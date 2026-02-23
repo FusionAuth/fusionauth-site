@@ -39,7 +39,7 @@ npx --version   # Should show 10.x.x or higher
 ```
 </Aside>
 
-You also need a **FusionAuth Enterprise license**. Custom OAuth scopes require an Enterprise license. [Contact FusionAuth](/pricing) to obtain a license key.
+You also need a **FusionAuth Essentials license** (or higher). Custom OAuth scopes require an Essentials license. If you already have a paid plan, you can find your license key at [account.fusionauth.io](https://account.fusionauth.io/account/plan/). Otherwise, [contact FusionAuth](/pricing) to obtain one.
 
 ## Getting Started
 
@@ -60,7 +60,7 @@ git checkout completed-app
 
 ### Configure Your FusionAuth License
 
-Before starting the services, add your FusionAuth Enterprise license key to the Kickstart configuration.
+Before starting the services, add your FusionAuth license key to the Kickstart configuration.
 
 Open `kickstart/kickstart.json` and replace the `licenseId` value on line 16:
 
@@ -73,7 +73,7 @@ Open `kickstart/kickstart.json` and replace the `licenseId` value on line 16:
 }
 ```
 
-Replace `YOUR_LICENSE_KEY_HERE` with your actual FusionAuth Enterprise license key.
+Replace `YOUR_LICENSE_KEY_HERE` with your actual FusionAuth license key.
 
 ### Review The Project Structure
 
@@ -193,30 +193,18 @@ You should see:
 
 The tool works, but anyone can call it because there's no authentication. Let's fix that.
 
-### Verify That FusionAuth Is Running
-
-Before you continue, confirm that FusionAuth started successfully. Check that you can access it:
-
-```bash
-curl http://localhost:9011/.well-known/openid-configuration | jq .issuer
-```
-
-You should see the following:
-
-```json
-"http://localhost:9011"
-```
-
-You can also visit http://localhost:9011 in your browser to log into the FusionAuth admin UI. Use the admin credentials created by the Kickstart configuration:
+<Aside type="tip" nodark="true">
+You can log into the FusionAuth admin UI at `http://localhost:9011` to verify the Kickstart configuration. Use the admin credentials:
 
 * **Email:** `admin@example.com`
 * **Password:** `password`
 
-Navigate to **Applications** to see the MCP Server application that the Kickstart configuration created.
+Navigate to <Breadcrumb>Applications</Breadcrumb> to see the MCP Server application that the Kickstart configuration created.
+</Aside>
 
 ## Adding OAuth Protection
 
-Add FusionAuth OAuth authentication piece by piece to protect the MCP server, starting with configuration and ending with a fully protected server.
+Now, let's add authentication piece by piece to protect the MCP server, starting with configuration and ending with a fully protected server.
 
 ### OAuth Protection For MCP Servers
 
@@ -259,7 +247,9 @@ In this code:
 
 * `FUSIONAUTH_URL` adds the internal Docker network address (`http://fusionauth:9011`), which the MCP server container uses to reach FusionAuth.
 * `FUSIONAUTH_EXTERNAL_URL` adds the public localhost URL (`http://localhost:9011`), which browsers use during the OAuth flow.
+* `MCP_SERVER_URL` adds the public URL of the MCP server, used by FastMCP to construct OAuth redirect URLs.
 * `MCP_APP_ID` adds the application ID for the MCP server application.
+* `MCP_APP_SECRET` is a placeholder client secret. Token validation uses the UserInfo endpoint, which requires no client authentication, so this value is not used at runtime.
 * `FUSIONAUTH_API_KEY` adds the API key required for looking up user information from FusionAuth.
 
 The values of the configuration variables match the Kickstart configuration in `kickstart/kickstart.json`. When you ran `docker compose up`, FusionAuth detected a fresh installation and automatically ran the Kickstart configuration, which created:
@@ -270,7 +260,7 @@ The values of the configuration variables match the Kickstart configuration in `
 * An API key
 * A custom `get_name` scope
 
-The IDs and keys are hardcoded in the Kickstart file. In production, you'd use environment variables or secrets management instead of hardcoded values.
+The Ids and keys are hardcoded in the Kickstart file. In production, you'd use environment variables or secrets management instead of hardcoded values.
 
 ### Step 2: Implement Token Validation
 
@@ -367,7 +357,7 @@ This updated initialization does the following:
 * **Enables MCP clients to discover OAuth endpoints:** `authorization_servers` points to FusionAuth's external URL, where MCP clients can discover the endpoints.
 * **Passes the auth provider to FastMCP:** `auth=auth` enables authentication on the MCP server.
 
-Now all tool calls require a valid access token with the `get_name` scope.
+Now all tool calls made to this MCP server require a valid access token with the `get_name` scope. If no token is provided, the server returns a `401 Unauthorized` response.
 
 ### Step 4: Access Authenticated User Information
 
@@ -470,7 +460,7 @@ Before MCP clients like Claude Desktop or Cursor can connect to your protected M
 
 ### The Registration Process
 
-MCP clients need their own OAuth application in FusionAuth, separate from the MCP server application. When an MCP client initiates the OAuth flow, it looks like this:
+Each MCP client needs its own dedicated OAuth application in FusionAuth, separate from the MCP server application. This means if you want to support both Claude Desktop and Cursor, you register two separate applications — one per client. When an MCP client initiates the OAuth grant, it looks like this:
 
 1. The MCP client redirects the user to FusionAuth to log in.
 2. The user authenticates their account and grants consent.
@@ -478,7 +468,7 @@ MCP clients need their own OAuth application in FusionAuth, separate from the MC
 4. The MCP client exchanges the code for an access token.
 5. The MCP client passes the token to the MCP server with each request.
 
-For the OAuth flow to work, FusionAuth needs to know:
+For the OAuth grant to work, FusionAuth needs to know:
 
 * Which redirect URLs are allowed for each MCP client
 * Whether PKCE is required (some MCP clients use PKCE for security)
@@ -542,7 +532,7 @@ This includes the following key configuration values:
 * `scopeHandlingPolicy: "Compatibility"` allows custom scopes like `get_name`
 * `unknownScopePolicy: "Allow"` permits scopes that aren't pre-defined in FusionAuth
 
-The script returns the generated client ID, which you need for configuring Claude Desktop.
+The script returns the generated client Id, which you need for configuring Claude Desktop.
 
 ### Run The Client Registration Script
 
@@ -581,10 +571,10 @@ Setup complete!
   Client ID: 9436b02d-9305-4772-a237-5fabcf6e7f6a
 ```
 
-Copy the client ID you need for the next step. You can also verify the registration in the FusionAuth admin UI by navigating to **Applications** to see the new client alongside the MCP Server application.
+Copy the client Id you need for the next step. You can also verify the registration in the FusionAuth admin UI by navigating to <Breadcrumb>Applications</Breadcrumb> to see the new client alongside the MCP Server application.
 
 <Aside type="note" nodark="true">
-You can register multiple clients by selecting option 3 (All) or by providing comma-separated numbers (for example, `1,2`). Each client gets its own application and client ID in FusionAuth.
+You can register multiple clients by selecting option 3 (All) or by providing comma-separated numbers (for example, `1,2`). Each client gets its own application and client Id in FusionAuth.
 </Aside>
 
 ## Configuring Your MCP Client
@@ -612,30 +602,30 @@ All MCP clients use the same configuration structure:
 }
 ```
 
-Replace `YOUR_CLIENT_ID_HERE` with the client ID from the registration script (the one that corresponds to your MCP client).
+Replace `YOUR_CLIENT_ID_HERE` with the client Id from the registration script (the one that corresponds to your MCP client).
 
 Each parameter does the following:
 
 * `command` uses `npx` to run the `mcp-remote` bridge tool.
 * `mcp-remote` bridges MCP clients (which expect stdio) to your HTTP-based MCP server.
 * `--allow-http` allows non-HTTPS connections for local development.
-* `--static-oauth-client-info` provides the preregistered client ID from the setup script.
+* `--static-oauth-client-info` provides the preregistered client Id from the setup script.
 
 The `mcp-remote` tool is part of the official MCP ecosystem and handles the OAuth flow automatically.
 
 ### For Claude Desktop
 
 1. Open Claude Desktop.
-2. Navigate to **Settings → Developer**.
-3. Click **Edit Config**.
+2. Navigate to <Breadcrumb>Settings -> Developer</Breadcrumb>.
+3. Click <InlineUIElement>Edit Config</InlineUIElement>.
 4. Add the configuration above.
 5. Save the file.
 
 ### For Cursor
 
 1. Press `Cmd + Shift + P` (macOS) or `Ctrl + Shift + P` (Windows and Linux).
-2. Type `MCP` and select **Open MCP Settings**.
-3. Click **New MCP Server**.
+2. Type `MCP` and select <InlineUIElement>Open MCP Settings</InlineUIElement>.
+3. Click <InlineUIElement>New MCP Server</InlineUIElement>.
 4. Add the configuration above.
 5. Save the file.
 
@@ -723,7 +713,7 @@ The `required_scopes=["get_name"]` parameter ensures that:
 
 ### Custom Scopes In FusionAuth
 
-FusionAuth requires an Enterprise license to use custom scopes. The Kickstart configuration:
+FusionAuth requires an Essentials license (or higher) to use custom scopes. The Kickstart configuration:
 
 1. Activates the license
 2. Creates the `get_name` scope
@@ -739,8 +729,10 @@ This example demonstrates the core patterns for OAuth-protected MCP servers. For
 * **Token caching:** Cache UserInfo responses to avoid validating tokens on every request. Set the cache TTL to match token expiration.
 * **Refresh tokens:** Configure your FusionAuth application to issue refresh tokens for long-lived sessions.
 * **Multiple scopes:** As you add more tools, create specific scopes for each tool and configure the token verifier to require the appropriate scopes.
-* **Monitoring:** Log token validations, track which users call which tools, and monitor token expiration patterns.
+* **Monitoring:** Log token validations and tool calls in the MCP server. In FusionAuth, use the [login records API](https://fusionauth.io/docs/apis/login#search-login-records) to track which clients have authenticated and when.
 * **Rate limiting:** Implement per-user rate limits and return HTTP `429` responses when limits are exceeded.
+* **Stale client cleanup:** Use FusionAuth's [login records API](https://fusionauth.io/docs/apis/login#search-login-records) to identify client applications that haven't authenticated recently, then deregister them to keep your application list clean.
+* **Preregistering clients at scale:** If you need to onboard many MCP clients, automate registration using the FusionAuth Application API rather than running the setup script manually for each one.
 
 ## Troubleshooting
 
@@ -776,7 +768,7 @@ Then verify that the user is registered to the MCP client application and that t
 
 ### Your MCP Client Doesn't Show The Server
 
-Verify that your configuration JSON syntax is valid, restart the client after configuration changes, and confirm the client ID matches what the setup script created.
+Verify that your configuration JSON syntax is valid, restart the client after configuration changes, and confirm the client Id matches what the setup script created.
 
 ### The OAuth Flow Completes, But Tools Aren't Available
 
@@ -786,29 +778,7 @@ Completely quit and restart your MCP client (such as Claude Desktop or Cursor) a
 
 OAuth clients redirect users back to a specific URL after authentication. If FusionAuth doesn't recognize the redirect URL, it rejects the request. When you see this error, look at the error message to find which URL was attempted (for example, `http://localhost:16442/oauth/callback`). Then add that URL to your client application's authorized redirect URLs in FusionAuth.
 
-You can fix this in two ways:
-
-1. **Via the FusionAuth Admin UI:** Navigate to **Applications → [Your Client] → OAuth tab → Authorized redirect URLs**, then add the missing URL.
-
-2. **Via the API:** Update the application with a `PATCH` request:
-
-    ```bash
-    curl -X PATCH http://localhost:9011/api/application/{CLIENT_ID} \
-    -H "Authorization: YOUR_API_KEY" \
-    -H "Content-Type: application/json" \
-    -d '{
-        "application": {
-        "oauthConfiguration": {
-            "authorizedRedirectURLs": [
-            "http://localhost:3000/callback",
-            "http://localhost:16442/oauth/callback"
-            ]
-        }
-        }
-    }'
-    ```
-
-    Replace `{CLIENT_ID}` with your client's application ID and include all existing redirect URLs plus the new one.
+To fix this, navigate to <Breadcrumb>Applications -> [Your Client] -> OAuth -> Authorized redirect URLs</Breadcrumb> in the FusionAuth admin UI and add the missing URL.
 
 ## Next Steps
 
