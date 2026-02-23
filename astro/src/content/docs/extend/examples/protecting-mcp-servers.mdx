@@ -26,7 +26,7 @@ The following tutorial builds a working example of an OAuth-protected MCP server
 To follow this guide, you need the following installed:
 
 * Docker Desktop (ensure it's running)
-* Claude Desktop
+* An MCP client such as Claude Desktop or Cursor
 * Python 3.12 or later (and `pip`)
 * Node.js version 20.18.1 or later (ensure it's available in your PATH)
 
@@ -467,33 +467,28 @@ For the OAuth grant to work, FusionAuth needs to know:
 
 The `setup_clients.py` script automates this registration process. Let's look at the key parts.
 
-The script defines the client configuration with redirect URLs:
+The script prompts you for a name for the client, then creates an OAuth application in FusionAuth. Run it once for each MCP client you want to register. It uses wildcard redirect URLs so the OAuth callback works on any port:
 
 ```python
-CLIENT_CONFIGS = {
-    "claude_desktop": {
-        "name": "Claude Desktop",
-        "redirect_urls": [
-            "http://localhost:*/oauth/callback",
-            "http://127.0.0.1:*/oauth/callback",
-        ],
-    },
-}
+REDIRECT_URLS = [
+    "http://localhost:*/oauth/callback",
+    "http://127.0.0.1:*/oauth/callback",
+]
 ```
 
-MCP clients handle the OAuth callback by starting a temporary local HTTP server. The port that server listens on varies by client and can change between runs if the default port is already in use. Using wildcard redirect URLs (`localhost:*`) means FusionAuth will accept the callback on any port, so the flow works regardless of which port the client picks.
+MCP clients handle the OAuth callback by starting a temporary local HTTP server. The port that server listens on varies by client and can change between runs if the default port is already in use. Using wildcard redirect URLs means FusionAuth will accept the callback on any port, so the flow works regardless of which MCP client you use.
 
 Then it creates an OAuth application in FusionAuth with the right configuration:
 
 ```python
-def create_client_application(base_url: str, api_key: str, client_key: str, config: dict):
+def create_client_application(base_url: str, api_key: str, client_name: str):
     app_id = str(uuid.uuid4())
 
     body = {
         "application": {
-            "name": config["name"],
+            "name": client_name,
             "oauthConfiguration": {
-                "authorizedRedirectURLs": config["redirect_urls"],
+                "authorizedRedirectURLs": REDIRECT_URLS,
                 "authorizedURLValidationPolicy": "AllowWildcards",
                 "clientAuthenticationPolicy": "NotRequiredWhenUsingPKCE",
                 "enabledGrants": ["authorization_code", "refresh_token"],
@@ -521,7 +516,7 @@ This includes the following key configuration values:
 * `scopeHandlingPolicy: "Compatibility"` allows custom scopes like `get_name`
 * `unknownScopePolicy: "Allow"` permits scopes that aren't pre-defined in FusionAuth
 
-The script returns the generated client Id, which you need for configuring Claude Desktop.
+The script returns the generated client Id, which you need for configuring your MCP client.
 
 ### Run The Client Registration Script
 
@@ -533,38 +528,23 @@ pip install -r requirements.txt
 python setup_clients.py
 ```
 
-The script prompts you to select which clients to register. Choose the client(s) you want to use:
+The script prompts you for a name for the MCP client. Run it once for each client you want to register. You should see output like this:
 
 ```
-Available MCP clients:
-  1. Claude Desktop
-  2. Cursor
-  3. All
-
-Select clients to register (comma-separated numbers): 1
-```
-
-You should see output like this:
-
-```
-Registering 1 client(s)...
+Enter a name for this MCP client (e.g. Claude Desktop): Claude Desktop
 
   Creating Claude Desktop...
-  Created Claude Desktop (Client ID: 9436b02d-9305-4772-a237-5fabcf6e7f6a)
+  Created Claude Desktop (Client Id: 9436b02d-9305-4772-a237-5fabcf6e7f6a)
 
 ========================================
 Setup complete!
 ========================================
 
   MCP configuration for Claude Desktop:
-  Client ID: 9436b02d-9305-4772-a237-5fabcf6e7f6a
+  Client Id: 9436b02d-9305-4772-a237-5fabcf6e7f6a
 ```
 
 Copy the client Id you need for the next step. You can also verify the registration in the FusionAuth admin UI by navigating to <Breadcrumb>Applications</Breadcrumb> to see the new client alongside the MCP Server application.
-
-<Aside type="note" nodark="true">
-You can register multiple clients by selecting option 3 (All) or by providing comma-separated numbers (for example, `1,2`). Each client gets its own application and client Id in FusionAuth.
-</Aside>
 
 ## Configuring Your MCP Client
 
@@ -591,7 +571,7 @@ All MCP clients use the same configuration structure:
 }
 ```
 
-Replace `YOUR_CLIENT_ID_HERE` with the client Id from the registration script (the one that corresponds to your MCP client).
+Replace `YOUR_CLIENT_ID_HERE` with the client Id output by the registration script for this client.
 
 Each parameter does the following:
 
