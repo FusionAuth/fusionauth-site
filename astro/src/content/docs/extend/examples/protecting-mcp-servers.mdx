@@ -240,7 +240,6 @@ FUSIONAUTH_EXTERNAL_URL = os.environ.get("FUSIONAUTH_EXTERNAL_URL", "http://loca
 MCP_SERVER_URL = os.environ.get("MCP_SERVER_URL", "http://localhost:8000")
 MCP_APP_ID = os.environ.get("MCP_APP_ID", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e")
 MCP_APP_SECRET = os.environ.get("MCP_APP_SECRET", "P6mR6aMjI-c7WJPe1RA95_S6HIpq9xzEqFGhaY5yqDc")
-FUSIONAUTH_API_KEY = os.environ.get("FUSIONAUTH_API_KEY", "bf69486b-4733-4470-a592-f1bfce7af580")
 ```
 
 In this code:
@@ -250,7 +249,6 @@ In this code:
 * `MCP_SERVER_URL` adds the public URL of the MCP server, used by FastMCP to construct OAuth redirect URLs.
 * `MCP_APP_ID` adds the application ID for the MCP server application.
 * `MCP_APP_SECRET` is a placeholder client secret. Token validation uses the UserInfo endpoint, which requires no client authentication, so this value is not used at runtime.
-* `FUSIONAUTH_API_KEY` adds the API key required for looking up user information from FusionAuth.
 
 The values of the configuration variables match the Kickstart configuration in `kickstart/kickstart.json`. When you ran `docker compose up`, FusionAuth detected a fresh installation and automatically ran the Kickstart configuration, which created:
 
@@ -284,7 +282,9 @@ class FusionAuthTokenVerifier(TokenVerifier):
 
     async def verify_token(self, token: str) -> AccessToken | None:
         try:
-            # Validate token via UserInfo endpoint
+            # Validate token via UserInfo endpoint. With the profile, email, and
+            # openid scopes requested, the response includes user profile data
+            # (name, email) so no separate API call is needed.
             resp = requests.get(
                 f"{self.fusionauth_url}/oauth2/userinfo",
                 headers={"Authorization": f"Bearer {token}"},
@@ -296,13 +296,19 @@ class FusionAuthTokenVerifier(TokenVerifier):
 
             userinfo = resp.json()
 
-            # Decode token claims
+            # The UserInfo endpoint does not return scopes, so we decode the JWT
+            # to extract them. FastMCP uses scopes to enforce access control on
+            # individual tools.
             import base64
             payload_b64 = token.split('.')[1]
             payload_b64 += '=' * (4 - len(payload_b64) % 4)  # Add padding
             claims = json.loads(base64.urlsafe_b64decode(payload_b64))
 
             scopes = claims.get("scope", "").split() if claims.get("scope") else []
+
+            # Merge userinfo into claims so tools can access profile data
+            # (e.g. name, email) without needing a separate API call.
+            claims.update(userinfo)
 
             return AccessToken(
                 token=token,
@@ -318,9 +324,9 @@ class FusionAuthTokenVerifier(TokenVerifier):
 
 This token verifier validates access tokens by:
 
-1. Calling FusionAuth's UserInfo endpoint with the token
-2. Interpreting a `200 OK` response from the endpoint as a confirmation that the token is valid
-3. Decoding the token to extract claims, like scopes and the user ID
+1. Calling FusionAuth's UserInfo endpoint with the token. A `200 OK` response confirms the token is valid
+2. Decoding the JWT to extract scopes, since the UserInfo endpoint does not return them. FastMCP needs scopes to enforce per-tool access control
+3. Merging the UserInfo response into the token claims, so tools can read profile data (name, email) without making a separate API call
 4. Returning an `AccessToken` object that FastMCP can use
 
 ### Step 3: Enable OAuth On The MCP Server
@@ -333,7 +339,7 @@ token_verifier = FusionAuthTokenVerifier(
     fusionauth_url=FUSIONAUTH_URL,
     client_id=MCP_APP_ID,
     client_secret=MCP_APP_SECRET,
-    required_scopes=["get_name"],
+    required_scopes=["openid", "profile", "email", "get_name"],
 )
 
 # Configure OAuth provider
@@ -352,7 +358,7 @@ mcp = FastMCP(
 
 This updated initialization does the following:
 
-* **Creates a token verifier instance with required scopes:** `required_scopes=["get_name"]` ensures that only tokens with the `get_name` scope can execute tools.
+* **Creates a token verifier instance with required scopes:** `required_scopes=["openid", "profile", "email", "get_name"]` ensures that only tokens with all four scopes can execute tools. The `openid`, `profile`, and `email` scopes tell FusionAuth to include user profile data in the UserInfo response. The `get_name` scope is the custom scope that gates access to the `get_name` tool.
 * **Wraps the instance in `RemoteAuthProvider` (FastMCP's OAuth integration):** `RemoteAuthProvider` integrates OAuth with FastMCP's HTTP transport.
 * **Enables MCP clients to discover OAuth endpoints:** `authorization_servers` points to FusionAuth's external URL, where MCP clients can discover the endpoints.
 * **Passes the auth provider to FastMCP:** `auth=auth` enables authentication on the MCP server.
@@ -366,25 +372,6 @@ With authentication enabled, you can now access information about the authentica
 Replace the `get_name` tool with this implementation:
 
 ```python
-def _lookup_user_name(user_id: str) -> str:
-    """Look up a user's name from FusionAuth by user ID."""
-    try:
-        resp = requests.get(
-            f"{FUSIONAUTH_URL}/api/user/{user_id}",
-            headers={"Authorization": FUSIONAUTH_API_KEY},
-        )
-        if resp.status_code == 200:
-            user = resp.json().get("user", {})
-            first = user.get("firstName", "")
-            last = user.get("lastName", "")
-            if first or last:
-                return f"{first} {last}".strip()
-            return user.get("username") or user.get("email") or user_id
-    except Exception as e:
-        logger.error("Failed to look up user: %s", e)
-    return user_id
-
-
 @mcp.tool()
 def get_name() -> str:
     """Get the authenticated user's name from the access token.
@@ -396,8 +383,10 @@ def get_name() -> str:
     if access_token is None:
         return "Error: No access token found. Please authenticate first."
 
-    user_id = access_token.client_id
-    name = _lookup_user_name(user_id)
+    claims = access_token.claims
+    given = claims.get("given_name", "")
+    family = claims.get("family_name", "")
+    name = f"{given} {family}".strip() or claims.get("preferred_username") or claims.get("email") or access_token.client_id
 
     return f"Hello, {name}!"
 ```
@@ -405,8 +394,8 @@ def get_name() -> str:
 This code updates the `get_name` tool so that it:
 
 1. Uses the FastMCP `get_access_token()` to get the validated access token from the request context
-2. Extracts the user ID from the token, where it's stored in `client_id`
-3. Uses the FusionAuth User API to look up the user's full name
+2. Reads `given_name` and `family_name` directly from the token claims, which were populated from the UserInfo response in `verify_token`, so no additional API call is needed
+3. Falls back to `preferred_username`, then `email`, then the user Id if no name is available
 4. Returns a personalized greeting
 
 ### Step 5: Rebuild And Restart
@@ -460,7 +449,7 @@ Before MCP clients like Claude Desktop or Cursor can connect to your protected M
 
 ### The Registration Process
 
-Each MCP client needs its own dedicated OAuth application in FusionAuth, separate from the MCP server application. This means if you want to support both Claude Desktop and Cursor, you register two separate applications — one per client. When an MCP client initiates the OAuth grant, it looks like this:
+Each MCP client needs its own dedicated OAuth application in FusionAuth, separate from the MCP server application. This means if you want to support both Claude Desktop and Cursor, you register two separate applications, one per client. When an MCP client initiates the OAuth grant, it looks like this:
 
 1. The MCP client redirects the user to FusionAuth to log in.
 2. The user authenticates their account and grants consent.
@@ -705,11 +694,12 @@ If the UserInfo endpoint returns `200 OK`, the token is valid and active.
 
 ### Scope Enforcement
 
-The `required_scopes=["get_name"]` parameter ensures that:
+The `required_scopes=["openid", "profile", "email", "get_name"]` parameter ensures that:
 
-* Only tokens with the `get_name` scope can execute the tool
+* Only tokens containing all four scopes can execute tools
 * FastMCP automatically validates scopes before tool execution
-* Users must explicitly grant this scope during the consent flow
+* Users must explicitly grant these scopes during the consent flow
+* The `openid`, `profile`, and `email` scopes cause FusionAuth to include user profile data in the UserInfo response, so the MCP server can read the user's name without a separate API call
 
 ### Custom Scopes In FusionAuth
 
