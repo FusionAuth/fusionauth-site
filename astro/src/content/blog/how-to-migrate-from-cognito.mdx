@@ -10,10 +10,6 @@ tags: cognito, migrations, compare
 excerpt_separator: "{/* more */}"
 ---
 import Aside from "../../components/Aside.astro";
-import BulkAfterDiagram from "../../diagrams/docs/guides/bulk-migration-after-cognito.astro";
-import BulkBeforeDiagram from "../../diagrams/docs/guides/bulk-migration-before-cognito.astro";
-import SlowMigrationDiagram from "../../diagrams/docs/guides/slow-migration-cognito.astro";
-import SlowSubsequentDiagram from "../../diagrams/docs/guides/slow-migration-subsequent-cognito.astro";
 
 Amazon Cognito is a serverless CIAM service from Amazon Web Services with deep AWS integration. It offers authentication and authorization and supports a number of OAuth grants, including the Authorization Code grant, the Implicit grant and the Client Credentials grant.
 
@@ -88,11 +84,33 @@ You could notify the users in bulk via email or update your login screens with a
 
 Here's the login flow before the bulk migration:
 
-<BulkBeforeDiagram alt="Bulk migration login request flow before the migration." />
+```mermaid title="Bulk migration login request flow before the migration."
+sequenceDiagram
+
+participant u as User Agent
+participant c as Amazon Cognito
+
+u ->> c  : Request login page
+c -->> u  : Receive login page
+u ->> c  : Post credentials
+c ->> c : Verify credentials
+c -->> u  : Display results.
+```
 
 Here's the login flow after the bulk migration, when Amazon Cognito no longer is involved in the login process:
 
-<BulkAfterDiagram alt="Bulk migration login request flow after the migration." />
+```mermaid title="Bulk migration login request flow after the migration."
+sequenceDiagram
+
+participant u as User Agent
+participant ns as New System
+
+u ->> ns  : Request login page
+ns -->> u  : Receive login page
+u ->> ns  : Post credentials
+ns ->> ns : Verify credentials
+ns -->> u  : Display results.
+```
 
 The benefits of a bulk migration include:
 
@@ -111,13 +129,38 @@ With a slow, or phased, migration, users are not required to reset their passwor
 
 Here's a diagram of an initial user login during a slow migration:
 
-<SlowMigrationDiagram alt="Slow migration initial login request flow." />
+```mermaid title="Slow migration initial login request flow."
+sequenceDiagram
+
+participant u as User Agent
+participant ns as New System
+participant c as Cognito
+
+u ->> ns : Request login page
+ns -->> u : Receive login page
+u ->> ns : Post credentials
+ns ->> c : Post credentials
+c ->> c  : Verify credentials
+c -->> ns : Return results of authentication, including user attributes
+ns -->> u : Display results. If authentication successful, store user in New System.
+```
 
 After the initial login, Cognito is no longer the system of record for that user. Any changes to this user, whether made by themselves, automated processes or customer service team members, will need to be made in the new system.
 
 In subsequent logins, the original Cognito system is never consulted.
 
-<SlowSubsequentDiagram alt="Slow migration subsequent login request flow." />
+```mermaid title="Slow migration subsequent login request flow."
+sequenceDiagram
+
+participant u as User Agent
+participant ns as New System
+
+u ->> ns  : Request login page
+ns -->> u  : Receive login page
+u ->> ns  : Post credentials
+ns ->> ns : Verify credentials
+ns -->> u  : Display results.
+```
 
 The basic steps of a slow migration are:
 

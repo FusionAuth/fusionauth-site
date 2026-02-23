@@ -12,7 +12,7 @@ ${verificationOneTimeCode}
 [#else]
 To complete your email verification click on the following link.
 
-http://localhost:9011/email/verify/${verificationId}?client_id=${(application.oauthConfiguration.clientId)!''}&tenantId=${user.tenantId}
+http://localhost:9011/email/verify/${verificationId}?client_id=${(application.oauthConfiguration.clientId)!''}&tenantId=${tenant.id}
 [/#if]
 
 - FusionAuth Admin

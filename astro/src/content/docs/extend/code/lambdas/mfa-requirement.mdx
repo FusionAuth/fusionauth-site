@@ -1,0 +1,329 @@
+---
+title: MFA Requirement Lambda
+description: An overview of the MFA requirement lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+import AuthenticationTypeValues from 'src/content/docs/_shared/authentication-type-values.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+<EnterprisePlanBlurb />
+
+During logins, password changes, and [MFA Status API](/docs/apis/two-factor#retrieve-multi-factor-status) calls, FusionAuth performs various validations to decide whether to challenge the user on one of their MFA methods. Using this lambda function, you may extend this functionality to change FusionAuth's MFA decision for that user or trigger a suspicious login event.
+
+The MFA Requirement Lambda has access to the following information:
+
+* the access token returned by FusionAuth as the result of a successful authentication
+* the action being taken
+* FusionAuth's out of the box MFA decision
+* the user record
+* the user's registration for the application they're trying to authenticate to
+* the MFA policy settings on the tenant and application
+* metadata about the request
+
+You can use Lambda HTTP Connect to access external resources during validation, but you should use external resources sparingly; any additional latency will impact users.
+
+## Lambda Structure
+
+All lambda implementations must contain a method with the following signature:
+
+```javascript
+function checkRequired(result, user, registration, context) {
+  // Lambda code goes here
+}
+```
+
+The `checkRequired` function must accept the following parameters:
+
+* `result` - an object used for returning modified MFA requirements back to FusionAuth.
+* `user` - the read-only FusionAuth User object.
+* `registration` - the FusionAuth `UserRegistration` object. This parameter will be `undefined` when the user is not registered for the application (e.g. SSO, when an existing user signs into an application for the first time). This object is read-only.
+* `context` - an object containing context for the current request. This object is read-only and contains several optional fields.
+
+For more information about `user` and `application`, see the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation.
+
+`result` is of type `RequiredLambdaResult`, with the following structure:
+
+```javascript
+class RequiredLambdaResult {
+    /**
+     * This value will be set to FusionAuth's out of the box decision on whether an MFA challenge
+     * should be required for the user. Mutate this to change the decision.
+     * @type {boolean}
+     */
+    required;
+
+    /**
+     * To force a suspicious login event to be created, set this to true. This will have no effect
+     * unless the action is `login`.
+     * @type {boolean}
+     */
+    sendSuspiciousLoginEvent;
+}
+```
+
+`context` is an immutable argument of type `Context`, with the following structure:
+
+```javascript
+class Context {
+
+    /**
+     * The encoded JWT. This is an optional value and may be null. It will be
+     * populated if the /api/user/change-password was authenticated to via a JWT or if a `token`
+     * is POSTed to /api/two-factor/status
+    *
+    *  @type {string}
+    */
+    accessToken;
+
+    /**
+     * represents the action being taken. Logins and password changes via FusionAuth APIs or hosted pages will always use either `login` or `changePassword` respectively.
+     * `stepUp` is a value that may be passed in to the [MFA Status API](/docs/apis/two-factor#retrieve-multi-factor-status) using the `action` field.
+     * @type {string} - Possible values are [login], [changePassword], or [stepUp].
+     */
+    action;
+
+    /**
+     * The FusionAuth Application object (if applicable). This only exists if an applicationId was passed in to the relevant API, upstream from the lambda.
+     * @type {Application}
+     */
+    application;
+
+    /**
+     * A list of authentication threats detected for this request. This will only be populated when the action is `login` and Advanced Threat Detection is enabled.
+     * @type {Set<String>} - Possible values are [ImpossibleTravel].
+     */
+    authenticationThreats;
+
+    /**
+     * Event information about the current request. This is an optional value and may be null,
+     * depending on what is provided to FusionAuth via API calls.
+     * @type {EventInfo} - see below for details
+     */
+    eventInfo;
+
+
+    /**
+     * If existing two-factor trust was supplied (via a cookie/hosted pages or
+     * `twoFactorTrustId` on the API), this value will contain details about that trust.
+     * @type {Trust}
+     */
+    mfaTrust;
+
+    /**
+     * an object containing the MFA policies for the tenant and application.
+     * @type {Policies}
+     */
+    policies;
+}
+
+class EventInfo {
+    /**
+     * Additional data associated with the event. This is an optional value and may be null.
+     * @type {Map<String, Object>}
+     */
+    data;
+
+    /**
+     * @type {string}
+     */
+    deviceDescription;
+
+    /**
+     * @type {string}
+     */
+    deviceName;
+
+    /**
+     * @type {string}
+     */
+    deviceType;
+
+    /**
+     * @type {string}
+     */
+    ipAddress;
+
+
+    /**
+     * Location details based on the user's IP address. This will only be populated when
+     * Advanced Threat Detection is enabled.
+     * @type {Location}
+     */
+    location;
+
+    /**
+     * @type {string}
+     */
+    os;
+
+    /**
+     * @type {string}
+     */
+    userAgent;
+}
+
+class Location {
+    /**
+     * @type {string}
+     */
+    city;
+
+    /**
+     * @type {string}
+     */
+    country;
+
+    /**
+     * @type {double}
+     */
+    latitude;
+
+    /**
+     * @type {double}
+     */
+    longitude;
+
+    /**
+     * @type {string}
+     */
+    region;
+
+    /**
+     * @type {string}
+     */
+    zipcode;
+}
+
+class Policies {
+    /**
+     * This value will be set to the application's MFA login policy, if set.
+     * @type {string} - Possible values are [Disabled], [Enabled], or [Required].
+     */
+    applicationLoginPolicy;
+
+    /**
+     * If the Application has an MFA trust policy set, this value will be set to that policy.
+     * @type {string} - Possible values are [Any], [This], or [None].
+     */
+    applicationMultiFactorTrustPolicy;
+
+    /**
+     * This value will be set to the tenant's MFA login policy.
+     * @type {string} - Possible values are [Disabled], [Enabled], or [Required].
+     */
+    tenantLoginPolicy;
+}
+
+class StartInstant {
+    /**
+     * Every time /api/two-factor/login is completed for an application, the application Id and instant will be recorded here.
+     *
+     * @type {Map<UUID, Instant>}
+     */
+    applications;
+
+    /**
+     * The first instant the trust was established for the user's tenant.
+     *
+     * @type {Instant}
+     */
+    tenant;
+}
+
+class Trust {
+    /**
+     * The application that the MFA trust the user already has, was first associated with
+     * @type {string}
+     */
+    applicationId;
+
+    /**
+     * Additional attributes about the trust.
+     * @type {Map<String, Object>}
+     */
+    attributes;
+
+    /**
+     * When the MFA trust expires
+     * @type {Instant}
+     */
+    expirationInstant;
+
+    /**
+     * The twoFactorTrustId
+     * @type {String}
+     */
+    id;
+
+    /**
+     * When the MFA trust was created
+     * @type {Instant}
+     */
+    insertInstant;
+
+    /**
+     * Details about each application that trust was established for.
+     * @type {StartInstant}
+     */
+    startInstants;
+
+    /**
+     * Additional attributes/state trust.
+     * @type {Map<String, Object>}
+     */
+    state;
+
+    /**
+     * The user's tenant Id.
+     * @type {string}
+     */
+    tenantId;
+
+    /**
+     * The user's Id.
+     * @type {string}
+     */
+    userId;
+}
+```
+
+For more information about `context.application`, see the [Application API reference](/docs/apis/applications).
+
+For more information on advanced threat protection, see the [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) documentation.
+
+## Assigning The Lambda
+
+Once a lambda is created, you must assign it to a Tenant. Using the FusionAuth admin UI, find the <InlineField>MFA requirement lambda</InlineField> field found on the <Breadcrumb>Multi-Factor</Breadcrumb> tab in the Tenant configuration.
+
+Or if you are using the Tenant API, assign the lambda Id to the `tenant.lambdaConfiguration.multiFactorRequirementId` field.
+
+A lambda can also be configured at the application level and, if an application is provided on the request (see action above), the application's lambda will take precedence over the tenant's lambda. To assign an application-specific lambda, using the FusionAuth admin UI, find the <InlineField>MFA requirement lambda</InlineField> field found on the <Breadcrumb>Multi-Factor</Breadcrumb> tab in the Application configuration.
+
+Or if you are using the Application API, assign the lambda Id to the `application.lambdaConfiguration.multiFactorRequirementId` field.
+
+## Example Lambdas
+
+The following example requires MFA if the user's email address contains the string `gilfoyle`, and otherwise uses the default MFA decision:
+
+```javascript
+function checkRequired(result, user, registration, context) {
+  if (user.email.includes('gilfoyle')) {
+    result.required = true;
+  }
+}
+```
+
+A more complex example might involve using the user's location to determine if MFA should be required. In this example, if the user is logging in from outside the United States, MFA will be required. Note that this example assumes you are licensed for the [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) feature.
+
+```javascript
+function checkRequired(result, user, registration, context) {
+    if (context.eventInfo?.location?.country !== "USA") {
+        result.required = true;
+    }
+}
+```

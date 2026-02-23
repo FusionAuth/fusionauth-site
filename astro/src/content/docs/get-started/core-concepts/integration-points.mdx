@@ -6,11 +6,7 @@ subcategory: core concepts
 ---
 import ListHostedLoginPagesUseCases from 'src/content/docs/_shared/_list-hosted-login-pages-use-cases.mdx';
 import ClientSideApiKeys from 'src/content/docs/_shared/_client-side-api-keys.mdx';
-import LoginAPIDiagram from 'src/diagrams/docs/get-started/core-concepts/integration-points/login-api-flow.astro';
 import LoginAPIIssues from 'src/content/docs/get-started/core-concepts/_login-api-issues.mdx';
-import LoginAPIWithFederationDiagram from 'src/diagrams/docs/get-started/core-concepts/integration-points/login-api-flow-federation.astro';
-import OAuthDiagram from 'src/diagrams/docs/get-started/core-concepts/integration-points/oauth-grant.astro';
-import OAuthAndFederationDiagram from 'src/diagrams/docs/get-started/core-concepts/integration-points/oauth-grant-with-federation.astro';
 import RecommendedTokenStorageOptions from 'src/content/docs/_shared/_recommended-token-storage-options.mdx';
 import TokenStorageOptionsTable from 'src/content/docs/_shared/_token-storage-options.mdx';
 import { YouTube } from '@astro-community/astro-embed-youtube';
@@ -35,7 +31,25 @@ When you use this option, the data your client receives about the user is limite
 
 If this level of integration meets your needs, you'll have more portability and less lock-in to FusionAuth.
 
-<OAuthDiagram alt="The OAuth Authorization Code Grant"/>
+```mermaid title="The OAuth Authorization Code Grant"
+sequenceDiagram
+    participant User as User/Browser
+    participant App
+    participant FusionAuth
+
+    User ->> App : View Initial Page<br/>Click Login
+    App ->> User : Redirect To <br/>FusionAuth Authorization URL
+    User ->> FusionAuth : Request Login Page
+    FusionAuth ->> User : Return Login Page
+    User ->> FusionAuth : Provides Credentials
+    FusionAuth ->> FusionAuth : Validate Credentials
+    FusionAuth ->> User : Redirect With Authorization Code
+    User ->> App : Request Redirect URI
+    App ->> FusionAuth : Request Tokens
+    FusionAuth ->> App : Return Tokens
+    App ->> App : Create Session Or<br/>Otherwise Log User In
+    Note over User, FusionAuth: User Is Logged In And App Can Proceed<br/>Delivering Data And Functionality
+```
 
 ### Federated Authentication
 
@@ -43,17 +57,82 @@ Federated authentication, where FusionAuth isn't the system of record for users,
 
 When this is used, FusionAuth will defer to the configured systems of record for authentication and authorization. Please consult the Connector or Identity Provider documentation for more information on these options.
 
-<OAuthAndFederationDiagram alt="Logging In With An Identity Provider" />
+```mermaid title="Logging In With An Identity Provider"
+sequenceDiagram
+    participant User as User/Browser
+    participant App
+    participant FusionAuth
+    participant IdentityProvider as ${idpName}
+
+    User ->> App : View Initial Page<br/>Click Login
+    App ->> User : Redirect To <br/>FusionAuth Authorization URL
+    User ->> FusionAuth : Request Login Page
+    FusionAuth ->> User : Return Login Page
+    User ->> FusionAuth : Clicks On 'Login With ${idpName}'
+    FusionAuth ->> User : Redirect To Identity Provider Authorization URL
+    User ->> IdentityProvider : Request Login Page
+    IdentityProvider ->> User : Return Login Page
+    User ->> IdentityProvider : Enter Credentials
+    IdentityProvider ->> IdentityProvider : Validate Credentials
+    IdentityProvider ->> User : Redirect To FusionAuth With ${idpName} Authorization Code
+    User ->> FusionAuth : Requests Page, Has ${idpName} Authorization Code
+    FusionAuth ->> IdentityProvider : Exchange Authorization Code For ${idpName} Token
+    IdentityProvider ->> FusionAuth : Returns ${idpName} Token
+    FusionAuth ->> FusionAuth : Stores ${idpName} Token, Calls Lambda, Creates User And Registrations (If Needed), Generates FusionAuth Tokens
+    FusionAuth ->> User : Redirect To Redirect URI With FusionAuth Authorization Code
+    User ->> App : Request Redirect URI, Has FusionAuth Authorization Code
+    App ->> FusionAuth : Request FusionAuth Tokens
+    FusionAuth ->> App : Return FusionAuth Tokens
+    App ->> App : Create Session Or<br/>Otherwise Log User In
+    Note over User, FusionAuth: User Is Logged In And App Can Proceed<br/>Delivering Data And Functionality
+```
 
 ### Login API
 
 <LoginAPIIssues />
 
-<LoginAPIDiagram alt="The Login API Flow"/>
+```mermaid title="The Login API Flow"
+sequenceDiagram
+    participant User as User/Browser
+    participant App
+    participant FusionAuth
+
+    User ->> App : View Initial Page<br/>Click Login
+    App ->> User : Displays Login Page
+    User ->> App : Provides Credentials
+    App ->> FusionAuth : Forwards Credentials
+    FusionAuth ->> FusionAuth : Validate Credentials
+    FusionAuth ->> App : Returns Status Code<br/> Based On Validation
+    App ->> App : Process Status Code, Handle Login Failure, MFA, Locked Account, Etc
+    App ->> App : If Success, Create Session Or<br/>Otherwise Log User In
+    Note over User, FusionAuth: User Is Logged In And App Can Proceed<br/>Delivering Data And Functionality
+```
 
 You can also use federation with the Login API. Create and configure an [Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/).
 
-<LoginAPIWithFederationDiagram alt="The Login API Flow When User Logs In With An Identity Provider Such As Google"/>
+```mermaid title="The Login API flow when a user logs in with an identity provider such as Google"
+sequenceDiagram
+    participant User as User/Browser
+    participant App
+    participant FusionAuth
+    participant IdentityProvider as ${idpName}
+
+    User ->> App : View Initial Page<br/>Click Login
+    App ->> User : Displays Login Page<br/>Including Link To 'Login With ${idpName}'
+    User ->> App : Clicks On 'Login With ${idpName}'
+    App ->> User : Redirect To ${idpName} Authorization URL
+    User ->> IdentityProvider : Enters Credentials
+    IdentityProvider ->> IdentityProvider : Validate Credentials
+    IdentityProvider ->> User : Redirect to App With Authorization Code
+    User ->> App : Requests Page, Has Authorization Code
+    App ->> FusionAuth : Calls Complete Login<br/>With Code And Redirect URI
+    FusionAuth ->> IdentityProvider : Exchanges Code And<br/>Redirect URI For ${idpName} Token
+    IdentityProvider ->> FusionAuth : Returns ${idpName} Token
+    FusionAuth ->> FusionAuth : Stores ${idpName} Token, Calls Lambda, Creates User And Registrations (If Needed), Generates FusionAuth Tokens
+    FusionAuth ->> App : Return FusionAuth Tokens
+    App ->> App : Create Session Or<br/>Otherwise Log User In
+    Note over User, IdentityProvider: User Is Logged In And App Can Proceed<br/>Delivering Data And Functionality
+```
 
 Depending on the identity provider, you may be able to pass the token instead of the authorization code and redirect URI. In the case of a SAML provider, you'll need to provide the SAML response. Please consult the [provider specific API documentation](/docs/apis/identity-providers/) for details.
 

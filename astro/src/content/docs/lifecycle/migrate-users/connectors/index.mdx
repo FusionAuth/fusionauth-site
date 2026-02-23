@@ -9,7 +9,6 @@ navOrder: 0
 ---
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import ConnectorDiagram from 'src/diagrams/docs/lifecycle/migrate-users/connectors/_connector-diagram.astro';
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
 
@@ -44,9 +43,32 @@ Find Connectors in the administrative user interface by navigating to <Breadcrum
 
 If you are using a Connector, then to your end user and application, it is exactly the same as if FusionAuth is authenticating directly against the FusionAuth user datastore. Connector usage is transparent.
 
-Below is a diagram of the data flow for an Authorization Code grant when a Connector is configured. 
+The following diagram shows the data flow for an Authorization Code grant when a Connector is configured:
 
-<ConnectorDiagram />
+```mermaid
+sequenceDiagram
+
+  participant User as User/Browser
+  participant App
+  participant FusionAuth 
+  participant Connector As JSON API or LDAP Connection
+  participant DB as Your Identity Datastore
+
+  User ->> App : View Initial Page<br/>Click Login
+  App -->> User : Redirect User To FusionAuth
+  User ->> FusionAuth : Request Login Page
+  FusionAuth -->> User : Return Login Page
+  User ->> FusionAuth : Provides Credentials
+  FusionAuth ->> Connector : Provides Credentials
+  Connector ->> DB : Provides Credentials
+  DB ->> DB : Verifies Credentials
+  DB -->> Connector : Returns User Data
+  Connector -->> FusionAuth : Returns Data
+  FusionAuth ->> User : Redirect With Authorization Code
+  User ->> App : Request Redirect URI
+  App ->> FusionAuth : Request Tokens
+  FusionAuth -->> App : Return Tokens
+```
 
 ## Authentication
 

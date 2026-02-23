@@ -23,7 +23,7 @@ A third-party cookie is created by a domain other than the one a user is visitin
 
 Third-party cookies are predominantly used for advertising. By tracking a user throughout multiple websites, advertising companies can collect a lot of information about the user, including but not limited to websites visited, purchases made, and the interests they show on various websites. This information is used to provide targeted ads that are more relevant to the user.
 
-Because of the sheer amount of data they collect, third-party cookies are seen as a privacy risk and steps are being taken to phase out their use. Companies can be fined for breaking privacy regulations like [GDPR and CCPA](https://www.cookiepro.com/knowledge/gdpr-vs-ccpa/), and browsers like Firefox and Safari have started blocking third-party cookies altogether. Google Chrome plans to do the same [by 2022](https://blog.google/products/ads-commerce/a-more-privacy-first-web/).
+Because of the sheer amount of data they collect, third-party cookies are seen as a privacy risk and steps are being taken to phase out their use. Companies can be fined for breaking privacy regulations like [GDPR and CCPA](https://www.cookiepro.com/knowledge/gdpr-vs-ccpa/), and browsers like Firefox and Safari have started blocking third-party cookies altogether.
 
 First-party cookies are distinct from third-party cookies in that they are generated and stored by a website in its visitor's browser, rather than tracking a user’s overall browsing habits. First-party cookies remember a user’s session on that particular site, as well as basic data about the visitor. They help sites better understand visitor browsing behavior: what users did on that particular website, how often they visit, and so on to build an effective marketing strategy. 
 
@@ -95,14 +95,6 @@ A good CIAM solution provides users an easy registration and login experience. T
 ### Security and Compliance
 
 A robust CIAM solution can protect against hacks or frauds, as well as provide compliance with data protection laws. A CIAM solution in conjunction with multi-factor authentication and brute force protection can stop malicious actors from accessing customer data. When so configured, it can monitor the activities of internal employees and alert admins in case of suspicious access to sensitive data.
-
-## Other Solutions
-
-CIAM is not the only solution for the obsolescence of third-party cookies. Quite a few other solutions exist, although none as robust as a CIAM.
-
-For example, interest-based advertising, [Federated Learning of Cohorts (FLoC)](https://github.com/WICG/floc), is one alternative solution to third-party cookies without resorting to your own CIAM system. FLoC is a proposed browser standard, created by Google, that provides interest-based ads without letting advertisers know your identity. Users are categorized into *cohorts*—groups of users based on similar interests. The groups are large enough to make a user semi-anonymous to advertisers.
-
-FLoC however, isn't as glorious a solution as it claims to be. The question with FLoC is, "Do you trust Google?" Given that they have an ocean of information about millions of internet users, the answer is probably no. Beyond that, [fingerprinting and other tracking methods](https://www.eff.org/deeplinks/2021/03/googles-floc-terrible-idea) can still make a user stand out in a cohort.
 
 ## Conclusion
 

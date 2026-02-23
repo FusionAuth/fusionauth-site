@@ -7,8 +7,6 @@ subcategory: monitor
 ---
 import Aside from 'src/components/Aside.astro';
 import WhatIsOpenTelemetry from 'src/components/docs/operate/secure-and-monitor/whatIsOpentelemetry.mdx';
-import Diagram1 from 'src/components/docs/operate/secure-and-monitor/opentelemetryDiagram1.astro';
-import Diagram2 from 'src/components/docs/operate/secure-and-monitor/opentelemetryDiagram2.astro';
 
 ## Introduction
 
@@ -26,7 +24,27 @@ FusionAuth doesn't support OpenTelemetry instrumentation for traces. For more in
 
 Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below (you might also run OpenSearch in another Docker container).
 
-<Diagram1></Diagram1>
+```mermaid
+graph LR
+  subgraph I[Your server]
+    direction TB
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph E[Docker]
+      F(Your app)
+    end
+  end
+  D(User)
+  D --> F
+  D --> A
+  C --> G
+  F --> A
+  style I fill:#999
+```
 
 This diagram shows three components that could die and need monitoring: the PostgreSQL database, FusionAuth, and your app (web server) that directs users to FusionAuth for login. In this guide, you'll focus on monitoring FusionAuth.
 
@@ -59,7 +77,42 @@ In the following sections of this guide, you will run:
 - A bash script in another container to poll the FusionAuth API to get data about user logins
 - Prometheus in a final container to receive both the OpenTelemetry metrics
 
-<Diagram2></Diagram2>
+```mermaid
+graph LR
+  D(User)
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph P[Docker]
+      Q(OpenTelemetry Collector)
+    end
+    subgraph E[Docker]
+      B(Prometheus)
+    end
+    subgraph K[Docker]
+      L(bash script)
+    end
+    subgraph J[Docker]
+      F(Your app)
+    end
+  end
+  D --> J
+  D --> C
+  C --> G
+  F --> C
+  K --> |pushes metrics to| P
+  E --> |pulls metrics from| P
+  P --> |pull Prometheus metrics from| C
+  K --> |pull custom metrics from| C
+  style I fill:#999
+  style E fill:#944
+  style K fill:#944
+  style P fill:#944
+```
 
 This guide focuses on OpenTelemetry, not Prometheus and Grafana, and so uses the OpenTelemetry Collector. However, as of 2024, Grafana has released their own free and open-source version of an OpenTelemetry collector, called [Alloy](https://grafana.com/oss/alloy-opentelemetry-collector), that supports all Prometheus and OpenTelemetry protocols. It is component-based and has features that the OpenTelemetry Collector does not. You may prefer to use Alloy instead of OpenTelemetry Collector in your project.
 

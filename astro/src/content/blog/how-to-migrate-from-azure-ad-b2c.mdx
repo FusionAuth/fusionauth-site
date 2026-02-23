@@ -10,11 +10,6 @@ tags: azure ad b2c, migration
 excerpt_separator: "{/* more */}"
 ---
 import Aside from '../../components/Aside.astro';
-import BulkAfterDiagram from "../../diagrams/docs/guides/bulk-migration-after-azureadb2c.astro";
-import BulkBeforeDiagram from "../../diagrams/docs/guides/bulk-migration-before-azureadb2c.astro";
-import SlowMigrationDiagram from "../../diagrams/docs/guides/slow-migration-azureadb2c.astro";
-import SlowSubsequentDiagram from "../../diagrams/docs/guides/slow-migration-subsequent-azureadb2c.astro";
-
 
 Azure AD B2C is a serverless CIAM offering from Microsoft Azure with integration across many Azure services. It offers authentication and authorization for users. Azure AD B2C supports a number of OAuth grants, including the Authorization Code grant, the Implicit grant and the Client Credentials grant.
 
@@ -106,11 +101,33 @@ You can either notify the users in bulk via email or update your login screens w
 
 Here's the login flow before the bulk migration:
 
-<BulkBeforeDiagram alt="Bulk migration login request flow before the migration." />
+```mermaid title="Bulk migration login request flow before the migration."
+sequenceDiagram
+
+actor user as User Agent
+participant ad as Azure AD B2C
+
+user ->> ad  : Request login page
+ad -->> user  : Receive login page
+user ->> ad  : Post credentials
+ad ->> ad : Verify credentials
+ad -->> user  : Display results
+```
 
 Here's the login flow after the bulk migration, when Azure AD B2C no longer is involved in the login process:
 
-<BulkAfterDiagram alt="Bulk migration login request flow after the migration." />
+```mermaid title="Bulk migration login request flow after the migration."
+sequenceDiagram
+
+actor user as User Agent
+participant sys as New System
+
+user ->> sys  : Request login page
+sys -->> user  : Receive login page
+user ->> sys  : Post credentials
+sys ->> sys : Verify credentials
+sys -->> user  : Display results
+```
 
 The benefits of a bulk migration include:
 
@@ -137,13 +154,38 @@ The Azure AD B2C OAuth endpoint is monitored by rate limiting systems. If a dyna
 
 Here's a diagram of an initial user login during a slow migration:
 
-<SlowMigrationDiagram alt="Slow migration initial login request flow." />
+```mermaid title="Slow migration initial login request flow."
+sequenceDiagram
+
+actor user as User Agent
+participant sys as New System
+participant ad as Azure AD B2C
+
+user ->> sys : Request login page
+sys -->> user : Receive login page
+user ->> sys : Post credentials
+sys ->> ad : Post credentials
+ad ->> ad  : Verify credentials
+ad -->> sys : Return results of authentication, including user attributes
+sys -->> user : Display results. If authentication successful, store user in New System.
+```
 
 After the initial login, Azure AD B2C is no longer the system of record for that user. Any changes to this user, whether made by themselves, automated processes or customer service team members, must be made in the new system.
 
 In subsequent logins, the original Azure AD B2C system is never consulted, as below.
 
-<SlowSubsequentDiagram alt="Slow migration subsequent login request flow." />
+```mermaid title="Slow migration subsequent login request flow."
+sequenceDiagram
+
+actor user as User Agent
+participant sys as New System
+
+user ->> sys  : Request login page
+sys -->> user  : Receive login page
+user ->> sys  : Post credentials
+sys ->> sys : Verify credentials
+sys -->> user  : Display results.
+```
 
 The basic steps of a slow migration are:
 
