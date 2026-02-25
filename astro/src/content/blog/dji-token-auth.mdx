@@ -1,7 +1,7 @@
 ---
 publish_date: 2026-02-25
 title: Your Token Proves Who You Are, Not What You Own
-description: "One engineer reverse-engineered his DJI vacuum's API for fun and accidentally accessed 7,000 devices worldwide. Here's the authorization failure that made it possible — and how to make sure it doesn't happen in yours."
+description: "One engineer reverse-engineered his DJI vacuum's API for fun and accidentally accessed 7,000 devices worldwide. Here's the authorization failure that made it possible — and how to make sure it doesn't happen to you."
 authors: Brad McCarty, Dan Moore
 image: /img/blogs/dji-tokens-auth/token.png
 categories: Education
@@ -9,7 +9,7 @@ tags: authorization, api security, bola, iot security, token-based authenticatio
 excerpt_separator: "{/* more */}"
 ---
 
-Sammy Azdoufal spent $2,000 on a DJI Romo robot vacuum. It's a sleek, impressive machine — DJI's first foray into the consumer robotics market. And Sammy, being a normal, well-adjusted engineer, immediately decided the official app wasn't good enough and he needed to drive it with a PlayStation 5 controller instead.
+Sammy Azdoufal spent $2,000 on a DJI Romo robot vacuum. It's a sleek, impressive machine — DJI's first foray into the consumer robotics market. Sammy, being a normal, well-adjusted engineer, immediately decided the official app wasn't good enough; he wanted to drive his vacuum with a PlayStation 5 controller instead.
 
 So he did what any reasonable engineer would do: he fired up Claude (Anthropic's AI coding assistant) and asked it to reverse-engineer the API used by the DJI mobile app so he could build his own controller interface.
 
@@ -29,9 +29,9 @@ All with his perfectly legitimate, correctly-issued auth token for his own vacuu
 
 He didn't want to be the world's most well-informed burglar. He wanted to drive his new toy with a joystick.
 
-But he reported it responsibly, DJI patched it in two days, and now we get to talk about what actually went wrong.
+He reported it responsibly, DJI patched it in two days, and now we get to talk about what actually went wrong.
 
-## Authentication Worked. Authorization Didn't Exist.
+## Authentication Worked, Authorization Didn't Exist
 
 Here's the thing that's easy to gloss over in the "IoT bad, security hard" discourse: DJI's authentication wasn't broken. Sammy had a real account. He had a real device. He got a real, valid token. The system knew exactly who he was.
 
@@ -45,9 +45,9 @@ This is the authentication vs. authorization distinction, and it's one of the mo
 
 DJI's MQTT message broker (the server that routes communication between devices and the cloud) had no topic-level access controls. Once you had any valid token, you could see traffic from any device. The broker wasn't checking: "Does this token belong to the owner of this device?" It was just checking: "Is this a token? Cool, here's all the data."
 
-In auth terms: there was authentication, but there was no resource ownership scoping. The token was a skeleton key when it should have been a room-specific keycard.
+The token was a skeleton key when it should have been a room-specific keycard.
 
-## **What Proper Authorization Would Have Looked Like**
+## What Proper Authorization Would Have Looked Like
 
 The fix here isn't exotic. It's foundational. For a connected device platform, authorization needs to bind tokens to specific resources. When Sammy's token shows up asking for data, the system should have been checking:
 
@@ -56,9 +56,9 @@ The fix here isn't exotic. It's foundational. For a connected device platform, a
 3. Is this device currently registered to this account? ✗ (also absent)
 4. Is the requested action, such as listing devices, allowed for this token?  ✗ (also absent)
 
-This is sometimes called **Broken Object Level Authorization (BOLA)** — [OWASP's #1 API security risk](https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/) for good reason. It's the class of vulnerability where an API correctly authenticates a user but then fails to verify that the authenticated user is actually entitled to that specific resource.
+This is sometimes called **Broken Object Level Authorization (BOLA)** — [OWASP's #1 API security risk](https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/).
 
-The pattern shows up constantly in APIs: you can see your invoice at /invoices/1042, and you just try /invoices/1043 and... that works too. Same concept, much more consequential outcome when the resources are live home camera feeds.
+The pattern shows up constantly in APIs: you can see your invoice at `/invoices/1042`, so you try `/invoices/1043`, and... that works too.
 
 ## The IoT Threat Model Nobody Wants to Write
 
