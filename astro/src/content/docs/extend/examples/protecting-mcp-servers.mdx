@@ -576,11 +576,9 @@ Replace `YOUR_CLIENT_ID_HERE` with the client Id output by the registration scri
 Each parameter does the following:
 
 * `command` uses `npx` to run the `mcp-remote` bridge tool.
-* `mcp-remote` bridges MCP clients (which expect stdio) to your HTTP-based MCP server.
+* `mcp-remote` bridges MCP clients (which expect stdio) to your HTTP-based MCP server. MCP client config files only support stdio servers, so `mcp-remote` is required to connect to any HTTP-based MCP server, regardless of whether auth is involved.
 * `--allow-http` allows non-HTTPS connections for local development.
-* `--static-oauth-client-info` provides the preregistered client Id from the setup script.
-
-The `mcp-remote` tool is part of the official MCP ecosystem and handles the OAuth flow automatically.
+* `--static-oauth-client-info` provides the preregistered client Id from the setup script. This is required because FusionAuth does not support Dynamic Client Registration (DCR). Native MCP clients that attempt DCR will fail to connect. By passing a pre-registered client Id, `mcp-remote` bypasses DCR entirely.
 
 ### For Claude Desktop
 
@@ -706,26 +704,23 @@ This example demonstrates the core patterns for OAuth-protected MCP servers. For
 
 ## Deploying A Remote MCP Server
 
-This tutorial uses STDIO transport because the MCP server runs locally in Docker on the same machine as the MCP client. The `mcp-remote` bridge connects the client to the local HTTP server. For a production deployment, you would host the MCP server on a remote machine and connect to it over HTTPS.
+For a production deployment, you would host the MCP server on a remote machine and connect to it over HTTPS. The server code requires no changes. The only differences are infrastructure, configuration, and how MCP clients connect.
 
-### Transport Types
+### Infrastructure Requirements
 
-The MCP specification defines two transport types:
+For a remote deployment you need:
 
-* **STDIO.** The MCP client spawns the server as a local process and communicates via stdin/stdout. Only works when the server runs on the same machine as the client.
-* **Streamable HTTP.** The MCP client connects to the server over HTTP or HTTPS. This is what `mcp-remote` bridges to, and it works whether the server is local or remote.
+* A server hosting your MCP server, accessible over the internet
+* A reverse proxy such as [Caddy](https://caddyserver.com/) (which handles TLS certificates automatically) or TLS configured directly on your load balancer to serve HTTPS on the MCP server endpoint
+* A publicly accessible FusionAuth instance, since the OAuth browser redirect requires the user's browser to reach FusionAuth
 
-The server code in this tutorial uses Streamable HTTP transport via `mcp.http_app()`. STDIO is only involved because `mcp-remote` acts as a local bridge process. When the MCP server is remote, the bridge connects to the public URL instead of localhost.
+### Server Configuration
 
-### What Changes For Remote Deployment
-
-The server code requires no changes for remote deployment. The only differences are configuration:
+Set the following environment variables when starting the server:
 
 * `MCP_SERVER_URL`. Set this to your server's public HTTPS URL (e.g. `https://mcp.example.com`). FastMCP uses this to construct the OAuth metadata that MCP clients discover.
 * `FUSIONAUTH_EXTERNAL_URL`. Set this to your FusionAuth instance's public URL. MCP clients need to reach FusionAuth in their browser to complete the OAuth flow.
 * `FUSIONAUTH_URL`. If the MCP server container cannot reach FusionAuth via an internal network address, set this to the public URL as well.
-
-Pass these as environment variables when starting the server:
 
 ```bash
 MCP_SERVER_URL=https://mcp.example.com \
@@ -733,27 +728,9 @@ FUSIONAUTH_EXTERNAL_URL=https://auth.example.com \
 docker compose up -d
 ```
 
-### MCP Client Configuration
+### Registering Remote MCP Clients
 
-For a remote server, the MCP client config points at the public URL instead of localhost. Remove the `--allow-http` flag since the remote server uses HTTPS. The updated configuration looks like this:
-
-```json
-{
-  "mcpServers": {
-    "fusionauth-mcp": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "https://mcp.example.com/mcp",
-        "--static-oauth-client-info",
-        "{\"client_id\":\"YOUR_CLIENT_ID_HERE\"}"
-      ]
-    }
-  }
-}
-```
-
-Run the setup script with `--mcp-server-url` pointing at your public URL to generate the correct client config. For example:
+Run the setup script with `--mcp-server-url` pointing at your public URL to register clients against the remote server:
 
 ```bash
 python3 setup_clients.py --mcp-server-url https://mcp.example.com
@@ -774,22 +751,56 @@ python3 setup_clients.py \
 ```
 
 <Aside type="note" nodark="true">
-The `remote-mcp` branch of the [example repository](https://github.com/fusionauth/fusionauth-protected-mcp-server/tree/remote-mcp) contains the setup script with the `--tenant-id` and `--mcp-app-id` flags included.
+The [`remote-mcp` branch](https://github.com/fusionauth/fusionauth-protected-mcp-server/tree/remote-mcp) of the example repository contains the setup script with the `--tenant-id`, `--mcp-app-id`, and `--connector-ui` flags included.
 </Aside>
 
-### Infrastructure Requirements
+### Connecting MCP Clients
 
-For a remote deployment you need:
+There are two ways to connect an MCP client to a remote server, depending on the client.
 
-* A server running the Docker Compose stack, accessible over the internet.
-* HTTPS on the MCP server endpoint. Use a reverse proxy such as [Caddy](https://caddyserver.com/) (which handles TLS certificates automatically) or configure TLS directly on your load balancer.
-* A publicly accessible FusionAuth instance. The OAuth browser redirect requires the user's browser to reach FusionAuth, so it must be on a public URL.
+#### Config File (Claude Desktop, Cursor, And Others)
 
-The FusionAuth configuration, application setup, and OAuth flow are identical to the local setup. Only the URLs differ.
+MCP client config files only support stdio servers. There is no way to put an HTTP URL directly in `claude_desktop_config.json`. `mcp-remote` acts as a local stdio-to-HTTP bridge. FusionAuth also does not support Dynamic Client Registration (DCR), so native clients that try to auto-register will fail. The `--static-oauth-client-info` flag bypasses DCR by providing the pre-registered client Id directly.
+
+Update your config to point at the public URL and remove `--allow-http`:
+
+```json
+{
+  "mcpServers": {
+    "fusionauth-mcp": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.example.com/mcp",
+        "--static-oauth-client-info",
+        "{\"client_id\":\"YOUR_CLIENT_ID_HERE\"}"
+      ]
+    }
+  }
+}
+```
+
+#### Connector UI (Claude Desktop And Claude.ai Web)
+
+Updated versions of Claude Desktop and claude.ai in the browser support a connector UI that connects natively over HTTP without `mcp-remote`. Navigate to <Breadcrumb>Settings -> Connectors</Breadcrumb>, add a custom connector with the URL `https://mcp.example.com/mcp`, and enter the client Id and secret from the setup script in the <InlineField>OAuth Client Id</InlineField> and <InlineField>OAuth Client Secret</InlineField> fields.
+
+The connector UI still requires a pre-registered FusionAuth application. Use the `--connector-ui` flag when running the setup script (available on the [`remote-mcp` branch](https://github.com/fusionauth/fusionauth-protected-mcp-server/tree/remote-mcp)) to register one with the correct redirect URL and output the client secret:
+
+```bash
+python3 setup_clients.py --mcp-server-url https://mcp.example.com --connector-ui
+```
+
+The script outputs the URL, client Id, and client secret to enter in the connector UI fields.
 
 ## Troubleshooting
 
 If you run into an issue while setting up or testing your OAuth-protected MCP server, check the following common problems and solutions.
+
+### The "Incompatible Auth Server" Or "Does Not Support Dynamic Client Registration" Error
+
+Your MCP client is attempting to auto-register itself as an OAuth client using Dynamic Client Registration (DCR). FusionAuth does not support DCR. This error occurs when using Claude Code's native HTTP transport (`claude mcp add --transport http`) or the connector UI without providing a client Id.
+
+For the config file approach, use `mcp-remote` with `--static-oauth-client-info` as shown in this tutorial. For the connector UI, enter the client Id and secret from the setup script in the connector settings.
 
 ### The "File Is Not Defined" Error
 
