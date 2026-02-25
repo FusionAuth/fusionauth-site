@@ -473,10 +473,12 @@ The script prompts you for a name for the client, then creates an OAuth applicat
 REDIRECT_URLS = [
     "http://localhost:*/oauth/callback",
     "http://127.0.0.1:*/oauth/callback",
+    "http://localhost:*/callback",
+    "http://127.0.0.1:*/callback",
 ]
 ```
 
-MCP clients handle the OAuth callback by starting a temporary local HTTP server. The port that server listens on varies by client and can change between runs if the default port is already in use. Using wildcard redirect URLs means FusionAuth will accept the callback on any port, so the flow works regardless of which MCP client you use.
+MCP clients handle the OAuth callback by starting a temporary local HTTP server. The port that server listens on varies by client and can change between runs if the default port is already in use. Using wildcard redirect URLs means FusionAuth will accept the callback on any port. Both `/oauth/callback` and `/callback` are included since different clients use different callback paths.
 
 Then it creates an OAuth application in FusionAuth with the right configuration:
 
@@ -548,11 +550,11 @@ Copy the client Id you need for the next step. You can also verify the registrat
 
 ## Configuring Your MCP Client
 
-Now let's configure the MCP client to connect to the OAuth-protected MCP server. The configuration is the same for all clients, but the setup process differs slightly.
+Now let's configure the MCP client to connect to the OAuth-protected MCP server. This section covers the config file approach used by most MCP clients. CLI tools with native HTTP transport support are covered in the [Deploying A Remote MCP Server](#deploying-a-remote-mcp-server) section.
 
 ### Configuration Format
 
-All MCP clients use the same configuration structure:
+Config-file MCP clients use the following configuration structure:
 
 ```json
 {
@@ -751,12 +753,12 @@ python3 setup_clients.py \
 ```
 
 <Aside type="note" nodark="true">
-The [`remote-mcp` branch](https://github.com/fusionauth/fusionauth-protected-mcp-server/tree/remote-mcp) of the example repository contains the setup script with the `--tenant-id`, `--mcp-app-id`, and `--connector-ui` flags included.
+The [`remote-mcp` branch](https://github.com/fusionauth/fusionauth-protected-mcp-server/tree/remote-mcp) of the example repository contains the setup script with the `--tenant-id`, `--mcp-app-id`, and `--connector-ui` flags included. The registered client Id also works with CLI tools that support native HTTP transport, such as Claude Code (`claude mcp add --transport http --client-id YOUR_CLIENT_ID`).
 </Aside>
 
 ### Connecting MCP Clients
 
-There are two ways to connect an MCP client to a remote server, depending on the client.
+There are three ways to connect an MCP client to a remote server, depending on the client.
 
 #### Config File (Claude Desktop, Cursor, And Others)
 
@@ -780,6 +782,18 @@ Update your config to point at the public URL and remove `--allow-http`:
 }
 ```
 
+#### CLI Tools With Native HTTP Transport
+
+Some CLI tools support Streamable HTTP natively and can connect to a remote MCP server directly without `mcp-remote`. These tools still require a pre-registered client Id since FusionAuth does not support DCR, but they handle the HTTP transport themselves.
+
+Run the setup script to register a client, then pass the client Id when adding the server. For example, in Claude Code:
+
+```bash
+claude mcp add --transport http --client-id YOUR_CLIENT_ID fusionauth-mcp https://mcp.example.com/mcp
+```
+
+The setup script output includes the client Id to use here.
+
 #### Connector UI (Claude Desktop And Claude.ai Web)
 
 Updated versions of Claude Desktop and claude.ai in the browser support a connector UI that connects natively over HTTP without `mcp-remote`. Navigate to <Breadcrumb>Settings -> Connectors</Breadcrumb>, add a custom connector with the URL `https://mcp.example.com/mcp`, and enter the client Id and secret from the setup script in the <InlineField>OAuth Client Id</InlineField> and <InlineField>OAuth Client Secret</InlineField> fields.
@@ -798,9 +812,13 @@ If you run into an issue while setting up or testing your OAuth-protected MCP se
 
 ### The "Incompatible Auth Server" Or "Does Not Support Dynamic Client Registration" Error
 
-Your MCP client is attempting to auto-register itself as an OAuth client using Dynamic Client Registration (DCR). FusionAuth does not support DCR. This error occurs when using Claude Code's native HTTP transport (`claude mcp add --transport http`) or the connector UI without providing a client Id.
+Your MCP client is attempting to auto-register itself as an OAuth client using Dynamic Client Registration (DCR). FusionAuth does not support DCR.
 
-For the config file approach, use `mcp-remote` with `--static-oauth-client-info` as shown in this tutorial. For the connector UI, enter the client Id and secret from the setup script in the connector settings.
+The fix depends on which client you are using:
+
+* **Config file clients:** Use `mcp-remote` with `--static-oauth-client-info` as shown in this tutorial.
+* **Connector UI (Claude Desktop, claude.ai web):** Enter the client Id and secret from the setup script in the connector settings.
+* **CLI tools with native HTTP transport:** Pass a pre-registered client Id when adding the server. For example, in Claude Code: `claude mcp add --transport http --client-id YOUR_CLIENT_ID fusionauth-mcp https://mcp.example.com/mcp`. Run the setup script first to register the client and obtain the client Id.
 
 ### The "File Is Not Defined" Error
 
@@ -840,7 +858,7 @@ Completely quit and restart your MCP client after the OAuth flow completes. The 
 
 ### The "Invalid redirect_uri" Error Occurs During OAuth
 
-OAuth clients redirect users back to a specific URL after authentication. If FusionAuth doesn't recognize the redirect URL, it rejects the request. The setup script registers wildcard redirect URLs (`http://localhost:*/oauth/callback`) to handle any port, but if your MCP client uses a different callback path, you may still see this error.
+OAuth clients redirect users back to a specific URL after authentication. If FusionAuth doesn't recognize the redirect URL, it rejects the request. The setup script registers wildcard redirect URLs (`http://localhost:*/oauth/callback` and `http://localhost:*/callback`) to handle any port and callback path, but if your MCP client uses a different callback path, you may still see this error.
 
 When you see this error, look at the error message to find which URL was attempted. Then navigate to <Breadcrumb>Applications -> [Your Client] -> OAuth -> Authorized redirect URLs</Breadcrumb> in the FusionAuth admin UI and add the missing URL.
 
