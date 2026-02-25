@@ -14,7 +14,7 @@ export const getReleaseNoteRssItems = async () => {
         date: new Date(version.date.replace(/(\d+)(st|nd|rd|th)/, '$1'))
       }))
       .map(version => {
-        const id = `https://fusionauth.io/docs/release-notes#version-${version.versionRef}`;
+        const id = `https://fusionauth.io/docs/release-notes/archive#version-${version.versionRef}`;
         const link = id;
         const title = `Release ${version.version}`;
         const updated = version.date;
