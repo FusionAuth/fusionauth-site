@@ -26,31 +26,34 @@ DPoP is defined in [RFC 9449](https://datatracker.ietf.org/doc/html/rfc9449).
 
 ### When To Use DPoP
 
-You should consider using DPoP in the following scenarios:
+Consider using DPoP in the following scenarios:
 
-* **Securing APIs**: APIs that require strict assurance that the sender of the Token is the same entity to which the Token was issued.
-* **Multi Domain**: DPoP is compatible with CORS, and allows you to securely use Tokens between multiple domains.
-* **[FAPI 2.0](https://openid.net/specs/fapi-security-profile-2_0-final.html#name-dpop-proof-replay)**: This specification defines DPoP as one of the methods for sender-constrained Access Tokens.
+* **Securing APIs**: APIs that require strict assurance that the sender of the token is the same entity to which the token was issued.
+* **Multi Domain**: DPoP is compatible with CORS, and allows you to securely use tokens between multiple domains.
+* **[FAPI 2.0](https://openid.net/specs/fapi-security-profile-2_0-final.html#name-dpop-proof-replay)**: This specification defines DPoP as one of the methods for sender-constrained access tokens.
 * **Alternative to mTLS**: In environments where Mutual TLS (mTLS) is difficult to implement or not supported by the infrastructure, DPoP provides similar sender-constraining benefits at the application layer.
 
+When you use DPoP, the APIs receiving the access token will need to take additional steps to validate that the access token was sent by the correct client. FusionAuth doesn't yet have SDK support for this, but it's coming. For now, you can implement the checks [outlined in the RFC](https://datatracker.ietf.org/doc/html/rfc9449#name-the-dpop-authentication-sch):
+
+> For such an access token, a resource server MUST check that a DPoP proof was also received in the DPoP header field of the HTTP request, check the DPoP proof according to the rules in [Section 4.3](https://datatracker.ietf.org/doc/html/rfc9449#checking), and check that the public key of the DPoP proof matches the public key to which the access token is bound per [Section 6](https://datatracker.ietf.org/doc/html/rfc9449#Confirmation).
+
 <Aside type="note">
-  * DPoP is not a substitute for TLS. It MUST always be used in conjunction with HTTPS to ensure the integrity and confidentiality of the requests.
-  * When DPoP is used with CORS, `DPoP` must be added to `systemConfiguration.corsConfiguration.allowedHeaders`
+DPoP is not a substitute for TLS; always use DPoP with HTTPS to ensure request confidentiality.
 </Aside>
 
 ## FusionAuth Support And Scope
 
-FusionAuth acts as the **Authorization Server (AS)** in the DPoP flow. When a client includes a DPoP proof in a Token request, FusionAuth:
+FusionAuth acts as the **Authorization Server (AS)** in the DPoP flow. When a client includes a DPoP proof in a token request, FusionAuth:
 
-1. Extracts the DPoP proof, public key, and signature from the <InlineField>DPoP</InlineField> request header.
+1. Extracts the DPoP proof, public key, and signature from the `DPoP` request header.
 1. Verifies the signature using the provided public key and validates the proof according to [RFC 9449 § 5](https://datatracker.ietf.org/doc/html/rfc9449#section-5).
-1. Calculates the JWK SHA-256 thumbprint (<InlineField>jkt</InlineField>) of the public key provided in the proof.
-1. Binds the issued Access Token (and Refresh Token) to this thumbprint by adding a `cnf` claim.
-1. Returns a <InlineField>token_type</InlineField> of `DPoP` in the Token response.
+1. Calculates the JWK SHA-256 thumbprint (`jkt`) of the public key provided in the proof.
+1. Binds the issued access token (and refresh token) to this thumbprint by adding a `cnf` claim.
+1. Returns a `token_type` of `DPoP` in the token response.
 
 ### Token Binding Semantics
 
-When DPoP is used, the issued Access Token contains a **Confirmation (`cnf`)** claim as defined in [RFC 9449 § 6.1](https://datatracker.ietf.org/doc/html/rfc9449#section-6.1).
+When DPoP is used, the issued access token contains a **Confirmation (`cnf`)** claim as defined in [RFC 9449 § 6.1](https://datatracker.ietf.org/doc/html/rfc9449#section-6.1).
 
 ```json
 {
@@ -165,6 +168,10 @@ sequenceDiagram
 11. **Verification & Re-binding (AS)**: FusionAuth verifies the Refresh Token and its binding to the original key, validates the new DPoP proof, and issues a new Access Token bound to the same public key thumbprint.
 
 ## Client Responsibilities
+
+<Aside type="note">
+When DPoP is used with CORS, `DPoP` must be added to `systemConfiguration.corsConfiguration.allowedHeaders`.
+</Aside>
 
 Implementing DPoP on the client side requires careful management of the cryptographic key pair and the generation of per-request proofs.
 
