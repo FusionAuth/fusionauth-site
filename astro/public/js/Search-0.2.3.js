@@ -62,10 +62,6 @@ class Search {
       this.closeSearch();
     }
 
-    //close if background clicked
-    if (event.target === this.#searchModal) {
-      this.closeSearch();
-    }
   }
 
   #handleKeyDown(event) {
@@ -187,10 +183,10 @@ class Search {
       // https://pagefind.app/docs/ranking/
       await this.#pagefind.options({
         ranking: {
-          termFrequency: 0.1,
-          termSimilarity: 0.2,
-          pageLength: 0,
-          termSaturation: 1.8,
+          termFrequency: 0.5,
+          termSimilarity: 0.9,
+          pageLength: 0.8,
+          termSaturation: 1.9,
         }
       })
       // prime the filters
