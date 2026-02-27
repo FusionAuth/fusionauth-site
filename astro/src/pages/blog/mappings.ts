@@ -42,6 +42,6 @@ export const AUTHORS = {
   'Nathan Contino': {
     linkText: '@nathan-contino',
     linkUrl: 'https://www.lambdalatitudinarians.org',
-    description: `Read what Nathan Contino thinks about docs and code.'
+    description: `Read what Nathan Contino thinks about docs and code.`
   },
 };
