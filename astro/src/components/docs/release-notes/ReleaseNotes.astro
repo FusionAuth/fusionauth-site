@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
-
+import { render } from 'astro:content';
+import ReleaseNotesItem from './ReleaseNotesItem.astro';
 export const categories = [
   { id: 'theme-upgrade', label: 'Theme Upgrade', color: '#e11d48' },
   { id: 'new-feature', label: 'New Feature', color: '#16a34a' },
@@ -32,13 +33,13 @@ const updates = allUpdates.sort((a, b) => b.data.date.valueOf() - a.data.date.va
 const categoryStyles = categories.map(cat => `
   /* show when checked */
   .release-container:has(#toggle-${cat.id}:checked) .release-notes-item-${cat.id} {
-    display: flex !important;
+    display: flex;
   }
   /* active color */
   .filter-chip:has(#toggle-${cat.id}:checked) {
-    background-color: ${cat.color} !important;
-    color: #fff !important;
-    border-color: ${cat.color} !important;
+    background-color: ${cat.color};
+    color: #fff;
+    border-color: ${cat.color};
   }
   /* styling */
   .badge-${cat.id} {
@@ -61,16 +62,16 @@ const categoryStyles = categories.map(cat => `
 
   <div class="version-list">
     {updates.map(async (item) => {
-      const { Content } = await item.render();
+      const { Content } = await render(item);
       return (
         <article class="version">
-          <i style="float:right">{item.data.date.toLocaleDateString("en-UK", {year: "numeric", month: "long", day: "numeric",})}</i>
+          <i class="version-date">{item.data.date.toLocaleDateString("en-UK", {year: "numeric", month: "long", day: "numeric",})}</i>
           <header>
-            <h2 id=`version-${item.data.version.replaceAll('.', '-')}` class="release-note">Version {item.data.version} {item.data.name && `(${item.data.name})`}
-              <a class="anchor-link" title="copy header link" href=`#version-${item.data.version.replaceAll('.', '-')}`></a>
+            <h2 id={`version-${item.data.version.replaceAll('.', '-')}`} class="release-note">Version {item.data.version} {item.data.name && `(${item.data.name})`}
+              <a class="anchor-link" title="copy header link" href={`#version-${item.data.version.replaceAll('.', '-')}`}></a>
             </h2>
           </header>
-          <div class="content"><Content /></div>
+          <div class="content"><Content components={{ReleaseNotesItem}} /></div>
         </article>
       );
     })}
@@ -80,106 +81,51 @@ const categoryStyles = categories.map(cat => `
 <Fragment set:html={`<style>${categoryStyles}</style>`} />
 
 <style is:global>
+    @reference "tailwindcss";
+
   .release-container:has(.filter-input:checked) [class*="release-notes-item-"] {
-    display: none !important;
+    @apply hidden;
   }
 
   .release-container:has(#toggle-fix:checked):has(#toggle-new-feature:checked):has(#toggle-enhancement:checked):has(#toggle-breaking-change:checked):has(#toggle-internal:checked) [class*="release-notes-item-"] {
-    display: flex !important;
+    @apply flex;
   }
 
   .filter-chip {
-    background-color: var(--input-background, #fbfbfb);
-    color: var(--dim-text-color, #888);
-    border: 1px solid var(--border-color, #ddd);
-    filter: grayscale(1);
-    opacity: 0.7;
+    @apply opacity-70 grayscale;
+
   }
 
   .filter-chip:has(input:checked) {
-    filter: grayscale(0);
-    opacity: 1;
+    @apply grayscale-0 opacity-100;
   }
   .filter-controls input {
-    display: none;
+    @apply hidden;
   }
 
   .filter-controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
+    @apply flex flex-wrap gap-3;
   }
 
   .filter-controls label {
-    cursor: pointer;
-    padding: 6px 14px;
-    border-radius: 20px;
-    background-color: var(--input-background, #fbfbfb);
-    color: var(--main-text-color, #424242);
-    border: 1px solid var(--border-color, #dddddd);
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    user-select: none;
+    @apply 
+      py-2 px-4
+      text-sm text-slate-800 font-medium 
+      bg-slate-100 border border-slate-300 
+      rounded-full cursor-pointer
+      transition ease-in-out
   }
 
   .filter-controls label:has(input:checked) {
+    @apply text-white shadow-lg;
     background-color: var(--main-accent-color, #083b94);
-    color: #ffffff;
     border-color: var(--main-accent-color, #083b94);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .filter-controls label:hover {
-    filter: brightness(0.95);
+    @apply brightness-95;
   }
-
-
-  .issue-row {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    padding: 8px 0;
-  }
-
-  .issue-badge {
-    flex-shrink: 0;
-    width: 110px;
-    text-align: center;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-  }
-
-  .issue-content {
-    flex-grow: 1;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: var(--main-text-color);
-  }
-
-  .issue-content :global(p) {
-    margin: 0;
-    display: inline;
-  }
-
-  .github-link {
-    flex-shrink: 0;
-    font-family: var(--code-font-family, monospace);
-    font-size: 0.85rem;
-    text-decoration: none;
-    opacity: 0.7;
-  }
-  .github-link:hover {
-    opacity: 1;
-  }
-
-  .thanks-text {
-    font-style: italic;
-    color: var(--dim-text-color, #666);
-    font-size: 0.9rem;
+  .version-date {
+    @apply float-right;
   }
 </style>
