@@ -1,4 +1,13 @@
 import { defineCollection, z } from 'astro:content';
+import { glob } from 'astro/loaders'; // Not available with legacy API
+
+const releasesCollection = defineCollection({
+  schema: z.object({
+    version: z.string(),
+    date: z.date(),
+    name: z.string().optional()
+  }),
+})
 
 const articlesCollection = defineCollection({
   schema: z.object({
@@ -111,4 +120,5 @@ export const collections = {
   'docs': docsCollection,
   'json': jsonCollection,
   'blog': blogCollection,
+  'releases': releasesCollection
 };
