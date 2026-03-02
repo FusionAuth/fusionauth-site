@@ -1,6 +1,8 @@
 import { defineCollection, z } from 'astro:content';
+import { glob } from 'astro/loaders';
 
 const releasesCollection = defineCollection({
+  loader: glob({ pattern: '*.mdx', base: './src/content/releases'}),
   schema: z.object({
     version: z.string(),
     date: z.date(),
