@@ -68,7 +68,7 @@ If it is inline (for a field), use <AvailableSince since="1.5.0"> - [AvailableSi
 - If you are removing a field, use <RemovedSince since="1.5.0"> - [RemovedSince](astro/src/components/api/RemovedSince.astro)
 
 - The table of contents along the right side is populated by a list of headings extracted from the top level markdown. If you are using nested markdown files with your headings you need to export them into the parent MDX file.
-  - See [Account Portal](astro/src/content/docs/get-started/download-and-install/account-portal.mdx) for an example. See the Astro docs for [exported variables](https://docs.astro.build/en/guides/markdown-content/#using-exported-variables-in-mdx) and [exported properties](https://docs.astro.build/en/guides/markdown-content/#exported-properties) to see what that is doing.
+  - See [Account Portal](astro/src/content/docs/get-started/download-and-install/reference/account-portal.mdx) for an example. See the Astro docs for [exported variables](https://docs.astro.build/en/guides/markdown-content/#using-exported-variables-in-mdx) and [exported properties](https://docs.astro.build/en/guides/markdown-content/#exported-properties) to see what that is doing.
 - We currently use [FontAwesome v6](https://fontawesome.com/) to render icons, so you can use them to refer to UI buttons, like this:
     ```jsx
     <IconButton icon="edit" />
