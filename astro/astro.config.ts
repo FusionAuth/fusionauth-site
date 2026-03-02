@@ -64,9 +64,6 @@ const config = defineConfig({
         },
       ],
     ],
-    shikiConfig: {
-      theme: 'github-dark',
-    },
     syntaxHighlight: {
       type: "shiki",
       excludeLangs: ["mermaid"]
