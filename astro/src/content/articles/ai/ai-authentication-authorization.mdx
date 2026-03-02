@@ -260,7 +260,7 @@ Each agent needs an identity. In FusionAuth, you model agents as Entities, but i
 
 Entities are the same primitive used for IoT devices, APIs, and machine-to-machine communication. Entities can have types, permissions, and grants, making them perfect for representing agent identities.
 
-Here's how you'd set up the drive and coordinator agent entities for the business banking workflow; the calendar and business service API agents are omitted for brevity but are configured in the same way:
+Here's how you'd set up the document and coordinator agent entities for the business banking workflow; the calendar and business service API agents are omitted for brevity but are configured in the same way:
 
 ```javascript
 import { FusionAuthClient } from '@fusionauth/typescript-client';
@@ -308,17 +308,17 @@ const coordinatorResponse = await client.createEntity(null, {
 });
 const coordinatorId = coordinatorResponse.response.entity.id;
 
-const driveAgentResponse = await client.createEntity(null, {
+const documentAgentResponse = await client.createEntity(null, {
   entity: {
-    name: 'Drive Agent',
+    name: 'Document Agent',
     type: { id: entityTypeId },
     data: { role: 'document-retrieval' }
   }
 });
-const driveAgentId = driveAgentResponse.response.entity.id;
+const documentAgentId = documentAgentResponse.response.entity.id;
 
-// Grant the coordinator permission to invoke the drive agent
-await client.upsertEntityGrant(driveAgentId, {
+// Grant the coordinator permission to invoke the document agent
+await client.upsertEntityGrant(documentAgentId, {
   grant: {
     permissions: ['invoke'],
     recipientEntityId: coordinatorId
@@ -348,25 +348,25 @@ The agents can log key points in their workflow:
 import { FusionAuthClient } from '@fusionauth/typescript-client';
 
 // Use a write-only API key scoped to audit log creation
-const driveAgentClient = new FusionAuthClient(
-  'DRIVE_AGENT_WRITE_ONLY_API_KEY',
+const documentAgentClient = new FusionAuthClient(
+  'DOCUMENT_AGENT_WRITE_ONLY_API_KEY',
   'https://your-fusionauth-instance.com'
 );
 
-// Log when the drive agent begins its work
-await driveAgentClient.createAuditLog({
+// Log when the document agent begins its work
+await documentAgentClient.createAuditLog({
   auditLog: {
-    insertUser: 'DriveAgent (328ae70f-20cf-4f28-8e18-d1d43bdfa919)',
+    insertUser: 'DocumentAgent (328ae70f-20cf-4f28-8e18-d1d43bdfa919)',
     message: 'Gathered 4 documents from folder',
-    reason: "{\"agentType\":\"DriveAgent\",\"action\":\"drive.gather.completed\",\"actor\":\"328ae70f-20cf-4f28-8e18-d1d43bdfa919\",\"delegatedBy\":\"35d45ce6-1088-4f71-8523-f4245ecc72dc\",\"actingOnBehalfOf\":\"d384a5cb-2dfd-40dd-871e-8ae48d343250\",\"roles\":[\"business_owner\"],\"scope\":\"drive:read\"}",
+    reason: "{\"agentType\":\"DocumentAgent\",\"action\":\"document.gather.completed\",\"actor\":\"328ae70f-20cf-4f28-8e18-d1d43bdfa919\",\"delegatedBy\":\"35d45ce6-1088-4f71-8523-f4245ecc72dc\",\"actingOnBehalfOf\":\"d384a5cb-2dfd-40dd-871e-8ae48d343250\",\"roles\":[\"business_owner\"],\"scope\":\"document:read\"}",
     data: {
-      agentType: "DriveAgent",
-      action: "drive.gather.completed",
+      agentType: "DocumentAgent",
+      action: "document.gather.completed",
       actor: "328ae70f-20cf-4f28-8e18-d1d43bdfa919",
       delegatedBy: "35d45ce6-1088-4f71-8523-f4245ecc72dc",
       actingOnBehalfOf: "d384a5cb-2dfd-40dd-871e-8ae48d343250",
       roles: ["business_owner"],
-      scope: "drive:read"
+      scope: "document:read"
     } 
   }
 });
