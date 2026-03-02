@@ -256,9 +256,13 @@ Splitting agents this way has several benefits:
 
 ### Modeling Agents with Entities
 
-Each agent needs an identity. In FusionAuth, you model agents as Entities, but in another system you might use service accounts or short lived OAuth clients. 
+Each agent needs an identity. In FusionAuth, you model agents as Entities, but in another system you might use service accounts or short lived OAuth clients. Entities are the same FusionAuth concept used for IoT devices, APIs, and machine-to-machine communication.
 
-Entities are the same primitive used for IoT devices, APIs, and machine-to-machine communication. Entities can have types, permissions, and grants, making them perfect for representing agent identities.
+Entities can have types, permissions, and grants, making them perfect for representing agent identities. With this agentic system, you want ensure that:
+
+- Only the coordinator agent can invoke sub-agents
+- Only authorized humans can kick off the coordinator
+- Permissions are explicit and auditable
 
 Here's how you'd set up the document and coordinator agent entities for the business banking workflow; the calendar and business service API agents are omitted for brevity but are configured in the same way:
 
@@ -334,15 +338,11 @@ await client.upsertEntityGrant(coordinatorId, {
 });
 ```
 
-This ensures that:
+After this configuration, requests use the client credentials grant to ensure the calling agent has permission to call the recipient agent. Then the JWT vend API mentioned above is used to preserve the chain of identity, using audit logs.
 
-- Only the coordinator agent can invoke sub-agents
-- Only authorized humans can kick off the coordinator
-- Permissions are explicit and auditable
+The audit logging captures the action in both the `reason` and `data` fields because `reason` is searchable, but `data` stores proper JSON. The actual shape of the stored data is application specific.
 
-Requests are made using the client credentials grant to ensure the calling agent has permission to call the recipient agent. Then the JWT vend API mentioned above is used to preserve the chain of identity.
-
-The agents can log key points in their workflow:
+The agents should log key points in their workflow, as shown below:
 
 ```javascript
 import { FusionAuthClient } from '@fusionauth/typescript-client';
@@ -372,9 +372,9 @@ await documentAgentClient.createAuditLog({
 });
 ```
 
-This is added to both the `reason` and `data` fields for searchability in FusionAuth, but the type of data to store for auditing purposes is business logic specific.
+Clean up agent entities when the workflow completes successfully.
 
-Clean up agent entities when the workflow completes successfully. For error conditions, implement a reaper process for orphaned entities from failed workflows. Doing this work ensures the agents' credentials are no longer usable.
+For error states, implement a reaper process for orphaned entities from failed workflows. Doing this work ensures the agents' credentials are no longer usable.
 
 ## What We Believe
 
@@ -386,6 +386,6 @@ Let's return to where we started. We believe these things to be true:
 
 ## What's Next
 
-The landscape is evolving fast. MCP is maturing. Agent frameworks like Agentcore and Mastra are gaining traction. Data provenance, knowing which agent did what to what data, is evolving.
+The landscape is evolving fast. MCP is maturing. Agent frameworks like Agentcore and Mastra are gaining traction. The concepts of AI data provenance and the chain of identity, which allow you to know which agent did what to what data, are coming into definition.
 
 But the fundamentals won't change. Human identity at the root. Deterministic enforcement. Defense in depth. If you build on these principles, your AI systems have a secure foundation.
