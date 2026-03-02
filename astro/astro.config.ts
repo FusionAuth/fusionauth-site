@@ -12,17 +12,6 @@ import mermaid from 'astro-mermaid';
 import rehypeSlug from 'rehype-slug'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 
-const optionalIntegrations = [];
-if (!process.env.DEV) {
-  optionalIntegrations.push(compress({
-    Image: false,
-    SVG: false,
-    HTML: false,
-  }))
-} else {
-  console.log('skipping compression');
-}
-
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
 const config = defineConfig({
@@ -33,17 +22,22 @@ const config = defineConfig({
     plugins: [tailwindcss()],
   },
   integrations: [
-    ...optionalIntegrations,
     mermaid({
       theme: 'forest',
-      autoTheme: true
+      autoTheme: true,
+      enableLog: false,
     }),
     mdx(),
     sitemap({
       filter: siteMapFilter
     }),
     indexPages(),
-    markdownExtract.default()
+    markdownExtract.default(),
+    compress({
+      Image: false,
+      SVG: false,
+      HTML: false,
+    }),
   ],
   markdown: {
     remarkPlugins: [
