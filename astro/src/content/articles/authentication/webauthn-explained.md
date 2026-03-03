@@ -24,7 +24,7 @@ Let's start off with an overview of the use cases, "ceremonies", and types of au
 There are three main use cases that WebAuthn works well for.
 
 1. Re-authentication, where the user has an account created in another way, but wants an easier way to login.
-2. [First factor authentication](/blog/2022/11/01/authenticators-ceremonies-webauthn-oh-my#first-factor-vs-second-factor), where the user has no account or is on a new device, but uses WebAuthn to login instead of a more typical first factor like a username/password combination.
+2. [First factor authentication](/blog/authenticators-ceremonies-webauthn-oh-my#first-factor-vs-second-factor), where the user has no account or is on a new device, but uses WebAuthn to login instead of a more typical first factor like a username/password combination.
 3. As an additional factor for multi-factor authentication (MFA).
 
 The main focus of this article is re-authentication, though the other use cases will be covered briefly.
@@ -347,7 +347,7 @@ As the relying party, aka cosmosclownstore.com, you may specify what type of aut
 
 Next, let's look at attestation. This is not a separate ceremony, but a way of verifying authenticator lineage.
 
-## Attestation 
+## Attestation
 
 Attestation is the process of answering the question: How do I know this authenticator the user is using is legitimate?
 

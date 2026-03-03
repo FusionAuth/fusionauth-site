@@ -13,7 +13,7 @@ Authentication is an integral part of your application, and as such the acquisit
 
 Will your new provider give you the same support? Pricing? Integration options? All of these might change for better or for worse.
 
-Consider [the acquisition of Auth0 by Okta](/blog/2021/03/04/congrats-auth0-okta-acquisition). Auth0 customers praised them for their top-notch customer support. However, Okta customers have lamented their lackluster customer service [in online forums](https://news.ycombinator.com/item?id=26336270).
+Consider [the acquisition of Auth0 by Okta](/blog/congrats-auth0-okta-acquisition). Auth0 customers praised them for their top-notch customer support. However, Okta customers have lamented their lackluster customer service [in online forums](https://news.ycombinator.com/item?id=26336270).
 
 
 > "We moved from Okta a few years ago after we received almost no actual real support for a bunch of issues, even though we were paying a premium cost. 

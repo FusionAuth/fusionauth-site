@@ -9,8 +9,9 @@ import {codeTitleRemark} from './src/plugins/code-title-remark';
 import * as markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
 import mermaid from 'astro-mermaid';
-import rehypeSlug from 'rehype-slug'
-import rehypeAutolinkHeadings from 'rehype-autolink-headings'
+import rehypeSlug from 'rehype-slug';
+import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import linkValidator, { type LinkValidatorOptions } from 'astro-link-validator';
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
@@ -38,6 +39,21 @@ const config = defineConfig({
       SVG: false,
       HTML: false,
     }),
+    linkValidator({
+      checkExternal: false,
+      externalTimeout: 10,
+      failOnBrokenLinks: false,
+      verbose: false,
+      exclude: [ //destination URLs to exclude from checking -- NOT files!
+        '/platform/', '/cdn/', '/dev-tools/', '/tech-papers/', '/docs/quickstarts/', '/feature/', '/features/', '/webinar/',
+        '/community/', '/forum/', '/compare/', '/industry/', '/license/', '/partners/', '/video/', '/event/', '/ebooks/', '/glossary/', '/guides/',
+        'buildvsbuy', 'auth0-migration', 'community', 'community/forum', 'aws-reinvent22', 'aws-reinvent23', 'pricing', 'download', 'contact',
+        'get-started', 'passwordless', 'direct-download', 'jobs', 'careers', 'password-history', 'partners-form', 'partners',
+        'resource/all', 'sso', 'kubernetes', 'compare-fusionauth', 'security', 'customers-partners', 'license-faq',
+        'feature-list', 'product-privacy-policy', 'passkeys',
+      ],
+      //base: 'https://fusionauth.io',
+    })
   ],
   markdown: {
     remarkPlugins: [
