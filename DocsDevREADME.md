@@ -145,7 +145,7 @@ You can find help for {props.topic} at [help](/help)
   - you may need to coerce a prop into a boolean to use as a conditional for an expression. Such as `{!!props.message && <span>{props.message}</span>}`;
 - JSON files are their own content collection in astro. You can reference these using the [JSON component](astro/src/components/JSON.astro)
 - We have an alias mapped in [tsconfig](astro/tsconfig.json) that allows you to use absolute references from 'src'. Otherwise, imports must use relative paths.
-- If a doc pulls code from an example application, use the [RemoteCode or RemoteValue](https://github.com/FusionAuth/fusionauth-astro-components). You can also pull sections with tags: `<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-javascript-sdk/main/packages/sdk-react/README.md" tags="forDocSite" />`
+- All docs that use non-trivial code examples should have a github repo with an example app. See (Adding an example app)[#adding-an-example-app] for more.
 
 ### For API docs
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
@@ -201,6 +201,7 @@ Follow everything in the `Content Style Guidelines` section.
 - When using an aside in the blog, please use the `nodark="true"` attribute.
 - Make descriptions full sentences. They must end in a period or other punctuation.
 - Titles should not end in a period. They can end in a ? or ! if needed.
+- All blogs that use non-trivial code examples should have a github repo with an example app. See (Adding an example app)[#adding-an-example-app] for more.
 
 ## Lists
 
@@ -431,6 +432,7 @@ Some sections are better suited to being driven by data. Jekyll makes this easy 
 * Create a repo. It should have the prefix `fusionauth-example-` and you should add both the owner and devrel teams (as admins) and developer team (as maintainers).
 * Add a readme and a license (apache2). It's great for the readme to point at the blog post, but you can also update the readme after your post is live.
 * Add an entry in https://github.com/FusionAuth/fusionauth-site/blob/main/site/_data/exampleapps.yaml (you can do it on your blog post branch). Note that you can only put an app in one tech group, and that if it is a JavaScript app, use JavaScript, not typescript, as the group name.
+- When a blog or doc pulls code from an example application, use the [RemoteCode or RemoteValue](https://github.com/FusionAuth/fusionauth-astro-components). You can also pull sections with tags: `<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-javascript-sdk/main/packages/sdk-react/README.md" tags="forDocSite" />`
 
 This will add the example app to the example apps section in the docs.
 
