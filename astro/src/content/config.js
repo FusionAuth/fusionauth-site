@@ -29,6 +29,8 @@ const articlesCollection = defineCollection({
 });
 
 const devToolsCollection = defineCollection({
+  loader: glob({ pattern: '*.mdx', base: './src/content/dev-tools'}),
+
   schema: z.object({
     author: z.string().optional(),
     cta: z.string().optional(),
@@ -43,6 +45,18 @@ const devToolsCollection = defineCollection({
 });
 
 const quickstartsCollection = defineCollection({
+  loader: glob({ pattern: '*.mdx', 
+    base: './src/content/dev-tools', 
+    generateId: (data) => {
+      if (data.data.slug) return data.data.slug
+      
+      const slug = data.entry.split('.')[0]
+      console.log({slug})
+      return slug
+      
+    }
+  }),
+
   schema: z.object({
     author: z.string().optional(),
     cta: z.string().optional(),
@@ -51,14 +65,14 @@ const quickstartsCollection = defineCollection({
     excludeFromNav: z.boolean().default(false),
     htmlTitle: z.string().optional(),
     icon: z.string().optional(),
-    section: z.string(),
+    section: z.string().optional(),
     title: z.string(),
     sortTitle: z.string().optional(),
     featured: z.boolean().default(false),
     faIcon: z.string().optional(),
     color: z.string().optional(),
     codeRoot: z.string().optional(),
-  }),
+  })
 });
 
 const docsCollection = defineCollection({
