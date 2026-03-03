@@ -45,13 +45,14 @@ const devToolsCollection = defineCollection({
 });
 
 const quickstartsCollection = defineCollection({
-  loader: glob({ pattern: '*.mdx', 
+  loader: glob({ 
+    pattern: '*.mdx', 
     base: './src/content/dev-tools', 
     generateId: (data) => {
+      // Deals with slug transfer from filename loading
       if (data.data.slug) return data.data.slug
       
       const slug = data.entry.split('.')[0]
-      console.log({slug})
       return slug
       
     }
