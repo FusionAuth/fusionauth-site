@@ -19,7 +19,7 @@ OAuth 2.0 focuses on authorization. There are other protocols like [OpenID Conne
 
 This article will go through all the different OAuth 2 grant types and explain the flow for each so that you can determine which is the best fit and safely use it in your applications.
 
-If you aren't familiar with terms like Authorization Server and Resource Server, you might be interested in [What is OAuth](/articles/oauth/what-is-oauth/).
+If you aren't familiar with terms like Authorization Server and Resource Server, you might be interested in [What is OAuth](/articles/oauth/modern-guide-to-oauth).
 
 [![A call to action image displaying a link to download this article as an ebook.](/img/cta/oauth-grants-guide-cta.png 'Download this article as an ebook')](/tech-papers/complete-list-of-oauth-2-grants?utm_medium=cta&utm_source=articles&utm_campaign=oauth2-grants)
 
@@ -59,7 +59,7 @@ There is also an extension called [PKCE](https://datatracker.ietf.org/doc/html/r
 
 The implicit grant type is used by user-agent-specific clients like web browsers or email readers. Generally, it’s used by single-page web applications that can’t store client secret credentials because their application code and storage are publicly accessible.
 
-This grant is no longer recommended for getting access tokens because it is less secure than the authorization flow, since it lacks client authentication. The implicit grant is only used in legacy applications. Therefore, no flow will be outlined. [Learn more.](/blog/2021/04/29/whats-wrong-with-implicit-grant)
+This grant is no longer recommended for getting access tokens because it is less secure than the authorization flow, since it lacks client authentication. The implicit grant is only used in legacy applications. Therefore, no flow will be outlined. [Learn more.](/blog/whats-wrong-with-implicit-grant)
 
 ## Resource Owner Password Credentials Grant
 

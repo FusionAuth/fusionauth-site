@@ -191,7 +191,7 @@ And here lies the debate that the security industry has been having for years:
 
 **Do we allow users to use short passwords and put the burden on the computer to generate hashes as slowly as reasonably still secure? Or do we force users to use long passwords and just use a fast hashing algorithm like SHA2 or SHA512?**
 
-[Some in the industry have argued that enough is enough with consuming massive amounts of CPU and GPU cycles simply computing hashes for passwords](https://blog.benpri.me/blog/2019/01/13/why-you-shouldnt-be-using-bcrypt-and-scrypt/). By forcing users to use long passwords, we get back a lot of computing power and can reduce costs by shutting off the 42 servers we have to run to keep up with login volumes.
+[Some in the industry have argued that enough is enough with consuming massive amounts of CPU and GPU cycles simply computing hashes for passwords](https://blog.benpri.me/blog/why-you-shouldnt-be-using-bcrypt-and-scrypt/). By forcing users to use long passwords, we get back a lot of computing power and can reduce costs by shutting off the 42 servers we have to run to keep up with login volumes.
 
 Others claim that this is a bad idea for a variety of reasons including:
 
