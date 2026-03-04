@@ -1,12 +1,6 @@
-# Running builds
-Almost all of the content for site now lives under the [astro](./astro) directory and is built by astro. You can run the site by cd-ing into the astro directory and running npm scripts from there or by running savant targets from the top level.
+## Content Style Guide
 
-The build targets are
-- `npm run dev` or `sb watch`: starts the astro dev server. Will render each page on demand and watch for file changes. Does not run the full build
-- `npm run start` or `sb server`: runs a full build except for the compression step and will serve the whole site. Useful if you need test search or the build process.
-- `npm run dev-build` or `sb compile`: runs the build step minus the compression but does not serve the file
-
-## Content Style Guidelines
+> NOTE: To build the docs site, see the [docs README](/astro/README.md).
 
 Here are some guidelines to follow when writing documentation (everything under [docs](astro/src/content/docs)), articles (everything under [articles](astro/src/content/articles)), and blogs [blog](astro/src/content/blog):
 
@@ -43,7 +37,72 @@ Here are some guidelines to follow when writing documentation (everything under 
 - If you have a list element containing more than one paragraph, indent the second paragraph by the same amount as the start of the text in the first paragraph to make sure that it renders correctly.
 - The `title` frontmatter element is used in several places: an H1 tag on the page, in any dynamically created menus, and in the HTML title tag. Sometimes, for SEO purposes, we want to add extra stuff to the HTML title tag, such as `| FusionAuth`. But that looks bad in the menu item. If this is the case, use the `htmlTitle` frontmatter element, which is only used for the HTML title tag. If not present, the HTML title tag defaults to the `title` frontMatter element. This is set up for docs, articles, blog posts and any other layouts that inherit from `Default.astro`.
 
+## Lists
+
+- When order matters, use a ordered list (e.g. `1. `)
+- For ordered lists, always use `1. ` instead of manually ordering; astro automatically handles numbering.
+- When order doesn't matter, use an unordered list (e.g. `* `).
+- For unordered lists, always use `* `.
+- Always introduce lists with a colon. (yes, I know this list violates that rule)
+- Capitalize the first word unless the bullet points continue a sentence started in the introduction.
+- If the list item is a sentence, include a period at the end.
+
+### List Examples
+
+Smoothie-compatible fruits include the following:
+
+- apples
+- bananas
+- blueberries
+
+To make a smoothie:
+
+1. Put milk in a blender.
+2. Put a banana in a blender.
+3. Put an apple in a blender.
+4. Put blueberries in a blender.
+5. Run the blender for 30 seconds.
+
+## Proper names and other verbiage
+
+- .NET Core
+- air-gapped (not airgapped or air gapped)
+- Azure AD
+- CAPTCHA
+- client-side
+- Connector
+- curl
+- Docker
+- Docker Compose
+- e-commerce
+- ECMAScript
+- Elasticsearch
+- esport
+- first-party
+- fine-grained authorization
+- FusionAuth Cloud
+- Google reCAPTCHA
+- Identity Provider
+- IdP
+- Kickstart
+- macOS
+- multi-factor authentication
+- multi-tenancy/multi-tenant
+- Node.js
+- OAuth and OAuth2
+- private-labeled (an adjective)
+- re-authentication
+- self-service
+- server-side (an adjective)
+- Spring Boot
+- third-party
+- two-factor
+- WebAuthn
+- webview
+- X.509
+
 ## Docs
+
 - Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
 - If you are referencing a field in a form or JSON API doc, use the [InlineField](astro/src/components/InlineField.astro) component: `<InlineField>Issuer</InlineField>`.
 - If you are referencing a UI element or button, use the [InlineUIElement](astro/src/components/InlineUIElement.astro) component: `Click the <InlineUIElement>Ok</InlineUIElement> button`.
@@ -109,36 +168,37 @@ navorder: 0
 If you want to sort a category to the top of its section, you need to add it to `astro/src/tools/docs/categoriesToFloatToTop.json`.
 
 ### Including files
-- If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_` and use dashes to separate words: `_login-api-integration` not `_login_api_integration`.
+
+- For content shared across multiple pages, preface the filename with `_` and use dashes to separate words, e.g. `_login-api-integration`.
 - You may include both markdown files and astro components as imports in MDX. These are treated as components.
-```mdxjs
-import AccountPortalCore from 'src/content/docs/_shared/_account-portal.mdx';
-...
-<AccountPortalCore/>
-```
+  ```mdxjs
+  import AccountPortalCore from 'src/content/docs/_shared/_account-portal.mdx';
+  ...
+  <AccountPortalCore/>
+  ```
 - You can pass `props` to both astro components and mdx components.
   - For astro components this looks like:
-```typescript jsx
----
-const { feature } = Astro.props;
----
-{ feature && <><strong>Note:</strong> An Enterprise plan is required to utilize {feature}. </>}
-```
+    ```typescript
+    ---
+    const { feature } = Astro.props;
+    ---
+    { feature && <><strong>Note:</strong> An Enterprise plan is required to utilize {feature}. </>}
+    ```
   - For mdx it looks like:
-```mdxjs
----
----
-# Getting Help
-You can find help for {props.topic} at [help](/help)
-```
-- In MDX files you can put some content behind a javascript expression
-```mdxjs
----
----
-{props.showStuff && <>
-  This is some more content <a href="/home">Home</a>
-</>}
-```
+    ```mdxjs
+    ---
+    ---
+    # Getting Help
+    You can find help for {props.topic} at [help](/help)
+    ```
+  - In MDX files you can put some content behind a javascript expression
+    ```mdxjs
+    ---
+    ---
+    {props.showStuff && <>
+      This is some more content <a href="/home">Home</a>
+    </>}
+    ```
   - You may need to add a empty tag multi-line content after the expression to indicate that this is a block
   - Markdown syntax will not render inside of a block inside of an expression. You must use html there.
   - Content passed in the `<slot></slot>` of a component will be passed as rendered markdown.
@@ -148,6 +208,7 @@ You can find help for {props.topic} at [help](/help)
 - All docs that use non-trivial code examples should have a github repo with an example app. See (Adding an example app)[#adding-an-example-app] for more.
 
 ### For API docs
+
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
 - `Defaults` is always capitalized.
 - If a field is required, but only when another feature is enabled, mark it optional rather than required in the API. Then, add a note in the description saying when it is required, like so:
@@ -162,7 +223,9 @@ You can find help for {props.topic} at [help](/help)
 
 
 #### Request section layout
-This is general layout guidance for APIs that have `GET` and `POST` options:
+
+For APIs that have `GET` and `POST` options:
+
 ```
 ## Request section header
 GET URLs (could have 1-3 of these, show the most common)
@@ -182,89 +245,7 @@ Response codes
 Example response(s)
 ```
 
-## Blog posts
-
-Follow everything in the `Content Style Guidelines` section.
-
-- If updating an blog post, please update the add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
-- If you have a common component that you want to include, make sure the blog is a `.mdx` file and create a component. [Example components](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/src/components/blog) - [Example blog post using a component](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/amazon-cognito-and-fusionauth-comparison.mdx)
-- Images should be pulled in using markdown: `![alt text](/path/to/images)`
-- Images for a blog post should go under /astro/public/img/blogs/` in a directory related to the blog title.
-- We use Shiki for code formatting. Supported languages are listed here: https://shiki.style/languages
-- For site navigation, use Breadcrumb: Navigate to <Breadcrumb>Tenants</Breadcrumb> and then to the <Breadcrumb>Password</Breadcrumb> tab.
-- For field names, use double quotes: "Login Identifier Attribute".
-- For values, use back ticks: `userPrincipalName`.
-- Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/config/contentcheck/known-blog-categories.txt). You can separate categories with commas.
-- Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter. You can [learn more about the logic by reviewing the layout](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/layouts/Blog.astro).
-- You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
-- All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
-- When using an aside in the blog, please use the `nodark="true"` attribute.
-- Make descriptions full sentences. They must end in a period or other punctuation.
-- Titles should not end in a period. They can end in a ? or ! if needed.
-- All blogs that use non-trivial code examples should have a github repo with an example app. See (Adding an example app)[#adding-an-example-app] for more.
-
-## Lists
-
-- Capitalize the first word.
-- Have a period on the end if the list item is a sentence, otherwise don't.
-
-Examples.
-
-I like:
-
-- apples
-- bananas
-- blueberries
-
-Fruits were domesticated at different times.
-
-- Apples were domesticated 4000 years ago.
-- Bananas were domesticated 3000 years before apples.
-- Blueberries were not domesticated until around 1900.
-
-## Proper names and other verbiage
-- .NET Core
-- air-gapped (not airgapped or air gapped)
-- Azure AD
-- CAPTCHA
-- client-side
-- Connector
-- curl
-- Docker
-- Docker Compose
-- e-commerce
-- ECMAScript
-- Elasticsearch
-- esport
-- first-party
-- fine-grained authorization
-- FusionAuth Cloud
-- Google reCAPTCHA
-- Identity Provider
-- IdP
-- Kickstart
-- macOS
-- multi-factor authentication
-- multi-tenancy/multi-tenant
-- Node.js
-- OAuth and OAuth2
-- private-labeled (an adjective)
-- re-authentication
-- self-service
-- server-side (an adjective)
-- Spring Boot
-- third-party
-- two-factor
-- WebAuthn
-- webview
-- X.509
-
-
-## Words to avoid
-
-- etc
-
-## Article workflow
+## Articles
 
 Varies, but you'll always want to 
 
@@ -275,52 +256,7 @@ Don't `push -f` in general. Unless you know what you are doing.
 
 Publishing happens whenever a commit or PR is merged to `main`.
 
-## Sizing Window for Screenshots
-
-When adding screenshots to the documentation, articles or blogs, use a normalized browser window size. The following apple Script should be used to build a consistent Safari browser window.
-
-Note that you must have at least `1100` pixels of screen height. If you do not, your dimensions will be skewed. Go to `System Preferences > Display` then choose `More Space` or the next selection up from your current selection to ensure you have enough space available.
-
-You will also want to ensure that you do not have scroll bars omni-present, this will affect the UI when taking screenshots. See `System Preferences > General > Show scroll bars` and ensure `When scrolling` is selected.
-
-Also note that you should be resizing the image down to 1600px wide. If you are resizing up, something is wrong and your images will be fuzzy.
-
-```appleScript
-set theApp to "Safari"
-
-# Docs/blog screens
-#set appHeight to 1100
-#set appWidth to 1080
-
-# Wider UI screens
-#set appHeight to 1100
-#set appWidth to 1550
-
-# Video
-#set appHeight to 1100
-#set appWidth to 1550
-
-# Maintenance Mode Screens
-#set appHeight to 1100
-#set appWidth to 900
-
-tell application "Finder"
-	set screenResolution to bounds of window of desktop
-end tell
-
-set screenWidth to item 3 of screenResolution
-set screenHeight to item 4 of screenResolution
-
-tell application theApp
-	activate
-	reopen
-	set xAxis to 640
-	set yAxis to 360
-	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
-end tell
-```
-
-## Screenshot Standards
+## Screenshots
 
 - Use light mode when capturing screenshots
 - In macOS **System Settings > Appearance** make sure _Allow wallpaper tinting in windows_ is turned _off_.
@@ -334,16 +270,16 @@ end tell
      the class.
 - If you crop the image, don't use the `shadowed` role. And vice versa.
 - Highlight sections using image preview editor
-	- Highlights should be red rectangle with line weight 5
+  - Highlights should be red rectangle with line weight 5
 - To size and compress images without losing too much quality, follow these steps:
-	1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
-	2. Crop the image vertically to only display the necessary content.
+  1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
+  2. Crop the image vertically to only display the necessary content.
 - Use https://local.fusionauth.io and use the correct kickstart to add the Silicon Valley characters ( https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/development/kickstart.json )
 - Make sure that the same character is used for every screenshot on a page (unless you are demonstrating a view from the admin and also user perspective)
 - The shrink-images GitHub Action will call https://tinypng.com/ to compress the images that you commit.
 
-### Shell script for capturing sceenshots
-fa-screenshot.sh is located under `fusionauth-site/src/`. With this script you can automate following tasks:
+Use `fa-screenshot.sh`, located under `fusionauth-site/src/`. With this script you can automate following tasks:
+
 - Sizing and moving the Safari window
 - Capturing the screenshot
 - Resizing the screenshot image
@@ -354,54 +290,13 @@ fa-screenshot.sh is located under `fusionauth-site/src/`. With this script you c
 ```
 
 
+### Moving pictures
 
-Converting terminalizer gifs to videos
-----
+GIFs take up quite a lot of space. Use WEBMs instead:
 
-Gifs take up quite a lot of space: The brew gif was about 5mb, after some custom optimization it was only 2mb
-
-To reduce the space requirements further, a video format is highly recommended and the dominant video format is
-webm. Converting a gif to webm is cake: `ffmpeg -i terminalizer.gif terminalizer.webm`. ffmpeg will choose all
-of the best default settings for you because the format is already specifically for browsers.
-
-The problem is webm is not supported by safari (yet). You will also want to create an mp4 (which isn't always supported
-by some of the lesser browsers because it uses codecs that require paid licenses inside). You also will have to
-do some eyeballing on your video because safari is really picky about what it permits.
-
-Example of my brew convert command:
-```bash
-ffmpeg -i render1555538879075.gif -vf scale=744x478 -vsync 2 -pix_fmt yuv420p brew.mp4
+```console
+ffmpeg -i terminalizer.gif terminalizer.webm
 ```
-
-`-vf scale=` adjusts the scale of the output. The height and width must be divisible by 2!
-
-`-vsync 2` makes the framerate variable and is great for terminalizer gifs because there are MANY duplicated frames
-that this parameter will drop and significantly reduce your file size (by about half for my brew example)
-
-`-pix_fmt yuv420p` changes the pixel format to yuv420p which is the magic sauce that safari wants (this is
-also the part that needs a size that is divisible by 2)
-
-## Search
-
-We use pagefind to search astro content. 
-
-### Pagefind
-
-This runs on the astro build. https://pagefind.app/ has more details
-
-In order for it to work you locally you will need to fully run the astro build, it will not work in regular dev mode
-
-```sh
-npm run start
-```
-
-alternatively if you like savant you can do
-
-```sh
-sb watch
-```
-
-we build the full site with search for development
 
 ## Docs navigation
 
@@ -459,63 +354,9 @@ Prior to requesting review on a PR, please complete the following checklist.
 3. If you are referring to a field the user can fill out, use `<InlineField>Authorized Redirect URLs</InlineField>`.
 4. If you are referring to any other UI element, such as a submit button or read-only name, use `<InlineUIElement>Submit</InlineUIElement>` or (on the application view screen) `<InlineUIElement>Introspect endpoint</InlineUIElement>`.
 
-
-## Content checklist
-
-TBD
-
 ## Quickstarts
 
-Quickstarts are any pages that are going under /docs/quickstarts that are not on the blog.
-
-See https://github.com/FusionAuth/fusionauth-example-template/blob/main/QUICKSTART-INSTRUCTIONS.md for instructions on building out a quickstart.
-
-
-## Linting
-
-We're using [Vale](https://vale.sh/) to find misspellings and to standardize terms.
-
-The main configuration file is located at [`.vale.ini`](./.vale.ini), where we specify file extensions to parse (besides the default `.md` one), some custom filters to ignore Astro components and which rules we'll use.
-
-We also use eslint to remove HTML from markdown one commit at a time.
-
-### Rules
-
-- The rules _(or, as Vale calls them, "styles")_ are located at [`config/vale/styles`](./config/vale/styles).
-- Right now, we're using [`write-good`](./config/vale/styles/write-good), a collection of simple rules to avoid common mistakes and awkward sentences.
-- We also have a custom vocabulary at [`config/vale/styles/config/vocabularies/FusionAuth/accept.txt`](./config/vale/styles/config/vocabularies/FusionAuth/accept.txt) with known words.
-  - Note that this file can use regular expressions to match words in a case-insensitive manner, as described [in their docs](https://vale.sh/docs/topics/vocab/).
-- Anything marked as code (with backticks) is ignored, so if you have a UUID or config string, surrounding it with backticks is a good way to satisfy vale.
-
-### GitHub Actions
-
-There's [a GitHub Action](./.github/workflows/vale.yml) that runs Vale on added/modified files when opening a pull request. It'll only cover files located at `astro/src/content` and `astro/src/components`. It will block merging the PR.
-
-There are other GH actions there as well.
-
-When you are adding a new GH action, pin the SHA. https://michaelheap.com/pin-your-github-actions/ has more.
-
-### Running locally
-
-If you have Docker installed, you can lint files by running the command below.
-
-```shell
-$ cd fusionauth-site
-$ docker run --rm -v "$(pwd)/.vale.ini:/etc/.vale.ini" -v "$(pwd)/.github:/etc/.github" -v "$(pwd)/astro:/docs" -w /docs jdkato/vale --config /etc/.vale.ini src/content/path/to/folder/or/file
-```
-
-If you whether choose to [install Vale locally](https://vale.sh/docs/vale-cli/installation/), make sure you're at the root folder for this repository and run:
-
-```shell
-$ cd fusionauth-site
-$ vale astro/path/to/folder/or/file
-```
-
-If you want to filter by specific rules, you can also pass a `--filter` argument:
-
-```shell
-$ vale --filter=".Name == 'Vale.Spelling'" astro/path/to/file
-```
+For details about building a Quickstart, see [fusionauth-example-template/QUICKSTART-INSTRUCTIONS.md](https://github.com/FusionAuth/fusionauth-example-template/blob/main/QUICKSTART-INSTRUCTIONS.md).
 
 ### What to do with eslint linting errors
 
@@ -525,22 +366,33 @@ Move HTML into an astro component.
 
 As a last resort, if you can't do either of the above, you can use `{/* eslint-disable-line */}` to disable the lint checking for that line. This has the disadvantage of masking other errors, do don't do it unless it is your last resort.
 
-### What to do with vale linting errors
-
-Whenever you receive an error, you need to determine if you should:
-
-- Actually fix the word (e.g. if you received an error like _"Use 'Id' instead of 'ID'."_); or
-- Add a known word to [`the vocabulary`](./config/vale/styles/config/vocabularies/FusionAuth/accept.txt) if it's a language, library, company name, etc. But make sure you have the correct capitalization to avoid having duplicates there; or
-- In case of custom Astro components, you'd probably need to add a new `TokenIgnores` item in [`.vale.ini`](./.vale.ini).
-
-## Adding category or sub category to menu
+## Add a category or sub category to a menu
 
 If you add a category or sub category to the menu, there is a mechanism to auto generate a landing page for that category. You can see this on the [Manage Users -> Search page](https://fusionauth.io/docs/lifecycle/manage-users/search/). To enable this, add a line to the redirect.json as in [this example](https://github.com/FusionAuth/fusionauth-site/pull/3896).
+
+## Blog
+
+Follow everything in the `Content Style Guidelines` section.
+
+- If updating an blog post, please update the add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
+- If you have a common component that you want to include, make sure the blog is a `.mdx` file and create a component. [Example components](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/src/components/blog) - [Example blog post using a component](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/amazon-cognito-and-fusionauth-comparison.mdx)
+- Images should be pulled in using markdown: `![alt text](/path/to/images)`
+- Images for a blog post should go under /astro/public/img/blogs/` in a directory related to the blog title.
+- We use Shiki for code formatting. Supported languages are listed here: https://shiki.style/languages
+- For site navigation, use Breadcrumb: Navigate to <Breadcrumb>Tenants</Breadcrumb> and then to the <Breadcrumb>Password</Breadcrumb> tab.
+- For field names, use double quotes: "Login Identifier Attribute".
+- For values, use back ticks: `userPrincipalName`.
+- Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/config/contentcheck/known-blog-categories.txt). You can separate categories with commas.
+- Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter. You can [learn more about the logic by reviewing the layout](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/layouts/Blog.astro).
+- You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
+- All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
+- When using an aside in the blog, please use the `nodark="true"` attribute.
+- Make descriptions full sentences. They must end in a period or other punctuation.
+- Titles should not end in a period. They can end in a ? or ! if needed.
+- All blogs that use non-trivial code examples should have a github repo with an example app. See (Adding an example app)[#adding-an-example-app] for more.
 
 ## Pull request review process
 
 * If a piece of content is technical, it needs a technical review by engineering or devrel.
 * Typo fixes don't need review.
 * If a piece of content is significant (blog post, guide, article) give it the label `content` and it will be published to a slack channel for marketing awareness.
-
-
