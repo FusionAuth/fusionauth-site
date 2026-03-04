@@ -1,23 +1,52 @@
 ---
 title: Securing AI Agents
-description: Agent security isn't one thing; it's a layered defense.
+description: Agent security isn't one thing; it's a layered defense. Especially when agents are calling APIs or other networked services. Discover the layers of the secured agent stack in this article.
 author: Dan Moore
 section: AI
 icon: /img/icons/articles/ai/securing-ai-agents-teal-light.svg
 darkIcon: /img/icons/articles/ai/securing-ai-agents-teal-dark.svg
 ---
 
-Agent security isn't one thing. It has to be a layered defense. At the foundation is **secure human identity**. Without verified identity, you can't confirm an agent is authorized to act for the person it claims to represent. Agents carry OAuth tokens and API keys tied to human identities; a compromised identity means stolen access across every integrated system.
+Agent security isn't one thing. It has to be a layered defense. At the foundation is secure human identity. Without verified identity, you can't confirm an agent is authorized to act for the person it represents.
+
+Agents should carry tokens and keys tied to human identities; a compromised human identity means illicit access across every integrated system.
 
 Here's the full security stack, from foundational to application-level:
 
-**Secure Human Identities** — The bedrock. Every agent action chain starts with a verified human identity. This is what your identity provider handles.
+* **Secure Human Identities**: Every agent action chain starts with a verified human identity. This is what your identity provider handles.
+* **Craft the Right Prompt**: Instruct agents to behave like responsible employees. 
+* **Sub-agents** — Split agents to reduce blast radius and make trust boundaries explicit.
+* **Third-Party Service Access**: When agents need to access services like Google Calendar, Office 365, or Salesforce, they shouldn't have access to long lived credentials.
+* **Sandboxing**: Control network access and filesystem access using containers or VMs.
+* **Fine-Grained Authorization** — Use fine-grained authorization (FGA) to control access based on agent identity, user identity, resource attributes, and context.
+* **Logging and Tracing** — Preserve the chain of identity and capture key actions at decision points.
+* **Input/Output Filtering** — Control the text goes into and comes out of your agentic system using a filtering tool.
+* **Validation** - Validate outputs based on expected inputs.
+* **Human Interaction** — Agents need to ask for human confirmation before taking consequential actions.
 
-**Craft the Right Prompt** — Instruct agents to behave like responsible employees. Prompt engineering is a security control, not just a UX concern.
+Let's examine each of these in more detail.
 
-**Sub-agents** — As discussed above, split agents to reduce blast radius and make trust boundaries explicit.
 
-**Third-Party Service Access** — When agents need to access services like Google Calendar, Office 365, or Salesforce, the user authenticates against the third-party service, and your identity provider securely stores the refresh tokens. When needed, an access token can be minted and injected into the agent's context.
+## Secure Human Identities
+ The bedrock. Every agent action chain starts with a verified human identity. This is what your identity provider handles.
+
+## Craft the Right Prompt
+
+Instruct agents to behave like responsible employees. Prompt engineering is a security control, not just a UX concern.
+## Sub-agents
+
+Split agents to reduce blast radius and make trust boundaries explicit.
+
+
+## Third-party Service Access
+
+Here's a pattern for managing third-party tokens:
+
+```javascript
+// After the user connects their Google Calendar via OAuth,
+// FusionAuth stores the refresh token.
+
+## Third-party Token Access
 
 Here's a pattern for managing third-party tokens:
 
@@ -36,9 +65,16 @@ const googleIdpLink = userResponse.response.user
 // which get injected into the Calendar Agent's context
 ```
 
-**Fine-Grained Authorization** — Use FGA to control access based on agent identity, user identity, resource attributes, and context. Build your authorization schema once and apply it consistently across APIs, services, MCP servers, and agent workflows.
+## Sandboxing
+ — Control network access and filesystem access using containers or VMs.
 
-**Logging and Tracing** — Preserve the chain of identity and capture key actions at decision points. Use the Vend JWT API to create signed tokens that encode the delegation chain (the `act` claim). Log agent actions using the audit log API with write-only API keys minted for each agent:
+## Fine-Grained Authorization
+
+ — Use fine-grained authorization (FGA) to control access based on agent identity, user identity, resource attributes, and context. Build your authorization schema once and apply it consistently across APIs, services, MCP servers, and agent workflows.
+
+## Logging and Tracing
+
+Preserve the chain of identity and capture key actions at decision points. Use RFC 8693 or native API calls like the Vend JWT API to create signed tokens that encode the delegation chain (the `act` claim). Log agent actions using an audit log API with limited API keys minted for each agent. If the chain of identity isn't captured in your preferred logging system, use webhooks or tools like Kafka to fan these log entries out to other systems for compliance and monitoring.
 
 ```javascript
 // Create a write-only API key for the agent to log actions
@@ -60,13 +96,12 @@ await fetch('https://your-fusionauth-instance.com/api/system/audit-log', {
 });
 ```
 
-Webhooks and Kafka can fan out these log entries to other systems for compliance and monitoring.
+## Validation
 
-**Input/Output Filtering** — Control what goes into and comes out of your agentic system. Maintain stop word lists — both standard and custom — to prevent sensitive operations from being triggered in the wrong context. For example, "credit check" or "register new business" might be allowed in the business registration workflow but blocked in customer service.
+Validation This lets you test the entire agentic flow end to end and make sure that you don't introduce regressions as you evolve the system.
+## Human Interaction
 
-CleanSpeak (TODO: add link to https://cleanspeak.com/docs/3.x/tech/apis/content#filter-content) provides a filter API with sub-50ms response times that can wrap your agent prompts. It supports standard, custom, and one-time block lists.
-
-**Human Interaction** — Agents need to ask for human confirmation before taking consequential actions. Patterns include:
+Patterns include:
 
 - Ask every time, with the ability for the human to dial it down (yes once, yes always, no)
 - Ask only when there's real-world impact
@@ -80,6 +115,23 @@ For implementation, FusionAuth provides several mechanisms:
 - **Device grant**: for scenarios where the agent needs to pull a human into the loop on a different device.
 - **Passkey prompt**: for quick, low-friction confirmation of consequential actions.
 
+## Input/Output Filtering
+
+ Control what goes into and comes out of your agentic system using a filtering tool. Maintain stop word lists, both standard and custom, to prevent sensitive operations from being triggered in the wrong context. For example, "pull credit" or "register new business" might be allowed in a new business registration workflow but blocked in customer service.
+
+-CleanSpeak (TODO: add link to https://cleanspeak.com/docs/3.x/tech/apis/content#filter-content) provides a filter API with sub-50ms response times that can wrap your agent prompts. It supports standard, custom, and one-time block lists.
+
+## Validation
+
+ Validate outputs based on expected inputs. This lets you test the entire agentic flow end to end and make sure that you don't introduce regressions as you evolve the system.
+
+
+## Human Interaction
+
+Agents need to ask for human confirmation before taking consequential actions.
+
+
+## TODO
 The full lifecycle of a secured agent workflow looks like this:
 
 ```mermaid
@@ -184,3 +236,5 @@ But the fundamentals won't change. Human identity at the root. Deterministic enf
 - [Permify LLM Authorization](https://docs.permify.co/use-cases/llm-authorization)
 - [RFC 9396 — Rich Authorization Requests](https://datatracker.ietf.org/doc/html/rfc9396)
 - [How to Design OAuth Scopes](https://fusionauth.io/blog/how-to-design-oauth-scopes)
+
+what about agents not tied to human identites
