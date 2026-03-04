@@ -45,13 +45,12 @@ Deploying happens automatically via a GitHub action when `main` is updated.
 
 ## Redirects
 
-The [redirects.json](src/redirects.json) file specifies our redirect rules. This file is published to s3 and read by a Lambda function that processes redirects for the site. When modifying the file:
+[redirects.json](src/redirects.json) specifies our redirect rules. This file is published to s3 and read by a Lambda function that processes redirects for the site. When modifying the file:
 
+* Keep items in alphabetical order!
 * If you are moving a page around, update `redirects`.
 * If you are adding a page that is an index page, update `indexPages`.
 * If you are adding a new top level file or directory that's pulled from the S3 bucket, make sure you:
   * Add a behavior in CloudFront. You'll need to submit a PR in [fusionauth-site-infra](https://github.com/FusionAuth/fusionauth-site-infra/) for this change.
   * If you are adding a top level file, add an entry to the `s3Paths` array.
   * If you are adding a top level directory, add an entry to the `s3Prefixes` array.
-
-⚠️ _When updating this file, please keep items in alpha order._
