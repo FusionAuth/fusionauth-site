@@ -77,15 +77,17 @@ const quickstartsCollection = defineCollection({
 });
 
 const docsCollection = defineCollection({
+  loader: glob({ pattern: '**/*.mdx', base: './src/content/docs'}),
+
   schema: z.object({
     title: z.string().refine(
         title => !/[.!?]$/.test(title),
         { message: "Title cannot end with punctuation" }
-    ),
+    ).optional(),
     description: z.string().refine(
         desc => /[.]$/.test(desc),
         { message: "Description must end with a period" }
-    ),
+    ).optional(),
     canonicalUrl: z.string().optional(),
     htmlTitle: z.string().optional(),
     section: z.string().optional(),
