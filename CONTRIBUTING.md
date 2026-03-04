@@ -320,7 +320,7 @@ Please don't add a top level section.
 
 ## Data Driven Pages
 
-Some sections are better suited to being driven by data. Jekyll makes this easy with lightweight json files in the `astro/src/content/json` directory. You can then iterate and filter the data there in various ways in a `.astro` file.
+Some sections are better suited to being driven by lightweight json files in the `astro/src/content/json` directory. You can then iterate and filter the data there in various ways in a `.astro` file.
 
 ### Adding an example app
 
