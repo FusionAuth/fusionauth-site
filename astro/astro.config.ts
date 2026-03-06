@@ -39,7 +39,8 @@ const config = defineConfig({
       SVG: false,
       HTML: false,
     }),
-    linkValidator({
+    // only run link validator in the dev environment
+    process.env.DEV && linkValidator({
       checkExternal: false,
       externalTimeout: 10,
       failOnBrokenLinks: false,
