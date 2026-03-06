@@ -72,12 +72,15 @@ const config = defineConfig({
           behavior: 'append',
           content: {
             type: 'text',
-            value: '',
+            value: '#',
           },
           properties: {
             title: ['link to header'],
-            class: 'anchor-link'
+            class: 'anchor-link border-b-0 no-underline ml-2 opacity-0 group-hover:opacity-100'
           },
+          headingProperties: {
+            class: 'group'
+          }
         },
       ],
     ],
