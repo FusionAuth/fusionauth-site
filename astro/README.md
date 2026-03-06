@@ -26,7 +26,7 @@ To run a full site build:
 npm run start
 ```
 
-This may take a minute or two. Output can be noisy; if this bothers you, add the `--silent` flag, which hides log output, but not errors.
+This may take a minute or two. Output can be noisy, but do pay attention to the output from `astro-link-validator` (runs at the very end of the `build` step), which ensures that all internal links on the site point to valid URLs. For development convenience, this check doesn't fail the build, but you should always keep the broken link count at zero before merging into `main`.
 
 ## Linting
 
