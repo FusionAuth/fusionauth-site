@@ -1,0 +1,722 @@
+---
+title: Protecting MCP Servers With FusionAuth OAuth
+description: Learn how to protect Model Context Protocol (MCP) servers with OAuth authentication using FusionAuth.
+navcategory: developer
+section: extend
+subcategory: examples
+codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-protected-mcp-server/main
+---
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+Building a production Model Context Protocol (MCP) server requires you to consider not just the AI-powered tools and services you expose, but also how to control and track which clients can access them. With FusionAuth, you can add OAuth protection to your MCP server, letting you authenticate clients and enforce per-tool scopes, while maintaining full control with a self-hosted Identity Provider.
+
+Starting with a simple, unprotected MCP server and adding OAuth protection step by step, this guide demonstrates how to:
+
+* Examine a basic MCP server with a simple `get_name` tool.
+* Add FusionAuth OAuth configuration and token validation.
+* Register an MCP client (such as Claude Desktop) and test the protected tool.
+
+The following tutorial builds a working example of an OAuth-protected MCP server that you can extend with additional tools and security policies.
+
+## Prerequisites
+
+To follow this guide, you need the following installed:
+
+* Docker Desktop (ensure it's running).
+* An MCP client such as Claude Desktop or Cursor.
+* Python 3.12 or later (and `pip`).
+* Node.js version 20.18.1 or later (ensure it's available in your PATH).
+* FusionAuth 1.63.0 or later. The Docker stack in this guide uses the `latest` image tag, which satisfies this requirement. If you are running FusionAuth separately, version 1.63.0 or later is required because earlier versions do not advertise S256 PKCE support in the OIDC discovery document, which `mcp-remote` requires.
+
+<Aside type="tip">
+Verify your Node.js installation:
+
+```bash
+node --version  # Should show v20.x.x or higher
+npx --version   # Should show 10.x.x or higher
+```
+</Aside>
+
+You also need a **FusionAuth Essentials license** (or higher). Custom OAuth scopes require an Essentials license. If you already have a paid plan, you can find your license key at [account.fusionauth.io](https://account.fusionauth.io/account/plan/). Otherwise, [contact FusionAuth](/pricing) to obtain one.
+
+## Getting Started
+
+Clone the repository and navigate to the starter code:
+
+```bash
+git clone https://github.com/fusionauth/fusionauth-protected-mcp-server.git
+cd fusionauth-protected-mcp-server/unprotected-local-mcp
+```
+
+<Aside type="note">
+This guide walks you through building OAuth protection step by step. If you prefer to skip ahead and see the completed code, navigate to the `protected-local-mcp` folder instead:
+
+```bash
+cd fusionauth-protected-mcp-server/protected-local-mcp
+```
+</Aside>
+
+### Configure Your FusionAuth License
+
+Before starting the services, add your FusionAuth license key to the Kickstart configuration.
+
+Open `kickstart/kickstart.json` and replace the `licenseId` value on line 15:
+
+```json
+{
+  "variables": { ... },
+  "apiKeys": [ ... ],
+  "licenseId": "YOUR_LICENSE_KEY_HERE",
+  "requests": [ ... ]
+}
+```
+
+Replace `YOUR_LICENSE_KEY_HERE` with your actual FusionAuth license key.
+
+### Review The Project Structure
+
+The project is structured as follows:
+
+```
+fusionauth-protected-mcp-server/
+unprotected-local-mcp/          # Starter code (this guide begins here)
+├── docker-compose.yml
+├── kickstart/
+│   └── kickstart.json
+├── mcp-server/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── server.py
+└── setup/
+    ├── requirements.txt
+    └── setup_clients.py
+protected-local-mcp/            # Completed code with OAuth protection
+└── ...
+protected-remote-mcp/           # Remote deployment variant
+└── ...
+```
+
+## Understanding The Starter Code
+
+Let's examine the starter MCP server before adding authentication.
+
+### The Basic MCP Server
+
+Open `mcp-server/server.py`:
+
+<RemoteCode url={frontmatter.codeRoot + "/unprotected-local-mcp/mcp-server/server.py"} lang="python" tags="starter-server"/>
+
+This is a minimal MCP server with:
+
+* A single `get_name` tool that returns a hardcoded greeting.
+* HTTP transport on port 8000.
+* No authentication.
+
+### Test The Unprotected Server
+
+Start the Docker stack:
+
+```bash
+docker compose up -d
+```
+
+Wait about 20 seconds for all services to start, including:
+
+* **FusionAuth:** On port 9011, preconfigured via Kickstart.
+* **MCP Server:** The unprotected starter version on port 8000.
+* **PostgreSQL:** The FusionAuth database.
+
+Check that all services are healthy:
+
+```bash
+docker compose ps
+```
+
+Test the unprotected `get_name` tool:
+
+```bash
+curl -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "get_name",
+      "arguments": {}
+    }
+  }'
+```
+
+You should see:
+
+```
+event: message
+data: {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"Hello, World!"}],"structuredContent":{"result":"Hello, World!"},"isError":false}}
+```
+
+The tool works, but anyone can call it because there's no authentication. Let's fix that.
+
+<Aside type="tip">
+You can log into the FusionAuth admin UI at `http://localhost:9011` to verify the Kickstart configuration. Use the admin credentials:
+
+* **Email:** `admin@example.com`
+* **Password:** `password`
+
+Navigate to <Breadcrumb>Users</Breadcrumb> to see the test user created by the Kickstart configuration.
+</Aside>
+
+## Adding OAuth Protection
+
+Now, let's add authentication piece by piece to protect the MCP server, starting with configuration and ending with a fully protected server.
+
+### OAuth Protection For MCP Servers
+
+To protect an MCP server, you need to add:
+
+1. **Token Validation:** When a client sends a request, you need to verify that its access token is valid.
+2. **Scope Enforcement:** MCP clients require specific scopes (permissions) to execute tools.
+3. **User Context:** Once a request has been authenticated, you use the token to identify which user made the request.
+
+This guide uses FusionAuth's JWT validation endpoint for token validation. It verifies the token's signature using FusionAuth's public keys and returns the token claims, including scopes, if the token is valid.
+
+### Step 1: Add Configuration And Imports
+
+To configure the MCP server to connect to FusionAuth and import the OAuth components from FastMCP, replace the existing imports at the top of `server.py` with the following:
+
+<RemoteCode url={frontmatter.codeRoot + "/protected-local-mcp/mcp-server/server.py"} lang="python" tags="imports"/>
+
+You also need to add the FusionAuth Python client to `mcp-server/requirements.txt`:
+
+<RemoteCode url={frontmatter.codeRoot + "/protected-local-mcp/mcp-server/requirements.txt"} lang="text"/>
+
+In this code:
+
+* `FUSIONAUTH_URL` is the internal Docker network address (`http://fusionauth:9011`), which the MCP server container uses to reach FusionAuth.
+* `FUSIONAUTH_EXTERNAL_URL` is the public localhost URL (`http://localhost:9011`), which browsers use during the OAuth flow.
+* `MCP_SERVER_URL` is the public URL of the MCP server, used by FastMCP to construct OAuth redirect URLs.
+
+When you ran `docker compose up`, FusionAuth detected a fresh installation and automatically ran the Kickstart configuration in `kickstart/kickstart.json`, which created:
+
+* A test user (`test@example.com`/`password`).
+* An admin user (`admin@example.com`/`password`) with access to the FusionAuth admin UI.
+* An API key.
+
+### Step 2: Implement Token Validation
+
+After the configuration variables, add this code to extend the FastMCP `TokenVerifier` base class. You are creating a token verifier, which ensures that the MCP server responds only to properly authorized requests:
+
+<RemoteCode url={frontmatter.codeRoot + "/protected-local-mcp/mcp-server/server.py"} lang="python" tags="token-verifier"/>
+
+This token verifier validates access tokens by:
+
+1. Calling FusionAuth's `/api/jwt/validate` endpoint via the FusionAuth Python client. A successful response confirms the token is valid and returns its claims.
+2. Extracting scopes from the `scope` claim in the JWT. FastMCP uses scopes to enforce per-tool access control.
+3. Returning an `AccessToken` object that FastMCP can use.
+
+### Step 3: Enable OAuth On The MCP Server
+
+Wire up authentication to the FastMCP server by replacing the basic `mcp = FastMCP(...)` initialization with the following OAuth-enabled version:
+
+<RemoteCode url={frontmatter.codeRoot + "/protected-local-mcp/mcp-server/server.py"} lang="python" tags="mcp-init"/>
+
+This updated initialization does the following:
+
+* **Creates a token verifier with `required_scopes=["get_name"]`:** Only tokens containing the `get_name` scope can execute tools. FastMCP enforces this automatically before each tool call.
+* **Sets `scopes_supported` on `RemoteAuthProvider`:** This tells MCP clients which scopes to request during the OAuth flow. Including `openid` and `profile` ensures FusionAuth returns user profile data (name, email) from the UserInfo endpoint.
+* **Points `authorization_servers` at FusionAuth's external URL:** MCP clients use this to discover OAuth endpoints.
+* **Passes `auth=auth` to FastMCP:** This enables OAuth protection on the MCP server.
+
+Now all tool calls made to this MCP server require a valid access token with the `get_name` scope. If no token is provided, the server returns a `401 Unauthorized` response.
+
+### Step 4: Access Authenticated User Information
+
+With authentication enabled, you can now access information about the authenticated user. FastMCP provides a `get_access_token()` dependency that gives you the validated token in your tools.
+
+Replace the `get_name` tool with this implementation:
+
+<RemoteCode url={frontmatter.codeRoot + "/protected-local-mcp/mcp-server/server.py"} lang="python" tags="get-name-tool"/>
+
+This code updates the `get_name` tool so that it:
+
+1. Uses `get_access_token()` to retrieve the validated access token from the request context.
+2. Calls FusionAuth's UserInfo endpoint via the Python client to fetch the user's profile. Separating the UserInfo call into the tool means token validation stays lightweight, only validating the JWT and extracting scopes.
+3. Falls back to `preferred_username`, then `email`, then the user Id if the UserInfo call fails or no name is available.
+4. Returns a personalized greeting.
+
+### Step 5: Rebuild And Restart
+
+Rebuild the MCP server container with the new code:
+
+```bash
+docker compose up -d --build mcp-server
+```
+
+Wait a few seconds for the container to restart. The MCP server now requires OAuth authentication.
+
+## Testing OAuth Protection
+
+Let's verify that the authentication works.
+
+### Check That Authentication Is Enabled
+
+Verify that the server is running and authentication is active:
+
+```bash
+docker compose logs mcp-server | grep "Uvicorn running"
+```
+
+You should see output confirming the server started successfully on port 8000.
+
+### Test Without A Token
+
+Try calling the tool without authentication:
+
+```bash
+curl -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "get_name",
+      "arguments": {}
+    }
+  }'
+```
+
+You should see an authentication error:
+
+```json
+{"error": "invalid_token", "error_description": "Authentication failed. The provided bearer token is invalid, expired, or no longer recognized by the server. To resolve: clear authentication tokens in your MCP client and reconnect. Your client should automatically re-register and obtain new tokens."}
+```
+
+This indicates that the tool is now protected.
+
+## Registering MCP Clients As OAuth Clients
+
+Before MCP clients like Claude Desktop or Cursor can connect to your protected MCP server, you need to register them as OAuth clients in FusionAuth.
+
+### The Registration Process
+
+Each MCP client needs its own dedicated OAuth application in FusionAuth. This means if you want to support both Claude Desktop and Cursor, you register two separate applications, one per client. When an MCP client initiates the OAuth grant, it looks like this:
+
+1. The MCP client redirects the user to FusionAuth to log in.
+2. The user authenticates their account.
+3. FusionAuth redirects the user back to the MCP client with an authorization code.
+4. The MCP client exchanges the code for an access token.
+5. The MCP client passes the token to the MCP server with each request.
+
+For the OAuth grant to work, FusionAuth needs to know:
+
+* Which redirect URLs are allowed for each MCP client.
+* Whether PKCE is required (some MCP clients use PKCE for security).
+* Which OAuth grants are enabled.
+
+### What The Setup Script Does
+
+The `setup_clients.py` script automates this registration process. It is located in the `setup` directory. Let's look at the key parts.
+
+The script prompts you for a name for the client, then creates an OAuth application in FusionAuth using the FusionAuth Python client. Run it once for each MCP client you want to register. It registers exact redirect URLs for a fixed callback port (default `3334`):
+
+<RemoteCode url={frontmatter.codeRoot + "/protected-local-mcp/setup/setup_clients.py"} lang="python" tags="create-client-application"/>
+
+This includes the following key configuration values:
+
+* `authorizedURLValidationPolicy: "ExactMatch"` requires the redirect URL to match one of the registered URLs exactly. This is more secure than wildcard matching. Pass `--port` to the setup script if port `3334` is already in use on your machine.
+* `proofKeyForCodeExchangePolicy: "Required"` enforces PKCE for security.
+* `clientAuthenticationPolicy: "NotRequiredWhenUsingPKCE"` means that no client secret is needed when PKCE is used.
+* `scopeHandlingPolicy: "Strict"` only allows scopes that are explicitly registered on the application.
+
+The script returns the generated client Id and the full MCP configuration block to paste into your client config.
+
+### Run The Client Registration Script
+
+Install the dependencies and run the setup script:
+
+```bash
+cd setup
+pip install -r requirements.txt
+python setup_clients.py
+```
+
+By default, the script registers port `3334` as the OAuth callback port. If port `3334` is already in use on your machine, pass `--port` to use a different one:
+
+```bash
+python setup_clients.py --port 3335
+```
+
+The script prompts you for a name for the MCP client. Run it once for each client you want to register. You should see output like this:
+
+```
+FusionAuth MCP Client Setup
+========================================
+
+Checking FusionAuth at http://localhost:9011...
+FusionAuth is running.
+
+Enter a name for this MCP client (e.g. Claude Desktop): Claude Desktop
+
+  Creating Claude Desktop...
+  Created Claude Desktop (Client Id: 9436b02d-9305-4772-a237-5fabcf6e7f6a)
+
+  Configuring scope...
+
+========================================
+Setup complete!
+========================================
+
+  MCP configuration for Claude Desktop:
+  Client Id: 9436b02d-9305-4772-a237-5fabcf6e7f6a
+
+  Add this to your MCP client config:
+  {
+  "mcpServers": {
+    "name-server": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://localhost:8000/mcp",
+        "3334",
+        "--allow-http",
+        "--static-oauth-client-info",
+        "{\"client_id\":\"9436b02d-9305-4772-a237-5fabcf6e7f6a\"}"
+      ]
+    }
+  }
+}
+
+
+Test user credentials:
+  Email: test@example.com
+  Password: password
+```
+
+The script outputs the complete MCP client configuration, including the pre-registered client Id. Copy the JSON block from the output and use it directly in the next step. You can also verify the registration in the FusionAuth admin UI by navigating to <Breadcrumb>Applications</Breadcrumb> to see the new client.
+
+## Configuring Your MCP Client
+
+Now let's configure the MCP client to connect to the OAuth-protected MCP server. This section covers the config file approach used by most MCP clients. CLI tools with native HTTP transport support are covered in the [Deploying A Remote MCP Server](#deploying-a-remote-mcp-server) section.
+
+### Configuration Format
+
+Config-file MCP clients use the following configuration structure:
+
+```json
+{
+  "mcpServers": {
+    "name-server": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://localhost:8000/mcp",
+        "3334",
+        "--allow-http",
+        "--static-oauth-client-info",
+        "{\"client_id\":\"YOUR_CLIENT_ID_HERE\"}"
+      ]
+    }
+  }
+}
+```
+
+Replace `YOUR_CLIENT_ID_HERE` with the client Id output by the registration script for this client.
+
+Each parameter does the following:
+
+* `command` uses `npx` to run the `mcp-remote` bridge tool.
+* `mcp-remote` bridges MCP clients (which expect stdio) to your HTTP-based MCP server. MCP client config files only support stdio servers, so `mcp-remote` is required to connect to any HTTP-based MCP server, regardless of whether auth is involved.
+* `--allow-http` allows non-HTTPS connections for local development.
+* `--static-oauth-client-info` provides the preregistered client Id from the setup script. This is required because FusionAuth does not support Dynamic Client Registration (DCR). Native MCP clients that attempt DCR will fail to connect. By passing a pre-registered client Id, `mcp-remote` bypasses DCR entirely.
+
+### For Claude Desktop
+
+1. Open Claude Desktop.
+2. Navigate to <Breadcrumb>Settings -> Developer</Breadcrumb>.
+3. Click <InlineUIElement>Edit Config</InlineUIElement>.
+4. Add the configuration above.
+5. Save the file.
+
+### For Cursor
+
+1. Press `Cmd + Shift + P` (macOS) or `Ctrl + Shift + P` (Windows and Linux).
+2. Type `MCP` and select <InlineUIElement>Open MCP Settings</InlineUIElement>.
+3. Click <InlineUIElement>New MCP Server</InlineUIElement>.
+4. Add the configuration above.
+5. Save the file.
+
+## Testing The Protected Server
+
+Restart your MCP client to load the new configuration.
+
+When your MCP client starts, it does the following:
+
+1. Discovers the OAuth configuration from the MCP server.
+2. Opens your browser to FusionAuth's login page.
+3. Asks you to authenticate.
+
+<Aside type="note">
+If the OAuth flow doesn't start or you encounter errors, consult the [Troubleshooting section](#troubleshooting) below.
+</Aside>
+
+### Log In
+
+When the browser opens, log in with the test credentials:
+
+* **Email:** `test@example.com`
+* **Password:** `password`
+
+<Aside type="note">
+If you see an "Invalid redirect_uri" error, your MCP client is using a port or callback path that wasn't registered by the setup script. See the [Troubleshooting section](#troubleshooting) below.
+</Aside>
+
+### Authorization
+
+After you log in, FusionAuth directs you to an "Authorization successful!" page and redirects you back to the MCP client automatically.
+
+### Use The Protected Tool
+
+Once authorized, your MCP client has access to the MCP server's tools. Try asking your client:
+
+```
+Use the get_name tool
+```
+
+The MCP client calls the `get_name` tool, which returns:
+
+```
+Hello, Test User!
+```
+
+This indicates the tool successfully validated the access token and retrieved your user information from FusionAuth.
+
+<Aside type="note">
+If the tool doesn't appear immediately after the OAuth flow, completely quit and restart your MCP client. The client needs to reload with the newly obtained access token. See the [Troubleshooting section](#troubleshooting) for more common issues.
+</Aside>
+
+## How It Works
+
+Now that you've built and tested the OAuth-protected MCP server, let's review the key concepts.
+
+### The OAuth Flow
+
+When an MCP client connects to the MCP server, here's what happens:
+
+1. **Discovery:** The MCP client discovers OAuth endpoints from FusionAuth's OpenID Connect configuration.
+2. **Authorization:** The MCP client redirects the user's browser to FusionAuth's login page.
+3. **Authentication:** The user logs in and is redirected back to the MCP client.
+4. **Token exchange:** FusionAuth returns an authorization code, which the MCP client exchanges for an access token.
+5. **API calls:** The MCP client includes the access token in requests to the MCP server.
+6. **Validation:** The MCP server validates tokens using FusionAuth's JWT validation endpoint before executing tools.
+
+### Token Validation Approach
+
+The MCP server validates tokens using the FusionAuth Python client's `validate_jwt` method, which calls FusionAuth's `/api/jwt/validate` endpoint. This endpoint:
+
+* Verifies the JWT signature using FusionAuth's public keys.
+* Confirms the token has not expired.
+* Returns the token claims, including the `scope` field, if the token is valid.
+* Does not require client credentials.
+
+<Aside type="note">
+If you try to use FusionAuth's introspect endpoint here, it will return a 401. Introspection requires that the credentials used to call the endpoint belong to the same application that issued the token. Because the MCP server is a separate FusionAuth application from each MCP client, it cannot introspect the client's tokens. See [FusionAuth issue #3010](https://github.com/FusionAuth/fusionauth-issues/issues/3010) for details. The `/api/jwt/validate` endpoint does not have this restriction.
+</Aside>
+
+### Scope Enforcement
+
+The `required_scopes=["get_name"]` parameter ensures that:
+
+* Only tokens containing the `get_name` scope can execute tools.
+* FastMCP automatically validates scopes before tool execution.
+* Users must be registered to an application with this scope to obtain a token containing it.
+
+### Custom Scopes In FusionAuth
+
+FusionAuth requires an Essentials license (or higher) to use custom scopes. The setup script creates the `get_name` scope on each client application it registers. When users authorize the application, FusionAuth redirects them back to the MCP client with an "Authorization successful!" message.
+
+## Production Considerations
+
+This example demonstrates the core patterns for OAuth-protected MCP servers. For production deployments, consider including:
+
+* **HTTPS:** Use HTTPS for all endpoints, remove the `--allow-http` flag, and configure proper TLS certificates.
+* **Token caching:** Cache token validation responses to avoid calling FusionAuth's JWT validation endpoint on every request. Set the cache TTL to match token expiration.
+* **Refresh tokens:** Configure your FusionAuth application to issue refresh tokens for long-lived sessions. `mcp-remote` stores tokens in `~/.mcp-auth` and handles token refresh automatically. Support for the refresh grant varies across other MCP clients, so check your client's documentation.
+* **Multiple scopes:** As you add more tools, create specific scopes for each tool and configure the token verifier to require the appropriate scopes.
+* **Monitoring:** Log token validations and tool calls in the MCP server. In FusionAuth, use the [login records API](/docs/apis/login#search-login-records) to track which clients have authenticated and when.
+* **Rate limiting:** Implement per-user rate limits and return HTTP `429` responses when limits are exceeded.
+* **Stale client cleanup:** Use FusionAuth's [login records API](/docs/apis/login#search-login-records) to identify client applications that haven't authenticated recently, then deactivate or delete them to keep your application list clean.
+* **Preregistering clients at scale:** If you need to onboard many MCP clients, automate registration using the FusionAuth Application API rather than running the setup script manually for each one.
+
+## Deploying A Remote MCP Server
+
+For a production deployment, you would host the MCP server on a remote machine and connect to it over HTTPS. The server code requires no changes. The only differences are infrastructure, configuration, and how MCP clients connect.
+
+### Infrastructure Requirements
+
+For a remote deployment you need:
+
+* A server hosting your MCP server, accessible over the internet.
+* A reverse proxy such as [Caddy](https://caddyserver.com/) (which handles TLS certificates automatically) or TLS configured directly on your load balancer to serve HTTPS on the MCP server endpoint.
+* A publicly accessible FusionAuth instance, since the OAuth browser redirect requires the user's browser to reach FusionAuth.
+
+### Server Configuration
+
+The [`protected-remote-mcp`](https://github.com/fusionauth/fusionauth-protected-mcp-server/tree/main/protected-remote-mcp) folder of the example repository contains a `docker-compose.yml` that runs only the MCP server, with no FusionAuth or database. Copy it to your server and set the following environment variables when starting:
+
+* `MCP_SERVER_URL`. Set this to your server's public HTTPS URL (e.g. `https://mcp.example.com`). FastMCP uses this to construct the OAuth metadata that MCP clients discover.
+* `FUSIONAUTH_URL`. Set this to your FusionAuth instance's public URL. The MCP server uses this to validate tokens internally.
+* `FUSIONAUTH_EXTERNAL_URL`. Set this to the same value. This is the URL that MCP clients use in their browser to complete the OAuth flow. It is kept separate so that in containerized deployments where FusionAuth is reachable internally at a different address, the two can differ.
+
+```bash
+MCP_SERVER_URL=https://mcp.example.com \
+FUSIONAUTH_URL=https://auth.example.com \
+FUSIONAUTH_EXTERNAL_URL=https://auth.example.com \
+docker compose up -d
+```
+
+### Registering Remote MCP Clients
+
+Run the setup script from the `protected-remote-mcp/setup` directory, passing `--fusionauth-url`, `--api-key`, and `--mcp-server-url` to point it at your remote FusionAuth instance and MCP server:
+
+```bash
+python3 setup_clients.py \
+  --fusionauth-url https://auth.example.com \
+  --api-key YOUR_API_KEY \
+  --mcp-server-url https://mcp.example.com
+```
+
+If your FusionAuth instance has multiple tenants, also pass `--tenant-id` to target the correct one:
+
+```bash
+python3 setup_clients.py \
+  --fusionauth-url https://auth.example.com \
+  --api-key YOUR_API_KEY \
+  --mcp-server-url https://mcp.example.com \
+  --tenant-id YOUR_TENANT_ID
+```
+
+<Aside type="note">
+Use `claude mcp add-json` with the config output by the setup script to add the server in Claude Code.
+</Aside>
+
+### Connecting MCP Clients
+
+There are three ways to connect an MCP client to a remote server, depending on the client.
+
+#### Config File (Claude Desktop, Cursor, And Others)
+
+MCP client config files only support stdio servers. There is no way to put an HTTP URL directly in `claude_desktop_config.json`. `mcp-remote` acts as a local stdio-to-HTTP bridge. FusionAuth also does not support Dynamic Client Registration (DCR), so native clients that try to auto-register will fail. The `--static-oauth-client-info` flag bypasses DCR by providing the pre-registered client Id directly.
+
+Update your config to point at the public URL and remove `--allow-http`:
+
+```json
+{
+  "mcpServers": {
+    "name-server": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.example.com/mcp",
+        "3334",
+        "--static-oauth-client-info",
+        "{\"client_id\":\"YOUR_CLIENT_ID_HERE\"}"
+      ]
+    }
+  }
+}
+```
+
+#### CLI Tools
+
+Some CLI tools, such as Claude Code, let you add MCP servers using a JSON config directly from the command line rather than editing a config file manually. The setup is otherwise the same as for config-file clients: `mcp-remote` handles the HTTP transport and OAuth flow, and you still need a pre-registered client Id since FusionAuth does not support DCR.
+
+Run the setup script to register a client, then add the server using the JSON config it outputs. For example, in Claude Code:
+
+```bash
+claude mcp add-json name-server '{"command":"npx","args":["mcp-remote","https://mcp.example.com/mcp","3334","--static-oauth-client-info","{\"client_id\":\"YOUR_CLIENT_ID_HERE\"}"]}'
+```
+
+Replace `YOUR_CLIENT_ID_HERE` with the client Id from the setup script output.
+
+#### Connector UI (Claude Desktop And Claude.ai Web)
+
+Updated versions of Claude Desktop and claude.ai in the browser support a connector UI that connects natively over HTTP without `mcp-remote`. Navigate to <Breadcrumb>Settings -> Connectors</Breadcrumb>, add a custom connector with the URL `https://mcp.example.com/mcp`, and enter the client Id and secret from the setup script in the <InlineField>OAuth Client Id</InlineField> and <InlineField>OAuth Client Secret</InlineField> fields.
+
+The connector UI still requires a pre-registered FusionAuth application. Use the `--connector-ui` flag when running the setup script (available in the [`protected-remote-mcp`](https://github.com/fusionauth/fusionauth-protected-mcp-server/tree/main/protected-remote-mcp) folder) to register one with the correct redirect URL and output the client secret:
+
+```bash
+python3 setup_clients.py --mcp-server-url https://mcp.example.com --connector-ui
+```
+
+The script outputs the URL, client Id, and client secret to enter in the connector UI fields.
+
+## Troubleshooting
+
+If you run into an issue while setting up or testing your OAuth-protected MCP server, check the following common problems and solutions.
+
+### The "Incompatible Auth Server" Or "Does Not Support Dynamic Client Registration" Error
+
+Your MCP client is attempting to auto-register itself as an OAuth client using Dynamic Client Registration (DCR). FusionAuth does not support DCR.
+
+The fix depends on which client you are using:
+
+* **Config file clients:** Use `mcp-remote` with `--static-oauth-client-info` as shown in this tutorial.
+* **Connector UI (Claude Desktop, claude.ai web):** Enter the client Id and secret from the setup script in the connector settings.
+* **CLI tools:** Use `claude mcp add-json` with the config output by the setup script. Run the setup script first to register the client and obtain the client Id.
+
+### The "File Is Not Defined" Error
+
+You're using Node.js 18 or earlier. Upgrade to Node.js 20 or later. Note that if you use nvm, GUI applications may not pick up the correct Node.js version; consider installing Node.js via your system package manager instead.
+
+### The OAuth Flow Doesn't Start
+
+Check that the Docker services are running:
+
+```bash
+docker compose ps
+```
+
+Verify that the MCP server responds:
+
+```bash
+curl http://localhost:8000/.well-known/oauth-protected-resource/mcp
+```
+
+### The Token Validation Fails
+
+Check the MCP server logs:
+
+```bash
+docker compose logs mcp-server
+```
+
+Then verify that the user is registered to the MCP client application and that the token includes the required scopes.
+
+### Your MCP Client Doesn't Show The Server
+
+Verify that your configuration JSON syntax is valid, restart the client after configuration changes, and confirm the client Id matches what the setup script created.
+
+### The OAuth Flow Completes, But Tools Aren't Available
+
+Completely quit and restart your MCP client after the OAuth flow completes. The client needs to restart to pick up the newly obtained access token.
+
+### The "Invalid redirect_uri" Error Occurs During OAuth
+
+OAuth clients redirect users back to a specific URL after authentication. If FusionAuth doesn't recognize the redirect URL, it rejects the request. The setup script registers exact redirect URLs for port `3334` by default. If your MCP client uses a different port, pass `--port` to the setup script to register the correct port, or add the missing URL manually by navigating to <Breadcrumb>Applications -> [Your Client] -> OAuth -> Authorized redirect URLs</Breadcrumb> in the FusionAuth admin UI.
+
+## Next Steps
+
+You now have a working OAuth-protected MCP server, which you can extend by:
+
+* Adding more tools with different scope requirements.
+* Implementing role-based access control using FusionAuth roles.
+* Integrating additional FusionAuth features like multi-factor authentication.
+
+The token validation and scope enforcement patterns demonstrated here also apply to OAuth-protected REST APIs, GraphQL servers, and other authenticated services.
