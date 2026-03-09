@@ -19,7 +19,7 @@ An AI agent is more than a chatbot. It's semi-autonomous software powered by LLM
 
 Examples of agents include:
 
-- Tools Claude Desktop or ChatGPT that access tools and APIs to perform tasks
+- Software on the desktop or the webl like Claude Desktop or ChatGPT that access tools and APIs to perform tasks
 - Command-line tools like Claude Code and OpenCode that code
 - Semi-autonomous actors that can book travel, manage agendas, schedule meetings, or complete tasks with minimal human oversight
 
@@ -32,7 +32,7 @@ Here's the full security stack, from foundational to application-level:
 * **Secure Human Identities**: Every agent action chain starts with a verified human identity. This is what your identity provider handles.
 * **Craft the Right Prompt**: Instruct agents to behave like responsible employees. 
 * **Sub-agents** — Split agents to reduce blast radius and make trust boundaries explicit.
-* **Third-Party Service Access**: When agents need to access services like Google Calendar, Office 365, or Salesforce, they shouldn't have access to long lived credentials.
+* **Limit Service Access**: When agents need to access services like internal MCP servers, Office 365, or Salesforce, they shouldn't have access to long lived credentials.
 * **Sandboxing**: Control network access and filesystem access using containers or VMs.
 * **Fine-Grained Authorization** — Use fine-grained authorization (FGA) to control access based on agent identity, user identity, resource attributes, and context.
 * **Logging and Tracing** — Preserve the chain of identity and capture key actions at decision points.
@@ -40,62 +40,148 @@ Here's the full security stack, from foundational to application-level:
 * **Validation** - Validate outputs based on expected inputs.
 * **Human Interaction** — Agents need to ask for human confirmation before taking consequential actions.
 
+This stack, like many security architectures, relies on defense in depth. Each layer addresses different threats, so that if any single control fails, the others provide protection.
+
 Let's examine each of these in more detail.
 
-TODO
 ## Secure Human Identities
 
- The bedrock. Every agent action chain starts with a verified human identity. This is what your identity provider handles.
+ The bedrock. Every agent action should starts with a verified human identity. This is what your identity provider handles.
+
+If you don’t secure human identities and know what people can do in your systems, introducing agents will not help things. Agents have purpose, but no sense, and act with the speed of software. So they'll find holes that humans might not have.
+
+In addition:
+
+- without verified identity, you can't confirm an agent is authorized to act for the person it claims to represent; all the data provenance scaffolding in the world doesn't help if the human identity can't be trusted
+- AI agents often inherit or request user permissions; a compromised identity lets an agent access far more than intended
+- you need a verified human identity at the root of every agent action chain to trace responsibility when something goes wrong.
+- agents often carry OAuth tokens and API keys tied to human identities; stolen identity means stolen access across every integrated system
+
+This article won't cover this in any more detail, but don't sleep on this.
 
 ## Craft the Right Prompt
 
-Instruct agents to behave like responsible employees. Prompt engineering is a security control, not just a UX concern.
+Crafting the correct system and user prompt can help improve security. 
+
+For example, you can instruct agents to behave like "a responsible employee who understands the security ramifications of their activities, and won't violate company policy".
+
+Because of agent non-determinism, ensure this is one of many layers of security. In addition, make sure you include this behavior in your evals, so you can check and improve it over time. We'll talk more about evals below.
+
 ## Sub-agents
 
-Split agents to reduce blast radius and make trust boundaries explicit.
+You can split agents, creating multiple agents each with a specific task in mide. You can also enforce request guardrails between agents. You can let Agent A call agent B, but not vice versa.
 
+Splitting agents by purpose and requiring deterministic mutual authentication improves agentic system security.
 
-## Third-party Service Access
+It provides each agent with an explicit identity, allowing for better debugging, authorization checks, and auditing. Make sure identity creation is quick.
 
-Here's a pattern for managing third-party tokens:
+It makes data exfiltration more difficult. If you have one agent that can access data, receive arbitrary instructions and send messages, you are vulnerable to the [lethal trifecta](https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/). If, instead, you have three different agents, exploiting this vulnerability involves navigating and coercing all of these agents, rather than just one.
+
+By limiting the calls an agent can make, this implementation makes implied trust explicit, leading to better auditability and preventing privilege escalation. You can implement this with any supported authentication method, such as short-lived API keys, access tokens obtained using the client credentials grant, or mutual TLS and certificates.
+
+You can limit credentials to systems the agent must access. If you need to read from a cloud file system like Office 365, you can create an agent with credentials exactly scoped to that, with no privileges to read email or schedule events on a calendar.
+
+By using different agents, you also prevent contamination of the context window. If one agent starts to hallucinate, the tasks handled by other agents are minimally affected.
+
+Splitting agents reduces the blast radius of any issues and it also makes trust boundaries explicit.
+
+## Limit Service Access
+
+Agents often need credentials to access third-party services or internal APIs.  While a user may be involved in the initial creation of long-lived refresh tokens, such tokens should be kept away from the agents themselves.
+
+The proper way to manage this access is to mint short lived tokens from these refresh tokens that are properly scoped. At a minimum, limit the scopes needed to the agent's activities. This means that the damage an agnet can do with a credential is limited both in time and in scope.
+
+Here's a pattern for managing third-party tokens, where an identity provider like FusionAuth stores the refresh token:
 
 ```javascript
-// After the user connects their Google Calendar via OAuth,
-// FusionAuth stores the refresh token.
-
-## Third-party Token Access
-
-Here's a pattern for managing third-party tokens:
-
-```javascript
-// After the user connects their Google Calendar via OAuth,
+// After the user connects their calendar via OAuth,
 // FusionAuth stores the refresh token.
 // When the Calendar Agent needs access:
 
 const userResponse = await client.retrieveUser('human-user-id');
-const googleIdpLink = userResponse.response.user
+const idpLink = userResponse.response.user
   .identityProviders?.find(link =>
-    link.identityProviderId === 'google-idp-id'
+    link.identityProviderId === 'idp-id'
   );
 
-// The refresh token is available for minting fresh access tokens
-// which get injected into the Calendar Agent's context
+if (!idpLink) {
+  throw new Error('User has not connected their account');
+}
+
+const refreshToken = idpLink.token;  // stored by FusionAuth previously
+
+// Connect to remote IdP, ask for fresh access token
+const tokenResponse = await fetch(
+  'https://idp.example.com/token',
+  {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type:    'refresh_token',
+      refresh_token: refreshToken,
+      client_id:     CLIENT_ID, 
+      client_secret: CLIENT_SECRET, 
+    }),
+  }
+);
+
+const { access_token, expires_in } = await tokenResponse.json();
+
+// Next, inject the token into the Calendar Agent's context
 ```
 
 ## Sandboxing
- — Control network access and filesystem access using containers or VMs.
+
+Sandboxing an agent involves controlling network and filesystem access. This can be done using ephemeral containers or virtual machines. To control network requests, configure the correct firewall networking rules.
+
+Sandboxing improves the security of agents because:
+
+- the filesystem has minimal secrets or credentials; only those placed by the creator of the sandbox
+- network calls can be monitored and logged for auditing purposes
+- unexpected network requests can be blocked or rate-limited
+- resources can be limited, which prevents runaway agent loops from cascading into broader system failures
+
+Container-based sandboxing solutions like [Docker Sandboxes](https://www.docker.com/products/docker-sandboxes/) or [E2B](https://e2b.dev/) provide runtime isolation so that even if an agent behaves unexpectedly, the damage is contained.
 
 ## Fine-Grained Authorization
 
- — Use fine-grained authorization (FGA) to control access based on agent identity, user identity, resource attributes, and context. Build your authorization schema once and apply it consistently across APIs, services, MCP servers, and agent workflows.
+Use fine-grained authorization (FGA) to control access based on agent identity, user identity, resource attributes, and context.
+
+FGA checks can occur:
+
+* when the agent makes a request if the sandbox is configured correctly
+* at the servers and resources an agent requests, such as an MCP server
+
+By leveraging identity and authorization rules, you can enforce guardrails around agentic requests.
+
+Imagine you have an AI agent that helps developers by reading code, querying databases, and creating pull requests. FGA would let you set rules like:
+
+- Agent identity: Only the "CodeAssistant" agent (not the "MarketingBot" agent) can access GitHub repos.
+- User identity: When Alice asks the agent to query the database, it can only see data Alice herself has permission to see.
+- Resource attributes: The agent can read from the staging database but never from production.
+- Context: The agent can only make write operations during business hours, or only when a human has explicitly approved the action.
+
+The checks happen at two different locations.
+
+First, at the sandbox level. Before the agent even sends a request, the orchestration layer checks: "Is this agent allowed to call this tool on behalf of this user?"
+
+Second, at the MCP server level. When the agent calls, say, a GitHub MCP server, that server independently verifies: "Does this request come from an authorized agent + user combo, and are they allowed to touch this specific repo?"
+
+Instead of giving an agent blanket coarse-grained access, you're layering multiple dimensions of checks: who's asking, who they're acting for, what they're touching, and under what circumstances.
 
 ## Logging and Tracing
 
-Preserve the chain of identity and capture key actions at decision points. Use RFC 8693 or native API calls like the Vend JWT API to create signed tokens that encode the delegation chain (the `act` claim). Log agent actions using an audit log API with limited API keys minted for each agent. If the chain of identity isn't captured in your preferred logging system, use webhooks or tools like Kafka to fan these log entries out to other systems for compliance and monitoring.
+You can't secure what you can't see. When building agentic systems, preserve the chain of identity and capture key agent actions at decision points. 
+
+You can use RFC 8693, or native API calls that allow for similar token exchanges, to create signed tokens that encode the delegation chain (using, for example, the `act` claim). 
+
+Log agent actions to a deterministic system or capture the requests coming out of the sandbox.
+
+Below is an example of using the FusionAuth audit log to capture part of the agent ations.
 
 ```javascript
-// Create a write-only API key for the agent to log actions
-// (This is configured in FusionAuth admin, shown here conceptually)
+// First, create a limited, agent-scoped API key to log actions
+...
 
 // Agent logs an action to the audit log
 await fetch('https://your-fusionauth-instance.com/api/system/audit-log', {
@@ -113,104 +199,79 @@ await fetch('https://your-fusionauth-instance.com/api/system/audit-log', {
 });
 ```
 
-## Validation
+Make sure each log entry:
 
-Validation This lets you test the entire agentic flow end to end and make sure that you don't introduce regressions as you evolve the system.
-## Human Interaction
+* is persisted in a system beyond the agent's reach
+* is queryable
+* contains the agent identity and the identity of the associated user
 
-Patterns include:
-
-- Ask every time, with the ability for the human to dial it down (yes once, yes always, no)
-- Ask only when there's real-world impact
-- Never ask (YOLO mode — not recommended for banking)
-
-Beware of alert fatigue. Balance confirmation frequency with actual impact.
-
-For implementation, FusionAuth provides several mechanisms:
-
-- **Step-up authentication**: require the user to re-authenticate before the agent proceeds with a high-impact action.
-- **Device grant**: for scenarios where the agent needs to pull a human into the loop on a different device.
-- **Passkey prompt**: for quick, low-friction confirmation of consequential actions.
+As mentioned above, you might have agents call agents. Whether you need to log the entire chain of callers or just the initiator and the agent taking action depends on if you are doing authorization based on the caller chain or simply auditing requests.
 
 ## Input/Output Filtering
 
- Control what goes into and comes out of your agentic system using a filtering tool. Maintain stop word lists, both standard and custom, to prevent sensitive operations from being triggered in the wrong context. For example, "pull credit" or "register new business" might be allowed in a new business registration workflow but blocked in customer service.
+In addition to sandboxing, which controls access at a network level, you can also perform word or phrase filtering on the user prompt and the agent output.
 
--CleanSpeak (TODO: add link to https://cleanspeak.com/docs/3.x/tech/apis/content#filter-content) provides a filter API with sub-50ms response times that can wrap your agent prompts. It supports standard, custom, and one-time block lists.
+Maintain stop word lists, both standard and custom, to prevent sensitive operations from being triggered in the wrong context or in the wrong agent.
+
+For example, user prompts, such as these, which contain terms related to data exfiltration can be blocked:
+
+- "export all users"
+- "dump database"
+- "send to external"
+- "upload to"
+- "forward all emails"
+- "copy to public bucket"
+
+And, on the flip side, hallucinations of authority can be blocked and the operation retried: 
+
+— "as a certified"
+- "I am a doctor"
+- "I am a lawyer"
+- "this is legal advice"
+- "this is financial advice"
+
+When performing filtering, make sure your solution is deterministic and performant.
 
 ## Validation
 
- Validate outputs based on expected inputs. This lets you test the entire agentic flow end to end and make sure that you don't introduce regressions as you evolve the system.
+With every LLM system, you need to validate outputs based on your expected inputs. This is also called evaluation or evals. While this is often done to ensure that the tasks are done correctly, it also has security implications.
 
+After an agent completes its work, validate the results from a security perspective. Did the agent do what it should have?
+
+Validation tools like Freeplay.ai and Braintrust can help verify agent outputs against expected outcomes.
+
+This is especially important in regulated industries like banking, where an agent that recommends the wrong product package or misidentifies a business type could have compliance implications.
+
+A variant on validation is to have the agent do part of the work, but then have other parts handled by more deterministic software. For example, you might have an agent recommend a purchase, but then have a deterministic piece of software capture the human consent.
 
 ## Human Interaction
 
-Agents need to ask for human confirmation before taking consequential actions.
+Agents need to ask for human confirmation before taking consequential actions. These are also called "elicitations".
 
+Define what qualifies as consequential in your system. This includes actions that:
 
-## TODO
-The full lifecycle of a secured agent workflow looks like this:
+- are irreversable, such as deleting something from a database
+- impact the real world, such as ordering something from an ecommerce store
+- share or expose sensitive data
 
-```mermaid
-flowchart LR
-    subgraph User["👤 User"]
-        A[Login with Identity Provider]
-        B[Connect Google Calendar]
-        C[Connect Google Drive]
-        D[Enter Business Name & Folder ID]
-    end
+Alerting is something which, when done well, can improve system security. On the other hand, when done poorly, it leads to alert fatigue. There are a few patterns you might consider:
 
-    subgraph App["🖥️ Business Banking Setup App"]
-        E[Create Agent Entities & Grants]
-        G[Invoke Coordinator Agent]
-        H[Destroy Agent Entities]
-    end
+- ask every time with ability for human to dial it down; this manifests as the choices of 'yes once', 'yes always', 'no' pattern
+- progressive trust mode, where you ask for permission, but with backoff; for example, if there are five actions approved in a row, the next one is automatically approved
+- ask once per session per action
+- never ask/yolo mode, where agentic actions are always allowed
 
-    subgraph Coordinator["🤖 Coordinator Agent"]
-        I[Orchestrate Workflow]
-    end
+There are a multiple options for implementing human approval:
 
-    subgraph SubAgents["Sub-Agents"]
-        J["📁 Drive Agent"]
-        K["🏢 Business Service Agent"]
-        L["📅 Calendar Agent"]
-    end
+* re-authentication, whether with a password, passkey or MFA challenge
+* using the device grant, if the agent needs to pull a human into the loop on a different device
+* queuing up requests in a datastore, where all actions that have impact are queued up and a human can review and allow or deny all of them at the same time
 
-    subgraph External["External Services"]
-        M[("Google Drive")]
-        N["Business Service API"]
-        O[("Google Calendar")]
-    end
-
-    subgraph Results["📊 Results"]
-        P[Documents Gathered]
-        Q[Business Assessment]
-        R[Package Recommendation]
-        S[Meeting Scheduled]
-    end
-
-    A --> B --> D
-    A --> C --> D
-    D --> E --> G
-    G --> I
-    I --> J --> M --> P
-    I --> K --> N --> Q --> R
-    I --> L --> O --> S
-    P & R & S --> H
-    H --> T[Display Results to User]
-```
-
-### Validation
-
-After an agent completes its work, validate the results. Did the agent do what it should have? Validation tools like Freeplay.ai and Braintrust can help verify agent outputs against expected outcomes. This is especially important in regulated industries like banking, where an agent that recommends the wrong product package or misidentifies a business type could have compliance implications.
-
-### Sandboxing
-
-Limit agent access by running them in secure, isolated environments. Container-based sandboxing solutions like Docker Sandboxes (TODO: add link to https://www.docker.com/products/docker-sandboxes/) or E2B (TODO: add link to https://e2b.dev/) provide runtime isolation so that even if an agent behaves unexpectedly, the damage is contained.
+If an agent is not triggered by a human, there should still be some tie to a human identity. After all the agent did not deploy itself. That human can approve actions.
 
 ## AI Agent Governance
 
-Beyond securing individual agent workflows, you need governance — the organizational layer that answers:
+Beyond securing individual agent workflows, you need governance: the organizational layer that answers:
 
 - Who gets access to what agent resources?
 - How is access provisioned and deprovisioned?
@@ -218,40 +279,6 @@ Beyond securing individual agent workflows, you need governance — the organiza
 - Is access aligned with regulations and policies?
 - Can you produce audit trails and reporting on access decisions?
 
-Your identity provider can supply the tooling — webhooks, audit logs, Kafka integration — that supports governance processes. But governance itself is an organizational discipline, not a software feature. Your identity provider helps you build governance; it's not a governance solution on its own.
+Your identity provider can supply the tooling to support governance, such as webhooks, audit logs, and agent identities. But governance itself is an organizational discipline, not a software feature. Your identity provider helps you build governance; it's not a governance solution on its own.
 
-Fine-grained authorization combined with a GitOps workflow is a powerful pattern for compliance enforcement. Define your authorization schema in version control, deploy changes through CI/CD, and every change to agent permissions is tracked and reviewable.
 
-## What We Believe
-
-Let's return to where we started. We believe these things to be true:
-
-**Human identity is the source of AI authority.** Someone wrote that job. Someone authorized that agent. This should always be tracked.
-
-**AI auth is best done as an extension of existing best practices.** OAuth, tokens, gateways — the technologies that secured the API era work for the AI era. Don't reinvent what already works.
-
-**Identity enforcement needs to be deterministic.** AI systems are probabilistic. The identity layer that governs them must not be. When you check whether an agent has permission to read a document or schedule a meeting, the answer must be yes or no — never "probably."
-
-**Re-use existing solutions wherever possible.** The similarities to the API boom of the 2010s are striking. The patterns are proven. Use them.
-
-**Find value, don't follow the hype.** Not every problem needs a bleeding-edge solution. Pre-registering clients works. Plain APIs with good docs work. OAuth scopes work. Use the simplest thing that solves your problem.
-
-## What's Next
-
-The landscape is evolving fast. Standards like Rich Authorization Requests (RAR, RFC 9396) promise more expressive authorization for AI systems. MCP is maturing. Agent frameworks like Agentcore and Mastra are gaining traction. Data provenance — knowing which agent did what to what data — remains an open problem.
-
-But the fundamentals won't change. Human identity at the root. Deterministic enforcement. Defense in depth. If you build on these principles, your AI systems will be secure regardless of which frameworks and protocols win out.
-
----
-
-*Want to see these patterns in action? Check out the FusionAuth RAG example on GitHub (TODO: add link to https://github.com/FusionAuth/fusionauth-example-fga-rag) and explore the FusionAuth API gateway integrations (TODO: add link to https://fusionauth.io/docs/extend/examples/api-gateways/).*
-
-## References
-
-- [Emerging Agentic Identity Access](https://softwareanalyst.substack.com/p/emerging-agentic-identity-access)
-- [Model Context Protocol Introduction](https://modelcontextprotocol.io/docs/getting-started/intro)
-- [Permify LLM Authorization](https://docs.permify.co/use-cases/llm-authorization)
-- [RFC 9396 — Rich Authorization Requests](https://datatracker.ietf.org/doc/html/rfc9396)
-- [How to Design OAuth Scopes](https://fusionauth.io/blog/how-to-design-oauth-scopes)
-
-what about agents not tied to human identites
