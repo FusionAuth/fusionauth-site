@@ -1,57 +1,52 @@
-# FusionAuth Web Template
+# FusionAuth Documentation (and Blog)
 
-This project contains a web template that was inspired by Tailwind, Astro, and other designs. We plan on using this design for the FusionAuth docs, blogs, and auxiliary websites.
+> NOTE: For the content style guide, see [CONTRIBUTING.md](/CONTRIBUTING.md).
 
-The project also contains a custom search widget that uses Algolia's REST API. This could quite easily be ported to Lunr or any other search solution.
+To build the site:
 
-And most of all, this project is free and open source. Feel free to use any part of it for your own projects!
+1. Install dependencies:
 
-Happy coding!
+   ```console
+   npm install
+   ```
 
-## Astro
+1. Run a local development instance of the site:
 
-We are currently using Astro for our SSG technology. We aren't leveraging any Astro components really because we wanted a template that would make it simple for someone to extract our HTML, CSS, and JavaScript and port it to anything (Jekyll, Hugo, Next, etc).
+   ```console
+   npm run dev
+   ```
 
-To run the project, just type this:
+   To view the site, use the link displayed at the end of build output.
+   This development instance automatically rebuilds as you modify local files.
+   Some parts of the site, including site search, won't run on the development instance. To preview those, try a full site build.
 
-```
-npm install
-```
+To run a full site build:
 
-Then, generate your pages:
-
-```
+```console
 npm run start
 ```
 
-## Dev
-
-To run in dev, so file changes are picked up:
-
-```
-npm run dev
-```
+This may take a minute or two. Output can be noisy, but do pay attention to the output from `astro-link-validator` (runs at the very end of the `build` step), which ensures that all internal links on the site point to valid URLs. For development convenience, this check doesn't fail the build, but you should always keep the broken link count at zero before merging into `main`.
 
 ## Linting
-If you want to run the linter for the whole project you can run:
+
+To lint syntax across the entire site:
 
 ```sh
 npm run lint
 ```
 
-However, the project has a billion violations at the moment. To target a specific file, you can run:
+> NOTE: Most of the site doesn't currently pass lint checks.
+
+To lint syntax in a specific file:
 
 ```sh
  npm run lint -- src/components/BlogButton.astro
 ```
 
-or similar to just target the individual files you want to check. Also your editor should be able to run the linter as you edit, so you will see your violations in real time.
+To skip linting when you inevitably include HTML somewhere in an MDX file, use the `eslint-disable-next-line` or `eslint-disable-line`:
 
-If you need to skip the linter for any reason you can add a comment for either `eslint-disable-next-line` or `eslint-disable-line` to the line you want to skip.
-
-```markdown
+```mdx
 {/* eslint-disable-next-line */}
 <a href="https://www.fusionauth.io">FusionAuth</a>
 ```
-
-The check on Pull Requests will only look at the files that you have changed in your PR

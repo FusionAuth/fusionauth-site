@@ -20,6 +20,8 @@
   --color-old: #eeeeee;
   --color-fa-gray-light: #e6e7e8;
   --color-fa-gray-dark: #3e4e50;
+  --color-code-background-light: #1f273b;
+  --color-code-background-dark: #00081a;
 
   /* Remapping scales */
   --color-gray: var(--color-slate);
@@ -51,21 +53,51 @@
 
 /* --- Fix Typography (Tildes/Backticks) & CSS Overrides --- */
 @layer base {
-  /* This kills the backticks/tildes added by the typography plugin */
+  /* remove the backticks/tildes added by the typography plugin */
   .prose code::before, 
   .prose code::after {
     content: "" !important;
+    display: none;
   }
 
-  .prose blockquote p:first-of-type::before,
-  .prose blockquote p:first-of-type::after {
-    content: none !important;
+  /* add uncopyable bash prompt at the beginning of console code blocks */
+  pre[data-language="console"]::before {
+    content: "$ ";
+    color: var(--color-slate-500);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
   }
 
+  /* add uncopyable bash prompt at the beginning of console code blocks */
+  pre[data-language="powershell"]::before {
+    content: "PS> ";
+    color: var(--color-slate-500);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+  }
+
+  /* code block backgrounds */
+  .prose .astro-code {
+    background-color: var(--color-code-background-light) !important;
+  }
+
+  .dark .prose .astro-code {
+    background-color: var(--color-code-background-dark) !important;
+  }
+
+  /* remove indent and potential background styling from code blocks */
   .prose pre code {
     background-color: transparent !important;
     border-width: 0 !important;
     padding: 0 !important;
+  }
+
+  /* block quote historical */
+  .prose blockquote p:first-of-type::before,
+  .prose blockquote p:first-of-type::after {
+    content: none !important;
   }
 
   .prose h5 {
@@ -92,110 +124,60 @@ p[data-title] {
   margin-top: 0;
 }
 
-.astro-code {
-  margin-bottom: 0;
-}
-
 /* --- Handle Mermaid.js styling with rehypeMermaid across both dark and light modes --- */
-/* MERMAID LIGHT MODE */
-/* --- uncomment if dark mode mermaid diagrams need a white background because styling too hard --- */
-/*
+
 [id^="mermaid-"] {
-  background: var(--color-background);
-}
-*/
-
-[id^="mermaid-"] .cluster rect {
-  fill: none !important;
-}
-
-[id^="mermaid-"] p {
-  color: #000 !important;
-}
-
-[id^="mermaid-"] > * {
-  stroke: #1e293b !important;
-}
-
-/* workaround for line text label colors */
-[id^="mermaid-"] > .messageText {
-  stroke: none !important;
-  fill: #1e293b !important;
-}
-
-/* workaround for arrowhead (arrow lines) colors */
-[id^="mermaid-"] #arrowhead path {
-  fill: #1e293b !important;
+  .cluster rect {
+    fill: none !important;
+  }
+  p {
+    color: #000 !important;
+  }
+  > * {
+    stroke: #1e293b !important;
+  }
+  /* line text label colors */
+  > .messageText {
+    stroke: none !important;
+    fill: #1e293b !important;
+  }
+  /* arrowhead (arrow lines) colors */
+  #arrowhead path {
+    fill: #1e293b !important;
+  }
 }
 
 /* mermaid diagram titles */
-p[data-title] > em {
+.mermaid + p[data-title] > em {
+  margin-top: 0px;
   color: var(--color-blue-600);
+}
+/* mermaid diagram title should immediately follow diagram */
+.mermaid:has(+ p[data-title] > em) {
+  margin-bottom: 0px;
+  padding-bottom: 0px;
 }
 
 /* MERMAID DARK MODE */
-/* --- uncomment if light mode mermaid diagrams need a background because styling too hard --- */
-/*
 .dark [id^="mermaid-"] {
-  background: var(--color-background);
-}
-*/
-
-.dark [id^="mermaid-"] .cluster rect {
-  fill: none !important;
-}
-
-.dark [id^="mermaid-"] > * {
-  stroke: #94a3b8 !important;
-}
-
-/* workaround for line text label colors */
-.dark [id^="mermaid-"] .messageText {
-  stroke: none !important;
-  fill: #e2e8f0 !important;
-}
-
-/* workaround for arrowhead (arrow lines) colors */
-.dark [id^="mermaid-"] #arrowhead path {
-  fill: #64748b !important;
+  .cluster rect {
+    fill: none !important;
+  }
+  > * {
+    stroke: #94a3b8 !important;
+  }
+  /* line text label colors */
+  .messageText {
+    stroke: none !important;
+    fill: #e2e8f0 !important;
+  }
+  /* arrowhead (arrow lines) colors */
+  #arrowhead path {
+    fill: #64748b !important;
+  }
 }
 
-/* mermaid diagram titles */
-.dark p[data-title] > em {
+/* dark mermaid diagram titles */
+.dark .mermaid + p[data-title] > em {
   color: var(--color-orange-200);
-}
-
-.dark #release-notes-version {
-  color: var(--color-slate-300);
-}
-
-:is(h1, h2, h3, h4, h5, h6) .anchor-link {
-  margin-left: .5em;
-  opacity: 0;
-  cursor: pointer;
-  text-decoration: none;
-  border-bottom: none;
-}
-
-:is(h1, h2, h3, h4, h5, h6) .anchor-link::after {
-  content: "#";
-}
-
-.dark :is(h1, h2, h3, h4, h5, h6) .anchor-link:hover {
-  color: var(--color-orange-200);
-}
-
-:is(h1, h2, h3, h4, h5, h6) .anchor-link:hover {
-  color: var(--color-orange-800);
-}
-
-:where(h1, h2, h3, h4, h5, h6):hover .anchor-link {
-  display: inline;
-  height: 0.8em;
-  width: 0.8em;
-  opacity: 1;
-  filter: invert(0.1);
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
 }

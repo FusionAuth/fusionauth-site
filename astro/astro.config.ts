@@ -9,19 +9,9 @@ import {codeTitleRemark} from './src/plugins/code-title-remark';
 import * as markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
 import mermaid from 'astro-mermaid';
-import rehypeSlug from 'rehype-slug'
-import rehypeAutolinkHeadings from 'rehype-autolink-headings'
-
-const optionalIntegrations = [];
-if (!process.env.DEV) {
-  optionalIntegrations.push(compress({
-    Image: false,
-    SVG: false,
-    HTML: false,
-  }))
-} else {
-  console.log('skipping compression');
-}
+import rehypeSlug from 'rehype-slug';
+import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import linkValidator, { type LinkValidatorOptions } from 'astro-link-validator';
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
@@ -33,17 +23,38 @@ const config = defineConfig({
     plugins: [tailwindcss()],
   },
   integrations: [
-    ...optionalIntegrations,
     mermaid({
       theme: 'forest',
-      autoTheme: true
+      autoTheme: true,
+      enableLog: false,
     }),
     mdx(),
     sitemap({
       filter: siteMapFilter
     }),
     indexPages(),
-    markdownExtract.default()
+    markdownExtract.default(),
+    compress({
+      Image: false,
+      SVG: false,
+      HTML: false,
+    }),
+    // only run link validator in the dev environment
+    process.env.DEV && linkValidator({
+      checkExternal: false,
+      externalTimeout: 10,
+      failOnBrokenLinks: false,
+      verbose: false,
+      exclude: [ //destination URLs to exclude from checking -- NOT files!
+        '/platform/', '/cdn/', '/dev-tools/', '/tech-papers/', '/docs/quickstarts/', '/feature/', '/features/', '/webinar/',
+        '/community/', '/forum/', '/compare/', '/industry/', '/license/', '/partners/', '/video/', '/event/', '/ebooks/', '/glossary/', '/guides/',
+        'buildvsbuy', 'auth0-migration', 'community', 'community/forum', 'aws-reinvent22', 'aws-reinvent23', 'pricing', 'download', 'contact',
+        'get-started', 'passwordless', 'direct-download', 'jobs', 'careers', 'password-history', 'partners-form', 'partners',
+        'resource/all', 'sso', 'kubernetes', 'compare-fusionauth', 'security', 'customers-partners', 'license-faq',
+        'feature-list', 'product-privacy-policy', 'passkeys',
+      ],
+      //base: 'https://fusionauth.io',
+    })
   ],
   markdown: {
     remarkPlugins: [
@@ -61,12 +72,15 @@ const config = defineConfig({
           behavior: 'append',
           content: {
             type: 'text',
-            value: '',
+            value: '#',
           },
           properties: {
             title: ['link to header'],
-            class: 'anchor-link'
+            class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
           },
+          headingProperties: {
+            class: 'group'
+          }
         },
       ],
     ],
@@ -76,9 +90,6 @@ const config = defineConfig({
     }
   },
   site: 'https://fusionauth.io/',
-  // experimental: {
-  //   contentCollectionCache: true,
-  // }
 });
 
 export default config;

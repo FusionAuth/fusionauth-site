@@ -1,5 +1,13 @@
 import { defineCollection, z } from 'astro:content';
 
+const releasesCollection = defineCollection({
+  schema: z.object({
+    version: z.string(),
+    date: z.date(),
+    name: z.string().optional()
+  }),
+})
+
 const articlesCollection = defineCollection({
   schema: z.object({
     author: z.string().optional(),
@@ -111,4 +119,5 @@ export const collections = {
   'docs': docsCollection,
   'json': jsonCollection,
   'blog': blogCollection,
+  'releases': releasesCollection
 };

@@ -14,7 +14,6 @@ cta: EmailListCTA
 import Aside from '/src/components/Aside.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import Code from 'src/components/Code.astro';
 
 This quickstart adds login and a protected page to a React web app using a preconfigured, local version of FusionAuth in the following steps:
 
@@ -30,7 +29,7 @@ This Quickstart requires:
 * [Node.js](https://nodejs.org/en/download) 22 or later
 * [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later
 * On macOS and Windows, one of the following container management tools:
-  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use Orbstack for `docker compose` commands after install, run `docker context use orbstack` )
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use Orbstack for `docker compose` commands after install, run `docker context use orbstack`)
   * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
   * [Docker desktop](https://www.docker.com/products/docker-desktop/)
 
@@ -49,14 +48,27 @@ The repository contains:
 * `fusionauth-backend`, a preconfigured version of FusionAuth
 * `react-frontend-steps`, a runnable version of each development step of the React application
 
-In a terminal, navigate to `fusionauth-quickstart-react/fusionauth-backend`. To start a local instance of FusionAuth, run the following command:
+Navigate to `fusionauth-quickstart-react/fusionauth-backend`:
+
+```bash
+cd fusionauth-quickstart-react/fusionauth-backend
+```
+
+Open OrbStack or Docker Compose to start the docker daemon.
+
+To start a local instance of FusionAuth, run the following command:
 
 ```bash
 docker compose up -d
 ```
 
+If you see an error that reads "Is the docker daemon running?", make sure your container management tool is accepting commands. Depending on your tool:
+* to use Docker Compose, the Docker Compose must be open
+* to use Orbstack, enable OrbStack to run as the docker daemon with `docker context use orbstack`
+* to use Podman, replace `docker` in the above command with `podman`
+
 <Aside type="note">
-During the Docker compose process, the included `/fusionauth-quickstart-react/kickstart/kickstart.json` file uses the FusionAuth API to:
+During the Docker compose process, the included `kickstart/kickstart.json` file uses the FusionAuth API to:
 
 * Generate an API key
 * Configure CORS (<Breadcrumb>Settings -> System -> CORS</Breadcrumb>)
@@ -77,9 +89,11 @@ After authenticating, you should see the FusionAuth admin UI, which shows inform
 
 ## Create the React app
 
-First, create a new TypeScript React app with Vite: 
+First, create a new TypeScript React app with Vite:
 
-1. To generate a new React app in a folder called `app-quickstart-react`, open a terminal window and run the following command:
+1. To generate a new React app in a folder called `app-quickstart-react`, open a terminal and run the following commands:
+
+   If your terminal is still in the `fusionauth-backend` directory, run `cd ..` to navigate back up to `fusionauth-quickstart-react`.
 
    ```bash
    npm create vite@latest app-quickstart-react -- --template react-ts
@@ -144,7 +158,7 @@ Replace the contents of the `src/App.css` stylesheet with the following CSS:
 
 ### Update index.html
 
-In the root directory, replace the contents of `index.html` with the following code:
+_In the root directory_ (not `src`), replace the contents of `index.html` with the following code:
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-react/main/react-frontend-steps/1-customized/index.html" lang="html"/>
 
@@ -154,15 +168,21 @@ This page loads the CSS in the head component. The body loads `main.tsx`, the ma
 
 Run your app on port `3000`:
 
-1. In `package.json`, update the `dev` script to use port `3000`:
+1. In `package.json`, update the `dev` script to use port `3000`. Replace:
+
+   ```json
+   "scripts": {
+       "dev": "vite",
+   ```
+
+   with:
 
    ```json
    "scripts": {
        "dev": "vite --port 3000",
-   }
    ```
 
-1. From the React app directory, run the following command to start the Vite web server:
+1. From the React app directory, run the following command to start the web server:
 
    ```bash
    npm run dev
@@ -226,7 +246,13 @@ Open `src/account.tsx` and replace the file contents with the following code to:
 
 ### Test authentication
 
-1. Open a private browser window.
+1. Start the web server:
+
+   ```bash
+   npm run dev
+   ```
+
+1. Open a _private browser window_ so you don't retain your login status from previous sections.
 
 1. Navigate to the React app at [http://localhost:3000](http://localhost:3000).
 
@@ -243,7 +269,11 @@ Open `src/account.tsx` and replace the file contents with the following code to:
 
 FusionAuth validates the credentials, then redirects back to the `redirectUri` set in `src/main.tsx`. The home page checks whether the user is logged in. If they are, the app navigates to the account page.
 
+Right now, you should see a user home page containing nothing but the stub text "User info will display here":
+
 ![The home page, not yet populated with user data.](/img/quickstarts/react/home-sans-data.png)
+
+Let's use the FusionAuth React SDK to fetch and display that user data instead of stub text.
 
 ## Fetch user data
 

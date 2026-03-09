@@ -207,7 +207,7 @@ Implementing a CIAM solution can bring significant benefits, but there are also 
 
 - Challenge: CIAM systems may be targeted for cyberattacks, including credential stuffing, account takeovers, and phishing attacks. Proactively detecting and mitigating these threats is essential.
 - Impact: Unauthorized access, data breaches, and financial loss.
-- Solution: Use continuous monitoring and [advanced threat detection](/docs/operate/secure-and-monitor/advanced-threat-detection) tools to track authentication attempts, detect anomalies, and flag suspicious activities in real-time.
+- Solution: Use continuous monitoring and [advanced threat detection](/docs/operate/secure/advanced-threat-detection) tools to track authentication attempts, detect anomalies, and flag suspicious activities in real-time.
 
 ### 6. User Adoption and Training
 
