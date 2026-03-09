@@ -12,8 +12,48 @@ import mermaid from 'astro-mermaid';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import linkValidator, { type LinkValidatorOptions } from 'astro-link-validator';
+import { visit } from 'unist-util-visit';
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
+
+export const mermaidTitleFix = () => {
+  return (tree) => {
+    visit(tree, 'code', (node, index, parent) => {
+      const meta = node.meta || '';
+      const titleMatch = meta.match(/title=["'](.*?)["']/);
+      
+      if (node.lang === 'mermaid' && titleMatch) {
+        const title = titleMatch[1];
+        const titleNode = {
+          type: 'paragraph',
+          data: {
+            hName: 'p',
+            hProperties: { 'data-title-bottom': title } // Use a unique attr for bottom titles
+          },
+          children: [{ type: 'text', value: title }]
+        };
+
+        // Insert AFTER the code block
+        parent.children.splice(index + 1, 0, titleNode);
+        return index + 2; 
+      } else if (titleMatch) {
+        const title = titleMatch[1];
+        const titleNode = {
+          type: 'paragraph',
+          data: {
+            hName: 'p',
+            hProperties: { 'data-title': title }
+          },
+          children: [{ type: 'text', value: title }]
+        };
+
+        // Inject the title BEFORE the mermaid/code block
+        parent.children.splice(index, 0, titleNode);
+        return index + 2; // Skip the new title and original code block
+      }
+    });
+  };
+};
 
 const config = defineConfig({
   build: {
@@ -58,8 +98,8 @@ const config = defineConfig({
   ],
   markdown: {
     remarkPlugins: [
-      codeTitleRemark,
       remarkMdx,
+      mermaidTitleFix,
     ],
     rehypePlugins: [
       // Tweak GFM task list syntax
