@@ -8,6 +8,7 @@ section: Identity Basics
 date: 2019-11-04
 dateModified: 2019-11-04
 ---
+import Aside from 'src/components/Aside.astro';
 
 The last few years have brought an explosion of IDaaS (Identity as a Service) solutions giving developers a wide range of choices for how they manage their users' registrations, logins, and identity. It makes sense. Identity and access management are critical components of many applications, but building, testing, and maintaining a secure in-house solution can take weeks or months of senior developer hours. You don't build your own database, so why build a custom identity solution? And just like databases, there are many identity solutions to fit the different requirements of every application.
 
@@ -145,7 +146,8 @@ These are just some of the use cases that tenants can help solve, but there are 
 ## Conclusion
 There are benefits and drawbacks to both single-tenant and multi-tenant systems. Ultimately, a company must decide what is most important to their business and what can be sacrificed. Is cost a primary driver? Does your industry vertical have unique regulatory constraints? Is security critical for the type of data you are storing? Take the time to explicitly define your specific requirements, and then select the solution that best fits your needs.
 
-> **Expert Insights on Multi-Tenant vs. Single-Tenant Security**  
-> Still evaluating your architecture options? Watch our webinar [One Breach, Every Customer: The Hidden Danger of Multi-Tenant Identity](/webinar/one-breach-every-customer-the-hidden-danger-of-multi-tenant-identity) for real-world examples, security best practices, and a strategic decision framework.
+<Aside type="tip">
+Still evaluating your architecture options? Watch our webinar [One Breach, Every Customer: The Hidden Danger of Multi-Tenant Identity](/webinar/one-breach-every-customer-the-hidden-danger-of-multi-tenant-identity) for real-world examples, security best practices, and a strategic decision framework.
+</Aside>
 
 If you have additional questions on multi-tenant and single-tenant solutions, please [contact us](/contact "Contact Us").

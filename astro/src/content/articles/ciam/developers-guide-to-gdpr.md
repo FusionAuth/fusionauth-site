@@ -6,6 +6,7 @@ author: Brian Pontarelli
 icon: /img/icons/developer-guide-gdpr.svg
 darkIcon: /img/icons/developer-guide-gdpr-dark.svg
 ---
+import Aside from 'src/components/Aside.astro';
 
 ## The who, what, when, where, and why of the GDPR for developers
 
@@ -33,8 +34,9 @@ Developers should expect that the GDPR will apply to their projects and that the
 
 Developers should also be ready to accept the role of "data protection officer", serving as the gatekeeper for appropriate data management policies. Similar to a compliance officer, the data protection officer (DPO) has a comprehensive understanding of data management requirements and how they are implemented in each project. It may not be cost-effective for many companies to assign a single person as a DPO, so developers that are prepared to learn and understand the requirements will be more valuable to their team.
 
-> **Master GDPR Compliance for Your Applications**  
-> Get practical implementation strategies and avoid costly compliance mistakes. Watch our webinar [What You Need to Know About GDPR Compliance](/webinar/gdpr-resources) to learn developer-focused best practices, data handling requirements, and real-world compliance scenarios.
+<Aside type="tip">
+Get practical implementation strategies and avoid costly compliance mistakes. Watch our webinar [What You Need to Know About GDPR Compliance](/webinar/gdpr-resources) to learn developer-focused best practices, data handling requirements, and real-world compliance scenarios.
+</Aside>
 
 ## What data are we talking about?
 
