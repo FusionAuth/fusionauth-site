@@ -113,7 +113,6 @@ The next steps for any developer are straightforward.
 
 If your application takes advantage of third-party tools and components to add functionality or track user information, they should be considered part of your data management strategy. Take the time to ask what processes they have in place to ensure GDPR compliance, including their security framework and how they manage data. If they do not have a clearly defined, documented strategy you could be exposing your company to additional risk. Here are a few questions to get your discussion started:
 
-
 **Q: Where are their servers and computers physically located? Can you choose a location?**
 
 Even if a service is cloud-based, the physical location of the servers could impact how the GDPR applies to you.
