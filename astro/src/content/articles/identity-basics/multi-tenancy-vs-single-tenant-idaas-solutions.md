@@ -34,9 +34,6 @@ Simply put, multi-tenant is an architecture where multiple companies store their
 
 **Security risk** - If a hacker gains access to one tenant's data, they can access data from every tenant because all data resides in a single database. This is an important consideration because every tenant is relying on the security practices of the weakest tenant. According to InfoWorld, "System vulnerabilities have become a bigger problem with the advent of multi-tenancy in cloud computing. Organizations share memory, databases, and other resources in close proximity to one another, creating new attack surfaces."
 
-> **Learn More About Multi-Tenant Security Risks**  
-> Dive deeper into the hidden dangers of multi-tenant identity systems. Watch our on-demand webinar [One Breach, Every Customer: The Hidden Danger of Multi-Tenant Identity](/webinar/one-breach-every-customer-the-hidden-danger-of-multi-tenant-identity) to understand breach scenarios, mitigation strategies, and when single-tenant architecture is essential.
-
 **Single point of failure** - If the multi-tenant system goes down (and they do regardless of what salespeople will tell you), EVERYONE goes down. Then all tenants sit and wait until the cause is determined and fixed.
 
 **Cross-tenant data leaks** - In a multi-tenant system, simple programming errors can lead to the data from one tenant leaking into other tenants. This is specifically true for APIs. This not only poses a security risk, but it also be a legal issue since many new data privacy regulations specifically state that cross-tenant data leaks should be prohibited.
