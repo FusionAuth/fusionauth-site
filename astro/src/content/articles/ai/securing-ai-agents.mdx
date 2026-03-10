@@ -37,7 +37,7 @@ Before we talk about securing individual agent workflows, let's talk about gover
 
 For example, when an employee leaves the company, are all agent credentials associated with the user revoked as part of offboarding? Are associated agents reviewed to determine if they need to be associated with another human identity?
 
-Your identity provider can supply the tooling to support governance, such as events, audit logs, and agent identities. But governance itself is an organizational discipline, not a software feature. An identity provider like FusionAuth is one of the software components  that help you build governance; it's not a governance solution on its own.
+Your identity provider can supply the tooling to support governance, such as events, audit logs, and agent identities. But governance itself is an organizational discipline, not a software feature. An identity provider like FusionAuth is one of the software components that help you build governance; it's not a governance solution on its own.
 
 Let's talk about the layers protecting individual agentic workflows.
 
@@ -46,15 +46,15 @@ Let's talk about the layers protecting individual agentic workflows.
 Here's the full security stack, from foundational to application-level:
 
 * **Secure Human Identities**: Every agent action chain starts with a verified human identity. This is what your identity provider handles.
-* **Craft the Right Prompt**: Instruct agents to behave like responsible employees. 
-* **Sub-agents** — Split agents to reduce blast radius and make trust boundaries explicit.
 * **Limit Service Access**: When agents need to access services like internal MCP servers, Office 365, or Salesforce, they shouldn't have access to long lived credentials.
-* **Sandboxing**: Control network access and filesystem access using containers or VMs.
-* **Fine-Grained Authorization** — Use fine-grained authorization (FGA) to control access based on agent identity, user identity, resource attributes, and context.
 * **Logging and Tracing** — Preserve the chain of identity and capture key actions at decision points.
+* **Sub-agents** — Split agents to reduce blast radius and make trust boundaries explicit.
+* **Sandboxing**: Control network access and filesystem access using containers or VMs.
+* **Fine-grained Authorization** — Use fine-grained authorization (FGA) to control access based on agent identity, user identity, resource attributes, and context.
+* **Human Interaction** — Agents need to ask for human confirmation before taking consequential actions.
+* **Craft the Right Prompt**: Instruct agents to behave like responsible employees. 
 * **Input/Output Filtering** — Control the text goes into and comes out of your agentic system using a filtering tool.
 * **Validation** - Validate outputs based on expected inputs.
-* **Human Interaction** — Agents need to ask for human confirmation before taking consequential actions.
 
 This stack, like many security architectures, relies on defense in depth. Each layer addresses different threats, so that if any single control fails, the others provide protection.
 
@@ -75,22 +75,45 @@ In addition:
 
 This article won't cover this in any more detail, but don't sleep on this.
 
-## Craft the Right Prompt
+## Limit Service Access
 
-Crafting the correct system and user prompt can help improve security. 
+Agents often need credentials to access third-party services or internal APIs.  While a user may be involved in the initial creation of long-lived refresh tokens, such tokens should be kept away from the agents themselves.
 
-For example, you can instruct agents to behave like "a responsible employee who understands the security ramifications of their activities, and won't violate company policy".
+The proper way to manage this access is to mint short lived tokens from these refresh tokens that are properly scoped. At a minimum, limit the scopes needed to the agent's activities. This means that the damage an agent can do with a credential is limited both in time and in scope. And if a token is exfiltrated, the impact is similiarly limited.
 
-This layer handles the casual, non-adversarial failures. Much agent misbehavior isn't a sophisticated injection attack by someone who wants to break into your system. 
+Here's an example of how this might work for an agent that interacts with a calendar service.
 
-Instead, it's the agent doing something dumb because nobody told it not to. A well-crafted prompt that says "never send data to external endpoints" or "always confirm before deleting records" will prevent a class of mundane mistakes: the agent that cheerfully emails a spreadsheet to the wrong person, or drops a database table because the user casually said "clean this up." 
+When a user first connects their calendar through OAuth, the identity provider stores the resulting refresh token with associated calendar-specific scopes as part of the user's profile.
 
-These aren't attacks. They're the everyday consequences of giving a non-deterministic system real permissions.
+When an access token is needed to make an appointment, the system makes a standard refresh token grant request. What comes back is a short-lived access token with a defined expiration window that allows for calendar access.
 
-Prompt engineering of this type is the cheapest, fastest layer to implement. But it is the easiest to bypass. Its value isn't in stopping attacks. Instead, the value of crafting the right prompt is in reducing the noise so other defenses can focus on actual threats.
+That fresh, narrowly scoped token is then injected into the agent's context, giving the agent just enough access to make the appointment, for just long enough to do it, without ever exposing the long-lived refresh token to the agent itself.
 
+## Logging and Tracing
 
-Because of agent non-determinism, make sure this is one of many layers of security. In addition, include security related prompts in your evals, so you can check and improve it over time. We'll talk more about evals below.
+You can't secure what you can't see. When building agentic systems, preserve the chain of identity and capture key agent actions at decision points. 
+
+You can use RFC 8693, or native API calls that allow for similar token exchanges, to create signed tokens that encode the delegation chain (using, for example, the `act` claim). 
+
+Log agent actions to a deterministic system or capture the requests coming out of the sandbox.
+
+Before any agent begins logging, create a limited, agent-scoped API key or credential that only has permission to create an audit log event, nothing else. This ensures that even if the key is compromised, it can't be used to read data or perform other operations.
+
+When the agent takes a meaningful action, have it post an entry. The log entry captures two critical pieces of information: who is acting, and what they did.
+
+The "who" encodes the full chain-of-identity: for example, that it was a calender agent started by a coordinator agent, acting ultimately on behalf of a specific human user.
+
+The "what" is a plain-language description of the action, such as scheduling a meeting for participants.
+
+Such audit logs give you a queryable, tamper-resistant record that traces every agent action back to a real person.
+
+Make sure each log entry:
+
+* is persisted in a system beyond the agent's reach
+* is queryable
+* contains the agent identity and the identity of the associated user
+
+As mentioned above, you might have agents call agents. Whether you need to log the entire chain of callers or just the initiator and the agent taking action depends on if you are doing authorization based on the caller chain or simply auditing requests.
 
 ## Sub-agents
 
@@ -110,50 +133,7 @@ By using different agents, you also prevent contamination of the context window.
 
 Splitting agents reduces the blast radius of any issues and it also makes trust boundaries explicit.
 
-## Limit Service Access
-
-Agents often need credentials to access third-party services or internal APIs.  While a user may be involved in the initial creation of long-lived refresh tokens, such tokens should be kept away from the agents themselves.
-
-The proper way to manage this access is to mint short lived tokens from these refresh tokens that are properly scoped. At a minimum, limit the scopes needed to the agent's activities. This means that the damage an agent can do with a credential is limited both in time and in scope.
-
-Here's a pattern for managing third-party tokens, where an identity provider like FusionAuth stores the refresh token:
-
-```javascript
-// After the user connects their calendar via OAuth,
-// FusionAuth stores the refresh token.
-// When the Calendar Agent needs access:
-
-const userResponse = await client.retrieveUser('human-user-id');
-const idpLink = userResponse.response.user
-  .identityProviders?.find(link =>
-    link.identityProviderId === 'idp-id'
-  );
-
-if (!idpLink) {
-  throw new Error('User has not connected their account');
-}
-
-const refreshToken = idpLink.token;  // stored by FusionAuth previously
-
-// Connect to remote IdP, ask for fresh access token
-const tokenResponse = await fetch(
-  'https://idp.example.com/token',
-  {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type:    'refresh_token',
-      refresh_token: refreshToken,
-      client_id:     CLIENT_ID, 
-      client_secret: CLIENT_SECRET, 
-    }),
-  }
-);
-
-const { access_token, expires_in } = await tokenResponse.json();
-
-// Next, inject the token into the Calendar Agent's context
-```
+They aren't perfect, though. Sub-agents have the benefits listed above, but they multiply the number of identities and tokens you need to manage, which makes the "limit service access" layer more complex and harder to implement well.
 
 ## Sandboxing
 
@@ -168,7 +148,9 @@ Sandboxing improves the security of agents because:
 
 Container-based sandboxing solutions like [Docker Sandboxes](https://www.docker.com/products/docker-sandboxes/) or [E2B](https://e2b.dev/) provide runtime isolation so that even if an agent behaves unexpectedly, the damage is contained.
 
-## Fine-Grained Authorization
+Logging and tracing, mentioned above, are in tension with sandboxing. The more thoroughly you sandbox an agent, restricting its network access and isolating the environment, the harder it becomes to get logs out of that sandbox and into a durable, queryable system beyond the agent's reach. You either need to punch holes in the sandbox's network rules to allow logging traffic, which weakens the isolation, or you need to build a out-of-band mechanism to collect logs, which adds operational complexity.
+
+## Fine-grained Authorization
 
 Use fine-grained authorization (FGA) to control access based on agent identity, user identity, resource attributes, and context.
 
@@ -194,80 +176,15 @@ Second, at the MCP server level. When the agent calls, say, a GitHub MCP server,
 
 Instead of giving an agent blanket coarse-grained access, you're layering multiple dimensions of checks: who's asking, who they're acting for, what they're touching, and under what circumstances.
 
-## Logging and Tracing
+However, FGA isn't perfect, and can't always prevent privilege escalation through tool chaining. Suppose Alice asks the CodeAssistant agent to query the staging database for a list of table names. That's a perfectly legitimate read operation on a resource she has access to. The agent returns the results. Then Alice asks the agent to create a pull request that includes a database migration script. Also a legitimate operation, since she's allowed to create PRs. But the migration script references production table names that the agent learned from staging metadata, and the PR targets a branch with a CI pipeline that automatically runs migrations against production on merge.
 
-You can't secure what you can't see. When building agentic systems, preserve the chain of identity and capture key agent actions at decision points. 
+No single step violated the FGA rules. The agent read from staging (allowed). It created a PR (allowed). But by chaining those two permitted actions, the agent effectively gained write access to production, something FGA rules were explicitly designed to prevent.
 
-You can use RFC 8693, or native API calls that allow for similar token exchanges, to create signed tokens that encode the delegation chain (using, for example, the `act` claim). 
+This is why the checks at both levels matter. The sandbox-level orchestration might catch that the agent is attempting to create a PR containing production references and flag it. The GitHub MCP server might independently verify that the target branch's deployment scope exceeds what this agent-user combination is authorized for.
 
-Log agent actions to a deterministic system or capture the requests coming out of the sandbox.
+And ideally, the human interaction layer, discussed below, would require approval before any PR that touches a production deployment pipeline gets merged.
 
-Below is an example of using the FusionAuth audit log to capture part of the agent actions.
-
-```javascript
-// First, create a limited, agent-scoped API key to log actions
-...
-
-// Agent logs an action to the audit log
-await fetch('https://your-fusionauth-instance.com/api/system/audit-log', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'AGENT_WRITE_ONLY_API_KEY',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    auditLog: {
-      insertUser: 'Drive Agent (coordinator: xyz, human: abc)',
-      message: 'Retrieved articles of incorporation for Business ID 12345'
-    }
-  })
-});
-```
-
-Make sure each log entry:
-
-* is persisted in a system beyond the agent's reach
-* is queryable
-* contains the agent identity and the identity of the associated user
-
-As mentioned above, you might have agents call agents. Whether you need to log the entire chain of callers or just the initiator and the agent taking action depends on if you are doing authorization based on the caller chain or simply auditing requests.
-
-## Input/Output Filtering
-
-In addition to sandboxing, which controls access at a network level, you can also perform word or phrase filtering on the user prompt and the agent output.
-
-Maintain stop word lists, both standard and custom, to prevent sensitive operations from being triggered in the wrong context or in the wrong agent.
-
-For example, user prompts, such as these, which contain terms related to data exfiltration can be blocked:
-
-- "export all users"
-- "dump database"
-- "send to external"
-- "upload to"
-- "forward all emails"
-- "copy to public bucket"
-
-And, on the flip side, hallucinations of authority can be blocked and the operation retried: 
-
-— "as a certified"
-- "I am a doctor"
-- "I am a lawyer"
-- "this is legal advice"
-- "this is financial advice"
-
-When performing keyword filtering as outlined above, make sure your solution is deterministic and performant. You'll need to add stop words periodically based on agent behavior. This is another part of defense in depth and should not be relied upon to block every malicious prompt. There are other options that are more sophisticated and handle indirect or rephrased instructions, but they are generally slower, complex, or costly.
-
-## Validation
-
-With every LLM system, you need to validate outputs based on your expected inputs. This is also called evaluation or evals. While this is often done to ensure that the tasks are done correctly, it also has security implications.
-
-After an agent completes its work, validate the results from a security perspective. Did the agent do what it should have?
-
-Validation tools like Freeplay.ai and Braintrust can help verify agent outputs against expected outcomes.
-
-This is especially important in regulated industries like banking, where an agent that recommends the wrong product package or misidentifies a business type could have compliance implications.
-
-A variant on validation is to have the agent do part of the work, but then have other parts handled by more deterministic software. For example, you might have an agent recommend a purchase, but then have a deterministic piece of software capture the human consent.
+Each layer has a chance to break the chain that no single authorization check would catch on its own.
 
 ## Human Interaction
 
@@ -294,9 +211,63 @@ There are a multiple options for implementing human approval:
 
 If an agent is not triggered by a human, there should still be some tie to a human identity. After all the agent did not deploy itself. That human can approve actions.
 
+
+## Craft the Right Prompt
+
+Crafting the correct system and user prompt can help improve security. 
+
+For example, you can instruct agents to behave like "a responsible employee who understands the security ramifications of their activities, and won't violate company policy".
+
+This layer handles the casual, non-adversarial failures. Much agent misbehavior isn't a sophisticated injection attack by someone who wants to break into your system. 
+
+Instead, it's the agent doing something dumb because nobody told it not to. A well-crafted prompt that says "never send data to external endpoints" or "always confirm before deleting records" will prevent a class of mundane mistakes: the agent that cheerfully emails a spreadsheet to the wrong person, or drops a database table because the user casually said "clean this up." 
+
+These aren't attacks. They're the everyday consequences of giving a non-deterministic system real permissions.
+
+Prompt engineering of this type is the cheapest, fastest layer to implement. But it is the easiest to bypass. Its value isn't in stopping attacks. Instead, the value of crafting the right prompt is in reducing the noise so other defenses can focus on actual threats.
+
+Because of agent non-determinism, make sure this is one of many layers of security. In addition, include security related prompts in your evals, so you can check and improve it over time. We'll talk more about evals below.
+
+## Input/Output Filtering
+
+In addition to sandboxing, which controls access at a network level, you can also perform word or phrase filtering on the user prompt and the agent output.
+
+Maintain stop word lists, both standard and custom, to prevent sensitive operations from being triggered in the wrong context or in the wrong agent.
+
+For example, user prompts, such as these, which contain terms related to data exfiltration can be blocked:
+
+- "export all users"
+- "dump database"
+- "send to external"
+- "upload to"
+- "forward all emails"
+- "copy to public bucket"
+
+And, on the flip side, hallucinations of authority can be blocked and the operation retried: 
+
+- "as a certified"
+- "I am a doctor"
+- "I am a lawyer"
+- "this is legal advice"
+- "this is financial advice"
+
+When performing keyword filtering as outlined above, make sure your solution is deterministic and performant. You'll need to add stop words periodically based on agent behavior. This is another part of defense in depth and should not be relied upon to block every malicious prompt. There are other options that are more sophisticated and handle indirect or rephrased instructions, but they are generally slower, complex, or costly.
+
+## Validation
+
+With every LLM system, you need to validate outputs based on your expected inputs. This is also called evaluation or evals. While this is often done to ensure that the tasks are done correctly, it also has security implications.
+
+After an agent completes its work, validate the results from a security perspective. Did the agent do what it should have?
+
+Validation tools like Freeplay.ai and Braintrust can help verify agent outputs against expected outcomes.
+
+This is especially important in regulated industries like banking, where an agent that recommends the wrong product package or misidentifies a business type could have compliance implications.
+
+A variant on validation is to have the agent do part of the work, but then have other parts handled by more deterministic software. For example, you might have an agent recommend a purchase, but then have a deterministic piece of software capture the human consent.
+
 ## Defense In Depth
 
-You can't count on any of these layers alone, but they work together. Let's see how.
+You can't count on any of these layers alone, but they work together. Let's see how with an example.
 
 Imagine your agent's system prompt includes something like this: "You are a responsible employee who understands security ramifications and won't violate company policy."
 
@@ -335,13 +306,25 @@ These significantly reduce risk and you should prioritize implementation:
 * Sandboxing: real containment at the infrastructure level. Extremely valuable, but requires operational investment that not every team can make immediately.
 * Human interaction: essential for consequential actions, but the design challenge (avoiding alert fatigue while catching real risks) means it takes investment and iteration to get right.
 
-### Force multipliers 
+### Force Multipliers 
 
 These are valuable but don't mistake them for hard controls.
 
 * Craft the Right prompt: cheap, fast, reduces noise, but bypassable.
 * Input/output filtering: a useful signal layer, but brittle if relied on alone.
 * Validation/evals: important for ongoing improvement and compliance, but it's an after-the-fact check rather than a preventive control.
+
+### Layers In Tension
+
+In practice these layers can fight each other, and aren't always additive. For example:
+
+* Sub-agents and limit service access: more agents means more identities, tokens, and scopes to manage, increasing the operational complexity of the credential layer.
+* FGA vs. human interaction: overly conservative authorization rules route too many routine actions to human approval, causing alert fatigue.
+* Sandboxing vs. logging: strict network isolation makes it harder to get logs out to a durable external system.
+* Input/output filtering vs. craft the right prompt: aggressive keyword filtering can block legitimate agent outputs that the prompt explicitly instructed the agent to produce.
+* Sub-agents vs. logging and tracing: the more you split agents, the harder it becomes to reconstruct a coherent audit trail across multiple independent agents, each with their own identity and context window.
+
+Building a secure agent system is not trivial and requires judgement balancing these tradeoffs.
 
 ## Summing Up
 
