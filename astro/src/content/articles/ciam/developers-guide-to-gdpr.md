@@ -33,6 +33,9 @@ Developers should expect that the GDPR will apply to their projects and that the
 
 Developers should also be ready to accept the role of "data protection officer", serving as the gatekeeper for appropriate data management policies. Similar to a compliance officer, the data protection officer (DPO) has a comprehensive understanding of data management requirements and how they are implemented in each project. It may not be cost-effective for many companies to assign a single person as a DPO, so developers that are prepared to learn and understand the requirements will be more valuable to their team.
 
+> **Master GDPR Compliance for Your Applications**  
+> Get practical implementation strategies and avoid costly compliance mistakes. Watch our webinar [What You Need to Know About GDPR Compliance](/webinar/gdpr-resources) to learn developer-focused best practices, data handling requirements, and real-world compliance scenarios.
+
 ## What data are we talking about?
 
 Next, let's cover the specific data the GDPR applies to. With thousands of possible data points that can be collected, what data is included and excluded? Traditionally, companies built security around explicit user data like name, address, phone number, and credit card numbers. The GDPR defines a much wider scope encompassing any information related to a natural person (a 'data subject'). It can be anything from a name, a photo, an email address, social network identities or posts, bank details, medical information, or a computer IP address. If it is related to a person, it's covered. From the [GDPR website](https://gdpr.eu/eu-gdpr-personal-data):
@@ -107,6 +110,9 @@ The next steps for any developer are straightforward.
 ## What to Ask Third-Party Providers
 
 If your application takes advantage of third-party tools and components to add functionality or track user information, they should be considered part of your data management strategy. Take the time to ask what processes they have in place to ensure GDPR compliance, including their security framework and how they manage data. If they do not have a clearly defined, documented strategy you could be exposing your company to additional risk. Here are a few questions to get your discussion started:
+
+> **Deep Dive into GDPR Compliance**  
+> Ready to ensure your applications meet GDPR requirements? Watch our comprehensive webinar [What You Need to Know About GDPR Compliance](/webinar/gdpr-resources) for detailed guidance on third-party vendor assessment, data protection strategies, and building privacy-first applications.
 
 **Q: Where are their servers and computers physically located? Can you choose a location?**
 
