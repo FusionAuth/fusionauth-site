@@ -7,10 +7,7 @@ icon: /img/icons/articles/ai/securing-ai-agents-teal-light.svg
 darkIcon: /img/icons/articles/ai/securing-ai-agents-teal-dark.svg
 ---
 
-Agent security is a layered defense with a foundation of secure human identity. Without verified identity, you can't confirm an agent is authorized to act for the person it represents.
-
-Agents should carry tokens and keys tied to human identities; a compromised human identity means illicit access across every integrated system.
-
+Agent security is a layered defense with a foundation of secure human identity. Without verified identity, you can't confirm an agent is authorized to act for the person it represents. Agents must carry tokens and keys tied to human identities.
 
 ## What Are AI Agents?
 
@@ -19,14 +16,16 @@ AI agents are semi-autonomous software powered by LLMs. Agents can make API requ
 Examples of agents include:
 
 - Software on the desktop or the web like Claude Desktop or ChatGPT that access tools and APIs to perform tasks
-- Command-line tools like Claude Code and OpenCode that write software
-- Semi-autonomous actors that can book travel, manage agendas, schedule meetings, or complete tasks with minimal human oversight
+- Command-line tools like Claude Code or OpenCode that write software
+- Semi-autonomous actors like ChatGPT agent mode or Salesforce Agentforce 360, that can manage agendas, schedule meetings, and complete other tasks with minimal human oversight
 
 This article focuses on agents that are interacting with APIs and systems beyond the user's computer. For local agents that only interact with the filesystem or services on the same machine, we have a pretty good security model: the container or VM. But the power and the danger of agents increases when you allow remote connections on their own behalf or on behalf of human beings.
 
+This article also omits coverage of autonomous agents, not connected with any human identity, because these are rare to non-existent at the time of publishing.
+
 ## AI Agent Governance
 
-Before we talk about securing individual agent workflows, let's talk about governance. This is the organizational layer that answers:
+Before we talk about securing individual agents, let's talk about governance, which defines boundaries within which agents are secured. Governance is the organizational rules and processes that answer questions like:
 
 - Who gets access to what agent resources?
 - How is access provisioned and deprovisioned?
@@ -34,11 +33,17 @@ Before we talk about securing individual agent workflows, let's talk about gover
 - Is access aligned with regulations and policies?
 - Can you produce audit trails and reporting on access decisions?
 
-For example, when an employee leaves the company, are all agent credentials associated with the user revoked as part of offboarding? Are associated agents reviewed to determine if they need to be associated with another human identity?
+For example, when an employee leaves the company, are all agent credentials associated with the user revoked as part of offboarding? Are associated agents reviewed to determine if they need to be associated with another human identity? Tooling such as events, audit logs, and agent identities can support governance goals. But governance is an organizational discipline, not entirely a software feature.
 
-Your identity provider can supply the tooling to support governance, such as events, audit logs, and agent identities. But governance itself is an organizational discipline, not a software feature. An identity provider like FusionAuth is one of the software components that help you build governance; it's not a governance solution on its own.
+You can secure an individual agent and have poor governance. You can have great governance in theory but fall short on implementation, which can lead to security issues. A broader discussion of AI governance is beyond the scope of this document, but you should be thinking about and how to hook agentic identity and other security features into your processes.
 
-Let's talk about the layers protecting individual agentic workflows.
+## Containing Applications
+
+Agents don't exist alone. They are created and communicated with in a variety of mechanisms, whether an API call, an A2A request, or a messaging application.
+
+This layer might be a normal web application, a REST API or a commercial chat application, but it exists and is part of the agentic security environment. This containing application runs deterministic code and can reliably interact with other APIs, applications and services, such as a secrets vault or browser.
+
+Next, let's talk about the layers protecting individual agentic workflows.
 
 ## The Security Stack
 
@@ -55,7 +60,7 @@ Here's the full security stack, from foundational to application-level:
 * **Input/Output Filtering** — Control the text that goes into and comes out of your agentic system using a filtering tool.
 * **Validation** - Validate outputs based on expected inputs.
 
-This stack, like many security architectures, relies on defense in depth. Each layer addresses different threats, so that if any single control fails, the others provide protection.
+This stack, like many security architectures, relies on defense in depth. Each layer addresses different threats, so that if any single control fails, the others provide protection. This stack addresses relevant OWASP Top 10 For Agentic Applications threats.
 
 Let's examine each of these in more detail.
 
@@ -72,7 +77,9 @@ In addition:
 - you need a verified human identity at the root of every agent action chain to trace responsibility when something goes wrong.
 - agents often carry OAuth tokens and API keys tied to human identities; stolen identity means stolen access across every integrated system
 
-This article won't cover this in any more detail, but don't sleep on this.
+Agents are started via a containing application, but this layer can identify the human being who kicked off the request by a more normal authentication flow.
+
+This article won't cover securing human identities in any more detail, but don't sleep on this.
 
 ## Limit Service Access
 
@@ -84,9 +91,11 @@ Here's an example of how this might work for an agent that interacts with a cale
 
 When a user first connects their calendar through OAuth, the identity provider stores the resulting refresh token with associated calendar-specific scopes as part of the user's profile.
 
-When an access token is needed to make an appointment, the system makes a standard refresh token grant request. What comes back is a short-lived access token with a defined expiration window that allows for calendar access.
+When an access token is needed to make an appointment, the containing application retrieves the refresh token and makes a standard refresh token grant request against the calendar service. What comes back is a short-lived access token with a defined expiration window that allows for calendar access.
 
-That fresh, narrowly scoped token is then injected into the agent's context, giving the agent just enough access to make the appointment, for just long enough to do it, without ever exposing the long-lived refresh token to the agent itself.
+That fresh, narrowly scoped token is then injected into the agent's context by the containing application. This token offers the agent just enough access to make the appointment, for just long enough to do it, without ever exposing the long-lived refresh token to the agent itself.
+
+(See also OWASP ASI02: Tool Misuse and Exploitation.) TODO stopped here
 
 ## Logging and Tracing
 
@@ -330,6 +339,12 @@ In practice these layers can intefere with each other, and aren't always additiv
 * Sub-agents vs. logging and tracing: the more you split agents, the harder it becomes to reconstruct a coherent audit trail across multiple independent agents, each with their own identity and context window.
 
 Building a secure agent system is not simple. It requires judgement to balance these tradeoffs.
+
+## Additional Resources
+
+* [The Agentic AI Top 10 from OWASP](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/) is a great read that is referenced throughout the above.
+* [Building Governed AI Agents - A Practical Guide to Agentic Scaffolding](https://developers.openai.com/cookbook/examples/partners/agentic_governance_guide/agentic_governance_cookbook/) discusses scaffolding and governance.
+* [OpenClaw Security](https://docs.openclaw.ai/gateway/security) outlines security measures for a personal agent and an interesting threat model discussion.
 
 ## Summing Up
 
