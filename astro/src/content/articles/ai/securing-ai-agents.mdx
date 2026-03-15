@@ -60,13 +60,13 @@ Here's the full security stack, from foundational to application-level:
 * **Input/Output Filtering** — Control the text that goes into and comes out of your agentic system using a filtering tool.
 * **Validation** - Validate outputs based on expected inputs.
 
-This stack, like many security architectures, relies on defense in depth. Each layer addresses different threats, so that if any single control fails, the others provide protection. This stack addresses relevant OWASP Top 10 For Agentic Applications threats.
+This stack, like many security architectures, relies on defense in depth. Each layer addresses different threats, so that if any single control fails, the others provide protection.
 
 Let's examine each of these in more detail.
 
 ## Secure Human Identities
 
-This is the bedrock. Every agent action should start with a verified human identity. This is what your identity provider handles.
+This is the bedrock. Every agent action should start with a verified human identity.
 
 If you don’t secure human identities and know what people can do in your systems, introducing agents will not help things. Agents have purpose, but no sense, and act with the speed of software. So they'll find holes that humans might not have.
 
@@ -77,7 +77,7 @@ In addition:
 - you need a verified human identity at the root of every agent action chain to trace responsibility when something goes wrong.
 - agents often carry OAuth tokens and API keys tied to human identities; stolen identity means stolen access across every integrated system
 
-Agents are started via a containing application, but this layer can identify the human being who kicked off the request by a more normal authentication flow.
+Agents are started via a containing application or orchestration layer. This layer can use standard CIAM authentication methods to identify the human being who kicked off the request. If the agents are not started via a human request, but are instead run on a schedule, the human or team who set up the schedule can be the source of human authority.
 
 This article won't cover securing human identities in any more detail, but don't sleep on this.
 
@@ -94,8 +94,6 @@ When a user first connects their calendar through OAuth, the identity provider s
 When an access token is needed to make an appointment, the containing application retrieves the refresh token and makes a standard refresh token grant request against the calendar service. What comes back is a short-lived access token with a defined expiration window that allows for calendar access.
 
 That fresh, narrowly scoped token is then injected into the agent's context by the containing application. This token offers the agent just enough access to make the appointment, for just long enough to do it, without ever exposing the long-lived refresh token to the agent itself.
-
-(See also OWASP ASI02: Tool Misuse and Exploitation.) TODO stopped here
 
 ## Logging and Tracing
 
@@ -121,11 +119,7 @@ When the agent takes a meaningful action, have it post an audit log entry. The l
 
 The "who" encodes the full chain-of-identity: for example, that it was a calendar agent started by a coordinator agent, acting ultimately on behalf of a specific human user.
 
-Even if an agent workflow was kicked off using a scheduled job or cron, the agent is still acting with authority granted by a human being. 
-
-It could be the engineer who configured the cron job, or the team lead who approved the deployment. There is a human identity at the root of that chain. Their credentials should be the ones encoded in the delegation token, and when they leave the company, that scheduled agent's authority should be reviewed or revoked.
-
-Eventually agents may be autonomous, but for now, tie them to a human identity.
+Even if an agent workflow was kicked off using a scheduled job or cron, the agent is still acting with authority granted by a person or team. It could be the engineer who configured the cron job, or the team who collectively approved the deployment. There is at least one human identity at the root of that chain.
 
 ### What Did The Agent Do
 
@@ -133,23 +127,21 @@ The "what" is a plain-language description of the action, such as scheduling a m
 
 ## Sub-agents
 
-You can split agents, creating multiple agents each with a specific task in mind. You can also enforce request guardrails between agents. You can let Agent A call agent B, but not vice versa.
+You can split the work an agent does by creating multiple sub-agents. Each of these can perform a specific task contributing to the overall work.
 
-Splitting agents by purpose and requiring deterministic mutual authentication improves agentic system security.
+By doing so, you can enforce communication guardrails between the agents. For example, sub-agent A may be able to call sub-agent B, but not vice versa. Just as splitting apart services and requiring inter-service authentication decreases the blast radius of security issues, splitting agents and adding mutual authentication improves the security of an agentic system.
 
-It provides each agent with an explicit identity, allowing for better debugging, authorization checks, and auditing. Make sure identity creation is quick.
+Using sub-agents also provides each agent with an explicit identity, easing debugging, authorization checks, and auditing.
 
 It makes data exfiltration more difficult. If you have one agent that can access data, receive arbitrary instructions and send messages, you are vulnerable to the [lethal trifecta](https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/). If, instead, you have three different agents, exploiting this vulnerability involves navigating and coercing all of these agents, rather than just one.
 
-By limiting the calls an agent can make, this implementation makes implied trust explicit, leading to better auditability and preventing privilege escalation. You can implement this with any supported authentication method, such as short-lived API keys, access tokens obtained using the client credentials grant, or mutual TLS and certificates.
+By limiting the requests an agent can make, sub-agent implementation makes implied trust explicit, leading to better auditability and preventing privilege escalation. You can implement this with any authentication method, such as rotated and short-lived API keys, access tokens obtained using the client credentials grant, or mutual TLS with certificates.
 
-You can limit credentials to systems the agent must access. If you need to read from a cloud file system like Office 365, you can create an agent with credentials exactly scoped to that, with no privileges to read email or schedule events on a calendar.
+You can limit credentials to systems the agent must access to complete its task. If you need to read from a cloud file system like Office 365, you can create an agent with credentials exactly scoped to that, with no privileges to read email or schedule events on a calendar.
 
 By using different agents, you also prevent contamination of the context window. If one agent starts to hallucinate, the tasks handled by other agents are minimally affected.
 
-Splitting agents reduces the blast radius of any issues and it also makes trust boundaries explicit.
-
-They aren't perfect, though. Sub-agents have the benefits listed above, but they multiply the number of identities and tokens you need to manage, which makes the "limit service access" layer more complex and harder to implement well.
+This approach isn't perfect, though. Sub-agents have the benefits listed above, but they multiply the number of identities and tokens you need to manage, which makes the "limit service access" layer more complex and harder to implement well.
 
 ## Sandboxing
 
@@ -164,46 +156,43 @@ Sandboxing improves the security of agents because:
 
 Container-based sandboxing solutions like [Docker Sandboxes](https://www.docker.com/products/docker-sandboxes/) or [E2B](https://e2b.dev/) provide runtime isolation so that even if an agent behaves unexpectedly, the damage is contained.
 
-Logging and tracing, mentioned above, are in tension with sandboxing. The more thoroughly you sandbox an agent, restricting its network access and isolating the environment, the harder it becomes to get logs out of that sandbox and into a durable, queryable system beyond the agent's reach. You either need to punch holes in the sandbox's network rules to allow logging traffic, which weakens the isolation, or you need to build an out-of-band mechanism to collect logs, which adds operational complexity.
+Logging and tracing, mentioned above, are in tension with sandboxing; this is as true for agentic systems as for more deterministic ones.
+
+The more thoroughly you sandbox an agent, restricting its network access and isolating the environment, the harder it becomes to get logs out of that sandbox and into a durable, queryable system beyond the agent's reach. You either need to punch holes in the sandbox's network rules to allow logging traffic, which weakens the isolation, or you need to build an out-of-band mechanism to collect logs, which adds operational complexity.
 
 ## Fine-grained Authorization
 
-Use fine-grained authorization (FGA) to control access based on agent identity, user identity, resource attributes, and context.
+Use fine-grained authorization (FGA) to control access based on agent identity, user identity, resource attributes, and context. FGA typically uses an authorization server which allows for centralized authorization logic. With this, permission checks can occur in multiple places:
 
-FGA checks can occur:
-
-* when the agent makes a request if the sandbox is configured correctly
+* when the agent makes a request (if the sandbox is configured correctly)
 * at the servers and resources an agent requests, such as an MCP server
-
 
 Imagine you have an AI agent that helps developers by reading code, querying databases, and creating pull requests. FGA would let you set rules like:
 
-- Agent identity: Only the "CodeAssistant" agent (not the "MarketingBot" agent) can access GitHub repos.
+- Agent identity and limits: Only the "CodeAssistant" agent (not another "MarketingBot" agent) can read GitHub repos and post status updates to Slack.
 - User identity: When Alice asks the agent to query the database, it can only see data Alice herself has permission to see.
 - Resource attributes: The agent can read from the staging database but never from production.
 - Context: The agent can only make write operations during business hours, or only when a human has explicitly approved the action.
 
-The checks happen at two different locations.
+As mentioned above, FGA checks can happen at two different locations. Each has a different context to provide to the FGA authorization server.
 
 First, at the sandbox level. Before the agent even sends a request, the orchestration layer checks: "Is this agent allowed to call this tool on behalf of this user?"
 
-Second, at the MCP server level. When the agent calls, say, a GitHub MCP server, that server independently verifies: "Does this request come from an authorized agent + user combo, and are they allowed to touch this specific repo?"
+Second, at the MCP server level. When the agent calls, say, a GitHub MCP server, that server independently verifies: "Does this request come from an authorized agent/user combo, and are they allowed to touch this specific repo?"
 
 Instead of giving an agent blanket coarse-grained access, you're layering multiple dimensions of checks: who's asking, who they're acting for, what they're touching, and under what circumstances.
 
-However, FGA isn't perfect, and can't always prevent privilege escalation through tool chaining. Suppose Alice asks the CodeAssistant agent to query the staging database for a list of table names. That's a perfectly legitimate read operation on a resource she has access to. The agent returns the results. Then Alice asks the agent to create a pull request that includes a database migration script. Also a legitimate operation, since she's allowed to create PRs. But the migration script references production table names that the agent learned from staging metadata, and the PR targets a branch with a CI pipeline that automatically runs migrations against production on merge.
+However, FGA isn't perfect, and can't always prevent negative outcomes, especially if an agent has access to multiple tools. Consider this scenario:
 
-No single step violated the FGA rules. The agent read from staging (allowed). It created a PR (allowed). But by chaining those two permitted actions, the agent effectively gained write access to production, something FGA rules were explicitly designed to prevent.
+* CodeAssistant has permission to read from GitHub and permission to write to Slack.
+* Based on a request from Alice, the agent reads an internal design document from a private repo that describes an unannounced product feature, and summarizes it in a Slack channel to answer a colleague's question.
+* No individual check fails; reading GitHub is allowed, writing to Slack is allowed.
 
-This is why the checks at both levels matter. The sandbox-level orchestration might catch that the agent is attempting to create a PR containing production references and flag it. The GitHub MCP server might independently verify that the target branch's deployment scope exceeds what this agent-user combination is authorized for.
-
-And ideally, the human interaction layer, discussed below, would require approval before any PR that touches a production deployment pipeline gets merged.
-
-Each layer has a chance to break the chain that no single authorization check would catch on its own.
+Each action was authorized in isolation, but the combination leaked confidential business information to a wider audience than intended. Output filtering, covered below, or information flow policies, are options to address this issue.
 
 ## Human Interaction
 
-Agents need to ask for human confirmation before taking consequential actions. These are also called "elicitations".
+Agents need to ask for human confirmation before taking consequential actions. These are also called "elicitations" in the MCP specifications. Fancy!
 
 Define what qualifies as consequential in your system. This could include actions that:
 
@@ -234,13 +223,13 @@ For example, you can instruct agents to behave like "a responsible employee who 
 
 This layer handles the casual, non-adversarial failures. Much agent misbehavior isn't a sophisticated injection attack by someone who wants to break into your system. 
 
-Instead, it's the agent doing something dumb because nobody told it not to. A well-crafted prompt that says "never send data to external endpoints" or "always confirm before deleting records" will prevent a class of mundane mistakes: the agent that cheerfully emails a spreadsheet to the wrong person, or drops a database table because the user casually said "clean this up." 
-
-These aren't attacks. They're the everyday consequences of giving a non-deterministic system real permissions.
+Instead, it's the agent doing something dumb because nobody told it not to. A well-crafted prompt that says "never send data to external endpoints" or "always confirm before deleting records" will sometimes prevent a class of mundane mistakes: the agent that cheerfully emails a spreadsheet to the wrong person, or drops a database table because the user casually said "clean this up." 
 
 Prompt engineering of this type is the cheapest, fastest layer to implement. But it is the easiest to bypass. Its value isn't in stopping attacks. Instead, the value of crafting the right prompt is in reducing the noise so other defenses can focus on actual threats.
 
 Because of agent non-determinism, make sure this is one of many layers of security. In addition, include security-related prompts in your evals, so you can check and improve it over time. We'll talk more about evals below.
+
+A variant on this approach is to have the agent do part of the work, but then have other parts handled by more deterministic software. For example, you might have an agent recommend a purchase, but then have a deterministic piece of software capture human consent to perform the purchase.
 
 ## Input/Output Filtering
 
@@ -269,15 +258,15 @@ When performing keyword filtering as outlined above, make sure your solution is 
 
 ## Validation
 
-With every LLM system, you need to validate outputs based on your expected inputs. This is also called evaluation or evals. While this is often done to ensure that the tasks are done correctly, it also has security implications.
+With every LLM system, you need to validate prompt outputs based on your expected inputs. This is also called evaluation or evals.
 
-After an agent completes its work, validate the results from a security perspective. Did the agent do what it should have?
+Validation is similar to automated integration tests, but instead of making sure your application behavior didn't change, you confirm that the outputs of modified prompts are within an expected and valid range.
+
+While validation is often done to ensure that the tasks are done correctly, it also has security impacts. After an agent completes its work, validate the results from a security perspective. Did the agent do what it should have?
 
 Validation tools like Freeplay.ai and Braintrust can help verify agent outputs against expected outcomes.
 
 This is especially important in regulated industries like banking, where an agent that recommends the wrong product package or misidentifies a business type could have compliance implications.
-
-A variant on validation is to have the agent do part of the work, but then have other parts handled by more deterministic software. For example, you might have an agent recommend a purchase, but then have a deterministic piece of software capture the human consent.
 
 ## Defense In Depth
 
@@ -325,8 +314,8 @@ These significantly reduce risk and you should prioritize implementation:
 These are valuable, but don't mistake them for hard controls.
 
 * Craft the right prompt: cheap, fast, reduces noise, but bypassable.
-* Input/output filtering: a useful signal layer, but brittle if relied on alone.
-* Validation/evals: important for ongoing improvement and compliance, but it's an after-the-fact check rather than a preventive control.
+* Input/output filtering: a useful signal layer that can act in real-time, but brittle if relied on alone.
+* Validation/evals: checks that run after the fact; important for ongoing improvement and compliance.
 
 ### Layers In Tension
 
@@ -342,13 +331,13 @@ Building a secure agent system is not simple. It requires judgement to balance t
 
 ## Additional Resources
 
-* [The Agentic AI Top 10 from OWASP](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/) is a great read that is referenced throughout the above.
+* [The Agentic AI Top 10 from OWASP](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/) discusses and catalogs agentic security issues.
 * [Building Governed AI Agents - A Practical Guide to Agentic Scaffolding](https://developers.openai.com/cookbook/examples/partners/agentic_governance_guide/agentic_governance_cookbook/) discusses scaffolding and governance.
 * [OpenClaw Security](https://docs.openclaw.ai/gateway/security) outlines security measures for a personal agent and an interesting threat model discussion.
 
 ## Summing Up
 
-Agent security isn't a problem you solve once, no more than human user security is. It's an ongoing practice that evolves as your agents gain capabilities and access.
+Agent security is an ongoing practice that evolves as your agents gain capabilities and access. Just like securing human identities or applications, this is not one-and-done.
 
 Start with the foundations: verified human identities, short-lived scoped credentials, and logging that can reconstruct what happened when something goes wrong.
 
@@ -359,5 +348,3 @@ Layer in prompt engineering, filtering, and validation throughout, understanding
 The temptation with agents is to move fast. They're powerful, they're exciting, and the competitive pressure is real. But an agent with broad access and no guardrails is a liability that moves at the speed of software.
 
 The stack outlined here gives you a way to ship agents that are both useful and accountable. Security comes from the layers working together, so that the failure of any one control is caught by another. No single layer is sufficient.
-
-That's the point.
