@@ -80,6 +80,7 @@ const docsCollection = defineCollection({
     disableTOC: z.boolean().default(false),
     navOrder: z.number().default(1000),
     idpDisplayName: z.string().optional(),
+    sideNavSimple: z.boolean().default(false),
   }),
 });
 
