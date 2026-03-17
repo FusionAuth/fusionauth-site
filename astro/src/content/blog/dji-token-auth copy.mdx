@@ -1,0 +1,136 @@
+---
+publish_date: 2026-03-17
+title: "MCP Isn't Dead. But the Auth Problem It Exposed Is Yours to Solve"
+description: "Perplexity dropping MCP internally isn't a protocol story — it's an identity story. Here's the framework that survives any transport layer change."
+authors: Andrew Hatfield
+image: /img/blogs/mcp-not-dead/mcp.png
+categories: Education
+tags: mcp, perplexity, mcp authentication
+excerpt_separator: "{/* more */}"
+---
+
+Every protocol debate follows the same arc: hype, backlash, declared death, quiet maturation. REST was going to die. GraphQL would replace everything. Webhooks were too primitive. All three still ship in production.
+
+MCP (Model Context Protocol) hit its backlash moment last week. Perplexity's CTO announced they're moving away from it internally. Cloudflare posted about a different way to use it. The dev community declared the protocol DOA. Most of the hot takes got the story backwards.
+
+If you're building AI agents in production, the protocol debate is a distraction. The auth problem underneath it? That one's real. And it doesn't go away when you swap MCP for a REST endpoint.
+
+Let’s break down what actually happened, why the underlying problem is more significant than the headline, and what architecture holds up regardless of which transport layer wins.
+
+* * *
+
+## What Perplexity Actually Said
+
+At the Ask 2026 conference, [Perplexity CTO Denis Yarats said](https://x.com/NickSpisak_/status/2031832519113384289) his team is moving away from MCP internally in favor of direct APIs and CLIs. Two specific reasons: **context window overhead** (tool schemas eat tokens in long multi-step workflows) and **authentication friction** (managing auth across multiple MCP servers is messy at production scale).
+
+Simultaneously, Perplexity launched an Agent API - one endpoint, one key, models from six providers, built-in web search. Less wiring. Less surface area. Simpler operations.
+
+**Worth noting:** Perplexity still runs an MCP Server for developers who want it. This was a product architecture decision for their production workloads, not an industry proclamation.
+
+The [Cloudflare "Code Mode" post](https://blog.cloudflare.com/code-mode/) that got pulled into the narrative is actually titled "the better way to use MCP." Their argument is that LLMs should write TypeScript code to call MCP tools, rather than calling them directly via function calling - because LLMs have seen millions of real TypeScript projects but very few synthetic tool call examples. Cloudflare is doubling down on MCP as a connectivity standard. The post was almost universally misread.
+
+MCP isn't dead. It has institutional support from Anthropic, broad IDE adoption across Claude Desktop, Cursor, VS Code, and dozens of other tools, and a standardized discovery mechanism that no direct API replicates. What's happening is that the protocol is maturing past its hype phase - and some production teams are discovering that it introduced complexity their current auth infrastructure wasn't ready to absorb.
+
+* * *
+
+## The Part Nobody Covered: It's an Identity Problem
+
+Authentication friction was Yarats' second reason, and it got almost no coverage. That's where the real story is.
+
+Managing auth across a multi-tool agent system means handling:
+
+- Different auth methods per tool (API keys, OAuth, service accounts, short-lived tokens)
+- Different secrets per environment (dev, staging, prod)
+- Different permission scopes per user role
+- Agents that sometimes act on behalf of a user, and sometimes act as autonomous system actors
+- Audit logs that need to reconstruct who authorized what, when, and through which agent
+
+When you add a protocol layer on top of that, you're not simplifying auth - you're adding more surfaces where it can go wrong. Token rotation breaks. Cross-tool identity mapping fails. An incident hits and you can't trace which agent made which call with whose credentials.
+
+Perplexity's teams didn't abandon MCP because the protocol was architecturally flawed. They abandoned it because their identity foundation wasn't solid enough to support it cleanly at production scale. The protocol exposed the gap.
+
+This is the part that should matter to you. [Authentication for AI agents](https://fusionauth.io/articles/ai/ai-agent-identity-overview) is a fundamentally different problem than authentication for humans. Agents act on behalf of users sometimes, autonomously at other times, and in chains involving other agents in complex workflows. Standard human-centric IAM wasn't designed to track that.
+
+The teams that struggled most with MCP auth complexity aren't the ones who chose the wrong protocol. They're the ones who treated identity as a bolted-on dependency rather than infrastructure they own. When auth is external, opaque, and shared across tenants, there's nowhere to put the complexity - it leaks into ops, incidents, and compliance gaps.
+
+* * *
+
+## The Identity Requirement Is Constant, The Protocol Isn't
+
+Regardless of whether your agent stack runs on MCP, direct REST APIs, Perplexity's Agent API, or Cloudflare's sandboxed Code Mode - the same five identity problems follow you. The protocol doesn't create them. It just makes them harder to ignore.
+
+**1. Your agents are inheriting the wrong permissions**
+
+The most common agent auth mistake isn't a misconfiguration - it's a design assumption. Teams issue tokens at session start and let agents carry them through every subsequent step. By step four of a multi-step workflow, an agent booking a meeting is running with credentials that can also read financial records. Nobody intended that. Nobody caught it because the token was technically valid.
+
+Agents must inherit authority from an authenticated user or trusted service, scoped narrowly to the task at hand. Not a session-level token. Not a service account shared across workflows. A token that expires when the task ends and can't be reused for something the initiating user never authorized. [This is OAuth 2.1 applied to agentic workflows](https://fusionauth.io/articles/ai/mcp-connecting-software-ai) - the concepts aren't new, but most teams haven't operationalized them for autonomous actors that execute across multiple steps and systems.
+
+**2. Agents don't follow predictable paths - your authorization policy needs to handle that**
+
+Scattered authorization logic is a well-known microservices problem. Agents make it structurally worse. A human hitting your API follows a predictable call graph you can reason about in advance. An agent branches conditionally based on what it finds at runtime - calling tools you didn't anticipate when you wrote the policy, in sequences that differ every time the workflow runs. You can't audit a path that doesn't exist until execution.
+
+MCP's authorization gap makes this concrete: the protocol handles coarse-grained access, but fine-grained authorization behind each server is left to whoever built it. One tool enforces role checks, another trusts the token implicitly, and a third does something in between. When something goes wrong, you don't know if the failure was in policy or in code because there's no clear line between them.
+
+[Fine-grained authorization (FGA)](/blog/fine-grained-authorization) externalizes authorization decisions to a dedicated policy layer. When an agent queries a RAG system, calls an API, or writes to a production database, access decisions evaluate against explicit policy - not assumptions buried in application code. Critically, that policy evaluates at runtime against the actual context of the call, not a static map of what you thought the agent would do.
+
+**3. You can't pre-audit a call chain that emerges at runtime**
+
+Human IAM was built around a predictable model: a person authenticates, takes an action, logs out. Service mesh auth extended that to services, but the call graph is still declared - you know which service calls which. Agents break both assumptions. The chain isn't defined in advance; it emerges from the workflow. An agent discovers what to do next based on what it finds, delegates to other agents mid-execution, and completes actions the original human never explicitly reviewed.
+
+That means you can't pre-audit the path. You can only reconstruct it. Which means your logs need to capture not just what happened, but the delegation context: which human initiated the session, which agent acted on it, what that agent was permitted to do, and whether what it actually did stayed inside those bounds. Without that, incident response is archaeology. You find the damage but not the decision that caused it.
+
+**4. The blast radius scales with autonomy**
+
+A two-step agent workflow is manageable. An agent that runs for 47 steps, conditionally triggers three downstream agents, and writes to production systems at each branch - that's a different risk profile entirely.
+
+Over-permissioned agents in short workflows cause contained damage. The same over-permissioned agents in long, autonomous workflows cause proportionally larger damage, and they do it faster than any human can intervene. As [agent autonomy increases](/webinar/who-let-the-agents-in-managing-identity-in-an-era-of-autonomous-ai), least privilege stops being aspirational and becomes load-bearing. The enforcement mechanism also has to be external - an agent that carries its own authorization logic can, by definition, authorize itself to do things it shouldn't.
+
+**5. Your auth layer can't stay home when your agents go to work**
+
+This constraint rarely surfaces in protocol debates, but it hits fast in production. Agents don't always run in convenient, centralized environments. They run in customer data centers. In air-gapped networks. In cloud regions with strict data residency requirements. In GovCloud. In on-premises deployments that can't phone home to a SaaS auth provider.
+
+If your identity infrastructure only runs in one place, you've already decided where your agents can operate - and it probably isn't everywhere your customers need them. Auth has to follow the agent. A SaaS-only identity vendor is an architectural constraint masquerading as a dependency. Design for it before you're blocked by it.
+
+* * *
+
+## What This Means for Your Architecture Decisions
+
+If you're evaluating whether to build on MCP, direct APIs, or an integrated agent platform, the identity question should come before the protocol question.
+
+**Can you represent your agents as first-class identities today?** Not service accounts. Not shared API keys. Discrete identities with scoped permissions that are distinguishable in your logs.
+
+**Does your authorization model support dynamic, context-aware decisions?** Static RBAC works for predictable access patterns. Agents introduce conditional, context-dependent access needs - an agent retrieves a document, but only if the initiating user has permission to see it, and only if the document matches the scope of the task. That's relationship-based access control applied at retrieval time. RBAC doesn't handle it cleanly.
+
+**Can you reconstruct the delegation context after an incident?** If an agent writes incorrect data to a production system, or surfaces a document a user shouldn't have seen, you need to be able to trace it. The answer can't be "we'd have to look through logs across six systems."
+
+**Does your identity layer adapt to your architecture - or force you to adapt to it?** This is where most teams run into problems at scale. Identity vendors that lock you into specific deployment models, token formats, or integration patterns become architectural constraints. Your auth infrastructure should fit your agent design, not the other way around.
+
+These requirements don't change when MCP evolves. They don't change if MCP gets replaced by something else entirely. They're properties of any production system where autonomous software acts alongside humans.
+
+* * *
+
+## Choosing a Protocol: A Practical Frame
+
+For teams working through the MCP vs. direct APIs decision right now, the Perplexity experience maps to a practical heuristic:
+
+- **Well-defined tool sets, stable production workloads**: Direct APIs are simpler, faster, and cheaper to operate. You know what you need; write the integration.
+- **Dynamic tool discovery, open-ended agent tasks**: MCP's value is exactly here - agents that can find and use capabilities they weren't explicitly coded for. That's a real use case, and a CLI doesn't replicate it.
+- **Enterprise environments with compliance requirements**: Either architecture needs a dedicated identity layer. The protocol doesn't solve it, and neither does a unified agent API endpoint. Auth complexity just moves somewhere else if you haven't addressed it directly. If your agents touch regulated systems or run in constrained environments - air-gapped networks, GovCloud, customer data centers - your identity infrastructure needs to deploy wherever your agents run. A SaaS-only auth vendor can't follow you there.
+
+Most production stacks will end up hybrid: an integrated agent platform handling commodity tools, direct integrations for sensitive internal systems, and a policy layer that enforces authorization boundaries regardless of how the agent is connecting.
+
+The [agent identity decision framework](/articles/ai/ai-agent-identity-overview#a-decision-framework) starts with "who is the actor" - not "which protocol." That ordering matters.
+
+* * *
+
+## The Principle Worth Keeping
+
+Protocol debates are arguments about plumbing. Identity is structural.
+
+MCP's backlash surfaced something useful: **the authentication complexity that teams were absorbing into their protocol layer has to go somewhere.** If it doesn't go into a deliberate identity architecture, it goes into operations, incident response, and compliance gaps.
+
+The teams that will scale AI agents well in production aren't the ones who picked the right protocol. They're the ones who built an identity foundation solid enough to survive a protocol change.
+
+* * *
+
+**If you're working through agent identity architecture**, FusionAuth provides the identity foundation for AI systems - including [Fine-Grained Authorization via Permify](/blog/fine-grained-authorization), scoped M2M tokens for agent workflows, and the audit logging your team needs to reconstruct what happened when something goes wrong. Start with the [AI agent authentication overview](/articles/ai/ai-agent-identity-overview) or explore how [MCP authentication works in practice](articles/ai/mcp-connecting-software-ai).
