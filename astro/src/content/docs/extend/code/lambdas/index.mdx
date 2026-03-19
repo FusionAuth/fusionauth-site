@@ -8,6 +8,7 @@ navOrder: 0
 ---
 import AdvancedPlanBlurb from 'src/content/docs/_shared/_advanced-plan-blurb.astro';
 import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro'
 import InlineField from 'src/components/InlineField.astro';
 import LambdaTypes from 'src/content/docs/_shared/_lambda-types.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
@@ -87,6 +88,44 @@ function populate(jwt, user, registration) {
 
 For more information, see the [Lambda HTTP Connect documentation](/docs/extend/code/lambdas/lambda-remote-api-calls).
 
+## Secrets
+
+<Aside type="version">
+  Available Since Version 1.64.0
+</Aside>
+
+To securely store secret values used in lambdas, like API keys and application passwords, use a [lambda secret](/docs/extend/code/lambdas#using-secrets).
+
+1. In the Admin UI, visit <Breadcrumb>Settings -> Key Master</Breadcrumb>.
+1. From the dropdown in the upper right, select <Breadcrumb>Import secret</Breadcrumb>.
+1. Specify a unique **secret name**, which you will use to access your secret from a lambda.
+1. Specify your **secret value**.
+
+To access secrets, use the `context` parameter. Pass a secret **name** to `context.services.secrets.get('<key>')` to retrieve the corresponding secret **value** as a string:
+
+```javascript
+function populate(jwt, user, registration, context) {
+  var apiKey = context.services.secrets.get('<secret-name>');
+
+  var response = fetch("https://api.example.org/api/status?" + user.id, {
+    method: "GET",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded"
+      "authorization": "Basic " + apiKey
+    }
+  });
+
+  if (response.status === 200) {
+    var jsonResponse = JSON.parse(response.body);
+    console.log('response: ' + jsonResponse);
+    jwt.status = jsonResponse.status;
+  } else {
+    console.warn('failed request: ' + response.status);
+    jwt.status = "basic";
+  }
+}
+```
+
 ## Exceptions
 
 Throwing an exception in a lambda has the following effect:
@@ -96,7 +135,7 @@ Throwing an exception in a lambda has the following effect:
 
 The impact on the user experience depends on the type of lambda. For example, for a JWT populate lambda, the JWT will not be modified. For a reconcile lambda, the user will not be created or linked.
 
-Don't use exceptions should for flow control; reserve them for _exceptional_ situations.
+Don't use exceptions for flow control; reserve them for _exceptional_ situations.
 
 To view exception details, enable debugging on the lambda via the <InlineField>Debug enabled</InlineField> toggle in the administrative user interface or the API.
 
@@ -117,16 +156,6 @@ The GraalJS Engine [supports ECMAScript 2021](https://www.graalvm.org/22.0/refer
 For more information, see the [GraalJS engine documentation](https://www.graalvm.org/latest/reference-manual/js/).
 
 This engine has been available since FusionAuth version `1.35.0`.
-
-### Nashorn
-
-<Aside type="caution">
-  FusionAuth removed the Nashorn engine in version `1.49.0`; at or above this version, lambdas use GraalJS.
-</Aside>
-
-Nashorn is built on top of the Java virtual machine. While Nashorn permits access to the Java API, for security reasons FusionAuth restricts access to all Java objects within lambdas.
-
-The Nashorn engine supports ECMAScript version 5.1.
 
 ## Lambda Types
 

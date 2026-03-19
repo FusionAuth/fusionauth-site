@@ -97,6 +97,7 @@ const config = defineConfig({
     })
   ],
   markdown: {
+    smartypants: false,
     remarkPlugins: [
       remarkMdx,
       mermaidTitleFix,
