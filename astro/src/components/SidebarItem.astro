@@ -1,48 +1,60 @@
 ---
 const { node } = Astro.props;
 
-// Use the sorted children we created in the main component
 const childNodes = node.sortedChildren || [];
 const hasChildren = childNodes.length > 0;
 
 const isCurrent = node.isCurrentPage;
 const isAncestor = node.isActive && !isCurrent;
 
-// Base link styles
-const linkBase = "block px-2 py-1.5 text-sm rounded-md transition-colors w-full text-left truncate select-none";
-
-// Logic for colors and weights
 let stateClasses = "";
-
 if (isCurrent) {
-  // Exact match: Indigo background/text
-  stateClasses = "bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-700/30 dark:text-indigo-300";
+  stateClasses = "bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-900/40 dark:text-indigo-300";
 } else if (isAncestor) {
-  // Parent/Grandparent: Darker/Whiter text and slightly bolder
   stateClasses = "text-gray-900 font-bold dark:text-white";
 } else {
-  // Inactive: Dimmed
-  stateClasses = "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100";
+  stateClasses = "text-gray-500 dark:text-gray-400";
 }
+
+const linkBase = "flex-1 px-2 py-1.5 text-sm rounded-md transition-colors truncate";
 ---
 
+<style>
+  /* Custom CSS to handle scoped rotation without 'group' conflicts */
+  details[open] > summary .chevron-icon {
+    transform: rotate(90deg);
+  }
+</style>
+
 {hasChildren ? (
-  <details class="group" open={node.isOpen}>
-    <summary class="flex items-center justify-between list-none cursor-pointer [&::-webkit-details-marker]:hidden">
+  <details class="group/folder" open={node.isOpen}>
+    <summary 
+      class={`flex items-center justify-between list-none cursor-pointer rounded-md transition-colors w-full select-none [&::-webkit-details-marker]:hidden ${stateClasses} 
+      group-open/folder:hover:bg-transparent
+      group-[:not([open])]/folder:hover:bg-gray-100 dark:group-[:not([open])]/folder:hover:bg-gray-800 
+      group-[:not([open])]/folder:hover:text-gray-900 dark:group-[:not([open])]/folder:hover:text-gray-100`}
+    >
       {node.href ? (
-        <a href={node.href} class={`flex-1 ${linkBase} ${stateClasses} mr-1`}>
+        <a 
+          href={node.href} 
+          class={`${linkBase} hover:group-open/folder:bg-gray-100 dark:hover:group-open/folder:bg-gray-800 hover:group-open/folder:text-gray-900 dark:hover:group-open/folder:text-gray-100`}
+          onclick={`
+            const det = this.closest('details');
+            if (!det.open) {
+              event.preventDefault();
+              det.open = true;
+            }
+          `}
+        >
           {node.title}
         </a>
       ) : (
-        <span class={`flex-1 ${linkBase} ${stateClasses} cursor-default`}>
-          {node.title}
-        </span>
+        <span class={`${linkBase} cursor-default`}>{node.title}</span>
       )}
       
-      {/* Chevron Icon - Stays dimmed unless the node itself is current */}
-      <div class={`p-1 rounded-md text-gray-400 ${isCurrent ? 'text-indigo-500' : ''}`}>
+      <div class={`p-1.5 rounded-md transition-colors hover:group-open/folder:bg-gray-100 dark:hover:group-open/folder:bg-gray-800 hover:group-open/folder:text-gray-900 dark:hover:group-open/folder:text-gray-100 ${isCurrent ? 'text-indigo-500' : 'text-gray-400'}`}>
         <svg 
-          class="w-3.5 h-3.5 transition-transform duration-200 group-open:rotate-90" 
+          class="w-3.5 h-3.5 transition-transform duration-200 chevron-icon" 
           fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
         >
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
@@ -55,7 +67,10 @@ if (isCurrent) {
     </div>
   </details>
 ) : (
-  <a href={node.href} class={`${linkBase} ${stateClasses}`}>
+  <a 
+    href={node.href} 
+    class={`block px-2 py-1.5 text-sm rounded-md transition-colors w-full truncate ${stateClasses} hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100`}
+  >
     {node.title}
   </a>
 )}
