@@ -1,6 +1,12 @@
 import { defineCollection, z } from 'astro:content';
+import { glob } from 'astro/loaders';
 
 const releasesCollection = defineCollection({
+  loader: glob({
+    pattern: ["**/*.mdx", "!**/_*.mdx", "!**/_*/**/*.mdx"],
+    base: "./src/content/releases",
+    generateId: ({ entry }) => `${entry.replace(/\.mdx$/, '')}`,
+  }),
   schema: z.object({
     version: z.string(),
     date: z.date(),
@@ -60,6 +66,11 @@ const quickstartsCollection = defineCollection({
 });
 
 const docsCollection = defineCollection({
+  loader: glob({
+    pattern: ["**/*.mdx", "!**/_*.mdx", "!**/_*/**/*.mdx"],
+    base: "./src/content/docs",
+    generateId: ({ entry }) => `${entry.replace(/\.mdx$/, '')}`,
+  }),
   schema: z.object({
     title: z.string().refine(
         title => !/[.!?]$/.test(title),
@@ -78,7 +89,7 @@ const docsCollection = defineCollection({
     quatercategory: z.string().optional(),
     nestedHeadings: z.boolean().optional(),
     disableTOC: z.boolean().default(false),
-    navOrder: z.number().default(1000),
+    order: z.number().default(1000),
     idpDisplayName: z.string().optional(),
     sideNavSimple: z.boolean().default(false),
   }),

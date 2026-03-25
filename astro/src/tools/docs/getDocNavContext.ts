@@ -82,7 +82,7 @@ const recursiveSort = (category: Category) => {
 
     category.entries.sort((a, b) => {
       // everything has a default of 1000, so sorts to bottom
-      const numCompare = a.navOrder - b.navOrder;
+      const numCompare = a.order - b.order;
       if (numCompare !== 0) {
         return numCompare;
       }
@@ -111,7 +111,7 @@ export const getDocNavContext = async (section: string) => {
 
   const sectionDocs = await getCollection('docs', doc => doc.data.section === section);
   sectionDocs.forEach(doc => {
-    const { subcategory, tertcategory, quatercategory, title, sidenavTitle, description, navOrder } = doc.data;
+    const { subcategory, tertcategory, quatercategory, title, sidenavTitle, description, order } = doc.data;
     const category = prepContext(context, subcategory, tertcategory, quatercategory);
     
     category.entries.push({
@@ -119,7 +119,7 @@ export const getDocNavContext = async (section: string) => {
       sidenavTitle,
       description,
       href: getDocHref(doc.slug),
-      navOrder,
+      order,
     })
   });
   recursiveSort(context.category);
