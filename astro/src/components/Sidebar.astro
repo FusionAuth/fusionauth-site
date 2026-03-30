@@ -1,0 +1,149 @@
+---
+import { getCollection } from 'astro:content';
+import SidebarItem from './SidebarItem.astro';
+
+interface Props {
+  frontmatter: Record<string, any>;
+}
+
+const { frontmatter } = Astro.props;
+const docs = await getCollection('docs');
+const basePath = '/docs'; 
+
+// Strips everything environment-specific so we only compare the core slug.
+const normalizeForMatch = (p: string | null) => {
+  if (!p) return "";
+  let clean = decodeURI(p);
+  
+  // If the server retained the base path, strip it out for comparison
+  if (clean.startsWith(basePath)) {
+    clean = clean.substring(basePath.length);
+  }
+  
+  return clean
+    .replace(/\.(md|mdx|html)$/i, '')
+    .replace(/\/index$/i, '')
+    .replace(/^\/+|\/+$/g, '');
+};
+
+const safeCurrentPath = normalizeForMatch(Astro.url.pathname);
+
+const formatTitle = (str: string) =>
+  str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+function buildTree(docsArray: any[]) {
+  const root: any = { 
+    children: {}, 
+    title: 'Documentation', 
+    href: basePath,
+    order: -1 
+  };
+
+  for (const doc of docsArray) {
+    const { order, hidden, title: dataTitle } = doc.data;
+    const label = doc.data?.sidebar?.label;
+
+    if (hidden === true) continue;
+
+    const slug = doc.slug || doc.id || "";
+    const parts = slug.split('/');
+    let current = root;
+
+    if (slug === "index" || slug === "") {
+      root.title = label || dataTitle || root.title;
+      if (order !== undefined) root.order = order;
+      continue;
+    }
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      const isIndexFile = part === 'index';
+      const isLastPart = i === parts.length - 1;
+
+      if (isIndexFile) {
+        current.title = label || dataTitle || current.title;
+        current.href = `${basePath}/${slug.replace(/\/index$/, "")}`.replace(/\/+/g, '/').replace(/\/$/, "");
+        if (order !== undefined) current.order = order;
+        break; 
+      }
+
+      if (!current.children[part]) {
+        current.children[part] = {
+          name: part,
+          title: formatTitle(part),
+          href: null,
+          children: {},
+          isOpen: false,
+          isActive: false,
+          order: Infinity, 
+        };
+      }
+
+      if (isLastPart) {
+        current.children[part].title = label || dataTitle || formatTitle(part);
+        const cleanSlug = slug.replace(/\.(md|mdx)$/i, '');
+        current.children[part].href = `${basePath}/${cleanSlug}`.replace(/\/+/g, '/').replace(/\/$/, "");
+        if (order !== undefined) current.children[part].order = order;
+      }
+
+      current = current.children[part];
+    }
+  }
+  return root;
+}
+
+const treeRoot = buildTree(docs);
+
+function markActiveAndOpen(node: any): boolean {
+  const isDirectMatch = node.href != null && normalizeForMatch(node.href) === safeCurrentPath;
+  
+  node.isCurrentPage = isDirectMatch;
+
+  let hasActiveChild = false;
+  for (const key in node.children) {
+    if (markActiveAndOpen(node.children[key])) {
+      hasActiveChild = true;
+    }
+  }
+
+  node.isActive = isDirectMatch || hasActiveChild;
+  node.isOpen = node.isActive; 
+  
+  return node.isActive;
+}
+
+markActiveAndOpen(treeRoot);
+
+// Sorting logic
+function getSortedArray(nodeChildren: Record<string, any>) {
+  const childrenArray = Object.values(nodeChildren);
+
+  childrenArray.sort((a, b) => {
+    const valA = a.order === undefined ? Infinity : a.order;
+    const valB = b.order === undefined ? Infinity : b.order;
+    
+    if (valA !== valB) return valA - valB;
+    return a.title.localeCompare(b.title);
+  });
+
+  childrenArray.forEach(child => {
+    if (child.children && Object.keys(child.children).length > 0) {
+      child.sortedChildren = getSortedArray(child.children);
+    } else {
+      child.sortedChildren = [];
+    }
+  });
+
+  return childrenArray;
+}
+
+const treeArray = getSortedArray(treeRoot.children);
+---
+
+<aside class="w-64 flex-shrink-0 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 pt-2 pr-2 pl-0">
+  <nav class="flex flex-col gap-1">
+    {treeArray.map(node => (
+      <SidebarItem node={node} />
+    ))}
+  </nav>
+</aside>

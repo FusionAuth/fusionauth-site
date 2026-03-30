@@ -157,12 +157,12 @@ import Icon from 'src/components/icon/Icon.astro';
 
 Make descriptions full sentences. They must end in a period. Titles, on the other hand, should not end with punctuation.
 
-If you want to order pages within a section, use `navOrder`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
+If you want to order pages within a section, use `order`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
 
 Pages are ordered in the nav within a section in descending order. 
 
 ```
-navorder: 0
+order: 0
 ```
 
 If you want to sort a category to the top of its section, you need to add it to `astro/src/tools/docs/categoriesToFloatToTop.json`.

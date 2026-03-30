@@ -1,12 +1,6 @@
 ---
 title: Migrate From Akamai
 description: How to migrate your users from Akamai to FusionAuth.
-section: lifecycle
-subcategory: migrate users
-tertcategory: provider specific
-prerequisites: Docker
-technology: Akamai
-technologyLower: akamai
 ---
 
 import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
@@ -28,11 +22,9 @@ export const migration_source_name = 'Akamai';
 export const migration_source_dir = 'akamai';
 export const script_supports_social_logins = false;
 
-## Overview
+This document will help you migrate users from Akamai to FusionAuth.
 
-This document will help you migrate users from {frontmatter.technology} to FusionAuth.
-
-This guide is a low-level, technical tutorial focusing on calling APIs and preparing data when migrating users from {frontmatter.technology}. To understand how to plan a migration at a higher level, please read the [FusionAuth migration guide](/docs/lifecycle/migrate-users/).
+This guide is a low-level, technical tutorial focusing on calling APIs and preparing data when migrating users from Akamai. To understand how to plan a migration at a higher level, please read the [FusionAuth migration guide](/docs/lifecycle/migrate-users/).
 
 ## Prerequisites
 
@@ -40,14 +32,14 @@ To follow this tutorial, you need [Docker](https://docs.docker.com/get-docker).
 
 ## Planning Considerations
 
-{frontmatter.technology} (previously Janrain) and FusionAuth have [different words for the same concepts](https://identitydocs.akamai.com/getting-started/api-login/step1/page1-deliverables):
-- Applications (for example, a website or mobile app) are called applications in FusionAuth and properties in {frontmatter.technology}. In {frontmatter.technology}, properties can have multiple clients for authentication (such as a login client and an administration client), which are used as API keys (called client Ids and secrets).
-- User records are called users in FusionAuth and called profiles or entities in {frontmatter.technology}. Profiles are stored in an entity type, also called a schema. The default schema is called user.
-- In {frontmatter.technology}, a registration flow is called a form. Every application has a flow called `standard` to start with. Flows will be used to create example users for export testing in this guide.
+Akamai (previously Janrain) and FusionAuth have [different words for the same concepts](https://identitydocs.akamai.com/getting-started/api-login/step1/page1-deliverables):
+- Applications (for example, a website or mobile app) are called applications in FusionAuth and properties in Akamai. In Akamai, properties can have multiple clients for authentication (such as a login client and an administration client), which are used as API keys (called client Ids and secrets).
+- User records are called users in FusionAuth and called profiles or entities in Akamai. Profiles are stored in an entity type, also called a schema. The default schema is called user.
+- In Akamai, a registration flow is called a form. Every application has a flow called `standard` to start with. Flows will be used to create example users for export testing in this guide.
 
 ### Obtaining User Data
 
-{frontmatter.technology} and FusionAuth both support links to images (e.g. user profile photos), stored as URLs to files hosted on cloud storage. After migration, check that your photo storage host is still usable.
+Akamai and FusionAuth both support links to images (e.g. user profile photos), stored as URLs to files hosted on cloud storage. After migration, check that your photo storage host is still usable.
 
 When you are migrating from another provider, you can do a bulk or slow migration.
 
@@ -59,21 +51,21 @@ When you are migrating from another provider, you can do a bulk or slow migratio
 
 <GradualMigration />
 
-#### Migration Options in {frontmatter.technology}
+#### Migration Options in Akamai
 
 Here is how a bulk migration process might work:
 
-1. Export all user data from the {frontmatter.technology} API.
+1. Export all user data from the Akamai API.
 2. Convert the user data into FusionAuth-compatible objects and import the data into FusionAuth.
 
-Instead, if you are willing to perform a slow migration, also known as a gradual or online migration, you can allow your users to log in to {frontmatter.technology} via FusionAuth, and have FusionAuth transparently migrate their data. Slow migrations in FusionAuth use [Connectors](/docs/lifecycle/migrate-users/connectors), a paid feature.
+Instead, if you are willing to perform a slow migration, also known as a gradual or online migration, you can allow your users to log in to Akamai via FusionAuth, and have FusionAuth transparently migrate their data. Slow migrations in FusionAuth use [Connectors](/docs/lifecycle/migrate-users/connectors), a paid feature.
 
 A slow migration would look like this:
 
-1. Export all user data from the {frontmatter.technology} API.
+1. Export all user data from the Akamai API.
 2. Configure a FusionAuth Connector to call an intermediary web service whenever a user logs in.
-3. Write the intermediary web service that will call {frontmatter.technology} with the user's credentials and save the password to FusionAuth.
-4. Once you have migrated a large enough portion of your users, you can switch off the Connector and cancel your {frontmatter.technology} subscription.
+3. Write the intermediary web service that will call Akamai with the user's credentials and save the password to FusionAuth.
+4. Once you have migrated a large enough portion of your users, you can switch off the Connector and cancel your Akamai subscription.
 
 This tutorial will cover all the bulk- and slow-migration steps.
 
@@ -91,8 +83,8 @@ This tutorial will cover all the bulk- and slow-migration steps.
 
 <OtherEntitiesIntro migration_source_name={migration_source_name} other_migrated_entities="connections or roles" />
 
-* In {frontmatter.technology}, a role is a string that can be assigned to a user. FusionAuth has [roles](/docs/get-started/core-concepts/roles) that are configured on an application-by-application basis and made available in a token after successful authentication.
-* With {frontmatter.technology}, you can use schemas to separate users to manage access to clients. FusionAuth has [Groups](/docs/get-started/core-concepts/groups).
+* In Akamai, a role is a string that can be assigned to a user. FusionAuth has [roles](/docs/get-started/core-concepts/roles) that are configured on an application-by-application basis and made available in a token after successful authentication.
+* With Akamai, you can use schemas to separate users to manage access to clients. FusionAuth has [Groups](/docs/get-started/core-concepts/groups).
 
 ### Identifiers
 
@@ -100,37 +92,37 @@ When creating an object with the FusionAuth API, you can specify the Id. It must
 
 This works for users, applications, and tenants, among others.
 
-### {frontmatter.technology} User Structure
+### Akamai User Structure
 
-{frontmatter.technology} has customers (that's you) called Registration Applications. As mentioned earlier, a Registration Application has properties (which are Applications in FusionAuth terminology). A Registration Application also has schemas, which contain users.
+Akamai has customers (that's you) called Registration Applications. As mentioned earlier, a Registration Application has properties (which are Applications in FusionAuth terminology). A Registration Application also has schemas, which contain users.
 
 In FusionAuth, an instance can contain multiple applications and multiple users. Users can be organized into groups, but don't need to be. Users can belong to multiple applications.
 
-Permissions work slightly differently in the two systems. FusionAuth allows the creation of roles and those roles can be assigned to users. However, {frontmatter.technology} has only roles, which are strings.
+Permissions work slightly differently in the two systems. FusionAuth allows the creation of roles and those roles can be assigned to users. However, Akamai has only roles, which are strings.
 
 ## Bulk Migration
 
-This section walks you through migrating all users from {frontmatter.technology} to FusionAuth in one batch.
+This section walks you through migrating all users from Akamai to FusionAuth in one batch.
 
 ### Export User Data From Akamai
 
-In this section, you export your {frontmatter.technology} users with the API.
+In this section, you export your Akamai users with the API.
 
 - Clone or download the GitHub repository at https://github.com/fusionauth/fusionauth-import-scripts.
 
-This repository has a directory called {frontmatter.technologyLower}. It contains JavaScript files to import users, as well as sample data.
+This repository has a directory called `akamai`. It contains JavaScript files to import users, as well as sample data.
 
 - Clone or download the GitHub repository at https://github.com/fusionauth/fusionauth-example-docker-compose.
 
 This repository has a Docker compose file to start a local instance of FusionAuth.
 
-- Log in to your {frontmatter.technology} account at https://console.janrain.com.
+- Log in to your Akamai account at https://console.janrain.com.
 - If you don't have existing users, or wish to create ones purely for testing, browse to <Breadcrumb>MANAGE PROFILES -> user</Breadcrumb> and click <InlineUIElement>CREATE PROFILE</InlineUIElement> to add some users.
 
-  ![Add an {frontmatter.technology} user](/img/docs/lifecycle/migrate-users/provider-specific/akamai/addUser.png)
+  ![Add an Akamai user](/img/docs/lifecycle/migrate-users/provider-specific/akamai/addUser.png)
 
 <Aside type="note">
-{frontmatter.technology} stores users in [schemas](https://techdocs.akamai.com/identity-cloud/docs/manage-user-profile-schemas-in-console). The default schema is called `user`, but you might have another one, like `employee`. If so, change references to `user` in any calls to {frontmatter.technology} for the rest of this guide.
+Akamai stores users in [schemas](https://techdocs.akamai.com/identity-cloud/docs/manage-user-profile-schemas-in-console). The default schema is called `user`, but you might have another one, like `employee`. If so, change references to `user` in any calls to Akamai for the rest of this guide.
 </Aside>
 
 If you want to add a lot of users, you can create each user with the API call below instead of using the console. You need to replace the parameters in the request with your own URL, client Id, and flow version. You can find these in the console under <Breadcrumb>MANAGE PROPERTIES</Breadcrumb>.
@@ -160,7 +152,7 @@ You can export your own schema from the <Breadcrumb>MANAGE SCHEMAS</Breadcrumb> 
 
 ![Export user schema from the web interface](/img/docs/lifecycle/migrate-users/provider-specific/akamai/exportSchema.png)
 
-While you can export users from the {frontmatter.technology} web interface, it [does not export all properties](https://techdocs.akamai.com/identity-cloud/docs/why-you-only-get-back-a-limited-set-of-attributes-when-you-export-your-user-profiles) unless you [modify the search setting](https://techdocs.akamai.com/identity-cloud/docs/modify-user-profile-search-display-attributes). The problem is the setting documentation does not explain how to get lists of values for a user – like addresses and clients. It is therefore simpler to [use the API to get all information for a user](https://techdocs.akamai.com/identity-cloud/docs/search-for-user-profiles#example-1-return-all-the-users-in-an-entity-type), and this is what you'll do in this tutorial.
+While you can export users from the Akamai web interface, it [does not export all properties](https://techdocs.akamai.com/identity-cloud/docs/why-you-only-get-back-a-limited-set-of-attributes-when-you-export-your-user-profiles) unless you [modify the search setting](https://techdocs.akamai.com/identity-cloud/docs/modify-user-profile-search-display-attributes). The problem is the setting documentation does not explain how to get lists of values for a user – like addresses and clients. It is therefore simpler to [use the API to get all information for a user](https://techdocs.akamai.com/identity-cloud/docs/search-for-user-profiles#example-1-return-all-the-users-in-an-entity-type), and this is what you'll do in this tutorial.
 
 To access the API, you need an API key.
 
@@ -175,11 +167,11 @@ To access the API, you need an API key.
 
 ![API key values](/img/docs/lifecycle/migrate-users/provider-specific/akamai/property.png)
 
-You're now done working with the {frontmatter.technology} console and have sample user data to test an export.
+You're now done working with the Akamai console and have sample user data to test an export.
 
 ### Export The Users With The API
 
-Open a terminal and run the code below to extract all your {frontmatter.technology} users to the `users.json` file. Replace the start of the URL with your own, which you can get on the <Breadcrumb>MANAGE APPLICATION</Breadcrumb> page, and use your client Id and secret from your property.
+Open a terminal and run the code below to extract all your Akamai users to the `users.json` file. Replace the start of the URL with your own, which you can get on the <Breadcrumb>MANAGE APPLICATION</Breadcrumb> page, and use your client Id and secret from your property.
 
 ```sh
 cd fusionauth-import-scripts/akamai/src
@@ -262,7 +254,7 @@ Note that both FusionAuth and the JavaScript files in this guide must use the sa
 
 ### Prepare Users For Import To FusionAuth
 
-The next script, `src/2_convertUserToFaUser.mjs`, is the most complex. It maps the fields of `users.json` to FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped. For more information on the FusionAuth fields, see the [import API documentation](/docs/apis/users#request-6). For more information on the {frontmatter.technology} fields, see the user schema file in the `exampleData/1_akamaiExport/userSchema.js`.
+The next script, `src/2_convertUserToFaUser.mjs`, is the most complex. It maps the fields of `users.json` to FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped. For more information on the FusionAuth fields, see the [import API documentation](/docs/apis/users#request-6). For more information on the Akamai fields, see the user schema file in the `exampleData/1_akamaiExport/userSchema.js`.
 
 The script will output users that are ready for import to FusionAuth to the `faUsers.json` file.
 
@@ -272,15 +264,15 @@ To run the script, use the command below in the terminal you have open in the `s
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" node:24.0.1-alpine3.21 sh -c  "node 2_convertUserToFaUser.mjs";
 ```
 
-The script uses `stream-json`, a JSON library that can incrementally read massive files with millions of users. It opens the `users.json` file for reading in the line `new Chain([fs.createReadStream(inputFilename ), Pick.withParser({filter: 'results'}), new StreamArray()]);`, and ignores top-level properties other than the `results` array of {frontmatter.technology} users. For more information, see the [`stream-json` GitHub repository](https://github.com/uhop/stream-json).
+The script uses `stream-json`, a JSON library that can incrementally read massive files with millions of users. It opens the `users.json` file for reading in the line `new Chain([fs.createReadStream(inputFilename ), Pick.withParser({filter: 'results'}), new StreamArray()]);`, and ignores top-level properties other than the `results` array of Akamai users. For more information, see the [`stream-json` GitHub repository](https://github.com/uhop/stream-json).
 
-The `processUsers()` function calls `getFaUserFromUser()` to map the {frontmatter.technology} user to FusionAuth, and then saves the user to `faUsers.json`.
+The `processUsers()` function calls `getFaUserFromUser()` to map the Akamai user to FusionAuth, and then saves the user to `faUsers.json`.
 
 The `getFaUserFromUser()` function does a few things:
 
-- Maps as many matching fields from {frontmatter.technology} to FusionAuth as possible.
-- Extracts the bcrypt password strength (10), the salt, and hash from the {frontmatter.technology} password field.
-- Stores all {frontmatter.technology} user details that don't map to FusionAuth in the JSON `data` field.
+- Maps as many matching fields from Akamai to FusionAuth as possible.
+- Extracts the bcrypt password strength (10), the salt, and hash from the Akamai password field.
+- Stores all Akamai user details that don't map to FusionAuth in the JSON `data` field.
 - Adds FusionAuth User Registrations (the link between a FusionAuth User and an Application) to users.
 
 bcrypt stores all password components in one field, separated by `$`. However, FusionAuth requires these values to be provided as separate fields during import.
@@ -325,12 +317,12 @@ If you don't need to do this, please skip to the [What To Do Next](#what-to-do-n
 
 ### Create A User With A Password
 
-To test the slow migration, you need a user in {frontmatter.technology} with a password you know. To create one, follow the instructions at the top of the [Export User Data From Akamai](#export-user-data-from-akamai) section in the bulk migration tutorial above.
+To test the slow migration, you need a user in Akamai with a password you know. To create one, follow the instructions at the top of the [Export User Data From Akamai](#export-user-data-from-akamai) section in the bulk migration tutorial above.
 
 You can use either the console or the API request. The rest of this tutorial assumes you created a user called `janesmith@example.com` with the password `p@ssw0rd3xamp!e`.
 
 <Aside type="caution">
-If you did not complete the bulk migration tutorial earlier, you need to complete the first steps, which download the Git repository with the export scripts, export your {frontmatter.technology} users, and import their roles to FusionAuth. Follow the instructions from the [Export User Data From Akamai](#export-user-data-from-akamai) section to the [Create Roles For Your Users](#create-roles-for-your-users) section.
+If you did not complete the bulk migration tutorial earlier, you need to complete the first steps, which download the Git repository with the export scripts, export your Akamai users, and import their roles to FusionAuth. Follow the instructions from the [Export User Data From Akamai](#export-user-data-from-akamai) section to the [Create Roles For Your Users](#create-roles-for-your-users) section.
 
 If you did complete the bulk import tutorial, you need to delete the test user Jane from FusionAuth, so that you can import her again in this section. Browse to http://localhost:9011/admin/user, select the user Jane, and delete her.
 </Aside>
@@ -370,13 +362,13 @@ Any HTTP response other than code 200 is an error. Even if the response is 200, 
 {"stat":"error", "code":200, "error_description":"no such form 'sign'", "error":"invalid_argument", "request_id":"yc4qc2u8qsz27mkb"}
 ```
 
-### Configure A Connector Between FusionAuth And {frontmatter.technology}
+### Configure A Connector Between FusionAuth And Akamai
 
 <PremiumPlanBlurb />
 
 If you haven't done so already, activate your FusionAuth license by navigating to <Breadcrumb>Reactor</Breadcrumb> on the sidebar of the admin UI.
 
-Now configure a FusionAuth Connector to point to an intermediary web service between FusionAuth and {frontmatter.technology}. The web service will expose an API endpoint that can be called from a FusionAuth Connector to retrieve the user's details to be imported into FusionAuth.
+Now configure a FusionAuth Connector to point to an intermediary web service between FusionAuth and Akamai. The web service will expose an API endpoint that can be called from a FusionAuth Connector to retrieve the user's details to be imported into FusionAuth.
 
 <Aside type="note">
 For a general overview of Connectors, please see this [video](https://www.youtube.com/watch?v=ks-ppMH6WXw).
@@ -410,7 +402,7 @@ Now browse to <Breadcrumb>Tenants</Breadcrumb> and do the following.
 - Click <InlineUIElement>Add policy</InlineUIElement>.
 - Select `AkamaiConnector`.
 - Leave <InlineField>Domains</InlineField> with the value `*` to apply this Connector to every user.
-- Enable <InlineUIElement>Migrate user</InlineUIElement> so that FusionAuth will no longer use {frontmatter.technology} for subsequent logins of the same user.
+- Enable <InlineUIElement>Migrate user</InlineUIElement> so that FusionAuth will no longer use Akamai for subsequent logins of the same user.
 - Click <InlineUIElement>Submit</InlineUIElement>.
 
 ![Connector policy details in FusionAuth](/img/docs/lifecycle/migrate-users/provider-specific/akamai/connector-policy.png)
@@ -426,7 +418,7 @@ Save the changes by clicking the save icon at the top right.
 
 ### Build An Authentication Intermediary Web Service
 
-The next step is to write the small service that forwards the user's login Id and password to {frontmatter.technology} and returns the user details that will be saved to FusionAuth if the login is successful.
+The next step is to write the small service that forwards the user's login Id and password to Akamai and returns the user details that will be saved to FusionAuth if the login is successful.
 
 <Aside type='note'>
  Documentation on the inputs and outputs a Connector expects is [here](/docs/lifecycle/migrate-users/connectors/generic-connector).
@@ -436,17 +428,17 @@ The Connector makes a POST request to the URL you specify, and expects a JSON ob
 
 An example web service is in `akamai/src/4_connectorService.mjs`.
 
-This JavaScript service has an Express HTTP POST handler that gets the login Id and password from the request and forwards them to {frontmatter.technology} by calling the following function.
+This JavaScript service has an Express HTTP POST handler that gets the login Id and password from the request and forwards them to Akamai by calling the following function.
 
 ```js
 await isLoginValid(email, request.body.password);
 ```
 
-- Edit the `isLoginValid` function to set your personal {frontmatter.technology} details to match the curl command from the previous section, such as `client_id` and `flow_version`.
+- Edit the `isLoginValid` function to set your personal Akamai details to match the curl command from the previous section, such as `client_id` and `flow_version`.
 
 A 404 is returned if the user login credentials are not valid.
 
-If the credentials are valid, the user's details returned from {frontmatter.technology} are converted to a FusionAuth user in the function `getFaUserFromUser(user)`. This is the same function that was used in the script `2_convertUserToFaUser.mjs`, except the password is in plaintext, not a hash.
+If the credentials are valid, the user's details returned from Akamai are converted to a FusionAuth user in the function `getFaUserFromUser(user)`. This is the same function that was used in the script `2_convertUserToFaUser.mjs`, except the password is in plaintext, not a hash.
 
 - Run the service with the command below.
 
@@ -474,7 +466,7 @@ Log in with the username and password for the user you created earlier, such as 
 
 If you log out and log in again with the same user, you'll notice that `Request received` will not show in the web service console. This is because FusionAuth is now using its own authentication service, as the original user password has been hashed and saved in the FusionAuth database.
 
-The user has been successfully migrated, and {frontmatter.technology} is no longer needed for them.
+The user has been successfully migrated, and Akamai is no longer needed for them.
 
 #### Debug The Connector Service
 
@@ -496,7 +488,7 @@ Learn more about [general slow migration considerations](/docs/lifecycle/migrate
 
 ## What To Do Next
 
-Check what roles and features are used in {frontmatter.technology} for your real application and create similar permissions and roles in FusionAuth. Update the sample user conversion script to map the role names from {frontmatter.technology} to the roles in FusionAuth.
+Check what roles and features are used in Akamai for your real application and create similar permissions and roles in FusionAuth. Update the sample user conversion script to map the role names from Akamai to the roles in FusionAuth.
 
 <WhatNext />
 
