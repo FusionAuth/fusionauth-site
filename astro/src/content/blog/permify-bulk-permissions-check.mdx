@@ -8,6 +8,7 @@ categories: Tutorial
 tags: fine-grained authorization, permify, fga, bulk check, permissions
 excerpt_separator: "{/* more */}"
 ---
+import {RemoteCode} from '@fusionauth/astro-components';
 
 In [FusionAuth FGA by Permify](/docs/extend/fine-grained-authorization/fusionauth-fga), you can run individual permission checks quickly. Each check takes about [15 milliseconds (ms)](https://docs.permify.co/api-reference/permission/check-api#latency-&-performance), which is as fast as a single frame on a 60 Hz monitor. But if your app needs to display a user's permissions to 30 documents on a dashboard, the resulting half-second delay is noticeable and annoying.
 
@@ -77,36 +78,7 @@ docker run --rm --name="permify" -p 3476:3476 -p 3478:3478 ghcr.io/permify/permi
 
 - In another terminal, create the schema and data in Permify using the following command:
 
-```sh
-# write schema - https://docs.permify.co/api-reference/schema/write-schema
-schemaVersion=$(curl --location --request POST 'localhost:3476/v1/tenants/t1/schemas/write' \
-  --header 'Content-Type: application/json' \
-  --data-raw '{
-  "schema": "entity user {\n  relation hasDoctor @user\n  relation hasGuardian @user\n  relation isChild @user\n}\n entity record {\n  relation owner @user\n  relation consultant @user\n  action view = (owner not owner.isChild) or owner.hasGuardian or owner.hasDoctor or consultant\n  action edit = owner.hasDoctor\n}"
-}' | jq -r '.schema_version')
-
-# write data - https://docs.permify.co/api-reference/data/write-data
-curl --location --request POST 'localhost:3476/v1/tenants/t1/data/write' \
-  --header 'Content-Type: application/json' \
-  --data-raw '{
-  "metadata": {"schema_version":"'"$schemaVersion"'"},
-  "tuples":[
-    {"entity":{"type":"user","id":"Carol"},"relation":"hasDoctor","subject":{"type":"user","id":"Alice"}},
-    {"entity":{"type":"user","id":"Bob"},"relation":"isChild","subject":{"type":"user","id":"Bob"}},
-    {"entity":{"type":"user","id":"Bob"},"relation":"hasGuardian","subject":{"type":"user","id":"Alice"}},
-    {"entity":{"type":"user","id":"Dan"},"relation":"hasDoctor","subject":{"type":"user","id":"Eve"}},
-    {"entity":{"type":"user","id":"Frank"},"relation":"hasDoctor","subject":{"type":"user","id":"Eve"}},
-
-    {"entity":{"type":"record","id":"AliceRecord"},"relation":"owner","subject":{"type":"user", "id":"Alice"}},
-    {"entity":{"type":"record","id":"BobRecord"},"relation":"owner","subject":{"type":"user", "id":"Bob"}},
-    {"entity":{"type":"record","id":"CarolRecord"},"relation":"owner","subject":{"type":"user", "id":"Carol"}},
-    {"entity":{"type":"record","id":"FrankRecord"},"relation":"owner","subject":{"type":"user", "id":"Frank"}},
-    {"entity":{"type":"record","id":"FrankRecord"},"relation":"consultant","subject":{"type":"user", "id":"Alice"}},
-    {"entity":{"type":"record","id":"EveRecord"},"relation":"owner","subject":{"type":"user", "id":"Eve"}},
-    {"entity":{"type":"record","id":"DanRecord"},"relation":"owner","subject":{"type":"user", "id":"Dan"}}
-  ]
-}'
-```
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-example-permify-bulk-check/main/setup.sh" lang="sh" />
 
 If you get a connection error when running the command above, ensure your Permify Docker image is at least version 1.6.6.
 
@@ -118,42 +90,7 @@ A hospital administrator wants to check that both doctors (Alice and Eve) have t
 
 Writing a permissions-verifying app is simple with a bulk permissions check. In one call to Permify, you can check the `view` and `edit` permissions to all records for both doctors. The following call uses curl in the terminal:
 
-```sh
-curl --location --request POST 'localhost:3476/v1/tenants/t1/permissions/bulk-check' \
---header 'Content-Type: application/json' \
---data-raw '{
-	"metadata": {	"depth": 20 },
-	"items": [
-		{ "entity": { "type": "record", "id": "AliceRecord" }, "permission": "view", "subject": { "type": "user", "id": "Alice" } },
-		{ "entity": { "type": "record", "id": "BobRecord" },   "permission": "view", "subject": { "type": "user", "id": "Alice" } },
-		{ "entity": { "type": "record", "id": "CarolRecord" }, "permission": "view", "subject": { "type": "user", "id": "Alice" } },
-		{ "entity": { "type": "record", "id": "FrankRecord" }, "permission": "view", "subject": { "type": "user", "id": "Alice" } },
-		{ "entity": { "type": "record", "id": "EveRecord" },   "permission": "view", "subject": { "type": "user", "id": "Alice" } },
-		{ "entity": { "type": "record", "id": "DanRecord" },   "permission": "view", "subject": { "type": "user", "id": "Alice" } },
-
-		{ "entity": { "type": "record", "id": "AliceRecord" }, "permission": "view", "subject": { "type": "user", "id": "Eve" } },
-		{ "entity": { "type": "record", "id": "BobRecord" },   "permission": "view", "subject": { "type": "user", "id": "Eve" } },
-		{ "entity": { "type": "record", "id": "CarolRecord" }, "permission": "view", "subject": { "type": "user", "id": "Eve" } },
-		{ "entity": { "type": "record", "id": "FrankRecord" }, "permission": "view", "subject": { "type": "user", "id": "Eve" } },
-		{ "entity": { "type": "record", "id": "EveRecord" },   "permission": "view", "subject": { "type": "user", "id": "Eve" } },
-		{ "entity": { "type": "record", "id": "DanRecord" },   "permission": "view", "subject": { "type": "user", "id": "Eve" } },
-
-  	{ "entity": { "type": "record", "id": "AliceRecord" }, "permission": "edit", "subject": { "type": "user", "id": "Alice" } },
-		{ "entity": { "type": "record", "id": "BobRecord" },   "permission": "edit", "subject": { "type": "user", "id": "Alice" } },
-		{ "entity": { "type": "record", "id": "CarolRecord" }, "permission": "edit", "subject": { "type": "user", "id": "Alice" } },
-		{ "entity": { "type": "record", "id": "FrankRecord" }, "permission": "edit", "subject": { "type": "user", "id": "Alice" } },
-		{ "entity": { "type": "record", "id": "EveRecord" },   "permission": "edit", "subject": { "type": "user", "id": "Alice" } },
-		{ "entity": { "type": "record", "id": "DanRecord" },   "permission": "edit", "subject": { "type": "user", "id": "Alice" } },
-
-		{ "entity": { "type": "record", "id": "AliceRecord" }, "permission": "edit", "subject": { "type": "user", "id": "Eve" } },
-		{ "entity": { "type": "record", "id": "BobRecord" },   "permission": "edit", "subject": { "type": "user", "id": "Eve" } },
-		{ "entity": { "type": "record", "id": "CarolRecord" }, "permission": "edit", "subject": { "type": "user", "id": "Eve" } },
-		{ "entity": { "type": "record", "id": "FrankRecord" }, "permission": "edit", "subject": { "type": "user", "id": "Eve" } },
-		{ "entity": { "type": "record", "id": "EveRecord" },   "permission": "edit", "subject": { "type": "user", "id": "Eve" } },
-		{ "entity": { "type": "record", "id": "DanRecord" },   "permission": "edit", "subject": { "type": "user", "id": "Eve" } }
-	]
-}' | jq
-```
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-example-permify-bulk-check/main/bulk-check.sh" lang="sh" />
 
 The `items` array contains a list of objects in the form: the resource, the permission, and the requester. For example: Alice's medical record, the view action, and Alice the user.
 
@@ -215,16 +152,9 @@ Bulk permission checks are useful when you need to query many permissions at onc
 
 In simple cases, even when checking multiple permissions for a single user, the older API queries may be more useful than bulk permissions. For example, if you want a list of all the records Alice can view, it's not practical to list all the records in the database in your query. Rather run the appropriate [lookup call](https://docs.permify.co/api-reference/permission/lookup-entity):
 
-```sh
-curl --location --request POST 'localhost:3476/v1/tenants/t1/permissions/lookup-entity' \
---header 'Content-Type: application/json' \
---data-raw '{
-  "metadata": { "depth": 20 },
-  "entity_type": "record",
-  "permission": "view",
-  "subject": { "type": "user", "id": "AliceMotherDoctor" }
-}'
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-example-permify-bulk-check/main/lookup-entity.sh" lang="sh" />
 
+```
 # Result:
 # {"entity_ids":["AliceChildRecord","AliceConsultingPatientRecord","AliceMotherDoctorRecord","AlicePatientRecord"],"continuous_token":""}
 ```
