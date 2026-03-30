@@ -1,7 +1,9 @@
 import { getEntry } from 'astro:content';
 import { getCollection } from 'astro:content';
 
+
 export const getReleaseNoteRssItems = async () => {
+
   const archive = await getEntry('docs', 'release-notes/archive');
   const lines = archive.body.split("\n");
   const items = lines.map(line => line.match(/ReleaseNoteHeading version=['"]([^('|")]*)['"] releaseDate=['"]([^('|")]*)['"]/))

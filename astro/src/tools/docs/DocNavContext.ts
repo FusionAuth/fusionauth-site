@@ -3,7 +3,7 @@ export interface DocNavEntry  {
   sideNavTitle?: string;
   href: string;
   description?: string;
-  navOrder?: number;
+  order?: number;
 }
 export interface DocNavContext {
   category: Category;
