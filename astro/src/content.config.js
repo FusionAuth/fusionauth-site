@@ -15,6 +15,11 @@ const releasesCollection = defineCollection({
 })
 
 const articlesCollection = defineCollection({
+  loader: glob({
+    pattern: ["**/*.mdx", "!**/_*.mdx", "!**/_*/**/*.mdx"],
+    base: "./src/content/articles",
+    generateId: ({ entry }) => `${entry.replace(/\.mdx$/, '')}`,
+  }),
   schema: z.object({
     author: z.string().optional(),
     canonicalUrl: z.string().optional(),
