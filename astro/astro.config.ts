@@ -86,7 +86,7 @@ const config = defineConfig({
       failOnBrokenLinks: false,
       verbose: false,
       exclude: [ //destination URLs to exclude from checking -- NOT files!
-        '/platform/', '/cdn/', '/dev-tools/', '/tech-papers/', '/docs/quickstarts/', '/feature/', '/features/', '/webinar/',
+        '/platform/', '/cdn/', '/dev-tools/', '/tech-papers/', '/feature/', '/features/', '/webinar/',
         '/community/', '/forum/', '/compare/', '/industry/', '/license/', '/partners/', '/video/', '/event/', '/ebooks/', '/glossary/', '/guides/',
         'buildvsbuy', 'auth0-migration', 'community', 'community/forum', 'aws-reinvent22', 'aws-reinvent23', 'pricing', 'download', 'contact',
         'get-started', 'passwordless', 'direct-download', 'jobs', 'careers', 'password-history', 'partners-form', 'partners',
