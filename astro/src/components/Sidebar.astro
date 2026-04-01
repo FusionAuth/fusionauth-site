@@ -1,14 +1,13 @@
 ---
-import { getCollection } from 'astro:content';
 import SidebarItem from './SidebarItem.astro';
 
 interface Props {
   frontmatter: Record<string, any>;
+  collection: CollectionEntry[];
+  basePath: String;
 }
 
-const { frontmatter } = Astro.props;
-const docs = await getCollection('docs');
-const basePath = '/docs'; 
+const { frontmatter, collection, basePath } = Astro.props;
 
 // Strips everything environment-specific so we only compare the core slug.
 const normalizeForMatch = (p: string | null) => {
@@ -31,21 +30,21 @@ const safeCurrentPath = normalizeForMatch(Astro.url.pathname);
 const formatTitle = (str: string) =>
   str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
-function buildTree(docsArray: any[]) {
+function buildTree(pages: CollectionEntry[]) {
   const root: any = { 
     children: {}, 
-    title: 'Documentation', 
+    title: 'Documentation',
     href: basePath,
     order: -1 
   };
 
-  for (const doc of docsArray) {
-    const { order, hidden, title: dataTitle } = doc.data;
-    const label = doc.data?.sidebar?.label;
+  for (const page of pages) {
+    const { order, hidden, title: dataTitle } = page.data;
+    const label = page.data?.sidebar?.label;
 
     if (hidden === true) continue;
 
-    const slug = doc.slug || doc.id || "";
+    const slug = page.slug || page.id || "";
     const parts = slug.split('/');
     let current = root;
 
@@ -92,7 +91,7 @@ function buildTree(docsArray: any[]) {
   return root;
 }
 
-const treeRoot = buildTree(docs);
+const treeRoot = buildTree(collection);
 
 function markActiveAndOpen(node: any): boolean {
   const isDirectMatch = node.href != null && normalizeForMatch(node.href) === safeCurrentPath;
