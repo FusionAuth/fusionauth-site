@@ -1,0 +1,57 @@
+---
+import ClickableCard from "/src/components/ClickableCard.astro";
+import { getCollection } from "astro:content";
+
+let { collection, currentPathOverride } = Astro.props;
+if (!collection)
+  collection = "docs";
+const pages = await getCollection(collection);
+
+let currentPath = Astro.url.pathname.replace(/^\/|\/$/g, "").replace(".html", "");
+
+if (currentPathOverride)
+  currentPath = currentPathOverride.replace(/^\/|\/$/g, "");
+
+const prefix = currentPath.startsWith(`${collection}/`) 
+  ? currentPath.replace(`${collection}/`, "") 
+  : currentPath === collection 
+    ? "" 
+    : currentPath;
+
+const list = pages.filter((page) => {
+  if (page.data.excludeFromNav) return false;
+
+  const identifier = page.id;
+  if (!identifier) return false;
+
+  // index pages shouldn't show up under themselves!
+  if (`${collection}/${identifier}` == `${currentPath}/index`) return false;
+
+  // handle undefined (root) gracefully
+  if (!prefix) {
+    return !identifier.includes("/");
+  }
+
+  const isChild = identifier.startsWith(`${prefix}/`);
+
+  const remainingPath = identifier.substring(prefix.length + 1);
+  
+  let cleanRemainingPath = remainingPath.split('.')[0]; 
+  const isDirectChild = remainingPath.length > 0 && !cleanRemainingPath.includes("/") ||
+                        cleanRemainingPath.endsWith("index");
+
+  return isChild && isDirectChild;
+});
+---
+
+<div class="gap-6 mt-6 grid grid-cols-1 not-prose lg:grid-cols-2" xmlns="http://www.w3.org/1999/xhtml">
+  {list.map(page => (
+    <ClickableCard 
+      href={`/${collection}/${page.id.split('.')[0].replace("/index", "/")}`}
+      title={page.data.title}
+      description={page.data.description}
+      icon={page.data.icon ? page.data.icon : null}
+      darkIcon={page.data.darkIcon}
+    />
+  ))}
+</div>

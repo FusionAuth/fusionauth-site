@@ -1,18 +1,31 @@
 ---
-import { getCollection } from "astro:content";
-import Layout from "../../layouts/Article.astro";
+import { getCollection, render } from "astro:content";
+import Layout from "/src/layouts/Article.astro";
 
 export async function getStaticPaths() {
-  const entry = await getCollection("articles");
-  return entry.map(entry => ({
-    params: { slug: entry.slug }, props: { entry },
-  }));
+  const entries = await getCollection("articles");
+  return entries.map(entry => {
+    let slug = entry.id.replace(/^\/docs\//, '');
+
+    if (slug === 'index') {
+      slug = undefined;
+    }
+
+    if (slug && slug.endsWith('/index')) {
+      slug = slug.replace(/\/index$/, '');
+    }
+
+    return {
+      params: { slug }, 
+      props: { entry },
+    };
+  });
 }
 
 const { entry } = Astro.props;
-const { Content, headings } = await entry.render();
+const { Content, headings } = await render(entry);
 ---
-<Layout frontmatter={entry.data} headings={headings} id={entry.id}
+<Layout frontmatter={entry.data} {headings} id={entry.id}
         excludeFromSearchIndex={entry.id?.endsWith('index.mdx') || entry.id?.endsWith('index.md')}>
   <Content/>
 </Layout>

@@ -6,11 +6,9 @@ function convertToRSS(post) {
     title: post.data.title || 'uh-oh, no title',
     pubDate: post.data.updated_date || post.data.publish_date || '2024-01-01',
     description: post.data.description || 'uh-oh, no desc',
-    // Compute RSS link from post `slug`
-    // This example assumes all posts are rendered as `/blog/[slug]` routes
-    link: `/articles/${post.slug}`,
+    link: `/articles/${post.id}`,
     author: post.data.author,
-    categories: post.data.section.split(",").map(item => item.trim()),
+    categories: post.data.section? post.data.section.split(",").map(item => item.trim()) : [],
   }
 }
 
