@@ -1,0 +1,205 @@
+---
+publish_date: 2026-04-01
+title: Announcing the FusionAuth Brainf* SDK
+description: FusionAuth now supports Brainf*. Real JWTs. Real API calls. 14.7MB of compiled output. 28 hours of CPU time to initialize a buffer. It works. Mostly.
+authors: Blair Ewalt
+image: /img/blogs/brainf/brainf.png
+categories: Product
+tags: April fools, brainf, sdk
+excerpt_separator: "{/* more */}"
+---
+
+Twenty million developers trust FusionAuth with their auth stack. Today we're adding Brainf support. The SDK handles login, token refresh, user retrieval, registration, and user creation against a real FusionAuth instance, with real JWTs, and a real wire protocol built on ASCII control characters from the 1960s. It works. Please read the Performance section before deploying to production.
+
+\* yes, that one
+
+The SDK is [available on GitHub](https://github.com/FusionAuth/fusionauth-brainf-sdk) and supports the full range of FusionAuth's core identity operations. Every language community deserves first-class auth tooling. The Brainf community is no exception.
+
+## The FusionAuth Brainf SDK
+
+The FusionAuth Brainf SDK provides an interface to FusionAuth's REST API from Brainf applications. It handles the low-level HTTP communication, JSON serialization, and response parsing so that developers can focus on their application logic rather than the mechanics of the FusionAuth API.
+
+The SDK is built on a clean separation of concerns. The core SDK logic is written in a constrained dialect of C --- compiled to Brainf via the [ELVM](https://github.com/shinh/elvm) toolchain --- while a lightweight Python bridge (runner.py) handles the network I/O that Brainf's I/O model does not natively support. This architecture ensures the Brainf program itself remains the authoritative execution context while still enabling real HTTP communication with your FusionAuth instance.
+
+Supported operations include:
+
+- User login (`POST /api/login`)
+- Token refresh (`POST /api/jwt/refresh`)
+- User retrieval (`GET /api/user/{'{userId}'}`)
+- User registration (`POST /api/user/registration`)
+- User creation (`POST /api/user/registration`)
+
+## Differences from Other FusionAuth SDKs
+
+FusionAuth already offers SDKs for JavaScript, Python, Go, Java, C#, Ruby, and PHP. The Brainf SDK is philosophically consistent with those offerings --- it wraps the FusionAuth REST API, parses JSON responses, manages tokens, and returns results to the caller --- but there are a few implementation differences worth noting.
+
+**Memory model.** Where other SDKs use heap allocation, the Brainf SDK uses statically allocated buffers: 4 KB for request and response bodies, 2 KB for tokens, and 128 bytes for API keys. This is a consequence of the ELVM compilation target, which does not provide malloc or free. The upside: the SDK is immune to an entire class of heap vulnerabilities --- use-after-free, double-free, heap spray attacks. The downside: if your user object exceeds 4 KB, the SDK will not handle this gracefully. There is no grace. There is only 4 KB.
+
+**String handling.** The SDK ships its own implementations of strlen, strcpy, strcmp, strcat, and a full JSON state machine parser. The ELVM C compiler (8cc) does not link against a standard library, so all string operations are implemented from first principles. This includes a hand-rolled JSON parser capable of correctly deserializing FusionAuth API responses, written entirely in a constrained dialect of C, compiled to Brainf, running on a tape. It is not fast. It is correct. We are unreasonably proud of it.
+
+**Arithmetic.** The SDK does not use multiplication or division operators. These are implemented internally as repeated addition and repeated subtraction, respectively. This has no impact on correctness. Multiplying two numbers requires one of those numbers in sequential additions. Dividing requires one of those numbers in sequential subtractions. On an M4 Pro with 48 GB of RAM, in a language that reduces every operation to tape movements, this compounds in ways that are difficult to overstate and easy to observe. We will address this in the Performance section. The Performance section will not be comforting.
+
+**I/O.** Brainf provides exactly two I/O primitives: read a byte (`,`) and write a byte (`.`). All FusionAuth API communication is therefore mediated by the runner.py bridge, which translates the SDK's wire protocol into real HTTP requests. The wire protocol uses ASCII control characters: SOH (0x01) terminates HTTP request and response messages, STX (0x02) prefixes user commands, and ETX (0x03) wraps display output. These characters were defined in 1963 for teletype machines. They are now authenticating users. We are quite proud of this protocol. It is the cleanest part of the codebase.
+
+## Getting Started
+
+### Prerequisites
+
+- macOS with Apple Silicon (tested on M4 Pro)
+- Docker with [OrbStack](https://orbstack.dev/) or Docker Desktop
+- Python 3.x
+- gcc (included with Xcode Command Line Tools)
+- git
+- Patience
+
+### Installation
+
+Clone the SDK repository and build the ELVM toolchain:
+
+```bash
+git clone https://github.com/FusionAuth/fusionauth-brainf-sdk.git
+cd fusionauth-brainf-sdk
+git clone https://github.com/shinh/elvm
+cd elvm && make && cd ..
+```
+
+The `make` command will produce some warnings about missing language runtimes (Scala, Crystal, etc.). These are expected and can be safely ignored.
+
+Compile the SDK to Brainf:
+
+```bash
+make clean && make eir && make bf
+```
+
+This will produce `fusionauth.bf`. The compilation step takes a few minutes. The resulting file is 14.7 megabytes. This is normal. Please do not be alarmed by the file size.
+
+Start FusionAuth using the included Docker Compose configuration:
+
+```bash
+docker compose up -d
+```
+
+The included [Kickstart](/docs/get-started/download-and-install/development/kickstart) configuration will automatically provision a test application, API key, and sample users. FusionAuth will be available at http://localhost:9011.
+
+## Usage
+
+The SDK is invoked through the runner.py bridge, which manages the subprocess lifecycle and handles HTTP communication on behalf of the Brainf program.
+
+Native mode (for testing --- runs the compiled C binary directly):
+
+```bash
+make native
+
+python3 runner.py --native ./fusionauth_native \
+  --url http://localhost:9011 \
+  --docker-exec fusionauth-brainf-sdk-fusionauth-1 -v
+```
+
+Brainf mode (production):
+
+```bash
+python3 runner.py \
+  --bf-interpreter ./elvm/out/bfopt \
+  --bf-program fusionauth.bf \
+  --url http://localhost:9011 \
+  --docker-exec fusionauth-brainf-sdk-fusionauth-1 -v
+```
+
+Once the interactive REPL initializes --- this may take a moment --- you can configure the SDK and begin authenticating users:
+
+```
+bf-fusionauth> config bf-sdk-test-api-key-do-not-use-in-production-0000
+bf-fusionauth> login test@brainf.io changeme123 e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
+```
+
+The complete command reference:
+
+| Command | FusionAuth API | Description |
+|---|---|---|
+| `config <api_key> [tenant_id]` | N/A | Configure the SDK with your API key |
+| `login <email> <password> [app_id]` | `POST /api/login` | Authenticate a user |
+| `refresh [refresh_token]` | `POST /api/jwt/refresh` | Refresh an access token |
+| `getuser [user_id]` | `GET /api/user/{'{userId}'}` | Retrieve user details |
+| `register <user_id> <app_id> [role]` | `POST /api/user/registration` | Register a user to an application |
+| `createuser <email> <password> <app_id> [first] [last]` | `POST /api/user/registration` | Create a new user |
+| `token` | N/A | Display cached access token |
+| `rawresp` | N/A | Display last raw API response |
+| `quit` | N/A | Exit |
+
+## Security
+
+The FusionAuth Brainf SDK follows the same security model as FusionAuth's other client libraries. API keys are passed via the Authorization HTTP header, access tokens are cached in memory and never written to disk, and all communication with FusionAuth is over HTTP. For environments that require TLS, the runner.py bridge handles termination before traffic reaches FusionAuth.
+
+One environment-specific note: if you are running on macOS with OrbStack, you may observe that all API calls return 401 Unauthorized even with correct credentials. This is not a security feature of the SDK. It is a quirk of OrbStack's port forwarding on Apple Silicon, which silently strips HTTP Authorization headers from requests. The `--docker-exec` flag routes all HTTP traffic through `docker exec curl` inside the FusionAuth container, bypassing the port forwarding layer entirely. We spent several hours on this. The credentials were correct the entire time.
+
+We have been told this kind of thing builds character.
+
+## Performance
+
+The FusionAuth Brainf SDK is functionally correct. We want to be clear about that up front, because the performance characteristics are going to require some additional context.
+
+The compiled `fusionauth.bf` file contains approximately 15 million Brainf instructions. This is the result of compiling roughly 1,200 lines of C --- including a hand-rolled JSON parser, a JSON builder, string utilities, integer-to-string conversion, and the wire protocol --- through a toolchain that expands every array access, every conditional, and every function call into chains of tape operations.
+
+The native C binary performs a login in milliseconds.
+
+The Brainf binary --- running on bfopt, ELVM's optimized interpreter, on an Apple Silicon M4 Pro with 48 GB of RAM --- used 100% of one CPU core continuously for 28 hours without producing output. Our best estimate is that this time was spent initializing static buffers. We believe this is technically correct behavior. Brainf is single-threaded by design. The remaining 13 cores were available the entire time. They were not helpful.
+
+For context: initializing a 4 KB buffer in Brainf, where each byte must be zeroed by a tape operation, requires on the order of tens of thousands of instructions per cell. Across 24-bit ELVM word sizes, with repeated subtraction standing in for every division, and repeated doubling standing in for every multiplication, the overhead compounds. The machine is doing the work. It is doing all of the work.
+
+We are not saying you should not use Brainf mode. We are saying you should plan for it.
+
+## Example
+
+Here is a complete example of the SDK in action, using native mode:
+
+```
+$ python3 runner.py --native ./fusionauth_native \
+    --url http://localhost:9011 \
+    --docker-exec fusionauth-brainf-sdk-fusionauth-1 -v
+
+╔══════════════════════════════════════════════════════╗
+║  FusionAuth Brainf SDK --- Interactive Runner         ║
+║  The world's most cursed identity management tool   ║
+╚══════════════════════════════════════════════════════╝
+
+bf-fusionauth> config bf-sdk-test-api-key-do-not-use-in-production-0000
+  🧠 Config set.
+
+bf-fusionauth> login test@brainf.io changeme123 e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
+  [HTTP] POST http://localhost:9011/api/login
+  [RESP] 200 (1843 bytes)
+  🧠 Login successful.
+  🧠 Access token cached.
+
+bf-fusionauth> token
+  🧠 eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+It works. The authentication is real. The JWT is real. The user record in FusionAuth's database has been touched by a program written in Brainf.
+
+We have mixed feelings about this.
+
+## In Conclusion
+
+You made it to the end. It's April 1st.
+
+The GitHub repository is real. The FusionAuth Brainf SDK is real. The 14.7-megabyte compiled output is real. The 28 hours of CPU time trying to initialize a buffer is extremely real --- one of our team members can confirm this personally, because they woke up the next morning, checked their laptop, and found bfopt still running at 100% core utilization, having produced zero bytes of output.
+
+The auth industry has been in an SDK arms race for years. Every vendor adds another language every quarter. FusionAuth doesn't chase that leaderboard. We add SDK support when customers actually ask for it. We look at that trend and we ask ourselves: what is the logical endpoint? What is the final form of the SDK?
+
+It's this. It was always going to be this.
+
+The Brainf SDK supports login, token refresh, user retrieval, registration, and user creation against a real FusionAuth instance, with real JWTs, real JSON parsing, and a real wire protocol built on ASCII control characters from the 1960s. A marketer and an AI built it together over a few sessions. We are deeply sorry, and we are not sorry at all.
+
+Happy April Fools. Please do not use this in production.
+
+*(You could, though. That's the thing. You really could.)*
+
+## More Details
+
+- [GitHub Repository](https://github.com/FusionAuth/fusionauth-brainf-sdk)
+- [FusionAuth API Documentation](/docs/apis/)
+- [ELVM --- Esoteric Language Virtual Machine](https://github.com/shinh/elvm)
+- [Brainf on Wikipedia](https://en.wikipedia.org/wiki/Brainfuck)
+- [FusionAuth SDK Overview](/docs/sdks/)
+- [File a Bug](https://github.com/FusionAuth/fusionauth-brainf-sdk/issues) --- please note that "it is slow" is not a bug
