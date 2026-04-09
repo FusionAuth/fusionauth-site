@@ -15,7 +15,7 @@ A typical RAG setup embeds documents, stores them in a vector database, and retr
 
 Consider a company where the fraud team's investigation notes, the HR team's salary data, and the customer support team's playbooks all live in the same knowledge base. Without access control, any employee asking a question could get answers sourced from documents they were never meant to see. The LLM doesn't know or care about org charts and access policies. It uses whatever context it's given.
 
-The fix isn't to filter results after the LLM generates an answer. By then, the model has already read the restricted content and may leak it in its response. We need to filter _before_ documents reach the LLM, based on who's asking.
+The fix isn't to filter results after the LLM generates an answer. By then, the model has already read the restricted content and may leak it in its response. The solution is to filter _before_ documents reach the LLM, based on who's asking.
 
 ![Diagram showing how FusionAuth FGA By Permify filters documents before they reach the LLM in a RAG pipeline.](/img/blogs/securing-rag-permify/rag-permify-flow.png)
 
@@ -27,11 +27,11 @@ In this guide, you'll build a RAG chat application that enforces document-level 
 
 The application is a Next.js chat interface backed by three services:
 
-* **FusionAuth handles authentication:** Users log in via OAuth2 and get a JSON Web Token (JWT) containing their user ID.
+* **FusionAuth handles authentication:** Users log in via OAuth2 and get a JSON Web Token (JWT) containing their user Id.
 * **FusionAuth FGA By Permify handles authorization:** It stores relationships (such as who belongs to which team and who owns which document) and answers questions like, "Can user X view document Y?"
 * **Anthropic and Voyage AI handle embeddings and chat:** Voyage AI embeds documents as vectors for semantic search, and Claude generates answers from retrieved context.
 
-The FusionAuth FGA By Permify authorization model doesn't rely on a static access control list. Instead, it uses four entity types (users, organizations, teams, and documents) to determine access based on the requesting user's position in the org structure. The model grants `view` permission for a document if the user is either of the following:
+The FusionAuth FGA By Permify authorization model doesn't rely on a static access control list. Instead, it uses four entity types (users, organizations, teams, and documents) to determine access based on the requesting user's position in the org structure. The model grants `view` permission for a document if the user is any of the following:
 
 * The document owner
 * An explicit viewer
@@ -55,9 +55,9 @@ To follow this guide, you need:
 
 The example runs FusionAuth, FusionAuth FGA By Permify, and PostgreSQL in Docker containers, with a Next.js app connecting to all three. To get everything running, you need to:
 
-* Clone the example repo and start the Docker containers
-* Configure a few environment variables
-* Seed the demo data
+* Clone the example repo and start the Docker containers.
+* Configure a few environment variables.
+* Seed the demo data.
 
 ### Clone The Repository And Start The Services
 
@@ -80,7 +80,7 @@ npm install
 cp .env.example .env
 ```
 
-Open `.env` and set `AI_PROVIDER=anthropic`, then add the Anthropic and Voyage AI API keys. You also need the FusionAuth tenant ID, which is generated on first boot.
+Open `.env` and set `AI_PROVIDER=anthropic`, then add the Anthropic and Voyage AI API keys. You also need the FusionAuth tenant Id, which is generated on first boot.
 
 ```bash
 curl -s -H 'Authorization: bf69486b-4733-4470-a592-f1bc7a64f314' \
@@ -88,11 +88,11 @@ curl -s -H 'Authorization: bf69486b-4733-4470-a592-f1bc7a64f314' \
   "import json,sys;print(json.load(sys.stdin)['tenants'][0]['id'])"
 ```
 
-Set `AUTH_FUSIONAUTH_TENANT_ID` in `.env` to the returned tenant ID value. The other FusionAuth values (`AUTH_FUSIONAUTH_CLIENT_ID`, `AUTH_FUSIONAUTH_CLIENT_SECRET`, `AUTH_SECRET`) are already filled in by the example file.
+Set `AUTH_FUSIONAUTH_TENANT_ID` in `.env` to the returned tenant Id value. The other FusionAuth values (`AUTH_FUSIONAUTH_CLIENT_ID`, `AUTH_FUSIONAUTH_CLIENT_SECRET`, `AUTH_SECRET`) are already filled in by the example file.
 
 ### Start The Application And Seed The Data
 
-Now start the Next.js dev server and seed the data:
+Now start the Next.js dev server and seed the data.
 
 ```bash
 npm run dev
@@ -114,7 +114,7 @@ Open http://localhost:3000 and log in with `admin@example.com` / `password`.
 
 ## How The RAG Pipeline Works
 
-When a user sends a message, the chat API handler in `app/api/chat/route.ts` extracts the user ID from their JWT and passes both the query and the user ID to the `retrieveWithPermify` function in `lib/rag/retriever.ts`. This function is where the standard RAG pipeline meets authorization.
+When a user sends a message, the chat API handler in `app/api/chat/route.ts` extracts the user Id from their JWT and passes both the query and the user Id to the `retrieveWithPermify` function in `lib/rag/retriever.ts`. This function is where the standard RAG pipeline meets authorization.
 
 First, the app embeds the query in a vector using Voyage AI's `voyage-3-lite` model. The retriever then computes cosine similarity between the query vector and every stored document's embedding, ranking them by relevance. Up to this point, the flow is identical to any other RAG system.
 
@@ -124,13 +124,13 @@ The difference is what happens next: Instead of passing the top results straight
 
 Each `checkPermission` call asks FusionAuth FGA By Permify, "Does this user have `view` permission on this document?" FusionAuth FGA By Permify then traverses its relationship graph to answer. For example, if Jane is a member of the Customer Support team, and a document belongs to that team, FusionAuth FGA By Permify follows the chain `user → team member → team → doc` and returns `true`. If John from Fraud asks about the same document, FusionAuth FGA By Permify finds no path and returns `false`.
 
-The authorization model only includes documents that pass this check in the LLM's context. The chat handler builds a prompt from the permitted documents and sends it to Claude. If no documents survive the filter, rather than returning a hallucinated answer, the LLM responds:
+The authorization model only includes documents that pass this check in the LLM's context. The chat handler builds a prompt from the permitted documents and sends it to Claude. If no documents survive the filter, rather than returning a hallucinated answer, the LLM responds with the following message.
 
 ```
 I don't have any relevant documents to answer your question.
 ```
 
-The FusionAuth FGA By Permify schema that defines these rules is written in a DSL:
+The FusionAuth FGA By Permify schema that defines these rules is written in a DSL.
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-fga-rag/main/scripts/permify-write-schema.js#L15-L37" lang="javascript" />
 
@@ -138,7 +138,7 @@ The `view` rule on the `doc` entity captures five different ways a user may acce
 
 ## Testing Permissions With Different Users
 
-To see how permissions shape the RAG results, try the same question with different users. Log in as `admin@example.com` (password: `password`) and ask:
+To see how permissions shape the RAG results, try the same question with different users. Log in as `admin@example.com` (password: `password`) and ask the following question.
 
 ```
 What are the chargeback ratios?
@@ -148,17 +148,17 @@ The admin is an organization admin, so the `view` permission is satisfied via th
 
 ![The admin user receives a detailed answer about chargeback ratios, sourced from all team documents.](/img/blogs/securing-rag-permify/admin-chargeback-answer.png)
 
-Now log out and log in as `jane@example.com` (password: `password`). Jane leads the Customer Support team. Ask the same question:
+Now log out and log in as `jane@example.com` (password: `password`). Jane leads the Customer Support team. Ask the same question.
 
 ```
 What are the chargeback ratios?
 ```
 
-Jane has no relationship to the Disputes & Chargebacks team's documents. FusionAuth FGA By Permify finds no path from her user ID to those docs, so they're filtered out before reaching the LLM. She gets a response saying the documents don't contain chargeback information, with only her Customer Support team docs as sources.
+Jane has no relationship to the Disputes & Chargebacks team's documents. FusionAuth FGA By Permify finds no path from her user Id to those docs, so they're filtered out before reaching the LLM. She gets a response saying the documents don't contain chargeback information, with only her Customer Support team docs as sources.
 
 ![Jane receives a response stating no chargeback information is available in her accessible documents.](/img/blogs/securing-rag-permify/jane-chargeback-denied.png)
 
-Ask Jane something within her team's scope instead:
+Ask Jane something within her team's scope instead.
 
 ```
 What are our customer satisfaction metrics?
@@ -168,7 +168,7 @@ This time, the retriever finds Customer Support documents that Jane can view (sh
 
 ![Jane receives detailed Q4 customer satisfaction scores from her Customer Support team's documents.](/img/blogs/securing-rag-permify/jane-csat-answer.png)
 
-The cross-team viewer grants add a more nuanced layer. Jane has explicit `viewer` access to `dc-doc-6`, the Dispute evidence collection checklist, because Customer Support helps collect dispute evidence. As Jane, ask:
+The cross-team viewer grants add a more nuanced layer. Jane has explicit `viewer` access to `dc-doc-6`, the Dispute evidence collection checklist, because Customer Support helps collect dispute evidence. As Jane, ask the following question.
 
 ```
 What's on the dispute evidence collection checklist?
@@ -186,7 +186,7 @@ The `view` permission requires a more specific relationship:
 * Team lead
 * Organization admin
 
-Since the stranger has none of these, every `checkPermission` call returns `false`, and the LLM answers any question the stranger asks with:
+Since the stranger has none of these, every `checkPermission` call returns `false`, and the LLM answers any question the stranger asks with the following message.
 
 ```
 I don't have any relevant documents.
@@ -198,7 +198,7 @@ I don't have any relevant documents.
 
 Permissions in FusionAuth FGA By Permify are stored as data points. The application can write and delete relationship tuples at any time, with immediate effect.
 
-Log in as the admin and go to the Organization page. From here, you can add or remove members and promote or demote admins. Each of these actions maps to a FusionAuth FGA By Permify API call. Promoting a user to admin, for example, writes a single relationship tuple:
+Log in as the admin and go to the Organization page. From here, you can add or remove members and promote or demote admins. Each of these actions maps to a FusionAuth FGA By Permify API call. Promoting a user to admin, for example, writes a single relationship tuple.
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-fga-rag/main/app/api/organization/admins/route.ts#L35-L41" lang="typescript" />
 
@@ -216,13 +216,13 @@ How easily you can alter permissions is the core advantage of relationship-based
 
 This example stores documents and embeddings in memory, which means they're lost on restart. For a production setup, set the `DOCUMENTS_DATABASE_URL` environment variable to point to a PostgreSQL instance, and the app will persist documents and embeddings there instead.
 
-The permission checks in the retriever currently run sequentially, calling `checkPermission` once per candidate document. For larger document sets, FusionAuth FGA By Permify's `lookupEntity` API can return all the document IDs a user has access to in a single call (the documents listing page already uses this mechanism). To reduce the number of API calls, switch the retriever to pre-fetch permitted IDs and filter them locally.
+The permission checks in the retriever currently run sequentially, calling `checkPermission` once per candidate document. For larger document sets, FusionAuth FGA By Permify's `lookupEntity` API can return all the document Ids a user has access to in a single call (the documents listing page already uses this mechanism). To reduce the number of API calls, switch the retriever to pre-fetch permitted Ids and filter them locally.
 
 The authorization schema in this example covers a single `view` permission, but FusionAuth FGA By Permify schemas can express more complex rules. For example, you can:
 
-* Restrict edit permissions to document owners
-* Set team-scoped upload rights
-* Create approval workflows where a document is only visible after a lead signs off
+* Restrict edit permissions to document owners.
+* Set team-scoped upload rights.
+* Create approval workflows where a document is only visible after a lead signs off.
 
 The schema DSL supports all these rules without changes to application code.
 
