@@ -1,7 +1,7 @@
 ---
 publish_date: 2026-04-07
-title: Securing RAG with Fine-Grained Authorization Using Permify
-description: Build a RAG chat application that enforces document-level permissions using Permify, so unauthorized content never reaches the LLM.
+title: Securing RAG with Fine-Grained Authorization Using FusionAuth FGA By Permify
+description: Build a RAG chat application that enforces document-level permissions using FusionAuth FGA By Permify, so unauthorized content never reaches the LLM.
 authors: Dan Moore
 categories: Tutorial
 tags: fine-grained authorization, permify, fga, rag, anthropic, claude, permissions
@@ -17,21 +17,21 @@ Consider a company where the fraud team's investigation notes, the HR team's sal
 
 The fix isn't to filter results after the LLM generates an answer. By then, the model has already read the restricted content and may leak it in its response. We need to filter _before_ documents reach the LLM, based on who's asking.
 
-![RAG pipeline with Permify authorization](/img/blogs/securing-rag-permify/rag-permify-flow.png)
+![RAG pipeline with FusionAuth FGA By Permify authorization](/img/blogs/securing-rag-permify/rag-permify-flow.png)
 
 {/* more */}
 
 ## Building a demo app
 
-In this guide, we build a RAG chat application that enforces document-level permissions using [Permify](https://permify.co), a relationship-based authorization service. When a user asks a question, the system retrieves relevant documents, checks each one against Permify to confirm the user has the relevant access permission, and only passes permitted documents to the LLM. Unauthorized content never reaches the model.
+In this guide, we build a RAG chat application that enforces document-level permissions using [FusionAuth FGA By Permify](/docs/extend/fine-grained-authorization), a relationship-based authorization service. When a user asks a question, the system retrieves relevant documents, checks each one against FusionAuth FGA By Permify to confirm the user has the relevant access permission, and only passes permitted documents to the LLM. Unauthorized content never reaches the model.
 
 The application is a Next.js chat interface backed by three services:
 
 - **FusionAuth handles authentication:** Users log in via OAuth2 and get a JSON Web Token (JWT) containing their user ID.
-- **Permify handles authorization:** It stores relationships (such as who belongs to which team and who owns which document) and answers questions like, "Can user X view document Y?"
+- **FusionAuth FGA By Permify handles authorization:** It stores relationships (such as who belongs to which team and who owns which document) and answers questions like, "Can user X view document Y?"
 - **Anthropic and Voyage AI handle embeddings and chat:** Voyage AI embeds documents as vectors for semantic search, and Claude generates answers from retrieved context.
 
-The Permify authorization model doesn't rely on a static access control list. Instead, it uses four entity types (users, organizations, teams, and documents) to determine access based on the requesting user's position in the org structure. The model grants `view` permission for a document if the user is either of the following:
+The FusionAuth FGA By Permify authorization model doesn't rely on a static access control list. Instead, it uses four entity types (users, organizations, teams, and documents) to determine access based on the requesting user's position in the org structure. The model grants `view` permission for a document if the user is either of the following:
 
 - The document owner
 - An explicit viewer
@@ -42,7 +42,7 @@ The demo seeds a fictional company with four teams (Customer Support, Fraud & Se
 
 ![Organization structure with teams, members, and cross-team viewer grants](/img/blogs/securing-rag-permify/org-structure.svg)
 
-## Prerequisites for the FusionAuth and Permify integration
+## Prerequisites for the FusionAuth and FusionAuth FGA By Permify integration
 
 To follow this guide, we need:
 
@@ -51,9 +51,9 @@ To follow this guide, we need:
 - An [Anthropic API key](https://console.anthropic.com)
 - A [Voyage AI API key](https://voyageai.com) (used for embeddings)
 
-## Setting up FusionAuth, Permify, and PostgreSQL
+## Setting up FusionAuth, FusionAuth FGA By Permify, and PostgreSQL
 
-The example runs FusionAuth, Permify, and PostgreSQL in Docker containers, with a Next.js app connecting to all three. To get everything running, we need to:
+The example runs FusionAuth, FusionAuth FGA By Permify, and PostgreSQL in Docker containers, with a Next.js app connecting to all three. To get everything running, we need to:
 
 - Clone the example repo and start the Docker containers
 - Configure a few environment variables
@@ -69,7 +69,7 @@ cd fusionauth-example-fga-rag
 docker compose up -d
 ```
 
-This starts three services: FusionAuth (on port 9011), Permify (on port 3476), and PostgreSQL. FusionAuth uses a Kickstart file to configure itself automatically on first boot, creating the OAuth application, an RS256 signing key, and all 12 demo users with the correct IDs (matching the Permify seed data).
+This starts three services: FusionAuth (on port 9011), FusionAuth FGA By Permify (on port 3476), and PostgreSQL. FusionAuth uses a Kickstart file to configure itself automatically on first boot, creating the OAuth application, an RS256 signing key, and all 12 demo users with the correct IDs (matching the FusionAuth FGA By Permify seed data).
 
 ### Install dependencies and configure environment variables
 
@@ -106,9 +106,9 @@ npm run seed:all
 
 This does three things in order:
 
-1. Writes the Permify authorization schema (the entity types and permission rules).
+1. Writes the FusionAuth FGA By Permify authorization schema (the entity types and permission rules).
 2. Uploads 40 sample documents to the app, which embeds each one via Voyage AI and stores the vectors in memory.
-3. Writes 170 relationship tuples to Permify (including org memberships, team assignments, document ownership, and cross-team viewer grants).
+3. Writes 170 relationship tuples to FusionAuth FGA By Permify (including org memberships, team assignments, document ownership, and cross-team viewer grants).
 
 Open [http://localhost:3000](http://localhost:3000) and log in with `admin@example.com` / `password`.
 
@@ -118,11 +118,11 @@ When a user sends a message, the chat API handler in `app/api/chat/route.ts` ext
 
 First, the app embeds the query in a vector using Voyage AI's `voyage-3-lite` model. The retriever then computes cosine similarity between the query vector and every stored document's embedding, ranking them by relevance. Up to this point, the flow is identical to any other RAG system.
 
-The difference is what happens next: Instead of passing the top results straight to the LLM, the retriever checks each candidate document against Permify.
+The difference is what happens next: Instead of passing the top results straight to the LLM, the retriever checks each candidate document against FusionAuth FGA By Permify.
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-fga-rag/main/lib/rag/retriever.ts#L146-L162" lang="typescript" />
 
-Each `checkPermission` call asks Permify, "Does this user have `view` permission on this document?" Permify then traverses its relationship graph to answer. For example, if Jane is a member of the Customer Support team, and a document belongs to that team, Permify follows the chain `user → team member → team → doc` and returns `true`. If John from Fraud asks about the same document, Permify finds no path and returns `false`.
+Each `checkPermission` call asks FusionAuth FGA By Permify, "Does this user have `view` permission on this document?" FusionAuth FGA By Permify then traverses its relationship graph to answer. For example, if Jane is a member of the Customer Support team, and a document belongs to that team, FusionAuth FGA By Permify follows the chain `user → team member → team → doc` and returns `true`. If John from Fraud asks about the same document, FusionAuth FGA By Permify finds no path and returns `false`.
 
 The authorization model only includes documents that pass this check in the LLM's context. The chat handler builds a prompt from the permitted documents and sends it to Claude. If no documents survive the filter, rather than returning a hallucinated answer, the LLM responds:
 
@@ -130,7 +130,7 @@ The authorization model only includes documents that pass this check in the LLM'
 I don't have any relevant documents to answer your question.
 ```
 
-The Permify schema that defines these rules is written in a DSL:
+The FusionAuth FGA By Permify schema that defines these rules is written in a DSL:
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-fga-rag/main/scripts/permify-write-schema.js#L15-L37" lang="javascript" />
 
@@ -154,7 +154,7 @@ Now log out and log in as `jane@example.com` (password: `password`). Jane leads 
 What are the chargeback ratios?
 ```
 
-Jane has no relationship to the Disputes & Chargebacks team's documents. Permify finds no path from her user ID to those docs, so they're filtered out before reaching the LLM. She gets a response saying the documents don't contain chargeback information, with only her Customer Support team docs as sources.
+Jane has no relationship to the Disputes & Chargebacks team's documents. FusionAuth FGA By Permify finds no path from her user ID to those docs, so they're filtered out before reaching the LLM. She gets a response saying the documents don't contain chargeback information, with only her Customer Support team docs as sources.
 
 ![Jane denied chargeback data](/img/blogs/securing-rag-permify/jane-chargeback-denied.png)
 
@@ -196,9 +196,9 @@ I don't have any relevant documents.
 
 ## Managing permissions at runtime
 
-Permissions in Permify are stored as data points. The application can write and delete relationship tuples at any time, with immediate effect.
+Permissions in FusionAuth FGA By Permify are stored as data points. The application can write and delete relationship tuples at any time, with immediate effect.
 
-Log in as the admin and go to the Organization page. From here, we can add or remove members and promote or demote admins. Each of these actions maps to a Permify API call. Promoting a user to admin, for example, writes a single relationship tuple:
+Log in as the admin and go to the Organization page. From here, we can add or remove members and promote or demote admins. Each of these actions maps to a FusionAuth FGA By Permify API call. Promoting a user to admin, for example, writes a single relationship tuple:
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-fga-rag/main/app/api/organization/admins/route.ts#L35-L41" lang="typescript" />
 
@@ -216,9 +216,9 @@ How easily you can alter permissions is the core advantage of relationship-based
 
 This example stores documents and embeddings in memory, which means they're lost on restart. For a production setup, set the `DOCUMENTS_DATABASE_URL` environment variable to point to a PostgreSQL instance, and the app will persist documents and embeddings there instead.
 
-The permission checks in the retriever currently run sequentially, calling `checkPermission` once per candidate document. For larger document sets, Permify's `lookupEntity` API can return all the document IDs a user has access to in a single call (the documents listing page already uses this mechanism). To reduce the number of API calls, switch the retriever to pre-fetch permitted IDs and filter them locally.
+The permission checks in the retriever currently run sequentially, calling `checkPermission` once per candidate document. For larger document sets, FusionAuth FGA By Permify's `lookupEntity` API can return all the document IDs a user has access to in a single call (the documents listing page already uses this mechanism). To reduce the number of API calls, switch the retriever to pre-fetch permitted IDs and filter them locally.
 
-The authorization schema in this example covers a single `view` permission, but Permify schemas can express more complex rules. For example, you can:
+The authorization schema in this example covers a single `view` permission, but FusionAuth FGA By Permify schemas can express more complex rules. For example, you can:
 
 - Restrict edit permissions to document owners
 - Set team-scoped upload rights
@@ -226,4 +226,4 @@ The authorization schema in this example covers a single `view` permission, but 
 
 The schema DSL supports all these rules without changes to application code.
 
-The full source code is available on the [FusionAuth FGA + RAG Example](https://github.com/FusionAuth/fusionauth-example-fga-rag) repo. For more on Permify's authorization model, see the [Permify docs](https://docs.permify.co). For FusionAuth authentication configuration, see the [FusionAuth docs](/docs).
+The full source code is available on the [FusionAuth FGA + RAG Example](https://github.com/FusionAuth/fusionauth-example-fga-rag) repo. For more on FusionAuth FGA By Permify's authorization model, see the [FusionAuth FGA By Permify docs](/docs/extend/fine-grained-authorization). For FusionAuth authentication configuration, see the [FusionAuth docs](/docs).
