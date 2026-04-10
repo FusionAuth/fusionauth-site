@@ -1,10 +1,9 @@
 ---
-title: Install with Docker
+title: Docker
 description: Learn how to deploy and test FusionAuth using a Docker container.
 tags: docker, container, orbstack, compose, docker-compose, dockerfile. docker-compose.yml
 order: 0
 ---
-import UpgradeUsingDocker from 'src/content/docs/_shared/_upgrade-using-docker.mdx';
 import Aside from 'src/components/Aside.astro';
 import Steps from 'src/components/Steps.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
@@ -12,9 +11,17 @@ import Accordion from 'src/components/Accordion.astro';
 
 This page explains how to install FusionAuth using Docker.
 
-The following example uses Docker Compose. For Kubernetes install instructions, see [Install with Kubernetes](/docs/get-started/download-and-install/kubernetes/). For OpenShift and other community-supported environments, see the [FusionAuth Contrib](https://github.com/FusionAuth/fusionauth-contrib) GitHub repo.
+The instructions below require the following prerequisites:
 
-All of the FusionAuth Docker images may be found on [Docker Hub](https://hub.docker.com/u/fusionauth/).
+* [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later
+* On macOS and Windows, one of the following container management tools:
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use Orbstack for `docker compose` commands after install, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
+  * [Docker desktop](https://www.docker.com/products/docker-desktop/)
+
+For Kubernetes install instructions, see [Install with Kubernetes](/docs/get-started/download-and-install/kubernetes/). For OpenShift and other community-supported environments, see the [FusionAuth Contrib](https://github.com/FusionAuth/fusionauth-contrib) GitHub repo.
+
+For more FusionAuth Docker images, see [fusionauth on Docker Hub](https://hub.docker.com/u/fusionauth/).
 
 ## Docker Compose
 
@@ -22,7 +29,7 @@ Use the steps below to install FusionAuth using Docker Compose using the configu
 
 <Steps>
 
-1. Download the `docker-compose.yml` and the `.env` files:
+1. Download the `docker-compose.yml` and `.env` files:
 
    ```console
    curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/docker-compose.yml
@@ -54,6 +61,8 @@ Use the steps below to install FusionAuth using Docker Compose using the configu
    docker compose up -d
    ```
 
+1. Visit [http://localhost:9011](http://localhost:9011) to access the Admin UI.
+1. Congratulations, you have a working instance of FusionAuth! To set up login for an application, see our [First Time Setup guide](/docs/get-started/download-and-install/setup).
 </Steps>
 
 
@@ -82,51 +91,6 @@ By default this database is not accessible outside of the Docker Compose contain
 ### Search Service
 
 The search service provides a searchable index of users and field data.
-
-## Upgrading
-
-<UpgradeUsingDocker />
-
-### Migrations
-
-If there were database migrations required, what happens on an upgrade depends on two settings: the runtime mode and the silent mode.
-
-<Aside type="note">
-Prior to version `1.19.0`, migration behavior was different. See below for more.
-</Aside>
-
-If silent mode is set to `true`, then database migrations will automatically be performed.
-
-If silent mode is `false` and the runtime mode is set to `development`, then the [maintenance mode screen](/docs/get-started/download-and-install/fusionauth-app#maintenance-mode) will pop up and you will be prompted to complete the migrations there.
-
-In all other cases the migrations will not be applied, and you'll have to perform them yourself. If you want to manage your own database upgrades, performing the SQL migrations out of band with another tool or process is a good option.
-
-*When Are Database Migrations Applied*
-
-| Runtime Mode  | Silent Mode | Migration Behavior                                                 |
-|---------------|-------------|--------------------------------------------------------------------|
-| `development` | `true`      | Migration applied automatically                                    |
-| `development` | `false`     | Maintenance mode UI displayed, user prompted to run migrations     |
-| `production`  | `true`      | Migration applied automatically                                    |
-| `production`  | `false`     | Migration never applied by FusionAuth, must be applied out of band |
-
-See the [configuration reference](/docs/reference/configuration) or the [silent mode guide](/docs/get-started/download-and-install/reference/silent-mode) for more information. To apply the database migrations out of band see the [database upgrade](/docs/operate/deploy/upgrade#downtime-and-database-migrations) documentation.
-
-#### Prior to 1.19
-
-If the installation is in `production` mode, apply the migrations out of band. 
-
-When running in development runtime mode, silent mode was enabled based upon the presence of environment variables, such as the database user, and could not explicitly be enabled or disabled. 
-
-### Docker Tags
-
-The Docker Compose file references the `latest` tag, but that tag is not dynamic. It is only the latest at a point in time. To get the most recently released image, you have a couple of options.
-
-* Pull the latest image with this command: `docker pull fusionauth/fusionauth-app:latest` or `docker compose pull` and recreate your deployment with `docker compose up -d` which will recreate every container where a new image is available.
-* Edit the Docker Compose file and specify a specific version. This is a good idea for a production deployment. With `docker compose pull` you can only pull the specified image, or just run `docker compose up -d` which will pull the image and recreate the container at the same time.
-* Remove all images with `docker rmi <IMAGE ID>` selected from the list of IMAGE IDs which you can show with `docker images`. This requires that the image isn't used and therefore may prompt you to remove containers using it. Since all state of FusionAuth is stored in the database, and for docker you use volumes to persist data, you can safely remove the containers. After that you can use `docker compose pull`, `docker compose build` and `docker compose up -d` accordingly to get images specified the in the `docker-compose.yml`.
-
-To generally clean up your images on your system ,`docker image prune` will remove all unused, dangling images.
 
 ## Custom Docker Images
 
