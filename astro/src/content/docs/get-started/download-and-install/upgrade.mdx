@@ -1,15 +1,43 @@
 ---
 title: Upgrade
 description: Learn how to upgrade FusionAuth to a newer version.
-order: 3
+order: 2
 ---
-import Tabs from 'src/components/Tabs.astro';
-import TabItem from 'src/components/TabItem.astro';
+import Tabs from '/src/components/Tabs.astro';
+import TabItem from '/src/components/TabItem.astro';
+import Breadcrumb from '/src/components/BreadCrumb.astro';
 
 This page explains how to upgrade FusionAuth to a newer version.
 
 <Tabs>
-  <TabItem label="macOS and Linux">
+  <TabItem label="Docker">
+
+To upgrade an instance of FusionAuth configured with a container management tool such as Docker Desktop, OrbStack, or Podman:
+
+1. Stop the instance:
+
+   ```console
+   docker compose down
+   ```
+
+1. Modify the `docker-compose.yml` file to point to the version of FusionAuth you want. The following command will upgrade you to the latest version:
+
+   ```console
+   docker pull fusionauth/fusionauth-app:latest
+   ```
+
+   For a full list of available tags, see [`fusionauth-app` on Docker Hub](https://hub.docker.com/r/fusionauth/fusionauth-app).
+
+1. Start your instance:
+
+   ```console
+   docker compose up -d
+   ```
+
+1. Open the [<Breadcrumb>System -> About</Breadcrumb> page in the Admin UI](http://localhost:9011/admin/system/about/) to check your instance's version of FusionAuth.
+
+  </TabItem>
+  <TabItem label="`fusionauth-app` on macOS and Linux">
 1. First, shut down FusionAuth:
 
    ```console
@@ -29,7 +57,30 @@ This page explains how to upgrade FusionAuth to a newer version.
    ```
 
   </TabItem>
-  <TabItem label="Windows">
+  <TabItem label="Homebrew install on macOS">
+If you initially installed FusionAuth using Homebrew, you can also use Homebrew to upgrade to the latest version of FusionAuth.
+
+To upgrade FusionAuth using `brew`, follow the steps below:
+
+1. Stop `fusionauth-app` using Homebrew services:
+
+   ```console
+   brew services stop fusionauth-app
+   ```
+
+1. Upgrade the version of `fusionauth-app`:
+
+   ```console
+   brew upgrade fusionauth-app
+   ```
+
+1. Start `fusionauth-app` with Homebrew services:
+
+   ```console
+   brew services start fusionauth-app
+   ```
+  </TabItem>
+  <TabItem label="`fusionauth-app` on Windows">
 1. Terminate the running FusionAuth App and Search services:
 
    ```powershell
@@ -49,3 +100,34 @@ This page explains how to upgrade FusionAuth to a newer version.
    ```
   </TabItem>
 </Tabs>
+
+## Migrations
+
+If there were database migrations required, what happens on an upgrade depends on two settings: the runtime mode and the silent mode.
+
+If silent mode is set to `true`, FusionAuth will automatically migrate your database to the latest schema version.
+
+If silent mode is `false` and the runtime mode is set to `development`, Maintenance mode will appear when you access any URL hosted by FusionAuth. Follow the prompts to complete the migrations.
+
+In all other cases the migrations will not be applied, and you'll have to perform them yourself. If you want to manage your own database upgrades, performing the SQL migrations out of band with another tool or process is a good option.
+
+*When Are Database Migrations Applied*
+
+| Runtime Mode  | Silent Mode | Migration Behavior                                                 |
+|---------------|-------------|--------------------------------------------------------------------|
+| `development` | `true`      | Migration applied automatically                                    |
+| `development` | `false`     | Maintenance mode UI displayed, user prompted to run migrations     |
+| `production`  | `true`      | Migration applied automatically                                    |
+| `production`  | `false`     | Migration never applied by FusionAuth, must be applied out of band |
+
+See the [configuration reference](/docs/reference/configuration) or the [silent mode guide](/docs/get-started/download-and-install/reference/silent-mode) for more information. To apply the database migrations out of band see the [database upgrade](/docs/operate/deploy/upgrade#downtime-and-database-migrations) documentation.
+
+## Docker `latest` Tag
+
+The Docker Compose file references the `latest` tag, but that tag is not dynamic. It is only the latest at a point in time. To get the most recently released image, you have a couple of options:
+
+* Pull the latest image with this command: `docker pull fusionauth/fusionauth-app:latest` or `docker compose pull` and recreate your deployment with `docker compose up -d` which will recreate every container where a new image is available.
+* Edit the Docker Compose file to specify a specific version. This is a good idea for a production deployment. Run `docker compose pull` you can only pull the specified image, or just run `docker compose up -d` which will pull the image and recreate the container at the same time.
+* Remove all images with `docker rmi <IMAGE ID>` selected from the list of IMAGE IDs which you can show with `docker images`. This requires that the image isn't used and therefore may prompt you to remove containers using it. Since FusionAuth stores all state in the database, and for docker you use volumes to persist data, you can safely remove the containers. After that you can use `docker compose pull`, `docker compose build` and `docker compose up -d` accordingly to get images specified the in the `docker-compose.yml`.
+
+Use `docker image prune` to remove all unused images after upgrading.
