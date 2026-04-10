@@ -13,7 +13,6 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import linkValidator, { type LinkValidatorOptions } from 'astro-link-validator';
 import { visit } from 'unist-util-visit';
-import markdownIntegration from '@astropub/md';
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
@@ -70,7 +69,6 @@ const config = defineConfig({
       enableLog: false,
     }),
     mdx(),
-    markdownIntegration(),
     sitemap({
       filter: siteMapFilter
     }),
