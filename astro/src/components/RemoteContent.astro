@@ -2,9 +2,7 @@
 /**
  * Remote content fetcher. Remote content is assumed to be markdown.
  */
-// @ts-ignore
-import { Marked } from "marked";
-import {ensureLanguageIsLoaded, getCachedHighlighter, resolveLanguage} from "./shiki";
+import { markdown } from '@astropub/md';
 
 export interface Props {
   /**
@@ -85,37 +83,7 @@ function selectLines(
   }
 }
 
-const highlighter = await getCachedHighlighter();
-
-const remark = new Marked();
-remark.use({
-  extensions: [
-    {
-      name: "code",
-
-      renderer: (token) => {
-        try {
-          // @ts-ignore
-          return highlighter.codeToHtml(token.text, {
-            lang: resolveLanguage(token.lang),
-            theme: "github-dark",
-          });
-        } catch (e) {
-          console.error(e);
-          return "";
-        }
-      },
-    },
-  ],
-  async: true,
-  walkTokens: async (token) => {
-    if (token.type === "code") {
-      await ensureLanguageIsLoaded(highlighter, token.lang, {url});
-    }
-  },
-});
-
-const html = remark.parse(remoteSelectedContent);
+const html = await markdown(remoteSelectedContent);
 ---
 
 <article>
