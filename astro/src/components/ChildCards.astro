@@ -1,6 +1,7 @@
 ---
 import ClickableCard from "/src/components/ClickableCard.astro";
 import { getCollection } from "astro:content";
+import { Marked } from "marked";
 
 let { collection, currentPathOverride } = Astro.props;
 if (!collection)
@@ -42,13 +43,24 @@ const list = pages.filter((page) => {
 
   return isChild && isDirectChild;
 });
+
+const remark = new Marked();
+const markdownifiedList = await Promise.all(
+  list.map(async (page) => ({
+    ...page,
+    data: {
+      ...page.data,
+      markdownifiedTitle: await remark.parseInline(page.data.title)
+    }
+  }))
+);
 ---
 
 <div class="gap-6 mt-6 grid grid-cols-1 not-prose lg:grid-cols-2" xmlns="http://www.w3.org/1999/xhtml">
-  {list.map(page => (
+  {markdownifiedList.map(page => (
     <ClickableCard 
       href={`/${collection}/${page.id.split('.')[0].replace("/index", "/")}`}
-      title={page.data.title}
+      title={page.data.markdownifiedTitle}
       description={page.data.description}
       icon={page.data.icon ? page.data.icon : null}
       darkIcon={page.data.darkIcon}

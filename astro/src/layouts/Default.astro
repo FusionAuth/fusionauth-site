@@ -11,6 +11,7 @@ import ArticleNav from '../components/nav/ArticleNav.astro';
 import Icon from '../components/icon/Icon.astro';
 import { specialCaps } from '../tools/string';
 import IndexableBody from '../components/search/IndexableBody.astro';
+import { Marked } from "marked";
 
 interface Props {
   author?: string;
@@ -103,7 +104,7 @@ const articleStyles = [
 ];
 
 const mainStyles = [
-  "mx-auto max-w-8xl px-4 py-8",
+  "mx-auto max-w-8xl px-4 pt-8",
   "flex 2xl:container"
 ];
 
@@ -121,11 +122,18 @@ const tocStyles = [
 const path = Astro.url.pathname;
 const fullMarkdownPath = path.replace(/.html$/,'.mdx');
 
+const remark = new Marked();
+const markdownifiedTitle = remark.parseInline(htmlTitle);
+// remove simple markdown from string -- note that this is a hack that won't work for complex cases
+const cleanedHtmlTitle = htmlTitle
+  .replace(/[#*`_~]/g, '')
+  .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+  .trim();
 ---
 
 <!DOCTYPE html>
 <html class="antialiased min-h-full" lang="en">
-<Head title=`${htmlTitle} | FusionAuth Docs` description={description} canonicalUrl={frontmatter.canonicalUrl} {openGraphImage} {searchFilters} />
+<Head title=`${cleanedHtmlTitle} | FusionAuth Docs` description={description} canonicalUrl={frontmatter.canonicalUrl} {openGraphImage} {searchFilters} />
 <IndexableBody {excludeFromSearchIndex}>
   <slot name="nav"/>
   <main class:list={mainStyles}>
@@ -177,7 +185,7 @@ const fullMarkdownPath = path.replace(/.html$/,'.mdx');
             </>) }
           </div> }
 
-          <h1 data-pagefind-meta="title" class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]}>{title}</h1>
+          <h1 data-pagefind-meta="title" class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]} set:html={markdownifiedTitle}></h1>
 
           {author &&
             <p class="m-0 text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>
