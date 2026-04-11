@@ -1,0 +1,74 @@
+---
+version: "1.53.0"
+date: 2024-09-05
+name: "Lambda Llama"
+---
+import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
+import ReleaseNotesDBMigrate from 'src/components/docs/release-notes/ReleaseNotesDBMigrate.mdx';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+
+<ReleaseNotesDBMigrate />
+
+<Item category="breaking-change" issue="2473">
+This release ends support for the Docker image for the `linux/arm/v7` architecture.
+
+This deprecation was announced in version `1.52.0`, and while we had planned to continue publishing this build for the next few releases, Java 21 is not being built for this architecture which means we can no longer support it. Please see thread in [Adoptium support](https://github.com/adoptium/adoptium-support/issues/962) or the [Adoptium release status](https://github.com/adoptium/temurin/issues/49) for additional details.
+</Item>
+
+<Item category="known-issue" resolvedIn="1.57.0" issue="3037">
+Very large webhook event log volumes could impact performance during log cleaning operations. If you are currently using a version of FusionAuth earlier than `1.53.0` and use webhooks, we recommend upgrading to version `1.57.0`.
+</Item>
+
+<Item category="known-issue" resolvedIn="1.53.1" viaIssue="2861">
+A user may fail to enroll a new Passkey (WebAuthn credential) used for reauthentication during a login workflow. Previously configured Passkeys should continue to work as expected.
+</Item>
+
+<Item category="known-issue">
+FusionAuth's hosted login pages no longer create an SSO session when signing in using an external IdP.
+</Item>
+<Item category="known-issue" issue="3008">
+Currently, FusionAuth's Webhook Event Log does not set a retention policy by default and may grow too large in volume which can result in an impact to performance when searching Webhook Event Logs. See issue for workaround.
+</Item>
+
+<Item category="new-feature" issue="1314">
+Introduced the [Webhook Event Log](/docs/extend/events-and-webhooks/webhook-event-log), which contains a record of each triggered event and the corresponding attempts to deliver the event to each configured webhook. This log will be useful for monitoring events that have succeeded or failed to be received by your configured webhooks. The attempt log will provide you with timing, the status code returned by your webhook, and other metadata.
+
+The longer term goal of this feature will be to allow events to be retried when one or more webhooks failed to receive the event, or for some reason was unable to process the event. This is the first step towards that goal. You will find this new feature in the Admin UI under <Breadcrumb>System -> Webhook Log</Breadcrumb>.
+
+For more information, see the [API reference](/docs/apis/webhook-event-logs).
+</Item>
+
+<Item category="new-feature" issue="1282">
+Introduced the [Login Validation Lambda](/docs/extend/code/lambdas/login-validation), which can prevent login based on information in a user record, an application registration, and more. This allows the notion of a valid login to be extended beyond the standard items such as credential checks and MFA.
+</Item>
+
+<Item category="enhancement" issue="2810">
+Introduced dropdown menus for actions in Admin UI tables. The number of buttons on some pages grew to the point that it was becoming difficult to differentiate between the buttons, and was also visually cluttering up the view. We hope you like it!
+</Item>
+
+<Item category="fix" issue="2843" thanks="runely">
+When using the start and end times in the Advanced search criteria in the Admin UI for the Audit Log, Event Log, and Login Records the selected values were  incorrectly adjusted. This bug was introduced in version `1.52.0`.
+</Item>
+  
+<Item category="fix" issue="2736">
+An SSO TTL of `0` seconds or a very small number may make it impossible to complete login using hosted login pages. To work around this issue in prior versions, increase the TTL to something larger than `0`, ideally at least `30` seconds.
+
+The potential for this issue has existed for some time, but some changes made in version `1.50.0` made it more likely for this to occur.
+</Item>
+
+<Item category="internal" issue="2473">
+Updated from Java 17 to Java 21 LTS.
+</Item>
+
+<Item category="internal" issue="2700">
+Improved database connection resiliency under heavy load by separating interactive and non-interactive tasks into separate connection pools. This change should improve performance and scalability.
+
+If you self-host, you may see an increase in the number of open connections to the relational database from FusionAuth. Previously each FusionAuth node would open `10` connections. Starting in this release, this number will increase to a minimum of `21`, and can scale to a maximum of `50`. These numbers are subject to change in future releases.
+
+To calculate the total number of connections to the relational database, multiple these numbers by the number of nodes in your cluster. If you have a `3` node FusionAuth cluster, the minimum number of connections open to your database will be `63` with a maximum of `150`.
+</Item>
+
+<Item category="internal" issue="2829">
+Updated the following dependencies:
+* Upgrade `js/handlebars.js` `4.7.6` -> `4.7.8`
+</Item>

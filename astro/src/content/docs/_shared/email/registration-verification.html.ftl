@@ -11,8 +11,8 @@ Pro tip, your registration has already been verified, but feel free to complete 
 [#else]
 To complete your registration verification click on the following link.
 <p>
-  <a href="http://localhost:9011/registration/verify/${verificationId}?client_id=${(application.oauthConfiguration.clientId)!''}&postMethod=true&tenantId=${user.tenantId}">
-    http://localhost:9011/registration/verify/${verificationId}?client_id=${(application.oauthConfiguration.clientId)!''}&postMethod=true&tenantId=${user.tenantId}
+  <a href="http://localhost:9011/registration/verify/${verificationId}?client_id=${(application.oauthConfiguration.clientId)!''}&tenantId=${user.tenantId}">
+    http://localhost:9011/registration/verify/${verificationId}?client_id=${(application.oauthConfiguration.clientId)!''}&tenantId=${user.tenantId}
   </a>
 </p>
 [/#if]

@@ -1,18 +1,17 @@
 ---
 import '../css/style.css';
-import CTA from '../components/cta/CTA.astro';
 import Head from '../components/Head.astro';
 import Header from '../components/Header.astro';
 import Navigation from '../components/Navigation.astro';
 import GitHubEdit from '../components/GitHubEdit.astro';
 import Search from '../components/search/Search.astro';
-import SectionNavigation from '../components/SectionNavigation.astro';
 import TOC from '../components/TOC.astro';
 import Article from './Article.astro';
 import ArticleNav from '../components/nav/ArticleNav.astro';
 import Icon from '../components/icon/Icon.astro';
 import { specialCaps } from '../tools/string';
 import IndexableBody from '../components/search/IndexableBody.astro';
+import { Marked } from "marked";
 
 interface Props {
   author?: string;
@@ -30,10 +29,10 @@ interface Props {
   sections?: any[];
   sideMenu?: any[];
   title?: string;
-  cta?: string;
   contribute?: boolean;
   breadcrumbs?: any[];
   maxTocDepth?: number;
+  noBreadcrumb: boolean;
 }
 
 let {
@@ -53,7 +52,6 @@ let {
   sections = [],
   sideMenu = [],
   title = "",
-  cta = "DownloadCTA",
   contribute = true,
   breadcrumbs = [],
   searchFilters = {},
@@ -70,7 +68,6 @@ section = frontmatter.section ? frontmatter.section : section;
 title = frontmatter.title ? frontmatter.title : title;
 htmlTitle = frontmatter.htmlTitle ? frontmatter.htmlTitle : title;
 disableTOC = frontmatter.disableTOC ? frontmatter.disableTOC : disableTOC;
-cta = frontmatter.cta ? frontmatter.cta : cta;
 
 if (author && !searchFilters['author']) {
   searchFilters = {...searchFilters, author: [author]}
@@ -83,9 +80,9 @@ const articleStyles = [
   // base
   "pb-24 prose prose-slate dark:prose-invert max-w-none overflow-x-auto w-full",
   // a
-  "dark:prose-a:text-indigo-400 dark:hover:prose-a:text-indigo-400 dark:hover:prose-a:border-b-indigo-400 dark:prose-a:border-b-indigo-400 hover:prose-a:border-b-2 hover:prose-a:border-b-indigo-700 prose-a:border-b prose-a:border-b-indigo-700 prose-a:no-underline prose-a:text-indigo-700",
+  "prose-a:no-underline prose-a:border-b-1 dark:prose-a:text-indigo-400 dark:prose-a:border-b-indigo-400 prose-a:border-b-indigo-700 prose-a:text-indigo-700 dark:prose-a:hover:text-orange-200 dark:prose-a:hover:border-b-orange-200 prose-a:hover:text-orange-800 prose-a:hover:border-b-orange-800",
   // code
-  "dark:prose-code:bg-slate-700 prose-code:font-bold prose-code:bg-slate-200 prose-code:p-0.5 prose-code:rounded-sm prose-code:break-words prose-code:px-2 prose-code:rounded-md",
+  "prose-code:font-normal dark:prose-code:bg-slate-700/80 prose-code:bg-slate-200/80 prose-code:rounded-sm prose-code:break-words prose-code:px-0.5 prose-code:py-0.4",
   // headings
   "dark:prose-headings:text-slate-200 prose-headings:scroll-mt-24 prose-headings:text-slate-800 prose-headings:mb-4",
   // h2
@@ -107,12 +104,12 @@ const articleStyles = [
 ];
 
 const mainStyles = [
-  "mx-auto max-w-8xl px-4 py-8",
+  "mx-auto max-w-8xl px-4 pt-8",
   "flex 2xl:container"
 ];
 
 const sideNavStyles = [
-  "lg:bg-opacity-0 hidden dark:bg-slate-900 bg-white absolute top-[110px] px-4 py-4 w-64 -left-0 z-10",
+  "lg:bg-opacity-0 hidden dark:bg-slate-900 bg-white absolute top-[110px] py-4 w-64 -left-0 z-10",
   // spacing
   "lg:block lg:max-w-[270px] lg:w-full lg:pr-4 lg:mr-6 lg:py-0 lg:sticky lg:top-24 lg:self-start overflow-y-auto lg:max-h-[calc(100vh-100px)]"
 ];
@@ -120,11 +117,23 @@ const sideNavStyles = [
 const tocStyles = [
   "bottom-0 hidden overflow-y-auto pb-10 pt-0 xl:block w-full max-w-[240px] ml-6 sticky top-24 self-start overflow-y-auto lg:max-h-[calc(100vh-100px)] z-10"
 ];
+
+// used for copying markdown only
+const path = Astro.url.pathname;
+const fullMarkdownPath = path.replace(/.html$/,'.mdx');
+
+const remark = new Marked();
+const markdownifiedTitle = remark.parseInline(htmlTitle);
+// remove simple markdown from string -- note that this is a hack that won't work for complex cases
+const cleanedHtmlTitle = htmlTitle
+  .replace(/[#*`_~]/g, '')
+  .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+  .trim();
 ---
 
 <!DOCTYPE html>
 <html class="antialiased min-h-full" lang="en">
-<Head title={htmlTitle} description={description} canonicalUrl={frontmatter.canonicalUrl} {openGraphImage} {searchFilters} />
+<Head title=`${cleanedHtmlTitle} | FusionAuth Docs` description={description} canonicalUrl={frontmatter.canonicalUrl} {openGraphImage} {searchFilters} />
 <IndexableBody {excludeFromSearchIndex}>
   <slot name="nav"/>
   <main class:list={mainStyles}>
@@ -138,7 +147,7 @@ const tocStyles = [
       </button>
 
         <!-- Search button -->
-        <div class="bg-white hidden pb-6 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
+        <div class="bg-white hidden pb-1 pr-2 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
           <button type="button" class="flex items-center pl-2 pr-3 py-1.5 border border-slate-900/10 rounded-md shadow-sm text-slate-400 text-sm w-full dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700 dark:hover:border-slate-500 hover:border-slate-300" data-widget="search-button">
             <i class="fa-light fa-magnifying-glass mr-3"></i>
             <span>Search...</span>
@@ -153,8 +162,6 @@ const tocStyles = [
 
       <!-- Default Nav i.e. articles, may just break this out later-->
       { !Astro.slots.has('sideNav') && <>
-          <!-- Section nav -->
-        <SectionNavigation items={sections}/>
 
         <!-- Sidebar nav -->
         <Navigation items={sideMenu}/>
@@ -178,8 +185,8 @@ const tocStyles = [
             </>) }
           </div> }
 
-          {breadcrumbs.length === 0 && section && <p class="font-semibold mb-4 mt-0 text-indigo-700 text-lg dark:text-indigo-500">{ specialCaps(section) }</p>}
-          <h1 data-pagefind-meta="title" class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]}>{title}</h1>
+          <h1 data-pagefind-meta="title" class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]} set:html={markdownifiedTitle}></h1>
+
           {author &&
             <p class="m-0 text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>
           }
@@ -191,7 +198,6 @@ const tocStyles = [
           <img src={darkIcon} alt={title} class="ml-8 mr-4 my-0 w-20 hidden dark:block" />
         }
       </div>
-      {/* Corrected: No inner data-pagefind-body */}
       <section>
         <slot/>
       </section>
@@ -205,11 +211,6 @@ const tocStyles = [
         <nav>
           <TOC toc={headings} depth={2} maxDepth={maxTocDepth}/>
         </nav>
-
-        {/* FIXME sean will address the cta at some point */}
-        <div class=`mt-16 hidden ${!cta && 'hidden'}`>
-          <CTA cta={cta}/>
-        </div>
       </aside>
     }
   </main>

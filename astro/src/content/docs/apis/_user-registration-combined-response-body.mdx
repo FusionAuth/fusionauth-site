@@ -1,5 +1,6 @@
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
+import Aside from 'src/components/Aside.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineFieldValue from 'src/components/InlineFieldValue.astro';
 import JSON from 'src/components/JSON.astro';
@@ -63,8 +64,8 @@ import UserDataEmailFieldResponse from 'src/content/docs/apis/_user-data-email-f
 
     For additional information, see these tutorials:
 
-    - [Email Verification](/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified)
-    - [Registration Verification](/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified)
+    * [Email Verification](/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified)
+    * [Registration Verification](/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified)
   </APIField>
   <APIField name="registration.usernameStatus" type="String">
     <ModerationStatusResponse />
@@ -115,13 +116,17 @@ import UserDataEmailFieldResponse from 'src/content/docs/apis/_user-data-email-f
     The User's middle name.
   </APIField>
   <APIField name="user.mobilePhone" type="String">
-    The User's mobile phone number. This is useful is you will be sending push notifications or SMS messages to the User.
+    The User's mobile phone number. This is useful to send the User push notifications or SMS messages.
   </APIField>
   <APIField name="user.passwordChangeRequired" type="Boolean">
     Indicates that the User's password needs to be changed during their next login attempt.
   </APIField>
   <APIField name="user.passwordLastUpdateInstant" type="Long">
     The [instant](/docs/reference/data-types#instants) that the User last changed their password.
+
+    <Aside>
+      Since version 1.59.0, if a user does not currently have a password, this field will not be returned in the response.
+    </Aside>
   </APIField>
   <APIField name="user.preferredLanguages" type="Array<String>">
     An array of locale strings that give, in order, the User's preferred languages. These are important for email templates and other localizable text. See [Locales](/docs/reference/data-types#locales).
@@ -139,7 +144,7 @@ import UserDataEmailFieldResponse from 'src/content/docs/apis/_user-data-email-f
     The time-step size in seconds. With the current implementation, this will always be 30.
   </APIField>
   <APIField name="user.twoFactor.methods[x].email" type="String">
-    The value of the email address for this method. Only present if <InlineField>user.twoFactor.methods[x].method</InlineField> is <InlineFieldValue>email</InlineFieldValue>.
+    The value of the email address for this method. Only present if <InlineField>user.twoFactor.methods\[x].method</InlineField> is <InlineFieldValue>email</InlineFieldValue>.
   </APIField>
   <APIField name="user.twoFactor.methods[x].id" type="String">
     The unique Id of the method.
@@ -148,14 +153,16 @@ import UserDataEmailFieldResponse from 'src/content/docs/apis/_user-data-email-f
     <InlineFieldValue>true</InlineFieldValue> if this method was used most recently.
   </APIField>
   <APIField name="user.twoFactor.methods[x].method" type="String">
-    The type of this method. There will also be an object with the same value containing additional information about this method.  The possible values are:
+    The type of this method. There will also be an object with the same value containing additional information about this method.
+
+    The possible values are:
 
     * `authenticator`
     * `email`
     * `sms`
   </APIField>
   <APIField name="user.twoFactor.methods[x].mobilePhone" type="String">
-    The value of the mobile phone for this method. Only present if <InlineField>user.twoFactor.methods[x].method</InlineField> is <InlineFieldValue>sms</InlineFieldValue>.
+    The value of the mobile phone for this method. Only present if <InlineField>user.twoFactor.methods\[x].method</InlineField> is <InlineFieldValue>sms</InlineFieldValue>.
   </APIField>
   <APIField name="user.twoFactorDelivery" type="String" deprecated>
     The User's preferred delivery for verification codes during a two factor login request.
@@ -183,11 +190,38 @@ import UserDataEmailFieldResponse from 'src/content/docs/apis/_user-data-email-f
 
     For additional information, see these tutorials:
 
-        - [Email Verification](/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified)
-        - [Registration Verification](/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified)
+        * [Email Verification](/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified)
+        * [Registration Verification](/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified)
   </APIField>
+    <APIField name="verificationIds" type="Array" since="1.62.0">
+        The list of all identity verifications that exist for a user. This includes the email and phone identities that a user may have.
+    </APIField>
+
+    <APIField name="verificationIds[x].id" type="String" since="1.62.0">
+        An identity verification Id.
+
+        When using `FormField` verification strategy, FusionAuth provides two values, a verification Id (this value) and the <InlineField>verificationIds\[x].oneTimeCode</InlineField> value.
+
+        When `ClickableLink` is the verification strategy, this is the value FusionAuth sends to the user in order to complete identity verification. If you have not configured SMTP or an SMS messenger, you may optionally use this value to use an out-of-band transport such as your own email service to deliver this value.
+
+        Note that when `ClickableLink` is the verification strategy, this value is sensitive in that it can be used to verify the user's email address or phone number.
+    </APIField>
+
+    <APIField name="verificationIds[x].oneTimeCode" type="String" since="1.62.0">
+        A one time code that will be paired with the <InlineField>verificationIds\[x].id</InlineField>.
+
+        When `FormField` is the verification strategy, this is the value FusionAuth sends to the user in order to complete verification. If you have not configured SMTP or an SMS messenger, you may optionally send this value using an out-of-band transport such as your own email service.
+
+        This value will only be present when using the `FormField` verification strategy. When present, this is the value the user will need to enter to complete email or phone verification.
+    </APIField>
+
+    <APIField name="verificationIds[x].type" type="String" since="1.62.0">
+        The identity type that the verification Id is for. This identity type, along with <InlineField>verificationIds\[x].value</InlineField>, matches exactly one identity via <InlineField>user.identities\[x].type</InlineField>.
+    </APIField>
+
+    <APIField name="verificationIds[x].value" type="String" since="1.62.0">
+        The identity value that the verification Id is for. This identity value, along with <InlineField>verificationIds\[x].type</InlineField>, matches exactly one identity via <InlineField>user.identities\[x].value</InlineField>.
+    </APIField>
 </APIBlock>
 
-{!props.registration_create_response && <JSON title="Example Response JSON" src="user-registrations/combined-response.json" /> }
-
-{props.registration_create_response && <JSON title="Example Response JSON" src="user-registrations/combined-response-create.json" /> }
+<JSON title="Example Response JSON" src="user-registrations/combined-response-create.json" />

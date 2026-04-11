@@ -1,0 +1,140 @@
+---
+version: "1.47.0"
+date: 2023-07-25
+name: "Performance Panther"
+---
+import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
+import ReleaseNotesDBMigrate from 'src/components/docs/release-notes/ReleaseNotesDBMigrate.mdx';
+
+<ReleaseNotesDBMigrate />
+
+<Item category="breaking-change" >
+This version changes OAuth2 origin validation code. This change is not expected to cause any change in behavior for anyone with configured Authorized Origin URLs. The change is to inspect the port in addition to the schema and host when comparing the request and the `Referer` or `Host` header to determine if the request has originated from FusionAuth. One possible edge case that could be affected is if you using `localhost` in development for both FusionAuth and another application. In this example, it is possible that FusionAuth was not validating the Origin of requests from your application running on `localhost` correctly. If you encounter this case, you can either remove all Authorized Origin URLs from your configuration, or add the origin of your application so that it can be correctly validated.
+Due to the necessary change related to adding a CSRF token when performing a federated login, a manual change may be required to your themed login pages. Please read through these details to understand if you will be affected:
+
+* If you are using any 3rd party IdP configurations such as OpenID Connect, SAML v2, Google, Facebook with a custom theme, you will need to make a modification to your template in order for federated login to continue to work correctly.
+
+* If you are not using any 3rd party IdP configurations, or you are not using a custom theme, no change will be necessary.
+
+* If you will be affected by this change, please review the following details and update to your theme as part of your upgrade process:
+
+  1. Find the `alternativeLogins` macro usage in `oauth2Authorize` and `oauth2Register` and add `federatedCSRFToken=federatedCSRFToken` as the last argument to this macro.
+
+     ```html
+     [#-- Updated macro usage. Line breaks added for readability. --]
+     [@helpers.alternativeLogins clientId=client_id
+                            identityProviders=identityProviders
+                            passwordlessEnabled=passwordlessEnabled
+                            bootstrapWebauthnEnabled=bootstrapWebauthnEnabled
+                            idpRedirectState=idpRedirectState
+                            federatedCSRFToken=federatedCSRFToken/]
+     ```
+
+  1. Find the macro named `alternativeLogins` in `helpers` and add `federatedCSRFToken=""` as the last argument to this macro.
+
+     ```html
+     [#-- Updated macro in helpers. Line breaks added for readability. --]
+     [#macro alternativeLogins clientId
+                          identityProviders
+                          passwordlessEnabled
+                          bootstrapWebauthnEnabled=false
+                          idpRedirectState=""
+                          federatedCSRFToken=""]
+     ```
+
+  1. Find the element `<div class="login-button-container">` in the macro named `alternativeLogins` in `helpers` and add `id="login-button-container"` and `data-federated-csrf="${federatedCSRFToken}"` attributes.
+
+     ```html
+     [#-- Updated div in alternativeLogins macro. Line breaks added for readability. --]
+     <div id="login-button-container"
+       class="login-button-container"
+       data-federated-csrf="${federatedCSRFToken}">
+     ```
+</Item>
+
+<Item category="known-issue" resolvedIn="1.47.1" viaIssue="2392">
+The garbage collection logging change introduced in version `1.47.0` was not compatible with the way the FusionAuth docker image was built. You will need to use version `1.47.1` if you will be using the FusionAuth docker image.
+</Item>
+<Item category="known-issue" resolvedIn="1.49.1" viaIssue="2616">
+The `passwordValidationRules` variable may be `null` on the first render of the Change Password themed page. If you had been referencing this field in your template, the render may fail.
+</Item>
+<Item category="known-issue" resolvedIn="1.53.3" viaIssue="2764">
+The CSRF token used with federated login is not being applied when all configured IdPs for an application use managed domains and an `/oauth2/authorize` request for the application includes an `idp_hint` parameter.
+</Item>
+
+<Item category="new-feature" issue="1741" thanks="annismckenzie">
+Added support for SAML v2 assertion encryption when FusionAuth is acting as the SAML v2 IdP. This means FusionAuth is now compatible with a SAML v2 SP that requires encrypted assertions.
+</Item>
+
+<Item category="enhancement" issue="1738" thanks="glen-84" bonusThanks="geoalexidis">
+Added `user.preferredLanguages` to the basic self-service registration to allow a user's preferred language to be collected and then utilized to send localized emails without using advanced self-service registration.
+</Item>
+<Item category="enhancement" issue="2318">
+Improved handling of cache reload requests under heavy load. This should improve system performance at scale when mass creating or deleting of various items such as applications and keys.
+</Item>
+<Item category="enhancement" issue="2389">
+Added timers and metrics around lambda invocations and the use of HTTP Connect within a lambda function. This should help customers tune and manage lambdas by providing additional insight into the total execution time.
+</Item>
+<Item category="enhancement" issue="2222">
+Added configuration to accept any named parameter as a login hint coming from the SAML v2 SP when FusionAuth is acting as the SAML v2 IdP. Prior to this change, FusionAuth would accept `login_hint` if provided on the request. However, this value can not be configured or optionally disabled.
+</Item>
+<Item category="enhancement" issue="2337">
+Added `identityProviderName` to the IdP Link API response.
+</Item>
+
+<Item category="fix" issue="2348">
+Ensure a signed AuthN request always has the `Signature` element as the next sibling after the `Issuer` element. This bug may cause some SAML v2 services provides to reject the signature of an AuthN request sent from FusionAuth.
+</Item>
+<Item category="fix" issue="2355">
+Upgraded phone number validation to include the Kosovo country code of `+383` as well as various other country codes.
+</Item>
+<Item category="fix" issue="2360">
+Defend against corporate link "checkers" such as Outlook Safe Links and Google Workspace during the Change Password email workflow. This fix resolves a specific symptom that may occur when a link sent to a user during a change password workflow and the user has multi-factor authentication enabled. The symptom the end user may encounter is that multiple codes may be sent to the user during this workflow. When the two-factor method is email, multiple emails may be received, and when two-factor method is SMS, multiple SMS messages may be received. The cause of this symptom is that the link is being inspected by an intermediate party prior to the user's browser loading the link which functionally means the request is made more than once.
+</Item>
+<Item category="fix" issue="2363">
+Improved locale validation, and restrict the number of preferred languages per user to 20. This should not have any practical impact on users of FusionAuth, but it will better protect FusionAuth from storing erroneous values for the user's preferred languages.
+</Item>
+<Item category="fix" issue="2368">
+Improved username validation. This length limitation was already enforced by the schema, but the error message was not developer friendly. This change will add a proper validation error in the API response.
+</Item>
+<Item category="fix" issue="2333">
+Updated the Tenant view dialog in the admin UI to reflect the changes made to the `/.well-known/openid-configuration` endpoint in version `1.46.0`. This is a cosmetic change only, and does not include any functional fixes.
+</Item>
+<Item category="fix" issue="2338">
+Fixed Tenant select control on Group index page in the admin UI when only a single tenant is configured. This is just a cosmetic fix to how the form was being rendered.
+</Item>
+<Item category="fix" issue="2359">
+Reduced Kafka logging. So noisy.
+</Item>
+<Item category="fix" issue="2362">
+Protected the Kafka event sender from sending events related to it's own failure. This protects us from overloading the Kafka topic.
+</Item>
+<Item category="fix" issue="1898" thanks="sjswami">
+Fixed the `user.registration.update.complete` event to include the updates roles if applicable.
+</Item>
+<Item category="fix" issue="2382">
+Improved defense against truncated `oauth_context` request parameters. This parameter is passed around during various OAuth2 workflows to maintain context. This changes allows FusionAuth to fail more gracefully if this is value is intentionally or un-intentionally modified by a 3rd party.
+</Item>
+<Item category="fix" issue="602" thanks="patrickvalle">
+Enabled queries of the `username` and `fullName` fields using the `.exact` suffix on these fields which does an exact match.
+</Item>
+  
+<Item category="security" issue="1840" thanks="avitsrimer">
+A race condition exists when using a refresh token with a one-time-use policy where the same token value could successfully be used twice to obtain a new access token. In practice this would be very difficult to replicate outside of a scripted example.
+</Item>
+<Item category="security" issue="2238">
+All federated login requests now use a CSRF token. This change will add additional protection when using a federated login to ensure the login is completed from the same browser that started the login workflow. This mitigates an attack vector that can be used in phishing attacks where a victim could be convinced to click on a link that would cause the user to unknowingly complete a login.
+</Item>
+
+<Item category="internal" issue="2369">
+Added aggregate HTTP request timers and metrics that can be retrieved by the Status API and Prometheus Metrics API.
+</Item>
+<Item category="internal" issue="2238" bonusIssue="2384">
+Updated dependencies.
+</Item>
+<Item category="internal" issue="2388">
+Enabled GC (garbage collection) logging. A new log named `fusionauth-app.gc.log` will be found in the log directory.
+</Item>
+<Item category="internal" issue="2195">
+Improve performance and overhead when downloading and storing the IP location database required for resolving location meta-data for logins by IP address.
+</Item>

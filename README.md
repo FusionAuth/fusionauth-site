@@ -1,137 +1,56 @@
-## FusionAuth Site 
+# FusionAuth Site
 
-https://fusionauth.io
+Hosted at [https://fusionauth.io](https://fusionauth.io).
 
-The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? Please report using an issue or submit a pull request.
+The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? File an issue or submit a pull request.
 
-Thanks!<br/>
-&nbsp;&nbsp;&nbsp;– FusionAuth team
+> NOTE: To build the docs site, see the [docs README](/astro/README.md).
 
-## Review us on G2!
+## Build Entire Site
 
-https://www.g2.com/products/fusionauth/take_survey 
+To build the entire site:
 
-## Building
+1. Install a JDK, for example [OpenJDK](https://openjdk.org/install/):
 
-If you want to submit a PR or test a change to fix a link, etc it may be helpful for you to build and run locally.
+   ```console
+   brew install openjdk
+   ```
 
-### Building on your host machine
+1. Set up [Savant](http://savantbuild.org/):
 
-This project is built using astro. You'll need to have node (v20) installed.
+   ```
+   mkdir ~/savant
+   cd ~/savant
+   wget http://savant.inversoft.org/org/savantbuild/savant-core/1.0.0/savant-1.0.0.tar.gz
+   tar xvfz savant-1.0.0.tar.gz
+   ln -s ./savant-1.0.0 current
+   export PATH=$PATH:~/savant/current/bin/
+   ```
+   
+   To persist this change, add `~/savant/current/bin` to your `PATH` that in `.zshrc` or `.bashrc`.
 
-#### Install
+1. Build the site:
 
-Install these programs:
+   ```
+   sb serve
+   ```
 
-- java
-- node
-- git
-
-Go to the `astro` directory:
-
-```
-cd astro
-```
-
-Run `npm install`
-
-#### Running Astro In Dev Mode
-
-This is the quickest way to get started, but it only builds pages you visit.
-
-You'll need to be in the `astro` directory.
-
-```
-npm run dev
-```
-
-Then you can visit http://localhost:3000
-
-(It'll pick a different port if you have a process running on port 3000.)
-
-#### Setup Savant
-
-We use the Savant build tool to build the entire website.
-
-In order to fully build and run this project, you'll need to first setup Savant.
-
-Linux or macOS
-
-```
-mkdir ~/savant
-cd ~/savant
-wget http://savant.inversoft.org/org/savantbuild/savant-core/1.0.0/savant-1.0.0.tar.gz
-tar xvfz savant-1.0.0.tar.gz
-ln -s ./savant-1.0.0 current
-export PATH=$PATH:~/savant/current/bin/
-```
-
-You may optionally want to add `~/savant/current/bin` to your PATH that is set in your profile so that this change persists. You'll also need to ensure that you have Java >= 8 installed and the environment variable  `JAVA_HOME` is set.
-
-### Build The Entire Site
-
-```
-sb serve
-```
-
-For more information on the Savant build tool, checkout [savantbuild.org](http://savantbuild.org/).
-
-### CSS changes
+## CSS changes
 
 This project depends on CSS from the `fusionauth-style` project.
 
-If you are making changes to the CSS, you'll need to do the following:
-
-* clone that repo, make changes there on a branch
-* when your changes are done, run `sb int` which pushes up an integration build (similar to a maven snapshot) to the savant repo.
-* edit your css dependency var to be something like this (with the appropriate version number):
-```
-fusionauthWebsiteStyleVersion = "0.2.27-{integration}"
-```
-* then you can commit this and other folks can pull down your changes
-
-Each time you make a CSS change, you can run `sb int` in `fusionauth-style` and then `sb css` in this project to pull down the latest CSS.
-
-#### Releasing CSS changes
-
-Before you merge your site changes with CSS dependencies to `main`:
-
-* do a CSS version release, which will bump the version (see instructions in that repo for more)
-* update the version number in `site/_includes/_head.liquid`
-* update the dependency in the `fusionauth-site` savant build file.
-* run `sb css`
-* check in the new css files.
-
-
-## Deploying to S3
-
-📝 _This section is only useful if you work for FusionAuth. Sorry!_
-
-Only `main` is ever released. You should work on a feature branch so that nothing is inadvertently released, but you must merge to `main` before you release. On every project, including this site, `main` should always be completely clean and able to be released at anytime.
+## Deploy
 
 Deploying happens automatically via a GitHub action when `main` is updated.
 
-## Deploying Redirect Rules
+## Redirects
 
-📝 _This section is only useful if you work for FusionAuth. Sorry!_
+[redirects.json](src/redirects.json) specifies our redirect rules. This file is published to s3 and read by a Lambda function that processes redirects for the site. When modifying the file:
 
-The [redirects.json](src/redirects.json) file specifies our redirect rules. This file is published to s3 and read by a Lambda function that processes redirects for the site.
-
-* If you are moving a page around, update `redirects`
-* If you are adding a page that is an index page, update `indexPages`
+* Keep items in alphabetical order!
+* If you are moving a page around, update `redirects`.
+* If you are adding a page that is an index page, update `indexPages`.
 * If you are adding a new top level file or directory that's pulled from the S3 bucket, make sure you:
-    * Add a behavior in CloudFront. You'll need to submit a PR in [fusionauth-site-infra](https://github.com/FusionAuth/fusionauth-site-infra/) for this change.
-    * If you are adding a top level file, add an entry to the `s3Paths` array
-    * If you are adding a top level directory, add an entry to the `s3Prefixes` array
-
-⚠️ _When updating this file, please keep items in alpha order._
-
-## Sitemap
-
-📝 _This section is only useful if you work for FusionAuth. Sorry!_
-
-This is the state of things as of Nov 2023.
-
-The sitemap is generated during the Astro build by [@astrojs/sitemap](https://docs.astro.build/en/guides/integrations-guide/sitemap/).
-
-As of today, we still have static sitemaps that were generated by Jekyll, located in [astro/public](astro/public). These static sitemaps reference the sitemap generated by Astro.
+  * Add a behavior in CloudFront. You'll need to submit a PR in [fusionauth-site-infra](https://github.com/FusionAuth/fusionauth-site-infra/) for this change.
+  * If you are adding a top level file, add an entry to the `s3Paths` array.
+  * If you are adding a top level directory, add an entry to the `s3Prefixes` array.

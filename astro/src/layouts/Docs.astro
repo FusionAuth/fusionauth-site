@@ -1,46 +1,31 @@
 ---
 import Default from './Default.astro';
 import DocsNav from '../components/nav/DocsNav.astro';
-import DocsSideNav from 'src/components/side-nav/DocsSideNav.astro';
+import Sidebar from 'src/components/Sidebar.astro';
 import { Category } from '../tools/docs';
+import { getCollection } from 'astro:content';
 
 let { frontmatter, headings, navContext, noSideNav } = Astro.props;
 
 const openGraphImage = '/img/og/docs-developers-v1.png'
 
-let currentCat: Category = navContext.category;
+const docsCollection = await getCollection('docs');
+const basePath = '/docs'; 
+
 const breadcrumbs = [];
 const searchFilters: { [key: string]: string[] } = {
-  environment: ['docs'],
-  section: [currentCat.name],
+  environment: ['docs']
 }
-breadcrumbs.push({href: currentCat.href, title: currentCat.name});
-if (frontmatter.subcategory) {
-  searchFilters.subcategory = [frontmatter.subcategory];
-  const sub = currentCat.subcategories.find(sub => sub.name === frontmatter.subcategory);
-  breadcrumbs.push({href: sub.href, title: sub.name});
-  if (frontmatter.tertcategory) {
-    searchFilters.tertcategory = [frontmatter.tertcategory];
-    const tert = sub.subcategories.find(tert => tert.name == frontmatter.tertcategory);
-    breadcrumbs.push({href: tert.href, title: tert.name});
-    if (frontmatter.quatercategory) {
-      searchFilters.quatercategory = [frontmatter.quatercategory];
-      const quat = tert.subcategories.find(quat => quat.name === frontmatter.quatercategory);
-      breadcrumbs.push({href: quat.href, title: quat.name})
-    }
-  }
-}
+breadcrumbs.push({href: Astro.url.pathname, title: frontmatter.title});
 ---
 <Default {frontmatter}
          {headings}
-         cta="NONE"
-         contribute={false}
-         {breadcrumbs}
+         contribute={true}
          {openGraphImage}
          {searchFilters}
          maxTocDepth={3}
          {...Astro.props}>
-  <DocsNav {noSideNav} {breadcrumbs} slot="nav" darkModeToggle={true} />
-  <DocsSideNav slot="sideNav" context={navContext} {frontmatter} />
+  <DocsNav {noSideNav} slot="nav" darkModeToggle={true} />
+  <Sidebar slot="sideNav" {frontmatter} collection={docsCollection} {basePath} />
   <slot></slot>
 </Default>

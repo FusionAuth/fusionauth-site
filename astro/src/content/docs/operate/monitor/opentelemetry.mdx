@@ -1,29 +1,45 @@
 ---
-title: Monitor With OpenTelemetry
+title: OpenTelemetry
 description: Learn how to monitor FusionAuth with OpenTelemetry.
-navcategory: admin
-section: operate
-subcategory: monitor
 ---
 import Aside from 'src/components/Aside.astro';
-import Diagram1 from 'src/components/docs/operate/secure-and-monitor/opentelemetryDiagram1.astro';
-import Diagram2 from 'src/components/docs/operate/secure-and-monitor/opentelemetryDiagram2.astro';
-import InlineFieldValue from 'src/components/InlineFieldValue.astro';
 import WhatIsOpenTelemetry from 'src/components/docs/operate/secure-and-monitor/whatIsOpentelemetry.mdx';
-
-## Introduction
 
 This guide explains how to monitor FusionAuth with OpenTelemetry.
 
 <WhatIsOpenTelemetry></WhatIsOpenTelemetry>
 
-Please read the [FusionAuth monitoring overview](/docs/operate/secure-and-monitor/monitor) before proceeding. The overview explains the FusionAuth metrics, the activities that comprise a complete monitoring workflow, and the tools that complement OpenTelemetry, such as Prometheus and Elastic (which have their own FusionAuth guides). Review the [alternative monitoring services](/docs/operate/secure-and-monitor/monitor#overview-of-popular-monitoring-tools) in the overview to ensure that OpenTelemetry is the right tool for your needs.
+Please read the [FusionAuth monitoring overview](/docs/operate/monitor) before proceeding. The overview explains the FusionAuth metrics, the activities that comprise a complete monitoring workflow, and the tools that complement OpenTelemetry, such as Prometheus and Elastic (which have their own FusionAuth guides). Review the [alternative monitoring services](/docs/operate/monitor#overview-of-popular-monitoring-tools) in the overview to ensure that OpenTelemetry is the right tool for your needs.
+
+<Aside type="note">
+FusionAuth doesn't support OpenTelemetry instrumentation for traces. For more information and to find status, see the [open GitHub issue to add instrumentation for traces](https://github.com/FusionAuth/fusionauth-issues/issues/1665).
+</Aside>
 
 ## Architecture For Using OpenTelemetry With FusionAuth
 
 Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below (you might also run OpenSearch in another Docker container).
 
-<Diagram1></Diagram1>
+```mermaid
+graph LR
+  subgraph I[Your server]
+    direction TB
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph E[Docker]
+      F(Your app)
+    end
+  end
+  D(User)
+  D --> F
+  D --> A
+  C --> G
+  F --> A
+  style I fill:#999
+```
 
 This diagram shows three components that could die and need monitoring: the PostgreSQL database, FusionAuth, and your app (web server) that directs users to FusionAuth for login. In this guide, you'll focus on monitoring FusionAuth.
 
@@ -42,7 +58,7 @@ Since you don't have access to the FusionAuth source code, there are three ways 
 
 In this guide, you'll set up the last two options.
 
-If you are not using a paid cloud service, you will need to install Prometheus to view the OpenTelemetry metrics. That installation is explained briefly in this guide, but please work through the [Prometheus monitoring guide](/docs/operate/secure-and-monitor/prometheus) too. OpenTelemetry also monitors more than Prometheus — OpenTelemetry can trace an entire web request across services, instead of recording only a metric at a point in time.
+If you are not using a paid cloud service, you will need to install Prometheus to view the OpenTelemetry metrics. That installation is explained briefly in this guide, but please work through the [Prometheus monitoring guide](/docs/operate/monitor/prometheus) too. OpenTelemetry also monitors more than Prometheus — OpenTelemetry can trace an entire web request across services, instead of recording only a metric at a point in time.
 
 So why use OpenTelemetry if you are not using a paid monitoring service, do not need to trace requests inside FusionAuth, and could just use Prometheus by itself? For most FusionAuth users, there probably isn't any reason to use OpenTelemetry — Prometheus alone should be enough to monitor whether FusionAuth is up and running correctly. The only advantage running an OpenTelemetry collector offers is that it allows you to write a script that requests custom metrics (like user login counts) from the FusionAuth API and sends them through the OpenTelemetry collector to Prometheus, so you can get more detail about specific FusionAuth processes than you can get from Prometheus alone.
 
@@ -56,7 +72,42 @@ In the following sections of this guide, you will run:
 - A bash script in another container to poll the FusionAuth API to get data about user logins
 - Prometheus in a final container to receive both the OpenTelemetry metrics
 
-<Diagram2></Diagram2>
+```mermaid
+graph LR
+  D(User)
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph P[Docker]
+      Q(OpenTelemetry Collector)
+    end
+    subgraph E[Docker]
+      B(Prometheus)
+    end
+    subgraph K[Docker]
+      L(bash script)
+    end
+    subgraph J[Docker]
+      F(Your app)
+    end
+  end
+  D --> J
+  D --> C
+  C --> G
+  F --> C
+  K --> |pushes metrics to| P
+  E --> |pulls metrics from| P
+  P --> |pull Prometheus metrics from| C
+  K --> |pull custom metrics from| C
+  style I fill:#999
+  style E fill:#944
+  style K fill:#944
+  style P fill:#944
+```
 
 This guide focuses on OpenTelemetry, not Prometheus and Grafana, and so uses the OpenTelemetry Collector. However, as of 2024, Grafana has released their own free and open-source version of an OpenTelemetry collector, called [Alloy](https://grafana.com/oss/alloy-opentelemetry-collector), that supports all Prometheus and OpenTelemetry protocols. It is component-based and has features that the OpenTelemetry Collector does not. You may prefer to use Alloy instead of OpenTelemetry Collector in your project.
 
@@ -163,9 +214,9 @@ scrape_configs:
 
 This configures Prometheus to pull metrics from the Collector every fifteen seconds.
 
-Run all the containers with `docker compose up`. You should be able to log in to FusionAuth at http://localhost:9011 with email address <InlineFieldValue>admin@example.com</InlineFieldValue> and password <InlineFieldValue>password</InlineFieldValue>, and to Prometheus at http://localhost:9090.
+Run all the containers with `docker compose up`. You should be able to log in to FusionAuth at http://localhost:9011 with email address `admin@example.com` and password `password`, and to Prometheus at http://localhost:9090.
 
-To check that metrics are being pulled correctly, enter <InlineFieldValue>up</InlineFieldValue> on the Prometheus graph page and see whether any values appear after a minute. If you see nothing, check the Docker log files in the terminal.
+To check that metrics are being pulled correctly, enter `up` on the Prometheus graph page and see whether any values appear after a minute. If you see nothing, check the Docker log files in the terminal.
 
 ![Prometheus metrics](/img/docs/operate/secure-and-monitor/opentelemetry/prometheus.png)
 
@@ -330,7 +381,7 @@ Now you can run the script with `./app.sh` and add `echo` statements to debug ea
 
 You can add any other metrics you want to this bash script.
 
-FusionAuth has too [many metrics](/docs/operate/secure-and-monitor/monitor#metrics) to discuss in this article. You will need to decide which are important for you to monitor by reading the documentation.
+FusionAuth has too [many metrics](/docs/operate/monitor#metrics) to discuss in this article. You will need to decide which are important for you to monitor by reading the documentation.
 
 In addition to the metrics available through the various FusionAuth APIs, you can create your own metrics using any events that trigger [webhooks](/docs/extend/events-and-webhooks). A webhook can call another Docker container (created by you) that listens for incoming events and forwards them to the Collector.
 
@@ -338,10 +389,10 @@ A useful metric to start with is login counts. If this number drops from the ave
 
 ## Next Steps
 
-OpenTelemetry is not a standalone tool. Read the FusionAuth guides to [Prometheus](/docs/operate/secure-and-monitor/prometheus) and [Elastic](/docs/operate/secure-and-monitor/elastic) to choose a complete system that provides a dashboard with alerts you can use in conjunction with OpenTelemetry.
+OpenTelemetry is not a standalone tool. Read the FusionAuth guides to [Prometheus](/docs/operate/monitor/prometheus) and [Elastic](/docs/operate/monitor/elastic) to choose a complete system that provides a dashboard with alerts you can use in conjunction with OpenTelemetry.
 
 ## Further Reading
 
-- [FusionAuth monitoring overview](/docs/operate/secure-and-monitor/monitor)
-- [FusionAuth metrics](/docs/operate/secure-and-monitor/monitor#metrics)
+- [FusionAuth monitoring overview](/docs/operate/monitor)
+- [FusionAuth metrics](/docs/operate/monitor#metrics)
 - [OpenTelemetry Collector configuration documentation](https://opentelemetry.io/docs/collector/configuration)

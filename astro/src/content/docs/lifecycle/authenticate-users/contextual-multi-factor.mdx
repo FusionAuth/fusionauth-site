@@ -1,0 +1,237 @@
+---
+title: Contextual Multi-Factor Authentication (MFA)
+description: Learn about how FusionAuth decides to trigger multi-factor authentication (MFA) in the login flow.
+tags: context mfa, contextual mfa, context 2fa, 2fa context, mfa context, how mfa, determine mfa, mfa detect, context
+---
+import InlineField from 'src/components/InlineField.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+
+This page explains why and how FusionAuth asks for MFA during the login process.
+
+For guidance on implementing MFA using FusionAuth, see the [MFA documentation](/docs/lifecycle/authenticate-users/multi-factor-authentication).
+
+## When is MFA Required?
+
+FusionAuth displays an MFA challenge to the user when a login attempt meets one of the following criteria:
+
+* Does the tenant or application enable or require MFA?
+* Has the user provided an MFA method?
+* Did the user log in using an Identity Provider such as Google or OIDC? In this case, MFA is never required.
+* Has the device passed appropriate contextual checks, such as using a known device?
+
+The following diagram shows the FusionAuth MFA logic:
+
+```mermaid title="High level diagram of MFA logic."
+graph TD
+    isPolicyEnabled[Is MFA Turned On For This Tenant?] --> |No| noChallengePolicy[Do Not Challenge User]
+    isPolicyEnabled --> |Yes| identityProviderLogin[User Logged In Using an Identity Provider?]
+    identityProviderLogin --> |Yes| noChallengeIdentityProvider[Do Not Challenge User]
+    identityProviderLogin --> |No| isUserMFAEnabled[Has the User Set Up MFA?]
+    isUserMFAEnabled --> |No| isUserMFARequired[Is MFA Required By Tenant Or Application?]
+    isUserMFAEnabled --> |Yes| devicePassesContextualCheck[Does the Device Pass Contextual Check?]
+    devicePassesContextualCheck--> |Yes| noChallengeContextualCheck[Do Not Challenge User]
+    devicePassesContextualCheck--> |No| challengeContextualCheck[Challenge User]
+    isUserMFARequired --> |No| noChallengeMFARequired[Do Not Challenge User]
+    isUserMFARequired --> |Yes| promptMFASetupRequired[Prompt MFA Setup]
+
+    style noChallengePolicy stroke:#00FF00,stroke-width:4px
+    style noChallengeIdentityProvider stroke:#00FF00,stroke-width:4px
+    style noChallengeMFARequired stroke:#00FF00,stroke-width:4px
+    style noChallengeContextualCheck stroke:#00FF00,stroke-width:4px
+
+    style promptMFASetupRequired stroke:#FF0000,stroke-width:4px
+    style challengeContextualCheck stroke:#FF0000,stroke-width:4px
+```
+
+### Contextual Checks
+
+Contextual checks are based on attributes of the request evaluated every time a user authenticates. These checks include:
+
+* Has this device been seen before?
+* Has this user been seen before on this device?
+* Is there a suspicious login detected for this authentication attempt?
+
+The duration of trust of the device can be configured with the <InlineField>tenant.externalIdentifierConfiguration.twoFactorTrustIdTimeToLiveInSeconds</InlineField> configuration value.
+
+The goal of this contextual check is to challenge the user for another factor of authentication whenever FusionAuth determines the risk of invalid access outweighs user friction.
+
+Depending on [your license](#license-limitations), you can configure MFA policies at both the tenant and application level.
+
+### Tenant MFA Configuration
+
+Tenant configuration applies to all applications within a tenant. The MFA policy has three values:
+
+* `Disabled`: no MFA challenge occurs
+* `Enabled`: an MFA challenge occurs only if the user has a valid MFA method
+* `Required`: an MFA challenge always occurs, requires users without MFA to configure an MFA method
+
+Here's a diagram of the MFA challenge logic when the tenant has a policy for MFA.
+
+```mermaid title="Tenant MFA decision logic."
+graph TD
+    applicationMfaPolicy[MFA Policy At Application Level Configured?] --> |True| applicationMfaPolicyControls[Application MFA Policy Controls]
+    applicationMfaPolicy --> |False| tenantMfaPolicy
+    tenantMfaPolicy[What is MFA Policy At Tenant Level?] --> |Disabled| noChallenge[Do Not Challenge User]
+    tenantMfaPolicy --> |Enabled| checkUserConfigEnabled[Check User Has MFA Method]
+    tenantMfaPolicy --> |Required| checkUserConfigRequired[Check User Has MFA Method]
+    checkUserConfigEnabled --> |MFA Configured| contextualMFACheck[Check Request Context]
+    checkUserConfigEnabled --> |No MFA Configured| noChallengeUserConfig[Do Not Challenge User]
+    checkUserConfigRequired --> |MFA Configured| contextualMFACheckRequired[Check Request Context]
+    checkUserConfigRequired --> |No MFA Configured| forceUserToSetupMFA[Prompt User To Set Up MFA]
+    contextualMFACheck --> |Context Check Fails| challenge[Challenge User]
+    contextualMFACheck --> |Context Check Succeeds| noChallengeContextual[Do Not Challenge User]
+    contextualMFACheckRequired --> |Context Check Fails| challengeRequired[Challenge User]
+    contextualMFACheckRequired --> |Context Check Succeeds| noChallengeContextualRequired[Do Not Challenge User]
+
+    style noChallengeContextualRequired stroke:#00FF00,stroke-width:4px
+    style noChallenge stroke:#00FF00,stroke-width:4px
+    style noChallengeContextual stroke:#00FF00,stroke-width:4px
+    style noChallengeUserConfig stroke:#00FF00,stroke-width:4px
+    style challengeRequired stroke:#FF0000,stroke-width:4px
+    style challenge stroke:#FF0000,stroke-width:4px
+    style forceUserToSetupMFA stroke:#FF0000,stroke-width:4px
+```
+
+### Application MFA Configuration
+
+Application configuration applies to a single application within a tenant. Application policies always supersede the tenant policy.
+
+With an active application MFA configuration, there is an MFA policy with three possible values:
+
+* `Disabled`: no MFA challenge occurs
+* `Enabled`: an MFA challenge occurs only if the user has a valid MFA method
+* `Required`: an MFA challenge always occurs, requires users without MFA to configure an MFA method
+
+An additional trust policy determines if an application accepts the results of other MFA challenges with the following options:
+
+* `Any`: any application's challenge results are acceptable
+* `This`: only this application's challenge results are acceptable
+* `None`: no application's challenge results are acceptable, always displays an MFA challenge
+
+Here's a table outline possible scenarios for different trust policies.
+
+| Trust Policy             | Example Application                  | Notes                                                                 |
+|--------------------------|--------------------------------------|-----------------------------------------------------------------------|
+| `Any`           | Apps in a [suite of applications](/docs/get-started/use-cases/app-suite) such as Google Drive, Google Calendar and Gmail           | Any MFA challenge is good enough since they all have roughly the same risk profile. |
+| `This`          | A gambling application which uses real money in a suite which has other fantasy gaming apps. | The other fantasy gaming apps might not require MFA at all, but if they do, it's not a high enough level of security for the "real money" gambling application. |
+| `None`          | An internal admin dashboard | Access should be strictly controlled and user friction is not an issue. |
+
+Here's a diagram of MFA challenge logic when the application has a policy for MFA.
+
+```mermaid title="Diagram of application MFA decision logic."
+graph TD
+    applicationMfaPolicy[What is MFA Policy At Application Level?] --> |No Application Policy Present| deferToTenant[Defer To The Tenant Policy]
+    applicationMfaPolicy --> |Disabled| noChallenge[Do Not Challenge User]
+    applicationMfaPolicy --> |Enabled| checkUserConfigEnabled[Check User Has MFA Method]
+    checkUserConfigEnabled --> |MFA Configured| contextualMFACheck[Check Request Context]
+    checkUserConfigEnabled --> |No MFA Configured| noChallengeNoMFAConfigured[Do Not Challenge User]
+    applicationMfaPolicy --> |Required| checkUserConfigRequired[Check User Has MFA Method]
+    checkUserConfigRequired --> |MFA Configured| contextualMFACheckRequired[Check Request Context]
+    checkUserConfigRequired --> |No MFA Configured| forceUserToSetupMFA[Prompt User To Set Up MFA]
+    contextualMFACheck --> |Context Check Fails| challenge[Challenge User]
+    contextualMFACheck --> |Context Check Succeeds| trustPolicyMFACheck[What is the Application MFA Trust Policy?]
+    contextualMFACheckRequired --> |Context Check Fails| challengeRequired[Challenge User]
+    contextualMFACheckRequired --> |Context Check Succeeds| trustPolicyMFACheck
+    trustPolicyMFACheck --> |Any| noChallengeTrustPolicyAny[Do Not Challenge User]
+    trustPolicyMFACheck --> |This Application| trustSource[Is MFA Trust From This Application?]
+    trustSource --> |This Application| noChallengeAppMatch[Do Not Challenge User]
+    trustSource --> |Any Other Application| challengeTrustSource[Challenge User]
+    trustPolicyMFACheck --> |None| challengeTrustPolicyNone[Challenge User]
+
+    style noChallenge stroke:#00FF00,stroke-width:4px
+    style noChallengeNoMFAConfigured stroke:#00FF00,stroke-width:4px
+    style noChallengeTrustPolicyAny stroke:#00FF00,stroke-width:4px
+    style noChallengeAppMatch stroke:#00FF00,stroke-width:4px
+
+    style challenge stroke:#FF0000,stroke-width:4px
+    style challengeRequired stroke:#FF0000,stroke-width:4px
+    style challengeTrustSource stroke:#FF0000,stroke-width:4px
+    style challengeTrustPolicyNone stroke:#FF0000,stroke-width:4px
+    style forceUserToSetupMFA stroke:#FF0000,stroke-width:4px
+```
+
+## License Limitations
+
+Not all plans support all MFA features. The plan you are on affects the MFA options available to you and your users. Learn more about [plan features](/docs/get-started/core-concepts/premium-features) and [pricing](/pricing).
+
+The following contextual MFA features are limited to the specified plan.
+
+### Enterprise Only
+
+* Application MFA policies
+* Suspicious Login Contextual Check
+
+### Any Paid Plan
+
+* Email MFA
+* SMS MFA
+* User MFA Enrollment Account Management Pages
+
+### Any Plan
+
+* TOTP MFA
+* Tenant MFA policies
+* User MFA Enrollment APIs
+* Application MFA policies for the FusionAuth Admin UI only
+
+## MFA Challenges After Identity Provider Login
+
+If a user logs in with an Identity Provider such as Google or OIDC, FusionAuth does not challenge for MFA. [FusionAuth trusts that the correct MFA challenge process happens at Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/#account-security). 
+
+There's an [open issue to add a policy to allow for more control](https://github.com/FusionAuth/fusionauth-issues/issues/2005) in this scenario.
+
+## Custom MFA Logic
+
+You may need more granularity on who is challenged for an additional factor during login. For example, you might want everyone who is a member of a certain group or has a certain `user.data` field to complete an MFA challenge.
+
+To customize MFA to meet your needs, use one of the following methods:
+
+### MFA Requirement Lambda
+
+Under <Breadcrumb> Customization -> Lambdas </Breadcrumb>, create a new Lambda of type "MFA requirement lambda".
+
+The following example forces an MFA check for any user whose email address includes the string 'gilfoyle':
+
+```javascript
+function checkRequired(result, user, registration, context) {
+  if (user.email.includes('gilfoyle')) {
+    result.required = true;
+  }
+}
+```
+
+For more information, see [the MFA requirement lambda documentation](/docs/extend/code/lambdas/mfa-requirement).
+
+### Use a Webhook
+
+1. Set a tenant or application policy to `Enabled` and then use the API to ensure that everyone in the `mfa_required` group has an MFA method.
+1. Use a [transactional `user.update` webhook](/docs/extend/events-and-webhooks/events/user/user-update) to ensure that the MFA method can't be removed while the user is in that group.
+1. Set the trust duration to be the same or less than your session length.
+1. If you are using the application policy, set the trust policy to `This`.
+
+### Redirect Users Through a Special Application
+
+The following example guarantees that all users in the `mfa_required` group are challenged with MFA whenever they log in:
+
+1. Create an "MFA check" application with an MFA policy of `Required` and a trust policy of `None`.
+1. After a user logs in, examine their profile on an interstitial page.
+   1. If they are in the `mfa_required` group, redirect them to this application. They will be prompted for MFA and then redirected to the initial application.
+   1. Users that are not in the `mfa_required` group can be sent directly through to the application.
+
+Make sure the MFA check application uses a lambda to set the `aud` and `applicationId` claims to values expected by any access token consumers.
+
+This is similar to doing a conditional step-up authentication on the interstitial page, without using the step-up API.
+
+## MFA Challenges Outside Of The Login Process
+
+If you need to prompt for MFA outside of the login process, use step-up authentication. For example, you could display an MFA challenge when a user performs a high-risk action like initiating a money transfer. Use the [2FA API](/docs/apis/two-factor#start-multi-factor) to perform this process.
+
+For more information, see the [step-up authentication](/docs/lifecycle/authenticate-users/multi-factor-authentication#step-up-auth) documentation.
+
+## Limitations On MFA Challenges
+
+There's an [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/2357) about unexpected MFA behavior and workarounds when a user logs in with an identity provider but SSOs to an application with a login policy of `Required`.
+
+If a user signs up with an MFA method that is allowed for a tenant, such as email, and the tenant configuration changes later to disable that MFA method, the user can still use that MFA method. Users cannot, however, add disabled MFA methods. If you are disabling an MFA method previously in use, it's recommended you search for users using that method and remove it using a script, updating each user.

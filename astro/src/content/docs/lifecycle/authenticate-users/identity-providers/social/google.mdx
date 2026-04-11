@@ -1,25 +1,17 @@
 ---
 title: Google
 description: Learn how to add a login with Google button to your application.
-navcategory: login-methods
-section: lifecycle
-subcategory: authenticate users
-tertcategory: identity providers
-quatercategory: social
-tags: auth as a service
 ---
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import IdentityProviderOverviewDiagram from 'src/content/docs/_shared/_identity-provider-overview-diagram.astro';
+import {Content as IdentityProviderOverviewDiagram} from 'src/content/docs/_shared/_identity-provider-overview-diagram.mdx';
 import IdpApplicationConfiguration from 'src/content/docs/_shared/_idp-application-configuration.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineFieldValue from 'src/components/InlineFieldValue.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
-import LoginApiIntegration from 'src/content/docs/_shared/_login-api-integration.astro';
-
-## Overview
+import {Content as LoginApiIntegration} from 'src/content/docs/_shared/_login-api-integration.mdx';
 
 Adding a Login with Google button to FusionAuth is straightforward, and this guide will walk you through the steps necessary to collect the credentials from Google in order to enable this Social login.
 
@@ -114,6 +106,15 @@ This will take you to the `Add Google` panel, and you'll fill out the `Client Id
 ### Form Fields
 
 <APIBlock>
+  <APIField name="Id" optional since="1.61.0">
+    An optional UUID. When this value is omitted a unique Id will be generated automatically.
+  </APIField>
+  <APIField name="Tenant" optional since="1.62.0">
+    The tenant to which this identity provider belongs. This field only displays when the user selects a specific tenant on the previous page. When `Global identity provider` is selected on the previous page, this field does not display.
+  </APIField>
+  <APIField name="Name" required since="1.61.0">
+    A unique name to identify the identity provider. This name is for display purposes only and it can be modified later if desired.
+  </APIField>
   <APIField name="Client Id" required>
     The Google Client Id found in your Google credentials settings in the <InlineField>Client ID</InlineField> field.
   </APIField>
@@ -190,7 +191,7 @@ The <InlineField>API properties</InlineField> and <InlineField>Button properties
     itp_support=true
     ```
   </APIField>
-  <APIField name="Button properties" optional since="1.44.0" defaults="SEE DESCRIPTION">
+  <APIField name="Button properties" optional since="1.44.0" defaults="'See Description'">
     Google Identity Services button configuration in a properties file formatted String. Any attribute from [Google's documentation](https://developers.google.com/identity/gsi/web/reference/html-reference#element_with_class_g_id_signin) can be added. Properties can be referenced in templates that support Google login to render the login button via HTML or JavaScript. The properties specified in this field should not include the `data-` prefix on the property name.
 
     If omitted, this value will default to the following properties:
@@ -214,7 +215,10 @@ Google One Tap provides registration and authentication with a single user actio
 
 ![Add Google Options](/img/docs/lifecycle/authenticate-users/identity-providers/social/login-google-one-tap.png)
 
-Google One Tap can be enabled in FusionAuth `1.44.0` and later by including `auto_prompt=true` in the <InlineField>API properties</InlineField> configuration.
+Google One Tap can be enabled in FusionAuth `1.44.0` and later by:
+
+* setting the <InlineField>Login Method</InlineField> to `Use popup for login`
+* including `auto_prompt=true` in the <InlineField>API properties</InlineField> configuration
 
 ## Additional Steps For Your Google Application
 
@@ -243,7 +247,20 @@ Google is great at conforming to OIDC, so using the OIDC provider instead of Goo
 
 When you need such custom parameters, the Google Identity Provider won't work. Instead, do the following:
 
-* Create an [OpenId Connect Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc).
+* Create an [OpenID Connect Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc).
 * Set <InlineField>Discover endpoints</InlineField> to be <InlineFieldValue>false</InlineFieldValue>.
 * Enter the endpoints manually from the [Discovery document](https://developers.google.com/identity/protocols/oauth2/openid-connect#discovery).
+* Add the desired space-separated [Google OAuth2 scopes](https://developers.google.com/identity/protocols/oauth2/scopes) to <InlineField>Scope</InlineField>. The most commonly requested scopes are `openid`, `profile` and `email`. You must include `email` if you're using the [linking on email](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies) strategy.
 * Append whatever additional parameters are needed to the <InlineField>Authorization endpoint</InlineField> value. For example, you might end up with something like `https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=select_account` .
+
+## Limitations
+
+Google's GSI client supports a single configuration per page, which limits FusionAuth's capability to support multiple configurations on the same login page.
+
+Google identity providers configured with a <InlineField>Login Method</InlineField> of `Use popup for login` or `Use vendor JavaScript` use the GSI client. This provides a more modern and dynamic UX and support for Google One Tap.
+
+If more than one Google IdP using the GSI client would be available on the same login page, the themed page will select one configuration to initialize the button. Other IdPs configured to use the GSI client will not have a button rendered.
+
+You can work around this limitation by either
+1. Making sure to enable just one Google IdP using the GSI client per application
+2. Providing alternate Google IdP configurations with the `Use redirect for login` <InlineField>Login Method</InlineField>

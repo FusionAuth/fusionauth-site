@@ -1,26 +1,16 @@
 ---
-title: Monitor With Prometheus, Loki, And Grafana
+title: Prometheus, Loki, And Grafana
 description: Learn how to monitor FusionAuth with Prometheus, Loki Grafana, and ntfy.
-navcategory: admin
-section: operate
-subcategory: monitor
 ---
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineFieldValue from 'src/components/InlineFieldValue.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
-import Diagram1 from 'src/components/docs/operate/secure-and-monitor/prometheusDiagram1.astro';
-import Diagram2 from 'src/components/docs/operate/secure-and-monitor/prometheusDiagram2.astro';
-import Diagram3 from 'src/components/docs/operate/secure-and-monitor/prometheusDiagram3.astro';
-import Diagram4 from 'src/components/docs/operate/secure-and-monitor/prometheusDiagram4.astro';
-import Diagram5 from 'src/components/docs/operate/secure-and-monitor/prometheusDiagram5.astro';
-
-## Introduction
 
 This guide explains how to monitor FusionAuth logs and metrics with the open-source tools [Prometheus](https://prometheus.io/docs/introduction/overview), [Loki](https://grafana.com/docs/loki), and [Grafana](https://grafana.com/grafana), and receive alerts when problems occur.
 
-Please read the [FusionAuth monitoring overview](/docs/operate/secure-and-monitor/monitor) for details on FusionAuth metrics, the activities in a complete monitoring workflow, and what Prometheus, Loki, and Grafana are. Review the [alternative monitoring services](/docs/operate/secure-and-monitor/monitor#overview-of-popular-monitoring-tools) in the overview to ensure that Prometheus is the right tool for your needs.
+Please read the [FusionAuth monitoring overview](/docs/operate/monitor) for details on FusionAuth metrics, the activities in a complete monitoring workflow, and what Prometheus, Loki, and Grafana are. Review the [alternative monitoring services](/docs/operate/monitor#overview-of-popular-monitoring-tools) in the overview to ensure that Prometheus is the right tool for your needs.
 
 This guide will show you how to set up Prometheus in Docker containers on your local machine. However, a paid, cloud-hosted alternative is also available from [Grafana Cloud](https://grafana.com/auth/sign-up/create-user).
 
@@ -28,11 +18,54 @@ This guide will show you how to set up Prometheus in Docker containers on your l
 
 Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below (you might also run OpenSearch in another Docker container).
 
-<Diagram1></Diagram1>
+```mermaid
+graph LR
+  D(User)
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph J[Docker]
+      F(Your app)
+    end
+  end
+  D --> J
+  D --> C
+  C --> G
+  F --> C
+  style I fill:#999
+```
 
 This diagram shows three components that could die and need monitoring: the PostgreSQL database, FusionAuth, and the app (web server) that directs users to FusionAuth for login. In this guide, you'll focus on monitoring FusionAuth by adding Prometheus to your setup. Prometheus will poll your FusionAuth instance for errors every fifteen seconds.
 
-<Diagram2></Diagram2>
+```mermaid
+graph LR
+  D(User)
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph E[Docker]
+      B(Prometheus)
+    end
+    subgraph J[Docker]
+      F(Your app)
+    end
+  end
+  D --> J
+  D --> C
+  C --> G
+  F --> C
+  E --> |Prometheus pulls metrics from FusionAuth| C
+  style I fill:#999
+  style E fill:#944
+```
 
 <Aside type="caution">
 These instructions are for monitoring FusionAuth with Prometheus when you are self-hosting.
@@ -177,7 +210,39 @@ At the time of writing, FusionAuth found an error in the Ubuntu container docume
 
 Below is a diagram of the system design with the new components.
 
-<Diagram3></Diagram3>
+```mermaid
+graph LR
+  D(User)
+  N(Ntfy.sh)
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph E[Docker]
+      B(Prometheus)
+    end
+    subgraph K[Docker]
+      L(AlertManager)
+    end
+    subgraph J[Docker]
+      F(Your app)
+    end
+  end
+  D --> J
+  D --> C
+  C --> G
+  F --> C
+  E --> |Prometheus pulls metrics from FusionAuth| C
+  E --> K
+  K --> N
+  style I fill:#999
+  style E fill:#944
+  style K fill:#944
+  style N fill:#944
+```
 
 Add the code below to the `docker-compose.yml` file to include the new Alertmanager container and point the existing Prometheus container to it.
 
@@ -294,7 +359,36 @@ This section will show you how to run Grafana in Docker and create a simple dash
 
 Below is a diagram of the system design with the new components.
 
-<Diagram4></Diagram4>
+```mermaid
+graph LR
+  D(User)
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph E[Docker]
+      B(Prometheus)
+    end
+    subgraph J[Docker]
+      F(Your app)
+    end
+    subgraph M[Docker]
+      O(Grafana)
+    end
+  end
+  D --> J
+  D --> C
+  C --> G
+  F --> C
+  E --> |Prometheus pulls metrics from FusionAuth| C
+  M --> E
+  style I fill:#999
+  style E fill:#944
+  style M fill:#944
+```
 
 Add the new service below to `docker-compose.yml`.
 
@@ -374,7 +468,7 @@ You can query logs in Grafana, or in the terminal with the Loki API or [LogCLI](
 Loki is primarily a log store, and will not fetch logs itself. Tools to send logs to Loki include Promtail (the original sending tool), OpenTelemetry, and Alloy (a new OpenTelemetry-compliant tool from Grafana). For more options, see the [documentation](https://grafana.com/docs/loki/latest/send-data). In this guide, you use Promtail for simplicity and stability.
 
 <Aside type="note">
-When FusionAuth runs in Docker, it writes logs to the terminal and does not save them to a file or provide them via the [API](/docs/apis/system#export-system-logs). This means that the logs are not available in the [web interface](/docs/operate/troubleshooting/troubleshooting#logs).
+When FusionAuth runs in Docker, it writes logs to the terminal and does not save them to a file or provide them via the [API](/docs/apis/system#export-system-logs). This means that the logs are not available in the [web interface](/docs/operate/troubleshooting#logs).
 </Aside>
 
 To use Loki, add the services below to your `docker-compose.yml` file. You are now using Grafana images because Ubuntu has no images for Promtail.
@@ -513,12 +607,61 @@ In addition to monitoring the Prometheus metrics provided by FusionAuth, you mig
 
 If you combine the Prometheus, Alertmanager, Grafana, Loki, and ntfy infrastructure shown in this guide, your architecture will be as follows.
 
-<Diagram5></Diagram5>
+```mermaid
+graph LR
+  D(User)
+  N(Ntfy.sh)
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph E[Docker]
+      B(Prometheus)
+    end
+    subgraph K[Docker]
+      L(AlertManager)
+    end
+    subgraph P[Docker]
+      Q(Loki)
+    end
+    subgraph R[Docker]
+      S(Promtail)
+    end
+    subgraph J[Docker]
+      F(Your app)
+    end
+    subgraph M[Docker]
+      O(Grafana)
+    end
+  end
+  D --> J
+  D --> C
+  C --> G
+  F --> C
+  E --> C
+  E --> K
+  K --> N
+  M --> E
+  E --> |Prometheus reads Loki logs| P
+  R --> |Promtail reads FusionAuth logs| C
+  R --> |Promtail sends logs to Loki| P
+  M --> |Grafana queries Loki logs| P
+  style I fill:#999
+  style E fill:#944
+  style K fill:#944
+  style N fill:#944
+  style M fill:#944
+  style P fill:#944
+  style R fill:#944
+```
 
 ## Further Reading
 
-- [FusionAuth monitoring overview](/docs/operate/secure-and-monitor/monitor)
-- [FusionAuth metrics](/docs/operate/secure-and-monitor/monitor#metrics)
+- [FusionAuth monitoring overview](/docs/operate/monitor)
+- [FusionAuth metrics](/docs/operate/monitor#metrics)
 - [FusionAuth Prometheus API](/docs/apis/system#retrieve-system-metrics-using-prometheus)
 - [Prometheus](https://prometheus.io/docs/introduction/overview)
 - [Configure Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/configuration)

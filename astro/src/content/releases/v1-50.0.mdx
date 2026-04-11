@@ -1,0 +1,139 @@
+---
+version: "1.50.0"
+date: 2024-04-24
+name: "Scopes Salamander"
+---
+import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
+import ReleaseNotesDBMigrate from 'src/components/docs/release-notes/ReleaseNotesDBMigrate.mdx';
+import InlineField from 'src/components/InlineField.astro';
+
+<ReleaseNotesDBMigrate />
+
+<Item category="theme-upgrade" version="1.50.0">
+The new consent prompt themed page requires the `scopeConsentField` macro and `resolveScopeMessaging` function to be defined in the *Helpers* template in order to render scope consent form fields. These *must* be added to a custom theme in order for it to function.
+</Item>
+
+<Item category="breaking-change" >
+This release makes significant changes to the default behavior of new Applications with regard to scopes in OAuth workflows.
+The database migration will update existing Applications to behave in a backwards compatible manner.
+See the OAuth [Scopes](/docs/lifecycle/authenticate-users/oauth/scopes) documentation for more information, in particular the `Relationship`, `Unknown scope policy`, and `Scope handling policy` configurations.
+</Item>
+
+<Item category="breaking-change">
+If you are using an `iframe` to access the FusionAuth hosted login pages, the `src` must use the same domain as the FusionAuth pages.
+
+[FusionAuth uses cookies](/docs/reference/cookies) to manage user state with the `SameSite` attribute set to `Lax` or `Strict`. Browsers will block `Set-Cookie` headers on cross-domain requests.
+
+This release introduces a new redirect into the OAuth flows to `/oauth2/consent` as part of the OAuth [Scopes](/docs/lifecycle/authenticate-users/oauth/scopes)
+feature. This redirect will occur during each browser-based interactive OAuth workflow. Prior to this version it was possible to complete an OAuth code grant
+flow without cookies being set as long as there were no additional redirects to FusionAuth before the final redirect to the configured
+<InlineField>redirect_url</InlineField>. As a result it did not matter if the `Set-Cookie` headers were blocked. The redirect with the code would still work.
+
+However, in this version the browser will not be able to send the FusionAuth cookies required to maintain user state along with the redirect to
+`/oauth2/consent` and the login flow will fail. The user will be redirected back to `/oauth2/authorize` and will be unable to log in.
+</Item>
+
+<Item category="breaking-change" issue="2725">
+The `/oauth2/userinfo` endpoint now requires the `aud` claim to be present on the provided access token, allowing for tighter compliance with the OIDC spec. See the [UserInfo endpoint](/docs/lifecycle/authenticate-users/oauth/endpoints#userinfo) for more detail.
+
+If you are not using OAuth, and your JWT does not contain the `aud` claim, consider using the [JWT validate](/docs/apis/jwt#validate-a-jwt) API instead.
+</Item>
+
+<Item category="deprecated">
+**JWT authentication for the `/api/user` API**
+
+This functionality will be removed in a future release.
+
+If you are using this API with JWT authentication, you will need to modify your integration to use the `/oauth2/userinfo` endpoint if you have obtained your JWT using an OAuth2 grant, or authenticate the request to the User API using an API key.
+
+Removal of this authentication type is targeted for the end of 2024.
+</Item>
+
+<Item category="known-issue" issue="2736">
+An SSO TTL of `0` seconds or a very small number may make it impossible to complete login using hosted login pages. To work around this issue, increase the TTL to something larger than `0`, ideally at least `30` seconds.
+</Item>
+
+<Item category="known-issue" resolvedIn="1.62.1" viaIssue="3290">
+There was the potential for an error in the setup wizard if the timezone was not set on the machine running the browser. This has been corrected.
+</Item>
+
+<Item category="new-feature" issue="275" thanks="badaz">
+Custom OAuth scopes are now supported for applications. Custom OAuth scopes come along with a number of related features, including support for third-party applications, themeable user consent, and much more.
+
+See the [API docs](/docs/apis/scopes) and [OAuth Scopes documentation](/docs/get-started/core-concepts/scopes) for more detail.
+</Item>
+
+<Item category="new-feature" issue="2723">
+Applications may now be designated as third-party applications. In addition to the prompting for authorization that comes with the `Custom OAuth Scopes` feature (see above), limitations are being added to how third-party applications may interact with FusionAuth.
+</Item>
+<Item category="new-feature" issue="411">
+Applications can now be configured to prompt users to grant consent to requested OAuth scopes using the `/oauth2/consent` [themed](/docs/customize/look-and-feel/) page. See the OAuth [Scopes](/docs/lifecycle/authenticate-users/oauth/scopes) for more detail.
+</Item>
+<Item category="new-feature" issue="1647" thanks="themobi">
+Introduced [UserInfo Populate Lambda](/docs/extend/code/lambdas/userinfo-populate), which can customize the UserInfo response for an application.
+</Item>
+<Item category="new-feature" issue="2717">
+Added a new, optional First Time Setup wizard, which guides a developer through the basic setup needed to integrate their first application. After installing FusionAuth, you'll be able to access this from the main admin dashboard, as well as from the top of the left hand navigation.
+</Item>
+
+<Item category="enhancement" issue="2688">
+Added a maximum password length of 256 characters in the tenant password policy. This decision was made to strike a balance between allowing very secure passwords and maintaining acceptable performance when using a large number of hash iterations.
+</Item>
+
+<Item category="enhancement" issue="659" thanks="soullivaneuh">
+Added locale and timezone information to the Oauth UserInfo endpoint.
+</Item>
+
+<Item category="enhancement" issue="275">
+Applications now offer an `Unknown Scope Policy`. This can be used to enhance security by rejected or removing unrecognized scopes during an OAuth workflow. See the application [Scopes tab](/docs/get-started/core-concepts/applications#scopes) for more detail.
+</Item>
+
+<Item category="enhancement" issue="2590">
+The [Refresh Token Grant](/docs/lifecycle/authenticate-users/oauth/endpoints#refresh-token-grant-request) request now supports requesting a subset of the original scopes. Previously, the request responded with an `invalid_scope` OAuth error.
+</Item>
+
+<Item category="enhancement" issue="1582" bonusIssue="1475" thanks="awoodobvio">
+Applications now have a new Scope Handling Policy. The `Strict` option provides behaviors that are more compliant with the OIDC specification, while the `Compatibility` option provides backwards-compatible behavior. Specifically, `Strict` mode limits information in access tokens and populates Id tokens and UserInfo responses based on the requested OAuth scopes. This option also restricts the UserInfo endpoint to accepting only access tokens containing the `openid` scope.
+
+New applications will default to the `Strict` option. If your integration requires the `Compatibility` policy because you need backwards compatible behavior, please specify that option when creating the application.
+
+For more information, see the [Scope handling policy documentation](/docs/lifecycle/authenticate-users/oauth/scopes#scope-handling-policy).
+</Item>
+
+<Item category="enhancement" issue="2724">
+Added support for optional expansion of the `application.roles` and `application.scopes` properties on the Application Search API.
+
+This change is backwards compatible, but you may optionally request the Search API omit these properties on the response which may improve performance. See the [Application Search](/docs/apis/applications#search-for-applications) API for additional details on using the `expand` request parameter, and the `expandable` response value.
+</Item>
+
+<Item category="enhancement" issue="275">
+The `/oauth2/device/user-code` endpoint now returns the `scope` parameter value that should be used in the interactive portion of the Device Code Grant workflow. See [Device User Code](/docs/lifecycle/authenticate-users/oauth/endpoints#device-user-code) for more detail.
+</Item>
+
+
+<Item category="fix" issue="2671">
+The bcrypt algorithm now limits passwords to 50 characters. This restriction is due to limitations in the bcrypt algorithm. This limit will be enforced even when the tenant policy allows for a maximum password length greater than 50.
+</Item>
+<Item category="fix" issue="1651" bonusIssue="2672" thanks="ashutoshningot" bonusThanks="mou">
+There are several scenarios where implicit email verification can occur. They are, during registration verification, password change, passwordless authentication, and MFA code validation. In these cases, a configured email verification email was not being sent, and the email verification event was not being generated. The email and event will both be triggered during implicit verification now.
+</Item>
+<Item category="fix" issue="2593">
+When configuring MFA for an application, the `Trust policy` selector was not shown when MFA is required for the application, but only shown when MFA enabled for optional use. The selector is now shown when the `On login policy` is set to either `Enabled` or `Required`.
+</Item>
+<Item category="fix" issue="2702">
+When using FusionAuth behind a proxy, a missing `X-Forwarded-Proto` header could incorrectly cause a warning of a missing `X-Forwarded-Port` header. These warnings are now reported accurately. Additionally, FusionAuth will now be smarter about determining the forwarded port, taking it from one of multiple sources including `X-Forwarded-Host`, `X-Forwarded-Port`, or inferring it from `X-Forwarded-Proto`. This should make FusionAuth work with more proxies out of the box without additional configuration.
+</Item>
+<Item category="fix" issue="2670" thanks="charlesericjs">
+When authentication with an identity provider fails due to misconfiguration, and a user falls back to logging in with a username and password, the `authenticationType` reported by FusionAuth is for the original identity provider despite the user having logged in with a username and password. FusionAuth now correctly reports the authentication type as `PASSWORD`.
+</Item>
+
+<Item category="internal" issue="2678">
+Updated the following dependencies:
+* Upgrade `ch.qos.logback:logback-*` `1.4.14` to `1.5.6`
+* Upgrade `com.fasterxml.jackson.*` `2.15.3` to `2.15.4`
+* Upgrade `io.fusionauth:java-http` `0.2.10` to `0.3.2`
+* Upgrade `org.mybatis:mybatis` `3.5.15` to `3.5.16`
+* Upgrade `org.primeframework:prime-mvc` `4.22.0` to `4.22.7`
+* Upgrade `org.postgresql:postgresql` `42.7.2` to `42.7.3`
+* Upgrade `org.slf4j:slf4j-api` `2.0.7` to `2.0.13`
+</Item>
