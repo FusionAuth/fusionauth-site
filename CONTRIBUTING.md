@@ -4,10 +4,10 @@
 
 Here are some guidelines to follow when writing documentation (everything under [docs](astro/src/content/docs)), articles (everything under [articles](astro/src/content/articles)), and blogs [blog](astro/src/content/blog):
 
-- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth. 
+- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth.
   For example, see the API Key APIs description for `apiKeyId`, where API Key is capitalized: `The unique Id of the API Key to create. If not specified a secure random UUID will be generated.`
 - If referring to something that exists as a domain object in FusionAuth, but you are not explicitly referring to an object being created/updated in FusionAuth, use lowercase. Here are some examples:
- `To allow users to log into and use your application, you’ll need to create an Application in FusionAuth.`
+  `To allow users to log into and use your application, you’ll need to create an Application in FusionAuth.`
 - From the Link API, note the difference between a FusionAuth User and a 3rd party user: `This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.`
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` or `id` when describing a unique identifier
@@ -104,10 +104,12 @@ To make a smoothie:
 ## Docs
 
 - Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
-- If you are referencing a field in a form or JSON API doc, or a parameter use the [InlineField](astro/src/components/InlineField.astro) component: `<InlineField>Issuer</InlineField>`. The field can writable or read-only. It should be used for all fields, including those that are not editable in the UI.
-- If you are defining or describing an input or output to a inline field in a form or JSON API doc, or a parameter value use the [InlineFieldValue](astro/src/components/InlineFieldValue.astro) component: `<InlineFieldValue>acme</InlineFieldValue>`.
-- If you are referencing a UI element or button, use the [InlineUIElement](astro/src/components/InlineUIElement.astro) component: `Click the <InlineUIElement>Ok</InlineUIElement> button`.
-- If you are referencing a tab in the UI, use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component: `On the <Breadcrumb>OAuth</Breadcrumb> tab`.
+- Use the following components to reference UI elements:
+    - [InlineField](astro/src/components/InlineField.astro): The **name or label** of a field in a form, JSON API doc, or parameter. Use it whether the field is writable or read-only. Example: `Set the <InlineField>Issuer</InlineField> field.`
+    - [InlineFieldValue](astro/src/components/InlineFieldValue.astro): A **value** that is entered into or returned from a field. Use it alongside `InlineField` when specifying what value to set, or when documenting enumerated or example values. Example: `Set <InlineField>Relationship</InlineField> to <InlineFieldValue>Third-party</InlineFieldValue>.`
+    - [InlineUIElement](astro/src/components/InlineUIElement.astro): A **button or other interactive non-field UI element**, as well as read-only labels and display-only values. Example: `Click the <InlineUIElement>Ok</InlineUIElement> button.`
+    - [Breadcrumb](astro/src/components/Breadcrumb.astro): A **navigation path or tab** in the UI. Use it for multi-step paths and single elements alike. Example: `Navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb>` or `On the <Breadcrumb>OAuth</Breadcrumb> tab.`
+    - `InlineField` and `InlineFieldValue` are frequently used together when documenting what value to enter into a field.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
 - Include fragments that are shared between different sections of the doc should be stored in the [shared](astro/src/content/docs/_shared) directory.
@@ -136,7 +138,7 @@ If it is inline (for a field), use <AvailableSince since="1.5.0"> - [AvailableSi
     <IconButton icon="fa-search" />
     ```
 
-    ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
+  ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
 
 Import the component:
 
@@ -160,7 +162,7 @@ Make descriptions full sentences. They must end in a period. Titles, on the othe
 
 If you want to order pages within a section, use `order`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
 
-Pages are ordered in the nav within a section in descending order. 
+Pages are ordered in the nav within a section in descending order.
 
 ```
 order: 0
@@ -248,7 +250,7 @@ Example response(s)
 
 ## Articles
 
-Varies, but you'll always want to 
+Varies, but you'll always want to
 
 * Open a PR with changes. Tag someone to review it.
 * Merge using the GitHub interface or using a squash commit.
@@ -344,16 +346,17 @@ Prior to requesting review on a PR, please complete the following checklist.
    - If the create request has a property of `"name": "My application"`, the response should contain this same value.
    - Try and use real world names and values in example requests/responses. Using name such as `Payroll` for an Application name is more descriptive than `app 1` and allows the reader to more understand the example.
 4. When referencing a field in the description of another field use this syntax: `<InlineField>name</InlineField>`.
-5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.  
-6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.  
+5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.
+6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.
 
 #### Non API documentation
 1. Screenshots. Review color, dimensions and clarity. Review A/B to ensure layout has not changed, and the new screenshot is consistent with the previous one.
-   - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed. 
-   - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 
-2. If you are referring to a navigatable element, use `<Breadcrumb>Tenants</Breadcrumb>` or `<Breadcrumb>Tenants -> Your Tenant</Breadcrumb>`. In other words, use it even for singular elements.
-3. If you are referring to a field the user can fill out, use `<InlineField>Authorized Redirect URLs</InlineField>`.
-4. If you are referring to any other UI element, such as a submit button or read-only name, use `<InlineUIElement>Submit</InlineUIElement>` or (on the application view screen) `<InlineUIElement>Introspect endpoint</InlineUIElement>`.
+    - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed.
+    - The screenshot should not look fuzzy. If it does, the compression may be incorrect.
+2. If you are referring to a navigatable element or tab, use `<Breadcrumb>Tenants</Breadcrumb>`, `<Breadcrumb>Tenants -> Your Tenant</Breadcrumb>`, or `On the <Breadcrumb>OAuth</Breadcrumb> tab`. Use it even for singular elements.
+3. If you are referring to the name or label of a field the user can fill out (or a read-only field), use `<InlineField>Authorized Redirect URLs</InlineField>`.
+4. If you are specifying a value to enter into a field or documenting an enumerated value, use `<InlineFieldValue>https://example.com/callback</InlineFieldValue>`, often alongside `InlineField`: `Set <InlineField>Authorized Redirect URLs</InlineField> to <InlineFieldValue>https://example.com/callback</InlineFieldValue>.`
+5. If you are referring to any other UI element, such as a button or read-only label, use `<InlineUIElement>Submit</InlineUIElement>` or (on the application view screen) `<InlineUIElement>Introspect endpoint</InlineUIElement>`.
 
 ## Quickstarts
 
