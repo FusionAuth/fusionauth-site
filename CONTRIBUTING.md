@@ -111,14 +111,13 @@ To make a smoothie:
 - Use the following components to reference UI elements:
     - [InlineField](astro/src/components/InlineField.astro): The **name or label of a field** in a form, JSON API doc, or parameter list. Use it for writable and read-only fields. Example: `Set the <InlineField>Issuer</InlineField> field.`
     - [InlineFieldValue](astro/src/components/InlineFieldValue.astro): A **value** entered into or returned from a field. Use it for literal, example, and enumerated values. Example: `Set <InlineField>Relationship</InlineField> to <InlineFieldValue>Third-party</InlineFieldValue>.`
-    - [InlineUIElement](astro/src/components/InlineUIElement.astro): An **interactive non-field UI element** (button, link, menu item, icon button, etc.) or a display-only UI label that is not a field label, including section labels on a page. Example: `Click <InlineUIElement>Submit</InlineUIElement>.`
-    - [Breadcrumb](astro/src/components/Breadcrumb.astro): A **navigation path or tab** in the UI. Use it for multi-step paths and single tab names alike. Example: `Navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb>` or `On the <Breadcrumb>OAuth</Breadcrumb> tab.`
+    - [Breadcrumb](astro/src/components/Breadcrumb.astro): A navigation path, tab, or interactive non-field UI element (button, link, menu item, icon button, etc.) or a display-only UI label that is not a field label, including section labels on a page. Example: `Navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb>`, `On the <Breadcrumb>OAuth</Breadcrumb> tab.`, or `Click <Breadcrumb>Submit</Breadcrumb>.`
     - Use `InlineField` and `InlineFieldValue` together when describing what value to enter into a field.
-    - Use `Breadcrumb` for navigation paths and tabs. Use `InlineUIElement` for other controls and section labels. Do not use `InlineUIElement` for field names.
+    - Use `Breadcrumb` for navigation paths, tabs, other controls and section labels. Do not use `Breadcrumb` for field names.
     - Use `Breadcrumb` for sequential UI operations (for example tabs, pages, sidebar entries, links, and menu actions that navigate to a new page), not just multi-level paths.
-    - Wrap only the UI label in the component. Keep descriptors such as "tab", "section", "button", "field", and punctuation outside the component unless they are part of the literal UI text. Example: `On the <Breadcrumb>OAuth</Breadcrumb> tab.` and `Open the <InlineUIElement>Single sign-on</InlineUIElement> section.`
+    - Wrap only the UI label in the component. Keep descriptors such as "tab", "section", "button", "field", and punctuation outside the component unless they are part of the literal UI text. Example: `On the <Breadcrumb>OAuth</Breadcrumb> tab.` and `Open the <Breadcrumb>Single sign-on</Breadcrumb> section.`
     - If the text is a code/config/document concept (for example, `variables` section in JSON, `providers` section in a file, or `docker-compose.yml` keys), use backticks, not UI components.
-    - Checkbox and toggle labels are UI controls; use `InlineUIElement` for them. Use `InlineField` for form field names/labels, and `InlineFieldValue` for values.
+    - Checkbox and toggle labels are UI controls; use `Breadcrumb` for them. Use `InlineField` for form field names/labels, and `InlineFieldValue` for values.
     - Use backticks for programmatic values such as versions, booleans, and encoded values. Use quotes only for literal text values entered into editable fields.
     - In name/value bullet lists, prefer `<InlineField>Field Name</InlineField>:` followed by `<InlineFieldValue>value</InlineFieldValue>` (colon outside `InlineField`) unless the colon is part of the literal label text in the UI.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
@@ -367,8 +366,8 @@ Prior to requesting review on a PR, please complete the following checklist.
 2. If you are referring to navigation context, a path, or a tab, use `<Breadcrumb>Tenants</Breadcrumb>`, `<Breadcrumb>Tenants -> Your Tenant</Breadcrumb>`, or `On the <Breadcrumb>OAuth</Breadcrumb> tab`.
 3. If you are referring to a field name or field label (writable or read-only), use `<InlineField>Authorized Redirect URLs</InlineField>`.
 4. If you are specifying a field value (entered, returned, or enumerated), use `<InlineFieldValue>https://example.com/callback</InlineFieldValue>`, often alongside `InlineField`: `Set <InlineField>Authorized Redirect URLs</InlineField> to <InlineFieldValue>https://example.com/callback</InlineFieldValue>.`
-5. If you are referring to any other UI element (button, link, icon button, menu item, section label, or display-only non-field label), use `<InlineUIElement>Submit</InlineUIElement>` or (on the application view screen) `<InlineUIElement>Introspect endpoint</InlineUIElement>`.
-6. If a word like "tab" or "section" is explanatory and not part of the literal label, keep it outside the component: `Open the <InlineUIElement>Images</InlineUIElement> section.`
+5. If you are referring to any other UI element (button, link, icon button, menu item, section label, or display-only non-field label), use `<Breadcrumb>Submit</Breadcrumb>` or (on the application view screen) `<Breadcrumb>Introspect endpoint</Breadcrumb>`.
+6. If a word like "tab" or "section" is explanatory and not part of the literal label, keep it outside the component: `Open the <Breadcrumb>Images</Breadcrumb> section.`
 7. If a reference is to code/config/docs structure (not the admin UI), keep it in backticks rather than wrapping it in a UI component.
 
 ## Quickstarts
