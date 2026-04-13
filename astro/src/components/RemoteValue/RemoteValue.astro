@@ -1,0 +1,104 @@
+---
+import parse, { Parser, type SelectorFunction } from './parsers';
+export { Parser };
+
+/**
+ * Component to fetch values from remote files, optionally passing a selector to extract a value from the file
+ * (e.g. a JSON object).
+ *
+ * Import:
+ * import {RemoteValue} from 'src/components/astro-components';
+ *
+ * Complete usage syntax:
+ * <RemoteValue url="https://remote.url.to.file" selector="selector.path" parser={one of Parser values} default="default value" />
+ *
+ * Common usage syntax:
+ * <RemoteValue url="https://remote.url/file.json" selector="selector.path" />
+ *
+ * Props:
+ * url: remote URL to fetch the file from
+ * parser: value from the Enum exported by RemoteValue.astro. If not defined, the component will use the file extension
+ *          from the URL.
+ * selector: parser-dependent syntax to extract the value from the remote file. It can also be a callback function that
+ *          will be called with the entire file as an argument and should return the value to extract.
+ *          E.g. for JSON, we use jsonpath-plus to provide an XPath-based syntax.
+ * defaultValue: default value if we cannot retrieve the element (otherwise, we'll render "unknown").
+ *          This is recommended in case you ever change the remote file and the selector doesn't work anymore.
+ *
+ * These three examples return the same "email" element:
+ * <RemoteValue url="https://some.address/filename.json"
+ *              selector="$.users.4.email" />
+ * <RemoteValue url="https://some.address/filename.json"
+ *              selector="$.users.[?(@.username === 'john')].email" />
+ * <RemoteValue url="https://some.address/filename.json"
+ *              selector={(element) => element.users.find(e => e.username === 'json').email} />
+ *
+ * If you need to render the value inside a <Code> component, you need to pass a callback function as a child component:
+ * <RemoteValue
+ *     url="https://some.address/filename.json"
+ *     selector="$.requests.4.body.application.oauthConfiguration.clientSecret">
+ *     {(value) => <Code lang="shel" code={`SOME_ENV_VAR="${value}" some-command`} />}
+ * </RemoteValue>
+ */
+
+/**
+ * Available props.
+ */
+export interface Props {
+  /**
+   * Url to fetch code from.
+   */
+  url: string;
+
+  /**
+   * Selector to extract the value from the content.
+   * This is parser-specific but is normally some kind of XPath.
+   * E.g. JSONPath syntax for JSON objects (https://www.npmjs.com/package/jsonpath-plus)
+   */
+  selector: string | SelectorFunction;
+
+  /**
+   * Optional parser name. If no one was informed, we'll use the file extension.
+   */
+  parser?: Parser;
+
+  /**
+   * Default value if there's an error retrieving file.
+   * @default "unknown"
+   */
+  default?: string;
+}
+
+// Extracting props
+const { url, selector, parser, default: defaultValue = 'unknown' } = Astro.props;
+
+// Value that will be rendered
+let value;
+
+/**
+ * @link https://docs.astro.build/en/guides/data-fetching/
+ */
+const response = await fetch(url);
+if (response.ok) {
+  value = await response.text();
+} else {
+  throw new Error(`Failed to fetch remote value at [${url}], Reason: [${response.statusText}]`);
+}
+
+// Using the selector to look up the value
+// If you don't provide a selector, the entire file will be returned
+if ((value !== null) && (selector !== null)) {
+  value = parse(url, value, selector, parser);
+}
+
+// Default value
+if ((value === null) || (value === '')) {
+  value = defaultValue;
+}
+
+// @link https://docs.astro.build/en/reference/api-reference/#astroslotsrender
+const html = (Astro.slots.has('default'))
+  ? await Astro.slots.render('default', [value])
+  : value;
+---
+<Fragment set:html={html}/>
