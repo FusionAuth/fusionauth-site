@@ -118,6 +118,8 @@ def make_api_path(type)
       return base + "user/"
     end
 
+    if type == "audit-log"
+      type = "audit-logs"
     if type == "user-action"
       type = "user-actions"
     end
@@ -128,11 +130,6 @@ def make_api_path(type)
       type = "user-login-id-duplicate-update"
     end
     return base + type
-  end
-
-  # no plural
-  if type == "audit-log"
-    return base + "audit-log"
   end
 
   # theme has two endpoints now, one for simple and one for advanced
