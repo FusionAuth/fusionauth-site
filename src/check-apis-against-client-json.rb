@@ -111,22 +111,22 @@ def make_api_path(type)
     if type.start_with?("user-password-")
       return base + "user/password/" + type
     elsif type.start_with?("user-login-")
+      if type == "user-login-id-duplicate-on-create"
+        type = "user-login-id-duplicate-create"
+      end
+      if type == "user-login-id-duplicate-on-update"
+        type = "user-login-id-duplicate-update"
+      end
       return base + "user/login/" + type
     elsif type.start_with?("user-registration-")
       return base + "user/registration/" + type
     elsif type.start_with?("user-")
+      if type == "user-action"
+        type = "user-actions"
+      end
       return base + "user/" + type
     end
-
-    if type == "user-action"
-      type = "user-actions"
-    end
-    if type == "user-login-id-duplicate-on-create"
-      type = "user-login-id-duplicate-create"
-    end
-    if type == "user-login-id-duplicate-on-update"
-      type = "user-login-id-duplicate-update"
-    end
+    
     return base + type
   end
 
