@@ -101,21 +101,21 @@ def make_api_path(type)
 
     # sub-directories for buckets that grew too large for docs sidebar
     if type.start_with?("jwt-")
-      event_folder += "jwt/"
+      return base + "jwt/"
     end
     if type.start_with?("group-")
-      event_folder += "group/"
+      return base +  "group/"
     end
 
     # user sub-directory handling (specific -> general)
     if type.start_with?("user-password-")
-      event_folder += "user/password/"
+      return base + "user/password/"
     elsif type.start_with?("user-login-")
-      event_folder += "user/login/"
+      return base + "user/login/"
     elsif type.start_with?("user-registration-")
-      event_folder += "user/registration/"
+      return base + "user/registration/"
     elsif type.start_with?("user-")
-      event_folder += "user/"
+      return base + "user/"
     end
 
     if type == "user-action"
