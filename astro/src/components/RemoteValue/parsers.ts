@@ -30,7 +30,7 @@ function jsonParser (url: string, code: string, selectorOrFunction: string | Sel
   if (typeof CACHE[url] === 'undefined') {
     try {
       CACHE[url] = JSON.parse(code);
-    } catch (_err: unknown) {
+    } catch {
       return null;
     }
   }
