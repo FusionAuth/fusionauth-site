@@ -118,9 +118,6 @@ def make_api_path(type)
       return base + "user/"
     end
 
-    if type == "audit-log"
-      type = "audit-logs"
-    end
     if type == "user-action"
       type = "user-actions"
     end
