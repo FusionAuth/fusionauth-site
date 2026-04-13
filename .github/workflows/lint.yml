@@ -1,5 +1,7 @@
 # Runs the linter on the changed files in the PR
 name: Run ESLint on changed files, Build the site, and check APIs for completeness
+env:
+    BASE_REF: origin/${{ github.base_ref }}
 on:
   pull_request:
   workflow_dispatch:
@@ -8,19 +10,9 @@ jobs:
   run_lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-        # I want to lint only the files that have changed in the PR
-        # This is a bit tricky because we need to fetch the main branch to compare against
-        # Instead I am using the GitHub cli to fetch the changes in the PR
-      - name: Install GitHub CLI
-        run: sudo apt-get install gh
-
-      - name: Authenticate GitHub CLI
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-
-      - name: Set Pull Request Number
-        run: echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0 # need all branches
 
       - name: NPM Install
         run: |
@@ -34,7 +26,6 @@ jobs:
           npm run lint-pr
         shell: /usr/bin/bash -e -o pipefail {0}
 
-      # Might as well
       - name: Run a dev build
         run: |
           cd astro
@@ -42,7 +33,6 @@ jobs:
         shell: /usr/bin/bash -e -o pipefail {0}
 
       - name: Check APIs for completeness against client libs
-        # Only run if the API docs change. Not technically "lint" but it's a good place for it.
         run: |
           tagver=`curl --silent https://account.fusionauth.io/api/version -o - | jq 'last(.versions[-1])'|sed 's/"//g'`
           git clone --depth 1 --branch $tagver https://github.com/fusionauth/fusionauth-client-builder
