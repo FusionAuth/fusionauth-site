@@ -3,6 +3,7 @@ import { JSONPath } from 'jsonpath-plus';
 /**
  * Common cache object used by parsers.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CACHE: Record<string, any> = {};
 
 /**
@@ -29,7 +30,7 @@ function jsonParser (url: string, code: string, selectorOrFunction: string | Sel
   if (typeof CACHE[url] === 'undefined') {
     try {
       CACHE[url] = JSON.parse(code);
-    } catch (err: unknown) {
+    } catch (_err: unknown) {
       return null;
     }
   }
