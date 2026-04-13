@@ -110,13 +110,10 @@ def make_api_path(type)
     # user sub-directory handling (specific -> general)
     if type_name.start_with?("user-password-")
       event_folder += "user/password/"
-    end
     elsif type_name.start_with?("user-login-")
       event_folder += "user/login/"
-    end
     elsif type_name.start_with?("user-registration-")
       event_folder += "user/registration/"
-    end
     elsif type_name.start_with?("user-")
       event_folder += "user/"
     end
