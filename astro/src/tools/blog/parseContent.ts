@@ -53,7 +53,7 @@ export const parseContent = async (blog: BlogContent): Promise<ParsedBlog> => {
   return {
     ...blog.data,
     blurb,
-    slug: blog.slug,
+    id: blog.id,
     categories,
     tags,
     authors
