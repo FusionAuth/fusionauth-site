@@ -17,7 +17,7 @@ export const mapRelated = async (collection: BlogContent[], metaSection: MetaSec
         .filter(blog => blog.data
             && blog.data[metaSection]
             && blog.data[metaSection].split(',').includes(target)
-            && blog.slug !== currentSlug)
+            && blog.id !== currentSlug)
         .sort(sortByDate)
         .slice(0, 3)
         .map(parseContent)) : [];

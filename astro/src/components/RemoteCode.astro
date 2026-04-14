@@ -1,0 +1,123 @@
+---
+/**
+  * Remote code fetcher and syntax highlighter via the Astro Code component.
+  */
+
+import { Code } from 'astro/components';
+
+export interface Props {
+  /**
+   * Url to fetch code from.  Also allows selecting specific line(s) of code with
+   * the GitHub line syntax.
+   * E.g., https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/ruby/Gemfile#L3
+   */
+  url: string;
+
+  /**
+   * The language of your code.
+   * Supports all languages listed here: https://github.com/shikijs/shiki/blob/main/docs/languages.md#all-languages
+   *
+   * @default "plaintext"
+   */
+  lang?: string;
+
+  /**
+   * Optional tags marking the beginning and end of content to include
+   * Loosely based on https://docs.asciidoctor.org/asciidoc/latest/directives/include-tagged-regions/
+   * Note: Currently only supports one set of tags.
+   */
+  tags?: string;
+
+  /**
+   * The title of the remote code section, shown as a piece of text above the block.
+   */
+  title?: string;
+}
+
+const { url, lang = 'plaintext', tags, title, ...rest } = Astro.props;
+
+// max retries of extracting the code
+const MAX_RETRIES = 5;
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const extractCode = async (url: string, tags?: string): Promise<string> => {
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const remoteResponse = await fetch(url);
+
+      if (remoteResponse.ok) {
+        const remoteCode = await remoteResponse.text();
+
+        if ((tags !== undefined) && (tags !== '')) {
+          return selectTagged(remoteCode, tags);
+        }
+
+        const matchLines = url.match(/.*#L(\d+)(-L(\d+))?$/);
+        if ((matchLines !== null) && (matchLines.length > 0)) {
+          return selectLines(remoteCode, matchLines[1] as number, matchLines[3] as number);
+        }
+
+        return remoteCode.trim();
+      } else {
+        throw new Error(`Non-200 response: ${remoteResponse.status}`);
+      }
+    } catch (err) {
+      if (attempt < MAX_RETRIES - 1) {
+        const delay = 100 * Math.pow(2, attempt); // 100ms, 200ms, 400ms, ...
+        await sleep(delay);
+      } else {
+        throw new Error(`Failed to fetch remote code at [${url}] after ${MAX_RETRIES} attempts. Last error: ${(err as Error).message}`);
+      }
+    }
+  }
+
+  // Should never reach here
+  throw new Error("Unexpected error in extractCode");
+};
+
+const remoteSelectedCode = await extractCode(url, tags);
+
+function selectTagged (content: string, tags: string): string {
+  let lines = content.split('\n');
+  const startLine = lines.findIndex((line) => line.includes(`tag::${tags}`));
+  const endLine = lines.findIndex((line) => line.includes(`end::${tags}`));
+
+  lines = lines.slice(startLine + 1, endLine);
+  const prefixLengths = lines.filter((line) => line.trim().length > 0).map((line) => prefixSpaces(line));
+  const shortestPrefix = Math.min(...prefixLengths);
+  if (shortestPrefix > 0) {
+    lines = lines.map((line) => line.substring(shortestPrefix));
+  }
+
+  return lines.join('\n').replace(/\s+$/g, '');
+}
+
+function selectLines (content: string, lineNum: number, lineEnd: number): string {
+  const lines = content.split('\n');
+  if ((lineNum > 0) && (lineEnd > 0)) {
+    return lines.slice(lineNum - 1, lineEnd - 1).join('\n');
+  }
+
+  if (lineNum > 0) {
+    return lines[lineNum - 1];
+  }
+
+  return content;
+}
+
+function prefixSpaces(str: string): number {
+  let count = 0;
+  for (let i = 0; i < str.length; i++) {
+    if (str.charAt(i) == ' ' || str.charAt(i) == '\t') {
+      count++;
+    }
+  }
+  return count;
+}
+---
+{(title === '' || title === undefined)
+  ? null
+  : (<p data-title={title}><em>{title}</em></p>)}
+<Code code={remoteSelectedCode} lang={lang} {...rest}/>

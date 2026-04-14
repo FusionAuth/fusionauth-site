@@ -63,6 +63,11 @@ const docsCollection = defineCollection({
 });
 
 const blogCollection = defineCollection({
+  loader: glob({
+    pattern: ["**/*.mdx", "!**/_*.mdx", "!**/_*/**/*.mdx"],
+    base: "./src/content/blog",
+    generateId: ({ entry }) => `${entry.replace(/\.mdx$/, '')}`,
+  }),
   schema: z.object({
     title: z.string().refine(
         title => !/[.]$/.test(title),
@@ -88,7 +93,11 @@ const blogCollection = defineCollection({
 });
 
 const jsonCollection = defineCollection({
-  type: 'data',
+  loader: glob({
+    pattern: ["**/*.json"],
+    base: "./src/content/json",
+    generateId: ({ entry }) => `${entry.replace(/\.json$/, '')}`,
+  })
 })
 
 export const collections = {
