@@ -13,7 +13,190 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 For an explanation of how to upgrade a custom theme, see [Upgrade an Advanced Theme](/docs/customize/look-and-feel/advanced-themes/upgrade-advanced-theme).
 </Aside>
 
+## Version 1.65.0
+
+### Add voice option for sending two-factor codes
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+Version `1.65.0` adds support for sending phone-based two-factor codes by voice message in addition to SMS. The default theme templates have been updated to add a voice option in addition/as an alternative to SMS where appropriate.
+
+#### Account two-factor enable template
+
+Update the instruction message based on which message types are available:
+
+```plaintext title="Before"
+[#-- Email or SMS Instructions --]
+<p class="mt-0 mb-3">${theme.message("${method}-enable-step-1", helpers.display(user, (method == "email")?then("email", "mobilePhone")))}</p>
+```
+
+```plaintext title="After"
+[#-- Email or Phone Instructions --]
+[#assign messageKey = "${method}-enable-step-1"/]
+[#if method == "sms"]
+  [#assign smsEnabled = phoneMessageTypes?seq_contains("SMS")/]
+  [#assign voiceEnabled = phoneMessageTypes?seq_contains("Voice")/]
+  [#if phoneMessageTypes?size == 1 && smsEnabled]
+    [#assign messageKey = "sms-enable-smsMessage-step-1"/]
+  [#elseif phoneMessageTypes?size == 1 && voiceEnabled]
+    [#assign messageKey = "sms-enable-voiceMessage-step-1"/]
+  [/#if]
+[/#if]
+<p class="mt-0 mb-3">${theme.message(messageKey)}</p>
+```
+
+Add a field to select the type of message to send:
+
+```plaintext title="Before"
+[#elseif method == "sms"]
+  [@helpers.input type="text" id="mobilePhone" name="mobilePhone" label="Mobile phone" required=true/]
+[/#if]
+```
+
+```plaintext title="After"
+[#elseif method == "sms"]
+  [#if phoneMessageTypes?size > 1]
+      [@helpers.select name="messageType" id="select-message-type" options=phoneMessageTypes label="${theme.message('select-two-factor-message-type')}"/]
+  [/#if]
+  [@helpers.input type="text" id="mobilePhone" name="mobilePhone" label="Mobile phone" required=true/]
+[/#if]
+````
+
+#### OAuth2 two-factor enable template
+
+Update the instruction message based on which message types are available:
+
+```plaintext title="Before"
+[#-- Email or SMS Instructions --]
+<p class="mt-0 mb-3">${theme.message("oauth2-${method}-enable-step-1")}</p>
+```
+
+```plaintext title="After"
+[#-- Email or Phone Instructions --]
+[#assign messageKey = "oauth2-${method}-enable-step-1"/]
+[#if method == "sms"]
+  [#assign smsEnabled = phoneMessageTypes?seq_contains("SMS")/]
+  [#assign voiceEnabled = phoneMessageTypes?seq_contains("Voice")/]
+  [#if phoneMessageTypes?size == 1 && smsEnabled]
+    [#assign messageKey = "oauth2-sms-enable-smsMessage-step-1"/]
+  [#elseif (phoneMessageTypes![])?size == 1 && voiceEnabled]
+    [#assign messageKey = "oauth2-sms-enable-voiceMessage-step-1"/]
+  [/#if]
+[/#if]
+<p class="mt-0 mb-3">${theme.message(messageKey)}</p>
+```
+
+Add a field to select the type of message to send:
+
+```plaintext title="Before"
+[#elseif method == "sms"]
+  [@helpers.input type="text" id="mobilePhone" name="mobilePhone" label="Mobile phone" required=true/]
+[/#if]
+```
+
+```plaintext title="After"
+[#elseif method == "sms"]
+  [#if phoneMessageTypes?size > 1]
+    [@helpers.select name="messageType" id="select-message-type" options=phoneMessageTypes label="${theme.message('select-two-factor-message-type')}"/]
+  [/#if]
+  [@helpers.input type="text" id="mobilePhone" name="mobilePhone" label="Mobile phone" required=true/]
+[/#if]
+```
+
+#### OAuth2 two-factor methods template
+
+Update the form so it supplies a message type along with a method:
+
+```plaintext title="Before"
+[#macro methodOption id method]
+  <div class="flex items-center">
+    <input class="..."
+           type="radio" name="methodId" id="method-${id}" value="${id}" [#if id = methodId!'']checked[/#if]>
+    <label for="method-${id}" class="ml-3 block text-sm font-medium text-text">
+```
+
+```plaintext title="After"
+[#macro methodOption id method messageType='']
+   [#assign optionId = id + messageType?has_content?then('-' + messageType, '')/]
+  <div class="flex items-center">
+    <input class="..."
+           type="radio" name="methodId" id="method-${optionId}" value="${optionId}" [#if optionId = methodId!'']checked[/#if]>
+    <label for="method-${optionId}" class="ml-3 block text-sm font-medium text-text">
+```
+
+Update the description message:
+
+```plaintext title="After"
+[#elseif method.method == "sms" && messageType == "Voice"]
+  <span class="block">${theme.message('two-factor-method-voice')}</span>
+  <span class="block text-xs font-normal text-text">
+    ${theme.message('two-factor-get-code-at-voice', method.mobilePhone?substring(method.mobilePhone?length - 2))}
+  </span>
+[#elseif method.method == "sms"]
+  <span class="block">${theme.message('two-factor-method-sms')}</span>
+  <span class="block text-xs font-normal text-text">
+    ${theme.message('two-factor-get-code-at-sms', method.mobilePhone?substring(method.mobilePhone?length - 2))}
+  </span>
+```
+
+Include separate items for SMS and voice:
+
+```plaintext title="Before"
+[#list availableMethodsMap as id, method]
+  [@methodOption id method/]
+[/#list]
+```
+
+```plaintext title="After"
+[#list availableMethodsMap as id, method]
+  [#if method.method == "sms"]
+    [#list phoneMessageTypes as messageType]
+      [@methodOption id=id method=method messageType=messageType/]
+    [/#list]
+  [#else]
+    [@methodOption id=id method=method/]
+  [/#if]
+[/#list]
+```
+
+#### Messages
+
+To support these template changes, update the following message keys.
+
+```plaintext title="Messages Before"
+sms=SMS
+...
+two-factor-method-sms=Text message
+two-factor-get-code-at-sms=Get a code at (***) ***-**%s
+...
+sms-disable-step-1=To disable two-factor using SMS, click the button to send a one-time use code to %s. Once you receive the code, enter it in the form below.
+sms-enable-step-1=To enable two-factor using SMS, enter a mobile phone and click the button to send a one-time use code. Once you receive the code, enter it in the form below.
+oauth2-sms-enable-step-1=To enable two-factor using SMS, enter a mobile phone and click the button to send a one-time use code. Once you receive the code, enter it in the form below.
+```
+
+```plaintext title="Messages After"
+sms=Phone
+...
+voice=Voice
+...
+select-two-factor-message-type=Select a message type
+two-factor-method-sms=Text message
+two-factor-method-voice=Voice call
+two-factor-get-code-at-sms=Send code via SMS to (***) ***-**%s
+two-factor-get-code-at-voice=Send code via voice message to (***) ***-**%s
+...
+sms-disable-step-1=To disable two-factor using phone, click the button to send a one-time use code to %s. Once you receive the code, enter it in the form below.
+sms-enable-step-1=To enable two-factor using phone, enter a mobile phone and click the button to send a one-time use code. Once you receive the code, enter it in the form below.
+sms-enable-smsMessage-step-1=To enable two-factor using phone, enter a mobile phone and click the button to send a one-time use code via SMS message. Once you receive the code, enter it in the form below.
+sms-enable-voiceMessage-step-1=To enable two-factor using phone, enter a mobile phone and click the button to send a one-time use code via voice message. Once you receive the code, enter it in the form below.
+oauth2-sms-enable-step-1=To enable two-factor using phone, enter a mobile phone and click the button to send a one-time use code. Once you receive the code, enter it in the form below.
+oauth2-sms-enable-smsMessage-step-1=To enable two-factor using phone, enter a mobile phone and click the button to send a one-time use code via SMS message. Once you receive the code, enter it in the form below.
+oauth2-sms-enable-voiceMessage-step-1=To enable two-factor using phone, enter a mobile phone and click the button to send a one-time use code via voice message. Once you receive the code, enter it in the form below.
+```
+
 ## Version 1.63.0
+
+### Enable show/hide password button
 
 **OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
 
