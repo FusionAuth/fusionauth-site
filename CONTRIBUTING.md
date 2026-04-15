@@ -90,6 +90,7 @@ To make a smoothie:
 - multi-tenancy/multi-tenant
 - Node.js
 - OAuth and OAuth2
+- one-time password
 - private-labeled (an adjective)
 - re-authentication
 - self-service
