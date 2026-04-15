@@ -6,7 +6,6 @@ This content is hosted in the following subdirectories of `fusionauth.io`:
 
 - [https://fusionauth.io/docs](https://fusionauth.io/docs)
 - [https://fusionauth.io/blog](https://fusionauth.io/blog)
-- [https://fusionauth.io/dev-tools](https://fusionauth.io/dev-tools)
 - [https://fusionauth.io/articles](https://fusionauth.io/articles)
 
 The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? File an issue or submit a pull request.
