@@ -1,5 +1,5 @@
 ---
-title: Authentication With Magic Links
+title: Authentication With Magic Links And One-Time Passwords
 description: Learn how to create a passwordless experience for your end users using magic links.
 ---
 import Aside from 'src/components/Aside.astro';
@@ -23,13 +23,13 @@ Here's a video showing the default magic links process in FusionAuth:
 
 <YouTube id="hMqxo68ZJlw" />
 
-## Magic Links
+## Magic Links And One-Time Passwords
 
-This feature in FusionAuth sends a secure, single-use, time-bound, code. By default, if a user enters an email address, this is sent via email. If the user enters a phone number, this is sent via SMS. When a user visits the link or enters the one-time code from their SMS message, they are logged in, as if by magic. They don't need to provide any other credentials; ownership and access to the code is considered proof of who they are.
+This feature in FusionAuth sends a secure, single-use, time-bound, code. By default, if a user enters an email address, this is sent via email. If the user enters a phone number, this is sent via SMS. When a user visits the link or enters a one-time code, they are logged in, as if by magic. The one-time code is also known as a one-time password or OTP.
 
-This is also known as "magic link" login. It does not require a password, hence the general term "passwordless".
+The user don't need to provide any other credentials; ownership and access to the delivered code is considered proof of who they are. This is also known as "magic link" or OTP login. It does not require a password, hence the general term "passwordless".
 
-You are not required to use email or SMS as a transport mechanism, though it is quite common. If you are [Using the API Directly](#using-the-api-directly), you can use push notifications or send it via carrier pigeon. As long as the user can provide the value to FusionAuth, it will be validated and the user will be logged in.
+You are not required to use email or SMS as a transport mechanism, though it is quite common. If you are [Using the API Directly](#using-the-api-directly), you can use push notifications, send it via Whatsapp, or deliver it via carrier pigeon. As long as the user can provide the value to FusionAuth, it will be validated and the user will be logged in.
 
 <Aside title="Since 1.41.0" type="version">
 Prior to version 1.41.0, magic links and codes were the only form of passwordless authentication supported by FusionAuth.
@@ -58,7 +58,7 @@ In either case, you should:
 * Create an application
 * Turn on "Passwordless Login" under the "Security" tab of the application configuration:
 
-<img src="/img/docs/lifecycle/authenticate-users/passwordless/turn-on-passwordless.png" alt="Turn on magic links passwordless login" width="1200" />
+![Turn on magic links passwordless login](/img/docs/lifecycle/authenticate-users/passwordless/turn-on-passwordless.png)
 
 * Add a user and register them with your application. Make sure you register a valid email address or phone number
 
@@ -66,10 +66,10 @@ Since, by default, magic links authentication requires email or SMS delivery, en
 
 ## Using the FusionAuth Hosted Login Pages
 
-Choose the FusionAuth hosted login pages approach if you want to use the [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant). Enabling magic links adds an option for a user to receive a one-time code. Because this is the Authorization Code grant, any library or framework that supports this OAuth grant will work.
+Choose the FusionAuth hosted login pages approach if you want to use the [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant). 
 
 <Aside type="note">
-Make sure you are using the latest version of FusionAuth. As of version 1.41.0, FusionAuth supports multiple kinds of passwordless authentication, not just magic links.
+As of version 1.41.0, FusionAuth supports multiple kinds of passwordless authentication, not just magic links.
 </Aside>
 
 To use this option:
@@ -93,7 +93,7 @@ To test out how your users would experience this:
 1. Click the link or enter the one-time code into the form.
    ![The magic links phone request form](/img/docs/lifecycle/authenticate-users/passwordless/passwordless-phone-otp-request-form.png)
 
-As soon as the magic link is clicked or the one-time code from the SMS is entered, the user has begun an Authorization Code grant. You can [consume the authorization code](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant) using a library or your own code. Whatever you would normally do if someone signed in with a password, you can now do here. This means that you'll be provided with the same refresh tokens, user data, or JWTs that would be delivered if the user had signed in with a password.
+As soon as the magic link is clicked or the one-time code is entered, the user has begun an Authorization Code grant. You can [consume the authorization code](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant) using a library or your own code. Whatever you would normally do if someone signed in with a password, you can now do here. This means that you'll be provided with the same refresh tokens, user data, or JWTs that would be delivered if the user had signed in with a password.
 
 <Aside type="note">
 If you are testing locally with an email server like Mailcatcher, you may need to copy the link from the email and paste it into your browser. Some email clients will not allow you to click on links that are not HTTPS.
@@ -101,14 +101,14 @@ If you are testing locally with an email server like Mailcatcher, you may need t
 
 To customize the look of the login pages, use [themes](/docs/customize/look-and-feel/). While editing the theme, you could remove the username/password form. This would force everyone to use magic links authentication.
 
-Since changing a theme modifies it across all applications in a tenant, this might also affect the FusionAuth admin application (if the new application is in the default tenant) and other applications in the same tenant. If you want to hide the username/password form on an application by application basis, you can use separate tenants or add logic to your theme to hide parts of the HTML based on the `client_id`, or you can use application specific themes. The latter are a feature requiring a paid license.
+Changing a theme modifies it for all applications in a tenant, so these changes can affect the FusionAuth admin UI (if the new application is in the default tenant) and other applications in the same tenant. If you want to hide the username/password form on an application by application basis, use separate tenants, add logic to your theme to hide parts of the HTML based on the `client_id`, or [use application specific themes](/docs/customize/look-and-feel/application-specific-themes).
 
 ### Limitations
 
 There are a few limitations when using the FusionAuth hosted login pages:
 
-* This approach will only send the magic code via email or SMS
-* This approach also requires you to enable the Authorization Code or Implicit grant
+* This approach will only send the magic link or one-time code via email or SMS.
+* This approach requires you to use the Authorization Code grant.
 
 ## Using the API Directly
 
@@ -116,8 +116,8 @@ While using the FusionAuth hosted login pages works for many, you may need more 
 
 There are a couple of reasons you might choose this method of integration.
 
-* You can customize every part of the user login experience
-* You can send the code using a different method such as a Slack direct message
+* You can customize every part of the user login experience.
+* You can send the code using a different method such as a Slack direct message.
 
 When using this option, you must set up an [API key](/docs/apis/authentication) with the appropriate permissions. The minimum level of privilege required is the `POST` permission to the `/api/passwordless/start` endpoint.
 
@@ -194,13 +194,13 @@ To do so, set the `noJWT` parameter to true when you call the complete API endpo
 
 #### Common Failure Paths
 
-Every time you start a magic link login for a given user, all other codes for that user are marked invalid. Codes are also invalid after a configurable time limit.
+Every time you start a magic link or OTP login for a given user, all other codes for that user are marked invalid. Codes are also invalidated after a configurable time limit.
 
 If a user provides a code that is invalid, if their account is locked, or if there is any other issue in the request, a status code in the 400 range will be returned. Please consult the [passwordless API reference docs](/docs/apis/passwordless#response-3) for more details about return status codes.
 
 ## Two Factor Authentication
 
-You can use FusionAuth magic link authentication in combination with two-factor authentication (also called multi-factor authentication or MFA).
+You can use FusionAuth magic link and OTP authentication in combination with two-factor authentication (also called multi-factor authentication or MFA).
 
 When two-factor authentication is enabled for a user, after the code has been provided they are prompted to provide an additional two-factor verification code.
 
@@ -230,15 +230,15 @@ If you are using the FusionAuth provided email or phone templates, whether you a
 
 Since the template references "FusionAuth", start with duplicating the `[FusionAuth Default] Passwordless Login` template:
 
-<img src="/img/docs/lifecycle/authenticate-users/passwordless/duplicating-email-template.png" alt="Duplicate the magic link login email template." width="1200" />
+![Duplicate the magic link login email template.](/img/docs/lifecycle/authenticate-users/passwordless/duplicating-email-template.png
 
 Then modify it with your branding and messaging.
 
-<img src="/img/docs/lifecycle/authenticate-users/passwordless/modifying-email-template.png" alt="Modifying the magic link login email template." width="1200" />
+![Modifying the magic link login email template.](/img/docs/lifecycle/authenticate-users/passwordless/modifying-email-template.png)
 
 Configure the tenant identities template settings to use your email template.
 
-<img src="/img/docs/lifecycle/authenticate-users/passwordless/update-tenant-with-new-template.png" alt="Updating the tenant to use the new magic link email template." width="1200" />
+![Updating the tenant to use the new magic link email template.](/img/docs/lifecycle/authenticate-users/passwordless/update-tenant-with-new-template.png)
 
 When customizing, you can use any Apache FreeMarker built-ins within the template and in the subject. Make sure you modify both the HTML and text templates. Here are the default email templates:
 
@@ -246,7 +246,7 @@ When customizing, you can use any Apache FreeMarker built-ins within the templat
 
 You can localize the email template as well:
 
-<img src="/img/docs/lifecycle/authenticate-users/passwordless/localization-screen-for-email-template.png" alt="The localization screen for your email templates." width="1200" />
+![The localization screen for your email templates.](/img/docs/lifecycle/authenticate-users/passwordless/localization-screen-for-email-template.png)
 
 Here is more information about [email and message templates](/docs/customize/email-and-messages/).
 
@@ -264,7 +264,7 @@ Expires at: ${((.now?date?long + timeToLive * 1000)?number_to_time)?string}
 
 The message template is used for SMS delivery. It is similar to the email template, but does not have an HTML version. You can customize it in the same way as the email template, but you will only have a text version. Additionally, you can use the `oneTimeCode` variable to include the one-time code in the message.
 
-<img src="/img/docs/lifecycle/authenticate-users/passwordless/modifying-message-template.png" alt="Modifying the magic link login message template." width="1200" />
+![Modifying the magic link login message template.](/img/docs/lifecycle/authenticate-users/passwordless/modifying-message-template.png)
 
 Here is the default message template:
 
@@ -274,7 +274,7 @@ Here is the default message template:
 
 You can modify the lifetime of the code and one-time code delivered to users. By default it is 180 seconds; change this in the tenant settings:
 
-<img src="/img/docs/lifecycle/authenticate-users/passwordless/tenant-settings-duration.png" alt="The tenant settings to customize code lifetime." width="1200" />
+![The tenant settings to customize code lifetime.](/img/docs/lifecycle/authenticate-users/passwordless/tenant-settings-duration.png)
 
 You can also change the types of the generated code and one-time code. For example, you may want your code to be only alphanumeric characters and one-time code to be numeric digits.
 
@@ -287,15 +287,15 @@ You have the following options for the code generation strategy:
 * bytes
 * digits
 
-Consult the [tenant API documentation](/docs/apis/tenants) for the length limits, which vary based on the strategy.
+Consult the [tenant API documentation](/docs/apis/tenants) for length limits, which vary based on the strategy.
 
-<img src="/img/docs/lifecycle/authenticate-users/passwordless/tenant-settings-generation.png" alt="The tenant settings to customize code generation strategy." width="1200" />
+![The tenant settings to customize code generation strategy.](/img/docs/lifecycle/authenticate-users/passwordless/tenant-settings-generation.png)
 
 ## Security
 
 With magic link authentication, if the user's email account or phone number is hijacked, their account on your system is compromised. However, many organizations have security policies and protections around email accounts. It is often easier to protect and regularly change one email account password than to change all of a user's passwords. Email accounts are also more likely to have two-factor authentication enabled.
 
-One way to increase the security of your magic link authentications is to decrease the lifetime of the code. This will help if the email or SMS message is compromised or accidentally forwarded.
+One way to increase the security of your magic link/OTP authentications is to decrease the lifetime of the code. This will help if the email or SMS message is compromised or accidentally forwarded.
 
 There are no limits on how many passwordless requests can be made for a user, but only the most recent code is valid. Using any of the others, even if they have not yet expired, will display an `Invalid login credentials` message to the user.
 
@@ -305,14 +305,14 @@ If you use the passwordless API, follow the principle of least privilege, and li
 
 ### What About Users' Passwords
 
-When FusionAuth is your user datastore, you can optionally choose to disable passwords at the tenant level to make the passwordless login process easier. See the [Password enabled](/docs/get-started/core-concepts/tenants#password) tenant setting.
+You can choose to disable passwords to enforce passwordless login. See the [Password enabled](/docs/get-started/core-concepts/tenants#password-settings) tenant setting for more information.
 
 ## Troubleshooting
 
 ### Magic Link Button Not Appearing on Login Page
 
-If the "Login with a magic link" button does not appear on your login page, check the following:
-* Ensure that the application has "Passwordless Login" enabled under the "Security" tab.
+If the <InlineUIElement>Login with a magic link</InlineUIElement> button does not appear on your login page, check the following:
+* Ensure that the application has "Passwordless Login" enabled under the <Breadcrumb>Security</Breadcrumb> tab.
 * Ensure that the application and/or tenant has a valid email or phone template configured for Passwordless Login.
 * Ensure that SMS and/or email is configured in the tenant settings.
 
