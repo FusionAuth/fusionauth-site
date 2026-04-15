@@ -2,7 +2,12 @@
 
 Despite the name, this repo only contains the FusionAuth documentation, articles, developer tools, and blog.
 
-All of this content is hosted at [https://fusionauth.io/docs](https://fusionauth.io/docs) and [https://fusionauth.io/blog](https://fusionauth.io/blog).
+This content is hosted in the following subdirectories of `fusionauth.io`:
+
+- [https://fusionauth.io/docs](https://fusionauth.io/docs)
+- [https://fusionauth.io/blog](https://fusionauth.io/blog)
+- [https://fusionauth.io/dev-tools](https://fusionauth.io/dev-tools)
+- [https://fusionauth.io/articles](https://fusionauth.io/articles)
 
 The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? File an issue or submit a pull request.
 
