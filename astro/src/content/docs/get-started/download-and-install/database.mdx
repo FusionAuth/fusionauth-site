@@ -1,57 +1,64 @@
 ---
 title: Install a Database
 description: Learn how to install the database that FusionAuth will use to store user data.
-section: get started
-subcategory: download and install
+order: 4
 ---
-import Aside from 'src/components/Aside.astro';
+import Tabs from 'src/components/Tabs.astro';
+import TabItem from 'src/components/TabItem.astro';
 
-## Install a Database
+FusionAuth requires a database that meets the [System Requirements](/docs/get-started/download-and-install/reference/system-requirements). This page explains how to install a supported database.
 
-<Aside type="note">
-If you already have a PostgreSQL database installed that you will be using with FusionAuth, you can skip this section completely. If you are using MySQL and already have MySQL installed, you will still need to install the MySQL Connector to ensure FusionAuth works properly.
-</Aside>
+## Install PostgreSQL
 
-In order to use FusionAuth, you need to install a database. The database requirements are provided in the [System Requirements](/docs/get-started/download-and-install/system-requirements).
- Follow the instructions below to install a supported database.
+<Tabs>
+	<TabItem label="Manual Install">
+To install PostgreSQL, follow the installation instructions for your platform at [postgresql.org](https://www.postgresql.org/download/). We recommend PostgreSQL 15 or newer.
+	</TabItem>
+	<TabItem label="Homebrew">
 
-### Install MySQL
+	If you don't have PostgreSQL installed, you can install it using Homebrew:
+	
+	1. Install PostgreSQL:
+	
+   	   ```console
+   	   brew install postgresql@16
+   	   ```
+	1. Start PostgreSQL with Homebrew services:
+	
+   	   ```console
+   	   brew services start postgresql@16
+   	   ```
+   	1. Add the following line to your `~/.zshrc` or `~/.bashrc` file to add PostgreSQL binaries to your `PATH`:
 
-<Aside type="note">
-IBM Compose for MySQL or other MysQL platforms that utilize MySQL Group Replication are not supported.
-</Aside>
+       ```console
+       export PATH="$PATH:$(brew --prefix postgresql@16)/bin"
+       ```
+	</TabItem>
+</Tabs>
 
-#### Linux
+Then, configure PostgreSQL for use with FusionAuth:
 
-To install MySQL on a Linux system, you can use the `apt` or `yum` tools depending on whether or not your Linux distribution is based on Red Hat or Debian. The package name may vary depending on your platform, for example: `mysql-server` or `mysql-server-5.7`. Here's the commands for each:
+1. Create the FusionAuth user, `fusionauth`, with password `fusionauth`:
 
-```bash title="Red Hat"
-yum install mysql-server
-```
+   ```console
+   psql --command="CREATE USER fusionauth PASSWORD 'fusionauth'" --command="\du" postgres
+   ```
 
-```bash title="Debian"
-sudo apt-get install mysql-server
-```
+1. Create a database named `fusionauth` owned by the `fusionauth` user:
 
-#### Windows or macOS
+   ```console
+   createdb --owner=fusionauth fusionauth
+   ```
 
-If you are installing MySQL on a platform that does not supports RPM or DEB packages, you will need to download the installer from the MySQL website here: http://dev.mysql.com/downloads/mysql/
+## Install MySQL
 
-#### MySQL and Unicode
+To install MySQL, follow the installation instructions for your platform at [dev.mysql.com](https://dev.mysql.com/downloads/installer/).
 
-<Aside type="note">
-To properly store 4 byte Unicode, the character set must be set to `utf8mb4`.
+FusionAuth requires the ability to store 4-byte unicode. To store 4-byte unicode, you must configure your MySQL server to use the `utf8mb4` character set. If you don't configure this character set, FusionAuth will fail to start and log an error.
 
-By default this configuration is enforced during startup. If FusionAuth fails to startup due to this validation the log will contain detailed
-messages about the MySQL configuration.
+To configure your MySQL instance to use `utf8mb4`, add the following lines to `my.cnf` (`my.ini` on Windows):
 
-It is recommended to ensure you have properly configured MySQL to use `utf8mb4` before attempting to startup FusionAuth. Please verify you have
-the following configuration in your `my.cnf` file. On Windows the file is called `my.ini`.
-
-If you need to modify your configuration, restart MySQL for the changes to take effect.
-</Aside>
-
-```ini title="my.cnf"
+```ini
 [client]
 default-character-set = utf8mb4
 
@@ -64,36 +71,16 @@ character-set-server = utf8mb4
 collation-server = utf8mb4_bin
 ```
 
-This is a system wide configuration option, so be certain that other databases and applications on the same MySQL server won't be impacted by this change.
-It is possible not all of these configuration options will be available depending on your database configuration. Once you have configured the available
-options, if startup still fails due to this validation you may disable this feature. See `database.mysql.enforce-utf8mb4` in the [Configuration](/docs/reference/configuration) reference.
+After modifying the configuration file, restart MySQL to load your changes.
+
+This configuration changes the character set for the entire MySQL server. If you share your MySQL server across multiple databases and applications, check to ensure that this change doesn't impact functionality.
+
+Once you have configured the available options, if startup still fails due to this validation, you may disable this feature. See `database.mysql.enforce-utf8mb4` in the [Configuration reference](/docs/reference/configuration).
 
 ### Install MySQL Connector
 
-In order to use MySQL with FusionAuth, you also need to download and install the MySQL Connector for Java. This is a manual process due to the way that Oracle licenses MySQL. Follow these steps to get the MySQL Connector into the correct location for FusionAuth to use.
+To use MySQL with FusionAuth, you also need the MySQL Connector for Java. This is a manual process due to the way that Oracle licenses MySQL. To get the MySQL Connector into the correct location for FusionAuth:
 
-1. Download the MySQL Connector version 8.0.23 or newer using the Platform Independent installer from the Oracle website here: https://dev.mysql.com/downloads/connector/j/8.0.html
-2. Unzip or untar the archive you downloaded
-3. Copy the file from the archive named `mysql-connector-java-<version>.jar` to the FusionAuth app library directory. This directory is located in the installation directory at `fusionauth-app/lib`. For example, if you installed using the DEB package on a Debian Linux system, this location will be `/usr/local/fusionauth/fusionauth-app/lib`
-
-### Install PostgreSQL
-
-#### Linux
-
-To install PostgreSQL on a Linux system, you can use the `apt` or `yum` tools depending on whether or not your Linux distribution is based
-on Red Hat or Debian. The package name may vary depending on your platform.
-
-```bash title="Red Hat"
-sudo yum install postgresql-server postgresql
-sudo yum install postgresql9-contrib.x86_64
-```
-
-```bash title="Debian"
-sudo apt-get install postgresql-server
-sudo apt-get install postgresql-contrib
-```
-
-#### Windows or macOS
-
-If you are installing PostgreSQL on a platform that does not support RPM or DEB packages, you will need to download the installer from the PostgreSQL website here: https://www.postgresql.org
-
+1. Download the MySQL Connector version 8.0.23 or newer using the Platform Independent installer from [Oracle](https://dev.mysql.com/downloads/connector/j/8.0.html).
+1. Unzip or untar the archive.
+1. The archive should contain a file named `mysql-connector-java-<version>.jar`. Copy this file to the FusionAuth app library directory, located in the installation directory at `fusionauth-app/lib`. For example, a DEB package install on a Debian Linux system would locate the installation directory at `/usr/local/fusionauth/fusionauth-app/lib`.

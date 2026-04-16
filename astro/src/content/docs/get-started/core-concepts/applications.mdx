@@ -1,8 +1,7 @@
 ---
 title: Applications
 description: An overview of FusionAuth Applications.
-section: get started
-subcategory: core concepts
+order: 0
 ---
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import Icon from 'src/components/icon/Icon.astro';
@@ -11,6 +10,7 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
 import AvailableSince from 'src/components/api/AvailableSince.astro';
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
 import PremiumPlanBlurbApi from 'src/content/docs/_shared/_premium-plan-blurb-api.astro';
 import RoleAttributes from 'src/content/docs/get-started/core-concepts/_role_attributes.mdx';
 import ReadOnly from 'src/components/api/ReadOnly.astro';
@@ -25,8 +25,6 @@ import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro
 import AdvancedPlanBlurb from 'src/content/docs/_shared/_advanced-plan-blurb.astro';
 import Aside from 'src/components/Aside.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
-
-## Overview
 
 A FusionAuth Application is simply something a user can log into. When you use the Login API, you will provide an `applicationId` to indicate what resource you're attempting to obtain authorization. When you use one of the OAuth2 / OpenID Connect authorization grants you will provide a `client_id` in some fashion. This client identifier will be unique to a single FusionAuth Application which allows FusionAuth to verify the User is registered for the requested Application and subsequently return the correct roles. The `applicationId` and `client_id` can be considered synonymous, both concepts use the same `Id` value.
 
@@ -72,8 +70,6 @@ Before you start your integration with FusionAuth you need to set up at least on
   </APIField>
   <APIField name="Tenant" required>
     The tenant in which to create this Application.
-
-    This field is only displayed once multiple tenants exist in FusionAuth. When only a single tenant exists, the Application will always be created in the default tenant.
   </APIField>
   <APIField name="Theme" optional since="1.27.0">
     When a theme is selected, it will  be used for this application instead of the tenant theme.
@@ -203,6 +199,15 @@ The multi-factor configuration allows you to provide Application specific multi-
   </APIField>
   <APIField name="SMS template" optional>
     When a template is selected, it will be used to send a multi-factor authentication code when the SMS MFA method is used and a user is signing in to this application.
+  </APIField>
+  <APIField name="MFA requirement lambda" since="1.62.0" optional>
+    The MFA requirement lambda that will be invoked during logins, password changes, and MFA Status API calls. FusionAuth uses this lambda to determine whether to challenge the user with MFA. The lambda assigned to the application will override the lambda assigned to the application's tenant.
+
+    You can customize this logic to:
+
+    * Change FusionAuth’s MFA decision for a user.
+    * Trigger a suspicious login event based on your criteria./>
+    <EnterprisePlanBlurb />
   </APIField>
 </APIBlock>
 
@@ -481,6 +486,8 @@ The SAML configuration allows you to reveal FusionAuth as a SAML v2 Identity Pro
     The URL where you want to receive the LogoutRequest from FusionAuth.
 
     This field is required when <InlineField>Enable single logout</InlineField> is enabled.
+
+    You can learn more about this behavior in the [Logout And Session Management guide](/docs/lifecycle/authenticate-users/logout-session-management).
   </APIField>
   <APIField name="Signing key" optional since="1.25.0">
     The Key used to sign the SAML Single Logout response.
@@ -574,6 +581,18 @@ The security tab contains some additional security configuration for this applic
   <APIField name="Enabled" optional>
     When enabled, allow users to request login using a link sent via an email (or code sent via an SMS message). Enable this feature to display a button on the FusionAuth login form and allow usage of the Passwordless Login API.
   </APIField>
+  <APIField name="Email login strategy" since="1.64.0">
+    The default login strategy by which the user will complete the passwordless login via email. The possible values are:
+
+    * `ClickableLink` - send the user a clickable link that they can open in a web browser to authenticate
+    * `FormField` - send the user a short code that they can enter into a form field to authenticate
+  </APIField>
+  <APIField name="Phone login strategy" since="1.64.0">
+    The default login strategy by which the user will complete the passwordless login via phone. The possible values are:
+
+    * `ClickableLink` - send the user a clickable link that they can open in a web browser to authenticate
+    * `FormField` - send the user a short code that they can enter into a form field to authenticate
+  </APIField>
 </APIBlock>
 
 #### Authentication Tokens
@@ -612,7 +631,7 @@ A universal application uses the same application configuration across all tenan
 Users from any tenant can have a registration to a universal application, and registrations work as they would for normal applications.
 
 ### Universal Applications and Tenants
-Becuase a universal application does not belong to a single tenant, you will generally have to supply a tenant Id when interacting with a universal application. This is true during authentication and other user-specific workflows.  The supplied tenant Id tells FusionAuth a number of things, such as which tenant the user that is logging in belongs to, which theme to use, and more.
+Because a universal application does not belong to a single tenant, you will generally have to supply a tenant Id when interacting with a universal application. This is true during authentication and other user-specific workflows. The supplied tenant Id tells FusionAuth a number of things, such as which tenant the user that is logging in belongs to, which theme to use, and more.
 
 The tenant Id is typically provided on a `tenantId` query parameter, unless otherwise specified.
 

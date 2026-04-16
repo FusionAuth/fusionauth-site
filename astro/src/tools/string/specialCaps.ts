@@ -10,7 +10,7 @@ const specialCapsMap = {
   'scim': 'SCIM',
   'spa': 'SPA',
 }
-export const specialCaps = (target: string) => target
+export const specialCaps = (target: string) => target? target
     .split(' ')
     .map(target => specialCapsMap[target.toLowerCase()] || target)
-    .join(' ');
+    .join(' '): '';

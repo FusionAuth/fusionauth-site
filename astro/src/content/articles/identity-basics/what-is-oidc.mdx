@@ -10,7 +10,6 @@ dateModified: 2023-12-10
 ---
 import Aside from '/src/components/Aside.astro';
 import ExampleIdToken from 'src/content/docs/lifecycle/authenticate-users/oauth/_example_id_token.mdx';
-import OIDCFlow from "../../../diagrams/articles/identity-basics/oidc-flow.astro";
 
 
 OIDC, which stands for OpenID Connect, is a specification that allows users to authenticate using a standard protocol. This article covers what OIDC is, why you might want to use it, and how it works.
@@ -84,7 +83,29 @@ An example of an OP is FusionAuth. Examples of RPs include:
 
 Here's an example OIDC flow, using the authorization code flow.
 
-<OIDCFlow/>
+```mermaid
+sequenceDiagram
+
+  participant u as User/Browser
+  participant rp as Relying Party (RP)
+  participant op as OpenID Provider (OP)
+  
+  u ->> rp : Request protected resource<br /> requiring authentication
+  rp ->> rp : Prepare request<br/>for OP login form
+  rp ->> u : Redirect to OP
+  u ->> op : Sends request for login form
+  op ->> u : Sends login form
+  u ->> op : Sends credentials
+  op ->> op : Authenticates the user<br/>(Could be more steps here: MFA, federation, etc.)
+  op ->> u : Sends consent form<br/>with requested permissions
+  u ->> op : Send consent
+  op ->> u : Sends one-time authorization code and redirects browser<br/>to previously configured redirect URL
+  u ->> rp : Requests redirect URL<br/>and provides authorization code
+  rp ->> op : Send one-time authorization code,<br/>client identifier and other data
+  op ->> rp : Sends Id and other requested tokens
+  rp ->> rp : Validates Id token
+  rp ->> u  : Sends requested resource
+```
 
 For the RP, the end result of an interaction with the OP is a set of tokens that contain information about the user. Let's look at those next.
 

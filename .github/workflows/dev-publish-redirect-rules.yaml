@@ -1,0 +1,48 @@
+---
+name: (dev) publish redirect rules
+env:
+  BUCKET_NAME: "fusionauth-dev-us-east-1-artifacts"
+  PUBLISHER_ROLE_ARN: "${{ secrets.DEV_PUBLISHER_ROLE_ARN }}"
+  AWS_REGION: "us-east-1"
+
+on:
+  workflow_dispatch:
+    inputs:
+        branch:
+          required: true
+          type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: validate json
+        run: cat src/redirects.json | jq empty
+
+      - name: validate all redirects start with a `/`
+        run: exit $(cat src/redirects.json| jq '.redirects|to_entries | map(select(.key | startswith("/") | not)) | length')
+        shell: bash
+
+      - name: validate all indexPaths start with a `/`
+        run: exit $(cat src/redirects.json| jq '.indexPaths|to_entries | map(select(.key | startswith("/") | not)) | length')
+        shell: bash
+
+      - name: set aws credentials
+        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7
+        with:
+          role-to-assume: ${{ env.PUBLISHER_ROLE_ARN }}
+          role-session-name: site_publisher_session
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: upload file to s3
+        run: aws s3 cp src/redirects.json s3://${{ env.BUCKET_NAME }}/lambda/site-origin-request-handler/redirects.json

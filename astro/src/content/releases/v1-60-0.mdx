@@ -1,0 +1,217 @@
+---
+version: "1.60.0"
+name: "Prompt Param Piranha"
+date: 2025-09-10
+---
+import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
+
+<Item category="breaking-change" issue="3177">
+Some changes have been made to the way JWTs are produced and validated:
+
+**Moved claims**
+
+* The `gty` claim has been moved from the JWT header to the body.
+  * This claim is present in an access token or id token produced by an OAuth grant.
+* The `use` claim has been moved from the JWT header to the body.
+  * This claim is present in an access token produced by an OAuth client credentials grant to authenticate a FusionAuth SCIM server.
+
+**New and reserved claims**
+
+The following claims are now reserved:
+- `auth_time` - Reserved for all user tokens, excludes client credentials
+- `gty` - Reserved for all tokens
+- `tty` - Reserved for all tokens
+- `use` - Reserved for the client credentials grant
+
+We do not expect this change to impact our customers. If you are adding, removing or modifying these claims using a lambda function, you will need to plan to modify your integration.
+
+These claims are not considered reserved for the Vend API.
+
+**Token validation**
+
+It is possible that an existing access token or id token that has not yet expired will no longer be considered valid by FusionAuth. If you are using a short lived access token with a refresh token, refreshing the access token will correct itself. These changes will not have any affect on your use of the JWTs produced by FusionAuth.
+
+**Client credentials**
+
+The `aud` claim will always be returned as an array.
+
+Previously this claim may be returned as an string or an array depending upon the request. The following examples show different `scope` values and their prior affect on the `aud` claim:
+ * `scope=target-entity:1:read` -> `aud: 1`
+ * `scope=target-entity:1:read target-entity:2:read` -> `aud: [1, 2]`
+
+To simplify integration requiring an integrator to only account for a single data type this claim will now always be returned as an array. If you have only ever used a single entity in the scope parameter, it is possible your integration is not expecting an array. Please be sure to account for this change prior to upgrade.
+
+**SCIM client integrations**
+
+If you are using FusionAuth as a SCIM server and you have integrated with a third-party SCIM client by manually performing a client credentials grant please be aware that you will need to adjust your integration.
+
+The preferred integration with a SCIM client is to use the client credentials grant. By using a single long lived token you have functionally created an API key that cannot be revoked.
+
+If your SCIM clients authentication configuration does not offer a way to configure the `scope` parameter you may add this to the Token endpoint as a query string. For example the Microsoft configuration does not offer a separate `scope` field so you will need to append `?scope={scope}` to the Token endpoint where the value of `{scope}` is the scope you are using to obtain an access token.
+
+If your SCIM client authentication only allows for a token and does not directly support the client credentials grant, we would recommend that you programatically generate and rotate the access token by using an API to ensure that you are not creating very long lived access tokens for a SCIM client.
+
+**Deprecated features removed**
+
+The User API JWT authentication method which was deprecated in version `1.50.0` has now been removed.
+
+**OAuth Logout**
+
+Now that we identify an `id_token` using the newly added `tty` claim, the OAuth2 Logout endpoint will now correctly reject an `access_token` when sent as the `id_token_hint` parameter according to spec. If you have any integrations that are sending an `access_token` in the `id_token_hint` parameter instead of the `id_token` you will need to correct your integration prior to upgrading.
+</Item>
+
+<Item category="known-issue" resolvedIn="1.64.0" viaIssue="3317">
+The `id_token_hint` field of the `oauth2/logout` endpoint is incompatible with Id tokens generated in `1.59.x` and earlier. Versions `1.64.0` and later are once again backwards-compatible with those tokens.
+</Item>
+<Item category="known-issue" resolvedIn="1.60.1" viaIssue="3183">
+When using FusionAuth as a SAML IdP with a SAML Populate lambda that reads or modifies the SAML assertion will fail causing the login request to fail. If you have encountered this issue, please upgrade to `1.60.1` if possible, or click on the linked GitHub issue to review the temporary workaround.
+</Item>
+<Item category="known-issue" resolvedIn="1.61.0" viaIssue="3186">
+Performing a user reindex occasionally results in an email, username, or phoneNumber, for a small fraction of users, to not be searchable via Elasticsearch/OpenSearch.
+</Item>
+<Item category="known-issue" resolvedIn="1.60.2" viaIssue="3190">
+When using FusionAuth as a SAML Service Provider (SP), receiving a SAML Response containing an Assertion with an attribute value of `null` or of an unsupported type will result in a failure to parse the Response. If you have encountered this issue, please upgrade to `1.60.2` if possible.
+</Item>
+<Item category="known-issue" resolvedIn="1.61.1" viaIssue="3251">
+Providing an expired Id Token to the `/oauth2/logout` endpoint using the `id_token_hint` parameter results in an OAuth error.
+</Item>
+<Item category="known-issue" resolvedIn="1.64.0" viaIssue="3366">
+Rarely, version upgrades may cause a FusionAuth instance to deactivate a configured license. To work around this issue, check for your license after a version upgrade; if it is missing, re-activate the license using your license Id from [account.fusionauth.io/](https://account.fusionauth.io/).
+</Item>
+
+<Item category="new-feature" issue="2208">
+Added support for the OIDC [prompt](/docs/lifecycle/authenticate-users/oauth/prompt) parameter! This enables silent authentication, re-authentication requests, consent prompting, and more.
+
+Thanks to all of the community members that have helped us define this requirement, and waited patiently for it!
+</Item>
+
+<Item category="enhancement" issue="3177">
+General improvements to how we handle and process JWTs in the form of access tokens and refresh tokens:
+
+* Adding `tty` claim to all tokens produced to easily differentiate between an access token and id token.
+* Moving the `gty` claim from the header to the body for tokens produced by an OAuth grant.
+* Moving the `use` claim from the header to the body for tokens produced by the client credentials grant for a SCIM server.
+* Better support of the `token_type_hint` on the Introspect endpoint.
+* Allow the use of refresh tokens on the Introspect endpoint with a `token_type_hint` of `refresh_token`
+</Item>
+
+<Item category="enhancement" issue="2886">
+Move the `gty` and `use` claims from the JWT header to the body. This should improve interoperability with various identity providers such as AWS and Microsoft.
+
+The `gty` claim will be present for all tokens produced by an OAuth grant. The `use` claim will be present in an access token produced to authenticate the SCIM server.
+</Item>
+
+<Item category="enhancement" issue="3032">
+Significantly improved performance for the bulk User Import API.
+
+Performance will particularly be improved when you have thousands of configured applications.
+</Item>
+
+<Item category="enhancement" issue="3154">
+Our release process now auto-updates the the example JSON payload for usage data on collected metrics.
+
+This documentation will remain up to date going forward.
+
+For example data, see [Collected Metrics](/docs/get-started/download-and-install/reference/collected-metrics#metrics).
+</Item>
+
+<Item category="enhancement" issue="3159">
+In version `1.59.0` the password is now optional when creating or updating a user.
+
+When returning from a third-party login, a user may be prompted to complete registration by entering a password when self-service is enabled and is configured to require a password.
+
+This was unintended and has been corrected.
+</Item>
+
+<Item category="enhancement" issue="3165">
+During a password reset workflow, for a user that has MFA configured, the user will be prompted to complete the MFA challenge.
+
+When the user completes the challenge, the remember this device checkbox even when checked may not be honored.
+
+The result is that once the user completes the change password workflow by completing an MFA challenge, the user will be prompt again on next login. This can be frustrating, and has been corrected.
+</Item>
+
+<Item category="enhancement" issue="3171">
+When performing the initial setup of FusionAuth outside of FusionAuth Cloud maintenance mode assists you with configuring the connecting to the database and search service.
+
+When we cannot connect to the database, or you have not provided enough information to make these connections an error page is displayed.
+
+This page has been enhanced to provide better messaging and links to documentation to help you out if you need to troubleshooting the setup process.
+</Item>
+
+<Item category="enhancement" issue="3172">
+FusionAuth now supports multiple assertions in the SAML AuthN response.
+
+If the AuthN response contains multiple assertions, all will be made available to the SAML reconcile lambda function.
+</Item>
+
+<Item category="enhancement" issue="3173">
+We significantly improved performance of User API searches returning expanded user records, and user reindex actions as well!
+</Item>
+
+<Item category="fix" issue="2691">
+When decommissioning a license in a FusionAuth cluster, the change may not be reflected in all cluster nodes immediately. This can provide intermittent and inconsistent access to licensed features, depending on which node is handling a request.
+</Item>
+
+<Item category="fix" issue="2887">
+A user can be shown a rendering error while attempting to complete an email based MFA login.
+
+The error occurs when send rate limiting has been enabled as part of Advanced Threat Detection. When the user reached the rate limit threshold for requesting emails to be sent to complete login, the intended error was not shown an instead a page rendering error was displayed.
+</Item>
+
+<Item category="fix" issue="2936">
+When a user completes a forgot password workflow, the failed login count will be reset.
+
+This should reduce frustration for a user that changed their password after exceeding the configured failed login count. In this scenario, if the user had entered the the incorrect password again they would be required to wait for the configured time period before attempting login again. This could be quite frustrating.
+
+Now that the failed count has been reset, the user will at least be allowed to enter the wrong password a few more times before we thwart their efforts.
+</Item>
+
+<Item category="fix" issue="2966">
+When running in dark mode, or using a dark theme with a FusionAuth simple theme, some QR code scanners are unable to read the QR code for setting up MFA. We have added a light border to ensure that the QR code is still readable on a dark background. The QR code should have a high-contrast border to allow these readers to work.
+</Item>
+
+<Item category="fix" issue="3148">
+When previewing the `Phone verification required`, `Complete registration`, and `Passwordless` theme templates in an advanced theme preview window, a FreeMarker exception is displayed to the user.
+
+This was introduced in version `1.59.0`.
+</Item>
+
+<Item category="fix" issue="3151">
+A race condition exists, when attempting to activate FusionAuth using an air-gapped license without any outbound network access that may cause the the request to fail and not correctly persist the license.
+
+When this issue is encountered the system becomes un-licensed.
+</Item>
+
+<Item category="fix" issue="3160">
+When regenerating Reactor's encryption key, the _Breached Password Detection_ status may take longer than expected to return to _Active_.
+
+If you were to encounter this issue, deactivating and reactivating your license will also correct the state. You can also reach out to support if you see something like this as well.
+</Item>
+
+<Item category="fix" issue="3164">
+Improved MFA configuration workflow during self-service registration when configured as required.
+</Item>
+
+<Item category="fix" issue="3175">
+In version `1.59.0`, changes were introduced that made it impossible to set webhooks for a handful of event types as transactional.
+
+See release notes for `1.59.1` below for additional information.
+</Item>
+
+<Item category="security" issue="3177">
+FusionAuth accepts access tokens to authenticate requests and to initiate user authentication workflows.
+
+Improvements have been made to how tokens are accepted, processed and validated to ensure they are suitable to authenticate the request. This will improve security now and will be necessary to support access tokens more extensively for authenticating requests.
+</Item>
+
+<Item category="security" issue="3172">
+Improvements have been made to how FusionAuth processes signed SAML assertions to mitigate an identified vulnerability. If you are using using a SAML IdP, especially when allowing IdP initiated login, please plan to upgrade at your earliest convenience.
+</Item>
+
+<Item category="internal" issue="3176">
+Updated the following dependencies:
+* Upgrade `io.fusionauth:fusionauth-usage-stats:fusionauth-usage-stats-common` `0.6.0` -> `0.6.1`
+* Upgrade `org.primeframework:prime-mvc` `4.34.0` -> `4.35.1`
+* Upgrade `io.fusionauth:fusionauth-samlv2` `0.11.1` -> `1.0.0`
+</Item>

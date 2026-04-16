@@ -1,0 +1,47 @@
+---
+version: "1.53.3"
+date: 2024-10-25
+---
+import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
+import ReleaseNotesDBMigrate from 'src/components/docs/release-notes/ReleaseNotesDBMigrate.mdx';
+
+<ReleaseNotesDBMigrate />
+
+<Item category="theme-upgrade" version="1.53.3">
+A fix for FusionAuth SSO session management with external identity providers requires a change to Google IdP usage.
+</Item>
+
+<Item category="known-issue" resolvedIn="1.57.0" issue="3037">
+Very large webhook event log volumes could impact performance during log cleaning operations. If you are currently using a version of FusionAuth earlier than `1.53.0` and use webhooks, we recommend upgrading to version `1.57.0`.
+</Item>
+
+<Item category="fix" issue="2764">
+In order to better protect 3rd party logins via SAML v2, OpenID Connect, and other 3rd party identity providers, a CSRF (cross site request forgery) token was added in version `1.47.0`. This token was not being used when all identity providers configured for the requested `client_id` were also configured to use managed domains, and the authorize request also contained the `idp_hint` request parameter.
+
+In this specific configuration, because the token was not being utilized, the login workflow would fail with the error `The request origin could not be verified. Unable to complete this login request.`
+</Item>
+
+<Item category="fix" issue="2893">
+When using the hosted login pages, the end user is generally shown a checkbox named `Keep me signed in`, which indicates whether the user wishes to create an SSO session after logging in.
+
+When using an external identity provider along with an `idp_hint` or `login_hint` parameter, a user may be taken directly to the identity provider, bypassing the page with this checkbox. In this case, the user will not have the option of making a choice to establish or not establish an SSO session.
+
+This behavior has been improved in order to provide additional control on how the SSO session should be created.
+
+FusionAuth will now use the following order of operations in this non-interactive workflow to decide if the SSO session should be created:
+
+1. The user's previous selection, if available. This past choice will have been stored in an HTTP only cookie.
+1. The optionally supplied `rememberDevice` query parameter.
+
+In the event that the user has never seen the login page, the value of the `rememberDevice` query parameter will be the deciding factor. A value of `true` indicates that an SSO session should be created and a value of `false` indicates that an SSO session should not be created. If this parameter is omitted, the default behavior will be to create the SSO session.
+
+For more information on using the `idp_hint` and `login_hint` parameters, see the [Identity Providers Overview](/docs/lifecycle/authenticate-users/identity-providers/) documentation.
+</Item>
+
+<Item category="fix" issue="2903">
+When using the login validation lambda with a 3rd party identity provider such as OpenID Connect, when the validation lambda causes the login to fail, the end user will not see the specific error returned by the lambda. Instead the user will see the following generic error (unless this message has been modified in a theme):
+
+> A validation error occurred during the login attempt. An event log was created for the administrator to review.
+
+The reason for this generic message is that in most cases if FusionAuth cannot complete a login request to a 3rd party we do not want to show the end user the technical reason. When a login validation lambda is the cause of the login failure, we do intend to the show the end user a more specific message. This issue has been corrected and if the login validation lambda was the cause of the failure, the event log is created when the identity provider has enabled debug.
+</Item>

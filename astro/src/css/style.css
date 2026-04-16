@@ -1,37 +1,478 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-.font-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+@plugin "@tailwindcss/typography";
+
+/* Restore Manual Dark Mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* --- Background Images --- */
+  /* v4 requires the 'image' prefix for custom background utilities */
+  --background-image-hero: url("/img/heroes/dots-code.svg");
+  --background-image-articles: radial-gradient(circle 768px at top right, rgb(199,210,254,0.95) 0%, rgba(255,255,255,0.95) 80%, rgba(255,255,255,1.0) 100%), url("/img/texture/grid.svg");
+  --background-image-articles-dark: radial-gradient(circle 768px at top right, rgba(55,48,163,0.75) 0%, rgba(15,23,42,0.75) 80%, rgba(15,23,42,1.0) 100%), url("/img/texture/grid.svg");
+  
+  --background-position-pos-hero: right 0 bottom 150px;
+
+  /* --- Colors --- */
+  --color-background: #F1F5F9;
+  --color-login: #E2E8F0;
+  --color-old: #eeeeee;
+  --color-fa-gray-light: #e6e7e8;
+  --color-fa-gray-dark: #3e4e50;
+  --color-code-background-light: #1f273b;
+  --color-code-background-dark: #00081a;
+
+  /* Remapping scales */
+  --color-gray: var(--color-slate);
+  --color-green: var(--color-teal);
+  --color-red: var(--color-rose);
+  --color-rose: var(--color-pink);
+
+  /* Custom Orange */
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-300: #fdba74;
+  --color-orange-400: #fb923c;
+  --color-orange-500: #f58320;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  --color-orange-800: #9a3412;
+  --color-orange-900: #7c2d12;
+
+  /* --- Others --- */
+  --font-sans: "Inter", "-apple-system", "system-ui", "BlinkMacSystemFont", "Arial", "sans-serif";
+  --font-awesome: "Font Awesome 6 Pro";
+  --border-width-10: 10px;
+  --shadow-aside: 0 2px 4px 0 rgba(0,0,13,0.14), 0 0 0 1px rgba(63,63,68,0.05), 0 1px 3px 0 rgba(63,63,68,0.15);
+  --shadow-dropdown: 0 9px 12px 1px rgba(0,0,0,0.14), 0 3px 16px 2px rgba(0,0,0,0.12), 0 5px 6px -3px rgba(0,0,0,0.20);
+  --shadow-panel: 0 1px 1px 0 rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20);
+  --max-width-8xl: 90rem;
 }
 
-lite-youtube {
-  @apply aspect-video;
-  max-width: none !important;
-}
-
-@layer components {
-  .deprecated {
-    color: theme('textColor.red.700');
+/* --- Fix Typography (Tildes/Backticks) & CSS Overrides --- */
+@layer base {
+  /* tell OS-level chrome like scrollbars to respect dark mode */
+  html {
+    color-scheme: light;
   }
 
-  .since {
-    color: theme('textColor.green.600');
+  html.dark {
+    color-scheme: dark;
+  }
+
+  /* remove the backticks/tildes added by the typography plugin */
+  .prose code::before, 
+  .prose code::after {
+    content: "" !important;
+    display: none;
+  }
+
+  /* add uncopyable bash prompt at the beginning of console code blocks */
+  pre[data-language="console"]::before {
+    content: "$ ";
+    color: var(--color-slate-500);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+  }
+
+  /* add uncopyable bash prompt at the beginning of console code blocks */
+  pre[data-language="powershell"]::before {
+    content: "PS> ";
+    color: var(--color-slate-500);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+  }
+
+  /* code block backgrounds */
+  .prose .astro-code {
+    background-color: var(--color-code-background-light) !important;
+    font-size: 9pt !important;
+  }
+
+  .dark .prose .astro-code {
+    background-color: var(--color-code-background-dark) !important;
+  }
+
+  /* remove indent and potential background styling from code blocks */
+  .prose pre code {
+    background-color: transparent !important;
+    border-width: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* block quote historical */
+  .prose blockquote p:first-of-type::before,
+  .prose blockquote p:first-of-type::after {
+    content: none !important;
+  }
+
+  .prose h5 {
+    font-weight: 500;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    font-feature-settings: "case", "zero";
+  }
+
+  /* provide nice titles for code blocks */
+  [data-title]:has(+ div > .astro-code) {
+    @apply block w-full m-0 mt-6 px-2 pt-1 pb-0! mb-0! rounded-t-md border border-slate-700 bg-indigo-900;
+  }
+  [data-title]:has(+ div > .astro-code) > em {
+    @apply not-italic font-mono text-[0.7rem] tracking-wide text-white;
+  }
+  [data-title]:has(+ div > .astro-code) {
+    @apply not-italic font-mono text-[0.7rem]! tracking-wide text-white!;
+  }
+  [data-title] + div > .astro-code {
+    @apply mt-0!;
+    @apply m-0 rounded-t-none! border border-t-0 border-indigo-900;
+  }
+  /* code block titles in dark mode */
+  .dark [data-title] + div > .astro-code  {
+    @apply bg-slate-800 border-slate-700 text-slate-100;
+  } 
+  .dark [data-title]:has(+ div > .astro-code) {
+      @apply border-slate-700;
+  }
+
+  /* provide nice titles for mermaid diagrams */
+  .mermaid:has(+ p[data-title-bottom]) {
+    @apply mb-0! pb-0! border-slate-700;
+  }
+  .mermaid + [data-title-bottom] {
+    @apply block w-full m-0! px-4 py-0! rounded-b-md;
+    @apply text-[0.7rem] italic text-center tracking-wide;
   }
 }
 
-/*
-Handle spacing between the title and the code block for markdown code blocks
-ex:
-```json title="stuff"
-{"things": "stuff"}
-```
-*/
-p[data-title] {
-  margin-bottom: 0;
+/* --- Handle Article Background Logic --- */
+.bg-articles {
+  background-image: var(--background-image-articles);
 }
 
-p[data-title] + div pre {
-  margin-top: .25rem;
+.dark .bg-articles {
+  background-image: var(--background-image-articles-dark);
+}
+
+/* prevent white flash of content before mermaid diagram renders clientside */
+.dark pre.mermaid:not([data-processed]) {
+  background: var(--color-code-background-dark) !important;
+}
+
+/* mermaid diagram styles */
+[id^="mermaid-"] {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: auto;
+  font-size: 16px !important;
+  width: 100%
+}
+
+[id^="mermaid-"] .error-icon {
+  fill: red !important;
+}
+
+[id^="mermaid-"] .error-text {
+  fill: red !important;
+  stroke: red !important;
+}
+
+[id^="mermaid-"] .marker {
+  fill: #1e293b !important;
+  stroke: #1e293b !important;
+}
+
+.dark [id^="mermaid-"] .marker {
+  fill: #e2e8f0 !important;
+  stroke: #e2e8f0 !important;
+}
+
+[id^="mermaid-"] .marker.cross {
+  stroke: red !important;
+}
+
+[id^="mermaid-"] .actor {
+  stroke: #1e293b !important;
+  fill: #e2e8f0 !important;
+}
+
+.dark [id^="mermaid-"] .actor {
+  stroke: #94a3b8 !important;
+  fill: #1e293b !important;
+}
+
+[id^="mermaid-"] text.actor > tspan {
+  fill: #1e293b !important;
+  stroke: none !important;
+}
+
+.dark [id^="mermaid-"] text.actor > tspan {
+  fill: #f8fafc !important;
+  stroke: none !important;
+}
+
+[id^="mermaid-"] .actor-line {
+  stroke: #1e293b !important;
+}
+
+.dark [id^="mermaid-"] .actor-line {
+  stroke: #94a3b8 !important;
+}
+
+[id^="mermaid-"] .messageLine0 {
+  stroke: #64748b !important;
+}
+
+.dark [id^="mermaid-"] .messageLine0 {
+  stroke: #e2e8f0 !important;
+}
+
+[id^="mermaid-"] .messageLine1 {
+  stroke: #64748b !important;
+}
+
+.dark [id^="mermaid-"] .messageLine1 {
+  stroke: #e2e8f0 !important;
+}
+
+[id^="mermaid-"] #arrowhead path {
+  fill: #64748b !important;
+  stroke: #64748b !important;
+}
+
+[id^="mermaid-"] .flowchart-link {
+  stroke: #64748b !important;
+}
+
+.dark [id^="mermaid-"] #arrowhead path {
+  fill: #e2e8f0 !important;
+  stroke: #e2e8f0 !important;
+}
+
+.dark [id^="mermaid-"] .flowchart-link {
+  stroke: #e2e8f0 !important;
+}
+
+[id^="mermaid-"] .sequenceNumber {
+  stroke: #eee !important;
+}
+
+.dark [id^="mermaid-"] .sequenceNumber {
+  fill: #334155 !important;
+}
+
+[id^="mermaid-"] #sequencenumber circle {
+  r: 9px;
+}
+
+[id^="mermaid-"] #crosshead path {
+  fill: #64748b !important;
+  stroke: #64748b !important;
+}
+
+.dark [id^="mermaid-"] #crosshead path {
+  fill: #e2e8f0 !important;
+  stroke: #e2e8f0 !important;
+}
+
+[id^="mermaid-"] .messageText {
+  fill: #1e293b !important;
+  stroke: none !important;
+}
+
+.dark [id^="mermaid-"] .messageText {
+  fill: #f8fafc !important;
+  stroke: none !important;
+}
+
+[id^="mermaid-"] .labelBox {
+  fill: #c7d2fe !important;
+  stroke: #818cf8 !important;
+}
+
+.dark [id^="mermaid-"] .labelBox {
+  fill: #3730a3 !important;
+  stroke: #818cf8 !important;
+}
+
+[id^="mermaid-"] .labelText, [id^="mermaid-"] .labelText > tspan {
+  fill: #1e293b !important;
+  stroke: none !important;
+}
+
+.dark [id^="mermaid-"] .labelText, [id^="mermaid-"] .labelText > tspan {
+  fill: #f8fafc !important;
+  stroke: none !important;
+}
+
+[id^="mermaid-"] .loopText, [id^="mermaid-"] .loopText > tspan {
+  fill: #f8fafc !important;
+  stroke: none !important;
+}
+
+[id^="mermaid-"] .loopLine {
+  fill: #c7d2fe !important;
+  stroke: #818cf8 !important;
+}
+
+.dark [id^="mermaid-"] .loopLine {
+  fill: #3730a3 !important;
+  stroke: #818cf8 !important;
+}
+
+[id^="mermaid-"] .note {
+  fill: #c7d2fe !important;
+  stroke: #818cf8 !important;
+}
+
+.dark [id^="mermaid-"] .note {
+  fill: #3730a3 !important;
+  stroke: #818cf8 !important;
+}
+
+[id^="mermaid-"] .noteText, [id^="mermaid-"] .noteText > tspan {
+  fill: #1e293b !important;
+  stroke: none !important;
+}
+
+.dark [id^="mermaid-"] .noteText, .dark [id^="mermaid-"] .noteText > tspan {
+  fill: #f1f5f9 !important;
+  stroke: none !important;
+}
+
+[id^="mermaid-"] .activation0 {
+  fill: #e2e8f0 !important;
+  stroke: #94a3b8 !important;
+}
+
+.dark [id^="mermaid-"] .activation0 {
+  fill: #1e293b !important;
+  stroke: #94a3b8 !important;
+}
+
+[id^="mermaid-"] .activation1 {
+  fill: red !important;
+  stroke: red !important;
+}
+
+[id^="mermaid-"] .activation2 {
+  fill: red !important;
+  stroke: red !important;
+}
+
+[id^="mermaid-"] .actorPopupMenuPanel {
+  fill: red !important;
+}
+
+[id^="mermaid-"] .actor-man line {
+  fill: #e2e8f0 !important;
+  stroke: #94a3b8 !important;
+}
+
+.dark [id^="mermaid-"] .actor-man line {
+  fill: #e2e8f0 !important;
+  stroke: #94a3b8 !important;
+}
+
+[id^="mermaid-"] .actor-man circle {
+  fill: #e2e8f0 !important;
+  stroke: #94a3b8 !important;
+}
+
+.dark [id^="mermaid-"] .actor-man circle {
+  fill: #1e293b !important;
+  stroke: #94a3b8 !important;
+}
+
+[id^="mermaid-"] line {
+  stroke: #cbd5e1 !important;
+  fill: #cbd5e1 !important;
+}
+
+.dark [id^="mermaid-"] line {
+  stroke: #64748b !important;
+  fill: #64748b !important;
+}
+
+foreignObject {
+  overflow: visible;
+}
+
+
+[id^="mermaid-"] {
+  .cluster rect {
+    fill: none !important;
+  }
+  p {
+    color: #000 !important;
+  }
+  > * {
+    stroke: #1e293b !important;
+  }
+  /* line text label colors */
+  > .messageText {
+    stroke: none !important;
+    fill: #1e293b !important;
+  }
+  /* arrowhead (arrow lines) colors */
+  #arrowhead {
+    fill: #1e293b !important;
+  }
+  .nodeLabel p {
+    color: #1e293b !important;
+  }
+  .edgeLabel p {
+    background-color: #e2e8f0 !important;
+    color: #1e293b !important;
+  }
+}
+
+/* MERMAID DARK MODE */
+.dark [id^="mermaid-"] {
+  .cluster rect {
+    fill: none !important;
+  }
+  > * {
+    stroke: #94a3b8 !important;
+  }
+  /* line text label colors */
+  .messageText {
+    stroke: none !important;
+    fill: #e2e8f0 !important;
+  }
+  /* arrowhead (arrow lines) colors */
+  #arrowhead {
+    fill: #64748b !important;
+  }
+  .nodeLabel p {
+    color: #FFF !important;
+  }
+  .edgeLabel p {
+    background-color: #1e293b !important;
+    color: #FFF !important;
+  }
+}
+
+/* --- Entities (Node Objects) --- */
+[id^="mermaid-"] .node rect,
+[id^="mermaid-"] .node circle,
+[id^="mermaid-"] .node ellipse,
+[id^="mermaid-"] .node polygon,
+[id^="mermaid-"] .node path {
+  stroke: #1e293b !important;
+  fill: #e2e8f0 !important;
+}
+
+.dark [id^="mermaid-"] .node rect,
+.dark [id^="mermaid-"] .node circle,
+.dark [id^="mermaid-"] .node ellipse,
+.dark [id^="mermaid-"] .node polygon,
+.dark [id^="mermaid-"] .node path {
+  stroke: #94a3b8 !important;
+  fill: #1e293b !important;
 }

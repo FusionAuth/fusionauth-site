@@ -11,8 +11,8 @@ Pro tip, your email has already been verified, but feel free to complete the ver
 [#else]
 To complete your email verification click on the following link.
 <p>
-  <a href="http://localhost:9011/email/verify/${verificationId}?client_id=${(application.oauthConfiguration.clientId)!''}&tenantId=${user.tenantId}">
-    http://localhost:9011/email/verify/${verificationId}?client_id=${(application.oauthConfiguration.clientId)!''}&tenantId=${user.tenantId}
+  <a href="http://localhost:9011/email/verify/${verificationId}?client_id=${(application.oauthConfiguration.clientId)!''}&tenantId=${tenant.id}">
+    http://localhost:9011/email/verify/${verificationId}?client_id=${(application.oauthConfiguration.clientId)!''}&tenantId=${tenant.id}
   </a>
 </p>
 [/#if]

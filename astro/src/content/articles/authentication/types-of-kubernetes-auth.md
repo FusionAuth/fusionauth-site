@@ -47,7 +47,7 @@ Once users are authenticated, information about them, such as username, group, a
 
 If relying on external sources to determine user resource access, such as an OIDC server or [webhooks](/docs/extend/events-and-webhooks/), you'll want to make sure you have another means of authentication independent of that external source. This allows you to modify the configuration of your cluster when those external resources are unavailable. 
 
-Here's a [tutorial on setting up Kubernetes RBAC with FusionAuth](/blog/2022/02/24/rbac-with-kubernetes-fusionauth).
+Here's a [tutorial on setting up Kubernetes RBAC with FusionAuth](/blog/rbac-with-kubernetes-fusionauth).
 
 ## Application Auth
 

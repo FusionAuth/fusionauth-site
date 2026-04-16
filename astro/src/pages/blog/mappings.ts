@@ -39,4 +39,9 @@ export const AUTHORS = {
     linkUrl: 'https://www.linkedin.com/in/matt1hathcock/',
     description: `Discover Matt Hathcock's insights on product updates and strategies.`
   },
+  'Nathan Contino': {
+    linkText: '@nathan-contino',
+    linkUrl: 'https://www.lambdalatitudinarians.org',
+    description: `Read what Nathan Contino thinks about docs and code.`
+  },
 };

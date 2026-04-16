@@ -9,7 +9,6 @@ dateModified: 2023-03-24
 icon: /img/icons/oauth-device-authorization.svg
 darkIcon: /img/icons/oauth-device-authorization-dark.svg
 ---
-import Diagram from "../../../diagrams/articles/oauth/oauth-device-authorization-workflow.astro";
 
 If you have a modern entertainment device like a Roku, AppleTV, Xbox, PlayStation, etc., there's a good chance that at some point you will connect it to subscription services such as Netflix, Amazon, Pandora, or HBO. In theory it should be easy. It's your device and you've already purchased a subscription to the service. So, just turn it on and go right? Sadly, no.
 
@@ -20,7 +19,6 @@ We've all gone through it, and the reality is it's not the best way to start off
 ## The Problem
 
 We login to accounts all the time using our phones and computers, so it shouldn't be that difficult on another device, right? The problem is Internet connected boxes like Xbox and AppleTV don't have a built-in keyboard or tap input system. Suddenly, usability becomes a big issue. Fumbling your way through an on-screen keyboard to enter your username and password using a D-pad on a game controller or the arrow keys on a remote control can be a nightmare. And since most services ask you to enter very long, complex keycodes with all sorts of special characters and mixed-case letters, it's highly likely you will accidentally enter it wrong and have to start all over again.
-<br/>
 
 ## The Solution
 
@@ -35,7 +33,31 @@ In order to address this issue there is a proposed standard for the [Oauth2 Devi
 
 The specification is quite long and involved. To make life simpler, we distilled it down for you. For this example, we will connect a Roku device to a fictitious subscription called Nerd Stuff on Demand. We'll also be using FusionAuth for our identity provider, but this solution works with any identity provider that has implemented this OAuth workflow. Here is a sequence diagram that illustrates the process.
 
-<Diagram alt={"Diagram"}/>
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Roku
+    participant Smartphone Browser as Browser on <br/> Smartphone
+    participant FusionAuth
+    participant App Backend
+
+    Roku->>Roku : Open Nerd Stuff on Demand app
+    Roku->>FusionAuth : GET /oauth2/device_authorize
+    FusionAuth->>Roku : URL and code to display
+    Roku->>Roku : Display URL and code on TV
+    Roku-->>FusionAuth : GET /oauth2/token (polling every 2-5 seconds)
+    FusionAuth-->>Roku : "Not completed yet"
+    Smartphone Browser->>App Backend: GET https://nsod.tv/activate
+    App Backend->>Smartphone Browser : 302 redirect to /oauth2/device
+    Smartphone Browser->>FusionAuth : GET /oauth2/device
+    FusionAuth->>Smartphone Browser : HTML & CSS for start page that collects code
+    Smartphone Browser->>FusionAuth : POST /oauth/device w/ code
+    FusionAuth->>Smartphone Browser : 302 redirect to /oauth/authorize
+    Note over Smartphone Browser, FusionAuth: User logs in via standard<br/>OAuth v2 Authorization Code Grant
+    FusionAuth->>Smartphone Browser : 302 redirect to /oauth/device <br/> with activationComplete set to true
+    Roku-->>FusionAuth : GET /oauth2/token (polling every 2-5 seconds)
+    FusionAuth-->>Roku : Success! An access_token and refresh_token are returned
+```
 
 Let's go over the steps in quickly as well.
 
