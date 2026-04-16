@@ -1,12 +1,9 @@
 ---
 title: Login Validation Lambda
 description: An overview of the login validation lambda.
-navcategory: customization
-section: extend
-subcategory: code
-tertcategory: lambdas
 ---
-import AuthenticationTypeValues from 'src/content/docs/_shared/_authentication-type-values.mdx';
+import AuthenticationTypeValues from 'src/content/docs/_shared/authentication-type-values.astro';
+import AvailableSince from 'src/components/api/AvailableSince.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 
@@ -26,31 +23,66 @@ function validate(result, user, registration, context) {
 }
 ```
 
-This lambda must contain a function named `validate` that takes four parameters. The parameters that the lambda is passed are:
+This lambda must contain a function named `validate` that accepts the following parameters:
 
 * `result` - an object used for returning validation errors. You can modify this object.
 * `user` - the FusionAuth User object. This object is read-only.
 * `registration` - the FusionAuth UserRegistration object. This object is read-only.
 * `context` - an object containing context for the current request. This object is read-only.
 
-The `result` object contains an [Errors](/docs/apis/errors) object. The `user` and `registration` objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `context` object has the following structure:
+The `result` object contains an [Errors](/docs/apis/errors) object. For more information about the `user` and `registration` objects, see the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations).
 
-```json
-{
-  "authenticationType": "...",
-  "identityProvider": {
-    "id": "...",
-    "name": "...",
-    "identityProviderType": "..."
-  }
+`context` is an immutable argument of type `Context`, with the following structure:
+
+```javascript
+class Context {
+
+    /**
+     * The method used to authenticate the user. This will only be populated when the action is `login`.
+     * @type {String} - Possible values are listed below.
+     */
+    authenticationType;
+
+    /**
+     * The identity provider, present only when the login request is from a 3rd party IdP.
+     * @type {IdentityProvider}
+     */
+    identityProvider;
+
+    /**
+      * Provides access to services available to the lambda, including secrets.
+      * Use `context.services.secrets.get('<key>')` to retrieve a secret value.
+      * @type {Services}
+      * @since 1.64.0
+      */
+    services;
+}
+
+class IdentityProvider {
+
+    /**
+     * The identifier of the IdP.
+     * @type {String}
+     */
+    id;
+
+    /**
+     * The name of the IdP.
+     * @type {String}
+     */
+    name;
+
+    /**
+     * The type of the IdP.
+     * @type {String}
+     */
+    type;
 }
 ```
 
 `authenticationtype` is the method used to authenticate the user. The possible values are:
 
-<AuthenticationTypeValues show_since="105300" />
-
-The `identityProvider` object in the `context` will only be present when the login request is from a 3rd party Identity Provider.
+<AuthenticationTypeValues showSince="1.53.0" />
 
 To deny a login attempt, simply add one or more field or general errors to the result. The error schema can be found in the [API Errors](/docs/apis/errors) documentation.
 
@@ -58,7 +90,7 @@ To deny a login attempt, simply add one or more field or general errors to the r
 
 Once a lambda is created, you must assign it to a Tenant. Using the FusionAuth admin UI, find the <InlineField>Login validation lambda</InlineField> field found on the <Breadcrumb>Security</Breadcrumb> tab in the Tenant configuration.
 
-Or if you using the Tenant API, assign the lambda Id to the `tenant.lambdaConfiguration.loginValidationId` field.
+For the Tenant API, assign the lambda Id to the `tenant.lambdaConfiguration.loginValidationId` field.
 
 ## Example Lambda
 

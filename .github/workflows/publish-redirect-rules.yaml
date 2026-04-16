@@ -1,16 +1,8 @@
 ---
-name: publish-redirect-rules
-
-env:
-  AWS_REGION: us-east-1
+name: (prod) publish redirect rules
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'src/redirects.json'
-  pull_request:
     branches:
       - main
     paths:
@@ -23,26 +15,31 @@ permissions:
 
 jobs:
   deploy:
-    runs-on: fusionauth-standard
+    runs-on: ubuntu-latest
     steps:
 
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           sparse-checkout: src/redirects.json
 
       - name: validate json
         run: cat src/redirects.json | jq empty
 
+      - name: validate all redirects start with a `/`
+        run: exit $(cat src/redirects.json| jq '.redirects|to_entries | map(select(.key | startswith("/") | not)) | length')
+        shell: bash
+
+      - name: validate all indexPaths start with a `/`
+        run: exit $(cat src/redirects.json| jq '.indexPaths|to_entries | map(select(.key | startswith("/") | not)) | length')
+        shell: bash
+
       - name: set aws credentials
-        if: github.event_name == 'push'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7
         with:
-          role-chaining: true
-          role-to-assume: ${{ secrets.ACTIONS_RUNNER_ROLE_PROD }}
+          role-to-assume: arn:aws:iam::121700706967:role/gha-fusionauth-site-prod
           role-session-name: github-actions
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-east-1
 
       - name: upload file to s3
-        if: github.event_name == 'push'
         run: aws s3 cp src/redirects.json s3://${{ secrets.S3_ARTIFACTS_PROD }}/lambda/site-origin-request-handler/redirects.json

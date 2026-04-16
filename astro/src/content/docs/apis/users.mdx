@@ -1,7 +1,6 @@
 ---
-title: Users
-description: Learn about the APIs for creating, retrieving, updating, deleting, importing, searching for and verifying users.
-section: apis
+title: User API
+description: Learn how to integrate with the FusionAuth User API. This documentation provides a comprehensive reference for managing users.
 ---
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
@@ -11,10 +10,13 @@ import DeprecatedSince from 'src/components/api/DeprecatedSince.astro';
 import GenericUpdateExplanationFragment from 'src/content/docs/apis/_generic-update-explanation-fragment.mdx';
 import ImportUsersRequestBody from 'src/content/docs/apis/_import-users-request-body.mdx';
 import InlineField from 'src/components/InlineField.astro';
+import LoginIdField from 'src/content/docs/apis/_login-id-field.mdx';
+import LoginIdTypeField from 'src/content/docs/apis/_login-id-type-field.mdx';
+import LoginMetadataDevice from 'src/content/docs/apis/_login-metadata-device.mdx';
 import JSON from 'src/components/JSON.astro';
 import PremiumPlanBlurbApi from 'src/content/docs/_shared/_premium-plan-blurb-api.astro';
 import EnterprisePlanBlurbApi from 'src/content/docs/_shared/_enterprise-plan-blurb-api.astro';
-import {RemoteCode} from '@fusionauth/astro-components';
+import RemoteCode from 'src/components/RemoteCode.astro';
 import SearchPreprocessingWarning from "src/content/docs/_shared/_search-preprocessing-warning.mdx";
 import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
 import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
@@ -32,10 +34,9 @@ import UsersResponseBody from 'src/content/docs/apis/_users-response-body.mdx';
 import XFusionauthTenantIdHeaderAmbiguousOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-ambiguous-operation.mdx';
 import XFusionauthTenantIdHeaderCreateOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-create-operation.mdx';
 import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
-import ChangePassResponseCodes from './_change-pass-response-codes.astro';
+import ChangePassPostResponseCodes from 'src/content/docs/apis/_change-pass-post-response-codes.astro';
+import ChangePassGetResponseCodes from 'src/content/docs/apis/_change-pass-get-response-codes.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-
-## Overview
 
 This page contains all of the APIs for managing users.
 
@@ -97,6 +98,17 @@ This API is used to retrieve the information about a single User. You can use th
   </APIField>
 </APIBlock>
 
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<API method="GET" uri="/api/user?loginId={loginId}&loginIdTypes={type1}[&loginIdTypes={type2}]" authentication={["api-key"]} title="Retrieve a User by login Id and login Id types"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <LoginIdField login_id_type_field="loginIdTypes"/>
+  <LoginIdTypeField plural />
+</APIBlock>
+
 <XFusionauthTenantIdHeaderAmbiguousOperation />
 
 <API method="GET" uri="/api/user?email={email}" authentication={["api-key"]} title="Retrieve a User by email"/>
@@ -135,21 +147,15 @@ This API is used to retrieve the information about a single User. You can use th
 
 <XFusionauthTenantIdHeaderScopedOperation />
 
-<API method="GET" uri="/api/user?verificationId={verificationId}" authentication={["api-key"]} title="Retrieve a User by Email Verification Id"/>
+<API method="GET" uri="/api/user?verificationId={verificationId}" authentication={["api-key"]} title="Retrieve a User by Verification Id"/>
 
 #### Request Parameters
 
 <APIBlock>
   <APIField name="verificationId" type="String" required>
-    The verification Id associated with the user when the Email verification process has been started.
+    The verification Id associated with the user when the Email or Phone number verification process has been started.
   </APIField>
 </APIBlock>
-
-<XFusionauthTenantIdHeaderScopedOperation />
-
-<API method="GET" uri="/api/user" authentication={["jwt"]} title="Retrieve a User using a JWT"/>
-
-<DeprecatedSince since="1.50.0" />
 
 <XFusionauthTenantIdHeaderScopedOperation />
 
@@ -339,7 +345,7 @@ The response for this API contains the information for the User that was reactiv
 
 ## Import Users
 
-This API is used to bulk import multiple Users into FusionAuth. Each User must have at least an **email** or a **username**. This request is useful for migrating data from an existing database into FusionAuth. Additionally, you can provide an Id for each User inside the JSON User object of the request body. When using this API, the recommended batch size per request is dependent on deployment scale (note: 100,000 users per request is a reasonable batch size for a production capable deployment). After completing an import, you should [reindex the Elasticsearch database](/docs/lifecycle/manage-users/search/search#reindexing-elasticsearch) as well.
+This API is used to bulk import multiple Users into FusionAuth. Each User must have at least an **email** or a **username**, and a **password** (plaintext or hash). If you don't have the User's password, you can set this field to a long random string and require the User to reset their password at their next login. This request is useful for migrating data from an existing database into FusionAuth. Additionally, you can provide an Id for each User inside the JSON User object of the request body. When using this API, the recommended batch size per request is dependent on deployment scale (note: 100,000 users per request is a reasonable batch size for a production capable deployment). After completing an import, you should [reindex the Elasticsearch database](/docs/lifecycle/manage-users/search#reindexing-elasticsearch) as well.
 
 You should not make multiple calls to this API in parallel. Multiple sequential calls to this API are fine.
 
@@ -622,7 +628,7 @@ The response will contain recent logins containing no more than the value set by
 
 ## Verify a User's Email
 
-This API is used to mark a User's email as verified. This is usually called after the User receives the verification email after they register and they click the link in the email.
+This API is used to mark a User's email as verified. This is usually called after the User receives the verification email after they register and they click the link in the email. To verify a User's phone number identity, see the [Identity Verify API](/docs/apis/identity-verify).
 
 ### Request
 
@@ -694,7 +700,7 @@ This API is used to resend the verification email to a User. This API is useful 
 
 <APIBlock>
   <APIField name="applicationId" type="String" optional since="1.21.0">
-    The Id of the application. If valid, the email template configured in the Application settings will be used, if present. If not present, the email template configured in the Tenant settings will be used. In either case, the corresponding Application object will be available to the template.
+    The Id of the application. If valid, the email or message template configured in the Application settings will be used, if present. If not present, the template configured in the Tenant settings will be used. In either case, the corresponding Application object will be available to the template.
   </APIField>
   <APIField name="email" type="String" required>
     The email address used to uniquely identify the User.
@@ -709,7 +715,7 @@ This API is used to resend the verification email to a User. This API is useful 
 
 <APIBlock>
   <APIField name="applicationId" type="String" optional since="1.21.0">
-    The Id of the application. If valid, the email template configured in the Application settings will be used, if present. If not present, the email template configured in the Tenant settings will be used. In either case, the corresponding Application object will be available to the template.
+    The Id of the application. If valid, the email or message template configured in the Application settings will be used, if present. If not present, the template configured in the Tenant settings will be used. In either case, the corresponding Application object will be available to the template.
   </APIField>
   <APIField name="email" type="String" required>
     The email address used to uniquely identify the User.
@@ -766,6 +772,8 @@ If FusionAuth sends an email to the user, it will either use the `email` top lev
 
 ### Request
 
+Calling this API without an API key always attempts to send a message to the user. If FusionAuth is unable to deliver a message based on the resolved identity and tenant configuration, a forgot password workflow will not be started.
+
 <API method="POST" uri="/api/user/forgot-password" authentication={["none"]} title="Start the forgot password workflow without an API Key."/>
 
 <XFusionauthTenantIdHeaderAmbiguousOperation />
@@ -774,11 +782,10 @@ If FusionAuth sends an email to the user, it will either use the `email` top lev
 
 <APIBlock>
   <APIField name="applicationId" type="UUID" optional since="1.21.0">
-    The Id of the application. If valid, the email template configured in the Application settings will be used, if present. If not present, the email template configured in the Tenant settings will be used. In either case, the corresponding Application object will be available to the template.
+    The Id of the application. If valid, the email or message template configured in the Application settings will be used, if present. If not present, the template configured in the Tenant settings will be used. In either case, the corresponding Application object will be available to the template.
   </APIField>
-  <APIField name="loginId" type="String" required>
-    The login identifier of the user. The login identifier can be either the `email` or the `username`. The username is not case sensitive.
-  </APIField>
+  <LoginIdField hide_canonical_details login_id_type_field="loginIdTypes" required />
+  <LoginIdTypeField plural optional />
   <APIField name="state" type="Object" optional>
     An optional object that will be returned un-modified when you complete the forgot password request using the [Change a User's Password API](#change-a-users-password). This may be useful to return the user to particular state once they complete the password change.
   </APIField>
@@ -794,22 +801,31 @@ If FusionAuth sends an email to the user, it will either use the `email` top lev
 
 <APIBlock>
   <APIField name="applicationId" type="UUID" optional since="1.21.0">
-    The Id of the application. If valid, the email template configured in the Application settings will be used, if present. If not present, the email template configured in the Tenant settings will be used. In either case, the corresponding Application object will be available to the template.
+    The Id of the application. If valid, the email or message template configured in the Application settings will be used, if present. If not present, the template configured in the Tenant settings will be used. In either case, the corresponding Application object will be available to the template.
   </APIField>
   <APIField name="changePasswordId" type="String" optional>
     The optional change password Id to be used on the [Change a User's Password](#change-a-users-password) API.
 
     It is recommended to omit this parameter and allow FusionAuth to generate the identifier. Use this parameter only if you must supply your own value for integration into existing systems.
   </APIField>
-  <APIField name="loginId" type="String" required>
-    The login identifier of the user. The login identifier can be either the `email` or the `username`. The username is not case sensitive.
-  </APIField>
-  <APIField name="sendForgotPasswordEmail" type="Boolean" optional defaults="true">
+  <LoginIdField hide_canonical_details login_id_type_field="loginIdTypes" required />
+  <LoginIdTypeField plural optional />
+  <APIField name="sendForgotPasswordEmail" type="Boolean" optional defaults="true" deprecated>
     Whether or not calling this API should attempt to send the user an email using the configured Forgot Password email template. Setting this to `false` will begin the Forgot Password workflow without sending an email and only create the `changePasswordId`, this may be useful if you want to send an email outside of FusionAuth, or complete this workflow without the use of email.
 
-    <span class="text-green-800">Since 1.43.0</span>
+    <Aside type="version" title="Available since 1.43.0">
+      When setting this to `false` you will not be required to have configured the Forgot Password email template in the FusionAuth tenant. Prior to `1.43.0`, even when setting this to `false`, the Tenant would be required to have configured the Forgot Password email template.
+    </Aside>
 
-    Beginning in version `1.43.0`, when setting this to `false` you will not be required to have configured the Forgot Password email template in the FusionAuth tenant. Prior to this version, even when setting this to `false` the Tenant would be required to have configured the Forgot Password email template.
+    <DeprecatedSince since="1.59.0">Prefer using the new <InlineField>sendForgotPasswordMessage</InlineField> field.</DeprecatedSince>
+  </APIField>
+  <APIField name="sendForgotPasswordMessage" type="Boolean" optional defaults="true" since="1.59.0">
+    Determines whether a forgot password message is sent to the user. Setting this to `true` will cause a message to be sent. Setting this to `false` will begin the Forgot Password workflow without sending a message and only create the `changePasswordId`, which may be useful if you want to send a message outside of FusionAuth, or complete this workflow without the use of email/SMS.
+
+    The template and delivery method are based on the type of the identity resolved by the request.
+
+    * FusionAuth will attempt to deliver the message via SMS when the provided login Id and type resolve to a phone number identity. This requires <InlineField>tenant.phoneConfiguration.forgotPasswordTemplateId</InlineField> to be configured, otherwise the request will fail.
+    * If the provided login Id and type resolve to an email or username identity, FusionAuth will attempt to deliver the message via email. This requires <InlineField>tenant.emailConfiguration.forgotPasswordEmailTemplateId</InlineField> to be configured, otherwise the request will fail.
   </APIField>
   <APIField name="state" type="Object" optional>
     An optional object that will be returned un-modified when you complete the forgot password request. This may be useful to return the user to particular state once they complete the password change.
@@ -829,7 +845,7 @@ __Response Codes__
 |200 |The request was successful. A JSON response body will be provided when authenticated using an API key, when the API key has been omitted from the request, no response body is provided. |
 |400 |The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors. |
 |401 |You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication). |
-|403 |The forgot password functionality has been disabled. This is caused by an administrator setting the Forgot Password Email Template to the option _Feature Disabled. No template selected._ in the Tenant Email configuration. See **Tenants -> Email -> Template settings** in the FusionAuth admin UI. |
+|403 |The forgot password functionality has been disabled. This is caused by an administrator setting the Forgot Password Email Template to the option _Feature Disabled. No template selected._ in the Tenant Email configuration. See <Breadcrumb>Tenants -> Email -> Template settings</Breadcrumb> in the FusionAuth admin UI. |
 |404 |The User could not be found. |
 |422 |The User does not have an email address, this request cannot be completed. Before attempting the request again add an email address to the user. |
 |500 |There was an internal error. A stack trace is provided and logged in the FusionAuth log files. |
@@ -845,14 +861,91 @@ __Response Codes__
 
 <JSON title="Example Response JSON" src="users/forgot-password-response.json" />
 
+## Validate a password change
+
+### Request
+
+This API is used to validate whether a request to [change a user's password](#change-a-users-password) will require MFA (via a `trustToken`). There are 3 ways to call the endpoint:
+1. Validate a `changePasswordId` without authentication
+2. Validate user password change using a JWT
+3. Validate user password change using a `loginId` with API key
+
+The first case will also verify that a `changePasswordId` is valid. This usage is generally intended to be part of an email or SMS workflow and does not require authentication. The `changePasswordId` used on this API request will have been previously generated by the [Start Forgot Password API](#start-forgot-password-workflow) or by using the Forgot Password workflow on the FusionAuth login page. Use this API to validate the `changePasswordId` before requesting a password change.
+
+<API method="GET" uri="/api/user/change-password/{changePasswordId}" authentication={["none"]} title="Validate a changePasswordId" />
+
+#### Request Parameters
+
+<APIBlock>
+    <APIField name="changePasswordId" type="String" required>
+        The `changePasswordId` that is used to identify the user after the [Start Forgot Password workflow](#start-forgot-password-workflow) has been initiated.
+    </APIField>
+    <APIField name="ipAddress" type="String" optional since="1.62.0">
+        The IP address of the end-user that is changing their password. If this value is omitted FusionAuth will attempt to obtain the IP address of
+        the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. This value may be used by an MFA requirement lambda to determine if multi-factor authentication should be required.
+    </APIField>
+    <Aside>
+        Since version 1.62.0, the metadata fields below may be used by an MFA requirement lambda to determine if multi-factor authentication should be required.
+    </Aside>
+    <LoginMetadataDevice since="1.62.0"/>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+The "Validate user password change using a JWT or `loginId`" cases are used to verify whether MFA is required to change a user's password based solely on the user's JWT or `loginId`. It does not validate a specific `changePasswordId` and is instead meant to validate whether MFA is required before [changing the user's password](#change-a-users-password) using a JWT or `loginId`.
+
+<API method="GET" uri="/api/user/change-password" authentication={["jwt"]} title="Validate user password change using a JWT" />
+
+#### Request Parameters
+
+<APIBlock>
+    <APIField name="ipAddress" type="String" optional since="1.62.0">
+        The IP address of the end-user that is changing their password. If this value is omitted FusionAuth will attempt to obtain the IP address of
+        the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. This value may be used by an MFA requirement lambda to determine if multi-factor authentication should be required.
+    </APIField>
+    <Aside>
+        Since version 1.62.0, the metadata fields below may be used by an MFA requirement lambda to determine if multi-factor authentication should be required.
+    </Aside>
+    <LoginMetadataDevice since="1.62.0"/>
+</APIBlock>
+
+<API method="GET" uri="/api/user/change-password?loginId={loginId}" authentication={["api-key"]} title="Validate user password change using a loginId" />
+
+#### Request Parameters
+
+<APIBlock>
+    <LoginIdField
+        hide_canonical_details
+        login_id_type_field="loginIdTypes"
+        required />
+    <LoginIdTypeField plural optional since="1.61.0" />
+    <APIField name="ipAddress" type="String" optional since="1.62.0">
+        The IP address of the end-user that is changing their password. If this value is omitted FusionAuth will attempt to obtain the IP address of
+        the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. This value may be used by an MFA requirement lambda to determine if multi-factor authentication should be required.
+    </APIField>
+    <Aside>
+        Since version 1.62.0, the metadata fields below may be used by an MFA requirement lambda to determine if multi-factor authentication should be required.
+    </Aside>
+    <LoginMetadataDevice since="1.62.0"/>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+This JSON response body will only be returned when a validation error occurs.
+
+A successful response will not contain a response body.
+
+<ChangePassGetResponseCodes/>
 
 ## Change a User's Password
 
 This API is used to change the User's password.
 
-This API may be used as the second part of the Forgot Password workflow. For example, after the User is sent an email that contains a link to a web form that allows them to update their password you will call this API with the `changePasswordId` and their updated password. If the `changePasswordId` is valid then the User's password will be updated.
+This API may be used as the second part of the [Start Forgot Password workflow](#start-forgot-password-workflow). For example, after the User is sent an email or SMS message that contains a link to a web form that allows them to update their password you will call this API with the `changePasswordId` and their updated password. If the `changePasswordId` is valid then the User's password will be updated.
 
-This API may also be used separately from the Forgot Password workflow by omitting the `changePasswordId` and using the `loginId` instead.
+This API may also be used separately from the [Start Forgot Password workflow](#start-forgot-password-workflow) by omitting the `changePasswordId` and using the `loginId` instead.
 
 By default the `changePasswordId` is valid for 10 minutes after it was generated. If a `404` is returned when using the change password Id, the workflow will need to be started again to generate a new identifier. This duration can be modified using the [Tenant API](/docs/apis/tenants) or in the admin UI.
 
@@ -865,7 +958,7 @@ that if a user is using a refresh token they will be forced to re-authenticate w
 
 ### Request
 
-This usage is generally intended to be part of an email workflow and does not require authentication. The `changePasswordId` used on this API request will have been previously generated by the Start Forgot Password API or by using the Forgot Password workflow on the FusionAuth login page.
+This usage is generally intended to be part of an email or SMS workflow and does not require authentication. The `changePasswordId` used on this API request will have been previously generated by the [Start Forgot Password workflow](#start-forgot-password-workflow) or by using the Forgot Password workflow on the FusionAuth login page.
 
 <API method="POST" uri="/api/user/change-password" authentication={["none"]} title="Change a User’s password using the change password Id"/>
 <API method="POST" uri="/api/user/change-password/{changePasswordId}" authentication={["none"]} title="Change a User’s password using the change password Id"/>
@@ -874,7 +967,7 @@ This usage is generally intended to be part of an email workflow and does not re
 
 <APIBlock>
   <APIField name="changePasswordId" type="String" required deprecated>
-    The `changePasswordId` that is used to identity the user after the Start Forgot Password workflow has been initiated.
+    The `changePasswordId` that is used to identify the user after the [Start Forgot Password workflow](#start-forgot-password-workflow) has been initiated.
 
     If this `changePasswordId` was sent via an email to the User by FusionAuth during User create in order to set up a new password, or as part of a Forgot Password request, then successful use of this identifier to change the User's password will implicitly complete Email Verification if not already verified and the Tenant configuration has enabled implicit email verification.
 
@@ -890,7 +983,7 @@ This usage is generally intended to be part of an email workflow and does not re
 
 <APIBlock>
   <APIField name="changePasswordId" type="String" required since="1.33.0">
-    The `changePasswordId` that is used to identity the user after the Start Forgot Password workflow has been initiated.
+    The `changePasswordId` that is used to identify the user after the [Start Forgot Password workflow](#start-forgot-password-workflow) has been initiated.
 
     If this `changePasswordId` was sent via an email to the User by FusionAuth during User create in order to set up a new password, or as part of a Forgot Password request, then successful use of this identifier to change the User's password will implicitly complete Email Verification if not already verified and the Tenant configuration has enabled implicit email verification.
 
@@ -912,9 +1005,9 @@ This usage is generally intended to be part of an email workflow and does not re
 
 <JSON title="Example JSON Request" src="users/change-password-request.json" />
 
-This usage requires and API key and allows you to change any user's password if you have a unique email or username.
+This usage requires an API key and allows you to change any user's password if you have a unique login Id.
 
-<API method="POST" uri="/api/user/change-password" authentication={["api-key"]} title="Changes a User's password using an email address or username."/>
+<API method="POST" uri="/api/user/change-password" authentication={["api-key"]} title="Changes a User's password using a login Id."/>
 
 <XFusionauthTenantIdHeaderAmbiguousOperation />
 
@@ -922,18 +1015,22 @@ This usage requires and API key and allows you to change any user's password if 
 
 <APIBlock>
   <APIField name="applicationId" type="UUID" optional since="1.30.0">
-    An optional Application Id. When this value is provided, it will be used to resolve an application specific email template if you have configured transactional emails such as setup password, email verification and others.
+    An optional Application Id. When this value is provided, it will be used to resolve an application specific email or message template if you have configured transactional notifications such as setup password, email verification and others.
 
-    If not provided, only the tenant configuration will be used when resolving email templates.
+    If not provided, only the tenant configuration will be used when resolving templates.
   </APIField>
   <APIField name="currentPassword" type="String" optional>
     The User's current password. When this parameter is provided the current password will be verified to be correct.
   </APIField>
-  <APIField name="loginId" type="String" required>
-    The login identifier of the user. The login identifier can be either the `email` or the `username`. The username is not case sensitive.
-
-    When this value is provided it should be in place of the `changePasswordId` request parameter. If both the `changePasswordId` and `loginId` are provided on the request, the `changePasswordId` will take precedence.
-  </APIField>
+  <LoginIdField
+    hide_canonical_details
+    login_id_type_field="loginIdTypes"
+    required
+    footer={
+      <span>When this value is provided it should be in place of the `changePasswordId` request parameter. If both the `changePasswordId` and `loginId` are provided on the request, the `changePasswordId` will take precedence.</span>
+    }
+  />
+  <LoginIdTypeField plural optional />
   <APIField name="password" type="String" required>
     The User's new password.
   </APIField>
@@ -989,7 +1086,7 @@ For this reason, this API will return a `oneTimePassword` that is intended to be
 
 ### Response
 
-<ChangePassResponseCodes />
+<ChangePassPostResponseCodes />
 
 #### Response Body
 

@@ -3,9 +3,8 @@
  * Remote content fetcher. Remote content is assumed to be markdown.
  */
 // @ts-ignore
-import { getHighlighter } from "shiki";
-
 import { Marked } from "marked";
+import {ensureLanguageIsLoaded, getCachedHighlighter, resolveLanguage} from "./shiki";
 
 export interface Props {
   /**
@@ -86,10 +85,7 @@ function selectLines(
   }
 }
 
-const highlighter = await getHighlighter({
-  themes: ["github-dark"],
-  langs: ["jsx", "bash"],
-});
+const highlighter = await getCachedHighlighter();
 
 const remark = new Marked();
 remark.use({
@@ -101,7 +97,7 @@ remark.use({
         try {
           // @ts-ignore
           return highlighter.codeToHtml(token.text, {
-            lang: token.lang,
+            lang: resolveLanguage(token.lang),
             theme: "github-dark",
           });
         } catch (e) {
@@ -111,6 +107,12 @@ remark.use({
       },
     },
   ],
+  async: true,
+  walkTokens: async (token) => {
+    if (token.type === "code") {
+      await ensureLanguageIsLoaded(highlighter, token.lang, {url});
+    }
+  },
 });
 
 const html = remark.parse(remoteSelectedContent);

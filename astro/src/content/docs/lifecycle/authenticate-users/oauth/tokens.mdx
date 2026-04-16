@@ -1,24 +1,19 @@
 ---
 title: Tokens
 description: Learn about OAuth2 and OpenID Connect Tokens and how they are used.
-navcategory: login-methods
-section: lifecycle
-subcategory: authenticate users
-tertcategory: oauth
 ---
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
 import AccessTokenClaims from 'src/content/docs/_shared/_access-token-claims.mdx';
 import Aside from 'src/components/Aside.astro';
-import AuthenticationTypeClaimValues from 'src/content/docs/_shared/_authentication-type-values.mdx';
+import AuthenticationTypeValues from 'src/content/docs/_shared/authentication-type-values.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 import ExampleAccessToken from 'src/content/docs/lifecycle/authenticate-users/oauth/_example_access_token.mdx';
 import ExampleIdToken from 'src/content/docs/lifecycle/authenticate-users/oauth/_example_id_token.mdx';
 import ExampleRefreshToken from 'src/content/docs/lifecycle/authenticate-users/oauth/_example_refresh_token.mdx';
 import InlineField from 'src/components/InlineField.astro';
 import RemovedSince from 'src/components/api/RemovedSince.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
-
-## Overview
 
 When using the OAuth2 and OpenID Connect authentication grants you'll be dealing with some tokens. We'll review each token type, the purpose and how to use them.
 
@@ -39,12 +34,16 @@ With the exception of the refresh token, each token described here is a JSON Web
 The following describes the claims found in the JWT header.
 
 <APIBlock>
-  <APIField name="gty" since="1.36.0" type="Array<String>">
-    The list of grants in the order the grant occurred.
+  <APIField name="gty" since="1.36.0" type="Array<String>" deprecated>
+    The list of grant types in chronological order.
 
     For example, if the token was the result of an `authorization_code` grant, the value will be `[authorization_code]`.
 
     If the token was generated using a refresh token using the `refresh_token` grant, the value will be `[authorization_code, refresh_token]` if the initial grant used to obtain the refresh token was the `authorization_code` grant.
+
+    <RemovedSince since="1.160.0" >
+      As of version `1.60.0`, this claim is no longer returned in the header. This claim has moved to the JWT body.
+    </RemovedSince>
   </APIField>
   <APIField name="kid" type="String">
     The unique key identifier that represents the key used to build the signature.
@@ -80,22 +79,31 @@ Available since version 1.26.
 ### Client Credentials Access Token Claims
 
 <APIBlock>
-  <APIField name="aud" type="String">
-    The audience of this token. This value is equal to the target Entity's unique Id in FusionAuth. This registered claim is defined by [RFC 7519 Section 4.1.3](https://tools.ietf.org/html/rfc7519#section-4.1.3).
+  <APIField name="aud" type="Array<String>">
+    The audience(s) of this token. This value is equal to the target Entity's unique Id in FusionAuth. This registered claim is defined by [RFC 7519 Section 4.1.3](https://tools.ietf.org/html/rfc7519#section-4.1.3).
+
+    Note that prior to version `1.60.0`, this claim was a string when a single entity was defined in the scope using `target-entity:` and an array when more than one entity was defined in the scope. To simplify integrations, this claim is now always returned as an array.
   </APIField>
   <APIField name="exp" type="Long">
-    The expiration instant of the JWT expressed as UNIX time, which is the number of seconds since Epoch. This registered claim is defined by [RFC 7519 Section 4.1.4](https://tools.ietf.org/html/rfc7519#section-4.1.4).
+    The expiration instant of the JWT expressed as [unix time](/docs/reference/data-types#unix-time). This registered claim is defined by [RFC 7519 Section 4.1.4](https://tools.ietf.org/html/rfc7519#section-4.1.4).
+  </APIField>
+  <APIField name="gty" since="1.60.0" type="Array<String>">
+    The list of grant types in chronological order.
+
+    For example, if the token was the result of an `authorization_code` grant, the value will be `[authorization_code]`.
+
+    If the token was generated using a refresh token using the `refresh_token` grant, the value will be `[authorization_code, refresh_token]` if the initial grant used to obtain the refresh token was the `authorization_code` grant.
   </APIField>
   <APIField name="iat" type="Long">
-    The instant that the JWT was issued expressed as UNIX time, which is the number of seconds since Epoch. This registered claim is defined by [RFC 7519 Section 4.1.6](https://tools.ietf.org/html/rfc7519#section-4.1.6).
-  </APIField>
-  <APIField name="jti" type="String">
-    The unique identifier for this JWT. This registered claim is defined by
-    [RFC 7519 Section 4.1.7](https://tools.ietf.org/html/rfc7519#section-4.1.7).
+    The instant that the JWT was issued expressed as [unix time](/docs/reference/data-types#unix-time). This registered claim is defined by [RFC 7519 Section 4.1.6](https://tools.ietf.org/html/rfc7519#section-4.1.6).
   </APIField>
   <APIField name="iss" type="String">
     The issuer of the JWT. For FusionAuth, this is always the value defined in the tenant JWT configuration. This registered claim is defined by
     [RFC 7519 Section 4.1.1](https://tools.ietf.org/html/rfc7519#section-4.1.1).
+  </APIField>
+  <APIField name="jti" type="String">
+    The unique identifier for this JWT. This registered claim is defined by
+    [RFC 7519 Section 4.1.7](https://tools.ietf.org/html/rfc7519#section-4.1.7).
   </APIField>
   <APIField name="permissions" type="Array<String>">
     The permission granted to the recipient Entity by the target Entity. This claim is only present if permissions are associated with the grant and any requested permissions are found in the grant.
@@ -107,10 +115,16 @@ Available since version 1.26.
     Valid scopes are described in the [client credentials scopes section](/docs/lifecycle/authenticate-users/oauth/#client-credentials-scopes).
   </APIField>
   <APIField name="sub" type="UUID">
-    The subject of the access token. This value is equal to the recipient Entity's unique Id in FusionAuth. This registered claim is defined by [RFC 7519 Section 4.1.2](https://tools.ietf.org/html/rfc7519#section-4.1.2).
+    The subject of the token. The value is the unique Id of the recipient Entity. This registered claim is defined by [RFC 7519 Section 4.1.2](https://tools.ietf.org/html/rfc7519#section-4.1.2).
   </APIField>
   <APIField name="tid" type="UUID" since="1.36.0">
-    The FusionAuth Tenant unique Id.
+    The unique Id of the user's tenant.
+  </APIField>
+  <APIField name="tty" type="UUID" since="1.60.0">
+    The token type. This value will always be `at` indicating this is an `access token`.
+  </APIField>
+  <APIField name="use" type="String" since="1.60.0">
+    The intended use for this token. This claim will only be present when an access token has been created for use by the FusionAuth SCIM server. When the claim is present the value will be `scim_server`.
   </APIField>
 </APIBlock>
 
@@ -128,11 +142,7 @@ The Id Token may be returned as part of an Authentication request when the `open
 
 <APIBlock>
   <APIField name="applicationId" type="UUID">
-    The unique Id of the Application for which the User has been authenticated. A JWT can only represent authorization to a single Application.
-
-    This claim is only present if the User has a registration to the Application.
-
-    To obtain a JWT for another Application you must either authenticate again with a different `applicationId` using the [Authentication](/docs/apis/login#authenticate-a-user) API or utilize the [Issue a JWT](/docs/apis/jwt#issue-a-jwt) API to exchange a valid JWT for another.
+    The unique Id of the Application for which the user has been authenticated. This claim is only present if the user is registered for the application.
 
     <RemovedSince since="1.24.0">
     As of version `1.24.0`, this claim is no longer returned by default. The `id_token` should not be utilized for authorization, so this claim was removed to make it less likely for a holder of this token to incorrectly utilize this token. If you have a need for this claim, it can be added back using a JWT populate lambda.
@@ -147,15 +157,15 @@ The Id Token may be returned as part of an Authentication request when the `open
     This claim will be equal to the `client_id`.
   </APIField>
   <APIField name="authenticationType" type="String">
-    The method used to authenticate the User which resulted in this JWT being generated. The possible values are:
+    The method used to authenticate the user that resulted in the generated JWT. The possible values are:
 
-    <AuthenticationTypeClaimValues show_since="100000" />
+    <AuthenticationTypeValues />
   </APIField>
   <APIField name="auth_time" type="Long" since="1.36.0">
-    The time of the initial authentication request expressed as UNIX time which is the number of seconds since Epoch. This claim will remain the same even when the token has been re-issued through the use of a Refresh Token.
+    The time of the initial authentication request expressed as [unix time](/docs/reference/data-types#unix-time). The value will not change even if the token is re-issued using a Refresh Token.
   </APIField>
   <APIField name="birthdate" type="String" since="1.50.0">
-    The birthDate of the User if available.
+    The birthDate of the user if available.
     Format will be in `YYYY-MM-DD` as defined by the OpenID Connect core specification.
 
     When the `Scope handling policy` is `Strict`, this field is only populated when the <InlineField>scope</InlineField> claim contains the `profile` scope.
@@ -164,31 +174,38 @@ The Id Token may be returned as part of an Authentication request when the `open
     The Authorization Code hash value. As defined by the [3.3.2.11 of the OpenID Connect Core specification](https://openid.net/specs/openid-connect-core-1_0.html#HybridIDToken) this value is an encoded hash of the authorization code, the algorithm used to generate this hash depends upon the algorithm used to generate the `id_token` signature.
   </APIField>
   <APIField name="email" type="String">
-    The email address of the User whose claims are represented by this JWT.
+    The email address of the user whose claims are represented by this JWT.
 
     In version `1.50.0` and later, when the `Scope handling policy` is `Strict`, this field is only populated when the <InlineField>scope</InlineField> claim contains the `email` scope.
   </APIField>
   <APIField name="email_verified" type="Boolean">
-    The OpenId Connect claim indicating if the User's email has been verified.
+    The verification status of the <InlineField>email</InlineField>. This value is `true` when the email is verified.
 
     In version `1.50.0` and later, when the `Scope handling policy` is `Strict`, this field is only populated when the <InlineField>scope</InlineField> claim contains the `email` scope.
   </APIField>
   <APIField name="exp" type="Long">
-    The expiration instant of the JWT, expressed as UNIX time which is the number of seconds since Epoch. This registered claim is defined by
+    The expiration instant of the JWT, expressed as [unix time](/docs/reference/data-types#unix-time). This registered claim is defined by
     [RFC 7519 Section 4.1.4](https://tools.ietf.org/html/rfc7519#section-4.1.4).
   </APIField>
   <APIField name="family_name" type="String" since="1.50.0">
-    The last name of the User if available.
+    The last name of the user if available.
 
     When the `Scope handling policy` is `Strict`, this field is only populated when the <InlineField>scope</InlineField> claim contains the `profile` scope.
   </APIField>
   <APIField name="given_name" type="String" since="1.50.0">
-    The first name of the User if available.
+    The first name of the user if available.
 
     When the `Scope handling policy` is `Strict`, this field is only populated when the <InlineField>scope</InlineField> claim contains the `profile` scope.
   </APIField>
+  <APIField name="gty" since="1.60.0" type="Array<String>">
+    The list of grant types in chronological order.
+
+    For example, if the token was the result of an `authorization_code` grant, the value will be `[authorization_code]`.
+
+    If the token was generated using a refresh token using the `refresh_token` grant, the value will be `[authorization_code, refresh_token]` if the initial grant used to obtain the refresh token was the `authorization_code` grant.
+  </APIField>
   <APIField name="iat" type="Long">
-    The instant that the JWT was issued, expressed as UNIX time which is the number of seconds since Epoch. This registered claim is defined by
+    The instant that the JWT was issued, expressed [unix time](/docs/reference/data-types#unix-time). This registered claim is defined by
     [RFC 7519 Section 4.1.6](https://tools.ietf.org/html/rfc7519#section-4.1.6).
   </APIField>
   <APIField name="iss" type="String">
@@ -200,34 +217,41 @@ The Id Token may be returned as part of an Authentication request when the `open
     [RFC 7519 Section 4.1.7](https://tools.ietf.org/html/rfc7519#section-4.1.7).
   </APIField>
   <APIField name="middle_name" type="String" since="1.50.0">
-    The middle name of the User if available.
+    The middle name of the user if available.
 
     When the `Scope handling policy` is `Strict`, this field is only populated when the <InlineField>scope</InlineField> claim contains the `profile` scope.
   </APIField>
   <APIField name="name" type="String" since="1.50.0">
-    The full name of the User if available.
+    The full name of the user if available.
 
     When the `Scope handling policy` is `Strict`, this field is only populated when the <InlineField>scope</InlineField> claim contains the `profile` scope.
   </APIField>
   <APIField name="nonce" type="String" since="1.5.0">
   </APIField>
   <APIField name="phone_number" type="String" since="1.50.0">
-    The phone number of the User if available.
+    The phone number of the user if available. (<InlineField>user.phoneNumber</InlineField> or <InlineField>user.mobilePhone</InlineField> will be used in this order of precedence).
 
-    When the `Scope handling policy` is `Strict`, this field is only populated when the <InlineField>scope</InlineField> claim contains the `phone` scope.
+    This field is only populated when the `Scope handling policy` is `Strict`, and the <InlineField>scope</InlineField> claim contains the `phone` scope.
+  </APIField>
+  <APIField name="phone_number_verified" type="Boolean" since="1.59.0">
+    The verification status of the <InlineField>phone_number</InlineField>. This value is `true` when the phone number is verified.
+
+    This claim is based only on the <InlineField>user.phoneNumber</InlineField> verification status.
+
+    This field is only populated when the `Scope handling policy` is `Strict`, and the <InlineField>scope</InlineField> claim contains the `phone` scope.
   </APIField>
   <APIField name="picture" type="String" since="1.50.0">
-    A URL to a picture of the User if available.
+    A URL to a picture of the user if available.
 
     When the `Scope handling policy` is `Strict`, this field is only populated when the <InlineField>scope</InlineField> claim contains the `profile` scope.
   </APIField>
   <APIField name="preferred_username" type="String" since="1.5.0">
-    The username of the User whose claims are represented by this JWT.
+    The username of the user whose claims are represented by this JWT.
 
     In version `1.50.0` and later, when the `Scope handling policy` is `Strict`, this field is only populated when the <InlineField>scope</InlineField> claim contains the `profile` scope.
   </APIField>
   <APIField name="roles" type="Array<String>" deprecated>
-    The roles assigned to the User in the authenticated Application. This claim is only present if the User has a registration to the Application.
+    The roles assigned to the user in the authenticated Application. This claim is only present if the user is registered for the application.
 
     <RemovedSince since="1.24.0" >
       As of version `1.24.0`, this claim is no longer returned by default. The `id_token` should not be utilized for authorization, so this claim was removed to make it less likely for a holder of this token to incorrectly utilize this token. If you have a need for this claim, it can be added back using a JWT populate lambda.
@@ -243,10 +267,13 @@ The Id Token may be returned as part of an Authentication request when the `open
     The SSO session Id. This claim will only be present when this token is produced using an interactive grant during a single-signon request such as the Authorization Code grant or the Implicit grant.
   </APIField>
   <APIField name="sub" type="UUID">
-    The subject of the Id Token. This value is equal to the User's unique Id in FusionAuth. This registered claim is defined by [RFC 7519 Section 4.1.2](https://tools.ietf.org/html/rfc7519#section-4.1.2).
+    The subject of the token. The value is the unique Id of the FusionAuth user. This registered claim is defined by [RFC 7519 Section 4.1.2](https://tools.ietf.org/html/rfc7519#section-4.1.2).
   </APIField>
   <APIField name="tid" type="UUID" since="1.36.0">
-    The FusionAuth Tenant unique Id.
+    The unique Id of the user's tenant.
+  </APIField>
+  <APIField name="tty" type="UUID" since="1.60.0">
+    The token type. This value will always be `idt` indicating this is an `id_token`.
   </APIField>
 </APIBlock>
 
@@ -263,7 +290,7 @@ A refresh token is associated with the same set of validated and consented OAuth
 
 To request a refresh token during authentication you must provide the `offline_access` scope. The refresh token is not supported by the Implicit Grant, so if you provide the `offline_access` scope during an Implicit Grant workflow it will be ignored.
 
-If you request the `offline_access` scope and an Refresh Token is not returned, ensure that the FusionAuth application has been configured to generate refresh tokens. Ensure `Generate refresh tokens` is enabled in your application settings. See <strong>Settings -> Applications -> OAuth</strong>. This setting will cause a Refresh Token to be returned when the `offline_access` scope is requested. You will also want to ensure the `Refresh Token` grant is enabled which allows the use of the Refresh Token to be exchanged for a new Access Token.
+If you request the `offline_access` scope and an Refresh Token is not returned, ensure that the FusionAuth application has been configured to generate refresh tokens. Ensure `Generate refresh tokens` is enabled in your application settings. See <Breadcrumb>Settings -> Applications -> OAuth</Breadcrumb>. This setting will cause a Refresh Token to be returned when the `offline_access` scope is requested. You will also want to ensure the `Refresh Token` grant is enabled which allows the use of the Refresh Token to be exchanged for a new Access Token.
 
 ### Sample Refresh Token
 

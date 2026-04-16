@@ -1,0 +1,186 @@
+---
+publish_date: 2025-09-16
+title: User Segmentation
+description: How the right user segmentation model matters for your application, why it is important, and how to choose.
+authors: Dan Moore
+image: /img/blogs/user-segment-models/user-segmentation-model-header.png
+categories: Education
+tags: user segmentation, users, tenants, organizations, applications
+excerpt_separator: "{/* more */}"
+---
+
+If you're building any application with users, but especially a SaaS application, you've probably found yourself staring at a whiteboard, trying to figure out how to organize users, roles, permissions, and access control. Questions like: should users belong to organizations? Do you need multi-tenancy? How do you handle that enterprise customer who wants to run multiple separate instances?
+
+{/* more */}
+
+Welcome to the world of user segmentation and modeling. It's one of those architectural decisions that seems simple on the surface but has profound implications for your application's user experience, complexity, security, and feature set.
+
+Let's dive into the three primary models for user segmentation and help you figure out which one fits your needs. These lessons are drawn from my five years of experience helping users and customers with customer identity and access management (CIAM) architecture, but apply any time you have an application that people log in to.
+
+## What Is User Segmentation?
+
+Before we jump into the models, let's establish some terminology. These are drawn from the [NIST Digital Identity guidelines](https://csrc.nist.gov/pubs/sp/800/63/a/4/final).
+
+In authentication and identity management, a **subject** is any entity that needs to authenticate--typically a person, but it could be an organization, device, hardware, network, software, or service. AI agents may or may not have identities derived from the users they are acting on behalf of. In the context of user segmentation, we're typically talking about natural persons (human beings).
+
+An **identity** is an attribute or set of attributes that uniquely describes a subject within a given context. This could be any combination of:
+- email address
+- phone number  
+- username
+- government ID number
+- biometric data
+- credentials or authentication factors
+
+## Who Cares About User Segmentation?
+
+Anyone with users should care about this, but it's especially critical for SaaS applications. The model you choose affects:
+
+- User Experience: How intuitive is it for users to understand their access and boundaries? How do they know where to go to log in?
+- Complexity: How complicated is your application logic and data model? How do you run reports or get insights into usage?
+- Security: How well can you isolate data and control access? Are there user related settings such as password complexity that vary between customers?
+
+## The Three Models
+
+The three options are:
+
+* tenant
+* organization
+* application
+
+### The Tenant Model
+
+The tenant model follows a "find my tenant, then authenticate" flow. Users must first be associated with their tenant, then authenticated within that tenant's context. The tenant owns the user.
+
+![The tenant authentication flow.](/img/blogs/user-segment-models/user-in-tenant-model.png)
+
+Here's a real-world example: Zendesk. Each company gets its own tenant, and users authenticate within that specific tenant. If they want to switch tenants, they log out and log back in again. 
+
+The key characteristics of this model include:
+
+- complete isolation between tenants, either logical or physical
+- tenant-specific configurations, branding, and features
+- users belong to exactly one tenant
+- strong data isolation and security boundaries
+
+The benefits of the tenant model include:
+
+- excellent for private-label scenarios
+- strong security isolation, decreasing the blast radius if any single identity gets compromised
+- tenant-specific customization around user related features such as password complexity
+- scales well horizontally, since you can easily split tenants by server
+- supports data locality requirements, such as users whose data must remain in a certain country like Brazil or Germany
+
+This model does have some downsides:
+
+- the authentication flow is more complex
+- user profile data can't be shared between tenants
+- requires some kind of tenant identification mechanism
+
+Let's talk about how users can find their tenant. This requires a soft authentication, because you don't want an unauthenticated user to see all your tenants and pick one. It's bad for customer privacy as well as horrid user experience.
+
+Instead, use one or more of the following methods:
+
+- hostname or subdomain, such as `tenant1.example.com`, often communicated in an out-of-band manner
+- a user-provided identifier during login, which is how AWS does this, also often communicated in an out-of-band manner
+- with a login identifier the system can deliver a message to, such as an email address, a user can provide it and then get a message with a list of tenants available to the user
+
+Methods that are less reliable but may fit certain circumstances include determining a tenant through:
+
+- request attributes such as an email domain or IP address range
+- leave data on the device after a previous login, though this does not work for an initial login
+
+In FusionAuth, implement this segmentation model [using tenants](/docs/get-started/core-concepts/tenants).
+
+### The Organization Model  
+
+The organization model uses an "authenticate, then determine organization" approach. Users log in first, then select or are assigned to their organization context.
+
+![The organization authentication flow.](/img/blogs/user-segment-models/user-in-organization-model.png)
+
+Here's a real-world example: GitHub. With this application, you log in with your personal account, then switch between different organizations to which you belong.
+
+![The GitHub organization selection dropdown.](/img/blogs/user-segment-models/github-account-switcher.png)
+
+The key characteristics of this model include:
+
+- users can belong to multiple organizations; this is a major part of the benefits of this approach so plan for cross-organization memberships
+- authentication happens upstream of organization selection
+- there is a common user identity across organizations, including profile data and credentials
+- segment switching occurs without re-authentication
+
+The benefits of the organization model include:
+
+- flexible user membership across boundaries
+- easier organization switching, including single sign-on
+- a single source of truth for profile data
+
+This approach is not without its warts, including: 
+
+- less strict data isolation
+- complex authorization logic which you have to create and maintain
+- the potential for accidental data leakage between orgs
+
+In FusionAuth, implement this model [using entities](/docs/extend/examples/modeling-organizations).
+
+### The Application Model
+
+This is a variant of the organization model. Instead of an authentication and then organization determination, the organization is determined at the time of a successful authentication. If a user needs to switch, they re-authenticate, typically silently.
+
+This model has the following characteristics:
+
+- minimal segmentation overhead
+- standards support, if your identity provider maps applications to OIDC clients
+- creation of an authentication artifact, such as a token, to make requests to other parts of the application simpler
+
+If you choose applications, be aware that the artifact is a cached value, with all the issues that cached values have:
+
+- revocation can be complicated
+- the user data can be stale
+- it adds additional complexity to the system
+
+In FusionAuth, implement this segmentation model [using applications](/docs/get-started/core-concepts/applications).
+
+## Choosing Your Model
+
+Here are the key questions to ask yourself to determine which of these user segmentation models are right for you.
+
+* **Do you need separation of user spaces?** If customers, or their users, expect their data to be completely isolated from other customers, lean toward the tenant model.
+* **Would users be surprised if they had the same password for different applications?** If yes, you want tenant-level isolation.
+* **Do customers have differing requirements around credentials?** Different password policies, session lifetimes, or authentication methods by customer segment point toward the tenant model.
+* **Do you plan to horizontally scale authentication?** Tenant isolation makes scaling easier since you can distribute tenants across different infrastructure.
+* **Do you need data locality for a set of users?** Regulatory requirements like GDPR often make the tenant model necessary.
+
+If you answered yes to the above questions, you probably want the tenant model.
+
+* **Are users accessing different organizations frequently?** If users regularly switch contexts, the organization model offers better UX.
+* **Do you need to be able to dynamically add and remove organization membership without re-authentication?** This feature is a strength of the organization model.
+
+If you answered yes to either of these questions, the organization model is a good choice.
+
+Finally, if you want to leverage tokens for authentication without further requests, the application model excels. It also may be less overall work than the organizations model when applications map to OIDC clients.
+
+## Migration Between Models
+
+AKA, is this choice a one-way door? One of the trickier aspects of user segmentation is that you might need to change models as your application evolves. This is definitely possible, but it requires careful planning:
+
+- Moving from organization to tenant model requires planning around splitting a single user-profile up. You'll also need to educate users about how to find their application login.
+- Consolidating users from tenants into organizations, you'll need to decide how to merge profile data and which set of credentials will apply to the single user account.
+- Identifying and reworking features that rely on characteristics of the user segmentation model need to be part of your migration plan. For example, how customer service reps access specific customers' applications differs in these models.
+
+The decision about user segmentation isn't set in stone, but changes become expensive over time. Some upfront effort is worth it.
+
+## Implementation Considerations
+
+Whichever model you choose, you'll need to think about:
+
+* **Authentication flow**: How do users identify themselves and their context?
+* **Authorization**: How do you check permissions within and across segments?
+* **APIs**: How do you handle the segment context in your API design?
+* **User management**: How do administrators manage users within their segment? Do some admins need to manage users across segments?
+
+## Conclusion
+
+User segmentation models might not be the flashiest part of application architecture, but they're fundamental to building scalable, secure, and user-friendly applications. The tenant model offers maximum isolation and customization at the cost of operational complexity. The organization model provides flexibility and ease of use with some security trade-offs and implementation complexity. The application model is a variant of the organization model which may be simpler to implement.
+
+The right choice depends on your specific use case, user needs, and growth plans. Start by asking the questions shown above, prototype your user flows to make sure you understand the trade-offs, and remember that you can evolve your model.
+

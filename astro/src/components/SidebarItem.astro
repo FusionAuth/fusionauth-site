@@ -1,0 +1,81 @@
+---
+import { Marked } from "marked";
+
+const { node } = Astro.props;
+
+const childNodes = node.sortedChildren || [];
+const hasChildren = childNodes.length > 0;
+
+const isCurrent = node.isCurrentPage;
+const isAncestor = node.isActive && !isCurrent;
+
+let stateClasses = "";
+if (isCurrent) {
+  stateClasses = "bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-900/40 dark:text-indigo-300";
+} else if (isAncestor) {
+  stateClasses = "text-gray-900 font-bold dark:text-white";
+} else {
+  stateClasses = "text-gray-500 dark:text-gray-400";
+}
+
+const linkBase = "flex-1 pr-2 pl-4 py-0.5 text-sm rounded-md transition-colors whitespace-normal break-words -indent-2";
+
+
+const remark = new Marked();
+const markdownifiedTitle = remark.parseInline(node.title);
+---
+
+<style>
+  /* Custom CSS to handle scoped rotation without 'group' conflicts */
+  details[open] > summary .chevron-icon {
+    transform: rotate(90deg);
+  }
+</style>
+
+{hasChildren ? (
+  <details class="group/folder" open={node.isOpen}>
+    <summary 
+      class={`flex items-center justify-between list-none cursor-pointer rounded-md transition-colors w-full select-none [&::-webkit-details-marker]:hidden ${stateClasses} 
+      group-open/folder:hover:bg-transparent
+      group-[:not([open])]/folder:hover:bg-gray-100 dark:group-[:not([open])]/folder:hover:bg-gray-800 
+      group-[:not([open])]/folder:hover:text-gray-900 dark:group-[:not([open])]/folder:hover:text-gray-100`}
+    >
+      {node.href ? (
+        <a 
+          href={`${node.href}/`}
+          class={`${linkBase} hover:group-open/folder:bg-gray-100 dark:hover:group-open/folder:bg-gray-800 hover:group-open/folder:text-gray-900 dark:hover:group-open/folder:text-gray-100`}
+          aria-current={isCurrent ? "page" : undefined}
+          onclick="const det = this.closest('details'); if (!det.open) { event.preventDefault(); det.open = true; }"
+          set:html={markdownifiedTitle}
+        >
+        </a>
+      ) : (
+        <span class={`${linkBase} cursor-default`} set:html={markdownifiedTitle}></span>
+      )}
+      
+      <div 
+        aria-hidden="true" 
+        class={`p-1.5 rounded-md transition-colors hover:group-open/folder:bg-gray-100 dark:hover:group-open/folder:bg-gray-800 hover:group-open/folder:text-gray-900 dark:hover:group-open/folder:text-gray-100 ${isCurrent ? 'text-indigo-500' : 'text-gray-400'}`}
+      >
+        <svg 
+          class="w-3.5 h-3.5 transition-transform duration-200 chevron-icon shrink-0" 
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+    </summary>
+    
+    <div class="pl-3 mt-1 ml-2 border-l border-gray-200 dark:border-gray-800 flex flex-col gap-1">
+      {childNodes.map(child => <Astro.self node={child} />)}
+    </div>
+  </details>
+) : (
+  <a 
+    href={node.href} 
+    aria-current={isCurrent ? "page" : undefined}
+    class={`block pr-2 pl-4 py-0.5 -indent-2 text-sm rounded-md transition-colors w-full whitespace-normal break-words ${stateClasses} hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100`}
+    set:html={markdownifiedTitle}
+  >
+  </a>
+)}

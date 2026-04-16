@@ -58,8 +58,9 @@ OptionParser.new do |opts|
     options[:configfile] = configfile
   end
 
-# add in config file
-# run in gh workflow
+  opts.on("--pr", "Check local files instead of the website.") do
+    options[:pr] = true
+  end
 
   opts.on("-v", "--verbose", "Run verbosely.") do |v|
     options[:verbose] = v
@@ -97,15 +98,35 @@ def make_api_path(type)
     base = "extend/events-and-webhooks/events/"
     # convert audit-log-create-event to audit-log-create
     type = type.gsub("-event","")
-    if type == "user-action"
-      type = "user-actions"
+
+    # sub-directories for buckets that grew too large for docs sidebar
+    if type.start_with?("jwt-")
+      return base + "jwt/" + type
     end
-    if type == "user-login-id-duplicate-on-create"
-      type = "user-login-id-duplicate-create"
+    if type.start_with?("group-")
+      return base +  "group/" + type
     end
-    if type == "user-login-id-duplicate-on-update"
-      type = "user-login-id-duplicate-update"
+
+    # user sub-directory handling (specific -> general)
+    if type.start_with?("user-password-")
+      return base + "user/password/" + type
+    elsif type.start_with?("user-login-")
+      if type == "user-login-id-duplicate-on-create"
+        type = "user-login-id-duplicate-create"
+      end
+      if type == "user-login-id-duplicate-on-update"
+        type = "user-login-id-duplicate-update"
+      end
+      return base + "user/login/" + type
+    elsif type.start_with?("user-registration-")
+      return base + "user/registration/" + type
+    elsif type.start_with?("user-")
+      if type == "user-action"
+        type = "user-actions"
+      end
+      return base + "user/" + type
     end
+    
     return base + type
   end
 
@@ -191,13 +212,20 @@ def todash(camel_cased_word)
   downcase
 end
 
-def open_url(url)
-  res = Net::HTTP.get_response(URI.parse(url))
-  if res.code != "200"
-    return nil
+def fetch_doc(url, options)
+  if options[:pr]
+    # Convert the URL to a local file path
+    local_path = url.gsub(options[:siteurl] + "/docs", "astro/dist/docs") + ".html"
+    puts "checking " + local_path
+    if File.exist?(local_path)
+      return File.read(local_path)
+    else
+      return nil
+    end
+  else
+    res = Net::HTTP.get_response(URI.parse(url))
+    return res.code == "200" ? res.body : nil
   end
-
-  return res.body
 end
 
 def downcase(string)
@@ -249,6 +277,7 @@ def skip_file(fn)
   return false
 end
 
+# noinspection t
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
 
   # these are leafs of the tree and aren't fields with possible subfields.
@@ -310,18 +339,27 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       api_urls << url
     end
     page_content = ""
+
     api_urls.each do | api_url |
-      if options[:verbose]
+      if options[:verbose] && !options[:pr]
         puts "retrieving " + api_url
       end
 
-      tmp_page_content = open_url(api_url)
-      page_content = tmp_page_content + page_content
-      unless page_content
-        puts "Could not retrieve: " + api_url
-
-        exit(false)
+      tmp_page_content = fetch_doc(api_url, options)
+      
+      if tmp_page_content
+        page_content = tmp_page_content + page_content
+      else
+        puts "Error: Could not retrieve content from: #{api_url}"
+        # skip this URL:
+        # exit(false) 
       end
+    end
+
+    # Double check that we actually got SOMETHING after checking all URLs
+    if page_content.empty?
+      puts "Could not retrieve any content for: " + t
+      exit(false)
     end
   end
 

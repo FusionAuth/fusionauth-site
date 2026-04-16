@@ -1,10 +1,7 @@
 ---
-title: Endpoints
-description: A description of each of the OAuth and OIDC endpoints provided by FusionAuth.
-navcategory: login-methods
-section: lifecycle
-subcategory: authenticate users
-tertcategory: oauth
+title: OAuth2 Endpoints
+description: This page details FusionAuth's OAuth2 endpoints. Learn about the Authorization Code grant, Implicit grant, and other OAuth2 grants.
+tags: endpoints, oauth2, oauth 2.0, oauth endpoint
 ---
 import Aside from 'src/components/Aside.astro';
 import API from 'src/components/api/API.astro';
@@ -13,6 +10,7 @@ import APIField from 'src/components/api/APIField.astro';
 import AvailableSince from 'src/components/api/AvailableSince.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
 import OauthAuthorizeRedirectParameters from 'src/content/docs/_shared/_oauth-authorize-redirect-parameters.mdx';
 import AuthorizationHeader from 'src/content/docs/lifecycle/authenticate-users/oauth/_authorization-header.mdx';
 import DeviceTypeList from 'src/content/docs/_shared/_device-type-list.mdx';
@@ -24,8 +22,6 @@ import ClientCredentialsPermissionsExplanation from 'src/content/docs/lifecycle/
 import UserInfoAudClaimLimits from 'src/content/docs/_shared/_userinfo-aud-claim-limits.mdx';
 import UserInfoResponse from 'src/content/docs/_shared/_userinfo-response.mdx';
 import JSON from 'src/components/JSON.astro';
-
-## Overview
 
 In support of [OAuth 2.0 IETF RFC 6749](https://tools.ietf.org/html/rfc6749), [OAuth 2.0 IETF RFC 8628](https://tools.ietf.org/html/rfc8628), [JWK IETF RFC 7517](https://tools.ietf.org/html/rfc7517), and [OAuth 2.0 IETF RFC 7662](https://tools.ietf.org/html/rfc7662), the following endpoints are provided.
 
@@ -47,7 +43,16 @@ This is an implementation of the Authorization endpoint as defined by the [IETF 
 
 To begin the Authorization Code Grant you will redirect to the Authorization endpoint from your application.
 
-<API method="GET" uri="/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&tenantId={tenantId}"/>
+<API method="GET" uri="/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&tenantId={tenantId}&scope=openid%20offline_access%20profile%20email"/>
+
+### Request Headers
+<APIBlock>
+  <APIField name="Authorization" type="String" optional>
+    An optional request header that enables using an existing access token (JWT) to bootstrap the SSO session.
+
+    For more information and examples, see [Bootstrapping SSO](/docs/lifecycle/authenticate-users/single-sign-on#bootstrapping-sso).
+  </APIField>
+</APIBlock>
 
 #### Request Parameters
 
@@ -67,10 +72,15 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
 
     - `S256` - SHA-256
   </APIField>
+  <APIField name="dpop_jkt" type="String" optional since="1.63.0">
+    The `dpop_jkt` parameter can be provided to bind the authorization code to a DPoP key.
+    When this parameter is provided during the Authorization request, a corresponding <InlineField>DPoP</InlineField> HTTP header is required on the subsequent `POST` to the `/oauth2/token` endpoint.
+    [DPoP](/docs/lifecycle/authenticate-users/oauth/dpop) is an Enterprise feature.
+  </APIField>
   <APIField name="idp_hint" type="UUID" optional since="1.19.0">
     An optional unique Identity Provider Id that can allow you to bypass the FusionAuth login page.
 
-    Adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end user clicking on the "Login with Pied Piper" button, or entering their email address when using the IdP configuration with managed domains.
+    Adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end user clicking on the <InlineUIElement>Login with Pied Piper</InlineUIElement> button, or entering their email address when using the IdP configuration with managed domains.
   </APIField>
   <APIField name="locale" type="String" optional>
     The [locale](/docs/reference/data-types#locales) to be used to render the login page.
@@ -84,6 +94,15 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
 
     If not using managed domains, providing an email address using this parameter prepopulates the email address in the login page.
   </APIField>
+  <APIField name="max_age" type="Integer" optional since="1.60.0">
+    An optional parameter that indicates the authenticated SSO session maximum age in seconds. This is called the Maximum Authentication Age in the OpenID specification.
+
+    A user with an SSO session older than the time specified by this parameter will be required to reauthenticate.
+
+    A value of `0` is equal to `prompt=login`.
+
+    Note that this parameter by itself does not guarantee that the user is reauthenticated. See [OIDC Prompt Security Considerations](/docs/lifecycle/authenticate-users/oauth/prompt#security-considerations) for implementation details.
+  </APIField>
   <APIField name="metaData.device.description" type="String" optional>
     A human readable description of the device used during login.
     This metadata is used to describe the refresh token that may be generated for this login request.
@@ -91,6 +110,17 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
   <APIField name="nonce" type="String" optional since="1.5.0">
     The `nonce` parameter as described in the [OpenID Connect core](https://openid.net/specs/openid-connect-core-1_0.html) specification.
     When this parameter is provided during the Authorization request, the value will be returned in the `id_token`.
+  </APIField>
+  <APIField name="prompt" type="String" optional since="1.60.0">
+    An optional case sensitive space-delimited parameter for additional control of silent authentication, forced reauthentication, and consent prompts.
+
+    The possible values are:
+
+    - `none` - No user interface is displayed. An error is returned if the user is not already authenticated.
+    - `login` - The user will be prompted for authentication when there's an existing SSO session.
+    - `consent` - Always prompt for consent from the user.
+
+    Note that `prompt=login` doesn't guarantee that the user is reauthenticated. See [OIDC Prompt](/docs/lifecycle/authenticate-users/oauth/prompt#security-considerations) for implementation details, security considerations, limitations and example usage.
   </APIField>
   <APIField name="redirect_uri" type="String" required>
     The URI to redirect to upon a successful request.
@@ -117,13 +147,15 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
   </APIField>
   <APIField name="scope" type="String" optional>
     If you are using OpenID Connect, the request must contain this parameter and at minimum it must contain `openid`.
-    This parameter may contain multiple scopes space separated.
+    This parameter may contain multiple space separated scopes.
     For example, the value of `openid offline_access` provides two scopes on the request.
 
-    These scopes modify the behavior of the endpoint:
+    Example scopes which modify the behavior of the endpoint:
 
     * `openid` - This scope is used to request an `id_token` be returned in the response
     * `offline_access` - This scope is used to request a `refresh_token` be returned in the response
+
+    [Learn more about scopes, including custom scopes.](/docs/lifecycle/authenticate-users/oauth/scopes)
   </APIField>
   <APIField name="state" type="String" optional>
     The optional state parameter. This is generally used as a Cross Site Request Forgery (CSRF) token or to provide deeplinking support.
@@ -172,6 +204,15 @@ To begin the Implicit Grant you will redirect to the Authorization endpoint from
 
 <API method="GET" uri="/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=token%20id_token&tenantId={tenantId}"/>
 
+### Request Headers
+<APIBlock>
+  <APIField name="Authorization" type="String" optional>
+    An optional request header that enables using an existing access token (JWT) to bootstrap the SSO session.
+
+    See [Bootstrapping SSO](/docs/lifecycle/authenticate-users/single-sign-on#bootstrapping-sso) for additional information and examples.
+  </APIField>
+</APIBlock>
+
 #### Request Parameters
 
 <APIBlock>
@@ -182,7 +223,7 @@ To begin the Implicit Grant you will redirect to the Authorization endpoint from
   <APIField name="idp_hint" type="UUID" optional since="1.19.0">
     An optional unique Identity Provider Id that can allow you to bypass the FusionAuth login page.
 
-    Adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end user clicking on the "Login with Pied Piper" button, or entering their email address when using the IdP configuration with managed domains.
+    Adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end user clicking on the <InlineUIElement>Login with Pied Piper</InlineUIElement> button, or entering their email address when using the IdP configuration with managed domains.
   </APIField>
   <APIField name="locale" type="String">
     The [locale](/docs/reference/data-types#locales) to be used to render the login page.
@@ -196,9 +237,29 @@ To begin the Implicit Grant you will redirect to the Authorization endpoint from
 
     If not using managed domains, providing an email address using this parameter prepopulates the email address in the login page.
   </APIField>
+  <APIField name="max_age" type="Integer" optional since="1.60.0">
+    An optional parameter that indicates the authenticated SSO session maximum age in seconds. This is called the Maximum Authentication Age in the OpenID specification.
+
+    A user with an SSO session older than the time specified by this parameter will be required to reauthenticate.
+
+    A value of `0` is equal to `prompt=login`.
+
+    Note that this parameter by itself does not guarantee that the user is reauthenticated. See [OIDC Prompt Security Considerations](/docs/lifecycle/authenticate-users/oauth/prompt#security-considerations) for implementation details.
+  </APIField>
   <APIField name="nonce" type="String" optional since="1.5.0">
     The `nonce` parameter as described in the [OpenID Connect core](https://openid.net/specs/openid-connect-core-1_0.html) specification.
     When this parameter is provided during the Authorization request, the value will be returned in the `id_token` if requested by the `response_type` parameter.
+  </APIField>
+  <APIField name="prompt" type="String" optional since="1.60.0">
+    An optional case sensitive space-delimited parameter for additional control of silent authentication, forced reauthentication, and consent prompts.
+
+    The possible values are:
+
+    - `none` - No user interface is displayed. An error is returned if the user is not already authenticated.
+    - `login` - The user will be prompted for authentication when there's an existing SSO session.
+    - `consent` - Always prompt for consent from the user.
+
+    Note that `prompt=login` doesn't guarantee that the user is reauthenticated. See [OIDC Prompt](/docs/lifecycle/authenticate-users/oauth/prompt#security-considerations) for implementation details, security considerations, limitations and example usage.
   </APIField>
   <APIField name="redirect_uri" type="String" required>
     The URI to redirect to upon a successful request.
@@ -326,7 +387,9 @@ Location: https://piedpiper.com/callback#
 
 ## Logout
 
-This endpoint provides a mechanism to invalidate the user's session held by FusionAuth, this effectively logs the user out of the FusionAuth SSO. Calling this endpoint does not revoke refresh tokens or JWTs. You can revoke the former by using the [Revoke Refresh Tokens API](/docs/apis/jwt). To revoke JWTs, [implement a revocation strategy](/articles/tokens/revoking-jwts).
+This endpoint provides a mechanism to invalidate the user's session held by FusionAuth, this effectively logs the user out of the FusionAuth SSO and any applications by calling a application specific URL.
+
+Calling this endpoint does not revoke refresh tokens or JWTs. You can revoke the former by using the [Revoke Refresh Tokens API](/docs/apis/jwt). To revoke JWTs, [implement a revocation strategy](/articles/tokens/revoking-jwts).
 
 Since `1.10.0` The logout behavior follows that of the [OpenID Connect Front-Channel Logout](https://openid.net/specs/openid-connect-frontchannel-1_0.html) specification.
 
@@ -336,7 +399,7 @@ The Logout URL used for each application is determined using the following prece
 2. The <InlineField>logoutURL</InlineField> configured on the Tenant if defined.
 3. `/`
 
-You can learn more about logout in the [Logout And Session Management guide](/docs/lifecycle/authenticate-users/logout-session-management).
+You can learn more about this behavior in the [Logout And Session Management guide](/docs/lifecycle/authenticate-users/logout-session-management).
 
 ### Request
 
@@ -580,10 +643,10 @@ Ensure you are sending these parameters as form encoded data in the request body
   </APIField>
   <APIField name="scope" type="String" optional>
     The optional scope you are requesting during this grant.
-    This parameter may contain multiple scopes space separated.
+    This parameter may contain multiple space separated scopes.
     For example, the value of `openid offline_access` provides two scopes on the request.
 
-    Available grant types:
+    Available scopes:
 
     * `openid` - This scope is used to request an `id_token` be returned in the response
     * `offline_access` - This scope scope is used to request a `refresh_token` be returned in the response
@@ -705,7 +768,7 @@ _Response Codes_
   </APIField>
   <APIField name="token_type" type="String">
     The token type as defined by [RFC 6749 Section 7.1](https://tools.ietf.org/html/rfc6749#section-7.1).
-    This value will always be `Bearer`.
+    This value will be `Bearer` or `DPoP` if a [DPoP Proof](/docs/lifecycle/authenticate-users/oauth/dpop) was provided.
   </APIField>
   <APIField name="userId" type="String">
     The unique Id of the user that has been authenticated.
@@ -765,6 +828,11 @@ Ensure you are sending these parameters as form encoded data in the request body
     The client secret.
     This parameter is optional when the `Authorization` header is provided.
     Please see the [the Client Secret table](#client-secret) for more details.
+  </APIField>
+  <APIField name="expires_in" type="Integer" optional since="1.59.0">
+    The expiration time, in seconds, for the access and Id tokens (if the `openid` scope was included) that will be returned in the response.
+
+    When provided on the request, this value will override the default TTL, provided it is less than the default value. The default TTL is taken from <InlineField>application.jwtConfiguration.timeToLiveInSeconds</InlineField> if it is set there, otherwise it is taken from  <InlineField>tenant.jwtConfiguration.timeToLiveInSeconds</InlineField>.
   </APIField>
   <APIField name="grant_type" type="String" required>
     The grant type to be used.
@@ -827,7 +895,7 @@ _Response Codes_
   </APIField>
   <APIField name="token_type" type="String">
     The token type as defined by [RFC 6749 Section 7.1](https://tools.ietf.org/html/rfc6749#section-7.1).
-    This value will always be `Bearer`.
+    This value will be `Bearer` or `DPoP` if a [DPoP Proof](/docs/lifecycle/authenticate-users/oauth/dpop) was provided.
   </APIField>
   <APIField name="userId" type="String">
     The unique Id of the user that has been authenticated.
@@ -940,7 +1008,7 @@ _Response Codes_
   </APIField>
   <APIField name="token_type" type="String">
     The token type.
-    The value will be `Bearer`.
+    This value will be `Bearer` or `DPoP` if a [DPoP Proof](/docs/lifecycle/authenticate-users/oauth/dpop) was provided.
   </APIField>
 </APIBlock>
 
@@ -1154,7 +1222,7 @@ _Response Codes_
   <APIField name="pendingIdPLink.identityProviderUserId" type="String">
     The unique user Id of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
 
-    This is the value that FusionAuth will use to uniquely link a FusionAuth User to a user in the 3rd party identity provider.
+    This value is a unique Id that links a FusionAuth user to a user in a third-party identity provider.
   </APIField>
   <APIField name="scope" type="String" since="1.50.0">
     The value that should be used for the <InlineField>scope</InlineField> parameter during the interactive portion of the Device Code Grant.
@@ -1297,7 +1365,7 @@ _Response Codes_
   <APIField name="identityProviderLink.identityProviderUserId" type="String">
     The unique user Id of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
 
-    This is the value that FusionAuth will use to uniquely link a FusionAuth User to a user in the 3rd party identity provider.
+    This value is a unique Id that links a FusionAuth user to a user in a third-party identity provider.
   </APIField>
   <APIField name="identityProviderLink.insertInstant" type="Long">
     The [instant](/docs/reference/data-types#instants) when the identity provider link was created.
@@ -1357,6 +1425,19 @@ Ensure you are sending these parameters as form encoded data in the request body
 
     Starting in version `1.46.0` this endpoint will also accept a token generated by the Client Credentials Grant.
   </APIField>
+  <APIField name="token_type_hint" type="String" optional>
+    An optional hint to identify the token type.
+
+    When this value is omitted, the token can be an `access_token` or `id_token`. When this value is specified, it must match the token type.
+
+    In order to use a refresh token, this value must be set to `refresh_token`.
+
+    The possible values are:
+    - `access_token`
+    - `id_token`
+    - `refresh_token` <AvailableSince since="1.60.0"/>
+  </APIField>
+
 </APIBlock>
 
 ```plaintext options="wrap" title="Example HTTP Request"
@@ -1381,7 +1462,7 @@ _Response Codes_
 | 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                           |
 
 #### Response Body
-This is an example response body when the provided `access_token` was issued on behalf of a user using the Authorization Code Grant, Implicit Grant ,Password Credentials Grant or Refresh Token Grant.
+This is an example response body when the provided `access_token` was issued on behalf of a user using the Authorization Code Grant, Implicit Grant, Password Credentials Grant or Refresh Token Grant.
 
 <APIBlock>
   <APIField name="active" type="String">
@@ -1389,50 +1470,53 @@ This is an example response body when the provided `access_token` was issued on 
     When this value is `false` no claims will be provided in the response body.
   </APIField>
   <APIField name="applicationId" type="UUID">
-    The unique Id of the Application for which the User has been authenticated. The presence of this claim indicates the user is registered for this application.
+    The unique Id of the Application for which the user has been authenticated. This claim is only present if the user is registered for the application.
   </APIField>
   <APIField name="aud" type="String">
     The `client_id` that was used to request the access token.
   </APIField>
   <APIField name="auth_time" type="Long">
-    The time of the initial authentication request, expressed as UNIX time which is the number of seconds since Epoch. This claim will remain the same even when the token has been re-issued through the use of a Refresh Token.
+    The time of the initial authentication request, expressed as [unix time](/docs/reference/data-types#unix-time). The value will not change even if the token is re-issued using a Refresh Token.
   </APIField>
   <APIField name="authenticationType" type="String">
-    The method used to authenticate the User which resulted in this JWT being generated.
+    The method used to authenticate the user that resulted in the generated JWT.
     The possible values are:
 
-    * `APPLE` - The User was authenticated using Apple. <AvailableSince since="1.17.0" />
-    * `APPLICATION_TOKEN` - The User was authenticated using an [Application Authentication Token](/docs/lifecycle/authenticate-users/application-authentication-tokens).
-    * `FACEBOOK` - The User was authenticated using Facebook. &nbsp; <AvailableSince since="1.1.0" />
-    * `FEDERATED_JWT` - The User was authenticated using a JWT from an external Identity Provider.
+    * `APPLE` - The user was authenticated using Apple. <AvailableSince since="1.17.0" />
+    * `APPLICATION_TOKEN` - The user was authenticated using an [Application Authentication Token](/docs/lifecycle/authenticate-users/application-authentication-tokens).
+    * `FACEBOOK` - The user was authenticated using Facebook. &nbsp; <AvailableSince since="1.1.0" />
+    * `FEDERATED_JWT` - The user was authenticated using a JWT from an external Identity Provider.
     * `GENERIC_CONNECTOR` - The user was authenticated using a generic connector.  &nbsp; <AvailableSince since="1.18.0" />
-    * `GOOGLE` - The User was authenticated using Google. <AvailableSince since="1.1.0" />
-    * `HYPR` - The User was authenticated using HYPR provider. <AvailableSince since="1.12.0" />
+    * `GOOGLE` - The user was authenticated using Google. <AvailableSince since="1.1.0" />
+    * `HYPR` - The user was authenticated using HYPR provider. <AvailableSince since="1.12.0" />
     * `JWT_SSO` - A valid JWT authorized to one Application was exchanged for another JWT authorized to a different Application.
     * `LDAP_CONNECTOR` - The user was authenticated using an LDAP connector.  &nbsp; <AvailableSince since="1.18.0" />
     * `LINKEDIN` - The user was authenticated using LinkedIn.  &nbsp; <AvailableSince since="1.23.0" />
-    * `ONE_TIME_PASSWORD` The User was authenticated using a one time password. &nbsp; <AvailableSince since="1.5.0" />
-    * `OPENID_CONNECT` - The User was authenticated using an external OpenID Connect provider. <AvailableSince since="1.1.0" />
-    * `PASSWORD` - The User was authenticated using a loginId and password combination.
+    * `ONE_TIME_PASSWORD` The user was authenticated using a one time password. &nbsp; <AvailableSince since="1.5.0" />
+    * `OPENID_CONNECT` - The user was authenticated using an external OpenID Connect provider. <AvailableSince since="1.1.0" />
+    * `PASSWORD` - The user was authenticated using a loginId and password combination.
     * `PASSWORDLESS` - The user was authenticated using a passwordless login link. &nbsp; <AvailableSince since="1.5.0" />
     * `PING` - The user was authenticated using a `PUT` request on the Login API. This is used to record a login event without prompting for credentials.
     * `REGISTRATION` - The user was created using the Registration API.  &nbsp; <AvailableSince since="1.16.0" />
-    * `REFRESH_TOKEN` - The User requested a new JWT using a Refresh Token.
-    * `SAMLv2` - The User was authenticated using an external SAMLv2 provider. <AvailableSince since="1.6.0" />
-    * `TWITTER` - The User was authenticated using Twitter. <AvailableSince since="1.1.0" />
+    * `REFRESH_TOKEN` - The user requested a new JWT using a Refresh Token.
+    * `SAMLv2` - The user was authenticated using an external SAMLv2 provider. <AvailableSince since="1.6.0" />
+    * `TWITTER` - The user was authenticated using Twitter. <AvailableSince since="1.1.0" />
     * `USER_CREATE` - The user was created using the User API. &nbsp; <AvailableSince since="1.16.0" />
   </APIField>
+  <APIField name="cnf" type="Object" since="1.63.0">
+    The confirmation claim, which is present for DPoP tokens. The `jkt` field contains the base64url encoding of the JWK SHA-256 Thumbprint of the DPoP public key (in JWK format) to which the access token is bound.
+  </APIField>
   <APIField name="email" type="String">
-    The email address of the User.
+    The email address of the user.
   </APIField>
   <APIField name="email_verified" type="Boolean">
-    Indicates if the User's email has been verified.
+    The verification status of the <InlineField>email</InlineField>. This value is `true` when the email is verified.
   </APIField>
   <APIField name="exp" type="Long">
-    The expiration instant of the access token, expressed as UNIX time which is the number of seconds since Epoch.
+    The expiration instant of the access token, expressed as [unix time](/docs/reference/data-types#unix-time).
   </APIField>
   <APIField name="iat" type="Long">
-    The instant the access token was issued, expressed as UNIX time which is the number of seconds since Epoch.
+    The instant the access token was issued, expressed as [unix time](/docs/reference/data-types#unix-time).
   </APIField>
   <APIField name="iss" type="String">
     The issuer of the access token.
@@ -1440,27 +1524,34 @@ This is an example response body when the provided `access_token` was issued on 
   <APIField name="jti" type="String">
     The unique identifier of the access token.
   </APIField>
+  <APIField name="phone_number" type="String" since="1.50.0">
+    The phone number of the user if available. <InlineField>user.phoneNumber</InlineField> or <InlineField>user.mobilePhone</InlineField> will be used in this order of precedence.
+  </APIField>
+  <APIField name="phone_number_verified" type="Boolean" since="1.59.0">
+    The verification status of the <InlineField>phone_number</InlineField>. This value is `true` when the phone number is verified.
+  </APIField>
   <APIField name="preferred_username" type="String" since="1.5.0">
-    The username of the User whose claims are represented by this JWT.
+    The username of the user whose claims are represented by this JWT.
   </APIField>
   <APIField name="roles" type="String">
-    The roles assigned to the User in the authenticated Application.
+    The roles assigned to the user in the authenticated Application.
   </APIField>
   <APIField name="scope" type="String">
     The scope of the access token. This will only be present if scope was requested during authentication.
   </APIField>
   <APIField name="sub" type="UUID">
-    The subject of the access token.
-    This value is equal to the User's unique Id in FusionAuth.
+    The subject of the token. The value is the unique Id of the FusionAuth user.
   </APIField>
   <APIField name="tid" type="UUID" since="1.36.0">
-    The FusionAuth Tenant unique Id.
+    The unique Id of the user's tenant.
   </APIField>
 </APIBlock>
 
 <JSON title="Example JSON Response for a valid token" src="oauth/introspect_valid_token_response.json" />
 
 <JSON title="Example JSON Response for an invalid token" src="oauth/introspect_invalid_token_response.json" />
+
+<JSON title="Example JSON Response for a a valid refresh token" src="oauth/introspect_valid_refresh_token_response.json" />
 
 #### Response Body
 
@@ -1478,11 +1569,14 @@ This is an example response body when the provided `access_token` was issued as 
   <APIField name="aud" type="Object">
     The intended audience of this access token. This value may be a string or an array of string values representing one to many intended entities.
   </APIField>
+  <APIField name="cnf" type="Object" since="1.63.0">
+    The confirmation claim, which is present for DPoP tokens. The `jkt` field contains the base64url encoding of the JWK SHA-256 Thumbprint of the DPoP public key (in JWK format) to which the access token is bound.
+  </APIField>
   <APIField name="exp" type="Long">
-    The expiration instant of the access token, expressed as UNIX time which is the number of seconds since Epoch.
+    The expiration instant of the access token, expressed as [unix time](/docs/reference/data-types#unix-time).
   </APIField>
   <APIField name="iat" type="Long">
-    The instant the access token was issued, expressed as UNIX time which is the number of seconds since Epoch.
+    The instant the access token was issued, expressed as [unix time](/docs/reference/data-types#unix-time).
   </APIField>
   <APIField name="iss" type="String">
     The issuer of the access token.
@@ -1494,11 +1588,10 @@ This is an example response body when the provided `access_token` was issued as 
     The optional permissions requested for this access token. If no permissions were requested, this token represents all permissions allowed by the grant.
   </APIField>
   <APIField name="sub" type="UUID">
-    The subject of the access token.
-    This value is equal to the Entity unique Id in FusionAuth.
+    The subject of the token. The value is the unique Id of the FusionAuth user.
   </APIField>
   <APIField name="tid" type="UUID">
-    The FusionAuth Tenant unique Id.
+    The unique Id of the user's tenant.
   </APIField>
 </APIBlock>
 
@@ -1508,7 +1601,7 @@ This is an example response body when the provided `access_token` was issued as 
 
 ## UserInfo
 
-This is an implementation of the OpenId Connect UserInfo endpoint as defined by the [OpenId Connect Section 5.3](http://openid.net/specs/openid-connect-core-1_0.html#UserInfo).
+This is an implementation of the OpenID Connect UserInfo endpoint as defined by the [OpenID Connect Section 5.3](http://openid.net/specs/openid-connect-core-1_0.html#UserInfo).
 This endpoint may be called using the `GET` or the `POST` HTTP method.
 
 <Aside type="note">
@@ -1555,8 +1648,8 @@ Returns the Claims about the authenticated End-User.
 <Aside type="note">
   In version `1.50.0` and later the UserInfo response changes based on the <InlineField>oauthConfiguration.scopeHandlingPolicy</InlineField> value of the application object.
 
-  * In `Strict` mode the response claims are populated based on the `scope` values of the provided token and available information on the User object. This behavior more closely aligns with the OpenID Connect 1.0 specification recommendations.
-  * In `Compatibility` mode the response claims are populated based on available information on the User object only and include some claims from the provided token. This is behavior allows for backwards compatibility with versions of FusionAuth before 1.50.0.
+  * In `Strict` mode the response claims are populated based on the `scope` values of the provided token and available information on the user object. This behavior more closely aligns with the OpenID Connect 1.0 specification recommendations.
+  * In `Compatibility` mode the response claims are populated based on available information on the user object only and include some claims from the provided token. This is behavior allows for backwards compatibility with versions of FusionAuth before 1.50.0.
 </Aside>
 
 _Response Codes_
@@ -1680,12 +1773,16 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `access_denied`
     * `authorization_pending`
     * `change_password_required`
+    * `consent_required`
     * `expired_token`
+    * `interaction_required`
     * `invalid_client`
+    * `invalid_dpop_proof`
     * `invalid_grant`
     * `invalid_request`
     * `invalid_scope`
     * `invalid_token`
+    * `login_required`
     * `not_licensed`
     * `server_error`
     * `two_factor_required`
@@ -1713,6 +1810,7 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `access_token_required`
     * `access_token_unavailable_for_processing`
     * `auth_code_not_found`
+    * `authentication_required`
     * `change_password_administrative`
     * `change_password_breached`
     * `change_password_expired`
@@ -1720,6 +1818,8 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `client_authentication_missing`
     * `client_id_mismatch`
     * `consent_canceled`
+    * `consent_required`
+    * `email_verification_required`
     * `grant_type_disabled`
     * `invalid_additional_client_id`
     * `invalid_client_authentication`
@@ -1727,6 +1827,7 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `invalid_client_id`
     * `invalid_device_code`
     * `invalid_entity_permission_scope`
+    * `invalid_expires_in`
     * `invalid_grant_type`
     * `invalid_id_token_hint`
     * `invalid_origin`
@@ -1735,10 +1836,12 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `invalid_pkce_code_challenge_method`
     * `invalid_pkce_code_verifier`
     * `invalid_post_logout_redirect_uri`
+    * `invalid_prompt`
     * `invalid_redirect_uri`
     * `invalid_response_mode`
     * `invalid_response_type`
     * `invalid_target_entity_scope`
+    * `invalid_tenant_id`
     * `invalid_user_code`
     * `invalid_user_credentials`
     * `invalid_user_id`
@@ -1746,21 +1849,27 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `missing_client_id`
     * `missing_client_secret`
     * `missing_code`
-    * `missing_code_challenge`,
-    * `missing_code_verifier`,
+    * `missing_code_challenge`
+    * `missing_code_verifier`
     * `missing_device_code`
     * `missing_grant_type`
     * `missing_redirect_uri`
     * `missing_refresh_token`
     * `missing_required_scope`
     * `missing_response_type`
+    * `missing_tenant_id`
     * `missing_token`
     * `missing_user_code`
     * `missing_user_id`
     * `missing_verification_uri`
+    * `multi_factor_challenge_required`
     * `not_licensed`
+    * `phone_verification_required`
     * `refresh_token_not_found`
     * `refresh_token_type_not_supported`
+    * `registration_missing_requirement`
+    * `registration_required`
+    * `registration_verification_required`
     * `unknown`
     * `unknown_scope`
     * `user_code_expired`

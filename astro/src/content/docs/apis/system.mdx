@@ -1,7 +1,6 @@
 ---
-title: System
+title: System API
 description: Learn about the APIs for retrieving and updating the system configuration.
-section: apis
 ---
 import Aside from 'src/components/Aside.astro';
 import API from 'src/components/api/API.astro';
@@ -16,8 +15,6 @@ import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
 import ReindexRequestBody from 'src/content/docs/apis/_reindex-request-body.mdx';
 import PrometheusJvmGauges from 'src/content/docs/_shared/_prometheus-jvm-gauges.mdx';
-
-## Overview
 
 This page contains the APIs that are used for retrieving and updating the system configuration.
 
@@ -225,25 +222,41 @@ This API is used to retrieve the status of a reindex request. This may be useful
 
 The Status API is used to retrieve the current status and metrics for FusionAuth. This is useful for monitoring. For health checks, prefer [the Health API](/docs/apis/system#retrieve-system-health).
 
-By default, this API requires authentication. If you prefer to allow unauthenticated access to this endpoint from local scrapers, you may set `fusionauth-app.local-metrics.enabled=true`. See the  [configuration reference](/docs/reference/configuration) for more info.
+By default, this API requires authentication to return full results. If you prefer to allow unauthenticated access to this endpoint from local scrapers, you may set `fusionauth-app.local-metrics.enabled=true`. See the [configuration reference](/docs/reference/configuration) for more info.
+
+If you call this API without an API key, you will receive a status response only.
 
 <Aside type="note">
-FusionAuth also supports a system status check [using Prometheus](/docs/operate/secure-and-monitor/prometheus).
+FusionAuth also supports a system status check [using Prometheus](/docs/operate/monitor/prometheus).
 </Aside>
 
 ### Request
 
-<API method="GET" uri="/api/status" authentication={["local-bypass", "none"]} title="Return the system status without an API key"/>
-
-<API method="GET" uri="/api/status" authentication={["api-key"]} title="Return the system status with an API key"/>
+<API method="GET" uri="/api/status" authentication={["api-key", "basic", "local-bypass", "none"]} title="Return the system status"/>
 
 ### Response
-The JSON response from the Status API is complex and subject to change. The only exception is the `version` key.
 
-The `version` key will not change and will be returned as below. As a reminder, an API key is required to obtain this value unless explicitly allowed from `localhost`.
+This JSON response body varies based on whether you:
+
+* provide an API key
+* do not provide an API key
+* configure local bypass
+
+When no API key is used and local bypass is not enabled, the response will only include the `status` property.
+
 ```json
 {
-  "version": "1.26.1"
+  "status": "ok"
+}
+```
+
+When retrieved with an API key or if local bypass is enabled, the JSON response from the Status API is complex and subject to change. The only exception is the `version` key.
+
+The `version` key will not change and will be returned as below. As a reminder, an API key is required to obtain this value unless explicitly allowed from `localhost`.
+
+```json
+{
+  "version": "1.59.0"
 }
 ```
 
@@ -258,8 +271,7 @@ _Response Codes_
 | 453  | The FusionAuth database connection pool connectivity is below the healthy threshold. This means requests are waiting too long to obtain a connection to the database. Additional information may be available in the JSON response which is retrieved when using an API key.                                                                                                                                                                                                                                                                                              |
 | 454  | The FusionAuth database connection pool connectivity is below the healthy threshold. Additional information may be available in the JSON response which is retrieved when using an API key.<br/><br/> As of version `1.51.1` this status code will no longer be returned based upon the connectivity health check. In practice you only need to monitor for `452` to ensure FusionAuth is able to connect to the database. {/* eslint-disable-line */}                                                                                                                    |
 | 460  | FusionAuth is using Elasticsearch and the search service is reporting an unhealthy cluster status. In a cluster with 2+ nodes, this means the cluster status is being reported as `yellow` or `red`. In a single-node Elasticsearch configuration this means the cluster status is `red.`<br/><br/> As of version `1.51.1` this status code will no longer be returned based upon the Elasticsearch health check. If you are using an external Elasticsearch or OpenSearch service, you will want to monitor that separately from FusionAuth. {/* eslint-disable-line */} |
-| 500  | FusionAuth is not functioning properly. This could indicate that the database connectivity failed or one or more services within FusionAuth failed. Consult the FusionAuth [Troubleshooting](/docs/operate/troubleshooting/troubleshooting) to learn more about the failure or contact FusionAuth support for assistance.                                                                                                                                                                                                                                                 |
-
+| 500  | FusionAuth is not functioning properly. This could indicate that the database connectivity failed or one or more services within FusionAuth failed. Consult the FusionAuth [Troubleshooting](/docs/operate/troubleshooting) to learn more about the failure or contact FusionAuth support for assistance.                                                                                                                                                                                                                                                 |
 ## Retrieve System Health
 
 <Aside type="version">
@@ -292,7 +304,7 @@ The Version API is used to retrieve the current version of FusionAuth.
 
 ### Request
 
-<API method="GET" uri="/api/system/version" authentication={["api-key"]} title="Return the FusionAuth system version with an API key"/>
+<API method="GET" uri="/api/system/version" authentication={["api-key", "basic"]} title="Return the FusionAuth system version"/>
 
 ### Response
 
@@ -315,11 +327,11 @@ The Version API is used to retrieve the current version of FusionAuth.
 
 ## Retrieve System Metrics Using Prometheus
 
-This page contains the API that is used for retrieving FusionAuth application metrics to be used with Prometheus. Please refer to the [Prometheus setup](/docs/operate/secure-and-monitor/prometheus#) guide to understand how to set up Prometheus with the FusionAuth metrics endpoint.
+This page contains the API that is used for retrieving FusionAuth application metrics to be used with Prometheus. Please refer to the [Prometheus setup](/docs/operate/monitor/prometheus) guide to understand how to set up Prometheus with the FusionAuth metrics endpoint.
 
 By default, this API requires authentication. If you prefer to allow unauthenticated access to this endpoint from local scrapers, you may set `fusionauth-app.local-metrics.enabled=true`. See the  [configuration reference](/docs/reference/configuration) for more info.
 
-<API method="GET" uri="/api/prometheus/metrics" authentication={["basic", "api-key"]} title="Retrieve FusionAuth application metrics to use with Prometheus"/>
+<API method="GET" uri="/api/prometheus/metrics" authentication={["api-key", "basic", "local-bypass"]} title="Retrieve FusionAuth application metrics to use with Prometheus"/>
 
 ### Request Parameters
 There are no request parameters required with this API.

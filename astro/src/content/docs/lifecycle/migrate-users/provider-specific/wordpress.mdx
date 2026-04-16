@@ -1,27 +1,22 @@
 ---
-title: Migration From WordPress
+title: Migrate From WordPress
 description: How to migrate your users from WordPress to FusionAuth.
-section: lifecycle
-subcategory: migrate users
-tertcategory: provider specific
-prerequisites: Docker, Node
-technology: WordPress
-hashTechnology: WordPress Phpass
 importCodeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-import-scripts/main
 javaCodeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-contrib/master
 ---
 
-import InlineUIElement from 'src/components/InlineUIElement.astro';
-import InlineField from 'src/components/InlineField.astro';
-import Aside from '/src/components/Aside.astro';
-import {RemoteCode} from '@fusionauth/astro-components';
-import Identifiers from 'src/content/docs/lifecycle/migrate-users/provider-specific/_identifiers.mdx';
-import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/provider-specific/_mapping-user-attributes.mdx';
-import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-note.mdx';
-import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
-import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/provider-specific/_other-entities-intro.mdx';
-import WhatNext from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next.mdx';
 import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
+import Aside from '/src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import Identifiers from 'src/content/docs/lifecycle/migrate-users/provider-specific/_identifiers.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/provider-specific/_mapping-user-attributes.mdx';
+import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/provider-specific/_other-entities-intro.mdx';
+import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
+import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-note.mdx';
+import WhatNext from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next.mdx';
+import RemoteCode from 'src/components/RemoteCode.astro';
 
 export const migration_source_name = 'WordPress';
 export const migration_source_dir = 'wordpress';
@@ -29,9 +24,9 @@ export const script_supports_social_logins = false;
 
 ## Overview
 
-This document will help you migrate users from {frontmatter.technology} to FusionAuth.
+This document will help you migrate users from WordPress to FusionAuth.
 
-This guide is a low-level, technical tutorial focusing on transferring password hashes, calling APIs, and preparing data when migrating users from {frontmatter.technology}. To understand how to plan a migration at a higher level, please read the [FusionAuth migration guide](/docs/lifecycle/migrate-users/general-migration).
+This guide is a low-level, technical tutorial focusing on transferring password hashes, calling APIs, and preparing data when migrating users from WordPress. To understand how to plan a migration at a higher level, please read the [FusionAuth migration guide](/docs/lifecycle/migrate-users).
 
 ## Prerequisites
 
@@ -45,7 +40,7 @@ To follow this tutorial, you need:
 
 ### Obtaining User Data
 
-{frontmatter.technology} stores all users in a MySQL database. You will need access to the database to run a SQL extraction script.
+WordPress stores all users in a MySQL database. You will need access to the database to run a SQL extraction script.
 
 ### Mapping User Attributes
 
@@ -128,7 +123,7 @@ Browse to http://localhost/wp-login.php. Log in with username `user` and passwor
 
 ### Add A New User
 
-If you use WordPress as a user management system, you need to allow users to register themselves. To do this, browse to **Settings —> General —> Membership**. Enable <InlineUIElement>Anyone can register</InlineUIElement> and click <InlineUIElement>Save Changes</InlineUIElement>.
+If you use WordPress as a user management system, you need to allow users to register themselves. To do this, navigate to <Breadcrumb>Settings -> General -> Membership</Breadcrumb>. Enable <InlineUIElement>Anyone can register</InlineUIElement> and click <InlineUIElement>Save Changes</InlineUIElement>.
 
 Log out at the top right of the page. Browse to http://localhost/wp-login.php.
 Register a new user. Enter a username and email `richard@example.com`.
@@ -281,11 +276,11 @@ Your output should be valid JSON and look like the file `fusionauth-import-scrip
 
 ## Import Users
 
-Now that the user details have been extracted from {frontmatter.technology}, you need to add a password hashing plugin to FusionAuth that supports the phpass hashing algorithm used in {frontmatter.technology}, map the {frontmatter.technology} fields to FusionAuth fields, and then import the users using a script.
+Now that the user details have been extracted from WordPress, you need to add a password hashing plugin to FusionAuth that supports the phpass hashing algorithm used in WordPress, map the WordPress fields to FusionAuth fields, and then import the users using a script.
 
 ### Use A WordPress Password Hash Plugin For FusionAuth
 
-The {frontmatter.hashTechnology} hashing algorithm is not [natively supported by FusionAuth](/docs/reference/password-hashes). However, FusionAuth allows [custom plugins](/docs/extend/code/password-hashes/custom-password-hashing). There is a {frontmatter.hashTechnology} plugin accompanying this article [in this GitHub repository](https://github.com/FusionAuth/fusionauth-contrib/tree/main/Password%20Hashing%20Plugins).
+The WordPress Phpass hashing algorithm is not [natively supported by FusionAuth](/docs/reference/password-hashes). However, FusionAuth allows [custom plugins](/docs/extend/code/password-hashes/custom-password-hashing). There is a WordPress Phpass plugin accompanying this article [in this GitHub repository](https://github.com/FusionAuth/fusionauth-contrib/tree/main/Password%20Hashing%20Plugins).
 
 <Aside type="note">
 The linked repository has multiple plugin projects. You need to build and install only the Password Hashing Plugins project.
@@ -304,7 +299,7 @@ Open the file `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/myc
     lang="java"
 />
 
-Most of the other hashing plugins in this project take a plaintext password and Base64 salt and return a Base64 hash. The phpass plugin is more complicated. The salt is stored inside the hash, as is the hashing algorithm name. Thus the `encrypt` function needs to perform the password hash comparison inside the phpass algorithm to verify the user's password is correct. The {frontmatter.technology} user import script you will use shortly saves the existing hash to the salt field. If the `checkPassword` function succeeds, then the `encrypt` function returns the existing salt. If it fails, the function returns a random number to ensure that the passwords will never match. Only if given a new password with no existing hash will `encrypt` return a new hash.
+Most of the other hashing plugins in this project take a plaintext password and Base64 salt and return a Base64 hash. The phpass plugin is more complicated. The salt is stored inside the hash, as is the hashing algorithm name. Thus the `encrypt` function needs to perform the password hash comparison inside the phpass algorithm to verify the user's password is correct. The WordPress user import script you will use shortly saves the existing hash to the salt field. If the `checkPassword` function succeeds, then the `encrypt` function returns the existing salt. If it fails, the function returns a random number to ensure that the passwords will never match. Only if given a new password with no existing hash will `encrypt` return a new hash.
 
 The `factor` parameter should always be 8.
 
@@ -312,12 +307,12 @@ There are two other files linked to this plugin that you shouldn't need to alter
 - `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleWordPressPhpassPasswordEncryptorTest.java`, which holds unit tests for the hasher.
 - `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/guice/MyExampleFusionAuthPluginModule.java`, which makes the hasher file known to FusionAuth.
 
-If you make another hash plugin, you will need to make your own test and add your plugin to the Guice file. This might be the case if your {frontmatter.technology} installation has overridden the default hashing algorithm.
+If you make another hash plugin, you will need to make your own test and add your plugin to the Guice file. This might be the case if your WordPress installation has overridden the default hashing algorithm.
 
 <Aside type="note">
-The {frontmatter.hashTechnology} library uses specific prefixes in password hashes to indicate the algorithm and cost parameters.
+The WordPress Phpass library uses specific prefixes in password hashes to indicate the algorithm and cost parameters.
 
-- **No prefix:** Very old {frontmatter.technology} installations might use MD5 hashes. These hashes are 32 characters long and consist of hexadecimal characters.
+- **No prefix:** Very old WordPress installations might use MD5 hashes. These hashes are 32 characters long and consist of hexadecimal characters.
 - **$P$ or $P$B:** This prefix indicates phpass library. The $P$ indicates phpass, and the character following this prefix represents the cost parameter of the hash. The actual algorithm is a modified MD5 with multiple iterations to increase security. This is the algorithm the Java plugin discussed above uses and is the default in WordPress in 2024.
 - **$1$:** This prefix indicates an MD5-based crypt hash processed with a Unix `crypt()` function.
 - **$2a$, $2x$, $2y$:** These prefixes are associated with bcrypt.
@@ -371,26 +366,26 @@ The two users you exported have the roles Administrator and Subscriber, as seen 
 node 3_addRoles.mjs
 ```
 
-Now in the [FusionAuth admin interface](http://localhost:9011/admin), if you browse to **Applications —> WordpressTestImportApp** and click the <InlineUIElement>Manage Roles</InlineUIElement> button, you can see the roles have been added for your sample Application. This Application was created using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `fusionauth-import-scripts/wordpress/fusionAuthDockerFiles/kickstart/kickstart.json`. When FusionAuth comes up for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state.
+Now in the [FusionAuth admin interface](http://localhost:9011/admin), if you browse to <Breadcrumb>Applications -> WordpressTestImportApp</Breadcrumb> and click the <InlineUIElement>Manage Roles</InlineUIElement> button, you can see the roles have been added for your sample Application. This Application was created using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `fusionauth-import-scripts/wordpress/fusionAuthDockerFiles/kickstart/kickstart.json`. When FusionAuth comes up for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state.
 
 ### Prepare Users For Import To FusionAuth
 
 The next script, `4_convertWpUserToFaUser.mjs`, is the most important. It maps the fields of `users.json` to FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped.
 
-The script uses `stream-json`, a JSON library that can incrementally read massive files with millions of users. It opens the `users.json` file for reading in the line `new Chain([fs.createReadStream(inputFilename), parser(), new StreamArray(),]);`. For more information, read https://github.com/uhop/stream-json. The `processUsers()` function calls `getFaUserFromUser()` to map the {frontmatter.technology} user to FusionAuth, and then saves them to an `faUsers.json` file.
+The script uses `stream-json`, a JSON library that can incrementally read massive files with millions of users. It opens the `users.json` file for reading in the line `new Chain([fs.createReadStream(inputFilename), parser(), new StreamArray(),]);`. For more information, read https://github.com/uhop/stream-json. The `processUsers()` function calls `getFaUserFromUser()` to map the WordPress user to FusionAuth, and then saves them to an `faUsers.json` file.
 
 The `getFaUserFromUser()` function does a few things:
-- Maps as many matching fields from {frontmatter.technology} to FusionAuth as possible.
-- Stores all {frontmatter.technology} user details that don't map to FusionAuth in the `data` field. If there are details you want to include or exclude, alter the `dataToIgnore` list at the top of the file.
+- Maps as many matching fields from WordPress to FusionAuth as possible.
+- Stores all WordPress user details that don't map to FusionAuth in the `data` field. If there are details you want to include or exclude, alter the `dataToIgnore` list at the top of the file.
 - Ignores empty fields and arrays.
 - Uses the name we registered for the hashing algorithm in the Java plugin in `faUser.encryptionScheme = 'example-wordpress-phpass';`.
 - Adds Registrations (a Role link between a User and an Application) for users. You will need to change these Ids to match those of your application when doing a real migration.
 
-There are a few helper functions at the bottom of the file to extract keys and values from the {frontmatter.technology} `wp_usermeta` object and deserialize them from PHP. These are used when working with `wp_capabilities`.
+There are a few helper functions at the bottom of the file to extract keys and values from the WordPress `wp_usermeta` object and deserialize them from PHP. These are used when working with `wp_capabilities`.
 
 Carefully read this function and make sure that the user information you need is imported correctly. If any information is not needed, you can comment out the related lines.
 
-If you are uncertain about what a user attribute in FusionAuth does, read more in the [user guide](/docs/apis/users), as linked in the [general migration guide](/docs/lifecycle/migrate-users/general-migration) recommended earlier.
+If you are uncertain about what a user attribute in FusionAuth does, read more in the [user guide](/docs/apis/users), as linked in the [general migration guide](/docs/lifecycle/migrate-users) recommended earlier.
 
 In a terminal in the `fusionauth-import-scripts/wordpress/src` directory, run the script with the following command.
 
@@ -400,7 +395,7 @@ node 4_convertWpUserToFaUser.mjs
 
 ### Use The Script
 
-Now you have the users file `faUsers.json` and the {frontmatter.hashTechnology} plugin is installed. To import the users into FusionAuth, you need to run the Node.js import script.
+Now you have the users file `faUsers.json` and the WordPress Phpass plugin is installed. To import the users into FusionAuth, you need to run the Node.js import script.
 
 In a terminal in the `fusionauth-import-scripts/wordpress/src` directory, run the command below.
 
@@ -414,7 +409,7 @@ Finally, this script imports users individually. If this is too slow when runnin
 
 ### Verify The Import
 
-If the migration script ran successfully, you should be able to log in to the `WordpressTestImportApp` application with one of the imported users. In the [FusionAuth admin UI](http://localhost:9011/admin), navigate to **Applications —> WordpressTestImportApp**. Click the <InlineUIElement>View</InlineUIElement> button (green magnifying glass) next to the application and note the <InlineField>OAuth IdP login URL</InlineField>.
+If the migration script ran successfully, you should be able to log in to the `WordpressTestImportApp` application with one of the imported users. In the [FusionAuth admin UI](http://localhost:9011/admin), navigate to <Breadcrumb>Applications -> WordpressTestImportApp</Breadcrumb>. Click the <InlineUIElement>View</InlineUIElement> button (green magnifying glass) next to the application and note the <InlineField>OAuth IdP login URL</InlineField>.
 
 <img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/find-login-url.png`} alt="Application login URL." width="1200" role="bottom-cropped" />
 
@@ -423,7 +418,7 @@ Copy this URL and open it in a new incognito browser window. (If you don’t use
 <Aside type="note">
   After a successful test login, the user will be redirected to a URL like `https://example.com/?code=FlZF97WIYLNxt4SGD_22qvpRh4fZ6kg_N89ZbBAy1E4&locale=fr&userState=Authenticated`. This occurs because you haven't set up a web application to handle the authorization code redirect yet.
 
-  That is an important next step but is beyond the scope of this document. Consult the [5-minute setup guide](/docs/quickstarts/5-minute-setup-guide) for an example of how to do this.
+  That is an important next step but is beyond the scope of this document. Consult the [5-minute setup guide](/docs/get-started/start-here/step-1) for an example of how to do this.
 </Aside>
 
 
@@ -452,7 +447,7 @@ Log in to the database and browse to `Databases/fusionauth/Schemas/public/Tables
 
 ## What To Do Next
 
-{frontmatter.hashTechnology} uses a relatively old and weak hashing algorithm, though not terrible. You might want to rehash your users' passwords on their next login with a stronger algorithm. To enable this setting, follow these [instructions](/docs/extend/code/password-hashes/custom-password-hashing#rehashing-user-passwords).
+WordPress Phpass uses a relatively old and weak hashing algorithm, though not terrible. You might want to rehash your users' passwords on their next login with a stronger algorithm. To enable this setting, follow these [instructions](/docs/extend/code/password-hashes/custom-password-hashing#rehashing-user-passwords).
 
 <WhatNext />
 

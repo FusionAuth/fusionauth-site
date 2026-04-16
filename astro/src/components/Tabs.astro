@@ -1,0 +1,53 @@
+<div class="tabs-group my-8 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900">
+  <div class="tab-list flex bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 p-1 gap-1" role="tablist"></div>
+  <div class="tab-panels p-4">
+    <slot />
+  </div>
+</div>
+
+<script>
+  function initTabs() {
+    document.querySelectorAll('.tabs-group').forEach((group) => {
+      const tabList = group.querySelector('.tab-list');
+      const panelContainer = group.querySelector('.tab-panels');
+      const allPanels = panelContainer ? Array.from(panelContainer.children) : [];
+      const directPanels = allPanels.filter(child => child.classList.contains('tab-panel'));
+
+      if (!tabList || directPanels.length === 0) return;
+
+      tabList.innerHTML = '';
+      
+      directPanels.forEach((panel, index) => {
+        const label = panel.getAttribute('data-label') || `Tab ${index + 1}`;
+        const btn = document.createElement('button');
+        btn.innerHTML = label;
+        btn.className = 'px-4 py-1.5 text-sm font-medium rounded-md transition-all cursor-pointer focus:outline-none';
+        
+        const updateState = (isActive: boolean) => {
+          btn.setAttribute('aria-selected', String(isActive));
+          if (isActive) {
+            btn.className = 'px-4 py-1.5 text-sm font-bold rounded-md bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm transition-all';
+            panel.classList.remove('hidden');
+          } else {
+            btn.className = 'px-4 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all';
+            panel.classList.add('hidden');
+          }
+        };
+
+        btn.onclick = () => {
+          directPanels.forEach((_, i) => {
+            const siblingBtn = tabList.children[i] as any;
+            if (siblingBtn._update) siblingBtn._update(i === index);
+          });
+        };
+
+        (btn as any)._update = updateState;
+        tabList.appendChild(btn);
+        updateState(index === 0); // Default first tab
+      });
+    });
+  }
+
+  initTabs();
+  document.addEventListener('astro:after-swap', initTabs);
+</script>

@@ -1,13 +1,12 @@
 ---
-title: Multi-Factor
+title: Multi-Factor API
 description: Learn about the APIs for enabling and disabling multi-factor authentication for users.
-section: apis
 ---
 import Aside from 'src/components/Aside.astro';
+import AvailableSince from 'src/components/api/AvailableSince.astro';
 import InlineField from 'src/components/InlineField.astro';
 import TwoFactorTotpLimits from 'src/content/docs/_shared/_two-factor-totp-limits.mdx';
 import PlanBlurb from 'src/content/docs/_shared/_plan-blurb.astro';
-import DifferenceTwoFactorMultiFactor from 'src/content/docs/_shared/_difference-two-factor-multi-factor.mdx';
 import API from 'src/components/api/API.astro';
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
@@ -21,24 +20,13 @@ import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-respon
 import TwoFactorStartRequestBody from 'src/content/docs/apis/_two-factor-start-request-body.mdx';
 import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
 import TwoFactorStartResponseBody from 'src/content/docs/apis/_two-factor-start-response-body.mdx';
+import DeprecatedSince from 'src/components/api/DeprecatedSince.astro';
 
 <PlanBlurb>
-  Email and SMS multi--factor methods are only available in paid plan of FusionAuth. Please visit [our pricing page](/pricing) to learn more about paid plans.
+Email and SMS multi-factor methods are only available in a paid plan of FusionAuth. Please visit [our pricing page](/pricing) to learn more about paid plans.
 </PlanBlurb>
 
-<Aside type="caution">
-This API underwent breaking changes in version 1.26.
-
-If you are using a version of FusionAuth prior to 1.26.0, you should upgrade. 😎 &nbsp; But if you cannot - here is the doc you are looking for: [old Two Factor doc](/docs/archive/apis/two-factor-1-25).
-</Aside>
-
-## Overview
-
-This API allows you to manage multi-factor authentication (MFA) for users.
-
-<Aside type="note">
-  <DifferenceTwoFactorMultiFactor />
-</Aside>
+This API controls [multi-factor authentication (MFA)](/docs/lifecycle/authenticate-users/multi-factor-authentication) options.
 
 ## Authentication
 
@@ -211,6 +199,10 @@ Retrieves a user's multi-factor status. This is helpful to understand if a user 
 
 This API may also be used to identify if an existing multi-factor trust value obtained during a multi-factor login is expired, or valid for a specific application when configured to restrict multi-factor trust.
 
+<Aside>
+    Since version 1.62.0, prefer the POST method for this endpoint, which provides more information to MFA requirement lambda functions.
+</Aside>
+
 ### Request
 
 <API method="GET" uri="/api/two-factor/status/{twoFactorTrustId}" authentication={["api-key"]} title="Retrieve multi-factor status"/>
@@ -231,14 +223,46 @@ This API may also be used to identify if an existing multi-factor trust value ob
   </APIField>
 </APIBlock>
 
+<API method="POST" uri="/api/two-factor/status" authentication={["api-key"]} title="Retrieve multi-factor status using request payload"/>
+<AvailableSince since="1.62.0"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+    <APIField name="action" type="String" optional defaults="login">
+        The action the user is attempting to perform. This value may be used by an MFA requirement lambda to determine if multi-factor authentication should be required.
+
+        Valid values are:
+        * `changePassword`
+        * `login`
+        * `stepUp`
+    </APIField>
+    <APIField name="applicationId" type="String" optional>
+        A unique application Id. When Application multi-factor configuration is enabled, providing this parameter will ensure the returned status applies to the expected result when attempting to login into this application.
+    </APIField>
+    <APIField name="accessToken" type="String" optional>
+        An access token (not an Id token) returned by FusionAuth as the result of a successful authentication. The encoded access token will be available in `context.accessToken` in an MFA requirement lambda function. See the [MFA requirement lambda](/docs/extend/code/lambdas/mfa-requirement) documentation. This must be a valid token that was issued and signed by FusionAuth.
+    </APIField>
+    <APIField name="twoFactorTrustId" type="String" optional>
+        The existing multi-factor trust obtained by completing a multi-factor login. This is the value that allows you to bypass multi-factor during the next login attempt.
+    </APIField>
+    <APIField name="userId" type="String" required>
+        The unique Id of the user for which to retrieve multi-factor status.
+    </APIField>
+</APIBlock>
+
+<JSON title="Example POST Request JSON" src="two-factor/status/request.json" />
+
 ### Response
 
-.Response Codes
+Response Codes
 
 | Code | Description                                                                                                                                                                                                                                          |
 |------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 200  | The user does not have multi-factor enabled, or the provided trust is still valid for the next login.                                                                                                                                                |
-| 242  | The user has multi-factor authentication enabled. Since version `1.42.0`, this status code is also returned when two factor authentication is required.  The user will be required to complete a two-factor challenge during the next login attempt. |
+| 200  | The user does not have multi-factor enabled, a challenge is not required, or the provided trust is still valid for the next login.                                                                                                                                                |
+| 242  | The user has multi-factor authentication enabled. Since version `1.42.0`, this status code is also returned when multi-factor authentication is required.  The user will be required to complete a multi-factor challenge during the next login attempt. This status code can also be used to determine whether step up is required.|
 | 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                                                                                             |
 | 401  | You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication).                                                                  |
 | 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                                                                                           |
@@ -311,9 +335,9 @@ You are enabling MFA for a user. You must provide an API key or a valid JWT for 
 
 <APIBlock>
   <APIField name="applicationId" type="UUID" optional since="1.46.0">
-    An optional Application Id. When this value is provided, it will be used to resolve an application-specific email template and make `application` available as a template variable.
+    An optional Application Id. When this value is provided, it will be used to resolve an application-specific email or message template and make `application` available as a template variable.
 
-    If not provided, only the tenant configuration will be used when resolving email templates, and `application` will not be available as a template variable.
+    If not provided, only the tenant configuration will be used when resolving templates, and `application` will not be available as a template variable.
   </APIField>
   <APIField name="email" type="String" optional>
     The email to which send Multi-Factor codes. If the <InlineField>method</InlineField> is equal to `email`, this is required.
@@ -345,9 +369,9 @@ You are enabling MFA for a user. You must provide an API key or a valid JWT for 
 
 <APIBlock>
   <APIField name="applicationId" type="UUID" optional since="1.46.0">
-    An optional Application Id. When this value is provided, it will be used to resolve an application-specific email template and make `application` available as a template variable.
+    An optional Application Id. When this value is provided, it will be used to resolve an application-specific email or message template and make `application` available as a template variable.
 
-    If not provided, only the tenant configuration will be used when resolving email templates, and `application` will not be available as a template variable.
+    If not provided, only the tenant configuration will be used when resolving templates, and `application` will not be available as a template variable.
   </APIField>
   <APIField name="email" type="String" optional>
     The email to which send Multi-Factor codes. If the <InlineField>method</InlineField> is equal to `email`, this is required.
@@ -387,9 +411,9 @@ You are disabling MFA for a user. You must provide an API key or a valid JWT for
 
 <APIBlock>
   <APIField name="applicationId" type="UUID" optional since="1.46.0">
-    An optional Application Id. When this value is provided, it will be used to resolve an application-specific email template and make `application` available as a template variable.
+    An optional Application Id. When this value is provided, it will be used to resolve an application-specific email or message template and make `application` available as a template variable.
 
-    If not provided, only the tenant configuration will be used when resolving email templates, and `application` will not be available as a template variable.
+    If not provided, only the tenant configuration will be used when resolving templates, and `application` will not be available as a template variable.
   </APIField>
   <APIField name="methodId" type="String" required>
     The Id of the MFA method which will be removed.
@@ -409,9 +433,9 @@ You are disabling MFA for a user. You must provide an API key or a valid JWT for
 
 <APIBlock>
   <APIField name="applicationId" type="UUID" optional since="1.46.0">
-    An optional Application Id. When this value is provided, it will be used to resolve an application-specific email template and make `application` available as a template variable.
+    An optional Application Id. When this value is provided, it will be used to resolve an application-specific email or message template and make `application` available as a template variable.
 
-    If not provided, only the tenant configuration will be used when resolving email templates, and `application` will not be available as a template variable.
+    If not provided, only the tenant configuration will be used when resolving templates, and `application` will not be available as a template variable.
   </APIField>
   <APIField name="methodId" type="String" required>
     The Id of the MFA method which will be removed.
@@ -464,7 +488,9 @@ This API is used to retrieve Recovery Codes for a User.
 
 ### Request
 
-<API method="GET" uri="/api/user/two-factor/recovery-code/{userId}" authentication={["api-key"]} title="Retrieve Recovery Codes"/>
+<API method="GET" uri="/api/user/two-factor/recovery-code/{userId}" authentication={["api-key"]} title="Retrieve Recovery Codes (deprecated)"/>
+
+<DeprecatedSince since="1.64.0">This endpoint is deprecated. To provide access to a user's recovery codes, [generate new recovery codes](/docs/apis/two-factor#generate-recovery-codes) and deliver those</DeprecatedSince>
 
 #### Request Parameters
 

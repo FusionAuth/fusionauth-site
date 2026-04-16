@@ -1,20 +1,17 @@
 ---
 title: Authorization Hub
 description: Integrate with third party platforms, using FusionAuth to safely store refresh tokens.
-section: get started
-subcategory: use cases
-navOrder: 100
+order: 100
+tags: api, consents
 ---
 import Aside from 'src/components/Aside.astro';
-import StoreRefreshTokensDiagram from 'src/diagrams/docs/get-started/use-cases/authorization-hub/store-refresh-token.astro';
-import RetrieveAccessTokenDiagram from 'src/diagrams/docs/get-started/use-cases/authorization-hub/retrieve-access-token.astro';
 import AuthorizationHubDescription from 'src/content/docs/get-started/use-cases/_authorization-hub-description.mdx';
 
 ## Overview
 
 <AuthorizationHubDescription />
 
-## Problem 
+## Problem
 
 You have an application that leverages social or other platform providers, using their APIs to provide functionality to your users.
 
@@ -29,6 +26,8 @@ With the authorization hub implementation, you can manage tokens for social prov
 * LinkedIn
 * Microsoft Entra Id
 * Any provider supporting OIDC
+
+This is the inverse of the API consents use case](/docs/get-started/use-cases/api-consents-platform).
 
 ## Solution
 
@@ -90,7 +89,39 @@ First, you need to let users connect their accounts with the platforms.
 
 Here's a sequence diagram for requesting and storing the refresh token.
 
-<StoreRefreshTokensDiagram alt="Requesting and storing the refresh token." />
+```mermaid title="Requesting and storing the refresh token."
+sequenceDiagram
+    participant User as Logged In User/Browser
+    participant App
+    participant FusionAuth
+    participant IdentityProvider as YouTube
+
+    User ->> App : Request 'Connect With YouTube' Page
+    App ->> App : Generates Connect With YouTube Authorize URL Using 'idp_hint'
+    App ->> User : Returns 'Connect With YouTube' Page
+    User ->> App : Clicks On 'Connect With YouTube'
+    App ->> User : Redirects to FusionAuth
+    User ->> FusionAuth : Requests Login Page
+    FusionAuth ->> FusionAuth : Examines 'idp_hint'
+    FusionAuth ->> User : Redirects to YouTube
+    User ->> IdentityProvider : Requests Login Page
+    IdentityProvider ->> User : Returns Login Page
+    User ->> IdentityProvider : Enter Credentials
+    IdentityProvider ->> IdentityProvider : Validate Credentials
+    IdentityProvider ->> User : Redirect To FusionAuth With Identity Provider Authorization Code
+    User ->> FusionAuth : Requests Page, Has YouTube Authorization Code
+    FusionAuth ->> IdentityProvider : Exchange Authorization Code For YouTube Tokens
+    IdentityProvider ->> FusionAuth : Returns YouTube Tokens
+    FusionAuth ->> FusionAuth : Stores YouTube Refresh Token On Link
+    FusionAuth ->> User : Redirect To Redirect URI With FusionAuth Authorization Code
+    User ->> App : Request Redirect URI, Has FusionAuth Authorization Code
+    App ->> FusionAuth : Request FusionAuth Tokens
+    FusionAuth ->> App : Return FusionAuth Tokens
+    App ->> App : Redirect To 'Connect With YouTube' Page
+    App ->> FusionAuth : Request User's Links Using API
+    FusionAuth ->> App : Return User's Links
+    App ->> User : Display 'Connected' Message
+```
 
 ### Accessing Social Provider APIs
 
@@ -103,7 +134,25 @@ Next, when your application needs to interact with the platform, take these gene
 
  There may be slightly different steps to retrieve the access token, or they may use a different term, for certain platforms, but the general flow will be as above. Here's a sequence diagram for requesting the new access token.
 
-<RetrieveAccessTokenDiagram alt="Getting the access token." />
+```mermaid title="Getting the access token."
+sequenceDiagram
+    participant User as Logged In User/Browser
+    participant App
+    participant FusionAuth
+    participant IdentityProvider
+    participant API
+
+    User ->> App : Uploads Video
+    App ->> FusionAuth : Request List Of Links For User
+    FusionAuth ->> App : Returns List Of Links
+    loop For Each Link
+        App ->> App : Extracts Long Lived Token
+        App ->> IdentityProvider : Passes Long Lived Token
+        IdentityProvider ->> App : Returns Access Token
+        App ->> API : Passes Access Token And Video
+        API ->> App : Accepts Video For Upload
+    end
+```
 
 ## Expected Outcome
 
@@ -119,7 +168,7 @@ When the long lived token stored in FusionAuth expires or is revoked by the user
 
 For Google, prefer the OIDC Identity Provider, which allows you to request a refresh token, rather than the Google Identity Provider, which only offers you the Id token. The OIDC Identity Provider offers more flexibility for this use case. [Learn more](/docs/lifecycle/authenticate-users/identity-providers/social/google#custom-parameters).
 
-Currently you cannot query user link attributes using the [User Search API](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch). This means that you can't query FusionAuth to, for example, find out how many users have connected to a certain social provider. Please [follow this GitHub issue for more, including workarounds](https://github.com/FusionAuth/fusionauth-issues/issues/2791).
+Currently you cannot query user link attributes using the [User Search API](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch). This means that you can't query FusionAuth to, for example, find out how many users have connected to a certain social provider. Please [follow this GitHub issue for more, including workarounds](https://github.com/FusionAuth/fusionauth-issues/issues/2335).
 
 ## Other Example Scenarios
 
@@ -133,7 +182,9 @@ In each of these cases there's a third party platform API which is used to provi
 
 ## Additional Documentation
 
-* [The Third-Party Service Authorization Mode](/docs/lifecycle/authenticate-users/oauth/modes#third-party-service-authorization)
+* [Multi-Platform Video Uploads blog post](/blog/using-identity-provider-links)
+* [The third-party service authorization mode](/docs/lifecycle/authenticate-users/oauth/modes#third-party-service-authorization)
+* [The API consents use case](/docs/get-started/use-cases/api-consents-platform)
 * [List of supported social identity providers](/docs/lifecycle/authenticate-users/identity-providers/#social-identity-providers)
 * [List of SDKs](/docs/sdks)
 * [Identity link APIs](/docs/apis/identity-providers/links)

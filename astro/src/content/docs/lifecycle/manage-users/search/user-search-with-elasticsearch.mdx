@@ -1,31 +1,27 @@
 ---
 title: Searching Users With Elasticsearch or OpenSearch
 description: Learn how to search for users using the Elasticsearch search engine.
-navcategory: developer
-section: lifecycle
-subcategory: manage users
-tertcategory: search
-tags: b2b2e
+tags: search users, elasticsearch, opensearch, query users, read users
 ---
 import Aside from 'src/components/Aside.astro';
+import AvailableSince from 'src/components/api/AvailableSince.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import DataFieldDataTypeChanges from 'src/content/docs/_shared/_data-field-data-type-changes.mdx';
 import ElasticsearchVersion from 'src/content/docs/_shared/_elasticsearch-version.mdx';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
 import JSON from 'src/components/JSON.astro';
 import PaginatingSearchResults from 'src/content/docs/_shared/_paginating-search-results.mdx';
 import ReIndexingElasticsearch from 'src/content/docs/_shared/_re-indexing-elasticsearch.mdx';
-import {RemoteCode} from '@fusionauth/astro-components';
 import SearchPreprocessingWarning from 'src/content/docs/_shared/_search-preprocessing-warning.mdx';
 import TroubleshootingElasticsearchQueries from 'src/content/docs/lifecycle/manage-users/search/_troubleshooting-elasticsearch-queries.mdx';
 import UserSearchLimits from 'src/content/docs/_shared/_user-search-limits.mdx';
 import UserSearchLimitsWorkarounds from 'src/content/docs/_shared/_user-search-limits-workarounds.mdx';
-
-## Overview
+import RemoteCode from 'src/components/RemoteCode.astro';
 
 You can search users in FusionAuth to see how many there are, what they are doing, and more. This document will walk you through how to use FusionAuth's powerful search capabilities to retrieve such user data.
 
 <Aside type="note">
-While this document references Elasticsearch, the same functionality is available if you use a [supported version of OpenSearch](/docs/get-started/download-and-install/system-requirements#elasticsearch).
+While this document references Elasticsearch, the same functionality is available if you use a [supported version of OpenSearch](/docs/get-started/download-and-install/reference/system-requirements#elasticsearch).
 </Aside>
 
 Most of this document applies to searching [Entities](/docs/get-started/core-concepts/entity-management), which also leverage the Elasticsearch engine.
@@ -44,7 +40,7 @@ To do so, in the administrative user interface, navigate to <Breadcrumb>System -
 
 If you are using the database search engine, you'll want to [consult the database search engine documentation](/docs/get-started/core-concepts/users#database-search-engine) for more information. 
 
-* Learn more about [each type of search engine](/docs/lifecycle/manage-users/search/search).
+* Learn more about [each type of search engine](/docs/lifecycle/manage-users/search).
 * Learn more about [switching search engines](/docs/lifecycle/manage-users/search/switch-search-engines).
 
 ## An Introduction To The Elasticsearch Search Engine
@@ -104,11 +100,7 @@ Where this differs is the ability to continue paging through large result sets. 
 
 ### Field Mappings
 
-For both `queryString` and `query` searches, you may search against specific fields.
-
-The exact list of indexed fields is not documented, but if you are running FusionAuth self-hosted, you can find the list by [retrieving the Elasticsearch mapping](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/indices-get-mapping.html).
-
-If you are using FusionAuth Cloud, please [open a support ticket](https://account.fusionauth.io/account/support) if you have a question about which fields are searchable.
+For both `queryString` and `query` searches, you may search against specific fields. Here are [the available fields for matching](/docs/reference/user-fields).
 
 Fields of the user object are indexed, as are the following relationships, which are available using the `nested` query type.
 
@@ -145,7 +137,11 @@ This file is the first argument for the `search.sh` shell script. Here's how you
 
 ## Searching With `queryString`
 
-Let's look at some examples of `queryString` searches. Below, you are searching for `dinesh`, across all fields, and wildcards are prepended and appended.
+Let's look at some examples of `queryString` searches.
+
+### All Fields
+
+Below, you are searching for `dinesh`, across all fields, and wildcards are prepended and appended.
 
 <RemoteCode title="Example Request JSON For Searching Across All Indexed Fields With queryString" 
             url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/queryString/all-fields-data-request.json" />
@@ -156,6 +152,8 @@ Here's how you'd run it if the above JSON is in `all-fields-data-request.json`.
 ./search.sh all-fields-data-request.json
 ```
 
+### Email
+
 Below, only the `email` field is searched for the string `dinesh`, because `email:` is specified.
 
 <RemoteCode title="Example Request JSON For Searching By Emails With queryString"
@@ -163,12 +161,23 @@ Below, only the `email` field is searched for the string `dinesh`, because `emai
 
 If you change the value from `email:dinesh*` to `email:dinesh` this query will return 0 results, because there is no user with that email and no wildcarding is done. If, instead, you change the value to `email:dinesh@fusionauth.io` this query will return the user.
 
+### Multiple Fields
+
 Finally, below, the `email` field matches the string `dinesh` and the `verified` field is `false`. These are joined together with an `OR` clause which returns the user if either clause is true, but you can also use `AND` for the intersection.
 
 <RemoteCode title="Example Request JSON For Searching By Emails And The Verified Field"
             url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/queryString/email-verified-data-request.json" />
 
 Learn more about making [queryString queries in the Elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/query-dsl-query-string-query.html).
+
+### Phone Number
+
+<AvailableSince since="1.59.0"/>
+
+Below, only the `phoneNumber` field is searched for because `phoneNumber:` is specified. The query matches phone numbers with any country code and starting with the `303` area code.
+
+<JSON title="Example Request JSON For Searching By Phone Number With queryString"
+      src="users/search-queryString-phoneNumber-example-elastic-request.json" />
 
 ## Searching With `query`
 
@@ -293,6 +302,9 @@ If you attempt run a query to find results using a `startRow` greater than 10,00
 <JSON title="Next Results Query" src="users/search-nextResults-request.json" />
 
 You will receive a response containing users 10,001 through 10,025. You can then take the `nextResults` token from that response and repeat the request for users 10,026 through 10,050, and continue to repeat as needed to page through the results.
+
+<RemoteCode title="An Example Shell Script For Searching Using Extended Pagination"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-scripts/refs/heads/main/full-user-search/paginatefulluserdownload.sh" />
 
 ## Re-indexing
 

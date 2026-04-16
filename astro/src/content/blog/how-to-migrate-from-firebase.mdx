@@ -1,18 +1,16 @@
 ---
-publish_date: 2022-05-25 
+publish_date: 2022-05-25
 title: How to migrate your user data from Google Firebase
-description: How can you migrate user data such as password hashes and social logins away from Google Firebase?
+seoTitle: "Firebase Migration Guide | How to Migrate Users to Another Auth System"
+description: How to migrate user data from Firebase Authentication to another project or identity provider. This guide covers export methods, password handling, and reauthentication.
 authors: Dan Moore
 image: /img/blogs/migrate-from-firebase/how-to-migrate-user-data-from-firebase-to-fusionauth.svg
 categories: Tutorial, Compare
 tags: firebase, migration
+updated_date: 2025-08-21
 excerpt_separator: "{/* more */}"
 ---
 import Aside from "../../components/Aside.astro";
-import BulkAfterDiagram from "../../diagrams/docs/guides/bulk-migration-after-firebase.astro";
-import BulkBeforeDiagram from "../../diagrams/docs/guides/bulk-migration-before-firebase.astro";
-import SlowMigrationDiagram from "../../diagrams/docs/guides/slow-migration-firebase.astro";
-import SlowSubsequentDiagram from "../../diagrams/docs/guides/slow-migration-subsequent-firebase.astro";
 
 
 Firebase is a serverless offering from Google which includes customer identity and access management (CIAM) as well as other typical functionality needed for an application. As such, it offers authentication and authorization, a database, metrics and more.
@@ -20,6 +18,55 @@ Firebase is a serverless offering from Google which includes customer identity a
 At FusionAuth, we talk to potential customers who are interested in migrating away from Firebase because of limitations, typically of standards or data control.
 
 {/* more */}
+
+<details>
+    <summary>Summary - How to Migrate from Google Firebase</summary>
+### Key Takeaways
+
+- **Seamless migration path**: FusionAuth supports Firebase's modified scrypt hashing algorithm, enabling bulk migrations without forcing password resets, minimizing user disruption during the transition process.
+- **Deployment flexibility advantage**: Unlike Firebase's SaaS-only model, FusionAuth offers self-hosting options and deployment flexibility, giving teams complete control over data location and infrastructure architecture.
+- **Migration automation capabilities**: FusionAuth provides pre-built import scripts and Connectors for both bulk and drip migrations, reducing development overhead and accelerating your transition timeline.
+- **Enhanced standards compliance**: FusionAuth supports OAuth grants (including device grant) and authentication protocols that Firebase lacks, eliminating feature limitations that may have prompted your migration.
+- **Transparent operational control**: With FusionAuth's single-tenant architecture, you gain comprehensive logging, testing environments, and troubleshooting capabilities that Firebase's shared infrastructure cannot match.
+- **Scalable growth foundation**: FusionAuth eliminates Firebase's usage limits and throttling concerns while providing transparent pricing that scales predictably with your business growth.
+
+***
+
+### Definitions
+
+- **Bulk Migration**: A complete user data transfer approach where all users are moved simultaneously from Firebase to the new authentication provider, typically involving system downtime but ensuring immediate data consistency and single source of truth.
+- **Drip Migration**: A gradual user transition strategy where users are migrated individually during their next login attempt, allowing zero-downtime migrations while maintaining two systems temporarily until migration completion criteria are met.
+- **Modified Scrypt Algorithm**: Firebase's customized implementation of the scrypt password hashing algorithm that requires specific compatibility in the target authentication system—FusionAuth natively supports this format to prevent forced password resets during migration.
+- **Firebase Connectors**: Integration mechanisms that enable slow migrations by allowing the new authentication system to validate credentials against Firebase during the transition period, with FusionAuth's Connectors providing secure, configurable authentication passthrough capabilities.
+- **Authentication System of Record**: The primary identity management platform that serves as the authoritative source for user credentials and profile data—successful migration requires clear designation and complete transition to prevent data inconsistencies and security gaps.
+
+***
+
+### Frequently Asked Questions
+
+**Q: How easy is it to migrate from Firebase to FusionAuth?**
+
+A: FusionAuth provides comprehensive migration tooling for Firebase transitions. For Firebase specifically, FusionAuth offers pre-built import scripts, native support for Firebase's modified scrypt algorithm, and detailed step-by-step documentation. The migration process typically takes 2-4 weeks depending on complexity, with options for both bulk and drip migration strategies. FusionAuth's architecture eliminates common Firebase limitations like geographic restrictions and OAuth grant limitations that often drive migration decisions.
+
+**Q: How do I migrate users securely between authentication providers like Firebase and maintain password security?**
+
+A: Secure migration requires preserving existing password hashes to avoid forcing user password resets. FusionAuth natively supports Firebase's modified scrypt hashing algorithm, allowing direct import of existing password data without security compromises. For additional security, implement IP restrictions, custom headers, or client certificates during drip migrations. FusionAuth's single-tenant architecture ensures your user data never shares infrastructure with other customers, providing superior security isolation compared to Firebase's shared model.
+
+**Q: How do I achieve seamless authentication in microservices architectures after migrating from Firebase?**
+
+A: FusionAuth excels in microservices environments through its API-first architecture and flexible deployment options. Unlike Firebase's rigid SaaS model, you can deploy FusionAuth instances closer to your microservices, reducing latency and improving reliability. FusionAuth supports all standard OAuth2 and OpenID Connect flows, including the device grant that Firebase lacks, enabling consistent authentication across all service endpoints. The platform's JWT token architecture integrates seamlessly with microservices authorization patterns.
+
+**Q: Can FusionAuth be deployed using Docker or Kubernetes for better control than Firebase's serverless model?**
+
+A: Yes, FusionAuth offers complete deployment flexibility including Docker containers and Kubernetes orchestration, providing the infrastructure control that Firebase's serverless model cannot match. You can deploy FusionAuth on-premises, in your preferred cloud environment, or across multiple regions for optimal performance and compliance. This deployment flexibility eliminates Firebase's geographic restrictions while maintaining the scaling benefits through Kubernetes automation and load balancing capabilities.
+
+**Q: How does FusionAuth's single-tenant architecture enhance security compared to Firebase's shared infrastructure?**
+
+A: FusionAuth's single-tenant architecture ensures your authentication data runs on dedicated infrastructure, eliminating the security risks inherent in Firebase's multi-tenant model. This approach provides complete data isolation, enhanced logging and monitoring capabilities, and eliminates noisy neighbor effects that can impact performance. You gain full control over security configurations, compliance requirements, and data residency while maintaining the operational simplicity of a managed authentication solution through FusionAuth's streamlined architecture.
+
+***
+</details>
+
 
 This blog post will explain why and how you might choose to migrate from Firebase to another solution for user authentication and authorization. Other aspects of a migration, such as how to export your metrics data, will not be covered.
 
@@ -48,23 +95,25 @@ Firebase has strengths as well as weaknesses, and if your application depends on
 
 For example, if the customization is acceptable and you are using lots of Firebase features, migration doesn't make sense. The fact that Firebase is serverless makes it easy to "set and forget" and allows you to focus on other aspects of your application. You know, the features your users want.
 
-If you need Firebase's messaging, analytics or the Cloud Firestore NoSQL database and are not willing to look at alternatives, migration also won't make sense. A standalone auth provider won't provide the breadth of functionality, and you may not want to piece together replacements for everything Firebase offers. 
+If you need Firebase's messaging, analytics or the Cloud Firestore NoSQL database and are not willing to look at alternatives, migration also won't make sense. A standalone auth provider won't provide the breadth of functionality, and you may not want to piece together replacements for everything Firebase offers.
 
 ## How to migrate
 
 If, however, you have decided to migrate from Firebase, the first decision you'll need to make is: "With what will I replace the other Firebase functionality I depend on?"
 
-One option is to leave parts of your application running on Firebase. 
+One option is to leave parts of your application running on Firebase.
 
 Another is to migrate it all to an environment where you have more control. What makes sense here depends on what other Firebase functionality you use.
 
 Such guidance is beyond the scope of this article, though there is plenty of discussion on the internet. Here's an [article about moving from Firebase to AWS](https://aws.amazon.com/blogs/startups/migrating-your-startup-from-firebase-to-aws/) and here's a [GitHub issue thread discussing alternatives](https://github.com/WelcometoMyGarden/welcometomygarden/issues/106).
 
 <Aside nodark="true" type="note">
-This blog post gives general guidance on migration off of Firebase to any other auth provider. If you are looking for step by step instructions on how to migrate from Firebase to FusionAuth, please review our [Firebase migration guide](/docs/lifecycle/migrate-users/bulk/firebase).
+This blog post gives general guidance on migration off of Firebase to any other auth provider. If you are looking for step by step instructions on how to migrate from Firebase to FusionAuth, please review our [Firebase migration guide](/docs/lifecycle/migrate-users/provider-specific/firebase).
 </Aside>
 
 One of the critical pieces of any application infrastructure is, of course, authentication and authorization. This post will therefore focus on how to move your users' data. In this scenario, decide if you want to migrate your users in a bulk or drip migration.
+
+> _Ready to move off Firebase? [Let us show you](/contact) how FusionAuth can make the transition smooth and secure._
 
 ## Bulk migration from Firebase
 
@@ -73,18 +122,40 @@ The basic steps of a bulk migration are:
 * Set up the new auth system. Make sure you map user functionality and data from Firebase to the new system. Ensure the new system supports the [modified scrypt hashing algorithm](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/hash/Scrypt) used by Firebase.
 * Export your user data from Firebase. You can do this with the Firebase CLI: `firebase auth:export users.json --format=JSON --project your_project_id`.
 * Massage the exported user data into a format acceptable to your new provider, using whatever data transformation tools you are comfortable with.
-* Upload the user data to the new provider. 
+* Upload the user data to the new provider.
 * Create configuration in the new auth system corresponding to the applications previously set up in Firebase. You should also customize the user interface, messages, MFA methods and any other specific relevant settings.
 * Update your custom, COTS or OSS applications to point to the new auth system.
 * Disable the sign-in methods in your Firebase application to ensure that all of your users are authenticating against the new system.
 
 Here's the login flow before the bulk migration:
 
-<BulkBeforeDiagram alt="Bulk migration login request flow before the migration." />
+```mermaid title="Bulk migration login request flow before the migration."
+sequenceDiagram
+
+participant u as User Agent
+participant f as Firebase
+
+u ->> f  : Request login page
+f -->> u  : Receive login page
+u ->> f  : Post credentials
+f ->> f : Verify credentials
+f -->> u  : Display results
+```
 
 Here's the login flow after the bulk migration, when Firebase no longer is involved in the login process:
 
-<BulkAfterDiagram alt="Bulk migration login request flow after the migration." />
+```mermaid title="Bulk migration login request flow after the migration."
+sequenceDiagram
+
+participant u as User Agent
+participant ns as New System
+
+u ->> ns  : Request login page
+ns -->> u  : Receive login page
+u ->> ns  : Post credentials
+ns ->> ns : Verify credentials
+ns -->> u  : Display results
+```
 
 The benefits of a bulk migration include:
 
@@ -106,16 +177,41 @@ With a drip, or slow, migration, users log in to the new system, provide their u
 
 Here's a diagram of an initial user login during a slow migration:
 
-<SlowMigrationDiagram alt="Slow migration initial login request flow." />
+```mermaid title="Slow migration initial login request flow."
+sequenceDiagram
+
+participant u as User Agent
+participant ns as New System
+participant f as Firebase
+
+u ->> ns : Request login page
+ns -->> u : Receive login page
+u ->> ns : Post credentials
+ns ->> f : Post credentials
+f ->> f  : Verify credentials
+f -->> ns : Return results of authentication, including user attributes
+ns -->> u : Display results. If authentication successful, store user in New System.
+```
 
 After the initial login, Firebase is no longer the system of record for that user. Any changes to this user, whether made by themselves, automated processes or customer service team members, will need to be made in the new system. In subsequent logins, Firebase is never consulted.
 
-<SlowSubsequentDiagram alt="Slow migration subsequent login request flow." />
+```mermaid title="Slow migration subsequent login request flow."
+sequenceDiagram
+
+participant u as User Agent
+participant ns as New System
+
+u ->> ns  : Request login page
+ns -->> u  : Receive login page
+u ->> ns  : Post credentials
+ns ->> ns : Verify credentials
+ns -->> u  : Display results
+```
 
 The basic steps of a slow migration are:
 
 * Set up the new auth system. Make sure you map all user functionality and data from Firebase to the new system.
-* Determine what constitutes "done" for this migration, since it is unlikely that every single user will log in and be migrated, no matter how long you run these two systems in parallel. You can see [more details on how to calculate that](/docs/lifecycle/migrate-users/general-migration#migration-timeline).
+* Determine what constitutes "done" for this migration, since it is unlikely that every single user will log in and be migrated, no matter how long you run these two systems in parallel. You can see [more details on how to calculate that](/docs/lifecycle/migrate-users#migration-timeline).
 * Set up a way for the new system to present user credentials to Firebase during an authentication event. The exact method will depend on new system features, with FusionAuth you use [Connectors](/docs/lifecycle/migrate-users/connectors/). On the Firebase side, it can be done with an API call; see [this Firebase documentation](https://firebase.google.com/docs/reference/rest/auth#section-sign-in-email-password) for more.
 * Create configuration in the new auth system corresponding to the applications previously set up in Firebase. You should also customize the user interface, messages, MFA methods and any other settings that are relevant.
 * Update your custom, COTS or OSS applications to point to the new auth system.
@@ -125,11 +221,11 @@ The basic steps of a slow migration are:
 
 Slow migrations have less impact on your users, but more impact on your systems and employees and take more time.
 
-For instance, if a customer service representative needs to reset a password, they will have to determine if the user has been migrated to the new system or not before they can process the request. 
+For instance, if a customer service representative needs to reset a password, they will have to determine if the user has been migrated to the new system or not before they can process the request.
 
 ## Conclusion
 
 This overview of a Firebase migration covers considerations for migrating user data. No matter what the new target system is, you'll need to decide between a bulk or slow migration, as well take specific steps to move your data and settings. You'll also want to consider if and how to migrate any other functionality you use in Firebase.
 
-If you are looking for step by step instructions on how to move user data to FusionAuth from Firebase, please check out our [Firebase migration guide](/docs/lifecycle/migrate-users/bulk/firebase).
+If you are looking for step by step instructions on how to move user data to FusionAuth from Firebase, please check out our [Firebase migration guide](/docs/lifecycle/migrate-users/provider-specific/firebase).
 
