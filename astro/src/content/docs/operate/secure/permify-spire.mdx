@@ -185,18 +185,14 @@ This section, and the following ones, describe how the example system works — 
 The example Docker Compose file has containers for: a SPIRE server, a SPIRE agent, Permify, and three TypeScript services: Payments, Audit, and Orders. Every container besides the two SPIRE containers also has a corresponding proxy container running Envoy.
 
 Docker is the best way of showing a minimal example like this one — it's easy to run, and you can see exactly how each component is linked in the Compose file. However, most companies run SPIFFE in Kubernetes (through [Istio](https://istio.io)) or using the native identity services of the big three cloud providers (AWS, Azure, GCP). While Docker is simpler in general than the other options, it is actually much more complicated to use for SPIFFE than Kubernetes:
-- Workload attestation is more complicated in Docker than Kubernetes
-- Request routing is more complicated with proxies
-- Socket communication and permission management
-- Mutual TLS is more complicated and requires Envoy or Ghostunnel.
 
-TODO
+- **Workload attestation**: Docker requires manual join Token management, whereas Kubernetes uses automatic API-based attestation.
+- **Request routing**: Services in Docker need manual path routing (Envoy cannot do this dynamically). Istio can handle transparent dynamic proxying from service to service.
+- **Sockets**: Docker SPIRE agents need manual socket management for communication. Kubernetes doesn't need this.
+- **Sidecars**: In Docker, each service needs an Envoy sidecar container with configuration file.  Kubernetes doesn't need this.
 
-While Docker is simpler for running a single container, it is actually much more complicated for SPIFFE because it lacks an Orchestration Layer.
-- Workload Attestation: Docker requires manual "Join Token" management, whereas Kubernetes uses automatic API-based attestation.
-- Request Routing: You have to manually point your code at a local proxy port; Kubernetes uses "Transparent Proxying" to handle this at the network level.
-- Socket Plumbing: You must manually manage Unix socket mounts and host permissions; Kubernetes automates this via CSI drivers.
-- The "Sidecar" Burden: In Docker, you write double the YAML for every service (App + Proxy). In Kubernetes/Istio, the sidecar is "injected" automatically.
+For this reason, this guide won't discuss configuring proxies in Envoy. You should rather spend time investigating Istio once you understand the fundamentals of SPIFFE presented here.
+
 
 <RemoteCode
     url={frontmatter.codeRoot + "/docker-compose.yml"}
