@@ -14,17 +14,31 @@ import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 
-- [write schema - https://docs.permify.co/api-reference/schema/write-schema](#write-schema---httpsdocspermifycoapi-referenceschemawrite-schema)
-- [write data - https://docs.permify.co/api-reference/data/write-data](#write-data---httpsdocspermifycoapi-referencedatawrite-data)
-    - [envoy routing](#envoy-routing)
-  - [what is a sample workload you might want to use ReBAC for: a microservices setup where an "orders" service calls a "payments" service](#what-is-a-sample-workload-you-might-want-to-use-rebac-for-a-microservices-setup-where-an-orders-service-calls-a-payments-service)
-  - [what the Permify schema would look like](#what-the-permify-schema-would-look-like)
-  - [the glue layer that makes it possible to use permify to authorize the SPIFFE identities](#the-glue-layer-that-makes-it-possible-to-use-permify-to-authorize-the-spiffe-identities)
-  - [an example app standing up permify and a spire server and two workloads (task/job)](#an-example-app-standing-up-permify-and-a-spire-server-and-two-workloads-taskjob)
-  - [Next steps](#next-steps)
-  - [requested outline](#requested-outline)
-  - [todo](#todo)
-  - [Markdown](#markdown)
+- [Overview](#overview)
+  - [How did auth work before SPIFFE?](#how-did-auth-work-before-spiffe)
+  - [What are the problems with early auth?](#what-are-the-problems-with-early-auth)
+  - [A brief SPIFFE example](#a-brief-spiffe-example)
+  - [How does SPIFFE solve authentication problems?](#how-does-spiffe-solve-authentication-problems)
+  - [SPIFFE terminology and some more detail](#spiffe-terminology-and-some-more-detail)
+    - [Workloads and services](#workloads-and-services)
+    - [Humans aren't workloads (except when they are)](#humans-arent-workloads-except-when-they-are)
+    - [What can be a workload?](#what-can-be-a-workload)
+    - [What external authentication providers work with SPIRE?](#what-external-authentication-providers-work-with-spire)
+    - [Control plane](#control-plane)
+- [A working microservice example with SPIRE, Permify, Envoy, and Docker](#a-working-microservice-example-with-spire-permify-envoy-and-docker)
+- [Example system overview](#example-system-overview)
+  - [Docker, Kubernetes, and cloud providers](#docker-kubernetes-and-cloud-providers)
+  - [SPIRE configuration](#spire-configuration)
+  - [Permify configuration](#permify-configuration)
+  - [Workload and Envoy sidecar configuration](#workload-and-envoy-sidecar-configuration)
+  - [envoy routing](#envoy-routing)
+- [what is a sample workload you might want to use ReBAC for: a microservices setup where an "orders" service calls a "payments" service](#what-is-a-sample-workload-you-might-want-to-use-rebac-for-a-microservices-setup-where-an-orders-service-calls-a-payments-service)
+- [what the Permify schema would look like](#what-the-permify-schema-would-look-like)
+- [the glue layer that makes it possible to use permify to authorize the SPIFFE identities](#the-glue-layer-that-makes-it-possible-to-use-permify-to-authorize-the-spiffe-identities)
+- [an example app standing up permify and a spire server and two workloads (task/job)](#an-example-app-standing-up-permify-and-a-spire-server-and-two-workloads-taskjob)
+- [Next steps](#next-steps)
+- [requested outline](#requested-outline)
+- [todo](#todo)
 
 ## Overview
 
@@ -150,7 +164,7 @@ To run the example system accompanying this guide, you need to have [Docker](htt
 ➡️ Open a terminal in the repository directory and run the command below.
 
 ```sh
-docker compose up
+rm -rf ./spire/sockets/* && docker compose up
 ```
 
 ➡️ Once all containers are running, open a new terminal and run the commands below to test authentication and authorization from end to end.
@@ -184,6 +198,8 @@ This section, and the following ones, describe how the example system works — 
 
 The example Docker Compose file has containers for: a SPIRE server, a SPIRE agent, Permify, and three TypeScript services: Payments, Audit, and Orders. Every container besides the two SPIRE containers also has a corresponding proxy container running Envoy.
 
+todo DIAGRAM
+
 ### Docker, Kubernetes, and cloud providers
 
 
@@ -198,82 +214,46 @@ Since you probably won't use Docker in production, this guide won't discuss conf
 
 ### SPIRE configuration
 
-
-
+Below is the first section of the Compose file, handling SPIRE.
 
 <RemoteCode
     url={frontmatter.codeRoot + "/docker-compose.yml"}
     lang="yml"
     tags="a" />
 
-{frontmatter.technology}
+All containers are on the `spireNetwork` network so they can talk to each other.
 
-repository: https://github.com/ritza-co/permifySpire
-codeRoot: https://raw.githubusercontent.com/ritza-co/permifySpire/refs/heads/main
+The named volumes `serverBin` and `agentBin` expose the SPIRE binary files from the server and agent containers for other containers to use. Since the SPIRE containers do not have a shell (`sh` or `bash`), you need to interact with the containers (such as performing setup commands) from somewhere else. For example, the `spireServerInitialize` container uses the binary files from the server to register workloads. If the binary files were not exposed, you would have to install the SPIRE binaries on your host machine and run the setup commands from your host after starting Docker.
 
+The `spireServer` container exposes two more volumes: 1) **a configuration file** and 2) **a socket**:
 
-{/* Instructions for AI
+1. The `config/spireServer.conf` configuration file (shown below this bullet point) specifies a few basic settings:
+  - `bind_address = "0.0.0.0"` ensures the server listens to requests from outside the container.
+  - `socket_path` must match the socket path in the Compose file.
+  - `DataStore` and `KeyManager` settings tell the server where to manage its data.
+  - `NodeAttestor "join_token"` is important. This allows the SPIRE agent to register itself with the server, so it can begin authorizing workloads.
+  <RemoteCode
+    url={frontmatter.codeRoot + "/config/spireServer.conf"}
+    lang="js" />
+2. A socket is a shared file on disk processes can use to communicate. Unlike a TCP port, which any process can call, only a process with permission to a file can see it, making a socket more secure than a port. A process can ask also ask the operating system for details about the process on the other end of a socket, allowing SPIRE to perform attestation. The `registration.sock` socket is used by the `spireServerInitialize` container. This helper container's only job is to create registration entries in the server for the agent and workloads. The first two entries register the agent (with ID `spiffe://example.org/agent`) and create a "join token" — a secret password exposed in a shared volume that the SPIRE agent can give to the server to authenticate itself when starting. The next four registration entries for the services and Permify don't need a token, because the agent will authenticate them. Note that the SPIFFE ID domain name, like `example.org` matches the domain in server configuration file.
 
-Work only in the current directory. Create a Docker compose file, but no Dockerfiles. Instead of Dockerfiles you'll use standard Dockerhub images - for latest Deno, Permify, and SPIRE. For permify you can use a compose entry based on something like `docker run --rm --name="permify" -p 3476:3476 -p 3478:3478 ghcr.io/permify/permify serve`.
+The SPIRE agent's configuration is simpler than the server, using only the command `command: ["run", "-config", "/etc/spire/agent.conf", "-joinTokenFile", "/opt/spire/sockets/agent_token"]`. This command configures the agent using `spireAgent.conf` (shown below) and authenticates the agent with the SPIRE server using the shared join token created earlier.
 
-Create a minimalist example microservice SPIFFE system. It will be:
-Docker containers:
-- SPIRE
-- SPIRE agent
-- Permify, which has schema that allows orders but not accounting to call payments service to debit a customer.
-- Orders service (a Deno Javascript webservice)
-- Payments service
-- Accounting service
+<RemoteCode
+    url={frontmatter.codeRoot + "/config/spireAgent.conf"}
+    lang="js" />
 
-The orders service has a single endpoint called order. The payments service has one called pay. The accounting service has one called check. These receive a simple GET request. When the order service receives a request it calls the order service and passes its SVID along. The payments service calls Permify to check if the order service is allowed to request a payment. Permify doesn't need to use SPIRE as permission checks are publicly viewable. If the Accounting service calls Payments, it is rejected, unlike the orders service.
+- `NodeAttestor "join_token"` tells the agent to use the join token to authenticate itself with the server.
+- `insecure_bootstrap = true` tells the agent to trust the identity of the SPIRE server, which saves time in this example. You should **not** do this in production, as a malicious service could masquerade as the server. Rather pass the server's certificate into the agent at initialization manually.
+- `docker_socket_path = "unix:///var/run/docker.sock"` tells the agent where to find the Docker socket (which in turn is exposed to the container in the Compose file in the line `/var/run/docker.sock:/var/run/docker.sock:ro`), which the agent can query to attest the identity of the various services running as Docker containers.
 
-Below is some example Permify schema creation code from a different project you can use as a language example for curl:
+### Permify configuration
 
-# write schema - https://docs.permify.co/api-reference/schema/write-schema
-schemaVersion=$(curl --location --request POST 'localhost:3476/v1/tenants/t1/schemas/write' \
-  --header 'Content-Type: application/json' \
-  --data-raw '{
-  "schema": "entity user {\n  relation hasDoctor @user\n  relation hasGuardian @user\n  relation isChild @user\n}\n entity record {\n  relation owner @user\n  relation consultant @user\n  action view = (owner not owner.isChild) or owner.hasGuardian or owner.hasDoctor or consultant\n  action edit = owner.hasDoctor\n}"
-}' | jq -r '.schema_version')
+<RemoteCode
+    url={frontmatter.codeRoot + "/docker-compose.yml"}
+    lang="yml"
+    tags="b" />
 
-# write data - https://docs.permify.co/api-reference/data/write-data
-curl --location --request POST 'localhost:3476/v1/tenants/t1/data/write' \
-  --header 'Content-Type: application/json' \
-  --data-raw '{
-  "metadata": {"schema_version":"'"$schemaVersion"'"},
-  "tuples":[
-    {"entity":{"type":"user","id":"Carol"},"relation":"hasDoctor","subject":{"type":"user","id":"Alice"}},
-  ...
-*/}
-
-Docker containers:
-- SPIRE
-- SPIRE agent
-- Permify, which has schema that allows orders but not accounting to call payments service to debit a customer.
-- Orders service (a Deno Javascript webservice)
-- Payments service
-- Accounting service
-
-Example should be something like when order workload receives an http request from curl (mimicking a user) it sends a request to the payments service to debit the users account.  Payment service calls Permify to check if svid has permissions to act.
-
-Docker compose file has named containers to make it easier for you to navigate using `docker ps`, but in reality you must not hardcode names or you cannot starrt more than one containers for the same service.
-
-Using Deno so we don't need to clutter our file with Node packages and config files for a web server and cryptography.
-
-[JavaScript Registry](https://jsr.io)
-
-two options: native SDKs (safer, more work, not available for all languages) vs Sidecars/Proxies (have permissions to your containers but simpler)
-
-spiffe://example.org/orders
-spiffe://example.org/payments
-spiffe://example.org/audit
-
-
-run:
-
-```sh
-reset; docker compose down -v && rm -rf ./spire/sockets/* && docker compose up --remove-orphans
-```
 
 permify setup:
 
@@ -300,11 +280,24 @@ curl -X POST "http://localhost:3476/v1/tenants/t1/data/write" \
 ```
 
 
-```sh
-curl http://localhost:7773/order
-curl http://localhost:7773/order → {"allowed":true} ✅
-curl http://localhost:7775/audit → {"allowed":false}
-```
+### Workload and Envoy sidecar configuration
+
+<RemoteCode
+    url={frontmatter.codeRoot + "/docker-compose.yml"}
+    lang="yml"
+    tags="c" />
+
+
+Using Deno so we don't need to clutter our file with Node packages and config files for a web server and cryptography.
+
+[JavaScript Registry](https://jsr.io)
+
+two options: native SDKs (safer, more work, not available for all languages) vs Sidecars/Proxies (have permissions to your containers but simpler)
+
+spiffe://example.org/orders
+spiffe://example.org/payments
+spiffe://example.org/audit
+
 
 
 So far we used simple manual SVID verification in `1_app_oneWaySvidAuthentication`. But Permify doesn't work with SVIDs natively, so we have to use Ghosttunnel as a proxy, and ensure mTLS happens for both caller and target of HTTP requests.
@@ -391,50 +384,8 @@ ask about target authentication too, and make permify have an svid
 remove sections of config file and see if system runs
 https://istio.io/latest/docs/overview/what-is-istio/
 switch agent attestation from node to token attestation
+remove v=1
+replace article and code in personal repo with ritza stuff
 
 
-## Markdown
-
-
-- In your frontmatter, add variables you can use throughout the article, for instance
-  ```md
-  technology: WordPress
-  ```
-  You can refer to it in the article body as:
-  ```md
-  {frontmatter.technology}
-  ```
-
-
-  To use frontmatter variables in a link, write:
-  ```html
-  <a href={frontmatter.url}>{frontmatter.url}</a>
-  ```
-
-- To use a frontmatter variable as a url, use the following format, with quote inside the `{frontmatter ...}` part:
-  ```js
-  FRONTMATTER:
-
-  codeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-php-laravel-web/main
-
-  ARTICLE BODY:
-
-  <RemoteCode
-    url={frontmatter.codeRoot + "/laravel/services.php"}
-    lang="php"
-    tags="a" />
-  ```
-- To show only a code snippet from you example application files, add commented tags to the file, like so:
-  ```php
-      //tag::a[]
-    'fusionauth' => [
-        'client_id' => env('FUSIONAUTH_CLIENT_ID'),
-        'client_secret' => env('FUSIONAUTH_CLIENT_SECRET'),
-        'base_url' => env('FUSIONAUTH_BASE_URL'),
-        'redirect' => env('FUSIONAUTH_REDIRECT_URL'),
-        'tenant_id' => env('FUSIONAUTH_TENANT_ID'),
-    ],
-    //end::a[]
-  ```
-
-  cd ~/code/fusionauth-site/astro && docker run --init  --rm --name "faDocs" --network host -v ".:/app" -w "/app" richardjecooke/nodepuppeteer:24.0.1 sh -c  "npm install && npm run dev";
+cd ~/code/fusionauth-site/astro && docker run --init  --rm --name "faDocs" --network host -v ".:/app" -w "/app" richardjecooke/nodepuppeteer:24.0.1 sh -c  "npm install && npm run dev";
