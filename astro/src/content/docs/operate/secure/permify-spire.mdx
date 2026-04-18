@@ -1,6 +1,6 @@
 ---
-title: Using Permify with SPIFFE (SPIRE)
-description: Learn how to use FusionAuth fine-grained authentication by Permify with SPIFFE to authorize your workloads.
+title: Using Permify with SPIFFE
+description: Learn how to use FusionAuth fine-grained authentication by Permify with SPIRE to authorize your workloads.
 navcategory: premium
 section: operate
 subcategory: secure
@@ -28,9 +28,9 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 - [A working microservice example with SPIRE, Permify, Envoy, and Docker](#a-working-microservice-example-with-spire-permify-envoy-and-docker)
 - [Example system overview](#example-system-overview)
   - [Docker, Kubernetes, and cloud providers](#docker-kubernetes-and-cloud-providers)
-  - [SPIRE configuration](#spire-configuration)
-  - [Permify configuration](#permify-configuration)
-  - [Workload and Envoy sidecar configuration](#workload-and-envoy-sidecar-configuration)
+- [Example SPIRE configuration](#example-spire-configuration)
+- [Example Permify configuration](#example-permify-configuration)
+- [Example workload and Envoy sidecar configuration](#example-workload-and-envoy-sidecar-configuration)
   - [envoy routing](#envoy-routing)
 - [what is a sample workload you might want to use ReBAC for: a microservices setup where an "orders" service calls a "payments" service](#what-is-a-sample-workload-you-might-want-to-use-rebac-for-a-microservices-setup-where-an-orders-service-calls-a-payments-service)
 - [what the Permify schema would look like](#what-the-permify-schema-would-look-like)
@@ -212,7 +212,7 @@ Docker is the best way of showing a minimal example like this one — it's easy 
 
 Since you probably won't use Docker in production, this guide won't discuss configuring proxies in Envoy and Docker. You should rather spend time investigating Istio, or SPIFFE in your cloud provider, once you understand the fundamentals of SPIFFE presented here.
 
-### SPIRE configuration
+## Example SPIRE configuration
 
 Below is the first section of the Compose file, handling SPIRE.
 
@@ -235,7 +235,7 @@ The `spireServer` container exposes two more volumes: 1) **a configuration file*
   <RemoteCode
     url={frontmatter.codeRoot + "/config/spireServer.conf"}
     lang="js" />
-2. A socket is a shared file on disk processes can use to communicate. Unlike a TCP port, which any process can call, only a process with permission to a file can see it, making a socket more secure than a port. A process can ask also ask the operating system for details about the process on the other end of a socket, allowing SPIRE to perform attestation. The `registration.sock` socket is used by the `spireServerInitialize` container. This helper container's only job is to create registration entries in the server for the agent and workloads. The first two entries register the agent (with ID `spiffe://example.org/agent`) and create a "join token" — a secret password exposed in a shared volume that the SPIRE agent can give to the server to authenticate itself when starting. The next four registration entries for the services and Permify don't need a token, because the agent will authenticate them. Note that the SPIFFE ID domain name, like `example.org` matches the domain in server configuration file.
+2. A socket is a shared file on disk that processes can use to communicate. Unlike a TCP port, which any process can call, only a process with permission to a file can see it, making a socket more secure than a port. A process can also ask the operating system for details about the process on the other end of a socket, allowing SPIRE to perform attestation. The `registration.sock` socket is used by the `spireServerInitialize` container. This helper container's only job is to create registration entries in the server for the agent and workloads. The first two entries register the agent (with ID `spiffe://example.org/agent`) and create a "join token" — a secret password exposed in a shared volume that the SPIRE agent can give to the server to authenticate itself when starting. The next four registration entries for the services and Permify don't need a token, because the agent will authenticate them. Note that the SPIFFE ID domain name, like `example.org`, matches the domain in server configuration file.
 
 The SPIRE agent's configuration is simpler than the server, using only the command `command: ["run", "-config", "/etc/spire/agent.conf", "-joinTokenFile", "/opt/spire/sockets/agent_token"]`. This command configures the agent using `spireAgent.conf` (shown below) and authenticates the agent with the SPIRE server using the shared join token created earlier.
 
@@ -243,11 +243,11 @@ The SPIRE agent's configuration is simpler than the server, using only the comma
     url={frontmatter.codeRoot + "/config/spireAgent.conf"}
     lang="js" />
 
-- `NodeAttestor "join_token"` tells the agent to use the join token to authenticate itself with the server.
 - `insecure_bootstrap = true` tells the agent to trust the identity of the SPIRE server, which saves time in this example. You should **not** do this in production, as a malicious service could masquerade as the server. Rather pass the server's certificate into the agent at initialization manually.
 - `docker_socket_path = "unix:///var/run/docker.sock"` tells the agent where to find the Docker socket (which in turn is exposed to the container in the Compose file in the line `/var/run/docker.sock:/var/run/docker.sock:ro`), which the agent can query to attest the identity of the various services running as Docker containers.
+- `NodeAttestor "join_token"` tells the agent to use the join token to authenticate itself with the server.
 
-### Permify configuration
+## Example Permify configuration
 
 <RemoteCode
     url={frontmatter.codeRoot + "/docker-compose.yml"}
@@ -280,7 +280,7 @@ curl -X POST "http://localhost:3476/v1/tenants/t1/data/write" \
 ```
 
 
-### Workload and Envoy sidecar configuration
+## Example workload and Envoy sidecar configuration
 
 <RemoteCode
     url={frontmatter.codeRoot + "/docker-compose.yml"}
