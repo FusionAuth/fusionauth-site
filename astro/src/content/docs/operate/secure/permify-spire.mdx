@@ -30,8 +30,8 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
   - [Docker, Kubernetes, and cloud providers](#docker-kubernetes-and-cloud-providers)
 - [Example SPIRE configuration](#example-spire-configuration)
 - [Example Permify configuration](#example-permify-configuration)
-- [Example workload and Envoy sidecar configuration](#example-workload-and-envoy-sidecar-configuration)
-- [Example workload and Envoy sidecar configuration](#example-workload-and-envoy-sidecar-configuration-1)
+- [Example Envoy sidecar configuration](#example-envoy-sidecar-configuration)
+- [Example workload configuration](#example-workload-configuration)
   - [envoy routing](#envoy-routing)
 - [what is a sample workload you might want to use ReBAC for: a microservices setup where an "orders" service calls a "payments" service](#what-is-a-sample-workload-you-might-want-to-use-rebac-for-a-microservices-setup-where-an-orders-service-calls-a-payments-service)
 - [what the Permify schema would look like](#what-the-permify-schema-would-look-like)
@@ -261,7 +261,7 @@ The Permify container has default settings.
 
 `permifyHealthcheck` is necessary because the Permify image has no native health check for Docker and no shell in which to run commands. So to check when Permify is ready, the health check container runs a shell script that exits only when `http://localhost:3000/healthz` responds successfully.
 
-`permifyInitialize` runs a script to configure the Permify schema and data for the services in the rest of the Docker file. (This script could be a line in `permifyHealthcheck` if you wanted fewer containers.) The script itself, `permifyInitialize.ts`, is two JavaScript HTTPS calls to the Permify containers. The Permify JSON schema is shown below.
+`permifyInitialize` runs a script to configure the Permify schema and data for the services in the rest of the Docker file. (This script could be moved into `permifyHealthcheck` if you wanted fewer containers.) The script itself, `permifyInitialize.ts`, is two JavaScript HTTPS calls to the Permify container. The Permify JSON schema it sends is shown below.
 
 ```json
 entity user {} // compulsory but does nothing
@@ -274,7 +274,7 @@ entity service {
 
 In this schema, the services: audit, orders, and payments are not independent entities. Instead, they are each of the `service` entity type shown above. The `action` (or `permission`) `debit` is available on all services, which is used by the payments service to know if another service may debit. However, in Permify, an entity may not be given a direct permission. Instead, an entity can only be set as a relation to another entity. So this schema must have the `mayDebit` relation available. The `mayDebit` relation acts a list of services that may perform the `debit` action on another service.
 
-To perform the end-to-end test of orders requesting a debit to made in payments, the data shown below is added to Permify by the initialization container.
+To add the actual SPIFFE ID of the orders service, the datum shown below is added to Permify by the initialization container.
 
 ```js
 tuples: [{
@@ -317,7 +317,7 @@ entity paymentsService {
 }
 ```
 
-Now in `paymentsService`, the ID `spiffe:__example.org_orders` will be a member of the `isOrdersService` relation, and so will have rights to the `debit` action. Below is how you would create that data point (only the `relation` value has changed from the original example).
+Now in `paymentsService`, the ID `spiffe:__example.org_orders` will be a member of the `isOrdersService` relation, and so will have rights to the `debit` action. Below is how you would create that datum (only the `relation` value has changed from the original example).
 
 ```json
 [
@@ -329,7 +329,11 @@ Now in `paymentsService`, the ID `spiffe:__example.org_orders` will be a member 
 ]
 ```
 
-## Example workload and Envoy sidecar configuration
+## Example Envoy sidecar configuration
+
+At this point you may be thinking that using Docker for microservices and SPIFFE seems fine. That will change once you start trying to configure workloads to actually use SVIDS and talk to the SPIRE agent.
+
+TODO
 
 There is also a `permifyProxy` container, which works in the same way as the other proxy containers explained in the next section.
 
@@ -338,7 +342,7 @@ There is also a `permifyProxy` container, which works in the same way as the oth
     lang="yml"
     tags="c" />
 
-## Example workload and Envoy sidecar configuration
+## Example workload configuration
 
 <RemoteCode
     url={frontmatter.codeRoot + "/docker-compose.yml"}
