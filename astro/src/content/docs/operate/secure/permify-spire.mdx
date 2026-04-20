@@ -32,13 +32,7 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 - [Example Permify configuration](#example-permify-configuration)
 - [Example Envoy sidecar configuration](#example-envoy-sidecar-configuration)
 - [Example workload configuration](#example-workload-configuration)
-  - [envoy routing](#envoy-routing)
-- [what is a sample workload you might want to use ReBAC for: a microservices setup where an "orders" service calls a "payments" service](#what-is-a-sample-workload-you-might-want-to-use-rebac-for-a-microservices-setup-where-an-orders-service-calls-a-payments-service)
-- [what the Permify schema would look like](#what-the-permify-schema-would-look-like)
-- [the glue layer that makes it possible to use permify to authorize the SPIFFE identities](#the-glue-layer-that-makes-it-possible-to-use-permify-to-authorize-the-spiffe-identities)
-- [an example app standing up permify and a spire server and two workloads (task/job)](#an-example-app-standing-up-permify-and-a-spire-server-and-two-workloads-taskjob)
-- [Next steps](#next-steps)
-- [requested outline](#requested-outline)
+- [Summary and next steps](#summary-and-next-steps)
 - [todo](#todo)
 
 ## Overview
@@ -272,7 +266,7 @@ entity service {
 }
 ```
 
-In this schema, the services: audit, orders, and payments are not independent entities. Instead, they are each of the `service` entity type shown above. The `action` (or `permission`) `debit` is available on all services, which is used by the payments service to know if another service may debit. However, in Permify, an entity may not be given a direct permission. Instead, an entity can only be set as a relation to another entity. So this schema must have the `mayDebit` relation available. The `mayDebit` relation acts a list of services that may perform the `debit` action on another service.
+In this schema, the services: audit, orders, and payments are not independent entities. Instead, they are each of the `service` entity type shown above. The `action` (or `permission`) `debit` is available on all services, which is used by the payments service to know if another service may debit. However, in Permify, an entity may not be given a direct permission. Instead, an entity can only be set as a relation to another entity. In other words, fine-grained authorization (FGA) is achieved through relationship-based access control (ReBAC). So this schema must have the `mayDebit` relation available. The `mayDebit` relation acts a list of services that may perform the `debit` action on another service.
 
 To add the actual SPIFFE ID of the orders service, the datum shown below is added to Permify by the initialization container.
 
@@ -396,98 +390,31 @@ Here, all requests from the workload ("egress") are routed to the `payments` con
 
 ## Example workload configuration
 
-
+The workloads are the easiest part of the system to configure, since all SPIRE work has already been done. Below is an example configuration for the payments service.
 
 <RemoteCode
     url={frontmatter.codeRoot + "/docker-compose.yml"}
     lang="yml"
     tags="d" />
 
+The service communicates with the proxy using localhost (`- permifyUrl=http://localhost:8001`), as the proxy shares the service's network. The path routing shown earlier decides with service requests go to.
 
-Using Deno so we don't need to clutter our file with Node packages and config files for a web server and cryptography.
+In this example, the three workloads are simple JavaScript web services. Below is the payments service code with only two functions: an HTTP request handler, and `checkPermissionInPermify`.
 
-[JavaScript Registry](https://jsr.io)
+<RemoteCode
+    url={frontmatter.codeRoot + "/services/payments.ts"}
+    lang="js" />
 
-two options: native SDKs (safer, more work, not available for all languages) vs Sidecars/Proxies (have permissions to your containers but simpler)
+The request handler extract the SPIFFE ID of the caller from the request (`req.headers.get("spiffeId")`). The check permissions function uses the handler to call Permify (`${permifyUrl}/v1/tenants/t1/permissions/check`), remember to replace the ID slashes with underscores: `id: callerId.replace(/\//g, "_")`
 
-spiffe://example.org/orders
-spiffe://example.org/payments
-spiffe://example.org/audit
+The code for the orders and audit services are even simpler. As they only send requests, they have no SPIFFE code at all, and are merely a single small function to call the payments service.
 
+## Summary and next steps
 
-
-So far we used simple manual SVID verification in `1_app_oneWaySvidAuthentication`. But Permify doesn't work with SVIDs natively, so we have to use Ghosttunnel as a proxy, and ensure mTLS happens for both caller and target of HTTP requests.
-
-v1.9.2-alpine (so it has a shell). will run as both a client and server for bidirectional messages.
-
-
-Container | Port | Host Port
---- | --- | ---
-spireServer | 8081 |
-spireServerInitialize ||
-spireAgent ||
-_____________________||
-permify | 3476, 3478 |
-permifyProxy | 8443, 8001 |
-permifyHealthcheck | |
-permifyInitialize | |
-_____________________||
-orders | 8000 | 7773
-ordersProxy | 8443, 8001 |
-payments | 8000 |
-paymentsProxy | 8443, 8001 |
-audit | 8000 | 7775
-auditProxy | 8443, 8001 |
-
-don't use ghosttunnel if you need to extract spiffeid from the request (for example to use id to check with permify).  you have to use envoy.
-
-https://github.com/ritza-co/permifySpire
-
-### envoy routing
-
-Exactly! The path determines the route.
-     localhost:8001/payments → paymentsCluster
-     localhost:8001/audit   → auditCluster
-
-     Same envoy, same port, different path = different destination.
-
-     So orders.ts would call:
-     - http://localhost:8001/payments/pay (route to payments)
-     - http://localhost:8001/audit/something (route to audit)
-
-     Envoy matches the path prefix and forwards to the configured cluster. Simple and standard.
-
-envoy cannot do automated dynamic routing (fact check)
-
-istio is alternative - but kubernetes only
-
-
-
-## what is a sample workload you might want to use ReBAC for: a microservices setup where an "orders" service calls a "payments" service
-
-## what the Permify schema would look like
-
-spiffe id is subject (requester in permify)
-
-
-"Permify uses a ReBAC model to achieve FGA." so you can't add permissions for people to resources. you have to add the user to a role
-
-
-## the glue layer that makes it possible to use permify to authorize the SPIFFE identities
-
-## an example app standing up permify and a spire server and two workloads (task/job)
-
-## Next steps
+In this guide
 
 https://istio.io
 
-## requested outline
-
-- what is SPIFFE https://spiffe.io/
-- what is a sample workload you might want to use ReBAC for: a microservices setup where an "orders" service calls a "payments" service
-- what the Permify schema would look like
-- the glue layer that makes it possible to use permify to authorize the SPIFFE identities
-- an example app standing up permify and a spire server and two workloads
 
 ## todo
 
@@ -502,6 +429,6 @@ https://istio.io/latest/docs/overview/what-is-istio/
 switch agent attestation from node to token attestation
 remove v=1
 replace article and code in personal repo with ritza stuff
-
+https://github.com/ritza-co/permifySpire
 
 cd ~/code/fusionauth-site/astro && docker run --init  --rm --name "faDocs" --network host -v ".:/app" -w "/app" richardjecooke/nodepuppeteer:24.0.1 sh -c  "npm install && npm run dev";
