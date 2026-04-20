@@ -35,6 +35,9 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 - [Summary and next steps](#summary-and-next-steps)
 - [todo](#todo)
 
+
+
+
 ## Overview
 
 {/* this is a comment */}
@@ -45,6 +48,9 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 Since SPIRE and SPIFFE are so closely related we'll use the terms interchangeably in this guide.
 
+
+
+
 ### How did auth work before SPIFFE?
 
 Before the rise of cloud computing and Docker containers (**cloud native** systems), your software system might have been a database, some background jobs, and some web services running on a couple of corporate servers. How did a web service know if a background job had permissions to save information to the database? There were a few options:
@@ -53,6 +59,9 @@ Before the rise of cloud computing and Docker containers (**cloud native** syste
 - **A password, API key, or SSH key**. The job would send a secret token with its request to the web service. (For SSH, the job would create a tunnel to the service, but the effect is the same.)
 - **Mutual transport layer security (mTLS) X.509 certificates**. Similar to a password, except the job would first request a TLS certificate from a certification server using the password, then send certificate to the web service instead of the password.
 - **Kerberos**. A complicated system, but basically the job would use its password to request a short-lived ticket from the Kerberos server, which the job would then pass to the web service, which would verify the ticket using the service's private password (which Kerberos already had).
+
+
+
 
 ### What are the problems with early auth?
 
@@ -73,6 +82,9 @@ In summary, SPIFFE was designed to overcome the problems of:
 - long-lived authentication, and
 - slow speeds.
 
+
+
+
 ### A brief SPIFFE example
 
 Let's consider a brief SPIFFE example to learn how it solves the problems above.
@@ -91,6 +103,9 @@ Here's the process:
 1. When the service receives the request from the job, it can check the SVID validity internally using the SPIRE server certificate and any library that handles TLS cryptography (such libraries are available for any programming language). No call is needed to the SPIRE agent or server.
 1. The service has now authenticated the job, but has not done authorization. SPIFFE doesn't handle authorization at all. So the service calls an authorization server (like Permify) to check if the job with ID `spiffe://example.org/infrastructure/file-processor` has permission to save its result.
 
+
+
+
 ### How does SPIFFE solve authentication problems?
 
 You may have noticed some clear differences in this SPIFFE example compared to older authorization protocols:
@@ -103,15 +118,24 @@ You may have noticed some clear differences in this SPIFFE example compared to o
 
 In summary, switching to SPIFFE frees your programmers from having to manage secrets, massively reduces the risk of a hacker gaining access to your network or (non-existent) service password, increases authentication speed and simplicity, and scales to any number of containers in any number of locations.
 
+
+
+
 ### SPIFFE terminology and some more detail
 
 Now that you know the basics of SPIFFE, there are a few more details to know in order to understand the practical example that follows.
+
+
+
 
 #### Workloads and services
 
 With SPIFFE, services and jobs are called **workloads**. A workload might be a database, a web service, a bash script, or an entire external company's system wrapped in a single SVID. A workload is any instance of an app that does some work. (We need to say an app "instance" because a single app might be running dozens of times as different containers).
 
 "Workload" is confusing at first because the word's standard meaning is a "set of tasks". So you can think of a workload as a "service" if you prefer. But technically, a workload is more varied than a service. A "service" implies other services can call it, which is not possible with a bash script, for example.
+
+
+
 
 #### Humans aren't workloads (except when they are)
 
@@ -120,6 +144,9 @@ SPIRE attests the identity of a workload by verifying its details at the operati
 However, in addition to attestation, SPIFFE can be configured to accept and exchange tokens from other authentication providers. For example, a human could log in to any system that returns an OIDC certificate (like FusionAuth, Facebook, or KeyCloak), and then use that certificate to obtain an SVID from the SPIRE server. From then on, the human could pretend to be a workload, which might be useful for running debugging commands.
 
 The possibilities here are complex: allowing multiple federated SPIRE servers, inter-company SPIRE trust, and chains of authentication between SPIRE and other identity providers. This article won't discuss these possibilities, but if your company needs flexible authentication, SPIFFE can probably handle it.
+
+
+
 
 #### What can be a workload?
 
@@ -131,6 +158,9 @@ SPIRE can attest to the following types of workloads:
 - Systemd services: Any background service managed by systemd (like a database or web server), identified by their specific service unit name.
 - Cloud instances: A whole VM in AWS, Azure, or GCP, usually identified by instance identity document (IID).
 - AI agents (pending): Identified by specific metadata (capabilities and signed model hashes).
+
+
+
 
 #### What external authentication providers work with SPIRE?
 
@@ -146,9 +176,15 @@ While SPIRE can't directly attest the workload types below, their authentication
 
 HashiCorp vault (a secret store) used to be just another workload accessible with SVIDs, but as of the end of 2025 it is now a SPIFFE server implementation itself (like SPIRE). Similar secrets services, OpenBao, Infiscal, and Conjur, can accept SVIDs but not generate them.
 
+
+
+
 #### Control plane
 
 Programmers comply with the separation of concerns principle by dividing code into layers for UI, logic, and data access. Similarly, system architecture can be divided into separate "planes". SPIRE works on the **control plane**, where it governs who can talk to whom. The data actually passed around by the workloads is part of the **data plane**.
+
+
+
 
 ## A working microservice example with SPIRE, Permify, Envoy, and Docker
 
@@ -187,6 +223,9 @@ docker rmi envoyproxy/envoy:v1.37.2
 ```
 </Aside>
 
+
+
+
 ## Example system overview
 
 This section, and the following ones, describe how the example system works — and what alternative choices you might make in your system.
@@ -194,6 +233,9 @@ This section, and the following ones, describe how the example system works — 
 The example Docker Compose file has containers for: a SPIRE server, a SPIRE agent, Permify, and three TypeScript services: Payments, Audit, and Orders. Every container besides the two SPIRE containers also has a corresponding proxy container running Envoy.
 
 todo DIAGRAM
+
+
+
 
 ### Docker, Kubernetes, and cloud providers
 
@@ -206,6 +248,9 @@ Docker is the best way of showing a minimal example like this one — it's easy 
 - **Sidecars**: In Docker, each service needs an Envoy sidecar container with configuration file. Kubernetes doesn't need this.
 
 Since you probably won't use Docker in production, this guide won't discuss configuring proxies in Envoy and Docker. You should rather spend time investigating Istio, or SPIFFE in your cloud provider, once you understand the fundamentals of SPIFFE presented here.
+
+
+
 
 ## Example SPIRE configuration
 
@@ -242,9 +287,12 @@ The SPIRE agent's configuration is simpler than the server, using only the comma
 - `docker_socket_path = "unix:///var/run/docker.sock"` tells the agent where to find the Docker socket (which in turn is exposed to the container in the Compose file in the line `/var/run/docker.sock:/var/run/docker.sock:ro`), which the agent can query to attest the identity of the various services running as Docker containers.
 - `NodeAttestor "join_token"` tells the agent to use the join token to authenticate itself with the server.
 
+
+
+
 ## Example Permify configuration
 
-There are three Permify containers shownn below: `permify`, `permifyHealthcheck`, `permifyInitialize`.
+There are three Permify containers shown below: `permify`, `permifyHealthcheck`, `permifyInitialize`.
 
 <RemoteCode
     url={frontmatter.codeRoot + "/docker-compose.yml"}
@@ -323,9 +371,12 @@ Now in `paymentsService`, the ID `spiffe:__example.org_orders` will be a member 
 ]
 ```
 
+In production, you should use a persistent volume to save Permify data to disk, and not an initialization container that rewrites the schema and objects on every run.
+
+
 ## Example Envoy sidecar configuration
 
-At this point you may be thinking that using Docker for microservices and SPIFFE is simple enough for a basic system. That changes once you start trying to configure workloads to actually integrate SVIDs and talk to the SPIRE agent.
+At this point you might think that using Docker for microservices and SPIFFE is simple enough for a basic system. That changes once you start trying to configure workloads to actually integrate SVIDs and talk to the SPIRE agent.
 
 There are three design options to authenticate your workload:
 1. **Add logic to handle SVIDs (X.509) to your workloads directly**. For this approach, your programming language has to support X.509, and something needs to copy into the container the workload's SVID (from the agent) and the server root certificate (for SVID validation). This has several problems:
@@ -373,6 +424,8 @@ Below is the example Compose file section for the `permifyProxy` container runni
     lang="yml"
     tags="c" />
 
+The `labels:  app: "permify"` section is crucial. This tells Docker the type of service that the container identifies as. The SPIRE agent checks this label when using Docker for attestation.
+
 The proxy needs to run as part of the same network as the workload to handle requests: `network_mode: "service:permify"`. The Envoy configuration files also do static routing. Below is an example.
 
 ```yml
@@ -387,6 +440,9 @@ routes:
 ```
 
 Here, all requests from the workload ("egress") are routed to the `payments` container. You could use other paths, like `/orders` to add new routes. But it is impossible to dynamically route a request from a workload to another workload without manually adding a path and rewrite setting. This is another reason that although Kubernetes is far more complicated than Docker, it is a better choice in the long-term.
+
+
+
 
 ## Example workload configuration
 
@@ -409,26 +465,39 @@ The request handler extract the SPIFFE ID of the caller from the request (`req.h
 
 The code for the orders and audit services are even simpler. As they only send requests, they have no SPIFFE code at all, and are merely a single small function to call the payments service.
 
+
+
+
 ## Summary and next steps
 
-In this guide
+In this guide you learnt that SPIFFE is an excellent tool to simplify your microservice architecture by avoiding passwords. You can integrate Permify for authorization with SPIRE for authentication by replacing the `/` in SPIFFE IDs with `_`.
 
-https://istio.io
+Large systems should be modelled in Permify schemas with a separate entity and permissions for each service, as below.
+
+```json
+entity paymentsService {
+	relation isAuditService @auditService
+    relation isOrdersService @ordersService
+    relation isManager @user
+
+	action debit = isOrdersService
+    action view  = isAuditService or isManager
+}
+```
+
+Control plane and mTLS logic should be done in a proxy outside of your workloads.
+
+If you want to build a small system, you can extend the example repository in this guide and continue using Envoy. But for most use-cases, switching to Kubernetes would ultimately be less complex over the long-term. Check out [Istio](https://istio.io/latest/docs/overview/what-is-istio) to learn more.
+
+To learn how to model permissions in Permify, see the [documentation](https://fusionauth.io/permify-docs/permify-overview/intro). Finally, if you want to include users as well as services in your design, consider managing them with [FusionAuth](https://fusionauth.io/docs) — the partner application to Permify which handles user authentication.
 
 
 ## todo
 
-https://bridge.ritza.co/share/d7f91635-177b-48fb-a9b0-b22f4255a7ad/
-reread bulk permission article
-check all facts - including bootup flow example
 illustrations / animations
-ID
-ask about target authentication too, and make permify have an svid
-remove sections of config file and see if system runs
-https://istio.io/latest/docs/overview/what-is-istio/
-switch agent attestation from node to token attestation
-remove v=1
-replace article and code in personal repo with ritza stuff
+edit
+https://bridge.ritza.co/share/d7f91635-177b-48fb-a9b0-b22f4255a7ad/
 https://github.com/ritza-co/permifySpire
+replace article and code in personal repo with ritza stuff
 
-cd ~/code/fusionauth-site/astro && docker run --init  --rm --name "faDocs" --network host -v ".:/app" -w "/app" richardjecooke/nodepuppeteer:24.0.1 sh -c  "npm install && npm run dev";
+
