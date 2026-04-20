@@ -263,42 +263,48 @@ Below is a diagram of the full process, which you can refer back to as you read 
 sequenceDiagram
     participant Server as SPIRE server
     participant Agent as SPIRE agent
-
     box rgba(100,100,100,0.2)
         participant Permify as Permify
-        participant PermifyProxy as Permify proxy
+        participant PermifyProxy as Proxy
     end
     box rgba(100,100,100,0.2)
         participant Payments as Payments service
-        participant PaymentsProxy as Payments service proxy
-    end
-    box rgba(100,100,100,0.2)
-        participant Audit as Audit service
-        participant AuditProxy as Audit service proxy
+        participant PaymentsProxy as Proxy
     end
     box rgba(100,100,100,0.2)
         participant Orders as Orders service
-        participant OrdersProxy as Orders service proxy
+        participant OrdersProxy as Proxy
     end
+    Actor User as User
 
 
-    Note over Server: 1. `spireServerInitialize` container registers agent<br />join token and workload IDs at start
-    Note over Agent: 1. Gets join token from shared volume with the server
-    Agent->>Server: 2. Registers and receives root certificate
-    Note over Payments: 3. Instance starts to process file
-    Agent->>Payments: 4. Notices service and checks process/container ID
-    Agent->>Server: 5. Requests SVID for service
-    Agent->>Payments: 6. Provides SVID & root certificate
-    Agent->>Audit: 7. Notices job and checks process/container ID
-    Agent->>Server: 8. Requests SVID for job
-    Agent->>Audit: 9. Provides SVID & root certificate
-    Note over Audit: 10. Finishes processing
-    Orders->>Payments: 11. Sends result data & SVID
-    Note over Audit: 12. Validates SVID using root certificate
-    Payments->>Permify: 13. Checks if SPIFFE ID has permission to save result
+    Note over Server: 1. spireServerInitialize container registers agent<br />join token and workload IDs at startup
+    Note over Agent: 2. Gets join token from shared volume with the server
+    Agent->>Server: 3. Registers and receives root certificate
+
+    PermifyProxy->>Agent: 4. Registers and receives SVID
+    Note over Permify: 5. permifyInitialise container adds the schema and permissions data at startup
+    PaymentsProxy->>Agent: 6. Registers and receives SVID
+    OrdersProxy->>Agent: 7. Registers and receives SVID
+
+    User->>Orders: 8. Order an item (curl http://localhost:7773/order)
+    Orders->>OrdersProxy: 9. Request payment (http://localhost:8001/pay)
+    OrdersProxy->>PaymentsProxy: 10. https://paymentsProxy/pay
+    PaymentsProxy-->>PaymentsProxy: 11. Verify SVID
+    PaymentsProxy->>Payments: 12. http://localhost/pay
+    Payments->>PaymentsProxy: 13. Check if orders has permissions to request payment (http://localhost:8001/v1/tenants/t1/permissions/check)
+    PaymentsProxy->>PermifyProxy: 14. http://permifyProxy/v1/tenants/t1/permissions/check
+    PermifyProxy-->>PermifyProxy: 15. Verify SVID
+    PermifyProxy->>Permify: 16. http://permify/v1/tenants/t1/permissions/check
+    Permify-->>Permify: 17. Check if spiffe://example.org/orders has permission to request payment
+    Permify->>PermifyProxy: 18. Return response
+    PermifyProxy->>PaymentsProxy: 19. Return response
+    PaymentsProxy->>Payments: 20. Return response
+    Payments->>PaymentsProxy: 21. Return response
+    PaymentsProxy->>OrdersProxy: 22. Return response
+    OrdersProxy->>Orders: 23. Return response
+    Orders->>User: 24. Return response
 ```
-
-
 
 
 
