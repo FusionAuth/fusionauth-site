@@ -331,11 +331,14 @@ Now in `paymentsService`, the ID `spiffe:__example.org_orders` will be a member 
 
 ## Example Envoy sidecar configuration
 
-At this point you may be thinking that using Docker for microservices and SPIFFE is simple enough to use for your system. That changes once you start trying to configure workloads to actually integrate SVIDs and talk to the SPIRE agent.
+At this point you may be thinking that using Docker for microservices and SPIFFE is simple enough for a basic system. That changes once you start trying to configure workloads to actually integrate SVIDs and talk to the SPIRE agent.
 
 There are three design options to authenticate your workload:
-1. Add logic to handle SVIDs (X.509) to your workloads directly. For this approach, your programming language has to support X.509, and something needs to copy into the container the workload's SVID (from the agent) and the server root certificate (for SVID validation). This has several problems: control plane logic is mixed into the data plane (violating separation of concerns), some languages (like a simple bash script) can't handle X.509, and you're going to need a support (sidecar) container that has access to the SPIRE server, agent, and workload containers to copy around certificates (making permissions management tricky).
-1. Use a simple sidecar proxy, like [Ghostunnel](https://ghostunnel.dev/docs/spiffe-workload-api), for every workload. In this design, the workload knows nothing about SPIRE. Instead, a proxy container for every workload is created, and SPIRE treats the proxy as the object to be authenticated. The agent attests the proxy's identiy gives and the proxy an SVID certificate. The proxy automatically wraps every request from the workload with HTTPS using the SVID, and checks every incoming request's SVID — which enables mTLS (mutual transport layer security). Since Ghostunnel handles incoming and outgoing requests differently, you'll need to use one container with two instances of Ghostunnel running. This is shown below in an example sidecar proxy for the order service. Since Ghostunnel supports SPIFFE natively, this solution is as simple as adding the `--use-workload-api` flag. However, Ghostunnel does not pass the HTTPS details (SVID certificate) to the target workload, so there is no way for a service to get the SPIFFE ID of the service that called it. No SPIFFE ID means no way to check permissions in Permify. For simple microservice systems that need authentication but not authorization, we recommend Ghostunnel.
+1. **Add logic to handle SVIDs (X.509) to your workloads directly**. For this approach, your programming language has to support X.509, and something needs to copy into the container the workload's SVID (from the agent) and the server root certificate (for SVID validation). This has several problems:
+   - control plane logic is mixed into the data plane (violating separation of concerns),
+   - some languages (like a simple bash script) can't handle X.509,
+   - and you're going to need a support (sidecar) container that has access to the SPIRE server, agent, and workload containers to copy around certificates (making permissions management tricky).
+2. **Use a simple sidecar proxy, like [Ghostunnel](https://ghostunnel.dev/docs/spiffe-workload-api), for every workload**. In this design, the workload knows nothing about SPIRE. Instead, a proxy container for every workload is created, and SPIRE treats the proxy as the object to be authenticated. The agent attests the proxy's identiy gives and the proxy an SVID certificate. The proxy automatically wraps every request from the workload with HTTPS using the SVID, and checks every incoming request's SVID — which enables mTLS (mutual transport layer security). Since Ghostunnel handles incoming and outgoing requests differently, you'll need to use one container with two instances of Ghostunnel running. This is shown below in an example sidecar proxy for the order service. Since Ghostunnel supports SPIFFE natively, this solution is as simple as adding the `--use-workload-api` flag. However, Ghostunnel does not pass the HTTPS details (SVID certificate) to the target workload, so there is no way for a service to get the SPIFFE ID of the service that called it. No SPIFFE ID means no way to check permissions in Permify. For simple microservice systems that need authentication but not authorization, we recommend Ghostunnel.
     ```yml
       ordersProxy:
     image: ghostunnel/ghostunnel:v1.9.2-alpine
@@ -367,7 +370,7 @@ There are three design options to authenticate your workload:
     pid: "service:spireAgent"
     network_mode: "service:orders"
     ```
-1. Use [Envoy](https://www.envoyproxy.io/docs/envoy/v1.37.2/configuration/configuration) as a proxy (or switch to Kubernetes and Istio). Envoy is the design used in this guide. It is a leap in complexity compared to Ghostunnel, requiring large configuration files. But Envoy automatically handles all SVID management, mTLS checking, and can forward SPIFFE IDs to the workloads.
+3. **Use [Envoy](https://www.envoyproxy.io/docs/envoy/v1.37.2/configuration/configuration) as a proxy (or switch to Kubernetes and Istio)**. Envoy is the design used in this guide. It works in the same way as a proxy as Ghostunnel, but is a leap in complexity compared to Ghostunnel, requiring large configuration files. Envoy automatically handles all SVID management, mTLS checking, and can forward SPIFFE IDs to the workloads.
 
 Below is the example Compose file section for the `permifyProxy` container running Envoy. Every other workload has an almost identical container: `ordersProxy`, `auditProxy`, and `paymentsProxy`,
 
@@ -376,9 +379,7 @@ Below is the example Compose file section for the `permifyProxy` container runni
     lang="yml"
     tags="c" />
 
-The proxy needs to run as part of the same network as the workload to handle requests: `network_mode: "service:permify"`. In the configuration file (`config` folder) there is a line to pass the SPIFFE ID to the workload: `request_handle:headers():replace("spiffeId", "spiffe://example.org/audit")`.
-
-The Envoy configuration files also do static routing. Below is an example.
+The proxy needs to run as part of the same network as the workload to handle requests: `network_mode: "service:permify"`. The Envoy configuration files also do static routing. Below is an example.
 
 ```yml
 - name: egressService
@@ -394,6 +395,8 @@ routes:
 Here, all requests from the workload ("egress") are routed to the `payments` container. You could use other paths, like `/orders` to add new routes. But it is impossible to dynamically route a request from a workload to another workload without manually adding a path and rewrite setting. This is another reason that although Kubernetes is far more complicated than Docker, it is a better choice in the long-term.
 
 ## Example workload configuration
+
+
 
 <RemoteCode
     url={frontmatter.codeRoot + "/docker-compose.yml"}
