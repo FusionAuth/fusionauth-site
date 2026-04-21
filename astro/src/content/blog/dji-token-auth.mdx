@@ -1,0 +1,113 @@
+---
+publish_date: 2026-02-26
+title: Your Token Proves Who You Are, Not What You Own
+description: "One engineer reverse-engineered his DJI vacuum's API for fun and accidentally accessed 7,000 devices worldwide. Here's the authorization failure that made it possible — and how to make sure it doesn't happen to you."
+authors: Brad McCarty, Dan Moore
+image: /img/blogs/dji-tokens-auth/token.png
+categories: Education
+tags: authorization, api security, bola, iot security, token-based authentication
+excerpt_separator: "{/* more */}"
+---
+
+Sammy Azdoufal spent $2,000 on a DJI Romo robot vacuum. It's a sleek, impressive machine — DJI's first foray into the consumer robotics market. Sammy, being a normal, well-adjusted engineer, immediately decided the official app wasn't good enough; he wanted to drive his vacuum with a PlayStation 5 controller instead.
+
+So he did what any reasonable engineer would do: he fired up Claude (Anthropic's AI coding assistant) and asked it to reverse-engineer the API used by the DJI mobile app so he could build his own controller interface.
+
+Claude delivered. He got his auth token, he connected to the API , and —
+
+Wait.
+
+Why did he have access to 7,000 vacuums?
+
+## The Part Where It Gets Weird
+
+Sammy could see everything: live camera feeds, microphone audio, and detailed floor maps from DJI Romo units scattered across 24 countries. Not because he "hacked" anything in the dramatic sense — he didn't crack encryption, exploit a zero-day, or brute-force a password. He just authenticated with his own device's token and discovered that the system had absolutely no concept of which devices that token was supposed to be allowed to access.
+
+To demonstrate how bad it was, he took a Verge reporter's review unit, entered a 14-digit serial number, confirmed it was actively cleaning the living room at 80% battery, and pulled a detailed floor map of the journalist's home.
+
+All with his perfectly legitimate, correctly-issued auth token for his own vacuum.
+
+He didn't want to be the world's most well-informed burglar. He wanted to drive his new toy with a joystick.
+
+He reported it responsibly, DJI patched it in two days, and now we get to talk about what actually went wrong.
+
+## Authentication Worked, Authorization Didn't Exist
+
+Here's the thing that's easy to gloss over in the "IoT bad, security hard" discourse: DJI's authentication wasn't broken. Sammy had a real account. He had a real device. He got a real, valid token. The system knew exactly who he was.
+
+The system just didn't care what he was allowed to do with that identity.
+
+This is the authentication vs. authorization distinction, and it's one of the most common failure modes in APIs, IoT platforms, and connected systems. They are not the same thing:
+
+**Authentication** answers "Who are you?" — and DJI got this right. Sammy logged in, got a token, and the server recognized him.
+
+**Authorization** answers "Are you allowed to do this specific thing?" — and DJI completely skipped this part.
+
+DJI's MQTT message broker (the server that routes communication between devices and the cloud) had no topic-level access controls. Once you had any valid token, you could see traffic from any device. The broker wasn't checking: "Does this token belong to the owner of this device?" It was just checking: "Is this a token? Cool, here's all the data."
+
+The token was a skeleton key when it should have been a room-specific keycard.
+
+## What Proper Authorization Would Have Looked Like
+
+The fix here isn't exotic. It's foundational. For a connected device platform, authorization needs to bind tokens to specific resources. When Sammy's token shows up asking for data, the system should have been checking:
+
+1. Is this a valid token? ✓ (DJI got this part)
+2. Does this token belong to an account that owns the device being requested? ✗ (this check didn't exist)
+3. Is this device currently registered to this account? ✗ (also absent)
+4. Is the requested action, such as listing devices, allowed for this token?  ✗ (also absent)
+
+This is sometimes called **Broken Object Level Authorization (BOLA)** — [OWASP's #1 API security risk](https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/).
+
+The pattern shows up constantly in APIs: you can see your invoice at `/invoices/1042`, so you try `/invoices/1043`, and... that works too.
+
+## The IoT Threat Model Nobody Wants to Write
+
+Consumer IoT has a threat model problem. The companies building these devices are often excellent at the hardware engineering, pretty good at building reliable cloud infrastructure, and surprisingly casual about what happens when a valid auth token lands on a broker that routes data from every device on the platform.
+
+Part of this is scale pressure — ship fast, fix later — but part of it is that the threat model for IoT auth is genuinely different from a typical web app, and the differences matter:
+
+**Devices outlive apps.** A web app gets updated constantly. A robot vacuum sitting in someone's hallway in 2030 may still be running the same firmware, connecting to the same broker, with the same token-scoping decisions baked into the backend.
+
+**The physical world is the attack surface.** A compromised social media account leaks posts. A compromised vacuum leaks your floor plan, your daily routine, whether you're home, what your living room looks like, and when you eat cereal at 3am. The blast radius for IoT auth failures is your actual home.
+
+**Shared infrastructure is a force multiplier.** Most IoT platforms centralize device management through shared cloud brokers, exactly like DJI's setup. That's efficient and cost-effective, right up until the authorization layer fails and one user's valid token becomes access to the entire platform.
+
+## Now, Throw OpenClaw In The Mix
+
+This authorization vulnerability is bad enough, but suppose instead of building a controller interface, Sammy had asked a semi-autonomous AI agent, like OpenClaw, to use the authentication token and control his vacuum cleaner. Instead of deterministic code, the token would be exposed to the AI agent.
+
+The results could have been really bad, depending on the prompt used. An agent with an HTTP tool and a vague goal can probe broadly. With no authorization guardrails, every probe could succeed. The agent doesn't know it's crossed an ownership boundary because the API never told it no.
+
+For instance, imagine he prompted the agent to “clean all zones, no exclusions, right now”. The agent could enumerate the API surface: listing endpoints, trying device IDs sequentially or from discovered lists, where the controller would only hit the endpoints specified. This discovery would be a natural part of fulfilling Sammy’s request. Once the other zones are discovered, the vacuums in those zones would be told to clean everything, possibly ruining delicate rugs, triggering motion-detection security systems, or terrifying dogs when running in previously prohibited areas.
+
+An innocuous prompt could cause distress or damage to other people’s homes. The resource-level authorization scoping described above is even more critical when the caller is an agent making API requests to accomplish a goal rather than a human using a game controller. Token scoping, ownership verification, and action-level permissions need to be enforced as hard boundaries the agent cannot reason its way around.
+
+We wrote more about [how to approach this here](/blog/ai-authorization).
+
+## What This Means for You
+
+If you're building anything that issues tokens to control physical devices — or honestly, anything where one user's data should be invisible to another user — this story is worth reading slowly.
+
+The specific questions to pressure-test:
+
+**Are your tokens scoped to resources?** A token that grants identity ("I am Sammy") is not the same as a token that grants specific access ("I am Sammy and I own device X"). If your backend isn't enforcing the latter, you have a skeleton key problem.
+
+**Does your authorization layer check ownership, not just authentication?** For every API endpoint that returns device data, ask: does this endpoint verify that the requesting token belongs to the owner of the requested device? Not "is this a real token" — "is this token entitled to this resource?"
+
+**What's the blast radius of a misconfigured broker or middleware layer?** MQTT and similar pub/sub systems are powerful and flexible. They're also easy to misconfigure in ways that make every subscriber a potential eavesdropper. Default-deny on topic subscriptions is not always the norm — it needs to be explicitly configured.
+
+**Have you tested horizontal privilege escalation?** This is the BOLA test: can user A access user B's resources by simply changing an ID? In a properly scoped system, swapping a device serial number should return a 403. If it returns data, you have the DJI problem.
+
+## The Uncomfortable Punchline
+
+DJI's statement after the fix noted that "the actual probability of unauthorized access by malicious actors was extremely low," largely because Sammy's tests accounted for nearly all of the anomalous access in their logs.
+
+That's technically true, and also completely beside the point.
+
+The issue wasn't that some sophisticated attacker didn’t find this vulnerability — it's that a developer trying to build a joystick integration for his own vacuum stumbled into it in an afternoon, using a publicly available AI tool. The barrier to this kind of accidental (or intentional) access was essentially zero. The only thing that stood between DJI and a serious incident was the happy accident of one engineer who just wanted a fun weekend project and his ethics.
+
+That's not a security posture. That's luck.
+
+* * *
+
+The DJI Romo vulnerability is a clean illustration of why authentication and authorization are separate concerns that both require deliberate design. If you're building APIs or connected device platforms and want to think through how to properly scope tokens and enforce resource-level authorization, [we'd love to talk](/contact).

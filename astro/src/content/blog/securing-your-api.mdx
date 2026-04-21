@@ -9,13 +9,7 @@ categories: Education
 tags: apis, authentication, api keys, oauth, tokens, scopes, jwt
 excerpt_separator: "{/* more */}"
 ---
-import APIRequestWithCentralAuthority from "../../diagrams/blog/securing-your-api/api-request-with-api-key-and-central-authority.astro";
-import APIRequestWithMultipleRequestsCentralAuthority from "../../diagrams/blog/securing-your-api/api-request-with-api-key-and-multiple-requests-central-authority.astro";
-import APIRequest from "../../diagrams/blog/securing-your-api/api-request.astro";
 import Aside from '../../components/Aside.astro';
-import FailedAPIRequest from "../../diagrams/blog/securing-your-api/failed-api-request.astro";
-import SignedTokenValidation from "../../diagrams/blog/securing-your-api/signed-token-validation.astro";
-import IntrospectionValidation from "../../diagrams/blog/securing-your-api/introspection-validation.astro";
 
 When you are building out APIs for web applications, desktop apps or mobile applications, you must authenticate these requests. 
 
@@ -51,13 +45,29 @@ A client can make a `GET` request against an API server at `https://todo.piedpip
 
 Here's an example of a successful API request, where Richard requests information about his todos:
 
-<APIRequest alt="An API request." />
+```mermaid title="An API request."
+sequenceDiagram
+
+actor User as Richard
+participant API as API Server
+User ->> API : Get Richard's todos
+API ->> API : Request validated
+API ->> User : Richard's todos data
+```
 
 But how does the server know which user to get todos for when it receives a request? You need to deny random or malicious users access to precious, precious tasks. Authentication is critical. If the API server knows the caller is Richard, it knows that the requester can read and write Richard's todos, but not Dinesh's.
 
 Here's a failed request, because the user is unauthorized.
 
-<FailedAPIRequest alt="A failed API request." />
+```mermaid title="A failed API request."
+sequenceDiagram
+
+actor User as Dinesh
+participant API as API Server
+User ->> API : Get Richard's todos
+API ->> API : Request validation attempted, fails
+API ->> User : Error message
+```
 
 ## What API Authentication Needs
 
@@ -136,7 +146,43 @@ With centralized API key verification, the central authority is consulted every 
 
 The central authority validates the API key using its value and, possibly, contextual information about the request and requested resource.
 
-<APIRequestWithCentralAuthority alt="API request with central authority validating the key." />
+```mermaid title="API request with central authority validating the key."
+sequenceDiagram
+
+actor User as Richard
+participant Todos API Server
+participant Sharing API Server
+participant LLM Summary API Server
+participant CA as Central Authority
+par User to Todos API Server
+  User ->> Todos API Server : Get todos
+and User to Sharing API Server
+  User ->> Sharing API Server : Share todos
+and User to LLM Summary API Server
+  User ->> LLM Summary API Server : Summarize todos
+end
+
+par Todos API Server to CA
+  Todos API Server ->> CA : Is key valid?
+  CA ->> CA : Checks key value for Todos API Server
+  CA ->> Todos API Server : Yes
+and Sharing API Server to CA
+  Sharing API Server ->> CA : Is key valid?
+  CA ->> CA : Checks key value for Sharing API Server
+  CA ->> Sharing API Server : Yes
+and LLM Summary API Server to CA
+  LLM Summary API Server ->> CA : Is key valid?
+  CA ->> CA : Checks key value for LLM Summary API Server
+  CA ->> LLM Summary API Server : Yes
+end
+par Todos API Server to User
+  Todos API Server ->> User : Todos results
+and Sharing API Server to User
+  Sharing API Server ->> User : Share results
+and LLM Summary API Server to User
+  LLM Summary API Server ->> User : Summarize results
+end
+```
 
 What does the central authority look like? It's named vaguely intentionally, as it could be:
 * a database table
@@ -153,7 +199,43 @@ However, with centralized verification, the central authority is a chokepoint. S
 
 Here's a diagram showing three parallel requests from three different API servers which all need to have an API key verified.
 
-<APIRequestWithMultipleRequestsCentralAuthority alt="API request with central authority validating the key for multiple requests." />
+```mermaid title="API request with central authority validating the key for multiple requests."
+sequenceDiagram
+
+actor User as Richard
+participant Todos API Server
+participant Sharing API Server
+participant LLM Summary API Server
+participant CA as Central Authority
+par User to Todos API Server
+  User ->> Todos API Server : Get todos
+and User to Sharing API Server
+  User ->> Sharing API Server : Share todos
+and User to LLM Summary API Server
+  User ->> LLM Summary API Server : Summarize todos
+end
+
+par Todos API Server to CA
+  Todos API Server ->> CA : Is key valid?
+  CA ->> CA : Checks key value for Todos API Server
+  CA ->> Todos API Server : Yes
+and Sharing API Server to CA
+  Sharing API Server ->> CA : Is key valid?
+  CA ->> CA : Checks key value for Sharing API Server
+  CA ->> Sharing API Server : Yes
+and LLM Summary API Server to CA
+  LLM Summary API Server ->> CA : Is key valid?
+  CA ->> CA : Checks key value for LLM Summary API Server
+  CA ->> LLM Summary API Server : Yes
+end
+par Todos API Server to User
+  Todos API Server ->> User : Todos results
+and Sharing API Server to User
+  Sharing API Server ->> User : Share results
+and LLM Summary API Server to User
+  LLM Summary API Server ->> User : Summarize results
+end
+```
 
 Additionally, if you need to integrate with third-party services, you need to figure out how your API key approach maps to their API key protection system. This may require a proxy to translate requests, or additional integration work.
 
@@ -163,7 +245,19 @@ Let's look at decentralized API key verification, which has a different set of t
 
 With decentralized API key verification, the central authority issues a signed token as an API key. Such tokens use public key cryptography to allow an API server to validate them without communicating with the central authority on every request. The signature is signed by the central authority using a private key. The corresponding public key is published and retrieved periodically by the API server. The public key verifies that the token was signed by the central authority, which means that the contents can be trusted. When the contents of the token are examined, they can provide other information about the requester or operation, including when the token expires, who created the token and more.
 
-<SignedTokenValidation alt="Validation using signed API keys." />
+```mermaid title="Validation using signed API keys."
+sequenceDiagram
+
+actor User as Richard
+participant RS as Todos API Server
+participant AS as Central Authority
+RS ->> AS : Retrieve Public Keys 
+Note right of User : ... Time passes ...
+User ->> RS : Present API Key, Request Data
+RS ->> RS : Check Signature
+RS ->> RS : Check Data in Key
+RS ->> User : Return Todos Data
+```
 
 The OAuth standards can be used to implement decentralized API key verification. Let's map the words used above into OAuth terminology:
 
@@ -201,7 +295,18 @@ As mentioned above, OAuth supports decentralized API key verification. However, 
 
 With introspection, every time the API server receives a request, it presents the central authority with the API key. The central authority returns a response indicating whether the API key was valid or invalid. The format of the response is defined by the RFC.
 
-<IntrospectionValidation alt="Validation using signed OAuth introspection." />
+```mermaid title="Validation using signed OAuth introspection."
+sequenceDiagram
+
+actor User as Richard
+participant RS as Todos API Server
+participant AS as Central Authority
+User ->> RS : Present API Key, Request Data
+RS ->> AS : API Key Valid?
+AS ->> RS : API Key is Valid, Here's Data About The API Key
+RS ->> RS : Perform Additional Validity Checks Against Returned Data
+RS ->> User : Return Todos Data
+```
 
 A typical response looks like:
 
@@ -224,7 +329,7 @@ However, when using OAuth introspection, make sure you understand what a valid r
 
 From the specification, `active` is a:
 
-{/* eslint-disable-line */}> [b]oolean indicator of whether or not the presented token is currently active.  The specifics of a token's "active" state will vary depending on the implementation of the authorization server and the information it keeps about its tokens...
+> [b]oolean indicator of whether or not the presented token is currently active.  The specifics of a token's "active" state will vary depending on the implementation of the authorization server and the information it keeps about its tokens...
 
 With OAuth centralized API key verification, you can't rely on the central authority for everything. You must check the data it returns for correctness as well.
 
