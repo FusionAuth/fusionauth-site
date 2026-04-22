@@ -55,12 +55,28 @@ export const mermaidTitleFix = () => {
   };
 };
 
+const lightboxProvider = () => {
+  return {
+    name: 'mdx-lightbox-provider',
+    enforce: 'post',
+    transform(code, id) {
+      if(!id.endsWith('.mdx')) return;
+      code = `import _LightboxImage from "src/components/LightboxImage.astro";\n${code}`;
+      code = code.replace(
+        "components: { Fragment: _Fragment, ...props.components, },",
+        "components: { Fragment: _Fragment, img: _LightboxImage, ...props.components, },"
+      );
+      return code;
+    }
+  }
+}
+
 const config = defineConfig({
   build: {
     format: 'file'
   },
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), lightboxProvider()],
   },
   integrations: [
     mermaid({
