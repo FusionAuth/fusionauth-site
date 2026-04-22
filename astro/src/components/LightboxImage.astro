@@ -1,0 +1,57 @@
+---
+interface Props {
+  src: string;
+  alt: string;
+}
+
+const {src, alt} = Astro.props;
+const id = `lb-${Math.random().toString(36).slice(2, 9)}`;
+---
+<fa-astro-lightbox data-dialog-id={id}>
+    <img class="cursor-zoom-in" src={src} alt={alt} data-lightbox-trigger/>
+</fa-astro-lightbox>
+
+<dialog id={id} class="outline-0! max-w-screen max-h-screen bg-transparent m-auto overscroll-contain backdrop:overscroll-contain backdrop:bg-white/50 dark:backdrop:bg-slate-900/50" aria-label={alt}>
+    <img class="max-w-full max-h-full m-0! cursor-zoom-out" src={src} alt={alt} data-lightbox-close/>
+</dialog>
+
+<script>
+  class AstroLightbox extends HTMLElement {
+    private dialog: HTMLDialogElement | null = null;
+    private trigger: HTMLElement | null = null;
+    private closeButton: HTMLElement | null = null;
+    
+    connectedCallback() {
+      const dialogId = this.dataset.dialogId;
+      if (!dialogId) return;
+
+      this.trigger = this.querySelector<HTMLElement>('[data-lightbox-trigger]');
+      this.dialog = document.getElementById(dialogId) as HTMLDialogElement;
+      this.closeButton = this.dialog?.querySelector<HTMLElement>('[data-lightbox-close]');
+
+      if (!this.trigger || !this.dialog) return;
+
+      this.trigger.addEventListener('click', this.open);
+      this.dialog.addEventListener('click', this.handleDialogClick);
+      this.closeButton?.addEventListener('click', this.close);
+    }
+
+    disconnectedCallback() {
+      this.trigger?.removeEventListener('click', this.open);
+      this.dialog?.removeEventListener('click', this.handleDialogClick);
+      this.closeButton?.removeEventListener('click', this.close);
+    }
+
+    private open = () => this.dialog?.showModal();
+    
+    private close = () => this.dialog?.close();
+
+    private handleDialogClick = (event: MouseEvent) => {
+      if (event.target === this.dialog) {
+        this.dialog.close();
+      }
+    };
+  }
+
+  customElements.define('fa-astro-lightbox', AstroLightbox);
+</script>
