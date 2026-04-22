@@ -1,0 +1,283 @@
+---
+title: Express
+description: Integrate Fusionauth with an example Express website.
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-web/main
+---
+import Steps from 'src/components/Steps.astro';
+
+This quickstart adds a login page and required authentication to a website hosted with [Express](https://expressjs.com/).
+
+## Prerequisites
+
+This Quickstart requires:
+
+* [Node.js](https://nodejs.org/en/download) 22 or later
+* [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later
+* On macOS and Windows, one of the following container management tools:
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use Orbstack for `docker compose` commands after install, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
+  * [Docker desktop](https://www.docker.com/products/docker-desktop/)
+
+Be sure to open your container management tool to configure and install any dependencies needed by that tool, including Rosetta and Developer Tools on macOS.
+
+## Create a simple Express App
+
+For this QuickStart, we'll use an Express app that reads and writes data to a text file.
+
+<Steps>
+1. Create a file named `express-app.js` with the following contents:
+
+   ```javascript
+    const express = require('express');
+    const fs = require('fs');
+    const path = require('path');
+    const app = express();
+    const PORT = 3000;
+    const TARGET_FILE = path.join(__dirname, 'note.txt');
+
+    // Middleware to parse form data
+    app.use(express.urlencoded({ extended: true }));
+
+    // Ensure the file exists so we don't crash
+    if (!fs.existsSync(TARGET_FILE)) {
+        fs.writeFileSync(TARGET_FILE, 'Hello! Edit this text.', 'utf8');
+    }
+
+    app.get('/', (req, res) => {
+        const content = fs.readFileSync(TARGET_FILE, 'utf8');
+        
+        // Simple HTML UI
+        const html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Text Editor</title>
+                <style>
+                    body { font-family: sans-serif; margin: 40px; line-height: 1.6; }
+                    textarea { width: 100%; height: 300px; padding: 10px; margin-bottom: 10px; }
+                    button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+                    button:hover { background: #0056b3; }
+                </style>
+            </head>
+            <body>
+                <h1>Edit: ${path.basename(TARGET_FILE)}</h1>
+                <form method="POST" action="/save">
+                    <textarea name="content">${content}</textarea>
+                    <br>
+                    <button type="submit">Save Changes</button>
+                </form>
+            </body>
+            </html>
+        `;
+        res.send(html);
+    });
+
+    app.post('/save', (req, res) => {
+        const newContent = req.body.content;
+        fs.writeFileSync(TARGET_FILE, newContent, 'utf8');
+        res.redirect('/'); // Refresh the page to show updated content
+    });
+
+    app.listen(PORT, () => {
+        console.log(`Server running at http://localhost:${PORT}`);
+    });
+   ```
+
+1. Install dependencies:
+
+   ```console
+   npm install express
+   ```
+
+1. Run the app:
+
+   ```console
+   node express-app.js
+   ```
+
+1. Open the app at [https://localhost:3000](https://localhost:3000).
+
+1. Replace the text area text with "Hello Express", then click the **Save Changes** button.
+
+1. In a file browser or terminal, look in the directory where you created `express-app.js`. You should see a new file named `note.txt`, with text content "Hello Express".
+
+1. Congratulations, you have a working Express app that lets you edit a local text file through your web browser.
+</Steps>
+
+## Install and Run FusionAuth
+
+<Steps>
+1. Open your container management tool (listed in the prerequisites above).
+
+1. Clone the [GitHub repository for the FusionAuth instance you'll use with this QuickStart](https://github.com/FusionAuth/fusionauth-quickstart-react) to your local machine:
+
+   ```console
+   git clone git@github.com:FusionAuth/fusionauth-quickstart-app.git
+   ```
+
+1. Navigate into the cloned directory:
+
+   ```console
+   cd fusionauth-quickstart-app
+   ```
+
+1. To start a local instance of FusionAuth, run the following command:
+
+   ```console
+   docker compose up -d
+   ```
+1. Wait until all networks, volumes, and containers have a green status of **Healthy**, **Started**, or **Created** (this may take a few minutes, depending on your network speed and cached dependencies).
+
+1. Open [http://localhost:9011](http://localhost:9011) to access the FusionAuth Admin UI.
+</Steps>
+
+## Add FusionAuth to the Express App
+
+Now that you have a working instance of FusionAuth and a working Express app, let's use FusionAuth to add login to your Express app.
+
+<Steps>
+1. In the same folder as `express-app.js` and `note.txt`, create a file named `.env` with the following contents:
+
+   ```
+   FUSIONAUTH_CLIENT_ID=f0510a74-da7a-4101-a474-05e7f1d5ba7e
+   FUSIONAUTH_CLIENT_SECRET=super-secret-secret-that-should-be-regenerated-for-production
+   FUSIONAUTH_CALLBACK_URL=http://localhost:3000/oauth-callback
+   SESSION_SECRET=a_very_long_random_string
+   ```
+
+1. Install the dependencies we'll need to authenticate with FusionAuth:
+
+   ```console
+   npm install passport passport-oauth2 express-session dotenv
+   ```
+
+1. Add the following dependencies to the dependency imports at the top of `express-app.js`:
+
+   ```javascript
+   // auth dependencies
+   const session = require('express-session');
+   const passport = require('passport');
+   const OAuth2Strategy = require('passport-oauth2');
+   ```
+
+1. Below your dependencies in `express-app.js`, add the following FusionAuth configuration:
+
+   ```javascript
+    // --- FusionAuth Config ---
+    const FUSIONAUTH_URL = 'http://localhost:9011';
+    // read fusionauth configuration from .env file
+    require('dotenv').config();
+    const CLIENT_ID = process.env.FUSIONAUTH_CLIENT_ID;
+    const CLIENT_SECRET = process.env.FUSIONAUTH_CLIENT_SECRET;
+    const CALLBACK_URL = process.env.FUSIONAUTH_CALLBACK_URL;
+   ```
+
+1. Above the check for `TARGET_FILE`, add the following [Passport](https://www.npmjs.com/package/passport) configuration:
+
+   ```javascript
+    // --- Passport Setup ---
+    passport.use('fusionauth', new OAuth2Strategy({
+        authorizationURL: `${FUSIONAUTH_URL}/oauth2/authorize`,
+        tokenURL: `${FUSIONAUTH_URL}/oauth2/token`,
+        clientID: CLIENT_ID,
+        clientSecret: CLIENT_SECRET,
+        callbackURL: CALLBACK_URL
+    }, (accessToken, refreshToken, profile, cb) => {
+        // In a real app, you'd verify the user here. 
+        // For this utility, we'll just return a generic user object.
+        return cb(null, { id: 'user' });
+    }));
+
+    passport.serializeUser((user, done) => done(null, user));
+    passport.deserializeUser((obj, done) => done(null, obj));
+
+    // --- Middleware ---
+    app.use(express.urlencoded({ extended: true }));
+    app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: true }));
+    app.use(passport.initialize());
+    app.use(passport.session());
+
+    // Auth Guard Middleware
+    const ensureAuthenticated = (req, res, next) => {
+        if (req.isAuthenticated()) return next();
+        res.redirect('/login');
+    };
+   ```
+
+1. Below the check for `TARGET_FILE`, add the following new routes for login, the Oauth callback, and logout:
+
+   ```javascript
+    app.get('/login', passport.authenticate('fusionauth'));
+
+    app.get('/oauth-callback', 
+        passport.authenticate('fusionauth', { failureRedirect: '/login' }),
+        (req, res) => res.redirect('/')
+    );
+
+    // 1. The Logout Route
+    app.get('/logout', (req, res) => {
+      // Clear the local Express session
+      req.logout((err) => {
+        if (err) return next(err);
+        
+        // Redirect to FusionAuth to clear the SSO session
+        // This ensures the user is actually logged out of the identity provider
+        const fusionAuthLogout = `${FUSIONAUTH_URL}/oauth2/logout?client_id=${process.env.FUSIONAUTH_CLIENT_ID}`;
+        res.redirect(fusionAuthLogout);
+      });
+    });
+   ```
+
+1. In the `/` page route code, add the styling and HTML element for the log out button:
+
+   ```javascript
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Text Editor</title>
+        <style>
+            body { font-family: sans-serif; margin: 40px; line-height: 1.6; }
+            textarea { width: 100%; height: 300px; padding: 10px; margin-bottom: 10px; }
+            button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+            button:hover { background: #0056b3; }
+            .logout-btn { background: #dc3545; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; float: right; }
+        </style>
+    </head>
+    <body>
+        <h1>Edit: ${path.basename(TARGET_FILE)}</h1>
+        <form method="POST" action="/save">
+            <textarea name="content">${content}</textarea>
+            <br>
+            <button type="submit">Save Changes</button>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </form>
+        <br>
+    </body>
+    </html>
+   ```
+
+1. That's it! Your Express app should now use FusionAuth login. Run the app:
+
+   ```console
+   node express-app.js
+   ```
+
+1. Open the app at [https://localhost:3000](https://localhost:3000).
+
+1. Log in with the following credentials:
+
+   * username: `richard@example.com`
+   * password: `password`
+
+1. Edit the text file in the safety of an authenticated Express app.
+</Steps>
+
+## Next steps
+
+This is a quick introduction to using FusionAuth for user authentication. To learn more about integrating FusionAuth with your product, see [Get Started](http:///docs/get-started).
+
+FusionAuth has many features (including [Social Login](/docs/lifecycle/authenticate-users/identity-providers/#social-identity-providers), [Single Sign-On](/docs/lifecycle/authenticate-users/single-sign-on), [Passwordless](/docs/lifecycle/authenticate-users/passwordless/webauthn-passkeys), [Multi-factor Authentication](/docs/lifecycle/authenticate-users/multi-factor-authentication)), most of which are free. Some require additional licensing. For details, see the [pricing page](/pricing).
+
+For information on the React SDK, see [the GitHub documentation](https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-react/docs).
+
+You can ask general questions in [the FusionAuth forum](/community/forum).
