@@ -71,7 +71,7 @@ Here's the process:
 1. The SPIRE server starts, and is given a list of IDs for the SPIRE agent and services that want to register to use SPIFFE.
 1. The SPIRE agent starts, with access to the server where the services run. This agent registers itself with the SPIRE server and gets the certificate of the SPIRE server. This certificate is the root of all trust from now on, and allows services and agents to verify service IDs without calling the SPIRE server again.
 1. An instance of the background job starts to process a file.
-1. The SPIRE agent checks the identity of the new job or service that started (for example, through a process ID or Docker container label). The agent requests a **SVID** (SPIFFE Verifiable Identity Document), which is like a passport for the job, from the SPIRE server. The server returns an X.509 certificate (or JWT) extremely fast. The agent provides this certificate to the job via a local Unix socket. The SVID SPIFFE ID identifies the job with an identifier (name) like `spiffe://example.org/infrastructure/file-processor`. The agent also gives the service the SPIRE server certificate.
+1. When the job starts and needs its identity, it calls the Workload API -- a Unix socket exposed by the SPIRE agent on the same machine. The agent checks the identity of the calling process (for example, through its process ID or Docker container label). The agent requests a **SVID** (SPIFFE Verifiable Identity Document) from the SPIRE server on the job's behalf. The server returns an X.509 certificate (or JWT) extremely fast. The agent returns this certificate to the job via the Unix socket. The SVID SPIFFE ID identifies the job with an identifier (name) like `spiffe://example.org/infrastructure/file-processor`. The agent also gives the service the SPIRE server certificate.
 1. The job finishes executing and wants to send its result to the web service. The job calls the service, sending the service both the result data and the job's SVID (the actual certificate file read from disk).
 1. When the service receives the request from the job, it can check the SVID validity internally using the SPIRE server certificate and any library that handles TLS cryptography (such libraries are available for any programming language). No call is needed to the SPIRE agent or server.
 1. The service has now authenticated the job, but has not done authorization. SPIFFE doesn't handle authorization at all. So the service calls an authorization server (like Permify) to check if the job with ID `spiffe://example.org/infrastructure/file-processor` has permission to save its result.
@@ -89,10 +89,10 @@ sequenceDiagram
     Note over Server: 1. Starts with list of IDs for agent & services
     Agent->>Server: 2. Registers and receives root certificate
     Note over Job: 3. Instance starts to process file
-    Agent->>Web: 4. Verifies service process/container ID
+    Web->>Agent: 4. Calls Workload API, agent verifies process/container ID
     Agent->>Server: 5. Requests SVID for service
     Agent->>Web: 6. Provides SVID & root certificate
-    Agent->>Job: 7. Verifies job process/container ID
+    Job->>Agent: 7. Calls Workload API, agent verifies process/container ID
     Agent->>Server: 8. Requests SVID for job
     Agent->>Job: 9. Provides SVID & root certificate
     Note over Job: 10. Finishes processing
