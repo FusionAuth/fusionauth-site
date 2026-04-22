@@ -17,18 +17,18 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 - [FusionAuth Native Reports](#fusionauth-native-reports)
 - [An Overview Of Cohort Analysis](#an-overview-of-cohort-analysis)
 - [Understanding Additional User Charts](#understanding-additional-user-charts)
-  - [Total Users Charts](#total-users-charts)
-  - [User Acquisition Charts](#user-acquisition-charts)
+  - [Total Users Chart](#total-users-chart)
+  - [User Acquisition Chart](#user-acquisition-chart)
   - [User Age Chart](#user-age-chart)
-  - [Logins Per Year Charts](#logins-per-year-charts)
-  - [Percent Logins Per Year Charts](#percent-logins-per-year-charts)
-  - [Abandonment Charts](#abandonment-charts)
+  - [Logins Per Year Chart](#logins-per-year-chart)
+  - [Percent Logins Per Year Chart](#percent-logins-per-year-chart)
+  - [Abandonment Chart](#abandonment-chart)
   - [Activity Cohort Chart](#activity-cohort-chart)
   - [Returning Users Chart](#returning-users-chart)
   - [Friction Chart](#friction-chart)
   - [Login Frequency Chart](#login-frequency-chart)
   - [Cohort Analysis Chart](#cohort-analysis-chart)
-- [How To Run The Chart Code For Your FusionAuth Instance](#how-to-run-the-chart-code-for-your-fusionauth-instance)
+- [Create Charts For Your FusionAuth Instance](#create-charts-for-your-fusionauth-instance)
   - [Extract Customer Data](#extract-customer-data)
 - [Calculate And Display The Charts](#calculate-and-display-the-charts)
 - [Next Steps](#next-steps)
@@ -58,6 +58,10 @@ FusionAuth provides several charts, showing:
 
 Because more complex charts require time-consuming calculations, more informative charts aren't available directly in FusionAuth. However, you can export your data and calculate the statistics manually. This guide walks you through that process.
 
+<Aside type="warning">
+Many charts shown in this guide depend on the expiry duration of your login tokens. Longer expiry times mean that users log in less frequently. You can adjust the sample code accompanying this guide to analyze a period that makes sense for your FusionAuth configuration.
+</Aside>
+
 ## An Overview Of Cohort Analysis
 
 Cohort analysis is a behavioral analytics technique that groups users by shared characteristics or experiences within a period. You can then track the actions of each group over time.
@@ -79,21 +83,19 @@ Later on, we'll show you the code that generates some helpful charts using your 
 
 The following charts were created from 1,000 mock users with randomly generated registration and login dates, so they don't depict realistic patterns, but serve to illustrate the concepts.
 
-### Total Users Charts
+### Total Users Chart
 
 ![Total users charts](/img/blogs/cohort-analysis/chartTotalUsers.webp)
 
-Total users charts show the number of users who joined your service. This allows you to see whether your business is growing as you expect. However, these charts don't show registered users who are no longer active, so you need to compare the total users with the user activity and abandonment metrics (shown later).
+The total user chart shows the number of users who joined your service. This allows you to see whether your business is growing as you expect. Because these numbers include users who are no longer active, so you need to compare the total users with the user activity and abandonment metrics (shown later).
 
-Like many other charts, total users charts separate users into those who verified themselves (confirming their email address) and those who did not. Unverified users can act like outliers in your data, distorting your statistics. But it's still useful to know how many there are, and to try ways of encouraging users to verify.
+Like many other charts, the total users chart separates users into those who verified themselves (confirming their email address) and those who did not. Unverified users can act like outliers in your data, distorting your statistics.
 
-### User Acquisition Charts
+### User Acquisition Chart
 
 ![New users charts](/img/blogs/cohort-analysis/chartNewUsers.webp)
 
-A user acquisition chart is useful for assessing whether advertising campaigns, or new features, have attracted new users. Be aware that there might be a time delay between your marketing effort and the number of new registrations. You can also investigate any spikes or dips in the chart, and see whether there were any extra conversations about your business online or complaints about competitors.
-
-This chart doesn't show whether the users actually use your service after registering — it depicts user **acquisition**, not user **retention**.
+A user acquisition chart can help you understand the rate at which your application attracts new users. Combined with a timeline of advertising campaigns and feature releases, you can assess the value of those efforts. Spikes and dips in the chart can provide valuable information about user sentiment, but you might need a data scientist to know for sure (or not).
 
 ### User Age Chart
 
@@ -103,35 +105,33 @@ The age chart groups users by the number of years they have used your service. I
 
 Notice that this chart is the mirror image of the new users per year chart.
 
-### Logins Per Year Charts
+### Logins Per Year Chart
 
 ![Logins per year and month charts](/img/blogs/cohort-analysis/chartLoginsPerYear.webp)
 
-The logins per year and month charts show how active your users are. These charts, and some of the later charts, depend on the expiry duration of your login tokens. Longer expiry times mean that users log in less frequently. You can adjust the sample code to analyze a period that makes sense for your configuration.
+The logins per year chart shows how active your users are.
 
 Sometimes it's more meaningful to work with deduplicated logins for a period. In other words, if a user logs in more than once in a year or month, they are counted as logging in only once in that period. This prevents a small fraction of users who log in frequently from making the service appear more used than it actually is.
 
-### Percent Logins Per Year Charts
+### Percent Logins Per Year Chart
 
 ![Percent logins per year and month charts](/img/blogs/cohort-analysis/chartPercentLoginsPerYear.webp)
 
-The percent login charts are more useful versions of the previous charts. They show the ratio of logins to users. In 2025, you can see that just under half (0.45) of users actively use the service. The increasing trend of usage over time indicates that the example business became increasingly valuable to customers.
+The percent login chart shows the ratio of logins to users. In 2025, you can see that just under half (0.45) of users actively use the service. The increasing trend of usage over time indicates that the example business became increasingly valuable to customers.
 
-### Abandonment Charts
+### Abandonment Chart
 
 ![Abandonment charts](/img/blogs/cohort-analysis/chartAbandonment.webp)
 
 The first abandonment chart is the opposite of user activity. Here, you see how many users haven't logged in for more than one, two, six, or 12 months. The majority of users (over 500 of the 1,000 users) haven't logged in for at least a year.
 
-While the first chart is a static metric calculated today, the second abandonment chart shows the trend of users who haven't logged in for at least six months per year. This amount steadily increases over time, which contradicts the percent login chart that showed users logging in *more* each year. This apparent contradiction is because the percent login chart is relative (showing a percentage of users) and the abandonment chart is absolute (showing the number of users). Depending which statistic is more useful to you, you can change any absolute chart in the code to a relative chart by dividing the annual value by the number of users in that year.
+While the first chart is a static metric calculated today, the second abandonment chart shows the trend of users who haven't logged in for at least six months per year. This amount steadily increases over time, which contradicts the percent login chart that showed users logging in *more* each year. This apparent contradiction is because the percent login chart is relative (showing a percentage of users) and the abandonment chart is absolute (showing the number of users). Depending on which statistic is more useful to you, you can change any absolute chart in the code to a relative chart by dividing the annual value by the number of users in that year.
 
 ### Activity Cohort Chart
 
 ![2025 logins chart](/img/blogs/cohort-analysis/chart2025Logins.webp)
 
 The activity cohort chart groups users by how frequently they use the service. Here, you can see most registered users don't log in at all. A large number of users logged in up to four times in the last year (you should change the period to match your business and token expiry duration), but only a bare handful of dedicated users logged in more than four times a year.
-
-When analyzing cohort charts, you should take some sample users in each group and investigate which features they use, to determine which parts of your business offer the most value to customers and keep them engaged.
 
 ### Returning Users Chart
 
@@ -143,7 +143,7 @@ The returning users chart shows how many users log in after at least a year of n
 
 ![Friction chart](/img/blogs/cohort-analysis/chartFriction.webp)
 
-The friction chart groups users by how long it takes them to log in for the first time after registering. It shows both how easy the registration-to-usage flow is (low friction) and how much the registration process interests users in actually using your offering. If they realize while registering that your service isn't what they're really looking for, the time until they log in might be forever.
+The friction chart groups users by how long it takes a user to log in for the first time after registering. This shows how easily a user flows from registration to usage. If users realize while registering that your service isn't what they're really looking for, they may never log in.
 
 This example chart shows that nearly all users do log in, indicating high interest, but only after a month, suggesting the business should make it easier for users to explore the service after registering.
 
@@ -161,19 +161,17 @@ This chart is also known as the L30 chart or Power User Curve.
 
 ![Cohort analysis chart](/img/blogs/cohort-analysis/chartHeatmap.webp)
 
-The cohort analysis chart is a heatmap that shows user retention per month for the year following registration. The x-axis shows the number of months after registration, from `0` to `12`. The y-axis shows the month of registration. Pick any row (point on the y-axis) and read the chart from left to right to see how many users logged in during the first month after they registered, then after the second month, and so on. You'll likely see most users log in a lot in the first month or two, and slowly decline in logins over the next twelve months. If the decline tends towards zero, however, your service doesn't provide long-term value to customers.
+The cohort analysis chart is a heatmap that shows user retention per month for the year following registration. The x-axis shows the number of months after registration, from `0` to `12`. The y-axis shows the month of registration. Pick any row and read the chart from left to right to see how many users logged in during the first month after they registered, then after the second month, and so on. You'll likely see most users log in a lot in the first month or two, and slowly decline in logins over the next twelve months. If the decline tends towards zero, however, your service doesn't provide long-term value to customers.
 
-The y-axis is valuable because it shows you whether your business is getting better or worse at retaining customers over time. In this example, you can see the business has become better with retention over time, as there are darker colors higher in the chart.
+The y-axis shows whether your business is getting better or worse at retaining customers over time. In this example, you can see the business has become better with retention over time, as there are darker colors higher in the chart.
 
-## How To Run The Chart Code For Your FusionAuth Instance
+## Create Charts For Your FusionAuth Instance
+
+TODO HERE - remove docker. postgres is only for mock data
 
 To create the charts above for your business, you need to use [Docker](https://www.docker.com/get-started). If you prefer not to use Docker, ensure you have [Go](https://go.dev/doc/install) installed and use a PostgreSQL client (like the free IDE [DBeaver](https://dbeaver.io/download/)).
 
 You also need to have an instance of FusionAuth with the data you want to analyze. If you don't have any data yet, use the code in the appendix to create test data.
-
-<Aside type="note">
-The code in this guide uses Go because calculating user metrics is incredibly computationally expensive. Many charts require iterating through every login date for every user. Go can do this dozens of times faster than JavaScript or Python, using multiple CPU cores in parallel.
-</Aside>
 
 ### Extract Customer Data
 
