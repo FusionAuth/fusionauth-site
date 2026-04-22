@@ -1,51 +1,85 @@
 # FusionAuth Site
 
-Hosted at [https://fusionauth.io](https://fusionauth.io).
+Despite the name, this repo only contains the FusionAuth documentation, articles, developer tools, and blog.
+
+This content is hosted in the following subdirectories of `fusionauth.io`:
+
+- [https://fusionauth.io/docs](https://fusionauth.io/docs)
+- [https://fusionauth.io/blog](https://fusionauth.io/blog)
+- [https://fusionauth.io/articles](https://fusionauth.io/articles)
 
 The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? File an issue or submit a pull request.
 
-> NOTE: To build the docs site, see the [docs README](/astro/README.md).
+# FusionAuth Documentation and Blog
 
-## Build Entire Site
+## Build
 
-To build the entire site:
+To build the site:
 
-1. Install a JDK, for example [OpenJDK](https://openjdk.org/install/):
+1. Navigate into the `astro` directory, where the docs site lives:
 
    ```console
-   brew install openjdk
+   cd astro
    ```
 
-1. Set up [Savant](http://savantbuild.org/):
+1. Install dependencies:
 
-   ```
-   mkdir ~/savant
-   cd ~/savant
-   wget http://savant.inversoft.org/org/savantbuild/savant-core/1.0.0/savant-1.0.0.tar.gz
-   tar xvfz savant-1.0.0.tar.gz
-   ln -s ./savant-1.0.0 current
-   export PATH=$PATH:~/savant/current/bin/
-   ```
-   
-   To persist this change, add `~/savant/current/bin` to your `PATH` that in `.zshrc` or `.bashrc`.
-
-1. Build the site:
-
-   ```
-   sb serve
+   ```console
+   npm install
    ```
 
-## CSS changes
+1. Run a local development instance of the site:
 
-This project depends on CSS from the `fusionauth-style` project.
+   ```console
+   npm run dev
+   ```
+
+   To view the site, use the link displayed at the end of build output.
+   This development instance automatically rebuilds as you modify local files.
+   Some parts of the site, including site search, won't run on the development instance. To preview those, try a full site build.
+
+To run a full site build:
+
+```console
+npm run start
+```
+
+This may take a minute or two. Output can be noisy, but do pay attention to the output from `astro-link-validator`, which runs at the very end of the `build` step. This check ensures that all internal links on the site point to valid URLs. For development convenience, this check doesn't fail the build, but you should always keep the broken link count at zero before merging into `main`.
+
+## Write Content
+
+Always follow the content style guide found in [CONTRIBUTING.md](/CONTRIBUTING.md).
+
+## Lint
+
+To check syntax across the entire site:
+
+```sh
+npm run lint
+```
+
+> NOTE: Most of the site doesn't currently pass lint checks.
+
+To check syntax in a specific file:
+
+```sh
+npm run lint -- src/components/BlogButton.astro
+```
+
+To skip linting when you inevitably include HTML somewhere in an MDX file, use the `eslint-disable-next-line` or `eslint-disable-line`:
+
+```mdx
+{/* eslint-disable-next-line */}
+<a href="https://www.fusionauth.io">FusionAuth</a>
+```
 
 ## Deploy
 
-Deploying happens automatically via a GitHub action when `main` is updated.
+Deploying happens automatically via a GitHub action (one for content, another for redirects) whenever content merges into `main`. Dev server deployments have separate corresponding actions.
 
 ## Redirects
 
-[redirects.json](src/redirects.json) specifies our redirect rules. This file is published to s3 and read by a Lambda function that processes redirects for the site. When modifying the file:
+[src/redirects.json](src/redirects.json) specifies our redirect rules. This file is published to s3 and read by a Lambda function that processes redirects for the site. When modifying the file:
 
 * Keep items in alphabetical order!
 * If you are moving a page around, update `redirects`.

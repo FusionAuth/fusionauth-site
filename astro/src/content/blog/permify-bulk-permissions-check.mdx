@@ -1,0 +1,167 @@
+---
+publish_date: 2026-04-06
+title: How to Perform a Bulk Permissions Check in FusionAuth FGA By Permify
+description: Learn how to use FusionAuth FGA By Permify's Bulk Check API to verify multiple users' permissions across multiple resources in a single API call.
+authors: Ömer Topal, Dan Moore
+image: /img/blogs/permify-bulk-permissions-check/permify-bulk-permissions-check-header.png
+categories: Tutorial
+tags: fine-grained authorization, permify, fga, bulk check, permissions
+excerpt_separator: "{/* more */}"
+---
+import RemoteCode from 'src/components/RemoteCode.astro';
+
+In [FusionAuth FGA By Permify](/docs/extend/fine-grained-authorization), you can run individual permission checks quickly. Each check takes about [15 milliseconds (ms)](/permify-docs/api-reference/permission/check-api#latency-&-performance), which is as fast as a single frame on a 60 Hz monitor. But if your app needs to display a user's permissions to 30 documents on a dashboard, the resulting half-second delay is noticeable and annoying.
+
+In [December 2025](https://permify.co/changelog/#:~:text=New%20Bulk%20Check%20Endpoint,See%20the%20implementation%20commit), FusionAuth FGA By Permify added a new [Bulk Check API endpoint](/permify-docs/api-reference/permission/bulk-check) to fix this problem. You can now perform a bulk permissions check, enabling you to verify multiple users' permissions across multiple resources in a single API call.
+
+Consider the previous example: Instead of performing 30 individual checks that unnecessarily occupy your network and the FusionAuth FGA By Permify server, you can check all 30 documents in a single API call. You also save your app server from having to coordinate and collect the results of multiple calls. A bulk permissions check reduces latency and has less overhead than sending checks one by one.
+
+The Bulk Check API lets you verify up to 100 permissions in a single call.
+
+(If you'd like to see the code for this feature, it was made in this GitHub [commit](https://github.com/Permify/permify/commit/e00b129bb5343836695c0be6757eb4c130a2c53f). The original feature request was [GitHub request 1199](https://github.com/Permify/permify/issues/1199).)
+
+The rest of this post demonstrates how to perform a bulk check.
+
+{/* more */}
+
+## The example schema
+
+Let's use a simple schema of doctors, patients, and medical records:
+
+```js
+entity user {
+	relation hasDoctor @user
+	relation hasGuardian @user
+	relation isChild @user
+}
+
+entity record {
+	relation owner @user
+	relation consultant @user
+	action view = (owner not owner.isChild) or
+                   owner.hasGuardian or owner.hasDoctor or consultant
+	action edit = owner.hasDoctor
+}
+```
+
+In the schema above, users can have doctors, and users can be children who have guardians. Adult users can see their own medical records, and doctors can edit their patients' records. Doctors consulting on a record can only view that record, not edit it. Children cannot see their medical records.
+
+The following screenshot shows a visualization of the schema above. To take a closer look, copy the schema code into the [Permify Playground](https://play.permify.co).
+
+![FusionAuth FGA By Permify medical schema visualized](/img/blogs/permify-bulk-permissions-check/medicalSchema.webp)
+
+(A FusionAuth FGA By Permify schema does not restrict cardinality, meaning that a record may have many owners. Restricting a record to one owner is something you need to manage in your own data.)
+
+## The example data
+
+Let's create:
+
+- A user who is also a doctor and a mother, called Alice.
+- Her child, Bob.
+- Alice's patient, Carol.
+- Another patient, Dan, whom Alice does not treat.
+- Another doctor, Eve, who treats that patient.
+- A final patient, Frank, whom the other doctor Eve treats and whom Alice consults on.
+- Medical records for all the users.
+
+Given the schema rules, Alice can view but not edit her own record, as well as her child Bob's. Her child Bob cannot view his own record. Alice can edit her patient Carol's record, but not the record of the patient that she has no consulting or doctoral relationship with, Dan. Lastly, Alice can view but not edit the record of the patient on whom she consults, Frank.
+
+## Create the example in FusionAuth FGA By Permify
+
+The bulk check is in the next section. To run this example on your own computer, follow the instructions below before continuing.
+
+- Run FusionAuth FGA By Permify in [Docker](https://docs.docker.com/engine/install) using the in-memory database with the following command (Permify needs only 78 MB disk space):
+
+```sh
+docker run --rm --name="permify" -p 3476:3476 -p 3478:3478 ghcr.io/permify/permify serve
+```
+
+- In another terminal, create the schema and data in FusionAuth FGA By Permify using the following command:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-permify-bulk-check/main/setup.sh" lang="sh" />
+
+If you get a connection error when running the command above, ensure your Permify Docker image is at least version 1.6.6.
+
+While the commands above use the [default tenant](/permify-docs/getting-started/quickstart#configuring-schema-via-api), `t1`, if you have a multi-tenant system, you need to set your tenant ID in every call.
+
+## Run the bulk permissions check
+
+A hospital administrator wants to check that both doctors (Alice and Eve) have the appropriate permissions for all medical records as part of a system audit.
+
+Writing a permissions-verifying app is simple with a bulk permissions check. In one call to FusionAuth FGA By Permify, you can check the `view` and `edit` permissions to all records for both doctors. The following call uses curl in the terminal:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-permify-bulk-check/main/bulk-check.sh" lang="sh" />
+
+The `items` array contains a list of objects in the form: the resource, the permission, and the requester. For example: Alice's medical record, the view action, and Alice the user.
+
+The items above have been visually grouped by `view` or `edit`, and by Alice or the other doctor, Eve.
+
+To write the call in other languages, like Go and JavaScript, see the [API example code](/permify-docs/api-reference/permission/bulk-check).
+
+The call returns the following result:
+
+```js
+{
+  "results": [
+    { "can": "CHECK_RESULT_ALLOWED", "metadata": { "check_count": 6 }}, // alice view own record
+    { "can": "CHECK_RESULT_ALLOWED", "metadata": { "check_count": 4 }}, // alice view her child
+    { "can": "CHECK_RESULT_ALLOWED", "metadata": { "check_count": 3 }}, // alice view her patient
+    { "can": "CHECK_RESULT_ALLOWED", "metadata": { "check_count": 2 }}, // alice view consulting patient
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 5 }}, // alice view another doctor - no
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 5 }}, // alice view another patient - no
+
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 5 }}, // another doctor view
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 5 }},
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 5 }},
+    { "can": "CHECK_RESULT_ALLOWED", "metadata": { "check_count": 3 }},
+    { "can": "CHECK_RESULT_ALLOWED", "metadata": { "check_count": 6 }},
+    { "can": "CHECK_RESULT_ALLOWED", "metadata": { "check_count": 3 }},
+
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 2 }}, // alice edit own record - no
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 2 }}, // alice edit her child - no
+    { "can": "CHECK_RESULT_ALLOWED", "metadata": { "check_count": 2 }}, // alice edit her patient
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 2 }}, // alice edit consulting patient - no
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 2 }}, // alice edit another doctor - no
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 2 }}, // alice edit another patient - no
+
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 2 }}, // another doctor edit
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 2 }},
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 2 }},
+    { "can": "CHECK_RESULT_ALLOWED", "metadata": { "check_count": 2 }},
+    { "can": "CHECK_RESULT_DENIED",  "metadata": { "check_count": 2 }},
+    { "can": "CHECK_RESULT_ALLOWED", "metadata": { "check_count": 2 }},
+  ]
+}
+```
+
+In addition to the `CHECK_RESULT_ALLOWED` and `CHECK_RESULT_DENIED` values above, FusionAuth FGA By Permify may also return `CHECK_RESULT_UNSPECIFIED` if an error occurs. You typically should check to see if the result is `CHECK_RESULT_ALLOWED` to fail closed. However, if you pass in an ID that doesn't exist, like `AliceChild2`, Permify just returns `CHECK_RESULT_DENIED` instead of an error.
+
+FusionAuth FGA By Permify does not return the Ids of the entities checked. Instead, it returns an array of responses in the same order you passed the requests. You need to map the responses yourself.
+
+The `check_count` in the metadata tells you how many entities Permify investigated before deciding whether a user had permission or not. This field is useful for optimization, as you can see whether any of your checks use an excessive number of entities. You cannot ask FusionAuth FGA By Permify to remove this `metadata` field.
+
+If you need more than 100 checks, partition your data into sets of 100 and send multiple bulk requests to FusionAuth FGA By Permify.
+
+## When to use a bulk permissions check, and when not to
+
+Bulk permission checks are useful when you need to query many permissions at once. For example, when:
+- auditing users and permissions,
+- checking which of dozens of UI elements on a dashboard to show or hide enable,
+- validating complex access control logic in your API endpoints,
+- and validating batch operations.
+
+In simple cases, even when checking multiple permissions for a single user, the older API queries may be more useful than bulk permissions. For example, if you want a list of all the records Alice can view, it's not practical to list all the records in the database in your query. Rather run the appropriate [lookup call](/permify-docs/api-reference/permission/lookup-entity):
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-permify-bulk-check/main/lookup-entity.sh" lang="sh" />
+
+The result: 
+
+```
+{"entity_ids":["AliceRecord","BobRecord","CarolRecord","FrankRecord"],"continuous_token":""}
+```
+
+## Next steps
+
+We recommend reviewing your calls to FusionAuth FGA By Permify to check for any places where you can save bandwidth and time by switching to a bulk permissions check.
+
+If you have any further questions, please use the community support on [Discord](https://discord.gg/permify) or [open a support ticket](/docs/operate/troubleshooting/technical-support) if you have paid support.
