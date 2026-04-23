@@ -189,7 +189,7 @@ Edit the file `.env` to match your FusionAuth URL, API key, and application Id.
 To run the user extraction, use the following command:
 
 ```console
-go run 3extract.go
+go run extractUsers.go
 ```
 
 The extraction creates two files: `faUsers.json`, which contains the raw data from FusionAuth, and `users.json`, which contains the processed set of users with all login dates.
@@ -210,7 +210,7 @@ The `users.json` file has the following structure:
 If you have more than 999,999 users, you need to edit `numberOfResults=999999` in the script, and possibly extract your users in batches and concatenate the JSON output files.
 </Aside>
 
-The extraction script uses the [FusionAuth API](https://fusionauth.io/docs/apis/users), for example, `/api/user/search`. Users are retrieved first, with registration dates and verification data. Then, each user's login dates are retrieved.
+The extraction script uses the [FusionAuth API](https://fusionauth.io/docs/apis/users) (specifically `/api/user/search`) to retrieve users, then fetch login dates for each user.
 
 <Aside type="caution">
 Be careful that exporting, analyzing, and storing your users' IDs, email addresses, and login dates does not violate laws regarding personal data in your country.
@@ -226,26 +226,25 @@ The last step is to run the web server that displays the charts.
 If you're using Docker, run the following command:
 
 ```console
-go mod tidy && go run 4app.go
+go mod tidy && go run charts.go
 ```
 
 You don't need to edit any parameters or constants this time, because the code makes the charts from the JSON files and doesn't talk to FusionAuth.
 
-When the calculations are done, the terminal says `Charts created`.
+When the web server is ready to display your charts, you should see the following output in your terminal:
+```
+Charts created
+```
 
-Browse to http://localhost:7777 to view your charts.
+To view your charts, visit [http://localhost:7777](http://localhost:7777).
 
-The app reads all data from `users.json` in the `main()` function, calculates the charts, then inserts them into `5page.html`, and returns that page when requested. It calculates each chart in parallel, using the `runParallel()` function in the `getChartData()` function. The chart calculations themselves are just loops through the users and login dates.
+The web server reads all data from `users.json` in the `main()` function, calculates the charts, then inserts them into `charts.html`, and returns that page when requested. Each chart calculates in parallel, using the `runParallel()` function in the `getChartData()` function.
 
-If you want to change a chart, you can edit its calculation function without breaking any of the others — they are all independent. If you want to add a new chart, create a new function and call it from `getChartData()`. If any chart takes too long to calculate, comment out the function call, and in `5page.html`, comment out the chart display. The HTML uses [Chart.js](https://www.chartjs.org) for charts.
+If you want to change a chart, you can edit its calculation function without breaking any of the others — they are all independent. If you want to add a new chart, create a new function and call it from `getChartData()`. If any chart takes too long to calculate, comment out the function call, and in `charts.html`, comment out the chart display. The HTML uses [Chart.js](https://www.chartjs.org) for charts.
 
 ## Next Steps
 
 In this guide you learned how to use basic FusionAuth login data to analyze user behavior. Visualizing user behavior is foundational to determining which parts of your business offer the most value to customers and understanding how to keep them engaged. If you see any patterns you want to investigate further, edit the code to log the user Ids in a group that interests you, and then use those Ids to investigate which features in your app affect those users.
-
-You can also edit `4app.go` and `5page.html` to add any new charts you need. LLMs handle Go and HTML code very well due to the languages' simplicity. If you provide both files to any chatbot, it should instantly be able to add any chart you want.
-
-If you want even deeper analysis on a regular basis, you need to dive into the world of business intelligence (BI): data extraction, denormalization, and dashboards.
 
 ## Appendix — How To Create Fake Customer Data In FusionAuth
 
@@ -261,15 +260,15 @@ cd fusionauth-user-charts
 Edit the `.env` file. Adjust the URL, authorization key, and application Id in the code above to match your FusionAuth instance. Then run the file with the following command:
 
 ```console
-go run 1createMockData.go
+go run createMockData.go
 ```
 
-Once the users are registered, you need to randomize their registration dates, set 5% of user email addresses to unverified, and create thousands of login dates. To do this, you can either connect to your FusionAuth database in a SQL browser and run the contents of `2createMockData.sql`, or use the following command with Docker:
+Once the users are registered, you need to randomize their registration dates, set 5% of user email addresses to unverified, and create thousands of login dates. To do this, you can either connect to your FusionAuth database in a SQL browser and run the contents of `createMockData.sql`, or use the following command with Docker:
 
 ```console
-PGPASSWORD=postgres psql -h faDb -U postgres -d fusionauth -f 2createMockData.sql
+PGPASSWORD=postgres psql -h faDb -U postgres -d fusionauth -f createMockData.sql
 ```
 
 In the command above, you need to set your database location, username, and password to match your instance (these are probably in your `.env` file or `docker-compose.yml` file).
 
-That's all. You are now ready to run scripts 3 and 4 to extract the data and create the charts.
+That's all. You are now ready to run the extraction and chart creation scripts.
