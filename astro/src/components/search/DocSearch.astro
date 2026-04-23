@@ -254,41 +254,43 @@
     };
   }
 
-  const mockSearchClient = {
-    search(requests: Array<{ query: string }>) {
-      return Promise.resolve({
-        results: requests.map((req) => {
-          const query = (req.query || '').toLowerCase().trim();
-          const hits = (query
-            ? SAMPLE_HITS.filter((h) =>
-                Object.values(h.hierarchy).some((v) => v && v.toLowerCase().includes(query)) ||
-                (h.content || '').toLowerCase().includes(query)
-              )
-            : SAMPLE_HITS.slice(0, 5)
-          ).map((h) => makeHit(h, req.query || ''));
-          return {
-            hits,
-            nbHits: hits.length,
-            page: 0,
-            nbPages: 1,
-            hitsPerPage: 20,
-            exhaustiveNbHits: true,
-            query: req.query,
-            params: '',
-            processingTimeMS: 1,
-          };
-        }),
-      });
-    },
-  };
+  function mockSearch(requests: Array<{ query?: string }>) {
+    return Promise.resolve({
+      results: requests.map((req) => {
+        const query = (req.query || '').toLowerCase().trim();
+        const hits = (query
+          ? SAMPLE_HITS.filter((h) =>
+              Object.values(h.hierarchy).some((v) => v && v.toLowerCase().includes(query)) ||
+              (h.content || '').toLowerCase().includes(query)
+            )
+          : SAMPLE_HITS.slice(0, 5)
+        ).map((h) => makeHit(h, req.query || ''));
+        return {
+          hits,
+          nbHits: hits.length,
+          page: 0,
+          nbPages: 1,
+          hitsPerPage: 20,
+          exhaustiveNbHits: true,
+          query: req.query ?? '',
+          params: '',
+          processingTimeMS: 1,
+        };
+      }),
+    });
+  }
 
   docsearch({
     container: '#docsearch',
-    // @ts-ignore – mock client satisfies the required interface at runtime
-    searchClient: mockSearchClient,
+    // Placeholder credentials — real values will replace these when the index is live.
+    // transformSearchClient intercepts every query so no real network call is made.
+    appId: 'PLACEHOLDER',
+    apiKey: 'placeholder',
     indexName: 'fusionauth',
     placeholder: 'Search docs...',
     detachedMediaQuery: 'all',
+    // @ts-ignore – return shape matches what DocSearch expects at runtime
+    transformSearchClient: (client) => ({ ...client, search: mockSearch }),
   });
 
   // Wire mobile/header search buttons to open the DocSearch modal
