@@ -196,7 +196,9 @@ Now that you have a working instance of FusionAuth and a working Express app, le
         tokenURL: `${FUSIONAUTH_URL}/oauth2/token`,
         clientID: CLIENT_ID,
         clientSecret: CLIENT_SECRET,
-        callbackURL: CALLBACK_URL
+        callbackURL: CALLBACK_URL,
+        pkce: true,
+        state: true
     }, (accessToken, refreshToken, profile, cb) => {
         // In a real app, you'd verify the user here. 
         // For this utility, we'll just return a generic user object.
@@ -318,152 +320,178 @@ Now that you have a working instance of FusionAuth and a working Express app, le
 To see a more realistic example of FusionAuth usage, we can improve the app even more, so every user gets a unique note to edit. To accomplish this, we'll use FusionAuth's user data.
 
 <Steps>
+1. Open the FusionAuth Admin UI at [https://localhost:9011](https://localhost:9011).
+
+1. Log in with the following credentials:
+
+   * username: `admin@example.com`
+   * password: `password`
+
+1. Navigate to <Breadcrumb>Applications -> QuickStart App -> Edit -> Registration</Breadcrumb>.
+   * Under **Self-service registration**, toggle the **Enabled** switch to the active state.
+   * In the **Registration Fields** list, tick the **Enabled** and **Required** columns for the following rows:
+     * **Birthdate**
+     * **First name**
+     * **Last name**
+1. Click the **Save** button in the top right of the page to save your changes to self-service registration.
+1. Navigate to <Breadcrumb>Users -> Richard Hendricks -> Manage</Breadcrumb>.
+1. In the **Source** tab, look for the `firstName` and `lastName` fields. That's what we'll use to personalize the UI for each user. In the `registrations` list, you'll see registration data for the QuickStart app registration. We'll use the `id` field here to generate a unique name for each user's note.
+1. Click the <Breadcrumb>Logout</Breadcrumb> button in the top right to log out of the Admin UI. We'll use a different user account to access our Express app.
 1. Install `jsonwebtoken`, so we can access FusionAuth user data from the JWT:
 
    ```console
    npm install jsonwebtoken
    ```
 
-1. Import the `jsonwebtoken` dependency and upgrade `passport.use` to fetch user data:
+1. Import the `jsonwebtoken` dependency, upgrade `passport.use` to fetch the user's name (first and last), and update the `login` route to request the user's `profile`: 
 
    ```javascript
-    const express = require('express');
-    const fs = require('fs');
-    const path = require('path');
-    const jwt = require('jsonwebtoken');
-    const app = express();
-    const PORT = 3000;
+   const express = require('express');
+   const fs = require('fs');
+   const path = require('path');
+   const jwt = require('jsonwebtoken');
+   const app = express();
+   const PORT = 3000;
 
-    // Setup a directory for multi-user files
-    const DATA_DIR = path.join(__dirname, 'user_data');
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+   // Setup a directory for multi-user files
+   const DATA_DIR = path.join(__dirname, 'user_data');
+   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
-    // auth dependencies
-    const session = require('express-session');
-    const passport = require('passport');
-    const OAuth2Strategy = require('passport-oauth2');
+   // auth dependencies
+   const session = require('express-session');
+   const passport = require('passport');
+   const OAuth2Strategy = require('passport-oauth2');
 
-    // read configuration from .env file
-    require('dotenv').config();
-    const FUSIONAUTH_URL = 'http://localhost:9011';
-    const CLIENT_ID = process.env.FUSIONAUTH_CLIENT_ID;
-    const CLIENT_SECRET = process.env.FUSIONAUTH_CLIENT_SECRET;
-    const CALLBACK_URL = process.env.FUSIONAUTH_CALLBACK_URL;
+   // read configuration from .env file
+   require('dotenv').config();
+   const FUSIONAUTH_URL = 'http://localhost:9011';
+   const CLIENT_ID = process.env.FUSIONAUTH_CLIENT_ID;
+   const CLIENT_SECRET = process.env.FUSIONAUTH_CLIENT_SECRET;
+   const CALLBACK_URL = process.env.FUSIONAUTH_CALLBACK_URL;
 
-    // tell passport how to talk to fusionauth
-    passport.use('fusionauth', new OAuth2Strategy({
-        authorizationURL: `${FUSIONAUTH_URL}/oauth2/authorize`,
-        tokenURL: `${FUSIONAUTH_URL}/oauth2/token`,
-        clientID: CLIENT_ID,
-        clientSecret: CLIENT_SECRET,
-        callbackURL: CALLBACK_URL
-    }, (accessToken, refreshToken, profile, cb) => {
-        // decode jwt
-        const decoded = jwt.decode(accessToken);
+   // tell passport how to talk to fusionauth
+   passport.use('fusionauth', new OAuth2Strategy({
+       authorizationURL: `${FUSIONAUTH_URL}/oauth2/authorize`,
+       tokenURL: `${FUSIONAUTH_URL}/oauth2/token`,
+       clientID: CLIENT_ID,
+       clientSecret: CLIENT_SECRET,
+       callbackURL: CALLBACK_URL,
+       pkce: true,
+       state: true,
+       scope: ['openid', 'profile', 'email']
+   }, (accessToken, refreshToken, params, profile, cb) => {
+       const idToken = params.id_token;
+       const decoded = jwt.decode(idToken);
 
-        // get the user uuid to name the note
-        const user = {
-            id: decoded.sub, 
-            email: decoded.email,
-            name: decoded.name || 'User'
-        };
+       const firstName = decoded.given_name || '';
+       const lastName = decoded.family_name || '';
+       const fullName = `${firstName} ${lastName}`.trim();
 
-        return cb(null, user);
-    }));
+       const user = {
+          id: decoded.sub, 
+          email: decoded.email,
+          name: fullName || decoded.email || 'User'
+       };
 
-    // remember users via the session cookie
-    passport.serializeUser((user, done) => done(null, user));
-    passport.deserializeUser((obj, done) => done(null, obj));
+       return cb(null, user);
+   }));
 
-    // require authentication to access
-    app.use(express.urlencoded({ extended: true }));
-    app.use(session({ 
-        secret: process.env.SESSION_SECRET, 
-        resave: false, 
-        saveUninitialized: true 
-    }));
-    app.use(passport.initialize());
-    app.use(passport.session());
+   // remember users via the session cookie
+   passport.serializeUser((user, done) => done(null, user));
+   passport.deserializeUser((obj, done) => done(null, obj));
 
-    const ensureAuthenticated = (req, res, next) => {
-        if (req.isAuthenticated()) return next();
-        res.redirect('/login');
-    };
+   // require authentication to access
+   app.use(express.urlencoded({ extended: true }));
+   app.use(session({ 
+       secret: process.env.SESSION_SECRET, 
+       resave: false, 
+       saveUninitialized: true 
+   }));
+   app.use(passport.initialize());
+   app.use(passport.session());
 
-    // Helper to get specific user file
-    const getUserFile = (id) => path.join(DATA_DIR, `note-${id}.txt`);
+   const ensureAuthenticated = (req, res, next) => {
+       if (req.isAuthenticated()) return next();
+       res.redirect('/login');
+   };
 
-    // --- Routes ---
-    app.get('/login', passport.authenticate('fusionauth'));
+   // Helper to get specific user file
+   const getUserFile = (id) => path.join(DATA_DIR, `note-${id}.txt`);
 
-    app.get('/oauth-callback', 
-        passport.authenticate('fusionauth', { failureRedirect: '/login' }),
-        (req, res) => res.redirect('/')
-    );
+   // --- Routes ---
+   app.get('/login', passport.authenticate('fusionauth', { 
+       scope: ['openid', 'profile', 'email'] 
+   }));
 
-    app.get('/logout', (req, res) => {
-        // Clear the local Express session
-        req.logout((err) => {
-            if (err) return next(err);
-            req.session.destroy(() => {
-                // Redirect to FusionAuth to clear the SSO session
-                const logoutUrl = `${FUSIONAUTH_URL}/oauth2/logout?client_id=${CLIENT_ID}` +
-                    `&post_logout_redirect_uri=${encodeURIComponent('http://localhost:3000/login')}`;
-                res.redirect(logoutUrl);
-            });
-        });
-    });
+   app.get('/oauth-callback', 
+       passport.authenticate('fusionauth', { failureRedirect: '/login' }),
+       (req, res) => res.redirect('/')
+   );
 
-    app.get('/', ensureAuthenticated, (req, res) => {
-        const TARGET_FILE = getUserFile(req.user.id);
-        
-        // Ensure the file exists so we don't crash
-        if (!fs.existsSync(TARGET_FILE)) {
-            fs.writeFileSync(TARGET_FILE, `Hello ${req.user.id}!`, 'utf8');
-        }
+   app.get('/logout', (req, res) => {
+       // Clear the local Express session
+       req.logout((err) => {
+           if (err) return next(err);
+           req.session.destroy(() => {
+               // Redirect to FusionAuth to clear the SSO session
+               const logoutUrl = `${FUSIONAUTH_URL}/oauth2/logout?client_id=${CLIENT_ID}` +
+                   `&post_logout_redirect_uri=${encodeURIComponent('http://localhost:3000/login')}`;
+               res.redirect(logoutUrl);
+           });
+       });
+   });
 
-        const content = fs.readFileSync(TARGET_FILE, 'utf8');
-        
-        // Simple HTML UI
-        const html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Text Editor</title>
-                <style>
-                    body { font-family: sans-serif; margin: 40px; line-height: 1.6; }
-                    textarea { width: 100%; height: 300px; padding: 10px; margin-bottom: 10px; }
-                    button { padding: 10px 20px; background: #007bff; 
-                             color: white; border: none; cursor: pointer; }
-                    button:hover { background: #0056b3; }
-                    .logout-btn { background: #dc3545; color: white; padding: 8px 15px;
-                                  text-decoration: none; border-radius: 4px; float: right; }
-                </style>
-            </head>
-            <body>
-                <a href="/logout" class="logout-btn">Logout</a>
-                <h1>Edit: ${path.basename(TARGET_FILE)}</h1>
-                <form method="POST" action="/save">
-                    <textarea name="content">${content}</textarea>
-                    <br>
-                    <button type="submit">Save Changes</button>
-                </form>
-            </body>
-            </html>
-        `;
-        res.send(html);
-    });
+   app.get('/', ensureAuthenticated, (req, res) => {
+       const TARGET_FILE = getUserFile(req.user.id);
+       
+       // Ensure the file exists so we don't crash
+       if (!fs.existsSync(TARGET_FILE)) {
+           fs.writeFileSync(TARGET_FILE, `Hello ${req.user.name}!`, 'utf8');
+       }
 
-    app.post('/save', ensureAuthenticated, (req, res) => {
-        const TARGET_FILE = getUserFile(req.user.id);
-        const newContent = req.body.content;
-        fs.writeFileSync(TARGET_FILE, newContent, 'utf8');
-        res.redirect('/'); // Refresh the page to show updated content
-    });
+       const content = fs.readFileSync(TARGET_FILE, 'utf8');
+       
+       // Simple HTML UI
+       const html = `
+           <!DOCTYPE html>
+           <html>
+           <head>
+               <title>Text Editor</title>
+               <style>
+                   body { font-family: sans-serif; margin: 40px; line-height: 1.6; }
+                   textarea { width: 100%; height: 300px; padding: 10px; margin-bottom: 10px; }
+                   button { padding: 10px 20px; background: #007bff; 
+                            color: white; border: none; cursor: pointer; }
+                   button:hover { background: #0056b3; }
+                   .logout-btn { background: #dc3545; color: white; padding: 8px 15px;
+                                 text-decoration: none; border-radius: 4px; float: right; }
+               </style>
+           </head>
+           <body>
+               <a href="/logout" class="logout-btn">Logout</a>
+               <p style="float: right; margin-right: 20px;">Welcome, ${req.user.name}</p>
+               <h1>Personal Note Editor</h1>
+               <form method="POST" action="/save">
+                   <textarea name="content">${content}</textarea>
+                   <br>
+                   <button type="submit">Save Changes</button>
+               </form>
+           </body>
+           </html>
+       `;
+       res.send(html);
+   });
 
-    app.listen(PORT, () => {
-        console.log(`Server running at http://localhost:${PORT}`);
-    });
+   app.post('/save', ensureAuthenticated, (req, res) => {
+       const TARGET_FILE = getUserFile(req.user.id);
+       const newContent = req.body.content;
+       fs.writeFileSync(TARGET_FILE, newContent, 'utf8');
+       res.redirect('/'); // Refresh the page to show updated content
+   });
+
+   app.listen(PORT, () => {
+       console.log(`Server running at http://localhost:${PORT}`);
+   });
    ```
 
 1. Open the app at [https://localhost:3000](https://localhost:3000).
@@ -475,10 +503,9 @@ To see a more realistic example of FusionAuth usage, we can improve the app even
 
 1. _In a separate private/incognito window_, open the app at [https://localhost:3000](https://localhost:3000).
 
-1. Log in with the following credentials:
+1. Click <Breadcrumb>Register User> and create an account using your personal email address, name, and birthdate.
 
-   * username: `admin@example.com`
-   * password: `password`
+1. Enjoying using your unique user note! You should see your name at the top of the page, and in the default note text.
 
 Your Express app now provides unique notes for each user. Each user can independently edit and save their note. To see all of the notes, look for `<uuid>.txt` files in the `user_data` directory.
 </Steps>
