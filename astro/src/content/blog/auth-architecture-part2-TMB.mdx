@@ -11,8 +11,6 @@ excerpt_separator: "{/* more */}"
 ---
 
 import Aside from 'src/components/Aside.astro';
-import BrowserActiveSessionDiagram from "../../diagrams/blog/auth-architecture-part2-TMB/browser-active-session.astro";
-import BrowserNoSessionDiagram from "../../diagrams/blog/auth-architecture-part2-TMB/browser-no-session.astro";
 
 
 This post discusses the Token-Mediating Backend (TMB) authentication architecture for OAuth 2 applications. It covers how secure TMB is, when to use it, and how to implement it.
@@ -66,7 +64,7 @@ An attacker that manages to insert malicious JavaScript into your browser could 
 
 The security ranking is: BFF = TMB with DPoP ≫ TMB > BBOC.
 
-DPoP is not yet supported by FusionAuth, but it has been [requested](https://github.com/FusionAuth/fusionauth-issues/issues/1679). You can learn more about exactly how DPoP works in the [Evolving Auth Standards: Security Best Practices for App Developers webinar](https://fusionauth.io/webinar/evolving-auth-standards-security-best-practices-for-app-developers).
+DPoP is not yet supported by FusionAuth, but it has been [requested](https://github.com/FusionAuth/fusionauth-issues/issues/1679). You can learn more about exactly how DPoP works in the [Evolving Auth Standards: Security Best Practices for App Developers webinar](/webinar/evolving-auth-standards-security-best-practices-for-app-developers).
 
 ## When to use TMB
 
@@ -94,11 +92,48 @@ This section explains the TMB OAuth flow in more detail. It is based on the [off
 
 Below is the sequence if the browser loads the app and still has a session cookie from the previously active session.
 
-<BrowserActiveSessionDiagram />
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant B as Browser
+    participant F as Static file host
+    participant T as TMB
+    participant R as Resource server
+
+    U->>B: Visit website
+    B->>F: Request website
+    F->>B: Send HTML, CSS, JS
+
+    B->>T: Is there an active session (include session cookie)?
+    T->>B: Yes, here is your access token
+
+    U->>B: Make a purchase
+    B->>R: Make a purchase (include access token)
+```
 
 If there is no session, the user has to log in. This sequence is shown below.
 
-<BrowserNoSessionDiagram />
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant T as TMB
+    participant A as Authorization Endpoint (FusionAuth)
+    participant O as Token Endpoint (FusionAuth)
+    participant R as Resource server
+
+    B->>T: Is there an active session?
+    T->>B: No
+
+    B->>T: Start Authorization Code flow with PKCE extension
+    B->>A: Redirected to log in on this web page
+    A->>B: Returns authorization code
+    B->>T: Send code
+    T->>O: Send PKCE verifier and code
+    O->>T: Return refresh token and access token
+    T->>B: Return access token and session cookie
+
+    B->>R: Make a purchase (include access token)
+```
 
 For a more detailed explanation of every step in the flow, please see the accompanying repository [README section on TMB](https://github.com/kmaida/auth-architecture/tree/main/tmb#how-tmb-authentication-works).
 
@@ -239,7 +274,7 @@ Explore these resources for a deeper understanding of OAuth security architectur
 - [RFC 6749: The OAuth 2.0 Authorization Framework](https://www.rfc-editor.org/rfc/rfc6749)
 - [RFC 9700: OAuth 2.0 Security Best Current Practice](https://datatracker.ietf.org/doc/html/rfc9700)
 - [RFC 9449: OAuth 2.0 Demonstrating Proof of Possession](https://datatracker.ietf.org/doc/rfc9449)
-- [Evolving Auth Standards: Security Best Practices for App Developers](https://fusionauth.io/webinar/evolving-auth-standards-security-best-practices-for-app-developers)
+- [Evolving Auth Standards: Security Best Practices for App Developers](/webinar/evolving-auth-standards-security-best-practices-for-app-developers)
 - [OAuth 2.0 Demonstrating Proof of Possession (DPoP)](https://dpop.info)
 - [Passport.js OAuth strategy](https://www.passportjs.org/packages/passport-oauth2)
 - [The FusionAuth DPoP feature request](https://github.com/FusionAuth/fusionauth-issues/issues/1679)
