@@ -4,13 +4,12 @@ import Head from '../components/Head.astro';
 import Header from '../components/Header.astro';
 import Navigation from '../components/Navigation.astro';
 import GitHubEdit from '../components/GitHubEdit.astro';
-import Search from '../components/search/Search.astro';
+import DocSearch from '../components/search/DocSearch.astro';
 import TOC from '../components/TOC.astro';
 import Article from './Article.astro';
 import ArticleNav from '../components/nav/ArticleNav.astro';
 import Icon from '../components/icon/Icon.astro';
 import { specialCaps } from '../tools/string';
-import IndexableBody from '../components/search/IndexableBody.astro';
 import { Marked } from "marked";
 
 interface Props {
@@ -18,7 +17,6 @@ interface Props {
   date?: string;
   description?: string;
   disableTOC?: boolean;
-  excludeFromSearchIndex?: boolean,
   frontmatter?: Record<string, any>,
   headings?: any[];
   htmlTitle?: string;
@@ -41,7 +39,6 @@ let {
   date,
   description = "Looks like the developers forgot to include a description for this page. Sorry about that.",
   disableTOC,
-  excludeFromSearchIndex = false,
   frontmatter,
   headings = [],
   htmlTitle = "",
@@ -55,7 +52,6 @@ let {
   title = "",
   contribute = true,
   breadcrumbs = [],
-  searchFilters = {},
   maxTocDepth,
   isIndexPage = false,
 }: Props = Astro.props;
@@ -70,13 +66,6 @@ section = frontmatter.section ? frontmatter.section : section;
 title = frontmatter.title ? frontmatter.title : title;
 htmlTitle = frontmatter.htmlTitle ? frontmatter.htmlTitle : title;
 disableTOC = frontmatter.disableTOC ? frontmatter.disableTOC : disableTOC;
-
-if (author && !searchFilters['author']) {
-  searchFilters = {...searchFilters, author: [author]}
-}
-if (section && !searchFilters['section']) {
-  searchFilters = {...searchFilters, section: [section]}
-}
 
 const articleStyles = [
   // base
@@ -135,8 +124,8 @@ const cleanedHtmlTitle = htmlTitle
 
 <!DOCTYPE html>
 <html class="antialiased min-h-full" lang="en">
-<Head title=`${cleanedHtmlTitle} | FusionAuth Docs` description={description} canonicalUrl={frontmatter.canonicalUrl} {isIndexPage} {openGraphImage} {searchFilters} />
-<IndexableBody {excludeFromSearchIndex}>
+<Head title=`${cleanedHtmlTitle} | FusionAuth Docs` description={description} canonicalUrl={frontmatter.canonicalUrl} {isIndexPage} {openGraphImage} />
+<body class="antialiased bg-articles bg-right-top bg-no-repeat bg-white min-h-full text-slate-700 dark:bg-articles-dark dark:bg-slate-900 dark:text-slate-200">
   <slot name="nav"/>
   <main class:list={mainStyles}>
   <!-- Left sidebar -->
@@ -150,11 +139,7 @@ const cleanedHtmlTitle = htmlTitle
 
         <!-- Search button -->
         <div class="bg-white hidden pb-1 pr-2 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
-          <button type="button" class="flex items-center pl-2 pr-3 py-1.5 border border-slate-900/10 rounded-md shadow-sm text-slate-400 text-sm w-full dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700 dark:hover:border-slate-500 hover:border-slate-300" data-widget="search-button">
-            <i class="fa-light fa-magnifying-glass mr-3"></i>
-            <span>Search...</span>
-            <span class="font-semibold ml-auto pl-3 text-xs" data-widget="search-key-hint"></span>
-          </button>
+          <DocSearch />
         </div>
 
       <!-- Allow Docs to insert their own here -->
@@ -177,7 +162,7 @@ const cleanedHtmlTitle = htmlTitle
     </div>
 
     <!-- Main content section -->
-    <article data-pagefind-body class:list={articleStyles}>
+    <article class:list={articleStyles}>
       <div class="flex items-start">
         <div class="flex-grow">
           {breadcrumbs.length > 0 && <div class="flex flex-row not-prose hidden lg:block items-center pb-6">
@@ -187,7 +172,7 @@ const cleanedHtmlTitle = htmlTitle
             </>) }
           </div> }
 
-          <h1 data-pagefind-meta="title" class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]} set:html={markdownifiedTitle}></h1>
+          <h1 class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]} set:html={markdownifiedTitle}></h1>
 
           {author &&
             <p class="m-0 text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>
@@ -216,6 +201,5 @@ const cleanedHtmlTitle = htmlTitle
       </aside>
     }
   </main>
-  <Search/>
-</IndexableBody>
+</body>
 </html>
