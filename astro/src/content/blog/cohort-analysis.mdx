@@ -1,6 +1,6 @@
 ---
 publish_date: 2026-04-22
-title: "Analyzing Why Customers Leave — Cohort Analysis in FusionAuth"
+title: "Cohort Analysis"
 description: "Using login data to calculate helpful business statistics."
 authors: Dan Moore
 image: /img/blogs/header-example.svg
@@ -59,8 +59,8 @@ FusionAuth provides several charts, showing:
 Because more complex charts require time-consuming calculations, more informative charts aren't available directly in FusionAuth. However, you can export your data and calculate the statistics manually. This guide walks you through that process.
 
 <Aside type="warning">
-Many charts shown in this guide depend on the expiry duration of your login tokens. Longer expiry times mean that users log in less frequently. You can adjust the sample code accompanying this guide to analyze a period that makes sense for your FusionAuth configuration.
-</Aside>
+Many charts shown in this guide depend on the expiry duration of your login tokens. Longer expiry times mean that users log in less frequently. You can adjust the sample code accompanying this guide to analyze a period that makes sense for your FusionAuth configuration. For more information on token durations, see the [session management documentation](https://fusionauth.io/docs/lifecycle/authenticate-users/logout-session-management).
+  </Aside>
 
 ## An Overview Of Cohort Analysis
 
@@ -76,6 +76,8 @@ Cohort analysis can help you distinguish between **growth** and **retention**. F
 * 9,000 users registered this month (growth)
 * only 5% of users from six months ago returned (retention)
 This indicates an abandonment problem. Growth is sufficient to mask this problem until you investigate retention.
+
+Conversely, another product might have only 1,000 users but 95% are returning. This would be a healthier app than the previous example, even if it has fewer users.
 
 ## Understanding Additional User Charts
 
@@ -103,7 +105,7 @@ A user acquisition chart can help you understand the rate at which your applicat
 
 The age chart groups users by the number of years they have used your service. It's an indication of how much experience the average user has with your business.
 
-Notice that this chart is the mirror image of the new users per year chart.
+This chart is a mirror image of the new users per year chart. If a user registered in 2020, then in 2026, they will have been registered for six years.
 
 ### Logins Per Year Chart
 
@@ -117,7 +119,12 @@ Sometimes it's more meaningful to work with deduplicated logins for a period. In
 
 ![Percent logins per year and month charts](/img/blogs/cohort-analysis/chartPercentLoginsPerYear.webp)
 
-The percent login chart shows the ratio of logins to users. In 2025, you can see that just under half (0.45) of users actively use the service. The increasing trend of usage over time indicates that the example business became increasingly valuable to customers.
+The percent login charts tease out useful information about user activity that may be hidden in the previous charts. These show the ratio of logins to users.
+
+In 2025, you can see that just under half (45%) of users actively use the service. The increasing trend of usage over time indicates that the example business
+became increasingly valuable to customers.
+
+Percent logins charts may help you identify high and low points in your customer interactions.
 
 ### Abandonment Chart
 
@@ -125,19 +132,29 @@ The percent login chart shows the ratio of logins to users. In 2025, you can see
 
 The first abandonment chart is the opposite of user activity. Here, you see how many users haven't logged in for more than one, two, six, or 12 months. The majority of users (over 500 of the 1,000 users) haven't logged in for at least a year.
 
-While the first chart is a static metric calculated today, the second abandonment chart shows the trend of users who haven't logged in for at least six months per year. This amount steadily increases over time, which contradicts the percent login chart that showed users logging in *more* each year. This apparent contradiction is because the percent login chart is relative (showing a percentage of users) and the abandonment chart is absolute (showing the number of users). Depending on which statistic is more useful to you, you can change any absolute chart in the code to a relative chart by dividing the annual value by the number of users in that year.
+While the first chart is a static metric calculated today, the second abandonment chart shows the trend of users who haven't logged in for at least six months per year. This amount steadily increases over time, which contradicts the percent login chart that showed users logging in *more* each year.
+
+This apparent contradiction is because the percent login chart is relative (showing a percentage of users) and the abandonment chart is absolute (showing the number of users).
+
+You can change any absolute chart to a relative chart by modifying the code and dividing the annual or monthly value by the number of users in that year or month.
 
 ### Activity Cohort Chart
 
 ![2025 logins chart](/img/blogs/cohort-analysis/chart2025Logins.webp)
 
-The activity cohort chart groups users by how frequently they use the service. Here, you can see most registered users don't log in at all. A large number of users logged in up to four times in the last year (you should change the period to match your business and token expiry duration), but only a bare handful of dedicated users logged in more than four times a year.
+The activity cohort chart groups users by how frequently they use the service. Here, you can see most users who registered in 2025 don't log in at all. A large number of users logged in up to four times in the last year, with others logging in more often.
+
+You'll want to modify the duration to match your business and token expiry settings.
 
 ### Returning Users Chart
 
 ![Returning users chart](/img/blogs/cohort-analysis/chartReturningUsers.webp)
 
-The returning users chart shows how many users log in after at least a year of not using your service. If you notice any clear spikes, they might correlate to the release of new versions or features, marketing campaigns you ran, or customers leaving a competitor. This is similar to the analysis in the user acquisition chart, but for customers who are already familiar with your offering and come back to give it another try.
+The returning users chart shows how many users log in after at least a year of not using your service.
+
+If you have clear spikes, they might correlate to the release of new versions or features, marketing campaigns you ran, or customers leaving a competitor. Logins can also correlate to the cycles of your business; a tax preparation application might expect a yearly spike, where a gaming application might see spikes every new game release.
+
+This is similar to the user acquisition chart, but highlights customers already familiar with your offering who come back to give it another try.
 
 ### Friction Chart
 
@@ -151,9 +168,11 @@ This example chart shows that nearly all users do log in, indicating high intere
 
 ![Login frequency chart](/img/blogs/cohort-analysis/chartLoginFrequency.webp)
 
-The login frequency chart groups users by their number of logins in the past month. You want this chart to be as far to the right as possible.
+The login frequency chart groups users by their number of logins in the past month. You typically want this chart to have higher bars to the right. That indicates that people are logging in daily.
 
-In this example, you can see the vast majority of users didn't log in at all. This business is not currently healthy.
+In this example, you can see the vast majority of users didn't log in at all in the last month. Depending on your business, that may mean it is not currently healthy.
+
+On the other hand, if this is an application where people pay their utility bills, users logging in once a month may be perfectly normal. However, if users only log in once a year, that'd be problematic.
 
 This chart is also known as the L30 chart or Power User Curve.
 
@@ -201,8 +220,8 @@ The `users.json` file has the following structure:
     id: string
     email: string
     isVerified: bool
-    registeredDate: string // timestamp since 1970
-    loginDates: string[] // oldest dates first
+    registeredDate: number // timestamp since 1970
+    loginDates: number[] // oldest dates first
   }]
 ```
 
@@ -241,6 +260,8 @@ To view your charts, visit [http://localhost:7777](http://localhost:7777).
 The web server reads all data from `users.json` in the `main()` function, calculates the charts, then inserts them into `charts.html`, and returns that page when requested. Each chart calculates in parallel, using the `runParallel()` function in the `getChartData()` function.
 
 If you want to change a chart, you can edit its calculation function without breaking any of the others — they are all independent. If you want to add a new chart, create a new function and call it from `getChartData()`. If any chart takes too long to calculate, comment out the function call, and in `charts.html`, comment out the chart display. The HTML uses [Chart.js](https://www.chartjs.org) for charts.
+
+Some charts use all login dates and some use unique logins per month or year. If you want to use these deduplicated dates in your own charts, use the `LoginDatesUniqueYearly` and `LoginDatesUniqueMonthyl` variables.
 
 ## Next Steps
 
