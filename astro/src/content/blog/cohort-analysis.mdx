@@ -167,9 +167,7 @@ The y-axis shows whether your business is getting better or worse at retaining c
 
 ## Create Charts For Your FusionAuth Instance
 
-TODO HERE - remove docker. postgres is only for mock data
-
-To create the charts above for your business, you need to use [Docker](https://www.docker.com/get-started). If you prefer not to use Docker, ensure you have [Go](https://go.dev/doc/install) installed and use a PostgreSQL client (like the free IDE [DBeaver](https://dbeaver.io/download/)).
+To create the charts above for your business, you need to have [Go](https://go.dev/doc/install) installed.
 
 You also need to have an instance of FusionAuth with the data you want to analyze. If you don't have any data yet, use the code in the appendix to create test data.
 
@@ -177,28 +175,20 @@ You also need to have an instance of FusionAuth with the data you want to analyz
 
 While application databases like FusionAuth store data in a normalized structure to save space, data analysis requires denormalized data for fast retrieval and computation.
 
-The first step to analyze your user data in FusionAuth is to extract it and store it in a usable format. As this process puts the database under load, you should run it on a copy of your database using a separate FusionAuth instance.
+The first step to analyze your user data in FusionAuth is to extract it and store it in a usable format. Since chart generation puts significant load on a database, you'll first want to extract your data from FusionAuth.
 
-Use Git to clone the [accompanying repository](https://github.com/ritza-co/fusionauth-user-charts), or download and unzip it.
+Use Git to clone the [accompanying repository](https://github.com/ritza-co/fusionauth-user-charts):
 
-```sh
+```console
 git clone https://github.com/ritza-co/fusionauth-user-charts.git
 cd fusionauth-user-charts
 ```
 
-Edit the file `3extract.go` and update the constants near the top to match your FusionAuth URL, API key, and application Id.
+Edit the file `.env` to match your FusionAuth URL, API key, and application Id.
 
-To run the extraction with Docker, use the following command:
+To run the user extraction, use the following command:
 
-```sh
-docker run --init  -it  --rm --platform linux/amd64 --name "app" --network faNetwork -v .:/app -v ./gocache:/go/pkg -v ./buildcache:/root/.cache/go-build -w /app golang:1.25-bookworm sh -c "go run 3extract.go"
-```
-
-The only parameter you need to change is `--network faNetwork`. Ensure that your FusionAuth instance is running on the same network as the extraction code (`localhost` won't work in Docker). Alternatively, if you run FusionAuth remotely, remove the network parameter entirely.
-
-If you installed Go directly on your computer, run the following command instead of using Docker:
-
-```sh
+```console
 go run 3extract.go
 ```
 
@@ -222,23 +212,24 @@ If you have more than 999,999 users, you need to edit `numberOfResults=999999` i
 
 The extraction script uses the [FusionAuth API](https://fusionauth.io/docs/apis/users), for example, `/api/user/search`. Users are retrieved first, with registration dates and verification data. Then, each user's login dates are retrieved.
 
+<Aside type="caution">
+Be careful that exporting, analyzing, and storing your users' IDs, email addresses, and login dates does not violate laws regarding personal data in your country.
+
+The easiest way to anonymize the data would be to alter the extraction code to replace email address and user IDs with a random UUID before saving to JSON.
+<Aside/> >
+
+
 ## Calculate And Display The Charts
 
 The last step is to run the web server that displays the charts.
 
 If you're using Docker, run the following command:
 
-```sh
-docker run --init  -it  --rm --platform linux/amd64 --name "app" -p 7777:7777 -v .:/app -v ./gocache:/go/pkg -v ./buildcache:/root/.cache/go-build -w /app golang:1.25-bookworm sh -c "go mod tidy && go run 4app.go"
+```console
+go mod tidy && go run 4app.go
 ```
 
 You don't need to edit any parameters or constants this time, because the code makes the charts from the JSON files and doesn't talk to FusionAuth.
-
-If you're using Go directly, run the following command:
-
-```sh
-go mod tidy && go run 4app.go
-```
 
 When the calculations are done, the terminal says `Charts created`.
 
@@ -260,31 +251,23 @@ If you want even deeper analysis on a regular basis, you need to dive into the w
 
 To create fake users and login data for a FusionAuth application, you need to run a Go file and SQL script. There is no way to create fake dates using the FusionAuth API, so you need direct database access to run SQL.
 
-If you haven't done so already, use Git to clone the [accompanying repository](https://github.com/ritza-co/fusionauth-user-charts), or download and unzip it.
+If you haven't done so already, use Git to clone the [accompanying repository](https://github.com/ritza-co/fusionauth-user-charts):
 
-```sh
+```console
 git clone https://github.com/ritza-co/fusionauth-user-charts.git
 cd fusionauth-user-charts
 ```
 
-Edit the `1createMockData.go` file. Adjust the URL, authorization key, and application Id in the code above to match your FusionAuth instance. Then run the file with the following command:
+Edit the `.env` file. Adjust the URL, authorization key, and application Id in the code above to match your FusionAuth instance. Then run the file with the following command:
 
-```sh
-docker run --init  -it  --rm --platform linux/amd64 --name "app" --network faNetwork -v .:/app -v ./gocache:/go/pkg -v ./buildcache:/root/.cache/go-build -w /app golang:1.25-bookworm sh -c "go run 1createMockData.go"
-```
-
-The only parameter you need to change is `--network faNetwork`. Ensure your FusionAuth instance is running on the same network as the extraction code (`localhost` won't work in Docker). Alternatively, if you run FusionAuth remotely, remove the network parameter entirely.
-
-If you installed Go directly on your computer, you can run the following command instead of using Docker:
-
-```sh
+```console
 go run 1createMockData.go
 ```
 
 Once the users are registered, you need to randomize their registration dates, set 5% of user email addresses to unverified, and create thousands of login dates. To do this, you can either connect to your FusionAuth database in a SQL browser and run the contents of `2createMockData.sql`, or use the following command with Docker:
 
-```sh
-docker run --init -it --rm --platform linux/amd64 --name "app" --network faNetwork -v .:/app -w /app postgres:16-bookworm sh -c "PGPASSWORD=postgres psql -h faDb -U postgres -d fusionauth -f 2createMockData.sql"
+```console
+PGPASSWORD=postgres psql -h faDb -U postgres -d fusionauth -f 2createMockData.sql
 ```
 
 In the command above, you need to set your database location, username, and password to match your instance (these are probably in your `.env` file or `docker-compose.yml` file).
