@@ -20,8 +20,6 @@ This guide shows you how to combine Permify for authorization (permissions) with
 [SPIFFE](https://spiffe.io/docs/latest/spiffe-about/overview) (Secure Production Identity Framework For Everyone) is a protocol that allows a microservice to authenticate itself to other microservices, without using a shared password or fixed network address.
 <br />
 [SPIRE](https://spiffe.io/docs/latest/spire-about/spire-concepts) is an open-source implementation (an actual application) of this protocol that provides the authentication certificates to the microservices.
-<br />
-Since SPIRE and SPIFFE are so closely related we'll use the terms interchangeably in this guide.
 </Aside>
 
 If you've used SPIFFE before, you can skip over the explanation of how it works and head straight to the [example Permify application](#a-working-microservice-example-with-spire-permify-envoy-and-docker).
@@ -71,8 +69,8 @@ Here's the process:
 1. The SPIRE server starts, and is given a list of Ids for the SPIRE agent and services that want to register to use SPIFFE.
 1. The SPIRE agent starts, with access to the server where the services run. This agent registers itself with the SPIRE server and gets the certificate of the SPIRE server. This certificate is the root of all trust from now on, and allows services and agents to verify service Ids without calling the SPIRE server again.
 1. An instance of the background job starts to process a file.
-1. When the job starts and needs its identity, it calls the Workload API, a Unix socket exposed by the SPIRE agent on the same machine. The agent checks the identity of the calling process (for example, through its process Id or Docker container label). The agent requests a **SVID** (SPIFFE Verifiable Identity Document) from the SPIRE server on the job's behalf. The server returns an X.509 certificate (or JWT) extremely fast. The agent returns this certificate to the job via the Unix socket. The SVID SPIFFE Id identifies the job with an identifier (name) like `spiffe://example.org/infrastructure/file-processor`. The `example.org` portion is the **trust domain**, a label for your organization or environment that all workloads in the same SPIRE deployment share. In a real deployment you would replace it with your own domain. The agent also gives the service the SPIRE server certificate.
-1. The job finishes executing and wants to send its result to the web service. The job (or its proxy) uses its SVID to establish a mutually authenticated TLS connection with the web service. The SVID is presented automatically during the TLS handshake. The receiving service can extract the caller's SPIFFE Id from the peer certificate in that TLS session.
+1. When the job starts and needs its identity, it calls the SPIRE agent. The agent checks the identity of the calling process (for example, through its process Id or Docker container label). The agent requests a **SVID** (SPIFFE Verifiable Identity Document), which is like a passport for the job, from the SPIRE server on the job's behalf. The server returns an X.509 certificate (or JWT) extremely fast. The agent returns this certificate to the job. The SVID SPIFFE Id identifies the job with an identifier (name) like `spiffe://example.org/infrastructure/file-processor`. The `example.org` portion is the **trust domain**, a label for your organization or environment that all workloads in the same SPIRE deployment share. The agent also gives the service the SPIRE server certificate.
+1. The job finishes executing and wants to send its result to the web service. The job calls the service, sending the service both the result data, and the job's SVID to authenticate itself.
 1. When the service receives the request from the job, it can check the SVID validity internally using the SPIRE server certificate and any library that handles TLS cryptography (such libraries are available for any programming language). No call is needed to the SPIRE agent or server.
 1. The service has now authenticated the job, but has not done authorization. SPIFFE doesn't handle authorization at all. So the service calls an authorization server (like Permify) to check if the job with Id `spiffe://example.org/infrastructure/file-processor` has permission to save its result.
 
@@ -89,10 +87,10 @@ sequenceDiagram
     Note over Server: 1. Starts with list of IDs for agent & services
     Agent->>Server: 2. Registers and receives root certificate
     Note over Job: 3. Instance starts to process file
-    Web->>Agent: 4. Calls Workload API, agent verifies process/container Id
+    Web->>Agent: 4. Identifies itself. Agent verifies process/container Id
     Agent->>Server: 5. Requests SVID for service
     Agent->>Web: 6. Provides SVID & root certificate
-    Job->>Agent: 7. Calls Workload API, agent verifies process/container Id
+    Job->>Agent: 7. Identifies itself. Agent verifies process/container Id
     Agent->>Server: 8. Requests SVID for job
     Agent->>Job: 9. Provides SVID & root certificate
     Note over Job: 10. Finishes processing
@@ -110,7 +108,7 @@ You may have noticed some clear differences in this SPIFFE example compared to o
 - **No authorization**. SPIFFE handles only authentication. It completely ignores permissions a service might have. Permissions must be handled elsewhere. This mandates a clear separation of concerns.
 - **Authentication by attestation**. Services don't have to keep passwords anymore. Instead, a SPIFFE agent running on the same machine as the service (or on the Docker host) physically checks the process and user IDs of the service at the operating system level. This is called **attestation**.
 - **Speed**. After attestation, the agent will obtain a short-lived **SVID** (usually an X.509 certificate, but could be a JWT) for the service from the SPIFFE server very quickly. Refreshing an SVID is also fast. There is no need to contact the SPIFFE server to verify a SVID, so network use is reduced.
-- **Location independence**. Since the SPIFFE agent runs on the same machine as the service, that machine can be anywhere on the network with any IP address. As long as the SPIFFE agent knows the address of the SPIFFE server and can complete node attestation, it can obtain SVIDs for any workloads running on that machine.
+- **Location independence**. Since the SPIFFE agent runs on the same machine as the service, that machine can be anywhere on the network with any IP address. As long as the SPIFFE agent knows the address of the SPIFFE server and can complete node attestation, it can obtain SVIDs for any services running on that machine.
 - **Short-lived SVIDs**. SVIDs are quick to generate, so there is no cost to refreshing them frequently. This eliminates the need for certificate revocation lists.
 
 In summary, switching to SPIFFE frees your programmers from having to manage secrets, massively reduces the risk of a hacker gaining access to your network or service password (since there isn't one), increases authentication speed and simplicity, and scales to any number of containers in any number of locations.
@@ -299,7 +297,7 @@ All containers are on the `spireNetwork` network so they can talk to each other.
 
 The named volumes `serverBin` and `agentBin` expose the SPIRE binary files from the server and agent containers for other containers to use. Since the SPIRE containers do not have a shell (`sh` or `bash`), you need to interact with the containers (such as performing setup commands) from somewhere else. For example, the `spireServerInitialize` container uses the binary files from the server to register workloads. If the binary files were not exposed, you would have to install the SPIRE binaries on your host machine and run the setup commands from your host after starting Docker.
 
-Before `spireServer` starts, a one-shot `socketsInit` container runs to set permissions on the shared sockets volume (named volumes are created owned by root, and SPIRE needs to write into the directory). The `spireServer` container itself exposes two more volumes: 1) **a configuration file** and 2) **a socket**:
+The `spireServer` container itself uses two more volumes: 1) **a configuration file** and 2) the named volume **sockets**:
 
 1. The `config/spireServer.conf` configuration file (shown below this bullet point) specifies a few basic settings:
   - `bind_address = "0.0.0.0"` ensures the server listens to requests from outside the container.
@@ -309,7 +307,9 @@ Before `spireServer` starts, a one-shot `socketsInit` container runs to set perm
   <RemoteCode
     url={frontmatter.codeRoot + "/config/spireServer.conf"}
     lang="js" />
-2. A socket is a shared file on disk that processes can use to communicate. Unlike a TCP port, which any process can call, only a process with permission to a file can see it, making a socket more secure than a port. A process can also ask the operating system for details about the process on the other end of a socket, allowing SPIRE to perform attestation. The `registration.sock` socket is used by the `spireServerInitialize` container. This helper container's only job is to create registration entries in the server for the agent and workloads. The first two entries register the agent (with Id `spiffe://example.org/agent`) and create a "join token" — a secret password exposed in a shared volume that the SPIRE agent can give to the server to authenticate itself when starting. The next four registration entries for the services and Permify don't need a token, because the agent will authenticate them. Note that the SPIFFE Id domain name, like `example.org`, matches the domain in server configuration file.
+2. A socket is a shared file on disk that processes can use to communicate. Unlike a TCP port, which any process can call, only a process with permission to a file can see it, making a socket more secure than a port. A process can also ask the operating system for details about the process on the other end of a socket, allowing SPIRE to perform attestation. The socket files are shared in the named volume `sockets`. Before the `spireServer` container starts, an ephemeral container (`createSocketsNamedVolumeWithCorrectPermissions`) runs to set permissions on the shared sockets volume (named volumes are created owned by root, and SPIRE needs to write into the directory).
+
+    The `registration.sock` socket is used by the `spireServerInitialize` container. This helper container's only job is to create registration entries in the server for the agent and workloads. The first two entries register the agent (with Id `spiffe://example.org/agent`) and create a "join token" — a secret password exposed in a shared volume that the SPIRE agent can give to the server to authenticate itself when starting. The next four registration entries for the services and Permify don't need a token, because the agent will authenticate them. Note that the SPIFFE Id domain name, like `example.org`, matches the domain in server configuration file.
 
 The SPIRE agent's configuration is simpler than the server, using only the command `command: ["run", "-config", "/etc/spire/agent.conf", "-joinTokenFile", "/opt/spire/sockets/agent_token"]`. This command configures the agent using `spireAgent.conf` (shown below) and authenticates the agent with the SPIRE server using the shared join token created earlier.
 
