@@ -68,13 +68,13 @@ Consider four components:
 - A SPIRE agent (client).
 
 Here's the process:
-1. The SPIRE server starts, and is given a list of IDs for the SPIRE agent and services that want to register to use SPIFFE.
-1. The SPIRE agent starts, with access to the server where the services run. This agent registers itself with the SPIRE server and gets the certificate of the SPIRE server. This certificate is the root of all trust from now on, and allows services and agents to verify service IDs without calling the SPIRE server again.
+1. The SPIRE server starts, and is given a list of Ids for the SPIRE agent and services that want to register to use SPIFFE.
+1. The SPIRE agent starts, with access to the server where the services run. This agent registers itself with the SPIRE server and gets the certificate of the SPIRE server. This certificate is the root of all trust from now on, and allows services and agents to verify service Ids without calling the SPIRE server again.
 1. An instance of the background job starts to process a file.
-1. When the job starts and needs its identity, it calls the Workload API, a Unix socket exposed by the SPIRE agent on the same machine. The agent checks the identity of the calling process (for example, through its process ID or Docker container label). The agent requests a **SVID** (SPIFFE Verifiable Identity Document) from the SPIRE server on the job's behalf. The server returns an X.509 certificate (or JWT) extremely fast. The agent returns this certificate to the job via the Unix socket. The SVID SPIFFE ID identifies the job with an identifier (name) like `spiffe://example.org/infrastructure/file-processor`. The `example.org` portion is the **trust domain**, a label for your organization or environment that all workloads in the same SPIRE deployment share. In a real deployment you would replace it with your own domain. The agent also gives the service the SPIRE server certificate.
-1. The job finishes executing and wants to send its result to the web service. The job (or its proxy) uses its SVID to establish a mutually authenticated TLS connection with the web service. The SVID is presented automatically during the TLS handshake. The receiving service can extract the caller's SPIFFE ID from the peer certificate in that TLS session.
+1. When the job starts and needs its identity, it calls the Workload API, a Unix socket exposed by the SPIRE agent on the same machine. The agent checks the identity of the calling process (for example, through its process Id or Docker container label). The agent requests a **SVID** (SPIFFE Verifiable Identity Document) from the SPIRE server on the job's behalf. The server returns an X.509 certificate (or JWT) extremely fast. The agent returns this certificate to the job via the Unix socket. The SVID SPIFFE Id identifies the job with an identifier (name) like `spiffe://example.org/infrastructure/file-processor`. The `example.org` portion is the **trust domain**, a label for your organization or environment that all workloads in the same SPIRE deployment share. In a real deployment you would replace it with your own domain. The agent also gives the service the SPIRE server certificate.
+1. The job finishes executing and wants to send its result to the web service. The job (or its proxy) uses its SVID to establish a mutually authenticated TLS connection with the web service. The SVID is presented automatically during the TLS handshake. The receiving service can extract the caller's SPIFFE Id from the peer certificate in that TLS session.
 1. When the service receives the request from the job, it can check the SVID validity internally using the SPIRE server certificate and any library that handles TLS cryptography (such libraries are available for any programming language). No call is needed to the SPIRE agent or server.
-1. The service has now authenticated the job, but has not done authorization. SPIFFE doesn't handle authorization at all. So the service calls an authorization server (like Permify) to check if the job with ID `spiffe://example.org/infrastructure/file-processor` has permission to save its result.
+1. The service has now authenticated the job, but has not done authorization. SPIFFE doesn't handle authorization at all. So the service calls an authorization server (like Permify) to check if the job with Id `spiffe://example.org/infrastructure/file-processor` has permission to save its result.
 
 Below is a diagram of the process.
 
@@ -89,16 +89,16 @@ sequenceDiagram
     Note over Server: 1. Starts with list of IDs for agent & services
     Agent->>Server: 2. Registers and receives root certificate
     Note over Job: 3. Instance starts to process file
-    Web->>Agent: 4. Calls Workload API, agent verifies process/container ID
+    Web->>Agent: 4. Calls Workload API, agent verifies process/container Id
     Agent->>Server: 5. Requests SVID for service
     Agent->>Web: 6. Provides SVID & root certificate
-    Job->>Agent: 7. Calls Workload API, agent verifies process/container ID
+    Job->>Agent: 7. Calls Workload API, agent verifies process/container Id
     Agent->>Server: 8. Requests SVID for job
     Agent->>Job: 9. Provides SVID & root certificate
     Note over Job: 10. Finishes processing
     Job->>Web: 11. Sends result data & SVID
     Note over Web: 12. Validates SVID using root certificate
-    Web->>Auth: 13. Checks if SPIFFE ID has permission to save result
+    Web->>Auth: 13. Checks if SPIFFE Id has permission to save result
 ```
 
 
@@ -149,8 +149,8 @@ The possibilities here are complex: allowing multiple federated SPIRE servers, i
 
 SPIRE can attest the following types of workloads:
 
-- Linux processes: Identified by user ID (UID), group ID (GID), or the file path of the binary (e.g., `/usr/bin/python3`).
-- Docker containers: Identified by image ID, container labels, or environment variables.
+- Linux processes: Identified by user Id (UID), group Id (GID), or the file path of the binary (e.g., `/usr/bin/python3`).
+- Docker containers: Identified by image Id, container labels, or environment variables.
 - Kubernetes pods: Identified by namespace, service account, or pod labels.
 - Systemd services: Any background service managed by systemd (like a database or web server), identified by their specific service unit name.
 - Cloud instances: A whole VM in AWS, Azure, or GCP, usually identified by instance identity document (IID).
@@ -196,7 +196,7 @@ curl http://localhost:7773/order  # allowed
 curl http://localhost:7775/audit  # denied
 ```
 
-The request to the orders service above triggers a call to the payments service. The payments service calls Permify with the SPIFFE ID of the orders service to see if orders is authorized to request a payment. Permify says orders has permission, so payments prints `allowed`.
+The request to the orders service above triggers a call to the payments service. The payments service calls Permify with the SPIFFE Id of the orders service to see if orders is authorized to request a payment. Permify says orders has permission, so payments prints `allowed`.
 
 The second request, to the audit service, also triggers a call to payments service. This time Permify does not find any permissions for audit to payments, and denies the request.
 
@@ -309,7 +309,7 @@ Before `spireServer` starts, a one-shot `socketsInit` container runs to set perm
   <RemoteCode
     url={frontmatter.codeRoot + "/config/spireServer.conf"}
     lang="js" />
-2. A socket is a shared file on disk that processes can use to communicate. Unlike a TCP port, which any process can call, only a process with permission to a file can see it, making a socket more secure than a port. A process can also ask the operating system for details about the process on the other end of a socket, allowing SPIRE to perform attestation. The `registration.sock` socket is used by the `spireServerInitialize` container. This helper container's only job is to create registration entries in the server for the agent and workloads. The first two entries register the agent (with ID `spiffe://example.org/agent`) and create a "join token" — a secret password exposed in a shared volume that the SPIRE agent can give to the server to authenticate itself when starting. The next four registration entries for the services and Permify don't need a token, because the agent will authenticate them. Note that the SPIFFE ID domain name, like `example.org`, matches the domain in server configuration file.
+2. A socket is a shared file on disk that processes can use to communicate. Unlike a TCP port, which any process can call, only a process with permission to a file can see it, making a socket more secure than a port. A process can also ask the operating system for details about the process on the other end of a socket, allowing SPIRE to perform attestation. The `registration.sock` socket is used by the `spireServerInitialize` container. This helper container's only job is to create registration entries in the server for the agent and workloads. The first two entries register the agent (with Id `spiffe://example.org/agent`) and create a "join token" — a secret password exposed in a shared volume that the SPIRE agent can give to the server to authenticate itself when starting. The next four registration entries for the services and Permify don't need a token, because the agent will authenticate them. Note that the SPIFFE Id domain name, like `example.org`, matches the domain in server configuration file.
 
 The SPIRE agent's configuration is simpler than the server, using only the command `command: ["run", "-config", "/etc/spire/agent.conf", "-joinTokenFile", "/opt/spire/sockets/agent_token"]`. This command configures the agent using `spireAgent.conf` (shown below) and authenticates the agent with the SPIRE server using the shared join token created earlier.
 
@@ -350,7 +350,7 @@ entity service {
 
 In this schema, the services: audit, orders, and payments are not independent entities. Instead, they are each of the `service` entity type shown above. The `action` (or `permission`) `debit` is available on all services, which is used by the payments service to know if another service may debit. However, in Permify, an entity may not be given a direct permission. Instead, an entity can only be set as a relation to another entity. In other words, fine-grained authorization (FGA) is achieved through relationship-based access control (ReBAC). So this schema must have the `mayDebit` relation available in addition to the `debit` action. The `mayDebit` relation acts a list of services that may perform the `debit` action on another service.
 
-To add the actual SPIFFE ID of the orders service, the datum shown below is added to Permify by the initialization container.
+To add the actual SPIFFE Id of the orders service, the datum shown below is added to Permify by the initialization container.
 
 ```js
 tuples: [{
@@ -360,7 +360,7 @@ tuples: [{
 }],
 ```
 
-This code says that the orders service, identified by `spiffe:__example.org_orders` and of type `service`, has the `mayDebit` relation on the payments service. The SPIFFE IDs shown above are unusual. The format of the official ID in SPIRE is `spiffe://example.org/orders` (note the `/` instead of `_`). Since Permify does not allow `/` as an ID character, the payments services (shown later) replaces the `/` characters before sending the ID to Permify.
+This code says that the orders service, identified by `spiffe:__example.org_orders` and of type `service`, has the `mayDebit` relation on the payments service. The SPIFFE IDs shown above are unusual. The format of the official Id in SPIRE is `spiffe://example.org/orders` (note the `/` instead of `_`). Since Permify does not allow `/` as an Id character, the payments services (shown later) replaces the `/` characters before sending the Id to Permify.
 
 There is a practical problem with the schema above. If your system has many services with many different permissions, the `service` entity will be filled with hundreds of permissions across dozens of services, and be difficult to read and maintain. Instead, you can model each service as its own entity, with its permissions grouped inside. Below is how that hypothetical model would look for this example's three services.
 
@@ -393,7 +393,7 @@ entity paymentsService {
 }
 ```
 
-Now in `paymentsService`, the ID `spiffe:__example.org_orders` will be a member of the `isOrdersService` relation, and so will have rights to the `debit` action. Below is how you would create that datum (only the `relation` value has changed from the original example).
+Now in `paymentsService`, the Id `spiffe:__example.org_orders` will be a member of the `isOrdersService` relation, and so will have rights to the `debit` action. Below is how you would create that datum (only the `relation` value has changed from the original example).
 
 ```json
 [
@@ -417,7 +417,7 @@ There are three design options to authenticate your workload:
    - control plane logic is mixed into the data plane (violating separation of concerns),
    - some languages (like a simple bash script) can't handle X.509,
    - and you're going to need a support (sidecar) container that has access to the SPIRE server, agent, and workload containers to copy around certificates (making permissions management tricky).
-2. **Use a simple sidecar proxy, like [Ghostunnel](https://ghostunnel.dev/docs/spiffe-workload-api), for every workload**. In this design, the workload knows nothing about SPIRE. Instead, a proxy container for every workload is created, and SPIRE treats the proxy as the object to be authenticated instead of the workload. The agent attests the proxy's identity gives and the proxy an SVID certificate. The proxy automatically wraps every request from the workload with HTTPS using the SVID, and checks every incoming request's SVID — which enables mTLS (mutual transport layer security). Since Ghostunnel handles incoming and outgoing requests differently, you'll need to use one container with two instances of Ghostunnel running. This is shown below in an example sidecar proxy for the order service. Since Ghostunnel supports SPIFFE natively, this solution is as simple as adding the `--use-workload-api` flag. However, Ghostunnel does not pass the HTTPS details (SVID certificate) to the target workload, so there is no way for a service to get the SPIFFE ID of the service that called it. No SPIFFE ID means no way to check permissions in Permify. For simple microservice systems that need authentication but not authorization, we recommend Ghostunnel.
+2. **Use a simple sidecar proxy, like [Ghostunnel](https://ghostunnel.dev/docs/spiffe-workload-api), for every workload**. In this design, the workload knows nothing about SPIRE. Instead, a proxy container for every workload is created, and SPIRE treats the proxy as the object to be authenticated instead of the workload. The agent attests the proxy's identity gives and the proxy an SVID certificate. The proxy automatically wraps every request from the workload with HTTPS using the SVID, and checks every incoming request's SVID — which enables mTLS (mutual transport layer security). Since Ghostunnel handles incoming and outgoing requests differently, you'll need to use one container with two instances of Ghostunnel running. This is shown below in an example sidecar proxy for the order service. Since Ghostunnel supports SPIFFE natively, this solution is as simple as adding the `--use-workload-api` flag. However, Ghostunnel does not pass the HTTPS details (SVID certificate) to the target workload, so there is no way for a service to get the SPIFFE Id of the service that called it. No SPIFFE Id means no way to check permissions in Permify. For simple microservice systems that need authentication but not authorization, we recommend Ghostunnel.
     ```yml
       ordersProxy:
     image: ghostunnel/ghostunnel:v1.9.2-alpine
@@ -495,7 +495,7 @@ In this example, the three workloads are simple JavaScript web services. Below i
     url={frontmatter.codeRoot + "/services/payments.ts"}
     lang="js" />
 
-The request handler extracts the SPIFFE ID of the caller from the request (`req.headers.get("spiffeId")`). The check permissions function uses the handler to call Permify (`${permifyUrl}/v1/tenants/t1/permissions/check`), remembering to replace the ID slashes with underscores: `id: callerId.replace(/\//g, "_")`.
+The request handler extracts the SPIFFE Id of the caller from the request (`req.headers.get("spiffeId")`). The check permissions function uses the handler to call Permify (`${permifyUrl}/v1/tenants/t1/permissions/check`), remembering to replace the Id slashes with underscores: `id: callerId.replace(/\//g, "_")`.
 
 The code for the orders and audit services is even simpler. As they only send requests, they have no SPIFFE code at all, and are merely a single small function to call the payments service.
 
