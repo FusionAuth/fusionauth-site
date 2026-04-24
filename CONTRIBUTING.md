@@ -31,7 +31,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - All image captions should be one or more complete sentences.
 - Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
 - Single spaces should be used instead of double spaces after a period.
-- Headers should use title case, not start case: `This Is the Header Text`. This is true for all headers (h1, h2, h3, h4). (Disregard the existing start case and sentence case documents in the repository — they are there because the policy has been changed three times.)
+- Headers should use title case, not start case: `This Is the Header Text`. This is true for all headers (h1, h2, h3, h4). (Disregard the existing start case and sentence case documents in the repository — they are there because the policy has changed three times.)
 - When writing, you have access to Asides. Here's an [example blog post using an Aside](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/log4j-fusionauth.mdx). You can assign the following values to the type: `tip` for tips. `note` for things for the user to be aware of. `important` for things the user should pay attention to. `warn` for dangerous actions like deleting a tenant.
 - For links, don't use the absolute URL for the FusionAuth website (https://fusionauth.io), only relative URLs. This allows us to deploy to our local and staging environments and not get sent over to prod.
 - If you have a list element containing more than one paragraph, indent the second paragraph by the same amount as the start of the text in the first paragraph to make sure that it renders correctly.
