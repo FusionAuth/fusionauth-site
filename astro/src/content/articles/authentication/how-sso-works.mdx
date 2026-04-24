@@ -8,8 +8,6 @@ tags: architecture single-sign-on sso customer-experience sessions saml native-a
 icon: /img/icons/sso-works-why-care.svg
 darkIcon: /img/icons/sso-works-why-care-dark.svg
 ---
-import SSOLogin from "../../../diagrams/articles/authentication/how-sso-works/sso-login.astro";
-import SAMLSSOLogin from "../../../diagrams/articles/authentication/how-sso-works/saml-sso-login.astro";
 
 Single sign-on (SSO) allows users to log in once and access multiple applications using a single set of credentials, such as a username and password, magic link, or WebAuthn passkey.
 
@@ -124,7 +122,32 @@ Here’s a breakdown of each protocol's characteristics, common use cases, and h
 
 Here’s an [OIDC](/articles/identity-basics/what-is-oidc) single sign-on flow. The home page of each application is unavailable to anonymous users. When a browser requests it, the user is directed to the identity provider to log in. However, the authentication at the identity provider happens only once.
 
-<SSOLogin alt={"Single sign-on request flow during login."} />
+```mermaid title="Single sign-on request flow during login."
+sequenceDiagram
+
+actor Browser
+participant pp as Pied Piper Video Chat
+participant FusionAuth
+participant hooli as Hooli Jobs
+Browser ->> pp : View Home Page
+pp ->> pp : Check Session Existence
+pp -->> Browser : Redirect to FusionAuth Because There is No Valid Session
+Browser ->> FusionAuth : Request Login Page
+FusionAuth ->> FusionAuth : Check FA Session Existence
+FusionAuth -->> Browser : Send Login Page
+Browser ->> FusionAuth : Send Credentials
+FusionAuth -->> Browser : Redirects to Pied Piper
+Browser ->> pp : Requests Home Page
+pp -->> Browser : Sends Home Page
+Browser ->> hooli : Requests Home Page
+hooli ->> hooli : Check Session Existence
+hooli -->> Browser : Redirect to FusionAuth Because There is No Valid Session
+Browser ->> FusionAuth : Request Login Page
+FusionAuth ->> FusionAuth : Check FA Session Existence
+FusionAuth -->> Browser : Redirects to Home Page
+Browser ->> hooli : Requests Application Page
+hooli -->> Browser : Sends Application Page
+```
 
 (If you are a stickler, you'll notice there is no request for a token from the apps to the identity provider after the user authenticates. That is implied and required.)
 
@@ -161,7 +184,36 @@ Let’s look at a different scenario. Say you have two different applications: Z
 
 Here’s a diagram for a SAML flow. This is a service provider (SP) initiated flow, where the user is trying to access an application, such as Zendesk (the SP), when they are not logged in.
 
-<SAMLSSOLogin alt={"SAML single sign-on request flow during login."} />
+```mermaid title="SAML single sign-on request flow during login."
+sequenceDiagram
+
+actor Browser
+participant Zendesk
+participant FusionAuth
+participant Gusto
+Browser ->> Zendesk : Requests App
+Zendesk ->> Zendesk : Check Session Existence, Session Missing
+Zendesk -->> Browser : Redirect to FusionAuth With a Signed AuthNRequest (XML)
+Browser ->> FusionAuth : Request Login Page
+FusionAuth ->> FusionAuth : Validate AuthNRequest (XML)
+FusionAuth ->> FusionAuth : Check FA Session Existence (Doesn't Exist)
+FusionAuth -->> Browser : Send Login Page
+Browser ->> FusionAuth : Send Credentials Of User
+FusionAuth -->> Browser : Redirects to Zendesk With a Response (XML)
+Browser ->> Zendesk : Requests App and Provides Response (XML)
+Zendesk ->> Zendesk : Processes Response (XML)
+Zendesk -->> Browser : Sends App
+Browser ->> Gusto : Requests App
+Gusto ->> Gusto : Check Session Existence, Session Missing
+Gusto -->> Browser : Redirect to FusionAuth With a Signed AuthNRequest (XML)
+Browser ->> FusionAuth : Request Login Page
+FusionAuth ->> FusionAuth : Validate AuthNRequest (XML)
+FusionAuth ->> FusionAuth : Check FA Session Existence (Exists)
+FusionAuth -->> Browser : Redirects to Gusto With a Response (XML)
+Browser ->> Gusto : Requests App and Provides Response (XML)
+Gusto ->> Gusto : Processes Response (XML)
+Gusto -->> Browser : Sends App 
+```
 
 SAML is more complicated because of the breadth of the specification and because of the flexibility of XML. If you want to implement it, using a battle-tested library is a good idea.
 

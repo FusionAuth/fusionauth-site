@@ -98,15 +98,35 @@ def make_api_path(type)
     base = "extend/events-and-webhooks/events/"
     # convert audit-log-create-event to audit-log-create
     type = type.gsub("-event","")
-    if type == "user-action"
-      type = "user-actions"
+
+    # sub-directories for buckets that grew too large for docs sidebar
+    if type.start_with?("jwt-")
+      return base + "jwt/" + type
     end
-    if type == "user-login-id-duplicate-on-create"
-      type = "user-login-id-duplicate-create"
+    if type.start_with?("group-")
+      return base +  "group/" + type
     end
-    if type == "user-login-id-duplicate-on-update"
-      type = "user-login-id-duplicate-update"
+
+    # user sub-directory handling (specific -> general)
+    if type.start_with?("user-password-")
+      return base + "user/password/" + type
+    elsif type.start_with?("user-login-")
+      if type == "user-login-id-duplicate-on-create"
+        type = "user-login-id-duplicate-create"
+      end
+      if type == "user-login-id-duplicate-on-update"
+        type = "user-login-id-duplicate-update"
+      end
+      return base + "user/login/" + type
+    elsif type.start_with?("user-registration-")
+      return base + "user/registration/" + type
+    elsif type.start_with?("user-")
+      if type == "user-action"
+        type = "user-actions"
+      end
+      return base + "user/" + type
     end
+    
     return base + type
   end
 
@@ -326,12 +346,20 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       end
 
       tmp_page_content = fetch_doc(api_url, options)
-      page_content = tmp_page_content + page_content
-      unless page_content
-        puts "Could not retrieve: " + api_url
-
-        exit(false)
+      
+      if tmp_page_content
+        page_content = tmp_page_content + page_content
+      else
+        puts "Error: Could not retrieve content from: #{api_url}"
+        # skip this URL:
+        # exit(false) 
       end
+    end
+
+    # Double check that we actually got SOMETHING after checking all URLs
+    if page_content.empty?
+      puts "Could not retrieve any content for: " + t
+      exit(false)
     end
   end
 

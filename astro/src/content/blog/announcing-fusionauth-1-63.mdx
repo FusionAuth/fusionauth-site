@@ -1,0 +1,61 @@
+---
+publish_date: 2026-02-26
+title: Announcing FusionAuth 1.63 - The Proof Pangolin
+description: "FusionAuth 1.63.0 hardens security like the keratin scales of a pangolin with DPoP and noms a whole bunch of bugs."
+authors: Nathan Contino
+image: /img/blogs/release-1-63/fusionauth-1-63.png
+categories: Release Updates, Product
+tags: release notes, DPoP, MFA, setup wizard, bugfixes
+excerpt_separator: "{/* more */}"
+---
+We're excited to release FusionAuth 1.63.0. This version includes [Demonstrating Proof-of-Possession (DPoP)](/docs/lifecycle/authenticate-users/oauth/dpop), enhancements to the MFA Lambda, improvements to the Setup Wizard, and a new Admin UI page for [Fine-Grained Authorization (FGA)](/docs/extend/fine-grained-authorization). We've also taken the time to clear up some longstanding bugs and visual issues on the Admin UI.
+
+We're calling this release the Proof Pangolin because of our focus on hardening security, much like the armor of a pangolin. Furthermore, pangolins are prolific eaters of bugs, and this release has eaten more than its fair share!
+
+So without further ado, let us... _demonstrate proof-of-pangolin_:
+
+![Demonstrating Proof-of-Pangolin](/img/blogs/release-1-63/pangolin.jpg "Photo by Brent Stirton/Getty Images for National Geographic Magazine")
+
+## What is DPoP?
+
+Demonstrating Proof-of-Possession (DPoP) binds access and refresh tokens to a client key pair for additional security. This protects against token theft and replay attacks.
+
+When a client includes a DPoP proof in a token request, FusionAuth:
+
+1. Extracts the DPoP proof, public key, and signature from the `DPoP` request header.
+1. Verifies the signature using the provided public key and validates the proof according to [RFC 9449 § 5](https://datatracker.ietf.org/doc/html/rfc9449#section-5).
+1. Calculates the JWK SHA-256 thumbprint (`jkt`) of the public key provided in the proof.
+1. Binds the issued access token (and refresh token) to this thumbprint by adding a `cnf` claim.
+1. Returns a `token_type` of `DPoP` in the token response.
+
+Consider using DPoP in the following scenarios:
+
+* **Securing APIs**: APIs that require strict assurance that the sender of the token is the same entity to which the token was issued.
+* **Multi Domain**: DPoP is compatible with CORS, and allows you to securely use tokens between multiple domains.
+* **[FAPI 2.0](https://openid.net/specs/fapi-security-profile-2_0-final.html#name-dpop-proof-replay)**: This specification defines DPoP as one of the methods for sender-constrained access tokens.
+* **Alternative to mTLS**: In environments where Mutual TLS (mTLS) is difficult to implement or not supported by the infrastructure, DPoP provides similar sender-constraining benefits at the application layer.
+
+When you use DPoP, the APIs receiving the access token will need to take additional steps to validate that the access token was sent by the correct client. FusionAuth doesn't yet have SDK support for this, but it's coming. For now, you can implement the checks [outlined in the RFC](https://datatracker.ietf.org/doc/html/rfc9449#name-the-dpop-authentication-sch):
+
+> For such an access token, a resource server MUST check that a DPoP proof was also received in the DPoP header field of the HTTP request, check the DPoP proof according to the rules in [Section 4.3](https://datatracker.ietf.org/doc/html/rfc9449#checking), and check that the public key of the DPoP proof matches the public key to which the access token is bound per [Section 6](https://datatracker.ietf.org/doc/html/rfc9449#Confirmation).
+
+## Setup Wizard Improvements
+
+We recently onboarded several new team members. Our Developer Success team used this opportunity to learn about pain points in the first-time setup process. Using those insights, we identified some simple ways to make the Setup Wizard and Admin UI easier (and nicer) to use.
+
+Keep an eye out for more developer-focused improvements coming soon. Developer Success will keep an ear to the ground (and [fusionauth-issues](https://github.com/FusionAuth/fusionauth-issues)) to learn more ways that we can help our developer community.
+
+## AuthenticationType in MFA Lambdas
+
+In 1.62, FusionAuth added support for the [MFA Requirement Lambda](/docs/extend/code/lambdas/mfa-requirement), which runs custom logic to determine if a user should be challenged for an extra factor of authentication during a login event. 
+
+This release adds `AuthenticationType` to the list of parameters available to this Lambda, making it possible to further target your MFA challenges to increase security and minimize friction.
+
+For example, you could use the `AuthenticationType` parameter in the MFA Lambda to:
+* challenge every employee who logs in through your admin OIDC provider
+* apply more relaxed challenge logic to all other users, such as those who log in with a username and password
+
+Alternatively, you could check if the user has ever logged in with this social provider before, challenging only during the initial login.
+We also fixed a large number of bugs: for a full list, take a look at changelog entries marked with the "fix" category in the [release notes](/docs/release-notes/#version-1-63-0).
+
+Thanks for using FusionAuth!

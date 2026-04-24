@@ -8,10 +8,6 @@ categories: Education
 tags: standards, fedcm, federated credential management, authentication
 excerpt_separator: "{/* more */}"
 ---
-import FedCMPassiveFirstTimeLogin from "src/diagrams/blog/fedcm/fedcm-passive-first-time-login.astro";
-import FedCMPassiveSecondTimeLogin from "src/diagrams/blog/fedcm/fedcm-passive-second-time-login.astro";
-import RedirectFirstTimeLogin from "src/diagrams/blog/fedcm/redirect-first-time-login.astro";
-import RedirectSecondTimeLogin from "src/diagrams/blog/fedcm/redirect-second-time-login.astro";
 
 FedCM, or Federated Credential Management, is a web standard being developed by the W3C to create a more secure and privacy-conscious way for users to log into websites using third-party identity providers.
 
@@ -47,11 +43,52 @@ Below, you'll see the differences between the flow of the browser requests and t
 
 Here is the first time a user logs in with the redirect based workflow, such as OIDC.
 
-<RedirectFirstTimeLogin alt="The first time a user logs in with the redirect based workflow." />
+```mermaid title="The first time a user logs in with the redirect-based workflow."
+sequenceDiagram
+    participant Browser
+    participant WebApp as Relying Party
+    participant AuthProvider as IdP 
+
+    Browser->>WebApp: 1. Navigate to protected resource
+    WebApp->>Browser: 2. Redirect to login page<br/>including FedCM API JavaScript
+    Browser->>Browser: 3. Calls FedCM API on page render
+    Browser->>AuthProvider: 4. Makes requests to standard endpoints to <br/>determine configuration, support, use accounts, and relying party 
+    Browser->>Browser: 5. Determines user is logged out
+    Browser->>AuthProvider: 6. Requests login URL,<br/>prompting user to log in
+    AuthProvider->>Browser: 7. Sends login page
+    Browser->>AuthProvider : 8. Submits credentials
+    AuthProvider->>AuthProvider : 9. Verifies credentials
+    AuthProvider->>Browser: 10. Returns requested data
+    Browser->>Browser: 11. FedCM API Call Succeeds
+    Browser->>WebApp: 12. Presents token 
+    Note over WebApp: Token received, end of FedCM dictated interaction
+    WebApp->>WebApp: 13. Validate token using JWKS or other means
+    WebApp->>WebApp: 14. Create user session
+        WebApp->>Browser: 15. Redirect to protected resource
+        Browser->>WebApp: 16. Access protected resource
+        WebApp->>Browser: 17. Return protected content
+```
 
 The second time the user logs in, they are bounced to the IdP. But they don't see a login form since their cookies are valid.
 
-<RedirectSecondTimeLogin alt="The second time the user logs in, they are bounced to the IdP." />
+```mermaid title="The second time the user logs in, they are bounced to the IdP."
+sequenceDiagram
+    participant Browser
+    participant WebApp as Relying Party
+    participant AuthProvider as IdP 
+    
+    Browser->>WebApp: 1. Navigate to protected resource
+    WebApp->>Browser: 2. Redirect to login page
+    Browser->>WebApp: 3. User clicks "Login" button
+    WebApp->>Browser: 4. Redirect to IdP
+    Browser->>AuthProvider: 5. Load authentication page, including cookies
+    AuthProvider->>AuthProvider: 6. Validates cookies 
+    AuthProvider->>Browser: 7. Redirect with authentication success 
+    WebApp->>WebApp: 8. Create user session
+        WebApp->>Browser: 9. Redirect to protected resource
+        Browser->>WebApp: 10. Access protected resource
+        WebApp->>Browser: 11. Return protected content
+```
 
 ### Login Flows With FedCM
 
@@ -59,7 +96,31 @@ The experience the first time the user logs in with FedCM depends on the particu
 
 This diagram shows the flow of the "passive" mode, which requires minimal user interaction. There are other modes, but this is the option that reduces friction the most.
 
-<FedCMPassiveFirstTimeLogin alt="The first time flow of the passive mode, which requires minimal user interaction." />
+```mermaid title="The first time flow of the passive mode, which requires minimal user interaction."
+sequenceDiagram
+    participant Browser as User Agent
+    participant WebApp as Relying Party
+    participant AuthProvider as IDP 
+
+    Browser->>WebApp: 1. Navigate to protected resource
+    WebApp->>Browser: 2. Redirect to login page<br/>including FedCM API JavaScript
+    Browser->>Browser: 3. Calls FedCM API on page render
+    Browser->>AuthProvider: 4. Makes requests to standard endpoints to <br/>determine configuration, support, use accounts, and relying party 
+    Browser->>Browser: 5. Determines user is logged out
+    Browser->>AuthProvider: 6. Requests login URL,<br/>prompting user to log in
+    AuthProvider->>Browser: 7. Sends login page
+    Browser->>AuthProvider : 8. Submits credentials
+    AuthProvider->>AuthProvider : 9. Verifies credentials
+    AuthProvider->>Browser: 10. Returns requested data
+    Browser->>Browser: 11. FedCM API Call Succeeds
+    Browser->>WebApp: 12. Presents token 
+    Note over WebApp: Token received, end of FedCM dictated interaction
+    WebApp->>WebApp: 13. Validate token using JWKS or other means
+    WebApp->>WebApp: 14. Create user session
+        WebApp->>Browser: 15. Redirect to protected resource
+        Browser->>WebApp: 16. Access protected resource
+        WebApp->>Browser: 17. Return protected content
+```
 
 Once a token is received by the browser in step 12, the FedCM portion of the flow is complete. There may be more for the RP to do, such as receive the token from the browser and validate it.
 
@@ -67,7 +128,27 @@ With the passive mode, the second time a user logs in with FedCM is really where
 
 When the user has previously used FedCM and has no more than one account, they are not prompted to log in and are instead auto-reauthenticated without leaving the RP:
 
-<FedCMPassiveSecondTimeLogin alt="The second time flow of the passive mode, no user interaction occurs." />
+```mermaid title="The second time flow of the passive mode, no user interaction occurs."
+sequenceDiagram
+    participant Browser as User Agent
+    participant WebApp as Relying Party
+    participant AuthProvider as IDP 
+
+    Browser->>WebApp: 1. Navigate to protected resource
+    WebApp->>Browser: 2. Redirect to login page<br/>including FedCM API JavaScript
+    Browser->>Browser: 3. Calls FedCM API on page render
+    Browser->>AuthProvider: 4. Makes requests to standard endpoints to <br/>determine configuration, support, use accounts, and relying party 
+    AuthProvider->>Browser: 5. Returns requested data
+    Browser->>Browser: 6. FedCM API Call Succeeds
+    Browser->>WebApp: 7. Presents token 
+    Note over WebApp: Token received, end of FedCM dictated interaction
+
+    WebApp->>WebApp: 8. Validate token using JWKS or other means
+    WebApp->>WebApp: 9. Create user session
+        WebApp->>Browser: 10. Redirect to protected resource
+        Browser->>WebApp: 11. Access protected resource
+        WebApp->>Browser: 12. Return protected content
+```
 
 While the focus of FedCM is authentication, the authors of the specification have considered related use cases, including:
 

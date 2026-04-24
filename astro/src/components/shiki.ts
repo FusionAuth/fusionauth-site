@@ -7,8 +7,7 @@ const cachedLoadedLanguages = new Map<string, Promise<void>>();
  * Configuration for the highlighter.
  */
 const HIGHLIGHTER_CONFIG = {
-  themes: ["github-dark"],
-  langs: [],
+  themes: ["github-dark"]
 };
 
 /**

@@ -8,10 +8,6 @@ icon: /img/icons/articles/authentication-fedCM.svg
 darkIcon: /img/icons/articles/authentication-fedCM-dark.svg
 ---
 import Aside from 'src/components/Aside.astro';
-import FedCMPassiveFirstTimeLogin from "../../../diagrams/articles/authentication/fedcm/fedcm-passive-first-time-login.astro";
-import FedCMPassiveSecondTimeLogin from "../../../diagrams/articles/authentication/fedcm/fedcm-passive-second-time-login.astro";
-import RedirectFirstTimeLogin from "../../../diagrams/articles/authentication/fedcm/redirect-first-time-login.astro";
-import RedirectSecondTimeLogin from "../../../diagrams/articles/authentication/fedcm/redirect-second-time-login.astro";
 
 ## Key Takeaways
 
@@ -26,6 +22,10 @@ The Federated Credential Management (FedCM) API is a proposed web specification 
 The original impetus of FedCM was to provide federated login a better foundation with browser support. Rather than general purpose web primitives, like redirects, iframes, and third-party cookies, partially because these primitives are also employed by advertisers to track users across the web, developers can use a native API. While Google Chrome has pushed the decision about blocking [third party cookies to the user](https://privacysandbox.com/news/privacy-sandbox-next-steps/), other browsers still block all or many [third party cookies by default](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Third-party_cookies). 
 
 With a focus on user privacy, as well as leveraging the native UI elements of a browser, FedCM intends to build a login experience significantly more consistent and secure as well as solve problems that couldn't be addressed without browser functionality. Such problems include when too many identity providers are available (the NASCAR flag problem) and discovering identity providers.
+
+<Aside type="tip">
+Learn about FedCM implementation and how it changes the login landscape. Watch our webinar [FedCM: A New Way To Log In](/webinar/fedcm-a-new-way-to-log-in) for expert analysis, practical implementation guidance, and answers to common developer questions.
+</Aside>
 
 If you log into a web application using a third party social provider, you may soon be using FedCM. Most developers using "Sign-In with Google" and the Google Identity Services library are using FedCM; [the library was updated in 2024 to use this API](https://developers.googleblog.com/en/federated-credential-management-fedcm-migration-for-google-identity-services/).
 
@@ -71,11 +71,54 @@ These are terms used by the FedCM specification, so we'll use them through the r
 
 Here is the first time a user logs in with the redirect based workflow.
 
-<RedirectFirstTimeLogin alt="The first time a user logs in with the redirect based workflow." />
+```mermaid title="The first time a user logs in with the redirect based workflow."
+sequenceDiagram
+    participant Browser as User Agent
+    participant WebApp as Relying Party
+    participant AuthProvider as IDP
+
+    Browser->>WebApp: 1. Navigate to protected resource
+    WebApp->>Browser: 2. Redirect to login page
+    Browser->>WebApp: 3. User clicks "Login" button
+    WebApp->>Browser: 4. Redirect to Auth Provider
+    Browser->>AuthProvider: 5. Load authentication page
+    AuthProvider->>Browser: 6. Display login form
+    Browser->>AuthProvider: 7. Submit credentials (username/password, passkey, etc)
+    AuthProvider->>AuthProvider: 8. Validate credentials
+    alt Credentials Valid
+    Note over WebApp: Valid Credentials
+        AuthProvider->>Browser: 9a. Redirect with authentication success
+        WebApp->>WebApp: 10a. Create user session
+        WebApp->>Browser: 11a. Redirect to protected resource
+        Browser->>WebApp: 12a. Access protected resource
+        WebApp->>Browser: 13a. Return protected content
+    else Credentials Invalid
+    Note over WebApp: Invalid Credentials
+        AuthProvider->>Browser: 9b. Display error message
+        Browser->>AuthProvider: 10b. User retries or exits
+    end
+```
 
 The second time the user logs in, they are bounced to the IDP. But they don't see a login form since their cookies are valid.
 
-<RedirectSecondTimeLogin alt="The second time the user logs in, they are bounced to the IDP." />
+```mermaid title="The second time the user logs in, they are bounced to the IDP."
+sequenceDiagram
+    participant Browser as User Agent
+    participant WebApp as Relying Party
+    participant AuthProvider as IDP 
+    
+    Browser->>WebApp: 1. Navigate to protected resource
+    WebApp->>Browser: 2. Redirect to login page
+    Browser->>WebApp: 3. User clicks "Login" button
+    WebApp->>Browser: 4. Redirect to Auth Provider
+    Browser->>AuthProvider: 5. Load authentication page, including cookies
+    AuthProvider->>AuthProvider: 6. Validates cookies 
+    AuthProvider->>Browser: 7. Redirect with authentication success 
+    WebApp->>WebApp: 8. Create user session
+        WebApp->>Browser: 9. Redirect to protected resource
+        Browser->>WebApp: 10. Access protected resource
+        WebApp->>Browser: 11. Return protected content
+```
 
 ### Login Flows With FedCM
 
@@ -83,13 +126,56 @@ The experience the first time the user logs in with FedCM depends on the particu
 
 This diagram shows the flow of the "passive" mode, which requires minimal user interaction.
 
-<FedCMPassiveFirstTimeLogin alt="The first time flow of the passive mode, which requires minimal user interaction." />
+```mermaid title="The first time flow of the passive mode, which requires minimal user interaction."
+sequenceDiagram
+    participant Browser as User Agent
+    participant WebApp as Relying Party
+    participant AuthProvider as IDP 
 
+    Browser->>WebApp: 1. Navigate to protected resource
+    WebApp->>Browser: 2. Redirect to login page<br/>including FedCM API JavaScript
+    Browser->>Browser: 3. Calls FedCM API on page render
+    Browser->>AuthProvider: 4. Makes requests to standard endpoints to <br/>determine configuration, support, use accounts, and relying party 
+    Browser->>Browser: 5. Determines user is logged out
+    Browser->>AuthProvider: 6. Requests login URL,<br/>prompting user to log in
+    AuthProvider->>Browser: 7. Sends login page
+    Browser->>AuthProvider : 8. Submits credentials
+    AuthProvider->>AuthProvider : 9. Verifies credentials
+    AuthProvider->>Browser: 10. Returns requested data
+    Browser->>Browser: 11. FedCM API Call Succeeds
+    Browser->>WebApp: 12. Presents token 
+    Note over WebApp: Token received, end of FedCM dictated interaction
+    WebApp->>WebApp: 13. Validate token using JWKS or other means
+    WebApp->>WebApp: 14. Create user session
+        WebApp->>Browser: 15. Redirect to protected resource
+        Browser->>WebApp: 16. Access protected resource
+        WebApp->>Browser: 17. Return protected content
+```
 Once a token is received by the user agent in step 12, the FedCM portion is complete. There may be more for the RP to do.
 
 The second time a user logs in with FedCM is where the magic happens. When the user has previously used FedCM and has no more than one account, they are not prompted to log in and are instead auto-reauthenticated without leaving the RP:
 
-<FedCMPassiveSecondTimeLogin alt="The second time flow of the passive mode, no user interaction occurs." />
+```mermaid title="The second time flow of the passive mode, no user interaction occurs."
+sequenceDiagram
+    participant Browser as User Agent
+    participant WebApp as Relying Party
+    participant AuthProvider as IDP 
+
+    Browser->>WebApp: 1. Navigate to protected resource
+    WebApp->>Browser: 2. Redirect to login page<br/>including FedCM API JavaScript
+    Browser->>Browser: 3. Calls FedCM API on page render
+    Browser->>AuthProvider: 4. Makes requests to standard endpoints to <br/>determine configuration, support, use accounts, and relying party 
+    AuthProvider->>Browser: 5. Returns requested data
+    Browser->>Browser: 6. FedCM API Call Succeeds
+    Browser->>WebApp: 7. Presents token 
+    Note over WebApp: Token received, end of FedCM dictated interaction
+
+    WebApp->>WebApp: 8. Validate token using JWKS or other means
+    WebApp->>WebApp: 9. Create user session
+        WebApp->>Browser: 10. Redirect to protected resource
+        Browser->>WebApp: 11. Access protected resource
+        WebApp->>Browser: 12. Return protected content
+```
 
 The authors of the FedCM specification have considered other login situations, including:
 
@@ -119,7 +205,7 @@ Based on a list of [browsers by market share](https://radar.cloudflare.com/repor
 Identity provider support is growing, but is definitely not universal. Based on a [presentation in fall of 2024](https://docs.google.com/presentation/d/1WRGI1BlPnqRwRs40w1j1nOEYBHwDAEaNEljcTReoOic/edit?slide=id.g300c7805003_0_0#slide=id.g300c7805003_0_0), the following identity providers support FedCM:
 
 * Google ([here is their .well-known file](https://www.google.com/.well-known/web-identity ))
-* NetID (GMX/[Web.de](Web.de))
+* NetID
 * Shopify
 * Seznam (a Czech web portal and search engine)
 * Mobage (a portal and social network for games)
@@ -373,7 +459,7 @@ This endpoint receives the client identifier and can return terms of service, pr
 
 ##### id_assertion_endpoint
 
-This endpoint takes the client_id corresponding to the RP and the account id corresponding to the end user and some other parameters, including whether the user was automatically signed in. The request includes the RP origin, cookies, and the `Sec-Fetch-Dest` header.
+This endpoint takes the `client_id` corresponding to the RP and the account id corresponding to the end user and some other parameters, including whether the user was automatically signed in. The request includes the RP origin, cookies, and the `Sec-Fetch-Dest` header.
 
 This endpoint returns a token, and optionally a URL in a continue_on field. Here is an example response:
 
@@ -463,7 +549,9 @@ To use FedCM, end users have to change their login behavior, but due to the phas
 
 FedCM matters. This proposed standard is already supported on a majority of desktop traffic and is under active development, with [thirty organizations in the working group](https://www.w3.org/groups/wg/fedid/participants/). However, most folks will benefit from waiting until another draft is published and the API solidified. If you like to live on the edge and Google is an identity provider you need to support, you can use FedCM with it right now. Finally, get involved in shaping this proposed standard. As mentioned above there are meetings and other opportunities to contribute.
 
-If you want to learn more about FedCM, you can view [our on-demand webinar](/webinar/fedcm-a-new-way-to-log-in) on the topic.
+<Aside type="tip">
+Want to learn more about FedCM implementation? Watch our comprehensive webinar [FedCM: A New Way To Log In](/webinar/fedcm-a-new-way-to-log-in) featuring expert analysis, practical implementation guidance, and answers to common developer questions.
+</Aside>
 
 *Thanks to Sam Goto and Bruno Couriol for their reviews of this article.*
 
