@@ -116,12 +116,23 @@
   import docsearch from '@docsearch/js';
   import { algoliaConfig } from 'src/config';
 
-  docsearch({
+  const options: any = {
     container: '#docsearch',
     ...algoliaConfig,
     placeholder: 'Search docs...',
     detachedMediaQuery: 'all',
-  });
+  };
+
+  if (import.meta.env.DEV) {
+    // Rewrite indexed prod URLs (https://fusionauth.io/...) to the local origin
+    // so search results stay on the dev server. Dev-only — stripped from prod build.
+    options.transformItems = (items: any[]) => items.map((item) => ({
+      ...item,
+      url: item.url.replace(/^https?:\/\/[^/]+/, window.location.origin),
+    }));
+  }
+
+  docsearch(options);
 
   // Wire mobile/header search buttons to open the DocSearch modal
   const wireButtons = () => {
