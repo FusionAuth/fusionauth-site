@@ -110,9 +110,10 @@ To make a smoothie:
 
 - Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
 - Use the following to reference UI elements:
-    - **Field names**: Use **bold** for the **name or label of a field** in a form, JSON API doc, or parameter list. Use it for writable and read-only fields. Example: `Set the **Issuer** field.`
-    - **Field values**: Use `monospace` (backticks) for a **value** entered into or returned from a field. Use it for literal, example, and enumerated values. Example: `Set **Relationship** to `Third-party`.`
+    - **Field names (keys)**: Use **bold** for the **name or label of a field** in a form, JSON API doc, or parameter list. Use it for writable and read-only fields. Example: `Set the **Issuer** field.`
+    - **Field values (values)**: Use `monospace` (backticks) for a **value** entered into or returned from a field. Use it for literal, example, and enumerated values. Example: `Set **Relationship** to `Third-party`.`
     - [Breadcrumb](astro/src/components/Breadcrumb.astro): A navigation path, tab, or interactive non-field UI element (button, link, menu item, icon button, etc.) or a display-only UI label that is not a field label, including section labels on a page. Example: `Navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb>`, `On the <Breadcrumb>OAuth</Breadcrumb> tab.`, or `Click <Breadcrumb>Submit</Breadcrumb>.`
+    - In summary, **bold** is for keys (labels) and `monospace` is for values. If it is unclear how to format something, ask "is it a key or a value?". If it matches neither, it could be a navigation element which would be handled with a `Breadcrumb`. If none of these fit, check this guideline. If the guideline does not provide results, the guideline needs to be updated.
     - Use **bold** and `monospace` together when describing what value to enter into a field.
     - Use `Breadcrumb` for navigation paths, tabs, other controls and section labels. Do not use `Breadcrumb` for field names.
     - Use `Breadcrumb` for sequential UI operations (for example tabs, pages, sidebar entries, links, and menu actions that navigate to a new page), not just multi-level paths.
@@ -368,8 +369,9 @@ Prior to requesting review on a PR, please complete the following checklist.
 3. If you are referring to a field name or field label (writable or read-only), use `**Authorized Redirect URLs**`.
 4. If you are specifying a field value (entered, returned, or enumerated), use ``https://example.com/callback``: `Set **Authorized Redirect URLs** to `https://example.com/callback`.`
 5. If you are referring to any other UI element (button, link, icon button, menu item, section label, or display-only non-field label), use `<Breadcrumb>Submit</Breadcrumb>` or (on the application view screen) `<Breadcrumb>Introspect endpoint</Breadcrumb>`.
-6. If a word like "tab" or "section" is explanatory and not part of the literal label, keep it outside the component: `Open the <Breadcrumb>Images</Breadcrumb> section.`
-7. If a reference is to code/config/docs structure (not the admin UI), keep it in backticks rather than wrapping it in a UI component.
+6. In summary, **bold** is for keys (labels) and `monospace` is for values. If it is unclear how to format something, ask "is it a key or a value?". If it matches neither, it could be a navigation element which would be handled with a `Breadcrumb`. If none of these fit, check this guideline. If the guideline does not provide results, the guideline needs to be updated.
+7. If a word like "tab" or "section" is explanatory and not part of the literal label, keep it outside the component: `Open the <Breadcrumb>Images</Breadcrumb> section.`
+8. If a reference is to code/config/docs structure (not the admin UI), keep it in backticks rather than wrapping it in a UI component.
 
 ## Quickstarts
 
@@ -397,8 +399,9 @@ Follow everything in the `Content Style Guidelines` section.
 - Images for a blog post should go under /astro/public/img/blogs/` in a directory related to the blog title.
 - We use Shiki for code formatting. Supported languages are listed here: https://shiki.style/languages
 - For site navigation and sequential UI operations (tabs, pages, sidebar entries, links), use Breadcrumb: `Navigate to <Breadcrumb>Tenants -> Password</Breadcrumb>`.
-- For field names and labels, use **bold**: `**Login Identifier Attribute**`.
-- For field values, use `monospace`: ``userPrincipalName``. Use quotes only when presenting a literal text value for an editable field.
+- For field names and labels (keys), use **bold**: `**Login Identifier Attribute**`.
+- For field values (values), use `monospace`: ``userPrincipalName``. Use quotes only when presenting a literal text value for an editable field.
+- In summary, **bold** is for keys (labels) and `monospace` is for values. If it is unclear how to format something, ask "is it a key or a value?". If it matches neither, it could be a navigation element which would be handled with a `Breadcrumb`. If none of these fit, check this guideline. If the guideline does not provide results, the guideline needs to be updated.
 - Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/config/contentcheck/known-blog-categories.txt). You can separate categories with commas.
 - Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter. You can [learn more about the logic by reviewing the layout](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/layouts/Blog.astro).
 - You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
