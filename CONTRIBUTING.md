@@ -109,18 +109,18 @@ To make a smoothie:
 ## Docs
 
 - Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
-- Use the following components to reference UI elements:
-    - [InlineField](astro/src/components/InlineField.astro): The **name or label of a field** in a form, JSON API doc, or parameter list. Use it for writable and read-only fields. Example: `Set the <InlineField>Issuer</InlineField> field.`
-    - [InlineFieldValue](astro/src/components/InlineFieldValue.astro): A **value** entered into or returned from a field. Use it for literal, example, and enumerated values. Example: `Set <InlineField>Relationship</InlineField> to <InlineFieldValue>Third-party</InlineFieldValue>.`
+- Use the following to reference UI elements:
+    - **Field names**: Use **bold** for the **name or label of a field** in a form, JSON API doc, or parameter list. Use it for writable and read-only fields. Example: `Set the **Issuer** field.`
+    - **Field values**: Use `monospace` (backticks) for a **value** entered into or returned from a field. Use it for literal, example, and enumerated values. Example: `Set **Relationship** to `Third-party`.`
     - [Breadcrumb](astro/src/components/Breadcrumb.astro): A navigation path, tab, or interactive non-field UI element (button, link, menu item, icon button, etc.) or a display-only UI label that is not a field label, including section labels on a page. Example: `Navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb>`, `On the <Breadcrumb>OAuth</Breadcrumb> tab.`, or `Click <Breadcrumb>Submit</Breadcrumb>.`
-    - Use `InlineField` and `InlineFieldValue` together when describing what value to enter into a field.
+    - Use **bold** and `monospace` together when describing what value to enter into a field.
     - Use `Breadcrumb` for navigation paths, tabs, other controls and section labels. Do not use `Breadcrumb` for field names.
     - Use `Breadcrumb` for sequential UI operations (for example tabs, pages, sidebar entries, links, and menu actions that navigate to a new page), not just multi-level paths.
     - Wrap only the UI label in the component. Keep descriptors such as "tab", "section", "button", "field", and punctuation outside the component unless they are part of the literal UI text. Example: `On the <Breadcrumb>OAuth</Breadcrumb> tab.` and `Open the <Breadcrumb>Single sign-on</Breadcrumb> section.`
     - If the text is a code/config/document concept (for example, `variables` section in JSON, `providers` section in a file, or `docker-compose.yml` keys), use backticks, not UI components.
-    - Checkbox and toggle labels are UI controls; use `Breadcrumb` for them. Use `InlineField` for form field names/labels, and `InlineFieldValue` for values.
+    - Checkbox and toggle labels are UI controls; use `Breadcrumb` for them. Use **bold** for form field names/labels, and `monospace` for values.
     - Use backticks for programmatic values such as versions, booleans, and encoded values. Use quotes only for literal text values entered into editable fields.
-    - In name/value bullet lists, prefer `<InlineField>Field Name</InlineField>:` followed by `<InlineFieldValue>value</InlineFieldValue>` (colon outside `InlineField`) unless the colon is part of the literal label text in the UI.
+    - In name/value bullet lists, prefer `**Field Name**:` followed by ``value`` (colon outside the bolded field name) unless the colon is part of the literal label text in the UI.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
 - Include fragments that are shared between different sections of the doc should be stored in the [shared](astro/src/content/docs/_shared) directory.
@@ -227,7 +227,7 @@ If you want to sort a category to the top of its section, you need to add it to 
 - `Defaults` is always capitalized.
 - If a field is required, but only when another feature is enabled, mark it optional rather than required in the API. Then, add a note in the description saying when it is required, like so:
   ```
-  This field is required when <InlineField>theOtherField.enabled</InlineField> is set to true.
+  This field is required when **theOtherField.enabled** is set to true.
   ```
 - If a feature is only available when using a paid plan, use the [PremiumEditionBlurbApi](astro/src/content/docs/_shared/_premium-edition-blurb-api.astro) component `<PremiumEditionBlurbApi feature="custom forms" />` fragment for API fields, and [PremiumEditionBlurb](astro/src/content/docs/_shared/_premium-edition-blurb.astro) component for any other location where the feature is mentioned in docs. Only mark the request API fields.
 - If a feature is only available when using essentials, use the [AdvancedEditionBlurbApi](astro/src/content/docs/_shared/_advanced-edition-blurb-api.astro) component for API fields, and [AdvancedEditionBlurb](astro/src/content/docs/_shared/_advanced-edition-blurb.astro) for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
@@ -356,7 +356,7 @@ Prior to requesting review on a PR, please complete the following checklist.
 3. When adding or modifying request or response JSON examples, try to maintain themes and consistently.
    - If the create request has a property of `"name": "My application"`, the response should contain this same value.
    - Try and use real world names and values in example requests/responses. Using name such as `Payroll` for an Application name is more descriptive than `app 1` and allows the reader to more understand the example.
-4. When referencing a field in the description of another field use this syntax: `<InlineField>name</InlineField>`.
+4. When referencing a field in the description of another field use this syntax: `**name**`.
 5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.
 6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.
 
@@ -365,8 +365,8 @@ Prior to requesting review on a PR, please complete the following checklist.
     - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed.
     - The screenshot should not look fuzzy. If it does, the compression may be incorrect.
 2. If you are referring to navigation context, a path, or a tab, use `<Breadcrumb>Tenants</Breadcrumb>`, `<Breadcrumb>Tenants -> Your Tenant</Breadcrumb>`, or `On the <Breadcrumb>OAuth</Breadcrumb> tab`.
-3. If you are referring to a field name or field label (writable or read-only), use `<InlineField>Authorized Redirect URLs</InlineField>`.
-4. If you are specifying a field value (entered, returned, or enumerated), use `<InlineFieldValue>https://example.com/callback</InlineFieldValue>`, often alongside `InlineField`: `Set <InlineField>Authorized Redirect URLs</InlineField> to <InlineFieldValue>https://example.com/callback</InlineFieldValue>.`
+3. If you are referring to a field name or field label (writable or read-only), use `**Authorized Redirect URLs**`.
+4. If you are specifying a field value (entered, returned, or enumerated), use ``https://example.com/callback``: `Set **Authorized Redirect URLs** to `https://example.com/callback`.`
 5. If you are referring to any other UI element (button, link, icon button, menu item, section label, or display-only non-field label), use `<Breadcrumb>Submit</Breadcrumb>` or (on the application view screen) `<Breadcrumb>Introspect endpoint</Breadcrumb>`.
 6. If a word like "tab" or "section" is explanatory and not part of the literal label, keep it outside the component: `Open the <Breadcrumb>Images</Breadcrumb> section.`
 7. If a reference is to code/config/docs structure (not the admin UI), keep it in backticks rather than wrapping it in a UI component.
@@ -397,8 +397,8 @@ Follow everything in the `Content Style Guidelines` section.
 - Images for a blog post should go under /astro/public/img/blogs/` in a directory related to the blog title.
 - We use Shiki for code formatting. Supported languages are listed here: https://shiki.style/languages
 - For site navigation and sequential UI operations (tabs, pages, sidebar entries, links), use Breadcrumb: `Navigate to <Breadcrumb>Tenants -> Password</Breadcrumb>`.
-- For field names and labels, use InlineField: `<InlineField>Login Identifier Attribute</InlineField>`.
-- For field values, use InlineFieldValue: `<InlineFieldValue>userPrincipalName</InlineFieldValue>`. Use quotes only when presenting a literal text value for an editable field.
+- For field names and labels, use **bold**: `**Login Identifier Attribute**`.
+- For field values, use `monospace`: ``userPrincipalName``. Use quotes only when presenting a literal text value for an editable field.
 - Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/config/contentcheck/known-blog-categories.txt). You can separate categories with commas.
 - Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter. You can [learn more about the logic by reviewing the layout](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/layouts/Blog.astro).
 - You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.

@@ -10,8 +10,6 @@ tags: ldap, connectors, netcore
 excerpt_separator: "{/* more */}"
 ---
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import InlineField from 'src/components/InlineField.astro';
-import InlineFieldValue from 'src/components/InlineFieldValue.astro';
 
 Microsoft's Active Directory is a common enterprise user data store. If you are building apps for users authenticated by Active Directory, you might want to connect FusionAuth to it. Another common use case is to have some applications for internal users which should be authenticated against Active Directory and other applications for people outside your organization, with user data stored in FusionAuth. FusionAuth can act as a CIAM for your external users, but delegate authentication of internal accounts to Active Directory.
 
@@ -98,13 +96,13 @@ To set up this application in FusionAuth, navigate to <Breadcrumb>Settings -> Ke
 
 ![Adding an RSA key in Key Master.](/img/blogs/active-directory-connector/fusionauth-add-rsa-key.png)
 
-Create an application called "Internal Payroll App". This is what you are going to let John have access to. In the <Breadcrumb>OAuth</Breadcrumb> tab, add a <InlineField>redirect URL</InlineField> of <InlineFieldValue>http://localhost:5000/signin-oidc</InlineFieldValue>. Add a <InlineField>logout redirect</InlineField> of <InlineFieldValue>http://localhost:5000/</InlineFieldValue>.
+Create an application called "Internal Payroll App". This is what you are going to let John have access to. In the <Breadcrumb>OAuth</Breadcrumb> tab, add a **redirect URL** of `http://localhost:5000/signin-oidc`. Add a **logout redirect** of `http://localhost:5000/`.
 
 Navigate to the <Breadcrumb>JWT</Breadcrumb> tab. Enable JWT application configuration and change the signing keys to the just created RSA key pair: "For Internal Payroll App".
 
 ![Configuring the application's JWT settings to sign with the generated RSA keypair.](/img/blogs/active-directory-connector/fusionauth-jwt-config.png)
 
-Save the application and then view it by clicking on the green magnifying glass. Scroll down to the OAuth configuration section, noting the <InlineField>Client ID</InlineField> and <InlineField>Client Secret</InlineField> values, which you'll need when configuring the web application in a bit:
+Save the application and then view it by clicking on the green magnifying glass. Scroll down to the OAuth configuration section, noting the **Client ID** and **Client Secret** values, which you'll need when configuring the web application in a bit:
 
 ![Viewing the application's OAuth settings to record the Client ID and Client Secret values.](/img/blogs/active-directory-connector/fusionauth-oauth-config.png)
 
@@ -130,7 +128,7 @@ function reconcile(user, userAttributes) {
 
 This code isn't too helpful though, as no user attributes are copied. At a minimum, you must set `user.id` and either `user.username` or `user.email` values. You also probably want to configure the `registrations` collection, which is the set of FusionAuth applications for which this user is authorized. If you have multiple tenants, populate `user.tenantId` as well.
 
-The lambda will receive a `userAttributes` variable from the Connector. This contains attributes requested from Active Directory. You'll see how to request specific attributes below. From `userAttributes`, you'll want to assemble a FusionAuth `user` object. All the normal [lambda limitations apply](/docs/extend/code/lambdas/#limitations). The attributes of the `user` object are thoroughly documented in the [API docs](/docs/apis/users#create-a-user), but in general you'll be copying values from `userAttributes` to `user`, or hardcoding values. Here's a more full featured example lambda function, which copies some attributes, sets `active` to <InlineFieldValue>true</InlineFieldValue>, and registers the user for a given application:
+The lambda will receive a `userAttributes` variable from the Connector. This contains attributes requested from Active Directory. You'll see how to request specific attributes below. From `userAttributes`, you'll want to assemble a FusionAuth `user` object. All the normal [lambda limitations apply](/docs/extend/code/lambdas/#limitations). The attributes of the `user` object are thoroughly documented in the [API docs](/docs/apis/users#create-a-user), but in general you'll be copying values from `userAttributes` to `user`, or hardcoding values. Here's a more full featured example lambda function, which copies some attributes, sets `active` to `true`, and registers the user for a given application:
 
 ```javascript
 // Using the response from an LDAP connector, reconcile the User.
@@ -212,14 +210,14 @@ Next, navigate to <Breadcrumb>Settings -> Connectors</Breadcrumb>. Create a new 
 
 Configure the LDAP Connector by providing or modifying the following info:
 
-* The <InlineField>LDAP URL</InlineField>, which is the DNS or IP address of your Active Directory server or servers (if load balanced). Because I'm in the same subnet as one of the servers, I'm using `ldap://192.168.0.59`, a private address.
-* The security method, which is either <InlineFieldValue>None</InlineFieldValue>, <InlineFieldValue>LDAPS</InlineFieldValue> (LDAP over SSL) or <InlineFieldValue>STARTTLS</InlineFieldValue> (LDAP over TLS). Make sure you modify the schema of the LDAP URL if needed.
+* The **LDAP URL**, which is the DNS or IP address of your Active Directory server or servers (if load balanced). Because I'm in the same subnet as one of the servers, I'm using `ldap://192.168.0.59`, a private address.
+* The security method, which is either `None`, `LDAPS` (LDAP over SSL) or `STARTTLS` (LDAP over TLS). Make sure you modify the schema of the LDAP URL if needed.
 * Optionally change the timeouts. If the Connector can't connect or read from the LDAP server for longer than the respective timeout, an error will be logged and the attempt to authenticate for a user associated with this Connector will fail.
-* Set <InlineField>Reconcile lambda</InlineField> to the previously created lambda, `ldapconnector` in my case.
-* Update the <InlineField>Base structure</InlineField> to the distinguished name (DN) where the user search should start. To search the entire directory, you'd use a structure such as `DC=piedpiper,DC=com`. If you want to search against only the accounting org, which makes sense for a payroll app, add the organization: `OU=accounting,DC=piedpiper,DC=com`.
-* Update the <InlineField>System Account DN</InlineField>, which is basically the account which searches Active Directory for the user who is authenticating. This user needs at least read access to the directory from the <InlineField>Base structure</InlineField>. I used the `Admin` account. Make sure you use the DN, not just the username; for example: `CN=Admin,OU=accounting,DC=piedpiper,DC=com`. You also need to provide the password for this account.
-* Configure the <InlineField>Login Identifier Attribute</InlineField>. This attribute contains the username for accounts in the LDAP directory. For my Active Directory instance that is `userPrincipalName`.
-* Set the <InlineField>Identifying Attribute</InlineField>. This is the entry attribute name that is the first component of the DN of entries in the directory. For my Active Directory instance, `cn` is the correct value.
+* Set **Reconcile lambda** to the previously created lambda, `ldapconnector` in my case.
+* Update the **Base structure** to the distinguished name (DN) where the user search should start. To search the entire directory, you'd use a structure such as `DC=piedpiper,DC=com`. If you want to search against only the accounting org, which makes sense for a payroll app, add the organization: `OU=accounting,DC=piedpiper,DC=com`.
+* Update the **System Account DN**, which is basically the account which searches Active Directory for the user who is authenticating. This user needs at least read access to the directory from the **Base structure**. I used the `Admin` account. Make sure you use the DN, not just the username; for example: `CN=Admin,OU=accounting,DC=piedpiper,DC=com`. You also need to provide the password for this account.
+* Configure the **Login Identifier Attribute**. This attribute contains the username for accounts in the LDAP directory. For my Active Directory instance that is `userPrincipalName`.
+* Set the **Identifying Attribute**. This is the entry attribute name that is the first component of the DN of entries in the directory. For my Active Directory instance, `cn` is the correct value.
 
 After all of the above are configured, you'll also want to specify which directory attributes to request from Active Directory. Anything stored in the Active Directory instance can be delivered to FusionAuth, as long as the authenticating user has permissions to retrieve it. AWS Microsoft Managed AD [runs Windows Server 2012](https://docs.aws.amazon.com/directoryservice/latest/admin-guide/directory_microsoft_ad.html), so this is [the list of available user attributes](https://docs.microsoft.com/en-us/windows/win32/adschema/c-user#windows-server-2012). 
 
@@ -293,7 +291,7 @@ To log in, click the <Breadcrumb>Secure</Breadcrumb> link and you'll be taken to
 
 ![The log in pages for the web application.](/img/blogs/active-directory-connector/webapp-login-page.png)
 
-Sign in with the Active Directory user you added (John's login if you are following along) and you'll be redirected back to a profile page. Note that I used `john@danadtest.fusionauth.io` as the username. That corresponds to the <InlineField>User UPN logon</InlineField> value configured when this account was created in Active Directory. This is also the `userPrincipalName` value, what the <InlineField>Login Identifier Attribute</InlineField> value was in the Connector config.
+Sign in with the Active Directory user you added (John's login if you are following along) and you'll be redirected back to a profile page. Note that I used `john@danadtest.fusionauth.io` as the username. That corresponds to the **User UPN logon** value configured when this account was created in Active Directory. This is also the `userPrincipalName` value, what the **Login Identifier Attribute** value was in the Connector config.
 
 ![The web application profile page.](/img/blogs/active-directory-connector/webapp-secured-page.png)
 
