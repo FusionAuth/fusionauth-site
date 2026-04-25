@@ -6,21 +6,37 @@ const frontmatter = {
   title: "Glossary",
   description: "A list of terms and definitions used in FusionAuth."
 };
+
+const groupedGlossary = Object.entries(glossary).reduce((acc, [term, entry]) => {
+  const categories = entry.categories || (entry.category ? [entry.category] : ["Uncategorized"]);
+  categories.forEach(category => {
+    if (!acc[category]) acc[category] = [];
+    acc[category].push({ term, ...entry });
+  });
+  return acc;
+}, {});
+
+const sortedCategories = Object.keys(groupedGlossary).sort();
 ---
 
 <Layout {frontmatter}>
-  <ul>
-    {Object.entries(glossary).map(([term, entry]) => (
-      <li>
-        <strong>{term}</strong>: {entry.definition}
-        {entry.link && (
-          entry.link.startsWith('http') ? (
-            <span> [<a href={entry.link} target="_blank" rel="noopener noreferrer">external</a>]</span>
-          ) : (
-            <span> [<a href={entry.link}>details</a>]</span>
-          )
-        )}
-      </li>
-    ))}
-  </ul>
+  {sortedCategories.map(category => (
+    <section>
+      <h2>{category}</h2>
+      <ul>
+        {groupedGlossary[category].sort((a, b) => a.term.localeCompare(b.term)).map((entry) => (
+          <li>
+            <strong>{entry.term}</strong>: {entry.definition}
+            {entry.link && (
+              entry.link.startsWith('http') ? (
+                <span> <a href={entry.link} target="_blank" rel="noopener noreferrer">further external details..</a></span>
+              ) : (
+                <span> <a href={entry.link}>read more..</a></span>
+              )
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
 </Layout>
