@@ -1,19 +1,29 @@
 ---
 import { getEntry } from 'astro:content';
 
-const { term } = Astro.props;
+const { term: termProp } = Astro.props;
+let displayText = Astro.slots.has('default') ? (await Astro.slots.render('default')).trim() : '';
+let lookupTerm = (termProp || displayText).trim();
 
-const entry = await getEntry('glossary', term);
+if (!lookupTerm) {
+  return '';
+}
+
+if (!displayText) {
+  displayText = lookupTerm;
+}
+
+const entry = await getEntry('glossary', lookupTerm);
 
 const definition = entry?.data.definition ?? '';
 const link = entry?.data.link;
 const isExternal = link?.startsWith('http');
-const id = `tooltip-${term.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Math.floor(Math.random() * 1000000)}`;
+const id = `tooltip-${lookupTerm.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Math.floor(Math.random() * 1000000)}`;
 
 const Tag = link ? 'a' : 'span';
 
 if (!entry) {
-  return term;
+  return displayText;
 }
 ---
 
@@ -27,7 +37,7 @@ if (!entry) {
     { "cursor-pointer": link }
   ]}
 >
-  {term}
+  {displayText}
   {isExternal && <i aria-label="(external)" class="fa-solid fa-arrow-up-right-from-square text-[0.8em] ml-1"></i>}
   {definition && (
     <span

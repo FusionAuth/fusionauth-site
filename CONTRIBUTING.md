@@ -42,9 +42,9 @@ Here are some guidelines to follow when writing documentation (everything under 
 - All documentation should use the shared glossary system for technical and business terms (such as “Default Tenant”, “User”, “Role”, “RS256”, etc.).
 - To add or edit a glossary term, update the JSON file at `astro/src/data/glossary.json`. Each entry should include a `"definition"` field and a `"categories"` array (strings), and may include an optional `"link"` (internal or external).
 - Terms can belong to multiple categories; they will appear under each category on the glossary page.
-- To reference a glossary term inline within documentation, use the `<GlossaryTerm term="…" />` component (available in `.astro` and `.mdx` files):
-  ```mdx
-  The <GlossaryTerm term="User" /> is an entity that can log in…
-  ```
+- To reference a glossary term inline within documentation, use the `GlossaryTerm` component (available in `.astro` and `.mdx` files). It supports three ways of being used:
+  - As a self-closing tag: `<GlossaryTerm term="User" />`
+  - Using the child content as the term: `<GlossaryTerm>User</GlossaryTerm>`
+  - Specifying a different lookup term: `<GlossaryTerm term="Default Tenant">Default Tenant Id</GlossaryTerm>` (useful when the displayed text is different from the glossary entry).
 - If the term has a link in the glossary, it will be rendered as a clickable link. If not, only the definition is shown via tooltip on hover.
 - The glossary system supports external links (rendered with an external-link icon), internal doc links, or no link.
