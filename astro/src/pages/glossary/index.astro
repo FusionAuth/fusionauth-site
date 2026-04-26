@@ -1,42 +1,54 @@
 ---
 import Layout from '../../layouts/Simple.astro';
-import glossary from '../../data/glossary.json';
+import { getCollection } from 'astro:content';
 
 const frontmatter = {
   title: "Glossary",
   description: "A list of terms and definitions used in FusionAuth."
 };
 
-const groupedGlossary = Object.entries(glossary).reduce((acc, [term, entry]) => {
-  const categories = entry.categories || (entry.category ? [entry.category] : ["Uncategorized"]);
+const terms = (await getCollection('glossary'))
+  .sort((a, b) => a.id.localeCompare(b.id));
+
+const groupedGlossary: Record<string, { term: string, definition: string, link?: string }[]> = terms.reduce((acc, term) => {
+  const { categories = ["Uncategorized"], definition, link } = term.data;
   categories.forEach(category => {
     if (!acc[category]) acc[category] = [];
-    acc[category].push({ term, ...entry });
+    acc[category].push({term: term.id, definition, link});
   });
   return acc;
 }, {});
 
 const sortedCategories = Object.keys(groupedGlossary).sort();
+
+const headings = sortedCategories
+  .map((text) => ({
+    text,
+    slug: text.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+    depth: 2,
+  }));
+
 ---
 
-<Layout {frontmatter}>
+<Layout {frontmatter} {headings}>
   {sortedCategories.map(category => (
     <section>
-      <h2>{category}</h2>
-      <ul>
+      <h2 id={category.toLowerCase().replace(/[^a-z0-9]/g, '-')}>{category}</h2>
+      <dl>
         {groupedGlossary[category].sort((a, b) => a.term.localeCompare(b.term)).map((entry) => (
-          <li>
-            <strong>{entry.term}</strong>: {entry.definition}
+          <dt>{entry.term}</dt>
+          <dd>
+              {entry.definition}
             {entry.link && (
               entry.link.startsWith('http') ? (
-                <span> <a href={entry.link} target="_blank" rel="noopener noreferrer">further external details..</a></span>
+                      <span class="inline-flex items-center"> <a href={entry.link} target="_blank" rel="noopener noreferrer">Read more... <i aria-label="(external)" class="fa-solid fa-arrow-up-right-from-square text-[0.8em] ml-1"></i></a></span>
               ) : (
-                <span> <a href={entry.link}>read more..</a></span>
+                      <span> <a href={entry.link}>Read more...</a></span>
               )
             )}
-          </li>
+          </dd>
         ))}
-      </ul>
+      </dl>
     </section>
   ))}
 </Layout>
