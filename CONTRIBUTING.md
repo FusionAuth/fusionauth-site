@@ -66,7 +66,9 @@ To make a smoothie:
 ### Glossary Terms
 
 All documentation should use the shared glossary system for technical and business terms (such as “Default Tenant”, “User”, “Role”, “RS256”, "rfc6749" etc.).
-- To add or edit a glossary term, update the JSON file at `astro/src/data/glossary.json`. Each entry should include a `"definition"` field and a `"categories"` array (strings), and may include an optional `"link"` (internal or external).
+- To add or edit a glossary term, update the JSON file at `astro/src/data/glossary.json`. Each entry should include a `"definition"` field and a `"categories"` array (strings), and may include optional `"link"` (internal or external), `"aliases"`, or `"abbreviations"` arrays (strings).
+- Terms must be written in full (e.g., "JSON Web Token" instead of "JWT" or "JWT (JSON Web Token)").
+- Abbreviations should be added to the `abbreviations` field.
 - Terms can belong to multiple categories; they will appear under each category on the glossary page.
 - To reference a glossary term inline within documentation, use the `GlossaryTerm` component (available in `.astro` and `.mdx` files). It supports three ways of being used:
     - **preferred** Using the child content as the term: `<GlossaryTerm>User</GlossaryTerm>`

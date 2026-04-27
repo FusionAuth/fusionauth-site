@@ -1,5 +1,5 @@
 ---
-import { getEntry } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 
 const { term: termProp } = Astro.props;
 let displayText = Astro.slots.has('default') ? (await Astro.slots.render('default')).trim() : '';
@@ -13,7 +13,16 @@ if (!displayText) {
   displayText = lookupTerm;
 }
 
-const entry = await getEntry('glossary', lookupTerm);
+let entry = await getEntry('glossary', lookupTerm);
+
+if (!entry) {
+  const allEntries = await getCollection('glossary');
+  entry = allEntries.find(e =>
+    e.id.toLowerCase() === lookupTerm.toLowerCase() ||
+    e.data.aliases?.some(a => a.toLowerCase() === lookupTerm.toLowerCase()) ||
+    e.data.abbreviations?.some(a => a.toLowerCase() === lookupTerm.toLowerCase())
+  );
+}
 
 const definition = entry?.data.definition ?? '';
 const link = entry?.data.link;

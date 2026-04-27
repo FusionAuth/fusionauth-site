@@ -107,6 +107,8 @@ const glossaryCollection = defineCollection({
     definition: z.string(),
     link: z.string().optional(),
     categories: z.array(z.string()).optional(),
+    aliases: z.array(z.string()).optional(),
+    abbreviations: z.array(z.string()).optional(),
   })
 })
 

@@ -10,11 +10,11 @@ const frontmatter = {
 const terms = (await getCollection('glossary'))
   .sort((a, b) => a.id.localeCompare(b.id));
 
-const groupedGlossary: Record<string, { term: string, definition: string, link?: string }[]> = terms.reduce((acc, term) => {
-  const { categories = ["Uncategorized"], definition, link } = term.data;
+const groupedGlossary: Record<string, { term: string, definition: string, link?: string, aliases?: string[], abbreviations?: string[] }[]> = terms.reduce((acc, term) => {
+  const { categories = ["Uncategorized"], definition, link, aliases = [], abbreviations = [] } = term.data;
   categories.forEach(category => {
     if (!acc[category]) acc[category] = [];
-    acc[category].push({term: term.id, definition, link});
+    acc[category].push({ term: term.id, definition, link, aliases, abbreviations });
   });
   return acc;
 }, {});
@@ -36,15 +36,27 @@ const headings = sortedCategories
       <h2 id={category.toLowerCase().replace(/[^a-z0-9]/g, '-')}>{category}</h2>
       <dl>
         {groupedGlossary[category].sort((a, b) => a.term.localeCompare(b.term)).map((entry) => (
-          <dt>{entry.term}</dt>
+          <dt>
+            {entry.term}
+            {entry.abbreviations && entry.abbreviations.length > 0 && ` (${entry.abbreviations.join(', ')})`}
+          </dt>
           <dd>
-              {entry.definition}
+            <p>{entry.definition}</p>
+            {entry.aliases && entry.aliases.length > 0 && (
+              <p class="text-sm text-slate-500 mt-1 italic">
+                Aliases: {entry.aliases.join(', ')}
+              </p>
+            )}
             {entry.link && (
-              entry.link.startsWith('http') ? (
-                      <span class="inline-flex items-center"> <a href={entry.link} target="_blank" rel="noopener noreferrer">Read more... <i aria-label="(external)" class="fa-solid fa-arrow-up-right-from-square text-[0.8em] ml-1"></i></a></span>
-              ) : (
-                      <span> <a href={entry.link}>Read more...</a></span>
-              )
+              <div class="mt-2">
+                {entry.link.startsWith('http') ? (
+                  <span class="inline-flex items-center">
+                    <a href={entry.link} target="_blank" rel="noopener noreferrer">Read more... <i aria-label="(external)" class="fa-solid fa-arrow-up-right-from-square text-[0.8em] ml-1"></i></a>
+                  </span>
+                ) : (
+                  <span><a href={entry.link}>Read more...</a></span>
+                )}
+              </div>
             )}
           </dd>
         ))}
