@@ -16,24 +16,29 @@ if (!displayText) {
 let entry = await getEntry('glossary', lookupTerm);
 
 if (!entry) {
-  const allEntries = await getCollection('glossary');
-  entry = allEntries.find(e =>
-    e.id.toLowerCase() === lookupTerm.toLowerCase() ||
-    e.data.aliases?.some(a => a.toLowerCase() === lookupTerm.toLowerCase()) ||
-    e.data.abbreviations?.some(a => a.toLowerCase() === lookupTerm.toLowerCase())
+  const entries = await getCollection('glossary',
+    ({id, data}) => [id, ...(data.aliases ?? []), ...(data.abbreviations ?? [])]
+      .map(s => s.toLowerCase())
+      .includes(lookupTerm.toLowerCase())
   );
+
+  if (entries.length > 1) {
+    console.warn(`Multiple glossary entries found for term "${lookupTerm}": ${entries.map(e => e.id).join(', ')}`);
+  }
+
+  entry = entries.at(0);
 }
-
-const definition = entry?.data.definition ?? '';
-const link = entry?.data.link;
-const isExternal = link?.startsWith('http');
-const id = `tooltip-${lookupTerm.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Math.floor(Math.random() * 1000000)}`;
-
-const Tag = link ? 'a' : 'span';
 
 if (!entry) {
   return displayText;
 }
+
+const definition = entry.data.definition;
+const link = entry.data.link;
+const isExternal = link?.startsWith('http');
+const id = `tooltip-${lookupTerm.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Math.floor(Math.random() * 1000000)}`;
+
+const Tag = link ? 'a' : 'span';
 ---
 
 <Tag
