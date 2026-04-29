@@ -14,21 +14,24 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 In the Northern Hemisphere, the world awakens with springtime splendor: the earth turns a vibrant emerald, daffodils burst into bloom, and FusionAuth marks the season with the release of version `1.65.0`.
 
-Meanwhile in the Southern Hemisphere, summer is waning. But at least one species is hard at work, eating bugs to prepare for brumation (reptilian hibernation):
+Meanwhile in the Southern Hemisphere, summer is waning. But at least one species is hard at work, eating bugs to prepare for brumation (reptilian hibernation): the [tasmanian mountain skink](https://nre.tas.gov.au/wildlife-management/fauna-of-tasmania/reptiles-and-frogs/tasmanian-lizards/mountain-skink).
 
-the Tenant Manager SSO<sup>[Tasmanian Mountain Skink](https://nre.tas.gov.au/wildlife-management/fauna-of-tasmania/reptiles-and-frogs/tasmanian-lizards/mountain-skink)</sup> (TMS<sup>TMS</sup>)
+Out of respect for this noble creature's acronym, we named this release the
+Tenant Manager SSO<sup>Tasmanian Mountain Skink</sup>.
+
+If that sounds like a mouthful, call it TMS<sup>TMS</sup>.
 
 ![an image of a tasmanian mountain skink, the mascot of this release, dubbed tms^tms](/img/blogs/release-1-65/tms.jpg "the tms^tms")
 
-Unfortunately, we weren't able to ship the skink-like functionality of regrowing arms. But we did manage to improve the performance of multi-node clusters, which is basically the same thing.
-
 This version includes the ability for tenant administrators to configure SSO right from Tenant Manager, a new identity provider testing API, custom favicons for simple themes, a voice option for MFA for improved accessibility, a declarative way to reconcile user identities, a new limited option for self-service incomplete user registration, and the ability to filter logs by tenant. And just like the real tasmanian mountain skink, this release eats up plenty of bugs!
+
+Unfortunately, we weren't able to ship the skink-like functionality of regrowing arms. But we did manage to improve the performance of multi-node clusters (and plenty of other performance and reliability improvements), which is basically the same thing.
 
 ## Self-Service SSO in Tenant Manager
 
 For the first time, tenant administrators can configure SSO entirely within [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager).
 
-First, ask your FusionAuth admin to enable Self-Service SSO in the FusionAuth Admin UI:
+First, ask your FusionAuth admin to enable Self-Service SSO in the FusionAuth Admin UI -- they'll only have to do this once:
 
 ![Complete Registration Settings](/img/docs/lifecycle/register-users/complete-registration-settings.png)
 
@@ -42,12 +45,7 @@ To support self-service SSO in Tenant Manager, we created a whole new [API for t
 
 To test an identity provider, open the <Breadcrumb>Single Sign-On</Breadcrumb> page, expand the action menu for an identity provider, and click <InlineUIElement>Test</InlineUIElement>.
 
-The connection test start page shows a summary of your configuration, including:
-
-* Identity provider name and type
-* Callback URL
-* For OpenID Connect: issuer, authorization URL, token URL, and userinfo URL
-* For SAML v2: SSO Login URL
+The connection test start page shows a summary of your configuration.
 
 Click <InlineUIElement>Start Test</InlineUIElement> to begin the test.
 
@@ -73,7 +71,7 @@ Anyway, now that we've filled up this section, back to the exciting features:
 
 ## Voice MFA
 
-Accessibility is for everyone. That's why we added a new voice option for [multi-factor authentication (MFA)](/docs/lifecycle/authenticate-users/multi-factor-authentication), allowing users to receive codes via audio instead of text.
+Accessibility is for everyone. Even if you have the sharpest eyes and best hearing, you're bound to have a friend or loved one who isn't so lucky. That's why we added a new voice option for [multi-factor authentication (MFA)](/docs/lifecycle/authenticate-users/multi-factor-authentication), allowing users to receive codes via audio instead of text.
 
 In the MFA settings for a tenant, find the <Breadcrumb>Phone</Breadcrumb> section. Enable the `Voice enabled` toggle to enable MFA audio codes!
 
@@ -87,20 +85,15 @@ Enough fun, let's talk about declarative configuration!
 
 Many of our users currently use reconcile lambdas like our [OIDC reconcile lambda](/docs/extend/code/lambdas/reconcile/openid-connect-response-reconcile) to reconcile user identities across identity providers. But it turns out we didn't need anything as powerful as a lambda to define reconciliation for self-service SSO in Tenant Manager.
 
-We just needed [attribute mappings](/docs/lifecycle/authenticate-users/identity-providers/#attribute-mappings).
+We just needed [attribute mappings](/docs/lifecycle/authenticate-users/identity-providers/#attribute-mappings). In fact, to use Tenant Manager SSO, you need to configure attribute mappings -- a reconcile lambda just won't do.
 
-Attribute mappings allow you to map claims from an Identity Provider response directly to FusionAuth user and registration fields. They are a declarative alternative to reconciliation lambdas. You can configure these key-value pairs using the [Identity Provider API](/docs/apis/identity-providers/), the Identity Provider configuration page in the Admin UI, and [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager#attribute-mappings).
+Attribute mappings allow you to map claims from an Identity Provider response directly to FusionAuth user and registration fields. FusionAuth admins can configure these key-value pairs using the [Identity Provider API](/docs/apis/identity-providers/) or the Identity Provider configuration page in the Admin UI. Tenant admins can customize them for their tenants in [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager#attribute-mappings).
 
-Attribute mapping keys represent fields on a FusionAuth user or registration and must begin with `user.` or `registration.`. Some example keys are:
-
-* `user.email` - The user's email address. This could be used for linking the user according to the configuring linking strategy.
-* `registration.data.subscription` - Custom registration data with information on the user's subscription.
-
-During reconciliation, FusionAuth reads claim values using the attribute mapping values declared in the Identity Provider response. FusionAuth assigns the retrieved values to the corresponding key on the FusionAuth user or registration. All attribute mappings are optional; if FusionAuth cannot retrieve a claim value or set a key, it omits the mapping, but still continues reconciliation.
+During reconciliation, FusionAuth reads claim values using the attribute mapping values declared in the Identity Provider response. FusionAuth assigns the retrieved values to the corresponding key on the FusionAuth user or registration. But don't worry, all attribute mappings are optional; if FusionAuth can't retrieve a claim value or set a key, it omits the mapping, but reconciliation continues.
 
 ## Self-Service Incomplete User Registration
 
-FusionAuth `1.65.0` introduces a new [self-service option for applications](/docs/lifecycle/register-users/complete-registration) that allows users to complete an existing (but incomplete) registration, but does not allow entirely new users to create a new registration. We call it **complete registration**.
+This release also adds a new [self-service option for applications](/docs/lifecycle/register-users/complete-registration) that allows users to complete an existing (but incomplete) registration, but does not allow entirely new users to create a new registration. We call it **complete registration**.
 
 ![Complete Registration](/img/docs/get-started/core-concepts/application-complete-registration-self-service-basic.png)
 
