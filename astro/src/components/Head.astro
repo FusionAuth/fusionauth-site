@@ -9,6 +9,7 @@ interface Props {
   title?: string;
   openGraphImage?: string;
   canonicalUrl?: string;
+  isIndexPage?: boolean;
   searchFilters?: { [key: string]: string[] };
 }
 
@@ -19,6 +20,7 @@ const {
   enableKapa = true,
   title, openGraphImage,
   canonicalUrl,
+  isIndexPage = false,
   searchFilters = {}
 } = Astro.props;
 const openGraphImageUrl = openGraphImage ? new URL(openGraphImage, Astro.url): new URL("/img/og/articles-developers-v1.png", Astro.url);
@@ -41,6 +43,12 @@ if (canonical.endsWith('index.html')) {
 } else if (canonical.endsWith('.html')) {
   canonical = canonical.slice(0, canonical.indexOf('.html'));
 }
+
+// Pages built from index.mdx are served as a directory (with trailing slash);
+// standalone .mdx files are served without one. Match whichever URL is served.
+if (isIndexPage && !canonical.endsWith('/')) {
+  canonical += '/';
+}
 const slug = Astro.params.slug;
 ---
 <head>
@@ -48,6 +56,7 @@ const slug = Astro.params.slug;
   <meta name="viewport" content="width=device-width"/>
   <link rel="icon" type="image/png" href="/img/favicon.png"/>
   { canonical && <link rel="canonical" href={canonical} /> }
+  <meta name="algolia-site-verification" content="857638C054AD182F" />
   <link rel="sitemap" href="/sitemap-index.xml">
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <link rel="stylesheet" href="/css/brands.min.css"/>
