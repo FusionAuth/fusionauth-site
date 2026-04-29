@@ -1,0 +1,152 @@
+---
+import '@docsearch/css';
+---
+<div id="docsearch"></div>
+
+<style is:global>
+  /* Color variables matching FusionAuth site theme */
+  :root {
+    --docsearch-primary-color: #4f46e5;
+    --docsearch-text-color: #334155;
+    --docsearch-muted-color: #94a3b8;
+    --docsearch-container-background: rgba(15, 23, 42, 0.5);
+    --docsearch-modal-background: #fff;
+    --docsearch-modal-shadow: 0 3px 8px rgba(15, 23, 42, 0.2);
+    --docsearch-searchbox-background: #f1f5f9;
+    --docsearch-searchbox-focus-background: #fff;
+    --docsearch-searchbox-shadow: inset 0 0 0 2px #4f46e5;
+    --docsearch-hit-color: #334155;
+    --docsearch-hit-active-color: #fff;
+    --docsearch-hit-background: #f1f5f9;
+    --docsearch-hit-shadow: none;
+    --docsearch-footer-background: #f8fafc;
+    --docsearch-key-gradient: linear-gradient(-26.5deg, #e2e8f0, #f8fafc);
+    --docsearch-key-shadow: inset 0 -2px 0 0 #cbd5e1, inset 0 0 1px 1px #fff, 0 1px 2px 1px rgba(15, 23, 42, 0.1);
+  }
+
+  html.dark {
+    --docsearch-text-color: #e2e8f0;
+    --docsearch-muted-color: #475569;
+    --docsearch-container-background: rgba(15, 23, 42, 0.8);
+    --docsearch-modal-background: #0f172a;
+    --docsearch-modal-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    --docsearch-searchbox-background: #1e293b;
+    --docsearch-searchbox-focus-background: #0f172a;
+    --docsearch-hit-color: #94a3b8;
+    --docsearch-hit-background: #1e293b;
+    --docsearch-footer-background: #1e293b;
+    --docsearch-key-gradient: linear-gradient(-26.5deg, #1e293b, #334155);
+    --docsearch-key-shadow: inset 0 -2px 0 0 #0f172a, inset 0 0 1px 1px #334155, 0 1px 2px 1px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Trigger button styled to match the existing sidebar search button */
+  #docsearch .DocSearch-Button {
+    background-color: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    height: auto;
+    margin: 0;
+    padding: 6px 12px 6px 10px;
+    width: 100%;
+  }
+
+  #docsearch .DocSearch-Button:hover,
+  #docsearch .DocSearch-Button:focus {
+    background-color: #fff;
+    border-color: #cbd5e1;
+    box-shadow: none;
+    color: #94a3b8;
+    outline: none;
+  }
+
+  html.dark #docsearch .DocSearch-Button {
+    background-color: #1e293b;
+    border-color: rgba(241, 245, 249, 0.1);
+    color: #94a3b8;
+  }
+
+  html.dark #docsearch .DocSearch-Button:hover,
+  html.dark #docsearch .DocSearch-Button:focus {
+    background-color: #334155;
+    border-color: #475569;
+  }
+
+  #docsearch .DocSearch-Button-Placeholder {
+    font-size: 0.875rem;
+    padding-right: 0;
+  }
+
+  #docsearch .DocSearch-Button .DocSearch-Search-Icon {
+    color: #94a3b8;
+    height: 1rem;
+    margin-right: 0.75rem;
+    width: 1rem;
+  }
+
+  #docsearch .DocSearch-Button-Keys {
+    margin-left: auto;
+    min-width: unset;
+    padding-left: 0.75rem;
+  }
+
+  #docsearch .DocSearch-Button-Key {
+    background: #f1f5f9;
+    border: none;
+    border-radius: 3px;
+    box-shadow: none;
+    color: #64748b;
+    font-size: 0.625rem;
+    font-weight: 600;
+    height: 18px;
+    line-height: 18px;
+    padding: 0 4px;
+  }
+
+  html.dark #docsearch .DocSearch-Button-Key {
+    background: #334155;
+    color: #94a3b8;
+  }
+</style>
+
+<script>
+  import docsearch from '@docsearch/js';
+  import { algoliaConfig } from 'src/config';
+
+  const options: any = {
+    container: '#docsearch',
+    ...algoliaConfig,
+    placeholder: 'Search docs...',
+    detachedMediaQuery: 'all',
+  };
+
+  if (import.meta.env.DEV) {
+    // Rewrite indexed prod URLs (https://fusionauth.io/...) to the local origin
+    // so search results stay on the dev server. Dev-only — stripped from prod build.
+    options.transformItems = (items: any[]) => items.map((item) => ({
+      ...item,
+      url: item.url.replace(/^https?:\/\/[^/]+/, window.location.origin),
+    }));
+  }
+
+  docsearch(options);
+
+  // Wire mobile/header search buttons to open the DocSearch modal
+  const wireButtons = () => {
+    document.querySelectorAll<HTMLElement>('[data-widget="search-button"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelector<HTMLButtonElement>('.DocSearch-Button')?.click();
+      });
+    });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireButtons);
+  } else {
+    wireButtons();
+  }
+</script>
