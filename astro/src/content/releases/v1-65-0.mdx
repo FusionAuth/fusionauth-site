@@ -2,24 +2,83 @@
 version: "1.65.0"
 name: "Tenant Manager SSO Tasmanian Mountain Skink"
 date: 2026-04-30
+description: "FusionAuth 1.65.0 adds self-service tenant SSO configuration, custom favicons for simple themes, voice MFA, a new way to test IdP configurations, and a variety of performance improvements."
+blogpost: "announcing-fusionauth-1-65"
 ---
 import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 
-<Item category="new-feature" >
-Introduced Tenant Manager SSO, which enables self-service SSO configuration for identity providers configured within tenant manager.
+<Item category="new-feature" issue="3189">
+Introduced self-service single-sign on (SSO) configuration from [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager). Now, tenant manager administrators can configure SSO for their tenant entirely within tenant manager.
+</Item>
+
+<Item category="new-feature" issue="3283">
+Added [custom favicons](/docs/customize/look-and-feel/simple-theme-editor#favicon) for hosted login pages using simple themes.
 </Item>
 
 <Item category="new-feature" issue="1303">
-Introduced a voice option for multi-factor authentication (MFA), allowing users to receive a code via audio instead of text.
+Introduced a voice option for [multi-factor authentication (MFA)](/docs/lifecycle/authenticate-users/multi-factor-authentication), allowing users to receive a code via audio instead of text.
 </Item>
 
-<Item category="fix" >
+<Item category="new-feature" issue="3446">
+Introduced a declarative way to reconcile identities across identity providers: [attribute mappings](/docs/lifecycle/authenticate-users/identity-providers/#attribute-mappings). You must use this alternative to reconcile lambdas to use self-service SSO in Tenant Manager.
+</Item>
+
+<Item category="new-feature" issue="3447">
+Created a new [API for testing identity provider configurations](/docs/apis/identity-providers/test), and a UI in [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager) that uses this API for visual testing. Use these tests to verify an identity provider configuration before enabling an identity provider.
+</Item>
+
+<Item category="enhancement" issue="3448">
+Added a [self-service option for applications](/docs/lifecycle/register-users/complete-registration) that allows users to complete an existing (but incomplete) registration, but does not allow entirely new users to create a new registration.
+</Item>
+
+<Item category="enhancement" issue="3449">
+Added the `auditLog.tenantId` field to the [Audit Logs API](/docs/apis/audit-logs), which provides the ability to filter audit logs by tenant using the API and in [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager).
+</Item>
+
+<Item category="enhancement" issue="3441">
+In the Admin UI, added a new **Help** section to the left-hand nav, containing links to a new **Get Started** section and the FusionAuth Documentation.
+</Item>
+
+<Item category="breaking-change" issue="3450">
+Made the linking strategy of an enabled identity provider immutable, to prevent users from inadvertently breaking an existing provider. To change the linking strategy for an enabled identity provider, disable the provider, make your change, then re-enable the provider.
+</Item>
+
+<Item category="fix" issue="3422">
 Improved the performance of `PATCH` and `PUT` calls to `/api/identity-provider` for deployments with thousands of tenants or applications.
+Additionally, this release of the Go and Java client libraries adds opt-in retry support with exponential backoff for these APIs.
 </Item>
 
-<Item category="enhancement" >
-Added opt-in retry support with exponential backoff to the Go and Java client libraries.
+<Item category="fix" since="1.63.0" issue="3386">
+Fixed a race condition where concurrent `PATCH` calls to `/api/identity-provider/{id}` could _all_ return status code `200`, but only one modification would persist. Now, only one call will succeed, and all others will return status code `409`.
+</Item>
+
+<Item category="fix" since="1.63.0" issue="3396">
+Fixed a broken link in Reactor that should have linked users to find their license key in their FusionAuth account.
+</Item>
+
+<Item category="fix" since="1.62.1" issue="3324">
+Fixed an issue where image URLs were obscured while viewing IdP configuration.
+</Item>
+
+<Item category="fix" since="1.62.1" issue="3327">
+Fixed an issue where `GET` requests to  `/api/jwt/issue` could produce a JWT for a user without firing the [JWT Populate lambda](/docs/extend/code/lambdas/jwt-populate), for users registered for one application, when requesting a token for an application for which the user is not registered.
+</Item>
+
+<Item category="fix" since="1.56.0" issue="3382">
+Fixed an issue where the Admin UI failed to display embedded maps.
+</Item>
+
+<Item category="fix" since="1.60.0" issue="3438">
+Fixed an issue where Reactor and license data could be lost when migrating to a new version of FusionAuth.
+</Item>
+
+<Item category="fix" since="1.64.1" issue="3442">
+Improved the performance and reliability of background jobs in multi-node clusters, reducing load by a factor of 3-9x.
+</Item>
+
+<Item category="fix">
+In the FusionAuth .NET Core Client, fixed [an issue](https://github.com/FusionAuth/fusionauth-netcore-client/issues/183) where `sendSetPasswordIdentityType()` incorrectly defaulted to `email` when omitted. The client now omits the type entirely from requests instead of using a default value.
 </Item>
 
 <Item category="internal" issue="3390">
@@ -27,17 +86,41 @@ Updated the following dependencies:
 
 Java:
 
-* `com.inversoft:inversoft-api-authentication` 0.32.1 -> 0.33.0
-* `com.inversoft:inversoft-scheduler` 0.3.0 -> 0.4.0
-* `com.inversoft:restify` 4.3.0 -> 4.4.0
-* `io.fusionauth:java-http` 1.4.0 -> 1.4.1
-* `org.apache.kafka:kafka-clients` 3.9.1 -> 3.9.2
-* `org.primeframework:prime-mvc` 5.9.0 -> 5.9.1
+- `com.inversoft:inversoft-api-authentication` `0.32.1` -> `0.33.0`
+- `com.inversoft:inversoft-scheduler` `0.3.0` -> `0.4.0`
+- `com.inversoft:restify` `4.3.0` -> `4.4.0`
+- `io.fusionauth:java-http` `1.4.0` -> `1.4.1`
+- `org.apache.kafka:kafka-clients` `3.9.1` -> `3.9.2`
+- `org.primeframework:prime-mvc` `5.9.0` -> `5.10.0`
 
 Javascript:
 
-* `brace-expansion` 1.1.12 -> 1.1.13
-* `lodash` 4.17.23 -> 4.18.1
+- `@ctrl/tinycolor` **removed** (was `4.2.0`)
+- `@floating-ui/core` **removed** (was `1.7.4`)
+- `@floating-ui/dom` **removed** (was `1.7.5`)
+- `@floating-ui/utils` **removed** (was `0.2.10`)
+- `@fusionauth/typescript-client` **removed** (was `1.62.0`)
+- `@lit-labs/ssr-dom-shim` **removed** (was `1.5.1`)
+- `@lit/react` **removed** (was `1.0.8`)
+- `@lit/reactive-element` **removed** (was `2.1.2`)
+- `@shoelace-style/animations` **removed** (was `1.2.0`)
+- `@shoelace-style/localize` **removed** (was `3.2.1`)
+- `@shoelace-style/shoelace` **removed** (was `2.20.1`)
+- `@types/react` **removed** (was `19.2.13`)
+- `@types/trusted-types` **removed** (was `2.0.7`)
+- `brace-expansion` `1.1.12` -> `1.1.13`
+- `composed-offset-position` **removed** (was `0.0.6`)
+- `csstype` **removed** (was `3.2.3`)
+- `lit` **removed** (was `3.3.2`)
+- `lit-element` **removed** (was `4.2.2`)
+- `lit-html` **removed** (was `3.3.2`)
+- `lodash` `4.17.23` -> `4.18.1`
+- `node-fetch` **removed** (was `2.7.0`)
+- `qr-creator` **removed** (was `1.0.0`)
+- `tr46` **removed** (was `0.0.3`)
+- `webidl-conversions` **removed** (was `3.0.1`)
+- `whatwg-url` **removed** (was `5.0.0`)
+
 </Item>
 
 

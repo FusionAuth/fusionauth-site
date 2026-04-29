@@ -1,7 +1,7 @@
 ---
 publish_date: 2026-04-30
 title: Announcing FusionAuth 1.65 - Tenant Manager SSO Tasmanian Mountain Skink
-description: "FusionAuth 1.65.0 empowers enterprise users with self-service SSO configuration, as territorial as a tasmanian mountain skink."
+description: "FusionAuth 1.65.0 emerges from brumation with self-service SSO configuration for tenants, custom favicons for simple themes, and a voice option for MFA accessibility."
 authors: Nathan Contino
 image: /img/blogs/release-1-65/fusionauth-1-65.png
 categories: Release Updates, Product
@@ -9,19 +9,119 @@ tags: release notes, bugfixes, tenant manager, sso,
 excerpt_separator: "{/* more */}"
 ---
 import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
 
-Welcome to FusionAuth `1.65.0`; the world may never be the same. This version includes Tenant Manager SSO, and more. As you might expect, we've also fixed a wide variety of bugs as part of our Spring cleaning.
+In the Northern Hemisphere, the world awakens with springtime splendor: the earth turns a vibrant emerald, daffodils burst into bloom, and FusionAuth marks the season with the release of version `1.65.0`.
 
-We're calling this release TMS<sup>TMS</sup>: the Tenant Manager SSO Tasmanian Mountain Skink, since this version enables self-service SSO configuration for enterprise users in a manner not unlike the territoriality of a [tasmanian mountain skink](https://nre.tas.gov.au/wildlife-management/fauna-of-tasmania/reptiles-and-frogs/tasmanian-lizards/mountain-skink): 
+Meanwhile in the Southern Hemisphere, summer is waning. But at least one species is hard at work, eating bugs to prepare for brumation (reptilian hibernation):
 
-![an image of a tasmanian mountain skink](/img/blogs/release-1-65/tms.jpg "the tms tms")
+the Tenant Manager SSO<sup>[Tasmanian Mountain Skink](https://nre.tas.gov.au/wildlife-management/fauna-of-tasmania/reptiles-and-frogs/tasmanian-lizards/mountain-skink)</sup> (TMS<sup>TMS</sup>)
 
-## Self-Service SSO for Enterprise Users
+![an image of a tasmanian mountain skink, the mascot of this release, dubbed tms^tms](/img/blogs/release-1-65/tms.jpg "the tms^tms")
 
+Unfortunately, we weren't able to ship the skink-like functionality of regrowing arms. But we did manage to improve the performance of multi-node clusters, which is basically the same thing.
 
+This version includes the ability for tenant administrators to configure SSO right from Tenant Manager, a new identity provider testing API, custom favicons for simple themes, a voice option for MFA for improved accessibility, a declarative way to reconcile user identities, a new limited option for self-service incomplete user registration, and the ability to filter logs by tenant. And just like the real tasmanian mountain skink, this release eats up plenty of bugs!
+
+## Self-Service SSO in Tenant Manager
+
+For the first time, tenant administrators can configure SSO entirely within [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager).
+
+First, ask your FusionAuth admin to enable Self-Service SSO in the FusionAuth Admin UI:
+
+![Complete Registration Settings](/img/docs/lifecycle/register-users/complete-registration-settings.png)
+
+From there, tenant administrators can configure, test, and enable SSO in Tenant Manager using the <Breadcrumb>Single Sign-On</Breadcrumb> page:
+
+![Edit identity provider](/img/docs/lifecycle/manage-users/tenant-manager/edit-idp.png)
+
+## Identity Provider Testing API
+
+To support self-service SSO in Tenant Manager, we created a whole new [API for testing identity provider configurations](/docs/apis/identity-providers/test), and a UI in Tenant Manager for visual testing. Tenant administrators can use these tests to verify an identity provider configuration before enabling an identity provider.
+
+To test an identity provider, open the <Breadcrumb>Single Sign-On</Breadcrumb> page, expand the action menu for an identity provider, and click <InlineUIElement>Test</InlineUIElement>.
+
+The connection test start page shows a summary of your configuration, including:
+
+* Identity provider name and type
+* Callback URL
+* For OpenID Connect: issuer, authorization URL, token URL, and userinfo URL
+* For SAML v2: SSO Login URL
+
+Click <InlineUIElement>Start Test</InlineUIElement> to begin the test.
+
+![Connection Test Start View](/img/docs/lifecycle/manage-users/tenant-manager/test-start.png)
+
+Complete the login flow using an identity provider, and you'll see the test success page:
+
+![Connection Test Completion View](/img/docs/lifecycle/manage-users/tenant-manager/test-completion.png)
+
+If your login flow works, you can click <InlineUIElement>Enable for production</InlineUIElement> to ship SSO to your users.
+
+If your login flow doesn't work, you'll see the test failure page, which provides logs and other information you can use to debug the problems with your configuration. Keep testing until your configuration works.
+
+## Custom Favicons for Simple Themes
+
+As we know, our users love customization. That's why we have now added an option to [upload your own favicon](/docs/customize/look-and-feel/simple-theme-editor#favicon) for hosted login pages using simple themes:
+
+![Theme image controls](/img/docs/customize/look-and-feel/simple-theme-editor/images.png)
+
+I'd say more, but that about explains it. I guess I can fill this extra space with a fun fact about tasmanian mountain skinks. Did you know that before brumation (the reptilian hibernation I mentioned before), lizards store both fat _and_ glycogen? That's one of the ways that brumation is distinct from hibernation, which is what mammals do: mammals don't store any glycogen for hibernation, just fat!
+
+Anyway, now that we've filled up this section, back to the exciting features:
+
+## Voice MFA
+
+Accessibility is for everyone. That's why we added a new voice option for [multi-factor authentication (MFA)](/docs/lifecycle/authenticate-users/multi-factor-authentication), allowing users to receive codes via audio instead of text.
+
+In the MFA settings for a tenant, find the <Breadcrumb>Phone</Breadcrumb> section. Enable the `Voice enabled` toggle to enable MFA audio codes!
+
+![Tenant Configuration - MFA Phone settings](/img/docs/get-started/core-concepts/tenant-configuration-mfa-phone-settings.png)
+
+Wow, that was another short one. OK, I guess I can fit another fun fact about tasmanian mountain skinks: it's also known as the _heath cool-skink_. Which, aside from sounding like a character from Wuthering Heights, is almost as cool as the species name, _orocryptum_, a portmanteau of the Greek words **oros** (mountain) and **kryptos** (hidden), because the tasmanian mountain skink lives in the mountains and proved pretty difficult to discover.
+
+Enough fun, let's talk about declarative configuration!
+
+## Declarative User Reconciliation
+
+Many of our users currently use reconcile lambdas like our [OIDC reconcile lambda](/docs/extend/code/lambdas/reconcile/openid-connect-response-reconcile) to reconcile user identities across identity providers. But it turns out we didn't need anything as powerful as a lambda to define reconciliation for self-service SSO in Tenant Manager.
+
+We just needed [attribute mappings](/docs/lifecycle/authenticate-users/identity-providers/#attribute-mappings).
+
+Attribute mappings allow you to map claims from an Identity Provider response directly to FusionAuth user and registration fields. They are a declarative alternative to reconciliation lambdas. You can configure these key-value pairs using the [Identity Provider API](/docs/apis/identity-providers/), the Identity Provider configuration page in the Admin UI, and [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager#attribute-mappings).
+
+Attribute mapping keys represent fields on a FusionAuth user or registration and must begin with `user.` or `registration.`. Some example keys are:
+
+* `user.email` - The user's email address. This could be used for linking the user according to the configuring linking strategy.
+* `registration.data.subscription` - Custom registration data with information on the user's subscription.
+
+During reconciliation, FusionAuth reads claim values using the attribute mapping values declared in the Identity Provider response. FusionAuth assigns the retrieved values to the corresponding key on the FusionAuth user or registration. All attribute mappings are optional; if FusionAuth cannot retrieve a claim value or set a key, it omits the mapping, but still continues reconciliation.
+
+## Self-Service Incomplete User Registration
+
+FusionAuth `1.65.0` introduces a new [self-service option for applications](/docs/lifecycle/register-users/complete-registration) that allows users to complete an existing (but incomplete) registration, but does not allow entirely new users to create a new registration. We call it **complete registration**.
+
+![Complete Registration](/img/docs/get-started/core-concepts/application-complete-registration-self-service-basic.png)
+
+When complete registration is enabled on an application, FusionAuth checks whether a registered user lacks any user or registration data required by the configured form. After authenticating, the user must supply that data before completing the hosted login flow.
+
+To enable complete registration for an application:
+
+1. Navigate to the <Breadcrumb>Applications</Breadcrumb> tab.
+1. <InlineUIElement>Edit</InlineUIElement> the application you want to configure.
+1. Navigate to the <Breadcrumb>Registration</Breadcrumb> tab.
+1. Scroll to the <InlineUIElement>Self-service registration</InlineUIElement> section.
+1. Set the <InlineUIElement>Registration mode</InlineUIElement> to <InlineField>Complete registration</InlineField>.
+1. Configure the [basic](/docs/lifecycle/register-users/basic-registration-forms) or [advanced](/docs/lifecycle/register-users/advanced-registration-forms) registration form.
+1. <InlineUIElement>Save</InlineUIElement> the application.
+
+## Filter Logs by Tenant
+
+Finally, we added the `auditLog.tenantId` field to the [Audit Logs API](/docs/apis/audit-logs). Now you can filter audit logs by tenant using the API and in [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager). This should make it that much easier to debug problems that only impact a single tenant.
 
 * * *
 
-We also fixed a large number of bugs: for a full list, take a look at changelog entries marked with the "fix" category in the [release notes](/docs/release-notes/#version-1-65-0).
+We also fixed a large number of bugs: for a full list, take a look at entries marked with the **fix** category in the [release notes](/docs/release-notes/#version-1-65-0).
 
-Thanks again for using FusionAuth! We still love you, even if many of you want to hide our name from your page titles.
+Thanks again for using FusionAuth! Don't forget to say "thank you" to any tasmanian mountain skinks you meet out there.
