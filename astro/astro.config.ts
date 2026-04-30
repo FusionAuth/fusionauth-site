@@ -1,4 +1,4 @@
-import {defineConfig} from 'astro/config';
+import {defineConfig, fontProviders} from 'astro/config';
 import compress from "astro-compress";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
@@ -75,6 +75,12 @@ const config = defineConfig({
   build: {
     format: 'file'
   },
+  fonts: [{
+    provider: fontProviders.fontsource(),
+    name: 'Inter',
+    cssVariable: '--font-inter-var',
+    weights: [300, 400, 500, 600, 700, 800, 900],
+  }],
   vite: {
     plugins: [tailwindcss(), lightboxProvider()],
   },
