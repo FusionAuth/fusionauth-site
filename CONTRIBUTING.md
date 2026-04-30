@@ -4,10 +4,10 @@
 
 Here are some guidelines to follow when writing documentation (everything under [docs](astro/src/content/docs)), articles (everything under [articles](astro/src/content/articles)), and blogs [blog](astro/src/content/blog):
 
-- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth. 
+- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth.
   For example, see the API Key APIs description for `apiKeyId`, where API Key is capitalized: `The unique Id of the API Key to create. If not specified a secure random UUID will be generated.`
 - If referring to something that exists as a domain object in FusionAuth, but you are not explicitly referring to an object being created/updated in FusionAuth, use lowercase. Here are some examples:
- `To allow users to log into and use your application, you’ll need to create an Application in FusionAuth.`
+  `To allow users to log into and use your application, you’ll need to create an Application in FusionAuth.`
 - From the Link API, note the difference between a FusionAuth User and a 3rd party user: `This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.`
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` or `id` when describing a unique identifier
@@ -32,6 +32,10 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
 - Single spaces should be used instead of double spaces after a period.
 - Headers should have the first letter of every word capitalized: `This Is The Header Text`. This is true for all headers (h1, h2, h3, h4). This is also known as [Start Case](https://en.wikipedia.org/wiki/Letter_case).
+- Use _emphasis_ only when you truly need extra emphasis on a specific term.
+- Use **bold** for new or key terms when paired with a definition or explanation.
+- Use monospace (backticks) for literal programmatic terms (functions, variables, properties, etc) and for values that may look numeric but are identifiers or encoded values (for example versions, booleans, and encoded strings).
+- Use quotes only when providing a text value for a field (typically editable text input).
 - When writing, you have access to Asides. Here's an [example blog post using an Aside](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/log4j-fusionauth.mdx). You can assign the following values to the type: `tip` for tips. `note` for things for the user to be aware of. `important` for things the user should pay attention to. `warn` for dangerous actions like deleting a tenant.
 - For links, don't use the absolute URL for the FusionAuth website (https://fusionauth.io), only relative URLs. This allows us to deploy to our local and staging environments and not get sent over to prod.
 - If you have a list element containing more than one paragraph, indent the second paragraph by the same amount as the start of the text in the first paragraph to make sure that it renders correctly.
@@ -105,9 +109,19 @@ To make a smoothie:
 ## Docs
 
 - Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
-- If you are referencing a field in a form or JSON API doc, use the [InlineField](astro/src/components/InlineField.astro) component: `<InlineField>Issuer</InlineField>`.
-- If you are referencing a UI element or button, use the [InlineUIElement](astro/src/components/InlineUIElement.astro) component: `Click the <InlineUIElement>Ok</InlineUIElement> button`.
-- If you are referencing a tab in the UI, use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component: `On the <Breadcrumb>OAuth</Breadcrumb> tab`.
+- Use the following to reference UI elements:
+    - **Field names (keys)**: Use **bold** for the **name or label of a field** in a form, JSON API doc, or parameter list. Use it for writable and read-only fields. Example: `Set the **Issuer** field.`
+    - **Field values (values)**: Use `monospace` (backticks) for a **value** entered into or returned from a field. Use it for literal, example, and enumerated values. Example: `Set **Relationship** to `Third-party`.`
+    - [Breadcrumb](astro/src/components/Breadcrumb.astro): A navigation path, tab, or interactive non-field UI element (button, link, menu item, icon button, etc.) or a display-only UI label that is not a field label, including section labels on a page. Example: `Navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb>`, `On the <Breadcrumb>OAuth</Breadcrumb> tab.`, or `Click <Breadcrumb>Submit</Breadcrumb>.`
+    - In summary, **bold** is for keys (labels) and `monospace` is for values. If it is unclear how to format something, ask "is it a key or a value?". If it matches neither, it could be a navigation element which would be handled with a `Breadcrumb`. If none of these fit, check this guideline. If the guideline does not provide results, the guideline needs to be updated.
+    - Use **bold** and `monospace` together when describing what value to enter into a field.
+    - Use `Breadcrumb` for navigation paths, tabs, other controls and section labels. Do not use `Breadcrumb` for field names.
+    - Use `Breadcrumb` for sequential UI operations (for example tabs, pages, sidebar entries, links, and menu actions that navigate to a new page), not just multi-level paths.
+    - Wrap only the UI label in the component. Keep descriptors such as "tab", "section", "button", "field", and punctuation outside the component unless they are part of the literal UI text. Example: `On the <Breadcrumb>OAuth</Breadcrumb> tab.` and `Open the <Breadcrumb>Single sign-on</Breadcrumb> section.`
+    - If the text is a code/config/document concept (for example, `variables` section in JSON, `providers` section in a file, or `docker-compose.yml` keys), use backticks, not UI components.
+    - Checkbox and toggle labels are UI controls; use `Breadcrumb` for them. Use **bold** for form field names/labels, and `monospace` for values.
+    - Use backticks for programmatic values such as versions, booleans, and encoded values. Use quotes only for literal text values entered into editable fields.
+    - In name/value bullet lists, prefer `**Field Name**:` followed by ``value`` (colon outside the bolded field name) unless the colon is part of the literal label text in the UI.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
 - Include fragments that are shared between different sections of the doc should be stored in the [shared](astro/src/content/docs/_shared) directory.
@@ -136,7 +150,7 @@ If it is inline (for a field), use <AvailableSince since="1.5.0"> - [AvailableSi
     <IconButton icon="fa-search" />
     ```
 
-    ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
+  ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
 
 Import the component:
 
@@ -160,7 +174,7 @@ Make descriptions full sentences. They must end in a period. Titles, on the othe
 
 If you want to order pages within a section, use `order`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
 
-Pages are ordered in the nav within a section in descending order. 
+Pages are ordered in the nav within a section in descending order.
 
 ```
 order: 0
@@ -214,7 +228,7 @@ If you want to sort a category to the top of its section, you need to add it to 
 - `Defaults` is always capitalized.
 - If a field is required, but only when another feature is enabled, mark it optional rather than required in the API. Then, add a note in the description saying when it is required, like so:
   ```
-  This field is required when <InlineField>theOtherField.enabled</InlineField> is set to true.
+  This field is required when **theOtherField.enabled** is set to true.
   ```
 - If a feature is only available when using a paid plan, use the [PremiumEditionBlurbApi](astro/src/content/docs/_shared/_premium-edition-blurb-api.astro) component `<PremiumEditionBlurbApi feature="custom forms" />` fragment for API fields, and [PremiumEditionBlurb](astro/src/content/docs/_shared/_premium-edition-blurb.astro) component for any other location where the feature is mentioned in docs. Only mark the request API fields.
 - If a feature is only available when using essentials, use the [AdvancedEditionBlurbApi](astro/src/content/docs/_shared/_advanced-edition-blurb-api.astro) component for API fields, and [AdvancedEditionBlurb](astro/src/content/docs/_shared/_advanced-edition-blurb.astro) for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
@@ -248,7 +262,7 @@ Example response(s)
 
 ## Articles
 
-Varies, but you'll always want to 
+Varies, but you'll always want to
 
 * Open a PR with changes. Tag someone to review it.
 * Merge using the GitHub interface or using a squash commit.
@@ -343,17 +357,21 @@ Prior to requesting review on a PR, please complete the following checklist.
 3. When adding or modifying request or response JSON examples, try to maintain themes and consistently.
    - If the create request has a property of `"name": "My application"`, the response should contain this same value.
    - Try and use real world names and values in example requests/responses. Using name such as `Payroll` for an Application name is more descriptive than `app 1` and allows the reader to more understand the example.
-4. When referencing a field in the description of another field use this syntax: `<InlineField>name</InlineField>`.
-5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.  
-6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.  
+4. When referencing a field in the description of another field use this syntax: `**name**`.
+5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.
+6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.
 
 #### Non API documentation
 1. Screenshots. Review color, dimensions and clarity. Review A/B to ensure layout has not changed, and the new screenshot is consistent with the previous one.
-   - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed. 
-   - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 
-2. If you are referring to a navigatable element, use `<Breadcrumb>Tenants</Breadcrumb>` or `<Breadcrumb>Tenants -> Your Tenant</Breadcrumb>`. In other words, use it even for singular elements.
-3. If you are referring to a field the user can fill out, use `<InlineField>Authorized Redirect URLs</InlineField>`.
-4. If you are referring to any other UI element, such as a submit button or read-only name, use `<InlineUIElement>Submit</InlineUIElement>` or (on the application view screen) `<InlineUIElement>Introspect endpoint</InlineUIElement>`.
+    - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed.
+    - The screenshot should not look fuzzy. If it does, the compression may be incorrect.
+2. If you are referring to navigation context, a path, or a tab, use `<Breadcrumb>Tenants</Breadcrumb>`, `<Breadcrumb>Tenants -> Your Tenant</Breadcrumb>`, or `On the <Breadcrumb>OAuth</Breadcrumb> tab`.
+3. If you are referring to a field name or field label (writable or read-only), use `**Authorized Redirect URLs**`.
+4. If you are specifying a field value (entered, returned, or enumerated), use ``https://example.com/callback``: `Set **Authorized Redirect URLs** to `https://example.com/callback`.`
+5. If you are referring to any other UI element (button, link, icon button, menu item, section label, or display-only non-field label), use `<Breadcrumb>Submit</Breadcrumb>` or (on the application view screen) `<Breadcrumb>Introspect endpoint</Breadcrumb>`.
+6. In summary, **bold** is for keys (labels) and `monospace` is for values. If it is unclear how to format something, ask "is it a key or a value?". If it matches neither, it could be a navigation element which would be handled with a `Breadcrumb`. If none of these fit, check this guideline. If the guideline does not provide results, the guideline needs to be updated.
+7. If a word like "tab" or "section" is explanatory and not part of the literal label, keep it outside the component: `Open the <Breadcrumb>Images</Breadcrumb> section.`
+8. If a reference is to code/config/docs structure (not the admin UI), keep it in backticks rather than wrapping it in a UI component.
 
 ## Quickstarts
 
@@ -380,9 +398,10 @@ Follow everything in the `Content Style Guidelines` section.
 - Images should be pulled in using markdown: `![alt text](/path/to/images)`
 - Images for a blog post should go under /astro/public/img/blogs/` in a directory related to the blog title.
 - We use Shiki for code formatting. Supported languages are listed here: https://shiki.style/languages
-- For site navigation, use Breadcrumb: Navigate to <Breadcrumb>Tenants</Breadcrumb> and then to the <Breadcrumb>Password</Breadcrumb> tab.
-- For field names, use double quotes: "Login Identifier Attribute".
-- For values, use back ticks: `userPrincipalName`.
+- For site navigation and sequential UI operations (tabs, pages, sidebar entries, links), use Breadcrumb: `Navigate to <Breadcrumb>Tenants -> Password</Breadcrumb>`.
+- For field names and labels (keys), use **bold**: `**Login Identifier Attribute**`.
+- For field values (values), use `monospace`: ``userPrincipalName``. Use quotes only when presenting a literal text value for an editable field.
+- In summary, **bold** is for keys (labels) and `monospace` is for values. If it is unclear how to format something, ask "is it a key or a value?". If it matches neither, it could be a navigation element which would be handled with a `Breadcrumb`. If none of these fit, check this guideline. If the guideline does not provide results, the guideline needs to be updated.
 - Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/config/contentcheck/known-blog-categories.txt). You can separate categories with commas.
 - Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter. You can [learn more about the logic by reviewing the layout](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/layouts/Blog.astro).
 - You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.

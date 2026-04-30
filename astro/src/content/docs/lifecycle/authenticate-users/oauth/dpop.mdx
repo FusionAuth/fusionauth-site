@@ -4,10 +4,7 @@ description: Learn how to enable sender-constrained OAuth tokens DPoP (Demonstra
 tags: dpop
 ---
 import Aside from 'src/components/Aside.astro';
-import Breadcrumb from 'src/components/Breadcrumb.astro';
 import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
-import InlineField from 'src/components/InlineField.astro';
-import InlineUIElement from 'src/components/InlineUIElement.astro';
 import TokenStorageOptionsTable from 'src/content/docs/_shared/_token-storage-options.mdx';
 
 <EnterprisePlanBlurb />
@@ -146,14 +143,14 @@ sequenceDiagram
 ### DPoP Token Issuance (Authorization Server)
 
 3. **Token Request**: After the user authenticates and authorizes the client, the client requests Tokens from the `/oauth2/token` endpoint, including a DPoP proof (Proof 1) signed with the private key in the `DPoP` header.
-4. **Verification (AS)**: FusionAuth extracts the DPoP proof and public key, verifies the signature, and ensures the claims (like <InlineField>htm</InlineField> and <InlineField>htu</InlineField>) are valid.
-5. **Binding (AS)**: FusionAuth then generates an Access Token bound to the SHA-256 thumbprint (<InlineField>jkt</InlineField>) of the public key.
-6. **Sender-Constrained Issuance (AS)**: FusionAuth issues the Tokens with a <InlineField>token_type</InlineField> of `DPoP`, ensuring they are constrained to the client's key.
+4. **Verification (AS)**: FusionAuth extracts the DPoP proof and public key, verifies the signature, and ensures the claims (like **htm** and **htu**) are valid.
+5. **Binding (AS)**: FusionAuth then generates an Access Token bound to the SHA-256 thumbprint (**jkt**) of the public key.
+6. **Sender-Constrained Issuance (AS)**: FusionAuth issues the Tokens with a **token_type** of `DPoP`, ensuring they are constrained to the client's key.
 
 ### Access Protected Resource (Resource Server)
 
-7. **API Request (Client)**: For every API call, the client generates a *new* DPoP proof (Proof 2) specific to the request (matching HTTP method <InlineField>htm</InlineField> and URI <InlineField>htu</InlineField>) and includes the Access Token hash (<InlineField>ath</InlineField>).
-8. **Verification (RS)**: Your API (Resource Server) verifies the Access Token, validates the DPoP proof signature, and ensures the proof's key matches the <InlineField>cnf.jkt</InlineField> binding in the Token.
+7. **API Request (Client)**: For every API call, the client generates a *new* DPoP proof (Proof 2) specific to the request (matching HTTP method **htm** and URI **htu**) and includes the Access Token hash (**ath**).
+8. **Verification (RS)**: Your API (Resource Server) verifies the Access Token, validates the DPoP proof signature, and ensures the proof's key matches the **cnf.jkt** binding in the Token.
 9. **Response (RS)**: Your API responds with the requested resource. Subsequent requests (e.g., Proof 3) follow the same pattern.
 
 ### DPoP Token Refresh (Authorization Server)
@@ -177,27 +174,27 @@ Implementing DPoP on the client side requires careful management of the cryptogr
 
 ### DPoP Proof Composition
 
-A DPoP proof is a JWT sent in the <InlineField>DPoP</InlineField> HTTP header. According to [RFC 9449 § 4.2](https://datatracker.ietf.org/doc/html/rfc9449#section-4.2), it must contain:
+A DPoP proof is a JWT sent in the **DPoP** HTTP header. According to [RFC 9449 § 4.2](https://datatracker.ietf.org/doc/html/rfc9449#section-4.2), it must contain:
 
 **JOSE Header:**
-* <InlineField>typ</InlineField>: MUST be `dpop+jwt`.
-* <InlineField>alg</InlineField>: An asymmetric signature algorithm (e.g., `ES256`). FusionAuth accepts the following algorithms: Ed448, Ed25519, RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, and PS512.
-* <InlineField>jwk</InlineField>: The public key corresponding to the private key used to sign the proof.
+* **typ**: MUST be `dpop+jwt`.
+* **alg**: An asymmetric signature algorithm (e.g., `ES256`). FusionAuth accepts the following algorithms: Ed448, Ed25519, RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, and PS512.
+* **jwk**: The public key corresponding to the private key used to sign the proof.
 
 **Payload Claims:**
-* <InlineField>jti</InlineField>: A unique identifier for the proof (UUID v4 is recommended) to prevent replay.
-* <InlineField>htm</InlineField>: The HTTP method of the request (e.g., `GET`, `POST`).
-* <InlineField>htu</InlineField>: The HTTP target URI of the request, without query or fragment parameters.
-* <InlineField>iat</InlineField>: The time the proof was created. FusionAuth allows a lifetime of 10 seconds and a window of +/- 15 seconds to account for clock skew.
-* <InlineField>ath</InlineField>: The base64url-encoded SHA-256 hash of the Access Token (required when presenting an Access Token to an RS).
+* **jti**: A unique identifier for the proof (UUID v4 is recommended) to prevent replay.
+* **htm**: The HTTP method of the request (e.g., `GET`, `POST`).
+* **htu**: The HTTP target URI of the request, without query or fragment parameters.
+* **iat**: The time the proof was created. FusionAuth allows a lifetime of 10 seconds and a window of +/- 15 seconds to account for clock skew.
+* **ath**: The base64url-encoded SHA-256 hash of the Access Token (required when presenting an Access Token to an RS).
 
 ### Nonce Handling
 
-If your Resource Server requires a nonce for temporal replay protection, they will respond with a `401` or `400` error and a <InlineField>WWW-Authenticate</InlineField> header containing a <InlineField>DPoP-Nonce</InlineField>.
+If your Resource Server requires a nonce for temporal replay protection, they will respond with a `401` or `400` error and a **WWW-Authenticate** header containing a **DPoP-Nonce**.
 
 The client MUST then:
-1. Extract the nonce from the <InlineField>DPoP-Nonce</InlineField> header.
-2. Include this in the <InlineField>nonce</InlineField> claim of a new DPoP proof.
+1. Extract the nonce from the **DPoP-Nonce** header.
+2. Include this in the **nonce** claim of a new DPoP proof.
 3. Retry the request.
 
 <Aside type="note">
@@ -208,32 +205,32 @@ FusionAuth currently does not require nonce handling, but your APIs may require 
 
 Your API (Resource Server) MUST perform the following steps to validate a DPoP-protected request as outlined in [RFC 9449 § 4.3](https://datatracker.ietf.org/doc/html/rfc9449#section-4.3):
 
-1. **Verify Headers**: Ensure the <InlineField>Authorization</InlineField> header uses the `DPoP` scheme and the <InlineField>DPoP</InlineField> header is present and is a valid JWT.
-2. **Strict Type Check**: Verify that the DPoP proof's JOSE header has `<InlineField>typ</InlineField>: "dpop+jwt"`.
-3. **Signature Verification**: Verify the proof's signature using the public key provided in the <InlineField>jwk</InlineField> header of the proof itself.
+1. **Verify Headers**: Ensure the **Authorization** header uses the `DPoP` scheme and the **DPoP** header is present and is a valid JWT.
+2. **Strict Type Check**: Verify that the DPoP proof's JOSE header has `**typ**: "dpop+jwt"`.
+3. **Signature Verification**: Verify the proof's signature using the public key provided in the **jwk** header of the proof itself.
 4. **Claims Validation**:
-    * <InlineField>htm</InlineField>: Matches the request's HTTP method.
-    * <InlineField>htu</InlineField>: Matches the request's absolute URI (normalization is recommended).
-    * <InlineField>iat</InlineField>: Within an acceptable window (e.g., +/- 15 seconds) to account for clock skew.
-    * <InlineField>jti</InlineField>: Has not been seen before (replay protection).
-5. **Access Token Hash (`ath`)**: Verify that the <InlineField>ath</InlineField> claim in the proof matches the SHA-256 hash of the Access Token provided in the <InlineField>Authorization</InlineField> header.
+    * **htm**: Matches the request's HTTP method.
+    * **htu**: Matches the request's absolute URI (normalization is recommended).
+    * **iat**: Within an acceptable window (e.g., +/- 15 seconds) to account for clock skew.
+    * **jti**: Has not been seen before (replay protection).
+5. **Access Token Hash (`ath`)**: Verify that the **ath** claim in the proof matches the SHA-256 hash of the Access Token provided in the **Authorization** header.
 6. **Token Binding Check**:
-    * Extract the <InlineField>cnf.jkt</InlineField> claim from the Access Token.
-    * Calculate the SHA-256 thumbprint of the <InlineField>jwk</InlineField> from the DPoP proof.
+    * Extract the **cnf.jkt** claim from the Access Token.
+    * Calculate the SHA-256 thumbprint of the **jwk** from the DPoP proof.
     * **MUST** ensure they are identical.
 
 ## FusionAuth Configuration
 
-There is no configuration required to enable DPoP in FusionAuth. FusionAuth responds to Token requests with a <InlineField>DPoP</InlineField> header containing a DPoP proof as long as the requesting client initializes the DPoP flow.
+There is no configuration required to enable DPoP in FusionAuth. FusionAuth responds to Token requests with a **DPoP** header containing a DPoP proof as long as the requesting client initializes the DPoP flow.
 
 ## Troubleshooting
 
 | Error | Cause | Resolution |
 | :--- | :--- | :--- |
 | `invalid_dpop_proof` | The DPoP proof is malformed, has an invalid signature, or missing claims. | Verify the client is correctly signing the JWT and including all required claims (§4.2). |
-| `use_dpop_nonce` | The server requires a fresh nonce. | Extract the <InlineField>DPoP-Nonce</InlineField> from the response and retry the request with the <InlineField>nonce</InlineField> claim. |
-| Thumbprint Mismatch | The <InlineField>jkt</InlineField> in the Access Token does not match the key in the DPoP proof. | Ensure the client is using the same key pair for the API request as it did for the Token request. |
-| <InlineField>ath</InlineField> Mismatch | The hash of the Access Token in the proof is incorrect. | Verify the <InlineField>ath</InlineField> calculation: `base64url(sha256(Access Token))`. |
+| `use_dpop_nonce` | The server requires a fresh nonce. | Extract the **DPoP-Nonce** from the response and retry the request with the **nonce** claim. |
+| Thumbprint Mismatch | The **jkt** in the Access Token does not match the key in the DPoP proof. | Ensure the client is using the same key pair for the API request as it did for the Token request. |
+| **ath** Mismatch | The hash of the Access Token in the proof is incorrect. | Verify the **ath** calculation: `base64url(sha256(Access Token))`. |
 
 ### Storage Options
 
