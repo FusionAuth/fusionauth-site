@@ -20,7 +20,7 @@ class CopyToClipboard {
       wrapper.appendChild(pre);
 
       const copyButton = document.createElement('button');
-      copyButton.className = 'absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 text-sm rounded hover:bg-indigo-700 text-white leading-none';
+      copyButton.className = 'absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 text-sm rounded hover:bg-indigo-700 text-white/50 leading-none';
       copyButton.dataset.copySource = code.id;
       copyButton.title = 'Copy contents';
 
