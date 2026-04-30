@@ -1,0 +1,90 @@
+---
+import Layout from '../../layouts/Default.astro';
+import { getCollection } from 'astro:content';
+import GlossaryNav from "src/components/nav/GlossaryNav.astro";
+import GlossaryCard from "src/components/glossary/GlossaryCard.astro";
+
+const frontmatter = {
+  title: "Glossary",
+  description: "A list of terms and definitions used in FusionAuth."
+};
+
+const terms = (await getCollection('glossary'))
+  .map((term) => ({
+    ...term,
+    normalizedId: term.id.replace(/[^a-zA-Z0-9]/g, '').toLocaleLowerCase()
+  }))
+  .sort((a, b) => a.normalizedId.localeCompare(b.normalizedId));
+
+const categories = [...new Set(Object.values(terms).flatMap(term => term.data.categories))]
+  .sort((a, b) => a.localeCompare(b));
+
+const groupedGlossary = Object.groupBy(terms, term => term.normalizedId.toLocaleUpperCase().charAt(0));
+---
+
+<Layout {frontmatter} disableTOC={true} noBreadcrumb={false}>
+  <GlossaryNav noSideNav={true} slot="nav" darkModeToggle={true} />
+
+  <aside slot="sideNav" class="flex flex-col gap-4 pt-2 pr-2">
+      <label>
+          <select id="category-filter" class="flex items-center pl-2 pr-3 py-1.5 border border-slate-900/10 rounded-md shadow-sm text-slate-400 text-sm w-full dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700 dark:hover:border-slate-500 hover:border-slate-300">
+              <option value="">All Categories</option>
+              {categories.map(category => (
+                  <option value={category}>{category}</option>
+              ))}
+          </select>
+      </label>
+
+      <div class="flex flex-col gap-2">
+        <span class="text-sm text-gray-500 dark:text-gray-400">Jump to</span>
+
+        <div  class="grid grid-cols-6 gap-2" data-widget="scroll-spy">
+          {Object.keys(groupedGlossary).map(key => (
+            <div class="group glossary-letter" data-letter={key} data-widget="scroll-spy-item">
+              <a href={`#glossary-${key}`} class="bg-slate-100 rounded-md flex group items-center justify-center aspect-square dark:bg-slate-700 group-[.active]:bg-indigo-600 group-[.active]:text-white">{key}</a>
+            </div>
+          ))}
+        </div>
+      </div>
+  </aside>
+
+  {Object.entries(groupedGlossary).map(([key, terms]) => (
+    <section class="glossary-section hidden has-[.visible]:block" data-letter={key}>
+      <h2 id={'glossary-' + key}>{key}</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2">
+        {terms.map((term) => (
+          <GlossaryCard {term} />
+        ))}
+      </div>
+    </section>
+  ))}
+</Layout>
+
+<script>
+  const filter = document.getElementById('category-filter') as HTMLSelectElement;
+  const glossaryLetters = document.querySelectorAll('.glossary-letter');
+  const glossaryItems = document.querySelectorAll('.glossary-section article');
+
+  const filterChange = (selectedCategory: string) => {
+    glossaryItems.forEach((item: HTMLElement) => {
+      const visible = !selectedCategory ||  item.dataset['categories']?.split(',').includes(selectedCategory);
+
+      item.classList.toggle('visible', visible)
+      item.classList.toggle('hidden', !visible)
+    });
+
+    glossaryLetters.forEach((letter: HTMLElement) => {
+      letter.classList.toggle('opacity-50',
+      !document.querySelectorAll('.glossary-section[data-letter="' + letter.dataset['letter'] + '"]:has(.visible)').length);
+    });
+
+    window['ScrollSpy']?.reloadHeaders();
+  }
+
+  filter.addEventListener('change', () => {
+    filterChange(filter.value);
+  });
+
+  filterChange(filter.value);
+</script>

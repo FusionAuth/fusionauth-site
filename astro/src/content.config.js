@@ -1,5 +1,6 @@
-import { defineCollection, z } from 'astro:content';
-import { glob } from 'astro/loaders';
+import { defineCollection } from 'astro:content';
+import {file, glob} from 'astro/loaders';
+import { z } from 'astro/zod';
 
 const releasesCollection = defineCollection({
   loader: glob({
@@ -100,10 +101,22 @@ const jsonCollection = defineCollection({
   })
 })
 
+const glossaryCollection = defineCollection({
+  loader: file('src/data/glossary.json'),
+  schema: z.object({
+    definition: z.string(),
+    link: z.string().optional(),
+    categories: z.array(z.string()).optional(),
+    aliases: z.array(z.string()).optional(),
+    abbreviations: z.array(z.string()).optional(),
+  })
+})
+
 export const collections = {
   'docs': docsCollection,
   'articles': articlesCollection,
   'releases': releasesCollection,
   'json': jsonCollection,
-  'blog': blogCollection
+  'blog': blogCollection,
+  'glossary': glossaryCollection
 };

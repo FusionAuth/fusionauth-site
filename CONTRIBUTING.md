@@ -4,10 +4,10 @@
 
 Here are some guidelines to follow when writing documentation (everything under [docs](astro/src/content/docs)), articles (everything under [articles](astro/src/content/articles)), and blogs [blog](astro/src/content/blog):
 
-- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth. 
+- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth.
   For example, see the API Key APIs description for `apiKeyId`, where API Key is capitalized: `The unique Id of the API Key to create. If not specified a secure random UUID will be generated.`
 - If referring to something that exists as a domain object in FusionAuth, but you are not explicitly referring to an object being created/updated in FusionAuth, use lowercase. Here are some examples:
- `To allow users to log into and use your application, you’ll need to create an Application in FusionAuth.`
+  `To allow users to log into and use your application, you’ll need to create an Application in FusionAuth.`
 - From the Link API, note the difference between a FusionAuth User and a 3rd party user: `This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.`
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` or `id` when describing a unique identifier
@@ -63,44 +63,19 @@ To make a smoothie:
 4. Put blueberries in a blender.
 5. Run the blender for 30 seconds.
 
-## Proper names and other verbiage
+### Glossary Terms
 
-- .NET Core
-- air-gapped (not airgapped or air gapped)
-- Azure AD
-- CAPTCHA
-- client-side
-- Connector
-- curl
-- Docker
-- Docker Compose
-- e-commerce
-- ECMAScript
-- Elasticsearch
-- esport
-- first-party
-- fine-grained authorization
-- FusionAuth Cloud
-- Google reCAPTCHA
-- Identity Provider
-- IdP
-- Kickstart
-- macOS
-- multi-factor authentication
-- multi-tenancy/multi-tenant
-- Node.js
-- OAuth and OAuth2
-- one-time password
-- private-labeled (an adjective)
-- re-authentication
-- self-service
-- server-side (an adjective)
-- Spring Boot
-- third-party
-- two-factor
-- WebAuthn
-- webview
-- X.509
+All documentation should use the shared glossary system for technical and business terms (such as “Default Tenant”, “User”, “Role”, “RS256”, "rfc6749" etc.).
+- To add or edit a glossary term, update the JSON file at `astro/src/data/glossary.json`. Each entry should include a `"definition"` field and a `"categories"` array (strings), and may include optional `"link"` (internal or external), `"aliases"`, or `"abbreviations"` arrays (strings).
+- Terms must be written in full (e.g., "JSON Web Token" instead of "JWT" or "JWT (JSON Web Token)").
+- Abbreviations should be added to the `abbreviations` field.
+- Terms can belong to multiple categories; they will appear under each category on the glossary page.
+- To reference a glossary term inline within documentation, use the `GlossaryTerm` component (available in `.astro` and `.mdx` files). It supports three ways of being used:
+    - **preferred** Using the child content as the term: `<GlossaryTerm>User</GlossaryTerm>`
+    - Specifying a different lookup term: `<GlossaryTerm term="Default Tenant">Default Tenant Id</GlossaryTerm>` (useful when the displayed text is different from the glossary entry). 
+    - As a self-closing tag: `<GlossaryTerm term="User" />`
+- If the term has a link in the glossary, it will be rendered as a clickable link. If not, only the definition is shown via tooltip on hover.
+- The glossary system supports external links (rendered with an external-link icon), internal doc links, or no link.
 
 ## Docs
 
@@ -128,7 +103,7 @@ If it is inline (for a field), use <AvailableSince since="1.5.0"> - [AvailableSi
 - If you are removing a field, use <RemovedSince since="1.5.0"> - [RemovedSince](astro/src/components/api/RemovedSince.astro)
 
 - The table of contents along the right side is populated by a list of headings extracted from the top level markdown. If you are using nested markdown files with your headings you need to export them into the parent MDX file.
-  - See [Account Portal](astro/src/content/docs/get-started/download-and-install/reference/account-portal.mdx) for an example. See the Astro docs for [exported variables](https://docs.astro.build/en/guides/markdown-content/#using-exported-variables-in-mdx) and [exported properties](https://docs.astro.build/en/guides/markdown-content/#exported-properties) to see what that is doing.
+    - See [Account Portal](astro/src/content/docs/get-started/download-and-install/reference/account-portal.mdx) for an example. See the Astro docs for [exported variables](https://docs.astro.build/en/guides/markdown-content/#using-exported-variables-in-mdx) and [exported properties](https://docs.astro.build/en/guides/markdown-content/#exported-properties) to see what that is doing.
 - We currently use [FontAwesome v6](https://fontawesome.com/) to render icons, so you can use them to refer to UI buttons, like this:
     ```jsx
     <IconButton icon="edit" />
@@ -136,7 +111,7 @@ If it is inline (for a field), use <AvailableSince since="1.5.0"> - [AvailableSi
     <IconButton icon="fa-search" />
     ```
 
-    ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
+  ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
 
 Import the component:
 
@@ -160,7 +135,7 @@ Make descriptions full sentences. They must end in a period. Titles, on the othe
 
 If you want to order pages within a section, use `order`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
 
-Pages are ordered in the nav within a section in descending order. 
+Pages are ordered in the nav within a section in descending order.
 
 ```
 order: 0
@@ -178,32 +153,32 @@ If you want to sort a category to the top of its section, you need to add it to 
   <AccountPortalCore/>
   ```
 - You can pass `props` to both astro components and mdx components.
-  - For astro components this looks like:
-    ```typescript
-    ---
-    const { feature } = Astro.props;
-    ---
-    { feature && <><strong>Note:</strong> An Enterprise plan is required to utilize {feature}. </>}
-    ```
-  - For mdx it looks like:
-    ```mdxjs
-    ---
-    ---
-    # Getting Help
-    You can find help for {props.topic} at [help](/help)
-    ```
-  - In MDX files you can put some content behind a javascript expression
-    ```mdxjs
-    ---
-    ---
-    {props.showStuff && <>
-      This is some more content <a href="/home">Home</a>
-    </>}
-    ```
-  - You may need to add a empty tag multi-line content after the expression to indicate that this is a block
-  - Markdown syntax will not render inside of a block inside of an expression. You must use html there.
-  - Content passed in the `<slot></slot>` of a component will be passed as rendered markdown.
-  - you may need to coerce a prop into a boolean to use as a conditional for an expression. Such as `{!!props.message && <span>{props.message}</span>}`;
+    - For astro components this looks like:
+      ```typescript
+      ---
+      const { feature } = Astro.props;
+      ---
+      { feature && <><strong>Note:</strong> An Enterprise plan is required to utilize {feature}. </>}
+      ```
+    - For mdx it looks like:
+      ```mdxjs
+      ---
+      ---
+      # Getting Help
+      You can find help for {props.topic} at [help](/help)
+      ```
+    - In MDX files you can put some content behind a javascript expression
+      ```mdxjs
+      ---
+      ---
+      {props.showStuff && <>
+        This is some more content <a href="/home">Home</a>
+      </>}
+      ```
+    - You may need to add a empty tag multi-line content after the expression to indicate that this is a block
+    - Markdown syntax will not render inside of a block inside of an expression. You must use html there.
+    - Content passed in the `<slot></slot>` of a component will be passed as rendered markdown.
+    - you may need to coerce a prop into a boolean to use as a conditional for an expression. Such as `{!!props.message && <span>{props.message}</span>}`;
 - JSON files are their own content collection in astro. You can reference these using the [JSON component](astro/src/components/JSON.astro)
 - We have an alias mapped in [tsconfig](astro/tsconfig.json) that allows you to use absolute references from 'src'. Otherwise, imports must use relative paths.
 - All docs that use non-trivial code examples should have a github repo with an example app. See (Adding an example app)[#adding-an-example-app] for more.
@@ -248,7 +223,7 @@ Example response(s)
 
 ## Articles
 
-Varies, but you'll always want to 
+Varies, but you'll always want to
 
 * Open a PR with changes. Tag someone to review it.
 * Merge using the GitHub interface or using a squash commit.
@@ -264,17 +239,17 @@ Publishing happens whenever a commit or PR is merged to `main`.
 - Make sure you set your `fusionauth-app.runtime-mode` to `production` unless documenting a feature only available in `development` mode.
 - Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
 - After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
-   - If you only want a portion of the screen, crop it. See Application Core Concepts for an example.
+    - If you only want a portion of the screen, crop it. See Application Core Concepts for an example.
 - Crop top/bottom if necessary (don't crop sides).
-   - If you crop the bottom or top, use the `bottom-cropped` or `top-cropped` class on the image. In some cases the
-     class may not be necessary if there is adequate spacing below. When text continues below or right above you will need
-     the class.
+    - If you crop the bottom or top, use the `bottom-cropped` or `top-cropped` class on the image. In some cases the
+      class may not be necessary if there is adequate spacing below. When text continues below or right above you will need
+      the class.
 - If you crop the image, don't use the `shadowed` role. And vice versa.
 - Highlight sections using image preview editor
-  - Highlights should be red rectangle with line weight 5
+    - Highlights should be red rectangle with line weight 5
 - To size and compress images without losing too much quality, follow these steps:
-  1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
-  2. Crop the image vertically to only display the necessary content.
+    1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
+    2. Crop the image vertically to only display the necessary content.
 - Use https://local.fusionauth.io and use the correct kickstart to add the Silicon Valley characters ( https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/development/kickstart.json )
 - Make sure that the same character is used for every screenshot on a page (unless you are demonstrating a view from the admin and also user perspective)
 - The shrink-images GitHub Action will call https://tinypng.com/ to compress the images that you commit.
@@ -341,16 +316,16 @@ Prior to requesting review on a PR, please complete the following checklist.
 1. If you added or changed an API parameter, ensure you added a version flag.
 2. When APIs have default values, this is only documented on the request. Do not add it to the response.
 3. When adding or modifying request or response JSON examples, try to maintain themes and consistently.
-   - If the create request has a property of `"name": "My application"`, the response should contain this same value.
-   - Try and use real world names and values in example requests/responses. Using name such as `Payroll` for an Application name is more descriptive than `app 1` and allows the reader to more understand the example.
+    - If the create request has a property of `"name": "My application"`, the response should contain this same value.
+    - Try and use real world names and values in example requests/responses. Using name such as `Payroll` for an Application name is more descriptive than `app 1` and allows the reader to more understand the example.
 4. When referencing a field in the description of another field use this syntax: `<InlineField>name</InlineField>`.
-5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.  
-6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.  
+5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.
+6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.
 
 #### Non API documentation
 1. Screenshots. Review color, dimensions and clarity. Review A/B to ensure layout has not changed, and the new screenshot is consistent with the previous one.
-   - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed. 
-   - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 
+    - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed.
+    - The screenshot should not look fuzzy. If it does, the compression may be incorrect.
 2. If you are referring to a navigatable element, use `<Breadcrumb>Tenants</Breadcrumb>` or `<Breadcrumb>Tenants -> Your Tenant</Breadcrumb>`. In other words, use it even for singular elements.
 3. If you are referring to a field the user can fill out, use `<InlineField>Authorized Redirect URLs</InlineField>`.
 4. If you are referring to any other UI element, such as a submit button or read-only name, use `<InlineUIElement>Submit</InlineUIElement>` or (on the application view screen) `<InlineUIElement>Introspect endpoint</InlineUIElement>`.
