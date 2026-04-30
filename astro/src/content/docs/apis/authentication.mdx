@@ -22,6 +22,7 @@ The FusionAuth APIs are primarily secured using API keys. A few APIs may use alt
 Each API endpoint is marked with an icon describing supported authentication methods:
 
 * <APIAuthenticationIcon classList={["mr-1"]} type="api-key"/> [API Key Authentication](#api-key-authentication)
+* <APIAuthenticationIcon classList={["mr-1"]} type="global-api-key"/> [Global API Key Authentication](#global-api-key-authentication)
 * <APIAuthenticationIcon classList={["mr-1"]} type="basic"/> [Basic Authentication using an API Key](#basic-authentication-using-an-api-key)
 * <APIAuthenticationIcon classList={["mr-1"]} type="client-credentials"/> [Client Credentials](#client-credentials)
 * <APIAuthenticationIcon classList={["mr-1"]} type="jwt"/> [JWT Authentication](#jwt-authentication)
@@ -34,7 +35,7 @@ Below you will find a detailed explanation of each type of authentication used i
 
 ## API Key Authentication
 
-When an API is marked with a red locked icon such as <APIAuthenticationIcon classList={["px-1"]} type="api-key"/> it means you are required to provide an API key.
+When an API is marked with a yellow lock icon such as <APIAuthenticationIcon classList={["px-1"]} type="api-key"/> it means you can use any type of API Key (global or tenant-scoped).
 
 To enable access to a secured API, create one or more API keys. The API key is then supplied in the HTTP request using the Authorization header. See [Managing API Keys](#managing-api-keys) for more information on adding additional keys.
 
@@ -51,15 +52,26 @@ curl -H 'Authorization: 7DUrRlA75b5LBRARYoTmScCTk6G6U1nG8R9mr7MGnvzA7AMxEXAMPLE'
      'https://local.fusionauth.io/api/user?email=richard@piedpiper.com'
 ```
 
+See the [API Endpoints reference](/docs/reference/api-endpoints) for a complete list of endpoints that use this authentication type.
+
 Here's a brief video covering some aspects of API keys:
 
 <YouTube id="eJWRKjd4DV4"></YouTube>
 
+## Global API Key Authentication
+
+<Aside type="version">
+This authentication method has been available since `1.65.0`
+</Aside>
+
+When an API is marked with a red lock icon such as <APIAuthenticationIcon classList={["px-1"]} type="global-api-key"/>, use a global API key. Attempts with a tenant-scoped API key fail.
+
+In addition if an `X-FusionAuth-TenantId` header is provided to this endpoint, the request will fail with a `401`.
 
 ## Basic Authentication using an API Key
 
 <Aside type="version">
-This authentication method has been available since 1.27.0
+This authentication method has been available since `1.27.0`
 </Aside>
 
 When an API endpoint is marked with a shield such as <APIAuthenticationIcon classList={["px-1"]} type="basic"/> it means you call this API and authenticate using HTTP basic authentication. HTTP basic authentication is a simple, standards based, authentication method. A username and password are supplied, separated by a `:`. It must be prefaced by the string `Basic` and a space. The `username:password` string is base64 encoded.
@@ -140,7 +152,7 @@ curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0
 ```
 
 <Aside type="version">
-  DPoP bound JWTs have been available since 1.63.0
+  DPoP bound JWTs have been available since `1.63.0`
 </Aside>
 
 <EnterprisePlanBlurb />
@@ -183,7 +195,7 @@ When you create an API key, the key value is defaulted to a secure random value.
 
 ### Managing API Keys via the API
 
-Prior to version `1.26.0`, the FusionAuth administrative user interface was the only way to create API keys. This functionality was not available through an API. Starting from version 1.26.0, API keys may be created using an API. Please refer to the [API Key API](/docs/apis/api-keys) for more information.
+Prior to version `1.26.0`, the FusionAuth administrative user interface was the only way to create API keys. This functionality was not available through an API. Starting from version `1.26.0`, API keys may be created using an API. Please refer to the [API Key API](/docs/apis/api-keys) for more information.
 
 ### Create an API Key
 
@@ -216,7 +228,9 @@ Prior to version `1.26.0`, the FusionAuth administrative user interface was the 
   <APIField name="Tenant">
     The optional tenant to which this API key will be assigned. This value cannot be changed once the API key is created.
 
-    When you assign an API key to a tenant, any requests made with this key will only be able to operate on users, applications, groups, and other entities in the selected tenant.
+    Once a tenant is assigned to an API Key it will no longer be considered global and the set of endpoints it can call will be limited.
+
+    See the [API Endpoints reference](/docs/reference/api-endpoints) for a complete list of endpoints that use this authentication type.
 
     <APIKeyCrossTenantNote />
   </APIField>
@@ -253,7 +267,7 @@ Each permission corresponds to an endpoint and an HTTP method.
 API keys are limited to the allowed endpoints and HTTP methods.
 
 <Aside type="caution">
-If you do not grant any endpoint permissions to an API key, the key has access to *all endpoints* and is essentially a 'super user' key.
+If you do not grant any endpoint permissions to an API key, the key has access to *all endpoints* and is essentially a 'super user' key. However, if you associate a tenant with a key, this is not the case. Tenant-scoped keys are, by default, only granted a subset of permissions.
 </Aside>
 
 These permissions are managed via the [API Key API](/docs/apis/api-keys) or in the administrative user interface under the <InlineUIElement>Endpoints</InlineUIElement> section.
@@ -269,7 +283,7 @@ Calling other endpoints would result in a `401` response code.
 
 ## Tenant Scoped API Keys
 
-When you assign an API key to a tenant, any requests made with this key will only be able to operate on users, applications, groups, and other entities in the selected tenant.
+When you assign an API key to a tenant, any requests made with this key will only be able to operate on users, applications, groups, and other entities in the selected tenant. Tenant-scoped keys will not be able to call global endpoints.
 
 <APIKeyCrossTenantNote />
 
