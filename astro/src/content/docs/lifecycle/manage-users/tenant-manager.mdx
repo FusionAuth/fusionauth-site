@@ -30,11 +30,11 @@ The Tenant Manager app is a universal application, and exists in all tenants. Re
 ### Browsing to the Tenant Manager App
 The Tenant Manager app is hosted on your FusionAuth instance at 
 
-`/tenant-manager/TENANT_ID`
+`/tenant-manager/?tenantId=TENANT_ID`
 
 where `TENANT_ID` is the Id of a user's tenant. Open <Breadcrumb>Tenants</Breadcrumb> to see a list of tenants along with their Ids.
 
-The Tenant Manager app participates in Single Sign-on (SSO), just as any other application.  For a seamless experience, you can link to the app from another application, such as your own Software-as-a-Service (SaaS) app.
+The Tenant Manager app participates in Single Sign-On, just as any other application.  For a seamless experience, you can link to the app from another application, such as your own Software-as-a-Service (SaaS) app.
 
 ## Managing Users
 
@@ -75,6 +75,166 @@ The down-arrow next to <InlineUIElement>Lock User</InlineUIElement> opens a menu
 * **Change password on next login:** The user is prompted for a new password on their next login
 * **Send password change email:** Sends an email that contains a password reset link to the address in user.email or user.data.email. You can use this when a user forgets their password.
 * **Delete user:** This will irreversibly delete the user's account, and should be done with caution. Locking a user's account is often a better, non-destructive option.
+
+## Managing Identity Providers
+
+### The Single Sign-On View
+![SSO View](/img/docs/lifecycle/manage-users/tenant-manager/sso-view.png)
+
+Use the <Breadcrumb>Single Sign-On</Breadcrumb> tab in the Tenant Manager sidebar to manage tenant-scoped identity providers.
+
+This view lists configured identity providers for the current tenant, including status and available actions.
+
+Identity providers created in Tenant Manager are saved with `source` set to `Tenant Manager`.
+
+### Creating an Identity Provider
+
+For complete field definitions and API-level behavior, see the [Identity Providers API](/docs/apis/identity-providers) and [Tenant Manager API](/docs/apis/tenant-manager).
+
+To create an identity provider, open the <Breadcrumb>Single Sign-On</Breadcrumb> view and use the <InlineUIElement>Add</InlineUIElement> button to select an identity provider type.
+The dropdown contains all identity provider types currently allowed by the FusionAuth administrator.
+
+#### OpenID Connect fields
+When creating an OpenID Connect identity provider, configure the following fields:
+
+* `Name`
+* `Button text`
+* `Client Id`
+* `Client secret`
+* `Discover endpoints` (when enabled, FusionAuth uses the issuer metadata to populate endpoints)
+* `Issuer` (when endpoint discovery is enabled)
+* `Authorization endpoint` (when endpoint discovery is disabled)
+* `Token endpoint` (when endpoint discovery is disabled)
+* `Userinfo endpoint` (when endpoint discovery is disabled)
+* `Scope` (space-delimited OIDC scopes sent to the upstream provider)
+* `Redirect URL` (display-only, copyable)
+* `Attribute mappings` ([Attribute Mappings](#attribute-mappings))
+* `Managed domains` (domains that route users to this provider during login)
+
+#### SAML v2 fields
+When creating a SAML v2 identity provider, configure the following fields:
+
+* `Name`
+* `Button text`
+* `SSO Login URL`
+* `NameID format` (the expected SAML subject format)
+* `Verification certificate` (used to verify the SAML response signature)
+* `Sign requests` (controls whether AuthN requests are signed)
+* `ACS callback URL` (display-only, copyable)
+* `Attribute mappings` ([Attribute Mappings](#attribute-mappings))
+* `Managed domains` (domains that route users to this provider during login)
+
+When request signing is enabled for SAML v2, the signing key pair is managed by FusionAuth and the private key is not entered in the Tenant Manager form.
+
+### Editing an Identity Provider
+![Edit identity provider](/img/docs/lifecycle/manage-users/tenant-manager/edit-idp.png)
+To edit an identity provider, open the <Breadcrumb>Single Sign-On</Breadcrumb> view, select a provider, and update the configuration.
+
+#### OpenID Connect fields
+When editing an OpenID Connect identity provider, configure the following fields:
+
+* `Name`
+* `Button text`
+* `Enabled`
+* `Client Id`
+* `Client secret`
+* `Discover endpoints` (when enabled, FusionAuth uses the issuer metadata to populate endpoints)
+* `Issuer` (when endpoint discovery is enabled)
+* `Authorization endpoint` (when endpoint discovery is disabled)
+* `Token endpoint` (when endpoint discovery is disabled)
+* `Userinfo endpoint` (when endpoint discovery is disabled)
+* `Scope` (space-delimited OIDC scopes sent to the upstream provider)
+* `Redirect URL` (display-only, copyable)
+* `Attribute mappings` ([Attribute Mappings](#attribute-mappings))
+* `Managed domains` (domains that route users to this provider during login)
+
+#### SAML v2 fields
+When editing a SAML v2 identity provider, configure the following fields:
+
+* `Name`
+* `Button text`
+* `Enabled`
+* `SSO Login URL`
+* `NameID format` (the expected SAML subject format)
+* `Verification certificate` (used to verify the SAML response signature)
+* `Sign requests` (controls whether AuthN requests are signed)
+* `ACS callback URL` (display-only, copyable)
+* `Issuer URL` (display-only, copyable)
+* `Metadata URL` (display-only, copyable)
+* `Attribute mappings` ([Attribute Mappings](#attribute-mappings))
+* `Managed domains` (domains that route users to this provider during login)
+
+When an identity provider is enabled, the linking strategy cannot be changed.
+
+When request signing is enabled for SAML v2, the signing key pair is managed by FusionAuth and the private key is not entered in the Tenant Manager form.
+
+To save your changes and immediately start a connection test, click <InlineUIElement>Save and test configuration</InlineUIElement>.
+
+For complete field definitions and API-level behavior, see the [Identity Providers API](/docs/apis/identity-providers) and [Tenant Manager API](/docs/apis/tenant-manager).
+
+### Attribute Mappings
+
+Attribute mappings in Tenant Manager control how identity provider response values populate FusionAuth user and registration fields.
+
+If a mapping value starts with `/`, it is treated as JSON Pointer notation directly.
+
+* Mapping targets come from the registration form selected by the FusionAuth administrator.
+* All mappings are optional.
+* The `user.password` field is not available as a mapping target.
+* Mapping values are pre-filled from administrator-configured default mappings.
+* To clear a mapping, save it as a blank value.
+
+For mapping values, you can use a simple claim name or a JSON Pointer path. For example:
+
+* `user.email` -> `email`
+* `user.data.department` -> `/organization/department`
+
+### Tenant Manager Identity Provider Restrictions
+
+* Some identity provider fields are administrator-controlled and are not available in Tenant Manager. On create, these values are set from Tenant Manager defaults.
+* On edit, values for identity provider fields not exposed in Tenant Manager are preserved.
+
+<Aside type="caution">
+Saving an identity provider in Tenant Manager reapplies Tenant Manager-managed values. This replaces `attributeMappings` and `applicationConfiguration` with Tenant Manager-managed values by design.
+</Aside>
+
+### Testing an Identity Provider Connection
+To test an identity provider, use the identity provider action menu in the <Breadcrumb>Single Sign-On</Breadcrumb> view and click <InlineUIElement>Test</InlineUIElement>.
+
+#### Start a Connection Test
+![Connection Test Start View](/img/docs/lifecycle/manage-users/tenant-manager/test-start.png)
+
+The connection test start page is:
+
+`/tenant-manager/sso/test/start/{identityProviderId}`
+
+This page shows a configuration summary before test login begins, including:
+
+* Identity provider name and type
+* Callback URL
+* For OpenID Connect: issuer, authorization URL, token URL, and userinfo URL
+* For SAML v2: SSO Login URL
+
+Click <InlineUIElement>Start Test</InlineUIElement> to begin the test login flow through the identity provider.
+
+To run a connection test, the identity provider must be enabled for at least one application.
+
+#### Review Connection Test Results
+![Connection Test Completion View](/img/docs/lifecycle/manage-users/tenant-manager/test-completion.png)
+
+After authentication, the connection test results page is:
+
+`/tenant-manager/sso/test/complete`
+
+This page includes:
+
+* An overall pass/fail status banner
+* A test information panel with identity provider name and test start time
+* A user data panel with email, username, and identity provider user Id
+* A login steps panel with success or error indicators for each step
+
+### Additional Single Sign-On Actions
+Additional actions in the <Breadcrumb>Single Sign-On</Breadcrumb> view include enabling, disabling, and deleting a configured identity provider.
 
 ## Roles and Permissions
 The default access to Tenant Manager is read-only unless a user is assigned the `admin` role. Read-only access enables only searching and viewing accounts.

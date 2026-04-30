@@ -44,6 +44,7 @@ FusionAuth supports the following enterprise identity providers:
 * [OpenID Connect](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc)
 * [SAML v2](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2)
 * [SAML v2 IdP Initiated](/docs/lifecycle/authenticate-users/identity-providers/enterprise/samlv2-idp-initiated) - requires a paid plan.
+* [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager) - tenant administrators can configure OIDC and SAML v2 providers in Tenant Manager.
 
 If you're looking for a provider that is not listed here, review the open feature requests in [GitHub](https://github.com/FusionAuth/fusionauth-issues/issues). Vote or comment on an existing feature, or open a new feature request if you do not find an request for your provider.
 
@@ -78,6 +79,9 @@ In the following, we have enabled "Limit links per user" on the Default tenant a
 ![Identity Providers](/img/docs/lifecycle/authenticate-users/identity-providers/identity-provider-tenant-config.png)
 
 ## Identity Providers and Applications
+<Aside type="note">
+Saving an identity provider in Tenant Manager reapplies Tenant Manager-managed values. This replaces `attributeMappings` and `applicationConfiguration` with Tenant Manager-managed values by design. See [Tenant Manager Identity Provider Restrictions](/docs/lifecycle/manage-users/tenant-manager#tenant-manager-identity-provider-restrictions).
+</Aside>
 
 Identity providers can be enabled or disabled on a per application basis.
 
@@ -163,6 +167,42 @@ To mitigate these attacks, consider the following strategies:
 * Use a reconcile lambda to ensure that the email address or identifier provided by the Identity Provider is expected.
 * Use a `Disabled` linking strategy for an Identity Provider and manage links via the [Links API](/docs/apis/identity-providers/links); this allows business logic to execute before or during linking. Examples include disallowing any links to a certain domain or calling into another API for additional validation before creating a link.
 
+## Attribute Mappings
+
+<Aside type="version">
+Available since 1.65.0.
+</Aside>
+
+<Aside type="note">
+Saving an identity provider in Tenant Manager reapplies Tenant Manager-managed values. This replaces `attributeMappings` and `applicationConfiguration` with Tenant Manager-managed values by design. See [Tenant Manager Identity Provider Restrictions](/docs/lifecycle/manage-users/tenant-manager#tenant-manager-identity-provider-restrictions).
+</Aside>
+
+Attribute mappings allow you to map claims from an Identity Provider response directly to FusionAuth user and registration fields. They are a declarative alternative to reconciliation lambdas. Attribute mappings are key value pairs that can be configured via the [Identity Provider API](/docs/apis/identity-providers/) or the [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager#attribute-mappings).
+
+Attribute mapping keys represent fields on a FusionAuth user or registration and must begin with `user.` or `registration.`. Some example keys are:
+* `user.email` - The user's email address. This could be used for linking the user according to the configuring linking strategy.
+* `registration.data.subscription` - Custom registration data with information on the user's subscription.
+
+Attribute mapping values represent fields or claims from the Identity Provider response. The shape of the response matches the parameter available in the corresponding reconcile lambda type.
+
+<Aside type="note">
+The OpenID Connect reconcile lambda has two parameters, `jwt` and `id_token`, attribute mapping values must include one of these as a prefix in order to indicate which parameter they are referencing.
+</Aside>
+
+The values can be specified using dot or JSON pointer notation. To refer to a field that contains `.` or `/`, use JSON pointer notation. JSON pointers require escaping a couple of characters:
+* Escape a literal `~` using `~0`
+* Escape a literal `/` using `~1`
+
+Some example attribute mapping values are:
+* `id_token.preferred_username` - the `preferred_username` claim on the OIDC ID token using dot notation
+* `/jwt/https:~1~1example.com~1favorite_color` - a custom claim `https://example.com/favorite_color` on the OIDC access token using JSON pointer notation
+* `assertion.attributes.email.0` - The first email attribute value on a SAML response using dot notation. All SAML attributes are arrays, so accessing a single value requires providing an index. **Note:** the attribute mapping does not include the `samlResponse` lambda parameter name in its value. Only OIDC requires specifying the parameter name.
+* `/assertion/attributes/email/0` - the first email attribute value on a SAML response using JSON pointer notation
+
+During reconciliation, FusionAuth reads claim values using the attribute mapping values declared in the Identity Provider response. FusionAuth assigns the retrieved values to the corresponding key on the FusionAuth user or registration. All attribute mappings are optional; if FusionAuth cannot retrieve a claim value or set a key, it omits the mapping, but still continues reconciliation.
+
+Reconcile lambdas and attribute mappings are mutually exclusive. You cannot configure both on a single Identity Provider.
+
 ## Linking Strategies
 
 ![Linking Strategies](/img/docs/lifecycle/authenticate-users/identity-providers/linking-strategy.png)
@@ -170,6 +210,10 @@ To mitigate these attacks, consider the following strategies:
 The linking strategy is used when creating the link between the Identity Provider and the user account in FusionAuth.
 
 Choose a linking strategy when you configure an identity provider.
+
+<Aside type="version">
+  Beginning in version `1.65.0`, you can **only** change the linking strategy value when the identity provider is **disabled**. To change the linking strategy for an identity provider that is already enabled, disable the provider, change the value, and then re-enable the provider.
+</Aside>
 
 The following table shows the differences between these linking strategies:
 
