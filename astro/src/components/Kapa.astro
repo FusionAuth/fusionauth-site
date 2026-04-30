@@ -1,0 +1,78 @@
+---
+const {
+  enableKapa = true,
+} = Astro.props;
+
+if (!enableKapa) return '';
+---
+
+<div class="fixed right-5 bottom-5 z-100">
+    <button id="kapa-button" class="relative flex flex-col items-center justify-center h-20 w-18 cursor-pointer rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800 bg-white dark:hover:bg-slate-800 dark:hover:border-indigo-500 group hover:bg-slate-100 hover:border-indigo-500 overflow-hidden shadow-lg">
+        <img
+                class="size-8 group-hover:scale-110 transition-transform duration-500"
+                src="https://uploads-ssl.webflow.com/617b1b1f42c1da41aeae3413/663bee0e6eec6b85377a3939_fa-square-icon-144.png" alt="FusionAuth Logo"/>
+
+        <span class="text-lg">Ask AI</span>
+
+        <span class="absolute inset-0 bg-black/50 transition-opacity duration-300 hidden group-[.is-loading]:flex items-center justify-center">
+            <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
+        </span>
+    </button>
+</div>
+
+<script>
+  const kapaButton = document.getElementById('kapa-button');
+
+  function loadScriptIfNotExists() {
+    return new Promise<void>((resolve) => {
+      const scriptSrc = "https://widget.kapa.ai/kapa-widget.bundle.js";
+
+      // Check if the script already exists in the document
+      if (document.querySelector(`script[src="${scriptSrc}"]`)) {
+        resolve();
+        return;
+      }
+
+      const script = document.createElement("script");
+
+      // Set the async property correctly
+      script.async = true;
+      script.onload = function () {
+        (window as any).Kapa.render({
+          onRender: () => resolve()
+        })
+      }
+      script.src = scriptSrc;
+
+      // Define other script attributes
+      const attributes = {
+        "data-website-id": "26ad3b7e-7d94-491c-ab54-95712d1fafee",
+        "data-project-name": "FusionAuth",
+        "data-project-color": "#0F172A",
+        "data-project-logo": "https://uploads-ssl.webflow.com/617b1b1f42c1da41aeae3413/663bee0e6eec6b85377a3939_fa-square-icon-144.png",
+        "data-render-on-load": "false",
+        'data-user-analytics-cookie-enabled': "false",
+        'data-button-animation-enabled': "false",
+        'data-mcp-server-url': "https://ai.fusionauth.io/mcp/docs",
+        'data-mcp-button-hidden': "false",
+        'data-launcher-button-hidden': "true",
+      };
+
+      // Set attributes on the script element
+      Object.entries(attributes).forEach(([key, value]) => {
+        script.setAttribute(key, value);
+      });
+
+      // Append to the document head
+      document.head.appendChild(script);
+    });
+  }
+
+  kapaButton.addEventListener('click', async () => {
+    kapaButton.classList.add('is-loading');
+    await loadScriptIfNotExists();
+
+    (window as any).Kapa("open");
+    kapaButton.classList.remove('is-loading');
+  });
+</script>
