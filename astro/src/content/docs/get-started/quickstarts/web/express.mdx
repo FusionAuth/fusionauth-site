@@ -5,7 +5,9 @@ description: Integrate Fusionauth with an example Express website.
 import Steps from 'src/components/Steps.astro';
 import Breadcrumb from '/src/components/Breadcrumb.astro';
 
-This quickstart adds a login page and required authentication to a website hosted with [Express](https://expressjs.com/).
+This quickstart explains how to add a login page and authentication to a website hosted with [Express](https://expressjs.com/). You'll begin with a simple Express app that allows visitors to edit a file. Then, you'll add authentication to the app with a FusionAuth instance. Finally, you'll extend the app to handle multiple independent users with user data provided by FusionAuth.
+
+This tutorial should take between 5 and 15 minutes; less if you already have prerequisites like Docker installed.
 
 ## Prerequisites
 
@@ -20,9 +22,9 @@ This Quickstart requires:
 
 Be sure to open your container management tool to configure and install any dependencies needed by that tool, including Rosetta and Developer Tools on macOS.
 
-## Create a simple Express App
+## Create a Simple Express App
 
-For this QuickStart, we'll use an Express app that reads and writes data to a text file.
+For this QuickStart, we'll use an Express app that reads and writes data to a text file:
 
 <Steps>
 1. Create a file named `express-app.js` with the following contents:
@@ -106,6 +108,8 @@ For this QuickStart, we'll use an Express app that reads and writes data to a te
 
 ## Install and Run FusionAuth
 
+Before we can add authentication to our Express app, we need a local FusionAuth instance:
+
 <Steps>
 1. Open your container management tool (listed in the prerequisites above).
 
@@ -129,21 +133,21 @@ For this QuickStart, we'll use an Express app that reads and writes data to a te
 
 1. Wait until all networks, volumes, and containers have a green status of **Healthy**, **Started**, or **Created** (this may take a few minutes, depending on your network speed and cached dependencies).
 
-1. Open [http://localhost:9011](http://localhost:9011) to access the FusionAuth Admin UI.
+1. Open [http://localhost:9011/admin](http://localhost:9011/admin) to access the FusionAuth Admin UI.
 
-1. Click the lock icon in the top right of the screen to log in with these credentials:
+1. Log in with these credentials:
 
    * username: `admin@example.com`
    * password: `password`
 
 1. Navigate to <Breadcrumb>Applications -> QuickStart App -> Edit -> OAuth</Breadcrumb>. On this page, you can find your client ID, your client secret, and specify redirect and logout URLs. In the next part of this QuickStart, we'll use these values to connect our Express app with FusionAuth.
 
-1. Click the <Breadcrumb>Logout</Breadcrumb> button in the top right to log out of the Admin UI. We'll use a different user account to access our Express app.
+1. Click the <Breadcrumb>Logout</Breadcrumb> button in the top right to log out of the Admin UI. We'll use a different user account to access our Express app, and because FusionAuth supports SSO, we need to log out of our admin account before we can log in as a normal user.
 </Steps>
 
 ## Add FusionAuth to the Express App
 
-Now that you have a working instance of FusionAuth and a working Express app, let's use FusionAuth to add login to your Express app.
+Now that you have a working instance of FusionAuth and a working Express app, let's use FusionAuth to add login to your Express app:
 
 <Steps>
 1. Navigate out of the `fusionauth-quickstart-app` folder, back to our Express app (the folder that contains `express-app.js` and `note.txt`):
@@ -152,7 +156,7 @@ Now that you have a working instance of FusionAuth and a working Express app, le
    cd ..
    ```
 
-1. Create a file named `.env` with the following contents:
+1. Create a file named `.env` with the following contents (we provided the same configuration for the local FusionAuth instance, and then viewed it in the Admin UI):
 
    ```plaintext
    FUSIONAUTH_CLIENT_ID=f0510a74-da7a-4101-a474-05e7f1d5ba7e
@@ -166,6 +170,8 @@ Now that you have a working instance of FusionAuth and a working Express app, le
    ```console
    npm install passport passport-oauth2 express-session dotenv
    ```
+
+   Most importantly, we're adding [Passport](https://www.npmjs.com/package/passport), which handles communication with our FusionAuth instance, and [dotenv](https://www.npmjs.com/package/dotenv), which handles reading our configuration from the `.env` file we just created.
 
 1. Replace the contents of `express-app.js` with the following code, which adds the following functionality:
 
@@ -320,12 +326,12 @@ Now that you have a working instance of FusionAuth and a working Express app, le
 1. Log out, and find yourself back in the cold, unprivileged world of an anonymous unauthenticated user.
 </Steps>
 
-## Add Per-User Notes
+## Add Independent Notes for Each User
 
-To see a more realistic example of FusionAuth usage, we can improve the app even more, so every user gets a unique note to edit. To accomplish this, we'll use FusionAuth's user data.
+To see a more realistic example of FusionAuth usage, we can improve the app even more, so every user gets a unique note to edit. To accomplish this, we'll use FusionAuth's user data:
 
 <Steps>
-1. Open the FusionAuth Admin UI at [http://localhost:9011](http://localhost:9011).
+1. Open the FusionAuth Admin UI at [http://localhost:9011/admin](http://localhost:9011/admin).
 
 1. Log in with the following credentials:
 
@@ -498,6 +504,8 @@ To see a more realistic example of FusionAuth usage, we can improve the app even
        console.log(`Server running at http://localhost:${PORT}`);
    });
    ```
+
+   This also updates the login route and adds the profile scope to the OAuth authorization call, which provides the user's info to our app.
 
 1. Open the app at [http://localhost:3000](http://localhost:3000).
 
