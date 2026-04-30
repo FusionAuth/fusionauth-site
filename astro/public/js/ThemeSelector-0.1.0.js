@@ -3,7 +3,6 @@
 class ThemeSelector {
   #button;
   #menu;
-  #theme;
 
   constructor() {
     // Bail if there is no theme selector
@@ -17,10 +16,6 @@ class ThemeSelector {
     this.#menu.addEventListener('mousemove', event => this.#handleMouseMove(event));
     this.#menu.querySelectorAll('button').forEach(button => button.addEventListener('click', event => this.#handleChange(event)))
 
-    this.#theme = localStorage.getItem('theme') || 'system';
-    this.changeTheme(this.#theme);
-    this.closeMenu();
-
     document.addEventListener('click', () => this.closeMenu());
     document.addEventListener('keydown', event => this.#handleKeyDown(event));
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => this.#handleChange(event));
@@ -33,7 +28,6 @@ class ThemeSelector {
       document.documentElement.classList.remove('dark');
     }
 
-    this.#theme = theme;
     this.closeMenu();
     localStorage.setItem('theme', theme);
   }
@@ -113,9 +107,4 @@ class ThemeSelector {
   }
 }
 
-// Initialize the class on the body
-const theme = localStorage.getItem('theme') || 'system';
-if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-  document.documentElement.classList.add('dark');
-}
 document.addEventListener('DOMContentLoaded', () => new ThemeSelector());
