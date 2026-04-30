@@ -31,7 +31,7 @@ export const getReleaseNoteRssItems = async () => {
   const nonArchivedItems = nonArchivedReleases.map(item => {
     const id = `https://fusionauth.io/docs/release-notes#version-${item.data.version.replace(/\./g, '-')}`;
     const link = id;
-    const description = item.data.description? item.data.description : `Release ${item.data.version}`;
+    const description = item.data.description? item.data.description : `Release ${item.data.version} includes bug fixes and performance updates.`;
     const content = item.data.blogpost? `For more information, check out our <a href="https://fusionauth.io/blog/${item.data.blogpost}">release post</a>.` : ``
     const title = `Release ${item.data.version}`;
     const updated = item.data.date;
