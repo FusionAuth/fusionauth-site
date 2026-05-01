@@ -1,0 +1,180 @@
+---
+import APIAuthenticationIcon from 'src/components/api/APIAuthenticationIcon.astro';
+import Endpoints from 'src/content/json/generated/api-endpoints.json';
+
+const allMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+
+const authenticationLinks = {
+  'api-key': '/docs/apis/authentication#api-key-authentication',
+  'global-api-key': '/docs/apis/authentication#global-api-key-authentication',
+};
+
+function iconType(apiKeyType: string): 'api-key' | 'global-api-key' {
+  return apiKeyType === 'global' ? 'global-api-key' : 'api-key';
+}
+
+function iconTitle(apiKeyType: string): string {
+  return apiKeyType === 'global' ? 'Global API Key Authentication' : 'API Key Authentication';
+}
+
+function iconHref(apiKeyType: string): string {
+  return apiKeyType === 'global' ? authenticationLinks['global-api-key'] : authenticationLinks['api-key'];
+}
+---
+
+<div class="not-prose">
+  <input
+    type="text"
+    id="endpoint-filter"
+    placeholder="Filter endpoints…"
+    class="border border-slate-300 dark:border-slate-600 rounded-md px-3 py-2 text-sm w-full mb-4 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    autocomplete="off"
+    spellcheck="false"
+  />
+
+  <table id="endpoint-table" class="w-full text-sm border-collapse">
+    <thead>
+      <tr class="border-b border-slate-300 dark:border-slate-700">
+        <th
+          class="text-left py-2 px-3 font-semibold text-slate-700 dark:text-slate-200 cursor-pointer select-none whitespace-nowrap"
+          data-col="0"
+        >
+          Endpoint <span class="sort-indicator inline-block w-3 ml-1 text-slate-400"></span>
+        </th>
+        {allMethods.map((m, i) => (
+          <th
+            class="text-center py-2 px-2 font-semibold text-slate-700 dark:text-slate-200 cursor-pointer select-none whitespace-nowrap"
+            data-col={i + 1}
+          >
+            <span class="text-yellow-500 dark:text-yellow-400 font-semibold text-xs spellcheck-ignore">{m}</span>
+            <span class="sort-indicator inline-block w-3 ml-1 text-slate-400 text-xs"></span>
+          </th>
+        ))}
+        <th
+          class="text-center py-2 px-3 font-semibold text-slate-700 dark:text-slate-200 cursor-pointer select-none whitespace-nowrap"
+          data-col={allMethods.length + 1}
+        >
+          Auth <span class="sort-indicator inline-block w-3 ml-1 text-slate-400"></span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {Endpoints.map((endpoint) => (
+        <tr class="border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="py-2 px-3 font-mono text-xs text-slate-800 dark:text-slate-200 spellcheck-ignore">
+            {endpoint.url}
+          </td>
+          {allMethods.map((m) => (
+            <td class="py-2 px-2 text-center" data-sort={endpoint.methods.includes(m) ? '0' : '1'}>
+              {endpoint.methods.includes(m)
+                ? <span class="text-green-600 dark:text-green-400 text-base leading-none" aria-label={m + ' supported'}>✓</span>
+                : <span class="text-slate-300 dark:text-slate-600 text-base leading-none" aria-label={m + ' not supported'}>–</span>
+              }
+            </td>
+          ))}
+          <td class="py-2 px-3 text-center" data-sort={endpoint.apiKeyType ?? 'tenant'}>
+            <a href={iconHref(endpoint.apiKeyType ?? 'tenant')} title={iconTitle(endpoint.apiKeyType ?? 'tenant')} class="inline-flex no-underline">
+              <APIAuthenticationIcon type={iconType(endpoint.apiKeyType ?? 'tenant')} />
+            </a>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+
+  <p id="endpoint-no-results" class="hidden text-slate-500 dark:text-slate-400 text-sm mt-4">
+    No endpoints match your filter.
+  </p>
+</div>
+
+<script>
+  type SortDir = 'asc' | 'desc' | null;
+
+  interface SortState {
+    col: number;
+    dir: SortDir;
+  }
+
+  function initEndpointTable() {
+    const input = document.getElementById('endpoint-filter') as HTMLInputElement | null;
+    const table = document.getElementById('endpoint-table') as HTMLTableElement | null;
+    const noResults = document.getElementById('endpoint-no-results') as HTMLElement | null;
+
+    if (!input || !table || !noResults) return;
+
+    const tbody = table.querySelector('tbody') as HTMLTableSectionElement;
+    const headers = table.querySelectorAll<HTMLTableCellElement>('thead th');
+
+    let sortState: SortState = { col: -1, dir: null };
+
+    // ── Filtering ──────────────────────────────────────────────────────────────
+    function applyFilter() {
+      const query = input!.value.toLowerCase().trim();
+      let visibleCount = 0;
+
+      Array.from(tbody.rows).forEach((row) => {
+        // Match against endpoint path text only (first cell)
+        const path = row.cells[0]?.textContent?.toLowerCase() ?? '';
+        const visible = query === '' || path.includes(query);
+        (row as HTMLElement).style.display = visible ? '' : 'none';
+        if (visible) visibleCount++;
+      });
+
+      noResults!.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    input.addEventListener('input', applyFilter);
+
+    // ── Sorting ────────────────────────────────────────────────────────────────
+    // For method columns (1–5): sort key is data-sort attribute ('0' = supported, '1' = not)
+    // For auth column: sort key is data-sort attribute ('tenant' | 'global')
+    // For endpoint column: sort key is cell text
+    function getCellSortKey(row: HTMLTableRowElement, col: number): string {
+      const cell = row.cells[col];
+      if (!cell) return '';
+      const dataSortVal = (cell as HTMLElement).dataset.sort;
+      if (dataSortVal !== undefined) return dataSortVal;
+      return cell.textContent?.trim().toLowerCase() ?? '';
+    }
+
+    function updateSortIndicators() {
+      headers.forEach((th, i) => {
+        const indicator = th.querySelector('.sort-indicator') as HTMLElement | null;
+        if (!indicator) return;
+        if (i === sortState.col) {
+          indicator.textContent = sortState.dir === 'asc' ? '▲' : '▼';
+        } else {
+          indicator.textContent = '';
+        }
+      });
+    }
+
+    function applySort(col: number) {
+      if (sortState.col === col) {
+        sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortState.col = col;
+        sortState.dir = 'asc';
+      }
+
+      const rows = Array.from(tbody.rows);
+      rows.sort((a, b) => {
+        const aKey = getCellSortKey(a, col);
+        const bKey = getCellSortKey(b, col);
+        const cmp = aKey.localeCompare(bKey);
+        return sortState.dir === 'asc' ? cmp : -cmp;
+      });
+
+      rows.forEach((row) => tbody.appendChild(row));
+      updateSortIndicators();
+      applyFilter();
+    }
+
+    headers.forEach((th, i) => {
+      th.addEventListener('click', () => applySort(i));
+    });
+  }
+
+  initEndpointTable();
+  document.addEventListener('astro:after-swap', initEndpointTable);
+</script>

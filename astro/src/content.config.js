@@ -11,7 +11,8 @@ const releasesCollection = defineCollection({
   schema: z.object({
     version: z.string(),
     date: z.date(),
-    name: z.string().optional()
+    name: z.string().optional(),
+    description: z.string().optional(),
   }),
 })
 
@@ -118,5 +119,5 @@ export const collections = {
   'releases': releasesCollection,
   'json': jsonCollection,
   'blog': blogCollection,
-  'glossary': glossaryCollection
+  'glossary': glossaryCollection,
 };

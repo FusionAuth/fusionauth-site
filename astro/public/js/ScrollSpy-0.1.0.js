@@ -20,7 +20,7 @@ class ScrollSpy {
 
   reloadHeaders() {
     this.#headers = [];
-    const elements = document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]');
+    const elements = document.querySelectorAll('h2[id], h3[id]');
     for (const e of elements) {
       this.#headers.push(e);
     }
@@ -37,9 +37,12 @@ class ScrollSpy {
       }
     }
 
+    const headerLink = document.querySelector(`[data-widget="scroll-spy"] a[href="#${header.id}"]`);
+    if (!headerLink) return;
+
     document.querySelectorAll('[data-widget="scroll-spy"] [data-widget="scroll-spy-item"]').forEach(li => li.classList.remove('active', 'section-active'));
 
-    const group = document.querySelector(`[data-widget="scroll-spy"] a[href="#${header.id}"]`).closest('[data-widget="scroll-spy-item"]');
+    const group = headerLink.closest('[data-widget="scroll-spy-item"]');
     group.classList.add('active');
   }
 }
