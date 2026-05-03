@@ -19,9 +19,9 @@ We covered a wide range of topics, from Voyager One still receiving software upd
 
 Identity is a critical part of progressive delivery. Adam covers two aspects of this in the webinar:
 
-* **group your users**: Dan might be a beta user who wants all new features rolled out immediately, while Adam prefers a slower, stable feature set. You can store these preferences in one or more user attributes. Then you can build your application to enable certain features for certain categories of users. The book calls this "progressive rollout".
+* **group your users**: Dan might be a beta user who wants all new features rolled out immediately. Adam, on the other habnd, wants a more stable and consistent user experience, with any changes introduced slowly (or after they are more throughly tested by early adopters in production). This categorization is tied to user identity and these preferences can be stored in one or more user attributes. Your application can then enable certain features for specific categories of users. The book calls this "progressive rollout".
 
-* **allow users to opt in to certain categories**: an individual user might want access to one set of new features (e.g. a new UI on a certain page), or an organization admin could do the same for their entire team. This dispersion of authority to determine when features are enabled is called "radical delegation".
+* **allow users to opt in to certain categories**: an individual user might want access to one set of new features (e.g. a new UI for a certain feature), or an organization admin could do the same for their entire team. This authority to determine when features are enabled is called "radical delegation".
 
 Let's talk about how this would work.
 
@@ -34,7 +34,7 @@ sequenceDiagram
   participant U as User
   participant A as Application
   participant F as FusionAuth / IdP
-  participant FM as Feature management server
+  participant FM as Feature management system
 
   U->>A: Login request
   A->>F: Authenticate user
@@ -45,9 +45,9 @@ sequenceDiagram
   A-->>U: Render features per tier
 ```
 
-When a user logs in, the application forwards the authentication request to FusionAuth or another auth server. FusionAuth validates the credentials and returns a signed JWT. That JWT contains a `rollout_level` claim, which is an attribute that indicates which tier of features they should receive (for example, alpha, beta, or GA). This pattern could also be used for longer-lived groupings, such as geography or pricing tier.
+When a user logs in, the application forwards the authentication request to FusionAuth or another auth server. FusionAuth validates the credentials and returns a signed JWT. That JWT contains a `rollout_level` claim, which is an attribute that indicates which tier of features they should receive (for example, alpha, beta, or GA). In FusionAuth, this is done using the [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate), which takes attributes from the user and adds them to the JWT. This pattern could also be used for longer-lived groupings, such as geography or pricing tier.
 
-With the session established, the application passes the `rollout_level` to the feature management server, which evaluates the claim and returns the appropriate flag values for that user's level. The application renders the features that match, ensuring that new functionality is progressively exposed based on user attributes rather than a blanket release to all users.
+With the session established, the application passes the `rollout_level` to the feature management system, which evaluates the claim and returns the appropriate flag values for that user's level. The application renders the features that match, ensuring that new functionality is progressively exposed based on user attributes rather than a blanket release to all users. You can use a specialized feature server, which offers governance, auditability, environment management, and reporting. Or you can use a feature flagging framework, which embeds the logic into your application.
 
 ## FusionAuth Implementation
 
@@ -121,9 +121,7 @@ which results in a group that looks like this (check out the `data` object):
 }
 ```
 
-Finally, you can also set this value for an entire tenant. If you're using a logical multi-tenant architecture, use the `tenant.data` field to store the `rollout_level`.
-
-This value then controls whether an entire organization wants the latest features or prefers a more conservative feature rollout. To set it, you'd use a similar script or SDK as for the group configuration shown previously.
+Finally, you can also set the `rollout_level` for an entire tenant. This value then controls whether that set of users wants the latest features or prefers a more conservative feature rollout. To set it, you'd use a similar script or SDK as for the group configuration shown previously.
 
 ## Delivering Attributes to Your Application
 
