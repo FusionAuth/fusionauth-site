@@ -25,7 +25,7 @@ permissions:
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
-  group: "astro-dev"
+  group: "deploy-dev"
   cancel-in-progress: false
 
 jobs:
@@ -57,6 +57,8 @@ jobs:
         run: NODE_OPTIONS=--max_old_space_size=8192 npm run build
       - name: Deploy to S3
         run: |
+          aws configure set default.s3.max_concurrent_requests 100
+          aws configure set default.s3.max_queue_size 10000
           aws s3 sync ./dist/ s3://${{ env.BUCKET_NAME }} --delete
           aws s3 sync ./cdn/ s3://${{ env.BUCKET_NAME }}/cdn/
       - name: CloudFront request handler and cache invalidation
