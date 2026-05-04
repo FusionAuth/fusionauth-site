@@ -137,18 +137,17 @@ const cleanedHtmlTitle = htmlTitle
 <Head title=`${cleanedHtmlTitle} | FusionAuth Docs` description={description} canonicalUrl={frontmatter.canonicalUrl} {isIndexPage} {openGraphImage} {searchFilters} />
 <IndexableBody {excludeFromSearchIndex}>
   <script>
-    import mermaid from "mermaid";
-  
-    // Configure Mermaid
-    mermaid.initialize({ startOnLoad: false, theme: 'default' });
-  
-    // Run on page load (use 'astro:page-load' if you use ViewTransitions)
     document.addEventListener("astro:page-load", async () => {
-      // Find all code blocks marked as mermaid
+      // check for mermaid diagrams on page
       const blocks = document.querySelectorAll("pre code.language-mermaid");
+      if (blocks.length === 0) return; // If no diagrams, stop here. Don't load Mermaid!
+  
+      // import Mermaid only when needed
+      const { default: mermaid } = await import("mermaid");
+      
+      mermaid.initialize({ startOnLoad: false, theme: 'default' });
       
       blocks.forEach((block) => {
-        // Replace the <pre><code> wrapper with a standard <div> for Mermaid
         const parent = block.parentElement;
         const mermaidDiv = document.createElement("div");
         mermaidDiv.className = "mermaid";
@@ -156,7 +155,6 @@ const cleanedHtmlTitle = htmlTitle
         parent.replaceWith(mermaidDiv);
       });
   
-      // Tell mermaid to render all elements with the .mermaid class
       await mermaid.run({
         querySelector: '.mermaid',
       });
