@@ -37,7 +37,7 @@ class HubSpotForm {
   init() {
     this.loadTrackingScript();
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => this.setupFormHandlers());
+      document.addEventListener('astro:page-load', () => this.setupFormHandlers());
     } else {
       this.setupFormHandlers();
     }

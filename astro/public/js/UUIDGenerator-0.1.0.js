@@ -36,4 +36,4 @@ class UUIDGenerator {
         this.#lut[d2 >> 16 & 0xff] + this.#lut[d2 >> 24 & 0xff] + this.#lut[d3 & 0xff] + this.#lut[d3 >> 8 & 0xff] + this.#lut[d3 >> 16 & 0xff] + this.#lut[d3 >> 24 & 0xff];
   }
 }
-document.addEventListener('DOMContentLoaded', () => new UUIDGenerator());
+document.addEventListener('astro:page-load', () => new UUIDGenerator());

@@ -8,7 +8,6 @@ import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
 import * as markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
-import mermaid from 'astro-mermaid';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import linkValidator, { type LinkValidatorOptions } from 'astro-link-validator';
@@ -87,11 +86,6 @@ const config = defineConfig({
   },
   integrations: [
     icon(),
-    mermaid({
-      theme: 'forest',
-      autoTheme: true,
-      enableLog: false,
-    }),
     mdx(),
     sitemap({
       filter: siteMapFilter
