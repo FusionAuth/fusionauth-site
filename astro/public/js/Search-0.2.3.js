@@ -224,7 +224,7 @@ class Search {
       (await Promise.all(results.slice(0, 100).map(result => result.data()))).forEach(data => {
         html += `<li class="group" data-widget="search-result">
           <a href="${data.url}" class="bg-slate-100 rounded-md flex group items-center px-4 py-2 dark:bg-slate-700 group-[.active]:bg-indigo-600 group-[.active]:text-white">
-            <i class="bg-white border border-slate-900/10 fa-regular fa-hashtag mr-4 px-1 py-0.5 rounded-md shadow-sm text-slate-400 text-sm dark:bg-slate-600 group-[.active]:bg-indigo-600 group-[.active]:border-indigo-300 group-[.active]:text-white"></i>
+            <i class="bg-white border border-slate-900/10 font-mono font-semibold mr-4 px-1 rounded-md shadow-sm text-slate-400 text-sm dark:bg-slate-600 group-[.active]:bg-indigo-600 group-[.active]:border-indigo-300 group-[.active]:text-white">#</i>
             <div class="flex flex-col">
               <span class="bg-slate-200 border border-slate-900/10 font-semibold mb-2 px-2 py-0.5 rounded-full text-slate-700 text-xs w-fit dark:bg-slate-600 dark:text-slate-400 group-[.active]:bg-indigo-500 group-[.active]:border-indigo-300 group-[.active]:text-white">
                 ${data.meta.title}
@@ -233,7 +233,9 @@ class Search {
                 ${data.excerpt}
               </span>
             </div>
-            <i class="fa-regular fa-angle-right"></i>
+            <span>
+              <svg viewBox="0 0 640 640" class="h-5"><path fill="currentColor" d="M439.1 297.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L371.2 320 233.9 182.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"></path></svg>
+            </span>
           </a>
         </li>`;
       });

@@ -1,4 +1,4 @@
-import {defineConfig} from 'astro/config';
+import {defineConfig, fontProviders} from 'astro/config';
 import compress from "astro-compress";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
@@ -14,6 +14,7 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import linkValidator, { type LinkValidatorOptions } from 'astro-link-validator';
 import { visit } from 'unist-util-visit';
+import icon from "astro-iconset";
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
@@ -82,10 +83,17 @@ const config = defineConfig({
   build: {
     format: 'file'
   },
+  fonts: [{
+    provider: fontProviders.fontsource(),
+    name: 'Inter',
+    cssVariable: '--font-inter-var',
+    weights: ['300 400 500 600 700 800 900'],
+  }],
   vite: {
     plugins: [tailwindcss(), lightboxProvider()],
   },
   integrations: [
+    icon(),
     mermaid({
       theme: 'forest',
       autoTheme: true,
