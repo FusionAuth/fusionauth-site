@@ -73,7 +73,8 @@ const lightboxProvider = () => {
 
 const config = defineConfig({
   build: {
-    format: 'file'
+    format: 'file',
+    concurrency: 32,
   },
   fonts: [{
     provider: fontProviders.fontsource(),
