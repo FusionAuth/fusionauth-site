@@ -8,7 +8,6 @@ import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
 import * as markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
-import remarkTextr from 'remark-textr';
 import mermaid from 'astro-mermaid';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
@@ -73,12 +72,6 @@ const lightboxProvider = () => {
   }
 }
 
-function typographicArrows(input) {
-  return input
-    .replace(/->/g, '→')
-    .replace(/<-/g, '←')
-}
-
 const config = defineConfig({
   build: {
     format: 'file'
@@ -131,8 +124,7 @@ const config = defineConfig({
     smartypants: false,
     remarkPlugins: [
       remarkMdx,
-      mermaidTitleFix,
-      [remarkTextr, { plugins: [typographicArrows] }]
+      mermaidTitleFix
     ],
     rehypePlugins: [
       // Tweak GFM task list syntax
