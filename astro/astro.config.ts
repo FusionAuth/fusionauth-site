@@ -14,6 +14,7 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import linkValidator, { type LinkValidatorOptions } from 'astro-link-validator';
 import { visit } from 'unist-util-visit';
+import icon from "astro-iconset";
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
@@ -86,6 +87,7 @@ const config = defineConfig({
     plugins: [tailwindcss(), lightboxProvider()],
   },
   integrations: [
+    icon(),
     mermaid({
       theme: 'forest',
       autoTheme: true,
