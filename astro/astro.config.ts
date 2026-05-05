@@ -86,8 +86,6 @@ const config = defineConfig({
     plugins: [tailwindcss(), lightboxProvider()],
     build: {
       chunkSizeWarningLimit: 1000,
-      cssMinify: 'lightningcss',
-      target: 'esnext',
     }
   },
   integrations: [
