@@ -75,6 +75,7 @@ const config = defineConfig({
   build: {
     format: 'file',
     concurrency: 12,
+    chunkSizeWarningLimit: 1000,
   },
   fonts: [{
     provider: fontProviders.fontsource(),

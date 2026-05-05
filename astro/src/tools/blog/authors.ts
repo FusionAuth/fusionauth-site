@@ -1,4 +1,4 @@
-export const AUTHORS = {
+export const authors = {
   'Aaron Ritter': {
     linkText: '@aaronritterch',
     linkUrl: 'https://www.linkedin.com/in/aaronritterch/',
