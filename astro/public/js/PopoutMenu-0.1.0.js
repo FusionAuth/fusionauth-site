@@ -38,4 +38,4 @@ class PopoutMenu {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => new PopoutMenu());
+document.addEventListener('astro:page-load', () => new PopoutMenu());

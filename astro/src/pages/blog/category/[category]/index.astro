@@ -3,12 +3,39 @@ import Layout from '../../../../layouts/BlogIndex.astro';
 import { getStaticCategoryPaths } from 'src/tools/blog';
 import { startCase } from 'src/tools/string';
 
-export async function getStaticPaths({ paginate }) {
-  return getStaticCategoryPaths(paginate);
+export async function getStaticPaths() {
+  const mockPaginate = (data, { params, props = {}, pageSize = 10 }) => {
+    const lastPage = Math.max(1, Math.ceil(data.length / pageSize));
+    const basePath = `/blog/category/${params.category}`;
+    
+    return [{
+      params: { category: params.category },
+      props: {
+        ...props,
+        page: {
+          data: data.slice(0, pageSize),
+          start: 0,
+          end: Math.min(pageSize - 1, data.length - 1),
+          size: pageSize,
+          total: data.length,
+          currentPage: 1,
+          lastPage,
+          url: {
+            current: basePath,
+            prev: undefined,
+            next: lastPage > 1 ? `${basePath}/2` : undefined
+          }
+        }
+      }
+    }];
+  };
+
+  return await getStaticCategoryPaths(mockPaginate);
 }
 
 const { page, categoryName } = Astro.props;
 const { category } = Astro.params;
+
 const categories = new Map([
   ['community', 'Engage with FusionAuth community stories and events.'],
   ['company', 'Get the latest FusionAuth company news and developments.'],
@@ -18,7 +45,7 @@ const categories = new Map([
   ['product', `Discover insights into FusionAuth's products and new features.`],
   ['release-updates', `Track FusionAuth's release updates and new features.`],
   ['tutorial', 'Access tutorials to implement and optimize authentication solutions.'],
-])
+]);
 ---
 
 <Layout title={startCase(categoryName) + " posts"}
@@ -28,5 +55,5 @@ const categories = new Map([
         subjectRef={category}
         subjectName={categoryName}
         page={page}
-        isIndexPage={page.currentPage === 1}
+        isIndexPage={true}
         showCategories={false}/>

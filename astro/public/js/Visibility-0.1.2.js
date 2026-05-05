@@ -28,4 +28,4 @@ class Visibility {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => new Visibility());
+document.addEventListener('astro:page-load', () => new Visibility());

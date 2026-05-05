@@ -4,16 +4,39 @@ import { getStaticTagPaths } from 'src/tools/blog';
 import { startCase } from 'src/tools/string';
 
 export async function getStaticPaths({ paginate }) {
-  return getStaticTagPaths(paginate);
+  const paths = await getStaticTagPaths(paginate);
+  
+  // remove first page AND any redundant '/1' aliases
+  const paginatedPaths = paths.filter(p => 
+    p.params.page !== undefined && 
+    p.params.page !== 1 && 
+    p.params.page !== '1'
+  );
+
+  // deduplicate by tag and page
+  const uniquePaths = Array.from(
+    new Map(paginatedPaths.map(p => [`${p.params.tag}-${String(p.params.page)}`, p])).values()
+  );
+
+  // fix previous link on page 2
+  return uniquePaths.map(p => {
+    if (p.props.page.currentPage === 2) {
+      // Rewrite '/blog/tag/ai/1' to just '/blog/tag/ai'
+      p.props.page.url.prev = `/blog/tag/${p.params.tag}`; 
+    }
+    return p;
+  });
 }
 
 const { page, tagName } = Astro.props;
 const { tag } = Astro.params;
 ---
+
 <Layout title={startCase(tagName) + " posts"}
         section="tag"
         sectionTitle="Tags"
         subjectRef={tag}
         subjectName={tagName}
         page={page}
+        isIndexPage={false}
         showCategories={true}/>
