@@ -1,0 +1,57 @@
+---
+import Layout from "../../../../layouts/BlogIndex.astro";
+import { getStaticAuthorPaths } from "src/tools/blog";
+import { AUTHORS } from "../../mappings";
+
+export async function getStaticPaths() {
+  // 1. Create a mock paginate function that bypasses Astro's filename check
+  const mockPaginate = (data, { params, props = {}, pageSize = 10 }) => {
+    const lastPage = Math.max(1, Math.ceil(data.length / pageSize));
+    const basePath = `/blog/author/${params.author}`;
+    
+    return [{
+      params: { author: params.author }, // No 'page' param needed here
+      props: {
+        ...props,
+        page: {
+          data: data.slice(0, pageSize),
+          start: 0,
+          end: Math.min(pageSize - 1, data.length - 1),
+          size: pageSize,
+          total: data.length,
+          currentPage: 1,
+          lastPage,
+          url: {
+            current: basePath,
+            prev: undefined,
+            next: lastPage > 1 ? `${basePath}/2` : undefined
+          }
+        }
+      }
+    }];
+  };
+
+  // 2. Pass the mock function into your helper
+  return await getStaticAuthorPaths(mockPaginate);
+}
+
+const { page, authorName } = Astro.props;
+const { author } = Astro.params;
+---
+
+<Layout
+  title={"Posts authored by " + authorName}
+  description={"FusionAuth Blog | " + AUTHORS[authorName]?.description ||
+    `Read ${authorName}'s posts on mobile development and security practices.`}
+  section="author"
+  sectionTitle="Posts By"
+  subjectRef={author}
+  subjectName={authorName}
+  page={page}
+  isIndexPage={true}
+  showCategories={true}
+  personalLink={{
+    text: AUTHORS[authorName]?.linkText,
+    href: AUTHORS[authorName]?.linkUrl,
+  }}
+/>
