@@ -110,7 +110,7 @@ const config = defineConfig({
         'buildvsbuy', 'auth0-migration', 'community', 'community/forum', 'aws-reinvent22', 'aws-reinvent23', 'pricing', 'download', 'contact',
         'get-started', 'passwordless', 'direct-download', 'jobs', 'careers', 'password-history', 'partners-form', 'partners',
         'resource/all', 'sso', 'kubernetes', 'compare-fusionauth', 'security', 'customers-partners', 'license-faq',
-        'feature-list', 'product-privacy-policy', 'passkeys', '/permify-docs/', '/permify-docs'
+        'feature-list', 'product-privacy-policy', 'passkeys', '/permify-docs/', '/permify-docs', '/legal/data-processing-addendum.pdf'
       ],
       //base: 'https://fusionauth.io',
     })
