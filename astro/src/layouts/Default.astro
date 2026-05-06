@@ -132,14 +132,55 @@ const cleanedHtmlTitle = htmlTitle
   .trim();
 ---
 
-<!DOCTYPE html>
+<!DOCTYPE html transition:animate={fade({ duration: "0.1s" })}>
 <html class="antialiased min-h-full" lang="en">
 <Head title=`${cleanedHtmlTitle} | FusionAuth Docs` description={description} canonicalUrl={frontmatter.canonicalUrl} {isIndexPage} {openGraphImage} {searchFilters} />
 <IndexableBody {excludeFromSearchIndex}>
+  <script>
+    document.addEventListener("astro:page-load", async () => {
+      // check for mermaid diagrams on page
+      const blocks = document.querySelectorAll("pre code.language-mermaid");
+      if (blocks.length === 0) return; // If no diagrams, stop here. Don't load Mermaid!
+  
+      // import Mermaid only when needed
+      const { default: mermaid } = await import("mermaid");
+      
+      mermaid.initialize({ startOnLoad: false, theme: 'default' });
+      
+      blocks.forEach((block) => {
+        const parent = block.parentElement;
+        const mermaidDiv = document.createElement("div");
+        mermaidDiv.className = "mermaid";
+        mermaidDiv.textContent = block.textContent;
+        parent.replaceWith(mermaidDiv);
+      });
+  
+      await mermaid.run({
+        querySelector: '.mermaid',
+      });
+    });
+  </script>
   <slot name="nav"/>
   <main class:list={mainStyles}>
   <!-- Left sidebar -->
   <div id="side-nav" class:list={sideNavStyles}>
+    <script is:inline>
+      document.addEventListener('astro:before-swap', () => {
+        const sidebar = document.getElementById('side-nav');
+        if (sidebar) {
+          // Store the current scroll position in a temporary global variable
+          window.sidebarScrollPos = sidebar.scrollTop;
+        }
+      });
+  
+      document.addEventListener('astro:after-swap', () => {
+        const sidebar = document.getElementById('side-nav');
+        if (sidebar && window.sidebarScrollPos !== undefined) {
+          // Re-apply the saved scroll position
+          sidebar.scrollTop = window.sidebarScrollPos;
+        }
+      });
+    </script>
     <!-- Relative container for the sticky search -->
     <div class="relative">
       <!-- Mobile close button -->
@@ -150,8 +191,7 @@ label="Close Menu">
 
         <!-- Search button -->
         <div class="bg-white hidden pb-1 pr-2 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
-          <button type="button" class="flex items-center pl-2 pr-3 py-1.5 border border-slate-900/10 rounded-md shadow-sm text-slate-400 text-sm w-full dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700 dark:hover:border-slate-500 hover:border-slate-300" data-widget="search-button" aria-
-label="Search">
+          <button type="button" class="flex items-center pl-2 pr-3 py-1.5 border border-slate-900/10 rounded-md shadow-sm text-slate-400 text-sm w-full dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700 dark:hover:border-slate-500 hover:border-slate-300" data-widget="search-button" aria-label="Search">
             <Icon name="fa7-solid:search" class="mr-3 h-lh" size={20} />
             <span>Search...</span>
             <span class="font-semibold ml-auto pl-3 text-xs" data-widget="search-key-hint">⌘/Alt+K</span>

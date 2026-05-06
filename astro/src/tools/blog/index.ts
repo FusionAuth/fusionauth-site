@@ -3,7 +3,7 @@ export * from "./BlogFrontmatter";
 export * from "./getHref";
 export * from "./getLatestStaticPaths";
 export * from "./getStaticIndexPaths";
-export * from "./mappings";
+export * from "./authors";
 export * from "./mapRelated";
 export * from "./ParsedBlog";
 export * from "./parseContent";

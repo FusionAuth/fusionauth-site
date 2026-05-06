@@ -129,4 +129,4 @@ class JWTDecoder {
 
 }
 
-document.addEventListener('DOMContentLoaded', () => new JWTDecoder());
+document.addEventListener('astro:page-load', () => new JWTDecoder());

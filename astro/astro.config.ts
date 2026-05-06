@@ -8,7 +8,6 @@ import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
 import * as markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
-import mermaid from 'astro-mermaid';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import linkValidator, { type LinkValidatorOptions } from 'astro-link-validator';
@@ -74,7 +73,8 @@ const lightboxProvider = () => {
 
 const config = defineConfig({
   build: {
-    format: 'file'
+    format: 'file',
+    concurrency: 12,
   },
   fonts: [{
     provider: fontProviders.fontsource(),
@@ -84,14 +84,12 @@ const config = defineConfig({
   }],
   vite: {
     plugins: [tailwindcss(), lightboxProvider()],
+    build: {
+      chunkSizeWarningLimit: 1000,
+    }
   },
   integrations: [
     icon(),
-    mermaid({
-      theme: 'forest',
-      autoTheme: true,
-      enableLog: false,
-    }),
     mdx(),
     sitemap({
       filter: siteMapFilter
@@ -115,7 +113,7 @@ const config = defineConfig({
         'buildvsbuy', 'auth0-migration', 'community', 'community/forum', 'aws-reinvent22', 'aws-reinvent23', 'pricing', 'download', 'contact',
         'get-started', 'passwordless', 'direct-download', 'jobs', 'careers', 'password-history', 'partners-form', 'partners',
         'resource/all', 'sso', 'kubernetes', 'compare-fusionauth', 'security', 'customers-partners', 'license-faq',
-        'feature-list', 'product-privacy-policy', 'passkeys', '/permify-docs/', '/permify-docs'
+        'feature-list', 'product-privacy-policy', 'passkeys', '/permify-docs/', '/permify-docs', '/legal/data-processing-addendum.pdf'
       ],
       //base: 'https://fusionauth.io',
     })

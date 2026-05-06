@@ -60,4 +60,4 @@ class EncoderDecoder {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => new EncoderDecoder());
+document.addEventListener('astro:page-load', () => new EncoderDecoder());

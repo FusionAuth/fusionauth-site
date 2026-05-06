@@ -1,6 +1,7 @@
 ---
 import Font from 'astro/components/Font.astro';
 import SearchFilter  from 'src/components/search/SearchFilter.astro';
+import { ClientRouter } from 'astro:transitions';
 
 interface Props {
   description?: string;
@@ -59,6 +60,7 @@ const slug = Astro.params.slug;
   <meta name="algolia-site-verification" content="857638C054AD182F" />
   <link rel="sitemap" href="/sitemap-index.xml">
   <Font cssVariable="--font-inter-var" preload />
+  <ClientRouter />
   <script src="../scripts/ScrollSpy.ts"></script>
   <script src="../scripts/Visibility.ts"></script>
   {applyTheme && <script is:inline>
@@ -70,7 +72,15 @@ const slug = Astro.params.slug;
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
 
-    document.documentElement.classList.toggle('dark', getTheme() === 'dark');
+    const applyThemeClass = () => {
+      document.documentElement.classList.toggle('dark', getTheme() === 'dark');
+    };
+
+    // 1. Run immediately on initial load to prevent flashing
+    applyThemeClass();
+
+    // 2. Run right before the new page renders during a View Transition
+    document.addEventListener('astro:after-swap', applyThemeClass);
   </script>}
   <title>{title}</title>
   <meta name="description" content={description}/>

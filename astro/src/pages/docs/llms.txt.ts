@@ -7,7 +7,8 @@ export const GET: APIRoute = async ({}) => {
     return new Response(
         `## FusionAuth.io Documentation\n\n${docs
             .map((doc) => {
-                return `- [${doc.data.title}](https://fusionauth.io/docs/${doc.slug}/)\n`;
+                const slug = doc.id === "index" ? "" : doc.id.replace(/\/index$/, "");
+                return `- [${doc.data.title}](https://fusionauth.io/docs/${slug})\n`;
             })
             .join("")}`,
         { headers: { "Content-Type": "text/plain; charset=utf-8" } }
