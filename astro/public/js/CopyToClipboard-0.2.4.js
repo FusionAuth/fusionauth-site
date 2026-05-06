@@ -69,4 +69,4 @@ class CopyToClipboard {
   }
 }
 
-document.addEventListener('astro:page-load', () => new CopyToClipboard());
+document.addEventListener('DOMContentLoaded', () => new CopyToClipboard());

@@ -342,4 +342,4 @@ FusionAuthPriceCalculator.plans = {
   'enterprise': 'Enterprise'
 }
 
-document.addEventListener('astro:page-load', () => new FusionAuthPriceCalculator());
+document.addEventListener('DOMContentLoaded', () => new FusionAuthPriceCalculator());

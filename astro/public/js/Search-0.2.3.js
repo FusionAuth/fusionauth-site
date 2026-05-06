@@ -260,4 +260,4 @@ class Search {
   }
 }
 
-document.addEventListener('astro:page-load', () => new Search());
+document.addEventListener('DOMContentLoaded', () => new Search());
