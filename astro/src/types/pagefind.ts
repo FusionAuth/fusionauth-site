@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 /** Global index options that can be passed to pagefind.options() */
 type PagefindIndexOptions = {
   /** Overrides the URL path that Pagefind uses to load its search bundle */
