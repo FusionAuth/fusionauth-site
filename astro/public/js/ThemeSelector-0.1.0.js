@@ -107,4 +107,4 @@ class ThemeSelector {
   }
 }
 
-document.addEventListener('astro:page-load', () => new ThemeSelector());
+document.addEventListener('DOMContentLoaded', () => new ThemeSelector());

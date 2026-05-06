@@ -65,4 +65,4 @@ class Base64EncoderDecoder {
   }
 }
 
-document.addEventListener('astro:page-load', () => new Base64EncoderDecoder());
+document.addEventListener('DOMContentLoaded', () => new Base64EncoderDecoder());

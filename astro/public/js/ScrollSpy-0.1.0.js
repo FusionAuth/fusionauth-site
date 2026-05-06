@@ -41,4 +41,4 @@ class ScrollSpy {
   }
 }
 
-document.addEventListener('astro:page-load', () => new ScrollSpy());
+document.addEventListener('DOMContentLoaded', () => new ScrollSpy());

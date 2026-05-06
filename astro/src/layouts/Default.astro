@@ -137,7 +137,7 @@ const cleanedHtmlTitle = htmlTitle
 <Head title=`${cleanedHtmlTitle} | FusionAuth Docs` description={description} canonicalUrl={frontmatter.canonicalUrl} {isIndexPage} {openGraphImage} {searchFilters} />
 <IndexableBody {excludeFromSearchIndex}>
   <script>
-    document.addEventListener("astro:page-load", async () => {
+    document.addEventListener("DOMContentLoaded", async () => {
       // check for mermaid diagrams on page
       const blocks = document.querySelectorAll("pre code.language-mermaid");
       if (blocks.length === 0) return; // If no diagrams, stop here. Don't load Mermaid!
@@ -165,19 +165,22 @@ const cleanedHtmlTitle = htmlTitle
   <!-- Left sidebar -->
   <div id="side-nav" class:list={sideNavStyles}>
     <script is:inline>
-      document.addEventListener('astro:before-swap', () => {
+      // restore the scroll position when a new page loads
+      document.addEventListener('DOMContentLoaded', () => {
         const sidebar = document.getElementById('side-nav');
         if (sidebar) {
-          // Store the current scroll position in a temporary global variable
-          window.sidebarScrollPos = sidebar.scrollTop;
+          const savedPos = sessionStorage.getItem('sidebarScrollPos');
+          if (savedPos !== null) {
+            sidebar.scrollTop = parseInt(savedPos, 10);
+          }
         }
       });
-  
-      document.addEventListener('astro:after-swap', () => {
+
+      // save the scroll position in session storage right before leaving the current page
+      window.addEventListener('beforeunload', () => {
         const sidebar = document.getElementById('side-nav');
-        if (sidebar && window.sidebarScrollPos !== undefined) {
-          // Re-apply the saved scroll position
-          sidebar.scrollTop = window.sidebarScrollPos;
+        if (sidebar) {
+          sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop.toString());
         }
       });
     </script>
