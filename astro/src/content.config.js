@@ -12,6 +12,7 @@ const releasesCollection = defineCollection({
     date: z.date(),
     name: z.string().optional(),
     description: z.string().optional(),
+    blogpost: z.string().optional(),
   }),
 })
 
