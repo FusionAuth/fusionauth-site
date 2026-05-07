@@ -20,13 +20,13 @@ This post discusses the Token-Mediating Backend (TMB) authentication architectur
 This is part two of a three-part series on OAuth architectures. Please read [part one](/blog/backend-for-frontend-security-architecture) if you haven't already, so you understand how the Backend-for-Frontend (BFF) architecture works, since TMB is a variation of BFF.
 </Aside>
 
-## Understanding TMB architecture
+## Understanding TMB Architecture
 
 TMB works just like Backend-For-Frontend (BFF), with one major difference: TMB stores access tokens in the frontend (desktop, mobile, or web app). Since the access token is available in the browser, the browser can call a resource server directly, instead of proxying resource server calls through the backend.
 
 For more information about TMB, see the Internet Engineering Task Force (IETF) [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend) draft.
 
-### TMB security
+### TMB Security
 
 TMB is less secure than BFF because access tokens in the browser are vulnerable to exfiltration by malicious JavaScript packages and cross-site scripting (XSS). However, it's much more secure than serverless web apps, which use the Browser-Based OAuth Client (BBOC) architecture, as they have no secure backend at all.
 
@@ -73,11 +73,11 @@ Since TMB is much less secure than BFF, there are few reasons to choose TMB. Bel
 
 By allowing the browser to call the resource server directly, TMB avoids the extra time it takes to route the call via the app backend. For a general web application, like a bank or forum, this time is irrelevant. But for apps where real-time performance is critical, like games, voice and video chat, or collaborative document editing, this time can create noticeable lag.
 
-### Infrastructure constraints
+### Infrastructure Constraints
 
 Hosting a web app with large JavaScript files and images can be costly. You might want to serve your frontend from a cheap static file host and run your API on a more expensive cloud server. This is more difficult using BFF than TMB, because the BFF design needs the backend to live on the same URL origin as the frontend (unless you configure complex cross-origin resource sharing), so you need a reverse proxy for URL redirects between the two servers. TMB doesn't have this constraint, as it's used only for the initial login, not for proxying every call to other servers.
 
-### Limited skill and time
+### Limited Skill and Time
 
 If you aren't a professional programmer and can't afford to hire one, you may make an app by combining various low-code services. If the default architecture of your authentication provider is TMB and not BFF, and you don't have time to experiment with changing it, that's what you're stuck with.
 
@@ -85,7 +85,7 @@ If this is the case, please know that you can implement your own BFF server with
 
 Even simpler, if you use FusionAuth (which is free if you host it yourself), you can use the built-in FusionAuth [Hosted Backend](/docs/apis/hosted-backend). The tutorial mentioned above also includes an example serverless HTML file with [two small JavaScript functions](https://github.com/FusionAuth/fusionauth-example-hostedbackend/blob/main/serverlessApp/index.html) that give you fully secure authentication by connecting to the Hosted Backend.
 
-## Getting technical: How the TMB flow works
+## Getting Technical: How the TMB Flow Works
 
 This section explains the TMB OAuth flow in more detail. It is based on the [official text from the IETF](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-application-architecture-2).
 
@@ -136,13 +136,13 @@ sequenceDiagram
 
 For a more detailed explanation of every step in the flow, please see the accompanying repository [README section on TMB](https://github.com/kmaida/auth-architecture/tree/main/tmb#how-tmb-authentication-works).
 
-## See TMB in action: A complete demo
+## See TMB in Action: A Complete Demo
 
 To help you get started using TMB, you can use a complete FusionAuth demonstration repository. The repository includes a React frontend and a Node.js/Express backend, demonstrating the TMB pattern with FusionAuth as the authorization server. Of course, you can adapt the backend to any language or framework.
 
 This section allows you to run a simple but functional TMB web app and server with FusionAuth to see how it works.
 
-### Download and start FusionAuth
+### Download and Start FusionAuth
 
 To follow along, you need [Node.js](https://nodejs.org), npm, and [Docker](https://docker.com) installed. While it's not explained here, you could use Deno (or Node in Docker if you know how to change your network settings) instead of Node.
 
@@ -170,7 +170,7 @@ This should download Docker images and start FusionAuth on [http://localhost:901
 
 Now you have an authentication provider running.
 
-### Start the backend app server
+### Start the Backend App Server
 
 1. Run the following commands to prepare the backend settings file for editing:
 
@@ -182,7 +182,7 @@ Now you have an authentication provider running.
    cp .env.sample .env
    ```
 
-2. Open the `tmb/backend/.env` file in a text editor and update the following values with your own Client ID and secrets, found in the FusionAuth Admin UI under <Breadcrumb>Applications -> Your App -> Action -> Edit</Breadcrumb>:
+2. Open the `tmb/backend/.env` file in a text editor and update the following values with your own Client ID and secrets, found in the FusionAuth admin UI under <Breadcrumb>Applications -> Your App -> Action -> Edit</Breadcrumb>:
 
    ```dotenv
    CLIENT_ID="e72dca1d-626c-4f4b-8f36-b7c8c2c0af33"
@@ -203,7 +203,7 @@ The backend is now running at http://localhost:4001, but does not provide a webs
 
 Now you have an authentication provider and an API to call.
 
-### Start the frontend
+### Start the Frontend
 
 1. In a new terminal in the repository directory, run the following commands to prepare the frontend settings file:
 
@@ -229,17 +229,17 @@ Now you have an authentication provider and an API to call.
 
 3. Browse to the frontend at [http://localhost:5173](http://localhost:5173).
 
-   ![TMB website homepage when logged out](/img/blogs/auth-architecture/loggedOut.png)
+   ![The TMB website homepage showing the logged out state.](/img/blogs/auth-architecture/loggedOut.png)
 
 4. Click the login button at the top right and log in with the test user `user@example.com` and the password `password`.
 
-   ![TMB website login page](/img/blogs/auth-architecture/logIn.png)
+   ![The TMB website login page with a username and password form.](/img/blogs/auth-architecture/logIn.png)
 
 Once logged in, you can browse to private pages on the site. You can also see that all the FusionAuth authentication cookies are set as `HttpOnly`, so they can't be stolen. The access token is stored in application memory, which is cleared each time the app reloads or the page is refreshed.
 
-![TMB website showing user profile when logged in](/img/blogs/auth-architecture/loggedIn.png)
+![The TMB website showing the user profile page when logged in.](/img/blogs/auth-architecture/loggedIn.png)
 
-### Architecture overview
+### Architecture Overview
 
 Let's take a quick look at how this app works under the hood.
 
@@ -266,12 +266,12 @@ If your authentication provider doesn't support BFF, you can implement one using
 And if you absolutely must use TMB, combine it with [DPoP (also supported by FusionAuth!)](/docs/lifecycle/authenticate-users/oauth/dpop) to reduce your risk profile.
 
 {/* TODO: Uncomment when part 3 is published.
-## Next in this series
+## Next in This Series
 
 The final post in this series discusses the third and least secure OAuth architecture: [Browser-Based OAuth Client (BBOC)](/blog/browser-based-oauth-client-security-architecture). Learn how it works and the rare cases when you might choose to use it.
 */}
 
-## Further reading
+## Further Reading
 
 Explore these resources for a deeper understanding of OAuth security architectures:
 
