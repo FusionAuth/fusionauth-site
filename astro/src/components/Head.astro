@@ -1,6 +1,7 @@
 ---
-import Font from 'astro/components/Font.astro';
+import { Font } from "astro:assets";
 import SearchFilter  from 'src/components/search/SearchFilter.astro';
+import { ClientRouter } from "astro:transitions";
 
 interface Props {
   description?: string;
@@ -70,12 +71,14 @@ const slug = Astro.params.slug;
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
 
-    const applyThemeClass = () => {
-      document.documentElement.classList.toggle('dark', getTheme() === 'dark');
+    const applyThemeClass = (d = document) => {
+      d.documentElement.classList.toggle('dark', getTheme() === 'dark');
     };
 
     // run immediately on initial load to prevent flashing
     applyThemeClass();
+
+    document.addEventListener('astro:after-swap', (e) => applyThemeClass(e.newDocument));
   </script>}
   <title>{title}</title>
   <meta name="description" content={description}/>
@@ -94,6 +97,8 @@ const slug = Astro.params.slug;
   <meta name="twitter:title" content={title}>
   <meta name="twitter:description" content={description}>
   <meta name="twitter:image" content={openGraphImageUrl}>
+
+  <ClientRouter />
 
   <!-- Search -->
   {searchFilters && <SearchFilter filters={searchFilters} />}
