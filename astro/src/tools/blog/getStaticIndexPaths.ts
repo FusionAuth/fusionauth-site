@@ -69,10 +69,10 @@ export const getStaticIndexPaths = async (
 
     filteredPosts.sort(sortByDate);
 
-    const params = {} as any;
+    const params: Record<string, string> = {};
     params[paramName] = slug; // Use the deduplicated slug
 
-    const props = {} as any;
+    const props: Record<string, string> = {};
     props[paramName + "Name"] = displayName; // Use the preserved readable name
 
     return paginate(filteredPosts, {
@@ -106,11 +106,11 @@ export const getStaticCategoryPaths = async (paginate: PaginateFunction): Promis
     const filteredPosts = blogs.filter((post) => post.data["categories"].includes(target));
     // newest first
     filteredPosts.sort(sortByDate);
-    const params = {} as any;
+    const params: Record<string, string> = {};
     params["category"] = target.trim().replaceAll(' ', '-').toLowerCase();
 
     // Put the readable name into the astro props
-    const props = {} as any;
+    const props: Record<string, string> = {};
     props["category" + "Name"] = target;
 
     return paginate(filteredPosts, {
