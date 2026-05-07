@@ -52,19 +52,17 @@ For a list of best practices mitigating the danger of client-side token storage,
 
 One relatively new technology makes client-side tokens a lot safer — Demonstrating Proof of Possession (DPoP), available as the IETF [RFC 9449](https://datatracker.ietf.org/doc/rfc9449).
 
-DPoP is complicated enough to warrant an entire article, and this [interactive DPoP site](https://dpop.info) has a great visual walkthrough of the protocol, but the concept is simple enough to understand.
+Before DPoP, if an attacker got their hands on your OAuth access token, they could use it to make requests just like you. With DPoP, the token alone isn't sufficient; the client must also prove their identity with a cryptographic signature.
 
-If an OAuth access token is like a door key that can be stolen, using DPoP is like using a door that you can unlock only if you have the key and you have signed your signature when trying to enter. An attacker with only the key can't open the door because they can't fake your signature.
+DPoP works by binding the token to a DPoP key, then requiring both the access token and a signature in requests. DPoP-enabled APIs reject any request that isn't signed by the DPoP key.
 
-DPoP works by cryptographically binding the access token to the DPoP key at creation, then requiring both the access token and the DPoP key in calls to resource servers. The resource servers reject any request with an access token that isn't signed by the DPoP key.
+Your browser stores the DPoP key using [a web cryptography API that prevents exfiltration](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable). The browser can sign requests with the DPoP key, but it can't access the key itself.
 
-If an attacker steals the access token in JavaScript, they can't steal the DPoP key because it's stored using the browser's web cryptography API with [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable) set to `false`. This means a request to a resource server can be signed with the DPoP key in the browser, but the key can never leave the browser or be accessed by JavaScript, preventing exfiltration.
+An attacker that manages to insert malicious JavaScript into your browser could make calls using a token signed by the key. But the token is only useful when the attacker can sign requests with the DPoP key, which is only possible in your browser. So we end up with a risk profile equivalent to BFF:
 
-An attacker that manages to insert malicious JavaScript into your browser could make calls using both the DPoP key and access code, but if the attacker exfiltrates the access code to their own machine, it's useless without the DPoP key. So DPoP makes storing access tokens in the browser as secure as using BFF. Remember that if an attacker manages to run malicious JavaScript in the user's browser (client hijacking), the attacker can make fraudulent requests as the user in both TMB and BFF patterns.
+BFF == TMB with DPoP > TMB > BBOC
 
-The security ranking is: BFF = TMB with DPoP ≫ TMB > BBOC.
-
-DPoP is not yet supported by FusionAuth, but it has been [requested](https://github.com/FusionAuth/fusionauth-issues/issues/1679). You can learn more about exactly how DPoP works in the [Evolving Auth Standards: Security Best Practices for App Developers webinar](/webinar/evolving-auth-standards-security-best-practices-for-app-developers).
+FusionAuth added support for DPoP in [version `1.63.0`](/blog/announcing-fusionauth-1-63). For a great visual walkthrough of the protocol, see the [interactive DPoP site](https://dpop.info).
 
 ## When to use TMB
 
