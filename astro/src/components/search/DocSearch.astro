@@ -5,37 +5,62 @@ import '@docsearch/css';
 
 <style is:global>
   :root {
+    /* Primary accent (indigo-600) */
     --docsearch-primary-color: #4f46e5;
+    --docsearch-highlight-color: #4f46e5;
+    --docsearch-focus-color: #4f46e5;
+    /* Text */
     --docsearch-text-color: #334155;
+    --docsearch-secondary-text-color: #64748b;
     --docsearch-muted-color: #94a3b8;
+    /* Surfaces */
     --docsearch-container-background: rgba(15, 23, 42, 0.5);
     --docsearch-modal-background: #fff;
     --docsearch-modal-shadow: 0 3px 8px rgba(15, 23, 42, 0.2);
     --docsearch-searchbox-background: #f1f5f9;
     --docsearch-searchbox-focus-background: #fff;
-    --docsearch-searchbox-shadow: inset 0 0 0 2px #4f46e5;
-    --docsearch-hit-color: #334155;
-    --docsearch-hit-active-color: #fff;
-    --docsearch-hit-background: #f1f5f9;
-    --docsearch-hit-shadow: none;
     --docsearch-footer-background: #f8fafc;
-    --docsearch-key-gradient: linear-gradient(-26.5deg, #e2e8f0, #f8fafc);
-    --docsearch-key-shadow: inset 0 -2px 0 0 #cbd5e1, inset 0 0 1px 1px #fff, 0 1px 2px 1px rgba(15, 23, 42, 0.1);
+    /* Hits */
+    --docsearch-hit-color: #334155;
+    --docsearch-hit-background: #f1f5f9;
+    --docsearch-hit-highlight-color: rgba(79, 70, 229, 0.1);
+    /* Keys */
+    --docsearch-key-background: #f1f5f9;
+    --docsearch-key-color: #64748b;
+    /* Borders */
+    --docsearch-subtle-color: #e2e8f0;
+    /* Button */
+    --docsearch-search-button-background: #fff;
+    --docsearch-search-button-text-color: #94a3b8;
   }
 
   html.dark {
+    /* Primary accent (indigo-400 for dark) */
+    --docsearch-highlight-color: #818cf8;
+    --docsearch-focus-color: #a5b4fc;
+    /* Text — all must meet 4.5:1 on #1e293b (slate-800) */
     --docsearch-text-color: #e2e8f0;
-    --docsearch-muted-color: #475569;
+    --docsearch-secondary-text-color: #94a3b8;
+    --docsearch-muted-color: #94a3b8;
+    /* Surfaces */
     --docsearch-container-background: rgba(15, 23, 42, 0.8);
     --docsearch-modal-background: #0f172a;
     --docsearch-modal-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
     --docsearch-searchbox-background: #1e293b;
     --docsearch-searchbox-focus-background: #0f172a;
-    --docsearch-hit-color: #94a3b8;
-    --docsearch-hit-background: #1e293b;
     --docsearch-footer-background: #1e293b;
-    --docsearch-key-gradient: linear-gradient(-26.5deg, #1e293b, #334155);
-    --docsearch-key-shadow: inset 0 -2px 0 0 #0f172a, inset 0 0 1px 1px #334155, 0 1px 2px 1px rgba(0, 0, 0, 0.4);
+    /* Hits */
+    --docsearch-hit-color: #cbd5e1;
+    --docsearch-hit-background: #1e293b;
+    --docsearch-hit-highlight-color: rgba(129, 140, 248, 0.15);
+    /* Keys */
+    --docsearch-key-background: #334155;
+    --docsearch-key-color: #94a3b8;
+    /* Borders */
+    --docsearch-subtle-color: #334155;
+    /* Button */
+    --docsearch-search-button-background: #1e293b;
+    --docsearch-search-button-text-color: #94a3b8;
   }
 
   #docsearch {
@@ -159,14 +184,58 @@ import '@docsearch/css';
       const rest = filtered.filter((item) => !primaryFilter(item.url) && !item.url.includes('/docs/'));
       const sorted = [...primary, ...docs, ...rest];
 
+      // For every docs page-level hit (type=lvl1): move the section name (lvl0)
+      // into the subtitle position (lvl1) and collapse the group header to
+      // "Documentation". This gives every result a section breadcrumb without
+      // any duplicate-counting logic, and requires no crawler changes.
+      const normalised = sorted.map((item) => {
+        const section = item.hierarchy?.lvl0;
+        if (!section || section === 'Blog' || section === 'Articles') return item;
+
+        // Collapse group header → "Documentation" for all docs hits.
+        const base = {
+          ...item,
+          hierarchy: { ...item.hierarchy, lvl0: 'Documentation' },
+          _highlightResult: item._highlightResult ? {
+            ...item._highlightResult,
+            hierarchy: { ...item._highlightResult.hierarchy, lvl0: { value: 'Documentation', matchLevel: 'none', matchedWords: [] } },
+          } : item._highlightResult,
+        };
+
+        // Promote page-level hits to lvl2 so DocSearch renders
+        // the section name as the subtitle beneath the page title.
+        if (item.type !== 'lvl1' || item.hierarchy.lvl2) return base;
+        return {
+          ...base,
+          type: 'lvl2',
+          hierarchy: { ...base.hierarchy, lvl1: section, lvl2: item.hierarchy.lvl1 },
+          _highlightResult: base._highlightResult ? {
+            ...base._highlightResult,
+            hierarchy: {
+              ...base._highlightResult.hierarchy,
+              lvl1: { value: section, matchLevel: 'none', matchedWords: [] },
+              lvl2: base._highlightResult.hierarchy?.lvl1,
+            },
+          } : base._highlightResult,
+          _snippetResult: item._snippetResult ? {
+            ...item._snippetResult,
+            hierarchy: {
+              ...item._snippetResult.hierarchy,
+              lvl1: { value: section, matchLevel: 'none', matchedWords: [] },
+              lvl2: item._snippetResult.hierarchy?.lvl1,
+            },
+          } : item._snippetResult,
+        };
+      });
+
       if (import.meta.env.DEV) {
-        return sorted.map((item) => ({
+        return normalised.map((item) => ({
           ...item,
           url: item.url.replace(/^https?:\/\/[^/]+/, window.location.origin),
         }));
       }
 
-      return sorted;
+      return normalised;
     },
   };
 
