@@ -10,37 +10,85 @@ const {
 if (!enableKapa) return '';
 ---
 
-<div class="fixed right-5 bottom-5 z-100">
-    <button id="kapa-button" class="relative flex flex-col items-center justify-center h-20 w-18 cursor-pointer rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800 bg-white dark:hover:bg-slate-800 dark:hover:border-indigo-500 group hover:bg-slate-100 hover:border-indigo-500 overflow-hidden shadow-lg">
-        <PurpleLogo viewBox="0 0 200 200" class="size-9 group-hover:scale-110 transition-transform duration-500 dark:hidden" />
-        <WhiteLogo viewBox="0 0 200 200" class="size-9 group-hover:scale-110 transition-transform duration-500 hidden dark:block" />
+<kapa-button class="fixed right-5 bottom-5 z-100">
+  <button id="kapa-button" class="relative flex flex-col items-center justify-center h-20 w-18 cursor-pointer rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800 bg-white dark:hover:bg-slate-800 dark:hover:border-indigo-500 group hover:bg-slate-100 hover:border-indigo-500 overflow-hidden shadow-lg">
+    <PurpleLogo viewBox="0 0 200 200" class="size-9 group-hover:scale-110 transition-transform duration-500 dark:hidden" />
+    <WhiteLogo viewBox="0 0 200 200" class="size-9 group-hover:scale-110 transition-transform duration-500 hidden dark:block" />
 
-        <span class="text-lg">Ask AI</span>
+    <span class="text-lg">Ask AI</span>
 
-        <span id="kapa-spinner" class="absolute inset-0 bg-black/10 dark:bg-black/50 transition-opacity duration-300 hidden items-center justify-center">
-            <Icon name="fa7-solid:spinner" class="h-8 animate-spin [animation-duration:2s]" size={32} />
-        </span>
-    </button>
-</div>
+    <span class="absolute inset-0 bg-black/10 dark:bg-black/50 transition-opacity duration-300 hidden group-[.is-loading]:flex items-center justify-center">
+      <Icon name="fa7-solid:spinner" class="h-8 animate-spin [animation-duration:2s]" size={32} />
+    </span>
+  </button>
+</kapa-button>
 
-<script is:inline>
-  (function() {
-    const btn = document.getElementById('kapa-button');
-    const spinner = document.getElementById('kapa-spinner');
-    const scriptSrc = "https://widget.kapa.ai/kapa-widget.bundle.js";
+<script>
+  const scriptSrc = "https://widget.kapa.ai/kapa-widget.bundle.js";
 
-    if (!btn) return;
+  declare global {
+    // Note the capital "W"
+    interface Window {
+      Kapa(fn: 'render', config?: { onRender: () => void }): void;
+      Kapa(fn: 'open', config?: { mode: 'search' | 'ai'; query: string; submit: boolean }): void;
+      Kapa(fn: 'close'): void;
+      Kapa(fn: 'unmount'): void;
+    }
+  }
 
-    async function loadKapa() {
+  let k = window.Kapa;
+  if (!k) {
+    let i: any = function () {
+      i.c(arguments);
+    };
+    i.q = [];
+    i.c = function (args) {
+      i.q.push(args);
+    };
+    window.Kapa = i;
+  }
+
+  class KapaButton extends HTMLElement {
+    private btn: HTMLButtonElement | null = null;
+    private script: HTMLScriptElement | null = null;
+    private loaded = false;
+
+    connectedCallback() {
+      this.btn = this.querySelector('button');
+
+      this.btn.addEventListener('click', async () => {
+        this.btn.classList.add('is-loading');
+        await this.loadKapa();
+        window.Kapa('open');
+        this.btn.classList.remove('is-loading');
+      });
+    }
+
+    disconnectedCallback() {
+      window.Kapa('unmount');
+
+      if (this.script) {
+        this.script.remove();
+        this.script = null;
+      }
+    }
+
+    private async loadKapa(): Promise<void> {
       return new Promise((resolve) => {
-        if (window.Kapa) {
+        if (this.loaded) {
           resolve();
           return;
         }
 
         const script = document.createElement("script");
-        script.src = scriptSrc;
         script.async = true;
+        window.Kapa('render', {
+          onRender: () => resolve()
+        });
+        script.onload = () => {
+          return this.loaded = true;
+        };
+        script.src = scriptSrc;
 
         const attrs = {
           "data-website-id": "26ad3b7e-7d94-491c-ab54-95712d1fafee",
@@ -57,26 +105,14 @@ if (!enableKapa) return '';
 
         Object.entries(attrs).forEach(([k, v]) => script.setAttribute(k, v));
 
-        script.onload = () => {
-          window.Kapa.render({
-            onRender: () => resolve()
-          });
-        };
-
+        // Append to the document head
         document.head.appendChild(script);
+        this.script = script;
       });
     }
+  }
 
-    btn.addEventListener('click', async () => {
-      spinner.style.display = 'flex';
-
-      await loadKapa();
-
-      if (window.Kapa) {
-        window.Kapa("open");
-      }
-
-      spinner.style.display = 'none';
-    });
-  })();
+  if (!customElements.get('kapa-button')) {
+    customElements.define('kapa-button', KapaButton);
+  }
 </script>
