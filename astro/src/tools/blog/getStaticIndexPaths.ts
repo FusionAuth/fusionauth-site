@@ -39,16 +39,16 @@ export const getAllEntries = (
  * @return the static paths result from the paginate function
  */
 export const getStaticIndexPaths = async (
-  paginate: PaginateFunction, 
-  attribute: keyof BlogFrontmatter, 
+  paginate: PaginateFunction,
+  attribute: keyof BlogFrontmatter,
   paramName: 'tag' | 'author'
 ): Promise<GetStaticPathsResult> => {
   const blogs = await getCollection('blog');
-  
+
   const allRawEntries = getAllEntries(blogs, attribute);
-  
+
   // Deduplicate based on the final URL slug, mapping slug -> Display Name
-  const uniqueSlugs = new Map<string, string>(); 
+  const uniqueSlugs = new Map<string, string>();
   allRawEntries.forEach(entry => {
     const slug = entry.trim().replaceAll(' ', '-').toLowerCase();
     if (!uniqueSlugs.has(slug)) {
@@ -63,16 +63,16 @@ export const getStaticIndexPaths = async (
       const postEntries = (post.data[attribute] as string)
         .split(",")
         .map(e => e.trim().replaceAll(' ', '-').toLowerCase());
-        
+
       return postEntries.includes(slug);
     });
 
     filteredPosts.sort(sortByDate);
-    
-    const params = {} as any;
+
+    const params: Record<string, string> = {};
     params[paramName] = slug; // Use the deduplicated slug
 
-    const props = {} as any;
+    const props: Record<string, string> = {};
     props[paramName + "Name"] = displayName; // Use the preserved readable name
 
     return paginate(filteredPosts, {
@@ -106,11 +106,11 @@ export const getStaticCategoryPaths = async (paginate: PaginateFunction): Promis
     const filteredPosts = blogs.filter((post) => post.data["categories"].includes(target));
     // newest first
     filteredPosts.sort(sortByDate);
-    const params = {} as any;
+    const params: Record<string, string> = {};
     params["category"] = target.trim().replaceAll(' ', '-').toLowerCase();
 
     // Put the readable name into the astro props
-    const props = {} as any;
+    const props: Record<string, string> = {};
     props["category" + "Name"] = target;
 
     return paginate(filteredPosts, {

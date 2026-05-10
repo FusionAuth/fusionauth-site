@@ -11,7 +11,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - From the Link API, note the difference between a FusionAuth User and a 3rd party user: `This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.`
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` or `id` when describing a unique identifier
-- Use `admin UI` instead of `Admin UI` when writing about the admin user interface.
+- Use `Admin UI` instead of `admin UI` when writing about the admin user interface.
 - Use `logged in` instead of `logged-in`
 - `log in` is the verb, `login` is the noun
 - Use `UserInfo` instead of `Userinfo`
@@ -24,7 +24,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - In general, put screenshot images after the text describing the image. That is "This functionality....\n\n<screenshot of functionality>". However, when describing fields for screens, as in the core concepts section, put the screenshot first.
 - If possible use an SVG for images. Otherwise, a PNG that has been properly minified is acceptable.
 - Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
-- When introducing a code snippet, don't use a : (colon). Instead, just use verbiage before it. "The code to exchange the token is similar to below."
+- When introducing a code snippet, you can use a colon or a period. For example: "The code to exchange the token is:" or "The code to exchange the token is similar to below."
 - Prefer 'You' to 'We'. 'Let's' is acceptable.
 - All code snippets within any documents should have indenting formatted to 2 spaces.
 - Code captions should have the first letter of every word capitalized: This Code Is The Best.

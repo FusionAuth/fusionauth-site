@@ -1,0 +1,163 @@
+---
+version: "1.37.0"
+date: 2022-08-09
+description: "FusionAuth 1.37.0 includes internal HTTP server changes, Webhook scoping, SCIM enhancements, and application-scoped MFA."
+---
+import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import ReleaseNotesDBMigrate from 'src/components/docs/release-notes/ReleaseNotesDBMigrate.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import Aside from 'src/components/Aside.astro';
+
+<Item category="breaking-change">
+This release contains some significant internal changes to our HTTP server. While we do not expect any issues, please be aware of this change as you test and prepare for upgrades. Please also be aware of changes to our Windows bundling options.
+</Item>
+
+<ReleaseNotesDBMigrate />
+
+<Item category="known-issue" viaIssue="1816" resolvedIn="1.37.1">
+Kickstart fails because it does not wait for FusionAuth to complete startup.
+</Item>
+
+<Item category="known-issue" viaIssue="1817" resolvedIn="1.37.1">
+Creating an application in the FusionAuth admin UI may fail due to a licensing error if you do not have an Enterprise license.
+</Item>
+
+<Item category="known-issue" viaIssue="1818" resolvedIn="1.37.2">
+A regression error was introduced in version `1.37.0` that causes HTTP request headers to be malformed when being sent to a Webhook, Generic Messenger or a Generic Connector.
+</Item>
+
+<Item category="known-issue" viaIssue="1831" resolvedIn="1.38.1">
+Static resources such as CSS and JS may be missing a `Content-Type` header which may cause a proxy using `X-Content-Type-Options: nosniff` to fail to load the resource.
+</Item>
+
+<Item category="known-issue" viaIssue="1905" resolvedIn="1.40.2">
+A two-factor trust may expire early causing a user to be prompted to complete two-factor during login.
+</Item>
+
+<Item category="known-issue">
+A theme issue may exist on a form action and may cause breaking changes when upgrading to this version. If you are upgrading, please verify your theme files accurately create a form action. The following themes should be updated:
+* OAuth authorize -> `action="/oauth2/authorize"`
+* Child registration not allowed -> `action="/oauth2/child-registration-not-allowed"`
+* OAuth passwordless -> `action="/oauth2/passwordless"`
+* OAuth register -> `action="/oauth2/register"`
+* OAuth two factor -> `action="/oauth2/two-factor"`
+* Change password form -> `action="/password/change"`
+* Forgot password -> `action="/password/forgot"`
+</Item>
+
+<Item category="security" issue="1814">
+Allow deprecated XML signature algorithms that were removed in Java 17. It is still not recommended that you use any of these legacy SHA1 algorithms, but if you are unable to utilize a modern algorithm, they will be allowed.
+</Item>
+
+<Item category="breaking-change">
+Windows install has been removed. Our strategy is to support Windows using WSL 2 with our provided Debian package. (Note: Due to customer feedback, a native Windows installation option was restored as of version `1.40.0`.)
+</Item>
+
+<Item category="breaking-change" issue="1812">
+Webhooks are no longer configured as "All applications" or limited to a single Application. They are now scoped to one or more tenants. Filter events in your own Webhook handler by the `applicationId`.
+</Item>
+
+<Item category="breaking-change" issue="1414">
+Deprecated Apache Tomcat specific configuration:
+* `fusionauth-app.http.max-header-size` default is now `64k`.
+* `fusionauth-app.http.cookie-same-site-policy` cookies will be written using `SameSite=Lax`, and cookies used by the Admin UI use `SameSite=Strict`.
+* `fusionauth-app.management.port` and `fusionauth-app.ajp.port` are no longer required.
+* `fusionauth-app.http.relaxed-path-chars` and `fusionauth-app.http.relaxed-query-chars` options removed.
+</Item>
+
+<Item category="breaking-change">
+FastPath and normal startup commands have changed. The startup process will now use `start.sh` instead of Catalina scripts.
+</Item>
+
+<Item category="breaking-change">
+When using the FusionAuth Docker image with MySQL, you will need to bundle the MySQL connector jar in the image, or add a layer to the stock FusionAuth image to ensure `curl` is installed.
+</Item>
+
+<Item category="fix" issue="1547">
+Add the appropriate feedback to the users when attempting to change an email during a gated email verification that is already in-use.
+</Item>
+
+<Item category="fix" issue="1676">
+Correct the validation when deleting a key from Key Master when in use by a de-activated application.
+</Item>
+
+<Item category="fix" issue="1705">
+Perform implicit email verification when enabled and a setup password email request is completed.
+</Item>
+
+<Item category="fix" issue="1745">
+Handle URL encoded characters in the user-information part of the URL when connecting to Elasticsearch.
+</Item>
+
+<Item category="fix" issue="1764">
+When using the Change Password workflow in the hosted login pages for a user that has enabled 2FA, adding the OAuth2 parameters found in the `state` resolves an error when the user completes the workflow.
+</Item>
+
+<Item category="fix" issue="1772">
+The Refresh Token retrieve API and the Session tab in admin UI will no longer show expired refresh tokens.
+</Item>
+
+<Item category="fix" issue="1790" thanks="theogravity">
+Fix Lambda JS validation when using ES6 features with the GraalJS engine.
+</Item>
+
+<Item category="enhancement" issue="1319">
+Administrative Email Verification using the API or FusionAuth admin UI. You may now optionally create the user with an un-verified email.
+</Item>
+
+<Item category="enhancement" issue="1699">
+The Oauth2 Logout does not log a user out of FusionAuth app if logging out of another application in the same default tenant.
+</Item>
+
+<Item category="enhancement" issue="1702">
+Updates to our initial SCIM Server implementation released in version `1.36.0`. (Also resolves #1703)
+</Item>
+
+<Item category="enhancement" issue="1743">
+Better options to capture debug information when troubleshooting an SMTP connection issue by enabling `debug` on the SMTP configuration.
+</Item>
+
+<Item category="enhancement" issue="1788" thanks="darkeagle1337">
+Support larger email templates on MySQL using `MEDIUMTEXT` which supports up to `16M`.
+</Item>
+
+<Item category="enhancement" issue="1792">
+Improvements to the OAuth2 Logout endpoint correctly supporting the `POST` method in addition to `GET`, and allowing an expired `id_token` in `id_token_hint`.
+</Item>
+
+<Item category="enhancement" issue="1812">
+Webhooks are now scoped to one or more tenants.
+</Item>
+
+<Item category="enhancement">
+Any API response that returns a Refresh Token will now also return a `refresh_token_id` (or `refreshTokenId`), useful for identifying a refresh token for revocation.
+</Item>
+
+<Item category="enhancement">
+The Access Token will contain a new claim named `sid` which is the immutable identifier Refresh Token.
+</Item>
+
+<Item category="enhancement">
+When available the Refresh Token is now returned in the `JWTRefreshTokenRevokeEvent` event in the `refreshToken` field.
+</Item>
+
+<Item category="enhancement">
+The Login Ping API may now optionally take the request as a POST body.
+</Item>
+
+<Item category="new-feature" issue="763">
+Application scoped Multi-Factor authentication allowing an application to choose to participate in MFA with a separate TTL.
+</Item>
+
+<Item category="new-feature" issue="1551" thanks="epbensimpson">
+Optionally disable the IdP linking strategy for an Identity Provider.
+</Item>
+
+<Item category="new-feature">
+Added `fusionauth-app.http.read-timeout` to the configuration to optionally set the maximum read timeout.
+</Item>
+
+<Item category="internal" issue="1671">
+Remove Apache Tomcat as the underlying application server, in favor of a more modern HTTP server based upon Netty.
+</Item>
