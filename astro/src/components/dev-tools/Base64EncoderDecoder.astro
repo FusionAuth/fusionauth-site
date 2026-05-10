@@ -1,0 +1,151 @@
+---
+import Toggle from "../Toggle.astro";
+import { border } from "../BaseInput.js";
+---
+
+<base64-encoder-decoder>
+  <form id="url-encoder-form" class="gap-y-6 grid grid-cols-1 mt-8">
+    <Toggle id="url_safe" label="URL safe" name="url_safe" required={false}/>
+    <Toggle id="without_padding" label="Without padding" name="without_padding" required={false}/>
+    
+    <div class="no-prose">
+      <div class:list={border(false, false, true)}>
+        <label for="decoded-textarea" class="absolute bg-white block font-medium leading-none left-2 px-1 text-slate-700 text-xs -top-2 z-20 dark:bg-slate-900 dark:text-white">
+          Decoded text
+        </label>
+        <div class="rounded overflow-hidden">
+          <textarea id="decoded-textarea" class="hidden" name="decoded-textarea"></textarea>
+        </div>
+      </div>
+      <sub class="italic mt-2 text-xs text-gray-500">Type or paste a text into the text area above and the text will be base64 <strong>Encoded</strong> as you type</sub>
+    </div>
+
+    <div class="no-prose">
+      <div class:list={border(false, false, true)}>
+        <label for="encoded-textarea" class="absolute bg-white block font-medium leading-none left-2 px-1 text-slate-700 text-xs -top-2 z-20 dark:bg-slate-900 dark:text-white">
+          Encoded text
+        </label>
+        <div class="rounded overflow-hidden">
+          <textarea id="encoded-textarea" class="hidden" name="encoded-textarea"></textarea>
+        </div>
+      </div>
+      <sub class="italic mt-2 text-xs text-gray-500">Type or paste base64 encoded text into the text area above and the text will be base64 <strong>Decoded</strong> as you type</sub>
+    </div>
+  </form>
+</base64-encoder-decoder>
+
+
+<script>
+  import { EditorView, lineNumbers } from '@codemirror/view';
+  import { dracula } from 'thememirror';
+
+  class Base64EncoderDecoder extends HTMLElement {
+    private decodedEditor: EditorView;
+    private encodedEditor: EditorView;
+    private urlSafeCheckbox: HTMLInputElement;
+    private withoutPaddingCheckbox: HTMLInputElement;
+
+    connectedCallback() {
+      const decodedTextarea = this.querySelector('#decoded-textarea') as HTMLTextAreaElement;
+      const encodedTextarea = this.querySelector('#encoded-textarea') as HTMLTextAreaElement;
+      this.urlSafeCheckbox = this.querySelector('#url_safe') as HTMLInputElement;
+      this.withoutPaddingCheckbox = this.querySelector('#without_padding') as HTMLInputElement;
+
+      this.decodedEditor = new EditorView({
+        parent: decodedTextarea.parentElement,
+        extensions: [
+          lineNumbers(),
+          dracula,
+          EditorView.updateListener.of((e) => {
+            if (e.docChanged) {
+              this.handleChange(true);
+            }
+          })
+        ]
+      });
+
+      this.encodedEditor = new EditorView({
+        parent: encodedTextarea.parentElement,
+        extensions: [
+          lineNumbers(),
+          dracula,
+          EditorView.updateListener.of((e) => {
+            if (e.docChanged) {
+              this.handleChange(false);
+            }
+          })
+        ]
+      });
+
+      this.urlSafeCheckbox.addEventListener('change', () => this.handleChange(true));
+      this.withoutPaddingCheckbox.addEventListener('change', () => this.handleChange(true));
+    }
+
+    private handleChange(isEncoding: boolean) {
+      if (isEncoding) {
+        const value = this.decodedEditor.state.doc.toString();
+        let encoded = this.urlSafeCheckbox.checked ? this.urlSafeEncode(value) : this.encode(value);
+        if (this.withoutPaddingCheckbox.checked) {
+          encoded = encoded.replace(/=+$/, '');
+        }
+        this.updateEditorValue(this.encodedEditor, encoded);
+      } else {
+        const value = this.encodedEditor.state.doc.toString();
+        try {
+          const decoded = this.urlSafeCheckbox.checked ? this.urlSafeDecode(value) : this.decode(value);
+          this.updateEditorValue(this.decodedEditor, decoded);
+        } catch (e) {
+          // Ignore decoding errors while typing
+        }
+      }
+    }
+
+    private updateEditorValue(view: EditorView, newValue: string) {
+      if (view.state.doc.toString() === newValue) return;
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: newValue }
+      });
+    }
+
+    decode(s: string) {
+      return atob(s);
+    }
+
+    encode(s: string) {
+      return btoa(s);
+    }
+
+    urlSafeDecode(s: string) {
+      return this.decode(s.replace(/-/g, '+').replace(/_/g, '/'));
+    }
+
+    urlSafeEncode(s: string) {
+      return this.encode(s).replace(/\+/g, '-').replace(/\//g, '_');
+    }
+  }
+
+  customElements.define('base64-encoder-decoder', Base64EncoderDecoder);
+</script>
+
+<style is:global>
+    .cm-content, .cm-gutter {
+        min-height: 300px !important;
+        font-size: 12px;
+    }
+
+    .cm-gutters {
+        margin: 1px;
+    }
+
+    .cm-scroller {
+        overflow: auto;
+    }
+
+    .cm-wrap {
+        border: 1px solid silver
+    }
+
+    .cm-lineNumbers {
+        width: 29px;
+    }
+</style>

@@ -3,47 +3,59 @@ import Icon from "astro-iconset/components";
 
 const {source} = Astro.props;
 ---
-<button data-widget="copy-button" data-copy-source={source}
-        class="group flex items-center justify-center bg-slate-200 leading-4 w-10 h-8 rounded text-indigo-700 dark:bg-slate-800 dark:text-indigo-400 dark:hover:bg-slate-700 dark:hover:text-indigo-400 hover:bg-slate-300 hover:text-indigo-600"
-        title="Copy contents">
+<copy-to-clipboard source={source}>
+  <button
+      class="group flex items-center justify-center bg-slate-200 leading-4 w-10 h-8 rounded text-indigo-700 dark:bg-slate-800 dark:text-indigo-400 dark:hover:bg-slate-700 dark:hover:text-indigo-400 hover:bg-slate-300 hover:text-indigo-600"
+      title="Copy contents">
     <Icon name={`fa7-solid:copy`} class="block group-[.active]:hidden" size={18}/>
     <Icon name={`fa7-solid:check`} class="group-[.active]:block hidden" size={18}/>
-</button>
+  </button>
+</copy-to-clipboard>
 
 <script>
-  const timeouts = new WeakMap<HTMLElement, number>();
+  class CopyToClipboard extends HTMLElement {
+    private timeout?: number;
+    private button?: HTMLButtonElement;
 
-  document.querySelectorAll('[data-widget="copy-button"]')
-    .forEach((copyButton: HTMLButtonElement) => {
-      copyButton.addEventListener('click', () => {
-        const id = copyButton.dataset.copySource;
+    connectedCallback() {
+      const source = this.getAttribute('source');
+      this.button = this.querySelector('button')!;
+      this.button.addEventListener('click', () => this.handleClick(source));
+    }
 
-        if (!id) return;
+    private handleClick(source: string | null) {
+      if (!source) return;
 
-        const source = document.getElementById(id);
+      const sourceElement = document.getElementById(source);
+      if (!sourceElement) return;
 
-        if (!source) return;
+      navigator.clipboard
+        .writeText(sourceElement.textContent || '')
+        .then(() => {
+          this.button!.classList.add('active');
 
-        navigator.clipboard
-          .writeText(source.textContent || '')
-          .then(() => {
-            copyButton.classList.add('active');
+          if (this.timeout) {
+            clearTimeout(this.timeout);
+          }
 
-            const existingTimeout = timeouts.get(copyButton);
-            if (existingTimeout) {
-              clearTimeout(existingTimeout);
-            }
+          this.timeout = window.setTimeout(() => {
+            this.button!.classList.remove('active');
+            this.timeout = undefined;
+          }, 1500);
+        })
+        .catch(err => {
+          console.error('Failed to copy text: ', err);
+        });
+    }
 
-            const timeoutId = window.setTimeout(() => {
-              copyButton.classList.remove('active');
-              timeouts.delete(copyButton);
-            }, 1500);
+    disconnectedCallback() {
+      if (this.timeout) {
+        clearTimeout(this.timeout);
+      }
+    }
+  }
 
-            timeouts.set(copyButton, timeoutId);
-          })
-          .catch(err => {
-            console.error('Failed to copy text: ', err);
-          });
-      });
-    });
+  if (!customElements.get('copy-to-clipboard')) {
+    customElements.define('copy-to-clipboard', CopyToClipboard);
+  }
 </script>

@@ -1,0 +1,57 @@
+---
+import { border } from "../BaseInput.js";
+import CopyToClipboard from "../CopyToClipboard.astro";
+import { Icon } from "astro-iconset/components";
+---
+
+<uuid-generator>
+  <div class="flex gap-x-6 items-stretch mt-8 no-prose">
+    <div class:list={[border(false, false, true), "flex items-center justify-between py-1 ps-2 pe-1 min-w-[350px]"]}>
+      <span id="uuid-value-display">UUID</span>
+      <CopyToClipboard source="uuid-value-display" />
+    </div>
+    <button id="uuid-button" class="bg-blue-700 flex items-center px-6 py-1.5 rounded-lg text-white hover:bg-blue-800" type="button">
+      <Icon name="fa7-solid:sync" class="inline h-4" />
+      <span class="ml-2">Generate</span>
+    </button>
+  </div>
+</uuid-generator>
+
+<script>
+  class UuidGenerator extends HTMLElement {
+    #lut: string[] = [];
+
+    constructor() {
+      super();
+      for (let i = 0; i < 256; i++) {
+        this.#lut[i] = (i < 16 ? '0' : '') + (i).toString(16);
+      }
+    }
+
+    connectedCallback() {
+      const uuidDisplay = this.querySelector('#uuid-value-display') as HTMLElement;
+      const generateButton = this.querySelector('#uuid-button') as HTMLButtonElement;
+
+      const updateUuid = () => {
+        uuidDisplay.textContent = this.generate();
+      };
+
+      generateButton.addEventListener('click', updateUuid);
+      updateUuid();
+    }
+
+    generate() {
+      const d0 = Math.random() * 0xffffffff | 0;
+      const d1 = Math.random() * 0xffffffff | 0;
+      const d2 = Math.random() * 0xffffffff | 0;
+      const d3 = Math.random() * 0xffffffff | 0;
+      return this.#lut[d0 & 0xff] + this.#lut[d0 >> 8 & 0xff] + this.#lut[d0 >> 16 & 0xff] + this.#lut[d0 >> 24 & 0xff] + '-' +
+          this.#lut[d1 & 0xff] + this.#lut[d1 >> 8 & 0xff] + '-' +
+          this.#lut[d1 >> 16 & 0x0f | 0x40] + this.#lut[d1 >> 24 & 0xff] + '-' +
+          this.#lut[d2 & 0x3f | 0x80] + this.#lut[d2 >> 8 & 0xff] + '-' +
+          this.#lut[d2 >> 16 & 0xff] + this.#lut[d2 >> 24 & 0xff] + this.#lut[d3 & 0xff] + this.#lut[d3 >> 8 & 0xff] + this.#lut[d3 >> 16 & 0xff] + this.#lut[d3 >> 24 & 0xff];
+    }
+  }
+
+  customElements.define('uuid-generator', UuidGenerator);
+</script>

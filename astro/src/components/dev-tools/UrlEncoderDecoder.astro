@@ -1,0 +1,145 @@
+---
+import { border } from "../BaseInput.js";
+---
+
+<url-encoder-decoder>
+  <form class="gap-y-6 grid grid-cols-1 mt-8">
+    <div class="no-prose">
+      <div class:list={border(false, false, true)}>
+        <label for="decoded-textarea" class="absolute bg-white block font-medium leading-none left-2 px-1 text-slate-700 text-xs -top-2 z-20 dark:bg-slate-900 dark:text-white">
+          Decoded URL
+        </label>
+        <div class="rounded overflow-hidden">
+          <textarea id="decoded-textarea" class="hidden" name="decoded-textarea"></textarea>
+        </div>
+      </div>
+      <sub class="italic mt-2 text-xs text-gray-500">Type or paste text or a URL into the text area above and the text will be <strong>Encoded</strong> as you type</sub>
+    </div>
+
+    <div class="no-prose">
+      <div class:list={border(false, false, true)}>
+        <label for="encoded-textarea" class="absolute bg-white block font-medium leading-none left-2 px-1 text-slate-700 text-xs -top-2 z-20 dark:bg-slate-900 dark:text-white">
+          Encoded URL
+        </label>
+        <div class="rounded overflow-hidden">
+          <textarea id="encoded-textarea" class="hidden" name="encoded-textarea"></textarea>
+        </div>
+      </div>
+      <sub class="italic mt-2 text-xs text-gray-500">Type or paste an encoded value into the text area above and the text will be <strong>Decoded</strong> as you type</sub>
+    </div>
+  </form>
+</url-encoder-decoder>
+
+<script>
+  import { EditorView, lineNumbers } from '@codemirror/view';
+  import { dracula } from 'thememirror';
+
+  class UrlEncoderDecoder extends HTMLElement {
+    private decodedEditor: EditorView;
+    private encodedEditor: EditorView;
+
+    connectedCallback() {
+      const decodedTextarea = this.querySelector('#decoded-textarea') as HTMLTextAreaElement;
+      const encodedTextarea = this.querySelector('#encoded-textarea') as HTMLTextAreaElement;
+
+      this.decodedEditor = new EditorView({
+        parent: decodedTextarea.parentElement,
+        extensions: [
+          lineNumbers(),
+          dracula,
+          EditorView.updateListener.of((e) => {
+            if (e.docChanged) {
+              this.handleChange(true);
+            }
+          })
+        ]
+      });
+
+      this.encodedEditor = new EditorView({
+        parent: encodedTextarea.parentElement,
+        extensions: [
+          lineNumbers(),
+          dracula,
+          EditorView.updateListener.of((e) => {
+            if (e.docChanged) {
+              this.handleChange(false);
+            }
+          })
+        ]
+      });
+    }
+
+    private handleChange(isEncoding: boolean) {
+      const src = isEncoding ? this.decodedEditor : this.encodedEditor;
+      const dst = isEncoding ? this.encodedEditor : this.decodedEditor;
+      
+      const value = src.state.doc.toString();
+      const parts = [];
+      const vars = value.split('&');
+      for (let i = 0; i < vars.length; i++) {
+        if (parts.length !== 0) {
+          parts.push('&');
+        }
+
+        const pair = vars[i].split('=');
+        if (pair.length > 0) {
+          try {
+            if (isEncoding) {
+              parts.push(encodeURIComponent(pair[0]));
+            } else {
+              parts.push(decodeURIComponent(pair[0]));
+            }
+          } catch (e) {
+             parts.push(pair[0]);
+          }
+        }
+
+        if (pair.length === 2) {
+          parts.push('=');
+          try {
+            if (isEncoding) {
+              parts.push(encodeURIComponent(pair[1]));
+            } else {
+              parts.push(decodeURIComponent(pair[1]));
+            }
+          } catch (e) {
+            parts.push(pair[1]);
+          }
+        }
+      }
+      this.updateEditorValue(dst, parts.join(''));
+    }
+
+    private updateEditorValue(view: EditorView, newValue: string) {
+      if (view.state.doc.toString() === newValue) return;
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: newValue }
+      });
+    }
+  }
+
+  customElements.define('url-encoder-decoder', UrlEncoderDecoder);
+</script>
+
+<style is:global>
+    .cm-content, .cm-gutter {
+        min-height: 300px !important;
+        font-size: 12px;
+    }
+
+    .cm-gutters {
+        margin: 1px;
+    }
+
+    .cm-scroller {
+        overflow: auto;
+    }
+
+    .cm-wrap {
+        border: 1px solid silver
+    }
+
+    .cm-lineNumbers {
+        width: 29px;
+    }
+</style>

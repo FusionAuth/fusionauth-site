@@ -1,0 +1,281 @@
+---
+---
+
+<jwt-debugger>
+  <div class="gap-y-6 grid md:grid-cols-2 md:grid-rows-[auto,auto] gap-5 my-8 md:min-h-[300px] text-[14px]">
+    <div class="row-span-2 flex-1 flex flex-col">
+      <label for="encoded-textarea" class="label block font-medium mb-1">
+        JSON Web Token (JWT)
+      </label>
+      <div class="rounded overflow-hidden grow">
+        <textarea id="encoded-textarea" class="hidden" name="encoded-textarea"></textarea>
+      </div>
+    </div>
+    <div class="flex-1 h-[min-content]">
+      <label for="header-textarea" class="label block font-medium mb-1">
+        Header
+      </label>
+      <div class="rounded overflow-hidden">
+        <textarea id="header-textarea" class="hidden" name="header-textarea"></textarea>
+      </div>
+    </div>
+    <div class="flex-1">
+      <label for="payload-textarea" class="label block font-medium mb-1">
+        Payload
+      </label>
+      <div class="rounded overflow-hidden">
+        <textarea id="payload-textarea" class="hidden" name="payload-textarea"></textarea>
+      </div>
+    </div>
+  </div>
+</jwt-debugger>
+
+<script>
+  import { json } from "@codemirror/lang-json";
+  import { MatchDecorator, ViewPlugin, Decoration, EditorView, lineNumbers } from "@codemirror/view";
+  import { dracula } from 'thememirror';
+  import { basicSetup } from "codemirror";
+import { AnnotationType, Transaction } from "@codemirror/state";
+
+  const tokenDec = Decoration.mark({class: "headerDec"});
+  const tokenDecorator = new MatchDecorator({
+    regexp: /([^.]+)/g,
+    decoration: () => tokenDec
+  });
+  const tokenColors = ViewPlugin.define(
+    (view) => ({
+      decorations: tokenDecorator.createDeco(view),
+      update(u) {
+        this.decorations = tokenDecorator.updateDeco(u, this.decorations);
+      },
+    }),
+    {
+      decorations: (v) => v.decorations,
+    },
+  );
+
+  class JwtDebugger extends HTMLElement {
+    private defaultToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo";
+    private encodedEditor: EditorView;
+    private headerEditor: EditorView;
+    private payloadEditor: EditorView;
+
+    connectedCallback() {
+      const encodedTextarea = this.querySelector('#encoded-textarea') as HTMLTextAreaElement;
+      const headerTextarea = this.querySelector('#header-textarea') as HTMLTextAreaElement;
+      const payloadTextarea = this.querySelector('#payload-textarea') as HTMLTextAreaElement;
+
+      this.encodedEditor = new EditorView({
+        parent: encodedTextarea.parentElement,
+        extensions: [
+          tokenColors,
+          EditorView.lineWrapping,
+          EditorView.updateListener.of((e) => {
+            if (e.docChanged && !this.isProgrammatic(e.transactions)) {
+              const newValue = e.state.doc.toString();
+              const {headers, payload} = this.decodeJwt(newValue);
+              this.updateEditorValue(this.headerEditor, headers);
+              this.updateEditorValue(this.payloadEditor, payload);
+            }
+          })
+        ],
+        doc: this.defaultToken
+      });
+
+      const {headers, payload} = this.decodeJwt(this.defaultToken);
+
+      this.headerEditor = new EditorView({
+        parent: headerTextarea.parentElement,
+        extensions: [
+          basicSetup,
+          EditorView.lineWrapping,
+          json(),
+          EditorView.updateListener.of((e) => {
+            if (e.docChanged && !this.isProgrammatic(e.transactions)) {
+              const newValue = e.state.doc.toString();
+              const currentToken = this.encodedEditor.state.doc.toString().split(".");
+              try {
+                const updatedHeader = btoa(newValue);
+                this.updateEditorValue(this.encodedEditor, `${updatedHeader}.${currentToken[1] || ''}.${currentToken[2] || ''}`);
+              } catch (e) {
+                // Ignore encoding errors while typing
+              }
+            }
+          })
+        ],
+        doc: headers
+      });
+
+      this.payloadEditor = new EditorView({
+        parent: payloadTextarea.parentElement,
+        extensions: [
+          basicSetup,
+          EditorView.lineWrapping,
+          json(),
+          EditorView.updateListener.of((e) => {
+            if (e.docChanged && !this.isProgrammatic(e.transactions)) {
+              const newValue = e.state.doc.toString();
+              const currentToken = this.encodedEditor.state.doc.toString().split(".");
+              try {
+                const updatedPayload = btoa(newValue);
+                this.updateEditorValue(this.encodedEditor, `${currentToken[0] || ''}.${updatedPayload}.${currentToken[2] || ''}`);
+              } catch (e) {
+                // Ignore encoding errors while typing
+              }
+            }
+          })
+        ],
+        doc: payload
+      });
+    }
+
+    private isProgrammatic(transactions: readonly Transaction[]) {
+      return !transactions.some(t => t.annotation(Transaction.userEvent));
+    }
+
+    private updateEditorValue(view: EditorView, newValue: string) {
+      if (view.state.doc.toString() === newValue) return;
+      view.dispatch({
+        changes: {from: 0, to: view.state.doc.length, insert: newValue}
+      });
+    }
+
+    decodeJwt(stringToDecode) {
+      const s = stringToDecode.split(".");
+      let headers, payload;
+      try {
+        headers = JSON.stringify(JSON.parse(atob(s[0])), null, 2);
+      } catch (e) {
+        headers = JSON.stringify({"error": "Token header is invalid"}, null, 2);
+      }
+
+      try {
+        payload = JSON.stringify(JSON.parse(atob(s[1])), null, 2);
+      } catch (e) {
+        payload = JSON.stringify({"error": "Token payload is invalid"}, null, 2);
+      }
+      return {payload, headers};
+    }
+  }
+
+  customElements.define('jwt-debugger', JwtDebugger);
+</script>
+
+<style is:global>
+    @reference '../../css/style.css'
+
+    .cm-editor {
+        @apply h-full;
+    }
+    #header-textarea .cm-editor {
+        @apply md:max-h-[max-content];
+    }
+
+    #payload-textarea .cm-editor {
+        @apply md:max-h-[max-content];
+    }
+
+    .cm-editor {
+        @apply flex-1 bg-white rounded-md border border-slate-400 p-2 h-full;
+    }
+
+    .cm-editor {
+        max-height: 100%;
+    }
+
+    .cm-scroller {
+        overflow: auto
+    }
+
+    .dark .cm-editor {
+        @apply bg-slate-900;
+    }
+
+    .dark .cm-focused .cm-cursor {
+        border-left: 1px solid white !important;
+    }
+
+    .cm-editor .cm-activeLine {
+        background: transparent;
+    }
+
+    .cm-editor .cm-gutters.cm-gutters-before {
+        display: none;
+    }
+
+    .cm-gutters {
+        min-height: initial !important;
+    }
+
+    .headerDec:first-of-type {
+        @apply text-green-600;
+    }
+
+    .headerDec:first-of-type:hover {
+        @apply bg-green-100;
+    }
+
+    .dark .headerDec:first-of-type:hover {
+        @apply bg-green-900;
+    }
+
+    .headerDec:nth-of-type(2) {
+        @apply text-indigo-600;
+    }
+
+    .headerDec:nth-of-type(2):hover {
+        @apply bg-indigo-100;
+    }
+
+    .dark .headerDec:nth-of-type(2):hover {
+        @apply bg-indigo-700;
+    }
+
+    .dark .headerDec:first-of-type {
+        @apply text-green-300;
+    }
+
+    .dark .headerDec:nth-of-type(2) {
+        @apply text-indigo-300;
+    }
+
+    .headerDec:nth-of-type(3) {
+        @apply text-red-600;
+    }
+
+    .headerDec:nth-of-type(3):hover {
+        @apply bg-red-100;
+    }
+
+    .dark .headerDec:nth-of-type(3) {
+        @apply text-red-500;
+    }
+
+    .dark .headerDec:nth-of-type(3):hover {
+        @apply bg-red-900;
+    }
+
+    .cm-line {
+        @apply text-indigo-800;
+    }
+
+    .dark .cm-line {
+        @apply text-indigo-100;
+    }
+
+    .ͼe {
+        @apply text-red-700;
+    }
+
+    .ͼd {
+        @apply text-green-700
+    }
+
+    .dark .ͼe {
+        @apply text-orange-300;
+    }
+
+    .dark .ͼd {
+        @apply text-green-300;
+    }
+</style>

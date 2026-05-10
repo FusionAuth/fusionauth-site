@@ -1,0 +1,157 @@
+---
+import { border } from "../BaseInput.js";
+import Text from "../Text.astro";
+import CopyToClipboard from "../CopyToClipboard.astro";
+---
+
+<date-time-converter>
+  <h3 class="mt-8">Current date/time</h3>
+  <p>These values are based on the current instant when this page was loaded. The milliseconds and seconds are from <a href="#what-is-epoch-time">epoch</a>. You can copy these values but they aren't editable.</p>
+
+  <div class="gap-6 grid grid-cols-[1fr_200px] items-center mt-8 no-prose">
+    <div class:list={[border(false, false, true), "flex items-center justify-between py-1 ps-2 pe-1"]}>
+      <span id="current-time-milliseconds">Milliseconds</span>
+      <CopyToClipboard source="current-time-milliseconds"/>
+    </div>
+    <span>Milliseconds</span>
+    <div class:list={[border(false, false, true), "flex items-center justify-between py-1 ps-2 pe-1"]}>
+      <span id="current-time-seconds">Seconds</span>
+      <CopyToClipboard source="current-time-seconds"/>
+    </div>
+    <span>Seconds</span>
+    <div class:list={[border(false, false, true), "flex items-center justify-between py-1 ps-2 pe-1"]}>
+      <span id="current-date">Date</span>
+      <CopyToClipboard source="current-date"/>
+    </div>
+    <span>Date</span>
+    <div class:list={[border(false, false, true), "flex items-center justify-between py-1 ps-2 pe-1"]}>
+      <span id="current-time">Time</span>
+      <CopyToClipboard source="current-time"/>
+    </div>
+    <span>Time</span>
+  </div>
+
+  <h3 class="mt-8" id="convert-from-seconds">Convert from seconds</h3>
+  <p>These values are based on an instant, which is either milliseconds and seconds are from <a href="#what-is-epoch-time">epoch</a>. You can modify the top value to change the output below it.</p>
+
+  <div class="mt-4">
+    <Text id="seconds-input" name="seconds" label="Seconds or milliseconds"/>
+  </div>
+
+  <div class="gap-6 grid grid-cols-[1fr_200px] items-center mt-8 no-prose">
+    <div class:list={[border(false, false, true), "flex items-center justify-between py-1 ps-2 pe-1"]}>
+      <span id="date-when-seconds">Date (when seconds)</span>
+      <CopyToClipboard source="date-when-seconds"/>
+    </div>
+    <span>Date (when seconds)</span>
+    <div class:list={[border(false, false, true), "flex items-center justify-between py-1 ps-2 pe-1"]}>
+      <span id="date-when-milliseconds">Date (when milliseconds)</span>
+      <CopyToClipboard source="date-when-milliseconds"/>
+    </div>
+    <span>Date (when milliseconds)</span>
+  </div>
+
+  <h3 class="mt-8">Convert from strings</h3>
+  <p>These values are based on a date in ISO format. You can modify the top value to change the output below it.</p>
+
+  <div class="mt-4">
+    <Text id="date-input" name="date" label="Date/time string"/>
+  </div>
+
+  <div class="gap-6 grid grid-cols-[1fr_200px] items-center mt-8 no-prose">
+    <div class:list={[border(false, false, true), "flex items-center justify-between py-1 ps-2 pe-1"]}>
+      <span id="seconds-since-epoch">Seconds</span>
+      <CopyToClipboard source="seconds-since-epoch"/>
+    </div>
+    <span>Seconds</span>
+    <div class:list={[border(false, false, true), "flex items-center justify-between py-1 ps-2 pe-1"]}>
+      <span id="milliseconds-since-epoch">Milliseconds</span>
+      <CopyToClipboard source="milliseconds-since-epoch"/>
+    </div>
+    <span>Milliseconds</span>
+  </div>
+</date-time-converter>
+
+<script>
+  class DateTimeConverter extends HTMLElement {
+    constructor() {
+      super();
+    }
+
+    connectedCallback() {
+      const secondsInput = this.querySelector('#seconds-input') as HTMLInputElement;
+      const dateInput = this.querySelector('#date-input') as HTMLInputElement;
+
+      const currentTimeMilliseconds = this.querySelector('#current-time-milliseconds');
+      const currentTimeSeconds = this.querySelector('#current-time-seconds');
+      const currentDate = this.querySelector('#current-date');
+      const currentTime = this.querySelector('#current-time');
+
+      const dateWhenSeconds = this.querySelector('#date-when-seconds');
+      const dateWhenMilliseconds = this.querySelector('#date-when-milliseconds');
+
+      const secondsSinceEpoch = this.querySelector('#seconds-since-epoch');
+      const millisecondsSinceEpoch = this.querySelector('#milliseconds-since-epoch');
+
+      const repaint = () => {
+        // Seconds input handling
+        let val = secondsInput.value;
+        if (val.trim() !== '') {
+          const number = parseInt(val);
+          if (isNaN(number) || !/^[0-9]+$/.test(val)) {
+            if (dateWhenSeconds) dateWhenSeconds.innerHTML = "Invalid value";
+            if (dateWhenMilliseconds) dateWhenMilliseconds.innerHTML = "Invalid value";
+          } else {
+            try {
+              const secondsDate = new Date(number * 1000);
+              if (dateWhenSeconds) dateWhenSeconds.innerHTML = secondsDate.toString();
+            } catch (e) {
+              if (dateWhenSeconds) dateWhenSeconds.innerHTML = "Invalid value";
+            }
+
+            try {
+              const millisecondsDate = new Date(number);
+              if (dateWhenMilliseconds) dateWhenMilliseconds.innerHTML = millisecondsDate.toString();
+            } catch (e) {
+              if (dateWhenMilliseconds) dateWhenMilliseconds.innerHTML = "Invalid value";
+            }
+          }
+        }
+
+        // Date input handling
+        val = dateInput.value;
+        if (val.trim() !== '') {
+          try {
+            const milliseconds = Date.parse(val);
+            if (!isNaN(milliseconds)) {
+              if (secondsSinceEpoch) secondsSinceEpoch.innerHTML = (milliseconds / 1000).toString();
+              if (millisecondsSinceEpoch) millisecondsSinceEpoch.innerHTML = milliseconds.toString();
+            } else {
+              if (secondsSinceEpoch) secondsSinceEpoch.innerHTML = "Invalid value";
+              if (millisecondsSinceEpoch) millisecondsSinceEpoch.innerHTML = "Invalid value";
+            }
+          } catch (e) {
+            if (secondsSinceEpoch) secondsSinceEpoch.innerHTML = "Invalid value";
+            if (millisecondsSinceEpoch) millisecondsSinceEpoch.innerHTML = "Invalid value";
+          }
+        }
+
+        const now = new Date();
+        if (currentTimeMilliseconds) currentTimeMilliseconds.innerHTML = now.getTime().toString();
+        if (currentTimeSeconds) currentTimeSeconds.innerHTML = Math.round(now.getTime() / 1000).toString();
+        if (currentDate) currentDate.innerHTML = now.toDateString();
+        if (currentTime) currentTime.innerHTML = now.toTimeString();
+      };
+
+      secondsInput.addEventListener('input', repaint);
+      dateInput.addEventListener('input', repaint);
+
+      // Initial values
+      secondsInput.value = new Date().getTime().toString();
+      dateInput.value = new Date().toISOString();
+      repaint();
+    }
+  }
+
+  customElements.define('date-time-converter', DateTimeConverter);
+</script>
