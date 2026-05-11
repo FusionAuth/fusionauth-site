@@ -4,6 +4,8 @@ const SHIFT = 100 as const;
 let headers: HTMLElement[] | null = null;
 
 const handleScroll = () => {
+  if (!headers || headers.length === 0) return;
+
   const scroll = document.documentElement.scrollTop;
   const header = headers.findLast((h) => scroll + SHIFT > h.offsetTop) ?? head(headers);
 
@@ -13,6 +15,7 @@ const handleScroll = () => {
   document.querySelectorAll('[data-widget="scroll-spy"] [data-widget="scroll-spy-item"].active').forEach(li => li.classList.remove('active'));
 
   const group = headerLink.closest('[data-widget="scroll-spy-item"]');
+  if (!group) return;
   group.classList.add('active');
 }
 
