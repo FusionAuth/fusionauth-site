@@ -155,87 +155,78 @@ import '@docsearch/css';
   import docsearch from '@docsearch/js';
   import { algoliaConfig } from 'src/config';
 
-  const urlDepth = (url: string) => (url.match(/\//g) || []).length;
+  const HITS_DOCS = 5;
+  const HITS_OTHER = 25;
+
+  const DOCS_FILTER = 'hierarchy.lvl0:Documentation';
 
   const options = {
     container: '#docsearch',
     ...algoliaConfig,
     placeholder: 'Search docs...',
     detachedMediaQuery: 'all',
+    // Two Algolia queries per keystroke (batched in one HTTP call):
+    //   Q1: filtered to Documentation (top HITS_DOCS)
+    //   Q2: filtered to NOT Documentation (top HITS_OTHER) — articles+blog
+    // Docs always shows up (it has its own query). The display order
+    // depends on the current page:
+    //   /docs/* (or default): docs first, then articles+blog mixed
+    //   /articles/*: articles from Q2 first, then docs, then blog
+    //   /blog/*: blog from Q2 first, then docs, then articles
+    //
+    // @docsearch/js v4 uses the algoliasearch v5 flat-request shape:
+    //   searchClient.search({ requests: SearchQuery[] }, requestOptions?)
+    // where each SearchQuery is `{ indexName, query, filters, hitsPerPage, ... }`.
+    transformSearchClient(searchClient: any) {
+      return {
+        ...searchClient,
+        search(params: any, requestOptions?: any) {
+          const originalRequests = params?.requests ?? [];
+          const expanded: any[] = [];
+          for (const req of originalRequests) {
+            expanded.push({ ...req, filters: DOCS_FILTER, hitsPerPage: HITS_DOCS });
+            expanded.push({ ...req, filters: `NOT ${DOCS_FILTER}`, hitsPerPage: HITS_OTHER });
+          }
+
+          return searchClient
+            .search({ ...params, requests: expanded }, requestOptions)
+            .then((response: any) => {
+              const path = window.location.pathname;
+              const page =
+                path.startsWith('/articles') ? 'articles' :
+                path.startsWith('/blog') ? 'blog' : 'docs';
+
+              const merged = [];
+              for (let i = 0; i < response.results.length; i += 2) {
+                const docs = response.results[i].hits;
+                const other = response.results[i + 1].hits;
+                const articles = other.filter((h: any) => h.url.includes('/articles/'));
+                const blog = other.filter((h: any) => h.url.includes('/blog/'));
+
+                let hits: any[];
+                if (page === 'docs') {
+                  hits = [...docs, ...other];
+                } else if (page === 'articles') {
+                  hits = [...articles, ...docs, ...blog];
+                } else {
+                  hits = [...blog, ...docs, ...articles];
+                }
+
+                merged.push({ ...response.results[i], hits, nbHits: hits.length });
+              }
+              return { ...response, results: merged };
+            });
+        },
+      };
+    },
     transformItems: (items: any[]) => {
-      const filtered = items.filter((item) => !/\/(tag|author|category)\//.test(item.url));
-      const path = window.location.pathname;
-      let primaryFilter: (url: string) => boolean;
-
-      if (path.startsWith('/articles')) {
-        primaryFilter = (url) => url.includes('/articles/');
-      } else if (path.startsWith('/blog')) {
-        primaryFilter = (url) => url.includes('/blog/');
-      } else {
-        primaryFilter = (url) => url.includes('/docs/');
-      }
-
-      const primary = filtered
-        .filter((item) => primaryFilter(item.url))
-        .sort((a, b) => urlDepth(a.url) - urlDepth(b.url));
-      const docs = filtered
-        .filter((item) => !primaryFilter(item.url) && item.url.includes('/docs/'))
-        .sort((a, b) => urlDepth(a.url) - urlDepth(b.url));
-      const rest = filtered.filter((item) => !primaryFilter(item.url) && !item.url.includes('/docs/'));
-      const sorted = [...primary, ...docs, ...rest];
-
-      // For every docs page-level hit (type=lvl1): move the section name (lvl0)
-      // into the subtitle position (lvl1) and collapse the group header to
-      // "Documentation". This gives every result a section breadcrumb without
-      // any duplicate-counting logic, and requires no crawler changes.
-      const normalised = sorted.map((item) => {
-        const section = item.hierarchy?.lvl0;
-        if (!section || section === 'Blog' || section === 'Articles') return item;
-
-        // Collapse group header → "Documentation" for all docs hits.
-        const base = {
-          ...item,
-          hierarchy: { ...item.hierarchy, lvl0: 'Documentation' },
-          _highlightResult: item._highlightResult ? {
-            ...item._highlightResult,
-            hierarchy: { ...item._highlightResult.hierarchy, lvl0: { value: 'Documentation', matchLevel: 'none', matchedWords: [] } },
-          } : item._highlightResult,
-        };
-
-        // Promote page-level hits to lvl2 so DocSearch renders
-        // the section name as the subtitle beneath the page title.
-        if (item.type !== 'lvl1' || item.hierarchy.lvl2) return base;
-        return {
-          ...base,
-          type: 'lvl2',
-          hierarchy: { ...base.hierarchy, lvl1: section, lvl2: item.hierarchy.lvl1 },
-          _highlightResult: base._highlightResult ? {
-            ...base._highlightResult,
-            hierarchy: {
-              ...base._highlightResult.hierarchy,
-              lvl1: { value: section, matchLevel: 'none', matchedWords: [] },
-              lvl2: base._highlightResult.hierarchy?.lvl1,
-            },
-          } : base._highlightResult,
-          _snippetResult: item._snippetResult ? {
-            ...item._snippetResult,
-            hierarchy: {
-              ...item._snippetResult.hierarchy,
-              lvl1: { value: section, matchLevel: 'none', matchedWords: [] },
-              lvl2: item._snippetResult.hierarchy?.lvl1,
-            },
-          } : item._snippetResult,
-        };
-      });
-
       if (import.meta.env.DEV) {
-        return normalised.map((item) => ({
+        return items.map((item) => ({
           ...item,
           url: item.url.replace(/^https?:\/\/[^/]+/, window.location.origin),
         }));
       }
-
-      return normalised;
+      return items;
     },
   };
 
