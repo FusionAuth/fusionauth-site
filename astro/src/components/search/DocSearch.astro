@@ -1,0 +1,207 @@
+---
+import '@docsearch/css';
+---
+<div id="docsearch"></div>
+
+<style is:global>
+  @reference "tailwindcss";
+
+  /* DocSearch reads these CSS variables internally. We bind them to
+     Tailwind theme tokens so the search modal picks up the same palette
+     used everywhere else in the app. */
+  :root {
+    --docsearch-primary-color: var(--color-indigo-600);
+    --docsearch-highlight-color: var(--color-indigo-600);
+    --docsearch-focus-color: var(--color-indigo-600);
+    --docsearch-text-color: var(--color-slate-700);
+    --docsearch-secondary-text-color: var(--color-slate-500);
+    --docsearch-muted-color: var(--color-slate-400);
+    --docsearch-container-background: rgba(15, 23, 42, 0.5);
+    --docsearch-modal-background: var(--color-white);
+    --docsearch-modal-shadow: 0 3px 8px rgba(15, 23, 42, 0.2);
+    --docsearch-searchbox-background: var(--color-slate-100);
+    --docsearch-searchbox-focus-background: var(--color-white);
+    --docsearch-footer-background: var(--color-slate-50);
+    --docsearch-hit-color: var(--color-slate-700);
+    --docsearch-hit-background: var(--color-slate-100);
+    --docsearch-hit-highlight-color: rgba(79, 70, 229, 0.1);
+    --docsearch-key-background: var(--color-slate-100);
+    --docsearch-key-color: var(--color-slate-500);
+    --docsearch-subtle-color: var(--color-slate-200);
+    --docsearch-search-button-background: var(--color-white);
+    --docsearch-search-button-text-color: var(--color-slate-400);
+  }
+
+  /* All dark-mode text colors must meet 4.5:1 contrast on slate-800. */
+  html.dark {
+    --docsearch-highlight-color: var(--color-indigo-400);
+    --docsearch-focus-color: var(--color-indigo-300);
+    --docsearch-text-color: var(--color-slate-200);
+    --docsearch-secondary-text-color: var(--color-slate-400);
+    --docsearch-muted-color: var(--color-slate-400);
+    --docsearch-container-background: rgba(15, 23, 42, 0.8);
+    --docsearch-modal-background: var(--color-slate-900);
+    --docsearch-modal-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    --docsearch-searchbox-background: var(--color-slate-800);
+    --docsearch-searchbox-focus-background: var(--color-slate-900);
+    --docsearch-footer-background: var(--color-slate-800);
+    --docsearch-hit-color: var(--color-slate-300);
+    --docsearch-hit-background: var(--color-slate-800);
+    --docsearch-hit-highlight-color: rgba(129, 140, 248, 0.15);
+    --docsearch-key-background: var(--color-slate-700);
+    --docsearch-key-color: var(--color-slate-400);
+    --docsearch-subtle-color: var(--color-slate-700);
+    --docsearch-search-button-background: var(--color-slate-800);
+    --docsearch-search-button-text-color: var(--color-slate-400);
+  }
+
+  #docsearch {
+    @apply min-w-0 w-[94%];
+  }
+
+  #docsearch .DocSearch-Button {
+    background-color: var(--docsearch-search-button-background);
+    color: var(--docsearch-search-button-text-color);
+    
+    @apply flex items-center w-full h-auto m-0 text-sm
+      rounded-md border border-slate-900/10 shadow-xs
+      hover:shadow-none focus:shadow-none focus:outline-none
+      pt-1.5 pr-3 pb-1.5 pl-2.5;
+
+    border-color: var(--docsearch-subtle-color);
+  }
+
+  html.dark #docsearch .DocSearch-Button:hover {
+    background-color: var(--color-slate-700);
+    border-color: var(--color-slate-600);
+  }
+
+  #docsearch .DocSearch-Button-Container {
+    @apply min-w-0;
+  }
+
+  #docsearch .DocSearch-Button-Placeholder {
+    @apply text-sm overflow-hidden whitespace-nowrap pr-0;
+    text-overflow: ellipsis;
+  }
+
+  #docsearch .DocSearch-Button .DocSearch-Search-Icon {
+    @apply text-slate-400 h-4 w-4 mr-3;
+  }
+
+  #docsearch .DocSearch-Button-Keys {
+    @apply shrink-0 ml-auto pl-3;
+    min-width: unset;
+  }
+
+  #docsearch .DocSearch-Button-Key {
+    background-color: var(--docsearch-key-background);
+    color: var(--docsearch-key-color);
+
+    @apply border-0 rounded-sm shadow-none font-semibold;
+    font-size: 0.625rem;
+    height: 18px;
+    line-height: 18px;
+    padding: 0 4px;
+  }
+</style>
+
+<script>
+  import docsearch from '@docsearch/js';
+  import { algoliaConfig } from 'src/config';
+
+  const HITS_DOCS = 5;
+  const HITS_OTHER = 25;
+
+  const DOCS_FILTER = 'hierarchy.lvl0:Documentation';
+
+  const options = {
+    container: '#docsearch',
+    ...algoliaConfig,
+    placeholder: 'Search docs...',
+    detachedMediaQuery: 'all',
+    // Two Algolia queries per keystroke (batched in one HTTP call):
+    //   Q1: filtered to Documentation (top HITS_DOCS)
+    //   Q2: filtered to NOT Documentation (top HITS_OTHER) — articles+blog
+    // Docs always shows up (it has its own query). The display order
+    // depends on the current page:
+    //   /docs/* (or default): docs first, then articles+blog mixed
+    //   /articles/*: articles from Q2 first, then docs, then blog
+    //   /blog/*: blog from Q2 first, then docs, then articles
+    //
+    // @docsearch/js v4 uses the algoliasearch v5 flat-request shape:
+    //   searchClient.search({ requests: SearchQuery[] }, requestOptions?)
+    // where each SearchQuery is `{ indexName, query, filters, hitsPerPage, ... }`.
+    transformSearchClient(searchClient: any) {
+      return {
+        ...searchClient,
+        search(params: any, requestOptions?: any) {
+          const originalRequests = params?.requests ?? [];
+          const expanded: any[] = [];
+          for (const req of originalRequests) {
+            expanded.push({ ...req, filters: DOCS_FILTER, hitsPerPage: HITS_DOCS });
+            expanded.push({ ...req, filters: `NOT ${DOCS_FILTER}`, hitsPerPage: HITS_OTHER });
+          }
+
+          return searchClient
+            .search({ ...params, requests: expanded }, requestOptions)
+            .then((response: any) => {
+              const path = window.location.pathname;
+              const page =
+                path.startsWith('/articles') ? 'articles' :
+                path.startsWith('/blog') ? 'blog' : 'docs';
+
+              const merged = [];
+              for (let i = 0; i < response.results.length; i += 2) {
+                const docs = response.results[i].hits;
+                const other = response.results[i + 1].hits;
+                const articles = other.filter((h: any) => h.url.includes('/articles/'));
+                const blog = other.filter((h: any) => h.url.includes('/blog/'));
+
+                let hits: any[];
+                if (page === 'docs') {
+                  hits = [...docs, ...other];
+                } else if (page === 'articles') {
+                  hits = [...articles, ...docs, ...blog];
+                } else {
+                  hits = [...blog, ...docs, ...articles];
+                }
+
+                merged.push({ ...response.results[i], hits, nbHits: hits.length });
+              }
+              return { ...response, results: merged };
+            });
+        },
+      };
+    },
+    transformItems: (items: any[]) => {
+      if (import.meta.env.DEV) {
+        return items.map((item) => ({
+          ...item,
+          url: item.url.replace(/^https?:\/\/[^/]+/, window.location.origin),
+        }));
+      }
+      return items;
+    },
+  };
+
+  const openDocSearch = () => {
+    document.querySelector<HTMLButtonElement>('.DocSearch-Button')?.click();
+  };
+
+  const init = () => {
+    const container = document.getElementById('docsearch');
+    if (!container) return;
+
+    docsearch(options);
+    document
+      .querySelectorAll<HTMLElement>('[data-widget="search-button"]')
+      .forEach((button) => button.addEventListener('click', openDocSearch));
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+</script>
