@@ -18,8 +18,7 @@ export const getReleaseNoteRssItems = async () => {
       pubDate: updated
     };
   });
-  const allItems = [...items, ...nonArchivedItems]
 
-  allItems.sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime());
-  return allItems;
+  items.sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime());
+  return items;
 }
