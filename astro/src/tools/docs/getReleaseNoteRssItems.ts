@@ -1,4 +1,3 @@
-import { getEntry } from 'astro:content';
 import { getCollection } from 'astro:content';
 
 
