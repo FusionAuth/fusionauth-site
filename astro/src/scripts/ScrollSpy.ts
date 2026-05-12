@@ -15,7 +15,9 @@ const handleScroll = () => {
   document.querySelectorAll('[data-widget="scroll-spy"] [data-widget="scroll-spy-item"].active').forEach(li => li.classList.remove('active'));
 
   const group = headerLink.closest('[data-widget="scroll-spy-item"]');
+
   if (!group) return;
+  
   group.classList.add('active');
 }
 
