@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 
 export const getReleaseNoteRssItems = async () => {
   const releases = await getCollection('releases');
-  const items = nonArchivedReleases.map(item => {
+  const items = releases.map(item => {
     const id = `https://fusionauth.io/docs/release-notes#version-${item.data.version.replace(/\./g, '-')}`;
     const link = id;
     const description = item.data.description? item.data.description : `Release ${item.data.version} includes bug fixes and performance updates.`;
