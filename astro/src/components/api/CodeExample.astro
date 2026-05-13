@@ -1,0 +1,112 @@
+---
+import CopyToClipboard from 'src/components/CopyToClipboard.astro';
+import { codeToHtml } from 'shiki';
+
+interface Props {
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  uri: string;
+  body?: string;
+}
+
+const { method, uri, body } = Astro.props;
+
+const uid = Math.random().toString(36).slice(2, 9);
+const curlId = `curl-${uid}`;
+const pythonId = `python-${uid}`;
+
+const methodFlag = method === 'GET' ? '-G' : `-X ${method}`;
+
+let curlSnippet = `curl ${methodFlag} \\
+  https://your-fusionauth-host${uri} \\
+  -H "Authorization: YOUR_API_KEY"`;
+
+if (body) {
+  curlSnippet += ` \\\n  -H "Content-Type: application/json" \\\n  -d '${body}'`;
+}
+
+const pythonMethod = method.toLowerCase();
+let pythonSnippet = `import requests
+
+headers = {
+    "Authorization": "YOUR_API_KEY",
+}`;
+
+if (body) {
+  pythonSnippet += `
+
+body = ${body}
+
+response = requests.${pythonMethod}(
+    "https://your-fusionauth-host${uri}",
+    headers=headers,
+    json=body,
+)`;
+} else {
+  pythonSnippet += `
+
+response = requests.${pythonMethod}(
+    "https://your-fusionauth-host${uri}",
+    headers=headers,
+)`;
+}
+
+pythonSnippet += `
+print(response.json())`;
+
+const shikiTheme = 'github-dark';
+
+const curlHtml = await codeToHtml(curlSnippet, { lang: 'bash', theme: shikiTheme });
+const pythonHtml = await codeToHtml(pythonSnippet, { lang: 'python', theme: shikiTheme });
+---
+
+<div class="not-prose relative my-4 rounded bg-gray-800" data-code-example>
+  <div class="flex items-center justify-between px-4 py-2 border-b border-gray-700">
+    <div class="flex gap-1">
+      <button
+        class="tab-btn px-3 py-1 rounded text-xs font-semibold text-white bg-indigo-600"
+        data-lang="curl"
+        data-target={curlId}
+      >curl</button>
+      <button
+        class="tab-btn px-3 py-1 rounded text-xs font-semibold text-gray-400 hover:text-white"
+        data-lang="python"
+        data-target={pythonId}
+      >Python</button>
+    </div>
+    <CopyToClipboard source={curlId} />
+  </div>
+  <span id={curlId} class="hidden">{curlSnippet}</span>
+  <span id={pythonId} class="hidden">{pythonSnippet}</span>
+  <div data-panel="curl" class="[&>pre]:overflow-x-auto [&>pre]:px-4 [&>pre]:py-3 [&>pre]:text-sm [&>pre]:leading-relaxed [&>pre]:!bg-transparent [&>pre]:!m-0" set:html={curlHtml} />
+  <div data-panel="python" class="hidden [&>pre]:overflow-x-auto [&>pre]:px-4 [&>pre]:py-3 [&>pre]:text-sm [&>pre]:leading-relaxed [&>pre]:!bg-transparent [&>pre]:!m-0" set:html={pythonHtml} />
+</div>
+
+<script>
+  document.querySelectorAll('[data-code-example]').forEach((container) => {
+    const buttons = container.querySelectorAll<HTMLButtonElement>('.tab-btn');
+    const copyButton = container.querySelector<HTMLElement>('[data-widget="copy-button"]');
+    const panels = container.querySelectorAll<HTMLElement>('[data-panel]');
+
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lang = btn.dataset.lang!;
+        const targetId = btn.dataset.target!;
+
+        panels.forEach((p) => p.classList.add('hidden'));
+        buttons.forEach((b) => {
+          b.classList.remove('bg-indigo-600', 'text-white');
+          b.classList.add('text-gray-400');
+        });
+
+        container.querySelector<HTMLElement>(`[data-panel="${lang}"]`)?.classList.remove('hidden');
+
+        btn.classList.add('bg-indigo-600', 'text-white');
+        btn.classList.remove('text-gray-400');
+
+        if (copyButton) {
+          copyButton.dataset.copySource = targetId;
+        }
+      });
+    });
+  });
+</script>
