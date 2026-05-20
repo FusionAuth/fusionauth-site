@@ -1,4 +1,4 @@
-import {defineConfig} from 'astro/config';
+import {defineConfig, fontProviders} from 'astro/config';
 import compress from "astro-compress";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
@@ -55,12 +55,34 @@ export const mermaidTitleFix = () => {
   };
 };
 
+const lightboxProvider = () => {
+  return {
+    name: 'mdx-lightbox-provider',
+    enforce: 'post',
+    transform(code, id) {
+      if(!id.endsWith('.mdx')) return;
+      code = `import _LightboxImage from "src/components/LightboxImage.astro";\n${code}`;
+      code = code.replace(
+        "components: { Fragment: _Fragment, ...props.components, },",
+        "components: { Fragment: _Fragment, img: _LightboxImage, ...props.components, },"
+      );
+      return code;
+    }
+  }
+}
+
 const config = defineConfig({
   build: {
     format: 'file'
   },
+  fonts: [{
+    provider: fontProviders.fontsource(),
+    name: 'Inter',
+    cssVariable: '--font-inter-var',
+    weights: [300, 400, 500, 600, 700, 800, 900],
+  }],
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), lightboxProvider()],
   },
   integrations: [
     mermaid({

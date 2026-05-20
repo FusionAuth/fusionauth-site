@@ -4,7 +4,7 @@
 
 Here are some guidelines to follow when writing documentation (everything under [docs](astro/src/content/docs)), articles (everything under [articles](astro/src/content/articles)), and blogs [blog](astro/src/content/blog):
 
-- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth. 
+- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth.
   For example, see the API Key APIs description for `apiKeyId`, where API Key is capitalized: `The unique Id of the API Key to create. If not specified a secure random UUID will be generated.`
 - If referring to something that exists as a domain object in FusionAuth, but you are not explicitly referring to an object being created/updated in FusionAuth, use lowercase. Here are some examples:
  `To allow users to log into and use your application, you’ll need to create an Application in FusionAuth.`
@@ -31,7 +31,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - All image captions should be one or more complete sentences.
 - Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
 - Single spaces should be used instead of double spaces after a period.
-- Headers should have the first letter of every word capitalized: `This Is The Header Text`. This is true for all headers (h1, h2, h3, h4). This is also known as [Start Case](https://en.wikipedia.org/wiki/Letter_case).
+- Headers should use title case, not start case: `This Is the Header Text`. This is true for all headers (h1, h2, h3, h4). (Disregard the existing start case and sentence case documents in the repository — they are there because the policy has changed three times.)
 - When writing, you have access to Asides. Here's an [example blog post using an Aside](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/log4j-fusionauth.mdx). You can assign the following values to the type: `tip` for tips. `note` for things for the user to be aware of. `important` for things the user should pay attention to. `warn` for dangerous actions like deleting a tenant.
 - For links, don't use the absolute URL for the FusionAuth website (https://fusionauth.io), only relative URLs. This allows us to deploy to our local and staging environments and not get sent over to prod.
 - If you have a list element containing more than one paragraph, indent the second paragraph by the same amount as the start of the text in the first paragraph to make sure that it renders correctly.
@@ -160,7 +160,7 @@ Make descriptions full sentences. They must end in a period. Titles, on the othe
 
 If you want to order pages within a section, use `order`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
 
-Pages are ordered in the nav within a section in descending order. 
+Pages are ordered in the nav within a section in descending order.
 
 ```
 order: 0
@@ -248,7 +248,7 @@ Example response(s)
 
 ## Articles
 
-Varies, but you'll always want to 
+Varies, but you'll always want to
 
 * Open a PR with changes. Tag someone to review it.
 * Merge using the GitHub interface or using a squash commit.
@@ -344,13 +344,13 @@ Prior to requesting review on a PR, please complete the following checklist.
    - If the create request has a property of `"name": "My application"`, the response should contain this same value.
    - Try and use real world names and values in example requests/responses. Using name such as `Payroll` for an Application name is more descriptive than `app 1` and allows the reader to more understand the example.
 4. When referencing a field in the description of another field use this syntax: `<InlineField>name</InlineField>`.
-5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.  
-6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.  
+5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.
+6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.
 
 #### Non API documentation
 1. Screenshots. Review color, dimensions and clarity. Review A/B to ensure layout has not changed, and the new screenshot is consistent with the previous one.
-   - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed. 
-   - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 
+   - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed.
+   - The screenshot should not look fuzzy. If it does, the compression may be incorrect.
 2. If you are referring to a navigatable element, use `<Breadcrumb>Tenants</Breadcrumb>` or `<Breadcrumb>Tenants -> Your Tenant</Breadcrumb>`. In other words, use it even for singular elements.
 3. If you are referring to a field the user can fill out, use `<InlineField>Authorized Redirect URLs</InlineField>`.
 4. If you are referring to any other UI element, such as a submit button or read-only name, use `<InlineUIElement>Submit</InlineUIElement>` or (on the application view screen) `<InlineUIElement>Introspect endpoint</InlineUIElement>`.

@@ -1,4 +1,5 @@
 ---
+import Font from 'astro/components/Font.astro';
 import SearchFilter  from 'src/components/search/SearchFilter.astro';
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
   title?: string;
   openGraphImage?: string;
   canonicalUrl?: string;
+  isIndexPage?: boolean;
   searchFilters?: { [key: string]: string[] };
 }
 
@@ -19,6 +21,7 @@ const {
   enableKapa = true,
   title, openGraphImage,
   canonicalUrl,
+  isIndexPage = false,
   searchFilters = {}
 } = Astro.props;
 const openGraphImageUrl = openGraphImage ? new URL(openGraphImage, Astro.url): new URL("/img/og/articles-developers-v1.png", Astro.url);
@@ -41,6 +44,12 @@ if (canonical.endsWith('index.html')) {
 } else if (canonical.endsWith('.html')) {
   canonical = canonical.slice(0, canonical.indexOf('.html'));
 }
+
+// Pages built from index.mdx are served as a directory (with trailing slash);
+// standalone .mdx files are served without one. Match whichever URL is served.
+if (isIndexPage && !canonical.endsWith('/')) {
+  canonical += '/';
+}
 const slug = Astro.params.slug;
 ---
 <head>
@@ -48,8 +57,9 @@ const slug = Astro.params.slug;
   <meta name="viewport" content="width=device-width"/>
   <link rel="icon" type="image/png" href="/img/favicon.png"/>
   { canonical && <link rel="canonical" href={canonical} /> }
+  <meta name="algolia-site-verification" content="857638C054AD182F" />
   <link rel="sitemap" href="/sitemap-index.xml">
-  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <Font cssVariable="--font-inter-var" />
   <link rel="stylesheet" href="/css/brands.min.css"/>
   <link rel="stylesheet" href="/css/duotone.min.css"/>
   <link rel="stylesheet" href="/css/fontawesome.min.css"/>
@@ -62,6 +72,17 @@ const slug = Astro.params.slug;
   <script defer src="/js/Search-0.2.3.js" type="text/javascript"></script>
   <script defer src="/js/ScrollSpy-0.1.0.js" type="text/javascript"></script>
   <script defer src="/js/Tabs-0.1.0.js" type="text/javascript"></script>
+  <script is:inline>
+    const getTheme = () => {
+      const theme = localStorage?.getItem('theme');
+      if (theme && theme !== 'system') {
+        return theme;
+      }
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    document.documentElement.classList.toggle('dark', getTheme() === 'dark');
+  </script>
   <script defer src="/js/ThemeSelector-0.1.0.js" type="text/javascript"></script>
   <script defer src="/js/Visibility-0.1.2.js" type="text/javascript"></script>
   <script defer src="/js/BlogScrollTable-0.1.0.js" type="text/javascript"></script>

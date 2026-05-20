@@ -1,9 +1,9 @@
 ---
-publish_date: 2026-04-10
-title: Cohort Analysis
+publish_date: 2026-04-22
+title: "Cohort Analysis"
 description: "Using login data to calculate helpful business statistics."
-authors: Person McPersonface
-image: /img/blogs/header-example.svg
+authors: Dan Moore
+image: /img/blogs/cohort-analysis/header.png
 categories: Education
 tags: user, analysis, retention
 excerpt_separator: "{/* more */}"
@@ -14,13 +14,11 @@ import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 
-If you use an authentication server like FusionAuth and want to improve your business's customer acquisition and retention, you need to perform user cohort analysis. Without analyzing your users' behavior, you have no information to guide your product development. Cohort analysis allows you to answer questions like:
+Understanding users' behavior can help guide product development and improve customer retention. This article demonstrates how to use FusionAuth to track customer statistics. Understanding *why* customers stay or leave might require data from your application database. But FusionAuth login statistics can help you understand *who* your customers are, and help you sort them into cohorts (groups). Cohort analysis allows you to answer questions like:
 
 - How frequently do customers use your app?
 - How many people register but quickly lose interest in your service?
 - Did new features or advertising campaigns entice new users or irritate existing users?
-
-This article demonstrates how to use FusionAuth to track customer statistics: retention rates, user age analyses, and customer cohorts (groups). While you need to investigate your own application database for the reasons *why* customers stay or leave, having a base of FusionAuth login statistics to work from lets you know *whom* to analyze.
 
 ## FusionAuth Native Reports
 
@@ -28,206 +26,187 @@ FusionAuth has a few built-in charts with views of total logins and registration
 
 ![Existing FusionAuth charts](/img/blogs/cohort-analysis/faCharts.webp)
 
-FusionAuth provides several simple charts, showing:
+FusionAuth provides several charts, showing:
 
 - <Breadcrumb>Login</Breadcrumb> shows the number of logins per application, time period, and user.
 - <Breadcrumb>Registration</Breadcrumb> shows the number of registrations per application and time period.
 - <Breadcrumb>Daily Active Users</Breadcrumb> shows the number of daily active users per application and time period.
 - <Breadcrumb>Monthly Active Users</Breadcrumb> shows the number of monthly active users per application and time period.
 
-More complex charts require time-consuming calculations and aren't available directly in the FusionAuth admin UI. However, you can export your data and calculate the statistics yourself. This post walks you through that process.
+Because more complex charts require time-consuming calculations, more informative charts aren't available directly in FusionAuth. However, you can export your data and calculate the statistics manually. This guide walks you through that process.
 
-## An Overview Of Cohort Analysis
+<Aside type="caution">
+Many charts shown in this guide depend on the expiry duration of your login tokens. Longer expiry times mean that users log in less frequently. You can adjust the sample code accompanying this guide to analyze a period that makes sense for your FusionAuth configuration. For more information on token durations, see the [session management documentation](/docs/lifecycle/authenticate-users/logout-session-management).
+</Aside>
+
+## An Overview of Cohort Analysis
 
 Cohort analysis is a behavioral analytics technique that groups users by shared characteristics or experiences within a period. You can then track the actions of each group over time.
 
-There are three concepts involved in an analysis:
+Any cohort analysis involves at least the following concepts:
 
-- **Cohort:** A group of users who perform a specific action (like registering for an application) within a specific timeframe (a day, week, or month).
-- **Metric:** The behavior you are measuring, such as logins, purchases, or feature usage.
-- **Time Horizon:** The period over which you track that metric (for example, Day 0, Day 1, or Week 4).
+- **Cohort:** a group of users
+- **Metric:** the behavior you are measuring (e.g. logins, purchases, feature usage)
+- **Time Horizon:** the period of time to gather measurements from (e.g. Day 0, Weeks 1-10, Month 4)
 
-Cohort analysis is useful for distinguishing between **growth** and **retention**.
+Cohort analysis can help you distinguish between **growth** and **retention**. For example, consider a product with 10,000 active users. Cohort analysis reveals that:
+* 9,000 users registered this month (growth)
+* only 5% of users from six months ago returned (retention)
+This indicates an abandonment problem. Growth is sufficient to mask this problem until you investigate retention.
 
-For example, a product may have 10,000 active users, which looks healthy. However, cohort analysis reveals that 9,000 of those users registered this month, and only 5% of users who registered six months ago returned even once. This result indicates an abandonment problem: the organization successfully acquires users but fails to keep them.
-
-On the other hand, a different product may have 1,000 active users. Cohort analysis reveals that 100 of those users registered this month, and 95% of users who registered six months ago returned. Even though there are fewer active users than the above product, the organization successfully acquires and retains users.
-
-There are two types of cohorts:
-
-- **Acquisition Cohorts:** The most common cohort type defines groups based on *when* users joined. This helps you identify whether newer versions of your product retain users better than older versions.
-- **Behavioral Cohorts:** This cohort type defines groups based on *what users did*. For example, you might compare a cohort of users who uploaded a profile picture in their first hour with a cohort that didn't.
-
-Since this article focuses on FusionAuth data such as registration and login dates, not purchases and features, it only covers acquisition cohorts. The latter are application specific and useful to analyze, but beyond the scope of this post.
+Conversely, another product might have only 1,000 users but 95% are returning. This would be a healthier app than the previous example, even if it has fewer users.
 
 ## Understanding Additional User Charts
 
-This guide includes code that generates 11 types of chart from your FusionAuth user registration and login data. Before demonstrating how to run that code, you'll learn about each chart type, beginning with more general charts and moving on to cohort charts.
+Later on, we'll show you the code that generates some helpful charts using your FusionAuth user registration and login data. For now, let's take a look at the charts, and what you can learn from them.
 
-The following charts were created from 1,000 mock users with randomly generated registration and login dates, so they don't depict realistic patterns, but serve to illustrate the concepts.
+The following charts were created from 20,000 mock users with randomly generated registration and login dates, so they don't depict realistic patterns, but serve to illustrate the concepts.
 
-### Total Users Charts
+### Total Users Chart
 
-![Total users chart.](/img/blogs/cohort-analysis/chartTotalUsers.webp)
+![Total users charts](/img/blogs/cohort-analysis/chartTotalUsers.webp)
 
-Total users charts show the number of users who joined your service. This allows you to see whether your business is growing as you expect. However, these charts don't show registered users who are no longer active, so you need to compare the total users with the user activity and abandonment metrics. You'll see examples of these later.
+The total user chart shows the number of users who joined your service. This allows you to see whether your business is growing as you expect. Because these numbers include users who are no longer active, so you need to compare the total users with the user activity and abandonment metrics (shown later).
 
-Like many other charts, total users charts separate users into those who verified themselves (confirming their email address or phone number) and those who did not. Unverified users may be outliers in your data, distorting your statistics. After all, if someone hasn't verified their information, they are not be an active application user.
+Like many other charts, the total users chart separates users into those who verified themselves (confirming their email address) and those who did not. Unverified users can act like outliers in your data, distorting your statistics.
 
-But it's still useful to know how many there are. It can also inform how much effort you put into encouraging users to verify.
+### User Acquisition Chart
 
-### User Acquisition Charts
+![New users charts](/img/blogs/cohort-analysis/chartNewUsers.webp)
 
-![New users chart.](/img/blogs/cohort-analysis/chartNewUsers.webp)
-
-A user acquisition chart shows the number of new users over a certain period of time. In this case, you are looking at the year timeframe on top and the month timeframe below.
-
-This is useful for assessing whether marketing or product efforts, such as advertising campaigns or new features have attracted new users. There is a time delay between your efforts and new registrations.
-
-You can also investigate any spikes or dips in the chart, and see whether there were any conversations about your business online or complaints about competitors.
-
-This chart doesn't show whether the users actually use your service after registering, though. It depicts user **acquisition**, not user **retention**.
+A user acquisition chart can help you understand the rate at which your application attracts new users. Combined with a timeline of advertising campaigns and feature releases, you can assess the value of those efforts. Spikes and dips in the chart can provide valuable information about user sentiment, but you might need a data scientist to know for sure (or not).
 
 ### User Age Chart
 
-![Years since registered chart.](/img/blogs/cohort-analysis/chartYearsSinceRegistered.webp)
+![Years since registered chart](/img/blogs/cohort-analysis/chartYearsSinceRegistered.webp)
 
 The age chart groups users by the number of years they have used your service. It's an indication of how much experience the average user has with your business.
 
 This chart is a mirror image of the new users per year chart. If a user registered in 2020, then in 2026, they will have been registered for six years.
 
-### Logins Per Year Charts
+### Logins per Year Chart
 
-![Logins per year and month charts.](/img/blogs/cohort-analysis/chartLoginsPerYear.webp)
+![Logins per year and month charts](/img/blogs/cohort-analysis/chartLoginsPerYear.webp)
 
-The logins per year and month charts show how active your users are. These charts, and some of the later charts, depend on the expiry duration of your login tokens. Longer durations mean that users log in less frequently, whether a full authentication event or a token refresh grant. Adjust the sample code to analyze a period that makes sense for your configuration.
+The logins per year chart shows how active your users are.
 
 Sometimes it's more meaningful to work with deduplicated logins for a period. In other words, if a user logs in more than once in a year or month, they are counted as logging in only once in that period. This prevents a small fraction of users who log in frequently from making the service appear more used than it actually is.
 
-FusionAuth does this with their [monthly active user calculations](/docs/get-started/core-concepts/users#what-makes-a-user-active). If someone logs in once or one hundred thousand times, they still count as one MAU.
-
-### Percent Logins Per Year Charts
+### Percent Logins per Year Chart
 
 ![Percent logins per year and month charts](/img/blogs/cohort-analysis/chartPercentLoginsPerYear.webp)
 
-The percent login charts tease out useful information about user activity that may be hidden in the previous charts. These show the ratio of logins to users. 
+The percent login charts tease out useful information about user activity that may be hidden in the previous charts. These show the ratio of logins to users.
 
-In 2025, you can see that just under half (45%) of users actively use the service. The increasing trend of usage over time indicates that the example business became increasingly valuable to customers.
+In 2025, you can see that around 42% of users actively use the service. Usage peaked in 2019 and has since stabilized, indicating that the example business became increasingly valuable to customers over time before reaching a steady state.
 
-Percent logins per month may help you identify especially busy times specific to your business, such as holidays for retailers.
+Percent logins charts may help you identify high and low points in your customer interactions.
 
-### Abandonment Charts
+### Abandonment Chart
 
 ![Abandonment charts](/img/blogs/cohort-analysis/chartAbandonment.webp)
 
-The first abandonment chart is the opposite of user activity. Here, you see how many users haven't logged in for more than one, two, six, or 12 months. The majority of users (over 500 of the 1,000 users) haven't logged in for at least a year.
+The first abandonment chart is the opposite of user activity. Each user is counted in every bucket they qualify for based on how long it's been since their last login: 1+, 2+, 6+, and 12+ months. Around 19,000 users haven't logged in for at least a month (1+), while only around 1,000 haven't logged in for over a year (12+).
 
 While the first chart is a static metric calculated today, the second abandonment chart shows the trend of users who haven't logged in for at least six months per year. This amount steadily increases over time, which contradicts the percent login chart that showed users logging in *more* each year.
 
 This apparent contradiction is because the percent login chart is relative (showing a percentage of users) and the abandonment chart is absolute (showing the number of users).
 
-You can change any absolute chart to a relative chart by dividing the annual value by the number of users in that year. You'll have to modify the code to do that.
+You can change any absolute chart to a relative chart by modifying the code and dividing the annual or monthly value by the number of users in that year or month.
 
 ### Activity Cohort Chart
 
-![2025 cohort activity chart.](/img/blogs/cohort-analysis/chart2025Logins.webp)
+![2025 logins chart](/img/blogs/cohort-analysis/chart2025Logins.webp)
 
-The activity cohort chart groups users by how frequently they use the service. Here, you can see most users who registered in 2025 don't log in at all. A large number of users logged in up to four times in the last year. Change the period to match your business and token expiry duration. Only a handful of dedicated users logged in more than four times a year.
+The activity cohort chart groups users by how frequently they use the service. Here, you can see most users who registered in 2025 don't log in at all. A large number of users logged in up to four times in the last year, with others logging in more often.
 
-When analyzing cohort activity charts, take sample users from each group and investigate which features they use to learn more about what makes your product useful to users.
+You'll want to modify the duration to match your business and token expiry settings.
 
 ### Returning Users Chart
 
-![Returning users chart.](/img/blogs/cohort-analysis/chartReturningUsers.webp)
+![Returning users chart](/img/blogs/cohort-analysis/chartReturningUsers.webp)
 
 The returning users chart shows how many users log in after at least a year of not using your service.
 
-If you have clear spikes, they might correlate to the release of new versions or features, marketing campaigns you ran, or customers leaving a competitor. They can also correlate to the cycles of your business; a tax preparation application might expect a yearly spike, where a gaming application might see spikes every new game release.
+If you have clear spikes, they might correlate to the release of new versions or features, marketing campaigns you ran, or customers leaving a competitor. Logins can also correlate to the cycles of your business; a tax preparation application might expect a yearly spike, where a gaming application might see spikes every new game release.
 
 This is similar to the user acquisition chart, but highlights customers already familiar with your offering who come back to give it another try.
 
 ### Friction Chart
 
-![Friction chart.](/img/blogs/cohort-analysis/chartFriction.webp)
-
-The friction chart groups users by how long it takes them to log in for the first time after registering.
-
-TODO I'm not sure this correct.
 - registration date is when a user registers for a single application
 - login can happen for application A but then the user can register for application b
 - when I register, an automatic login record is created TODO double check
 - please update
 
-It shows both how easy the registration-to-usage flow is, and how much the registration process interests users in actually using your offering. If they realize while registering that your service isn't what they're really looking for, they might never log in.
+![Friction chart](/img/blogs/cohort-analysis/chartFriction.webp)
+
+The friction chart groups users by how long it takes a user to log in for the first time after registering. This shows how easily a user flows from registration to usage. If users realize while registering that your service isn't what they're really looking for, they may never log in.
 
 This example chart shows that nearly all users do log in, indicating high interest, but only after a month, suggesting the business should make it easier for users to explore the service after registering.
 
+<Aside type="note">
+FusionAuth creates a login record at the moment of registration, so the extraction code skips the first login date for each user. Without this, every user would appear to have zero friction, since their first login would always match their registration date.
+</Aside>
+
 ### Login Frequency Chart
 
-![Login frequency chart.](/img/blogs/cohort-analysis/chartLoginFrequency.webp)
+![Login frequency chart](/img/blogs/cohort-analysis/chartLoginFrequency.webp)
 
-The login frequency chart groups users by their number of logins in the past month. You typically want this chart to have high bars as far to the right as possible. That indicates that people are logging in daily.
+The login frequency chart groups users by their number of logins in the past month. You typically want this chart to have higher bars to the right. That indicates that people are logging in daily.
 
 In this example, you can see the vast majority of users didn't log in at all in the last month. Depending on your business, that may mean it is not currently healthy.
 
-On the other hand, if this is an application where people pay their utility bills, users logging in once a month may be perfectly normal. However, if you see them log in once a quarter, that'd be problematic.
+On the other hand, if this is an application where people pay their utility bills, users logging in once a month may be perfectly normal. However, if users only log in once a year, that'd be problematic.
 
 This chart is also known as the L30 chart or Power User Curve.
 
 ### Cohort Analysis Chart
 
-![Cohort analysis chart.](/img/blogs/cohort-analysis/chartHeatmap.webp)
+![Cohort analysis chart](/img/blogs/cohort-analysis/chartHeatmap.webp)
 
-The cohort analysis chart is a heatmap that shows user retention per month for the year following registration.
+The cohort analysis chart is a heatmap that shows user retention per month for the year following registration. The x-axis shows the number of months after registration, from `0` to `12`. The y-axis shows the month of registration. Pick any row and read the chart from left to right to see how many users logged in during the first month after they registered, then after the second month, and so on. You'll likely see most users log in a lot in the first month or two, and slowly decline in logins over the next twelve months. If the decline tends towards zero, however, your service doesn't provide long-term value to customers.
 
-The x-axis shows the number of months after registration, from `0` to `12`. The y-axis shows the month of registration.
+The y-axis shows whether your business is getting better or worse at retaining customers over time. In this example, you can see the business has become better with retention over time, as there are darker colors higher in the chart.
 
-Pick any point on the y-axis and read the chart from left to right to see how many users logged in during the first month after they registered, then after the second month, and so on.
+## Create Charts for Your FusionAuth Instance
 
-For many apps, most users log in a lot in the first month or two. Then you'll see a slow decline in logins over the next twelve months. If the decline tends towards zero, however, your service might not provide long-term value to customers.
+To create the charts above for your business, you need to have [Go](https://go.dev/doc/install) installed.
 
-Graphing on the y-axis shows you whether your business is getting better or worse at retaining customers over time. In this example, you can see the business has become better with retention over time, as there are darker colors higher in the chart (which is the more recent timeframe).
-
-## How To Run The Chart Code For Your FusionAuth Instance
-
-To create the charts above for your business, you need to use [Docker](https://www.docker.com/get-started). If you prefer not to use Docker, ensure you have [Go](https://go.dev/doc/install) installed and a PostgreSQL database.
-
-You also need to have an instance of FusionAuth holding the data to analyze. If you don't have any data yet, use the code in [the appendix](#appendix) to create test data.
+You also need to have an instance of FusionAuth with the data you want to analyze. If you don't have any data yet, use the code in the appendix to create test data.
 
 ### Extract Customer Data
 
-While application databases like FusionAuth store data in a normalized structure, data analysis requires denormalized data for fast retrieval and computation.
+While application databases like FusionAuth store data in a normalized structure to save space, data analysis requires denormalized data for fast retrieval and computation.
 
-The first step to analyze your user data in FusionAuth is to extract it and store it in a usable format. As this process puts the database under load, run it on a copy of your database using a separate FusionAuth instance, rather than your production system.
+The first step to analyze your user data in FusionAuth is to extract it and store it in a usable format. Since chart generation puts significant load on a database, you'll first want to extract your data from FusionAuth.
 
-Use Git to clone the [accompanying repository](https://github.com/FusionAuth/fusionauth-example-cohort-analysis).
+Use Git to clone the [accompanying repository](https://github.com/ritza-co/fusionauth-user-charts):
 
-```sh
-git clone https://github.com/FusionAuth/fusionauth-example-cohort-analysis
-cd fusionauth-example-cohort-analysis
+```console
+git clone https://github.com/ritza-co/fusionauth-user-charts.git
 ```
 
-TODO rewrite with the golang client library
-Got this error when running the code (and had to change it to read the body to see it)
-body: {"fieldErrors":{"numberOfResults":[{"code":"[invalid]numberOfResults","message":"The [numberOfResults] is invalid because it has exceeded the maximum result window size. The sum of [startRow] and [numberOfResults] must be less than or equal to [10000]."}]},"generalErrors":[]}
-httpError! status: 400
-please handle pagination
+Navigate into the repo:
 
-Edit the file `3extract.go` and update the constants near the top to match your FusionAuth URL, API key, and application Id. TODO update to pull
-
-To run the extraction with Docker, use the following command:
-
-```sh
-docker run --init  -it  --rm --platform linux/amd64 --name "app" --network faNetwork -v .:/app -v ./gocache:/go/pkg -v ./buildcache:/root/.cache/go-build -w /app golang:1.25-bookworm sh -c "go run 3extract.go"
+```console
+cd fusionauth-user-charts
 ```
 
-The only parameter you need to change is `--network faNetwork`. Ensure that your FusionAuth instance is running on the same network as the extraction code (`localhost` won't work in Docker). Alternatively, if you run FusionAuth remotely, remove the network parameter entirely.
+Copy `.env.example` to `.env` and edit it to match your FusionAuth URL, API key, and application Id.
 
-If you installed Go directly on your computer, run the following command instead of using Docker:
+<Aside type="note">
+Use a superuser API key, or create one with the **Login Record** read permission and ensure it is scoped to the tenant your application belongs to.
 
-TODO please name these better than 3extract
-```sh
-go run 3extract.go
+<br/>
+
+On up-to-date FusionAuth instances, the script reads verified status from each user's identity data. On older instances where identity data is not returned by the search API, it falls back to a top-level verified field. Login history is unaffected either way.
+</Aside>
+
+To run the user extraction, use the following command:
+
+```console
+go mod tidy && go run extractUsers.go
 ```
 
 The extraction creates two files: `faUsers.json`, which contains the raw data from FusionAuth, and `users.json`, which contains the processed set of users with all login dates.
@@ -239,84 +218,78 @@ The `users.json` file has the following structure:
     id: string
     email: string
     isVerified: bool
-    registeredDate: string // timestamp since 1970
-    loginDates: string[] // oldest dates first
+    registeredDate: number // timestamp since 1970
+    loginDates: number[] // oldest dates first
   }]
 ```
 
-TODO see above, you with ES you can't pull 999,999 users. you need to do it in bathces of 10k, with extended pagniation: https://fusionauth.io/docs/lifecycle/manage-users/search/#extended-pagination
+The extraction script uses the [FusionAuth Go SDK](https://github.com/FusionAuth/go-client) to retrieve users, then fetch login dates for each user.
 
-<Aside type="caution">
-If you have more than 999,999 users, you need to edit `numberOfResults=999999` in the script, and possibly extract your users in batches and concatenate the JSON output files.
+<Aside type="danger">
+Be careful that exporting, analyzing, and storing your users' IDs, email addresses, and login dates does not violate laws regarding personal data in your country.
+
+The easiest way to anonymize the data would be to alter the extraction code to replace email address and user IDs with a random UUID before saving to JSON.
 </Aside>
 
-The extraction script uses the [FusionAuth API](/docs/apis/users), in particular the `/api/user/search` endpoint. Users are retrieved first, with registration dates and verification data. Then, each user's login dates are retrieved.
 
-## Calculate And Display The Charts
+## Calculate and Display the Charts
 
 The last step is to run the web server that displays the charts.
 
-If you're using Docker, run the following command:
+Run the following command:
 
-```sh
-docker run --init  -it  --rm --platform linux/amd64 --name "app" -p 7777:7777 -v .:/app -v ./gocache:/go/pkg -v ./buildcache:/root/.cache/go-build -w /app golang:1.25-bookworm sh -c "go mod tidy && go run 4app.go"
+```console
+go mod tidy && go run charts.go
 ```
 
 You don't need to edit any parameters or constants this time, because the code makes the charts from the JSON files and doesn't talk to FusionAuth.
 
-If you're using Go directly, run the following command:
-
-```sh
-go mod tidy && go run 4app.go
+When the web server is ready to display your charts, you should see the following output in your terminal:
+```
+Charts created
+Server listening at http://0.0.0.0:7777
 ```
 
-When the calculations are done, the terminal says `Charts created`.
+To view your charts, visit [http://localhost:7777](http://localhost:7777).
 
-Browse to http://localhost:7777 to view your charts.
+The web server reads all data from `users.json` in the `main()` function, calculates the charts, then uses `charts.html` as an in-memory template and returns the rendered page when requested. Each chart calculates in parallel, using the `runParallel()` function in the `getChartData()` function.
 
-The app reads all data from `users.json` in the `main()` function, calculates the charts, then inserts them into `5page.html`, and returns that page when requested. It calculates each chart in parallel, using the `runParallel()` function in the `getChartData()` function. The chart calculations themselves are just loops through the users and login dates.
+If you want to change a chart, you can edit its calculation function without breaking any of the others — they are all independent. If you want to add a new chart, create a new function and call it from `getChartData()`. If any chart takes too long to calculate, comment out the function call, and in `charts.html`, comment out the chart display. The HTML uses [Chart.js](https://www.chartjs.org) for charts.
 
-If you want to change a chart, you can edit its calculation function without breaking any of the others — they are all independent. If you want to add a new chart, create a new function and call it from `getChartData()`. If any chart takes too long to calculate, comment out the function call, and in `5page.html`, comment out the chart display. The HTML uses [Chart.js](https://www.chartjs.org) for charts.
+Some charts use all login dates and some use unique logins per month or year. If you want to use these deduplicated dates in your own charts, use the `LoginDatesUniqueYearly` and `LoginDatesUniqueMonthly` variables.
 
 ## Next Steps
 
 In this guide you learned how to use basic FusionAuth login data to analyze user behavior. Visualizing user behavior is foundational to determining which parts of your business offer the most value to customers and understanding how to keep them engaged. If you see any patterns you want to investigate further, edit the code to log the user Ids in a group that interests you, and then use those Ids to investigate which features in your app affect those users.
 
-You can also edit `4app.go` and `5page.html` to add any new charts you need. LLMs handle Go and HTML code very well due to the languages' simplicity. If you provide both files to any chatbot, it should instantly be able to add any chart you want.
-
-If you want even deeper analysis on a regular basis, you need to dive into the world of business intelligence (BI): data extraction, denormalization, and dashboards.
-
-## Appendix
+## Appendix — How to Create Fake Customer Data in FusionAuth
 
 To create fake users and login data for a FusionAuth application, you need to run a Go file and SQL script. There is no way to create fake dates using the FusionAuth API, so you need direct database access to run SQL.
 
-If you haven't done so already, use Git to clone the [accompanying repository](https://github.com/ritza-co/fusionauth-user-charts), or download and unzip it.
+If you haven't done so already, use Git to clone the [accompanying repository](https://github.com/ritza-co/fusionauth-user-charts):
 
-```sh
+```console
 git clone https://github.com/ritza-co/fusionauth-user-charts.git
+```
+
+Navigate into the repo:
+
+```console
 cd fusionauth-user-charts
 ```
 
-Edit the `1createMockData.go` file. Adjust the URL, authorization key, and application Id in the code above to match your FusionAuth instance. Then run the file with the following command:
+If you skipped the extraction step, copy `.env.example` to `.env` and edit it to match your FusionAuth instance. Then run the file with the following command:
 
-```sh
-docker run --init  -it  --rm --platform linux/amd64 --name "app" --network faNetwork -v .:/app -v ./gocache:/go/pkg -v ./buildcache:/root/.cache/go-build -w /app golang:1.25-bookworm sh -c "go run 1createMockData.go"
+```console
+go run createMockData.go
 ```
 
-The only parameter you need to change is `--network faNetwork`. Ensure your FusionAuth instance is running on the same network as the extraction code (`localhost` won't work in Docker). Alternatively, if you run FusionAuth remotely, remove the network parameter entirely.
+Once the users are registered, you need to randomize their registration dates, set 5% of user email addresses to unverified, and create thousands of login dates. To do this, you can either connect to your FusionAuth database in a SQL browser and run the contents of `createMockData.sql`, or use the following command with the PostgreSQL binary:
 
-If you installed Go directly on your computer, you can run the following command instead of using Docker:
-
-```sh
-go run 1createMockData.go
+```console
+PGPASSWORD=<your_db_password> psql -h <your_db_host> -U <your_db_user> -d fusionauth -v fusionauth_app_id=<your_application_id> -f createMockData.sql
 ```
 
-Once the users are registered, you need to randomize their registration dates, set 5% of user email addresses to unverified, and create thousands of login dates. To do this, you can either connect to your FusionAuth database in a SQL browser and run the contents of `2createMockData.sql`, or use the following command with Docker:
+Replace `<your_db_password>`, `<your_db_host>`, and `<your_db_user>` with your database credentials. Replace `<your_application_id>` with your FusionAuth application Id, which you can find in your `.env` file.
 
-```sh
-docker run --init -it --rm --platform linux/amd64 --name "app" --network faNetwork -v .:/app -w /app postgres:16-bookworm sh -c "PGPASSWORD=postgres psql -h faDb -U postgres -d fusionauth -f 2createMockData.sql"
-```
-
-In the command above, you need to set your database location, username, and password to match your instance (these are probably in your `.env` file or `docker-compose.yml` file).
-
-That's all. You are now ready to run scripts 3 and 4 to extract the data and create the charts.
+That's all. You are now ready to run the extraction and chart creation scripts.

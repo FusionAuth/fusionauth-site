@@ -21,7 +21,7 @@ There is not a simple solution because JWTs are designed to be portable, decoupl
 Here's a diagram that illustrates this architecture:
 
 <div class="flex justify-center p-4 w-full">
-<img src="/img/articles/revoking-jwts/jwt-revoke_350.png" alt="Revoking JWTs"/>
+![Revoking JWTs](/img/articles/revoking-jwts/jwt-revoke_350.png)
 </div>
 
 The ToDo Backend in the diagram can use the JWT and the public key to verify the JWT and then pull the user's Id (in this case the subject) out of the JWT. The ToDo Backend can then use the user's Id to perform operations on that user's data. However, because the ToDo Backend isn't verifying the JWT with the IdP, it has no idea if an administrator has logged into the IdP and locked or deleted that user's account.
