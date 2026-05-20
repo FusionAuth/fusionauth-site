@@ -2,11 +2,25 @@
 version: "1.65.0"
 name: "Tenant Manager SSO Tasmanian Mountain Skink"
 date: 2026-04-30
-description: "FusionAuth 1.65.0 adds self-service tenant SSO configuration, custom favicons for simple themes, voice MFA, a new way to test IdP configurations, and a variety of performance improvements."
-blogpost: "announcing-fusionauth-1-65"
+description: "FusionAuth 1.65.0 adds self-service tenant SSO configuration, custom favicons for simple themes, voice MFA, a new way to test IdP configurations, and a variety of performance improvements. For more information, check out our <a href='https://fusionauth.io/blog/announcing-fusionauth-1-65'>release post</a>."
 ---
 import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
+
+<Item category="breaking-change" issue="3450">
+Made the linking strategy of an enabled identity provider immutable, to prevent users from inadvertently breaking an existing provider. To change the linking strategy for an enabled identity provider, disable the provider, make your change, then re-enable the provider.
+</Item>
+
+<Item category="breaking-change" issue="3452">
+To harden security, removed access via tenant-scoped API keys to endpoints that impact a FusionAuth installation beyond the scope of a single tenant (e.g. [`/api/key/generate/` endpoint](/docs/apis/keys#generate-a-key)). To access these endpoints, you must now use a global API key.
+
+As a result, these endpoints:
+* no longer accept tenant-scoped API keys
+* respond with a `401` error code whenever a user provides the `X-FusionAuth-TenantId` header
+* no longer support the top-level `tenantId` property in [Kickstart](/docs/get-started/download-and-install/development/kickstart) configurations
+
+For a full list of APIs that now require a global API key, see [API Endpoints Guarded by API Keys](/docs/reference/api-endpoints).
+</Item>
 
 <Item category="new-feature" issue="3189">
 Introduced self-service single-sign on (SSO) configuration from [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager). Now, tenant manager administrators can configure SSO for their tenant entirely within tenant manager.
@@ -38,14 +52,6 @@ Added the `auditLog.tenantId` field to the [Audit Logs API](/docs/apis/audit-log
 
 <Item category="enhancement" issue="3441">
 In the Admin UI, added a new **Help** section to the left-hand nav, containing links to a new **Get Started** section and the FusionAuth Documentation.
-</Item>
-
-<Item category="breaking-change" issue="3450">
-Made the linking strategy of an enabled identity provider immutable, to prevent users from inadvertently breaking an existing provider. To change the linking strategy for an enabled identity provider, disable the provider, make your change, then re-enable the provider.
-</Item>
-
-<Item category="breaking-change" issue="3452">
-To harden security, removed access via tenant-scoped API keys to certain endpoints. To access these endpoints, you must now use a [global API key](/docs/reference/api-endpoints).
 </Item>
 
 <Item category="fix" issue="3422">
@@ -81,8 +87,44 @@ Fixed an issue where Reactor and license data could be lost when migrating to a 
 Improved the performance and reliability of background jobs in multi-node clusters, reducing load by a factor of 3-9x.
 </Item>
 
+<Item category="fix" since="1.62.0" issue="3436">
+Fixed a [FreeMarker](https://freemarker.apache.org/) exception that previously displayed when viewing keys without an algorithm in Key Master.
+</Item>
+
 <Item category="fix">
-In the FusionAuth .NET Core Client, fixed [an issue](https://github.com/FusionAuth/fusionauth-netcore-client/issues/183) where `sendSetPasswordIdentityType()` incorrectly defaulted to `email` when omitted. The client now omits the type entirely from requests instead of using a default value.
+In the FusionAuth .NET Core Client, fixed [an issue](https://github.com/FusionAuth/fusionauth-netcore-client/issues/183) where enumeration-based values like `sendSetPasswordIdentityType()` incorrectly defaulted to `email` when omitted. The client now omits the value entirely from requests instead of using a default value.
+</Item>
+
+<Item category="security">
+Fixed an issue where global API keys could be hidden by marking them as internal.
+</Item>
+
+<Item category="security">
+Tightened security of endpoints that should be only callable by internal API keys, to ensure they are not callable with regular API keys.
+</Item>
+
+<Item category="security">
+Fixed a race condition that could apply the wrong FIPS mode when bootstrapping a new cluster where nodes have different FIPS settings.
+</Item>
+
+<Item category="security">
+Fixed an issue where the `/api/cache/reload` endpoint was accessible to any super-admin API key, not just internal API keys. 
+</Item>
+
+<Item category="security">
+Fixed a flaw in the "Forgot password" flow to that could be used to enumerate registered email addresses using the cookies in the HTTP response.
+</Item>
+
+<Item category="security">
+Fixed an issue where a tenant-scoped API key could be used to add an identity provider to an application in a separate tenant.
+</Item>
+
+<Item category="security">
+Removed shell access from the `fusionauth` user account in the Docker install to better align with the principle of lease privilege.
+</Item>
+
+<Item category="security">
+Fixed a potential directory traversal issue that could expose files stored outside the web root folder.
 </Item>
 
 <Item category="internal" issue="3390">
