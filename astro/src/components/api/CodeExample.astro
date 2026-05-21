@@ -23,6 +23,7 @@ const goId = `go-${uid}`;
 const javaId = `java-${uid}`;
 const csharpId = `csharp-${uid}`;
 const phpId = `php-${uid}`;
+const rubyId = `ruby-${uid}`;
 
 const methodFlag = method === 'GET' ? '-G' : `-X ${method}`;
 const quotedUri = uri.includes('&') ? `'https://your-fusionauth-host${uri}'` : `https://your-fusionauth-host${uri}`;
@@ -245,6 +246,40 @@ phpLines.push(
 
 const phpSnippet = phpLines.join('\n');
 
+const bodyRubyJson = body
+  ? JSON.stringify(JSON.parse(body), null, 2).split('\n').join('\n  ')
+  : null;
+
+const rubyLines = [
+  'require "net/http"',
+  'require "json"',
+  'require "uri"',
+  '',
+  `uri = URI("https://your-fusionauth-host${uri}")`,
+  `http = Net::HTTP.new(uri.host, uri.port)`,
+  'http.use_ssl = true',
+  '',
+  `request = Net::HTTP::${method[0] + method.slice(1).toLowerCase()}.new(uri)`,
+  'request["Authorization"] = "YOUR_API_KEY"',
+];
+
+if (body) {
+  rubyLines.push(
+    'request["Content-Type"] = "application/json"',
+    `request.body = <<~JSON`,
+    `  ${bodyRubyJson}`,
+    `JSON`,
+  );
+}
+
+rubyLines.push(
+  '',
+  'response = http.request(request)',
+  'puts response.body',
+);
+
+const rubySnippet = rubyLines.join('\n');
+
 const shikiTheme = 'github-dark';
 
 const curlHtml = await codeToHtml(curlSnippet, { lang: 'bash', theme: shikiTheme });
@@ -254,6 +289,7 @@ const goHtml = await codeToHtml(goSnippet, { lang: 'go', theme: shikiTheme });
 const javaHtml = await codeToHtml(javaSnippet, { lang: 'java', theme: shikiTheme });
 const csharpHtml = await codeToHtml(csharpSnippet, { lang: 'csharp', theme: shikiTheme });
 const phpHtml = await codeToHtml(phpSnippet, { lang: 'php', theme: shikiTheme });
+const rubyHtml = await codeToHtml(rubySnippet, { lang: 'ruby', theme: shikiTheme });
 
 const snippets = [
   { lang: 'curl', label: 'curl', id: curlId, html: curlHtml, raw: curlSnippet },
@@ -263,6 +299,7 @@ const snippets = [
   { lang: 'java', label: 'Java', id: javaId, html: javaHtml, raw: javaSnippet },
   { lang: 'csharp', label: 'C#', id: csharpId, html: csharpHtml, raw: csharpSnippet },
   { lang: 'php', label: 'PHP', id: phpId, html: phpHtml, raw: phpSnippet },
+  { lang: 'ruby', label: 'Ruby', id: rubyId, html: rubyHtml, raw: rubySnippet },
 ];
 ---
 
