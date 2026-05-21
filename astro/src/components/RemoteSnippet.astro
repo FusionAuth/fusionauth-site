@@ -1,0 +1,75 @@
+---
+/**
+  * Local snippet loader for pre-generated Bluehawk snippets.
+  * Reads from src/codeSnippets/remote/ directory.
+  */
+
+import { Code } from 'astro:components';
+import * as fs from 'fs';
+import * as path from 'path';
+
+export interface Props {
+  /**
+   * Repository URL (for reference/documentation purposes)
+   * E.g., "https://github.com/FusionAuth/fusionauth-contrib"
+   */
+  repo: string;
+
+  /**
+   * Git branch name
+   * E.g., "main"
+   */
+  branch: string;
+
+  /**
+   * File path within the repository
+   * E.g., "Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleFirebaseScryptPasswordEncryptor.java"
+   */
+  filepath: string;
+
+  /**
+   * The language of your code.
+   * Supports all languages listed here: https://github.com/shikijs/shiki/blob/main/docs/languages.md#all-languages
+   *
+   * @default "plaintext"
+   */
+  lang?: string;
+
+  /**
+   * The title of the code section, shown as a piece of text above the block.
+   */
+  title?: string;
+
+  /**
+   * Optional tag for extracting specific snippet regions.
+   * If provided, looks for {filename}.snippet.{tag}.{ext}
+   * If not provided, looks for the full file at {filename}.{ext}
+   */
+  tag?: string;
+}
+
+const { repo, branch, filepath, lang = 'plaintext', title, tag, ...rest } = Astro.props;
+
+function getSnippetFilename(filepath: string, tag?: string): string {
+  const basename = path.basename(filepath);
+  if (!tag) return basename;
+  const ext = path.extname(basename);
+  const name = path.basename(basename, ext);
+  return `${name}.snippet.${tag}${ext}`;
+}
+
+const snippetFilename = getSnippetFilename(filepath, tag);
+const snippetPath = path.join(process.cwd(), 'src', 'codeSnippets', 'remote', snippetFilename);
+let snippetCode = '';
+
+try {
+  snippetCode = fs.readFileSync(snippetPath, 'utf-8');
+}
+catch (err) {
+  throw new Error(`Failed to read snippet file at [${snippetPath}]: ${(err as Error).message}`);
+}
+---
+{(title === '' || title === undefined)
+  ? null
+  : (<p data-title={title}><em>{title}</em></p>)}
+<Code code={snippetCode} lang={lang} {...rest}/>
