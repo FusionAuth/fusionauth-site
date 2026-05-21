@@ -205,7 +205,6 @@ function cloneOrUpdateRepo(repoInfo: RepoInfo): void {
     console.log(`  Repository exists, fetching updates...`);
     try {
       execSync(`git -C "${repoInfo.localPath}" fetch origin`, { stdio: 'inherit' });
-      console.log(`  Fetched successfully`);
     }
     catch (error) {
       console.error(`  Failed to fetch repo: ${error}`);
@@ -220,7 +219,6 @@ function cloneOrUpdateRepo(repoInfo: RepoInfo): void {
         stdio: 'inherit',
         cwd: CACHE_DIR
       });
-      console.log(`  Cloned successfully`);
     }
     catch (error) {
       console.error(`  Failed to clone repo: ${error}`);
@@ -266,7 +264,6 @@ function generateSnippets(snippet: SnippetInfo, repoPath: string): void {
     console.log(`  Running: ${command}`);
     try {
       execSync(command, { stdio: 'inherit' });
-      console.log(`  Snippet generation completed`);
     }
     catch (error) {
       console.error(`  Snippet generation failed: ${error}`);
@@ -275,14 +272,14 @@ function generateSnippets(snippet: SnippetInfo, repoPath: string): void {
   }
   else {
     const sourceFile = path.join(sourceDir, filename);
-    const command = `npx bluehawk copy "${sourceFile}" --output "src/codeSnippets/remote/${repoName}/"`;
-    console.log(`  Running: ${command}`);
+    const destDir = path.join(SNIPPET_OUTPUT_DIR, repoName, fileDir);
+    const destFile = path.join(destDir, filename);
     try {
-      execSync(command, { stdio: 'inherit' });
-      console.log(`  File copy completed`);
+      fs.mkdirSync(destDir, { recursive: true });
+      fs.copyFileSync(sourceFile, destFile);
     }
     catch (error) {
-      console.error(`  File copy failed: ${error}`);
+      console.error(`  Failed to copy file: ${error}`);
       process.exit(1);
     }
   }
