@@ -28,8 +28,8 @@ interface RepoInfo {
 }
 
 const CACHE_DIR = path.join(process.cwd(), '.cache', 'repos');
-const SNIPPET_OUTPUT_DIR = path.join(process.cwd(), 'astro', 'src', 'codeSnippets', 'remote');
-const CONTENT_DIR = path.join(process.cwd(), 'astro', 'src', 'content');
+const SNIPPET_OUTPUT_DIR = path.join(process.cwd(), 'src', 'codeSnippets', 'remote');
+const CONTENT_DIR = path.join(process.cwd(), 'src', 'content');
 
 function main(): void {
   console.log('=== Refresh Code Snippets ===\n');
@@ -232,8 +232,7 @@ function generateSnippets(snippet: SnippetInfo, repoPath: string): void {
 
   fs.mkdirSync(SNIPPET_OUTPUT_DIR, { recursive: true });
 
-  const relativePath = path.relative(process.cwd(), sourceDir);
-  const command = `cd astro && npx bluehawk snip "../${relativePath}" --output src/codeSnippets/remote/`;
+  const command = `npx bluehawk snip "${sourceDir}" --output src/codeSnippets/remote/`;
   console.log(`  Running: ${command}`);
 
   try {
