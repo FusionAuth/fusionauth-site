@@ -93,30 +93,42 @@ const pythonHtml = await codeToHtml(pythonSnippet, { lang: 'python', theme: shik
 </div>
 
 <script>
-  document.querySelectorAll('[data-code-example]').forEach((container) => {
+  const STORAGE_KEY = 'fa-code-example-lang';
+
+  function applyLang(container: Element, lang: string) {
     const buttons = container.querySelectorAll<HTMLButtonElement>('.tab-btn');
     const copyButton = container.querySelector<HTMLElement>('[data-widget="copy-button"]');
     const panels = container.querySelectorAll<HTMLElement>('[data-panel]');
 
-    buttons.forEach((btn) => {
+    const targetBtn = Array.from(buttons).find((b) => b.dataset.lang === lang);
+    if (!targetBtn) return;
+
+    panels.forEach((p) => p.classList.add('hidden'));
+    buttons.forEach((b) => {
+      b.classList.remove('bg-indigo-600', 'text-white');
+      b.classList.add('text-gray-400');
+    });
+
+    container.querySelector<HTMLElement>(`[data-panel="${lang}"]`)?.classList.remove('hidden');
+    targetBtn.classList.add('bg-indigo-600', 'text-white');
+    targetBtn.classList.remove('text-gray-400');
+
+    if (copyButton) {
+      copyButton.dataset.copySource = targetBtn.dataset.target!;
+    }
+  }
+
+  const containers = document.querySelectorAll('[data-code-example]');
+  const savedLang = localStorage.getItem(STORAGE_KEY);
+
+  containers.forEach((container) => {
+    if (savedLang) applyLang(container, savedLang);
+
+    container.querySelectorAll<HTMLButtonElement>('.tab-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const lang = btn.dataset.lang!;
-        const targetId = btn.dataset.target!;
-
-        panels.forEach((p) => p.classList.add('hidden'));
-        buttons.forEach((b) => {
-          b.classList.remove('bg-indigo-600', 'text-white');
-          b.classList.add('text-gray-400');
-        });
-
-        container.querySelector<HTMLElement>(`[data-panel="${lang}"]`)?.classList.remove('hidden');
-
-        btn.classList.add('bg-indigo-600', 'text-white');
-        btn.classList.remove('text-gray-400');
-
-        if (copyButton) {
-          copyButton.dataset.copySource = targetId;
-        }
+        localStorage.setItem(STORAGE_KEY, lang);
+        containers.forEach((c) => applyLang(c, lang));
       });
     });
   });
