@@ -1,0 +1,46 @@
+---
+/**
+  * Local snippet loader for code stored in src/codeSnippets/local/ directory.
+  */
+
+import { Code } from 'astro:components';
+import * as fs from 'fs';
+import * as path from 'path';
+
+export interface Props {
+  /**
+   * File path relative to src/codeSnippets/local/
+   * E.g., "extend/code/lambdas/samlv2-response-populate/signature.js"
+   */
+  filepath: string;
+
+  /**
+   * The language of your code.
+   * Supports all languages listed here: https://github.com/shikijs/shiki/blob/main/docs/languages.md#all-languages
+   *
+   * @default "plaintext"
+   */
+  lang?: string;
+
+  /**
+   * The title of the code section, shown as a piece of text above the block.
+   */
+  title?: string;
+}
+
+const { filepath, lang = 'plaintext', title, ...rest } = Astro.props;
+
+const snippetPath = path.join(process.cwd(), 'src', 'codeSnippets', 'local', filepath);
+let snippetCode = '';
+
+try {
+  snippetCode = fs.readFileSync(snippetPath, 'utf-8');
+}
+catch (err) {
+  throw new Error(`Failed to read local snippet file at [${snippetPath}]: ${(err as Error).message}`);
+}
+---
+{(title === '' || title === undefined)
+  ? null
+  : (<p data-title={title}><em>{title}</em></p>)}
+<Code code={snippetCode} lang={lang} {...rest}/>
