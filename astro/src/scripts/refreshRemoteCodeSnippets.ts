@@ -1,7 +1,6 @@
 #!/usr/bin/env node
+
 /**
- * refreshCodeSnippets.ts
- *
  * Scans all MDX files for RemoteSnippet components,
  * clones/pulls required repositories,
  * and runs Bluehawk to generate snippets.
@@ -47,7 +46,7 @@ function main(): void {
   console.log('\n=== Generating Snippets ===');
   const processedDirs = new Map<string, string>();
   for (const snippet of allSnippets) {
-    const repoName = getRepoName(snippet.repo);
+    const repoName = getRepoName(snippet.url);
     const repoPath = path.join(CACHE_DIR, repoName);
     const fileDir = path.dirname(snippet.filepath);
     const dirKey = `${repoName}:${fileDir}`;
@@ -101,16 +100,17 @@ function getAllSnippets(mdxFiles: string[]): SnippetInfo[] {
 }
 
 function getSnippetsFromFile(filePath: string): SnippetInfo[] {
-  const content = fs.readFileSync(filePath, 'utf-8');
+  const mdxContent = fs.readFileSync(filePath, 'utf-8');
+  const frontmatter = getFrontmatterFromMdxContent(mdxContent);
   const snippets: SnippetInfo[] = [];
 
   const regex = /<RemoteSnippet\s+([^>]+)\/>/g;
   let match;
 
-  while ((match = regex.exec(content)) !== null) {
+  while ((match = regex.exec(mdxContent)) !== null) {
     const propsStr = match[1];
 
-    const urlMatch = propsStr.match(/url=["']([^"']+)["']/);
+    const urlMatch = propsStr.match(/url=(?:\{([^}]+)\}|["']([^"']+)["'])/);
     const branchMatch = propsStr.match(/branch=["']([^"']+)["']/);
     const filepathMatch = propsStr.match(/filepath=["']([^"']+)["']/);
     const tagMatch = propsStr.match(/tag=["']([^"']+)["']/);
@@ -118,8 +118,12 @@ function getSnippetsFromFile(filePath: string): SnippetInfo[] {
     const titleMatch = propsStr.match(/title=["']([^"']+)["']/);
 
     if (urlMatch && branchMatch && filepathMatch) {
+      const frontmatterVariable = urlMatch[1];
+      const literalString = urlMatch[2];
+      const rawUrl = literalString || frontmatterVariable;
+      const url = getUrlFromFrontmatterOrLiteral(rawUrl, frontmatter);
       snippets.push({
-        url: urlMatch[1],
+        url,
         branch: branchMatch[1],
         filepath: filepathMatch[1],
         tag: tagMatch?.[1],
@@ -131,6 +135,30 @@ function getSnippetsFromFile(filePath: string): SnippetInfo[] {
   }
 
   return snippets;
+}
+
+function getFrontmatterFromMdxContent(mdxContent: string): Record<string, string> {
+  const frontmatter: Record<string, string> = {};
+  const match = mdxContent.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return frontmatter;
+  const lines = match[1].split('\n');
+  for (const line of lines) {
+    const kv = line.match(/^(\w+):\s*(.+)$/);
+    if (kv) frontmatter[kv[1]] = kv[2];
+  }
+  return frontmatter;
+}
+
+function getUrlFromFrontmatterOrLiteral(value: string, frontmatter: Record<string, string>): string {
+  const fmMatch = value.match(/^frontmatter\.(\w+)$/);
+  if (!fmMatch) return value;
+  const varName = fmMatch[1];
+  const resolved = frontmatter[varName];
+  if (!resolved) {
+    console.error(`  Error: Frontmatter variable '${varName}' not found`);
+    process.exit(1);
+  }
+  return resolved;
 }
 
 function groupSnippetsByRepo(snippets: SnippetInfo[]): Map<string, RepoInfo> {
