@@ -20,6 +20,7 @@ const curlId = `curl-${uid}`;
 const pythonId = `python-${uid}`;
 const typescriptId = `typescript-${uid}`;
 const goId = `go-${uid}`;
+const javaId = `java-${uid}`;
 
 const methodFlag = method === 'GET' ? '-G' : `-X ${method}`;
 const quotedUri = uri.includes('&') ? `'https://your-fusionauth-host${uri}'` : `https://your-fusionauth-host${uri}`;
@@ -124,18 +125,64 @@ goLines.push(
 
 const goSnippet = goLines.join('\n');
 
+const bodyJavaJson = body
+  ? JSON.stringify(JSON.parse(body), null, 4).split('\n').join('\n            ')
+  : null;
+
+const javaLines = [
+  'import java.net.URI;',
+  'import java.net.http.HttpClient;',
+  'import java.net.http.HttpRequest;',
+  'import java.net.http.HttpResponse;',
+  '',
+  'public class Main {',
+  '    public static void main(String[] args) throws Exception {',
+  '        HttpClient client = HttpClient.newHttpClient();',
+];
+
+if (body) {
+  javaLines.push(`        String body = """`, `            ${bodyJavaJson}`, `            """;`);
+  javaLines.push('');
+}
+
+javaLines.push(
+  '        HttpRequest request = HttpRequest.newBuilder()',
+  `            .uri(URI.create("https://your-fusionauth-host${uri}"))`,
+  '            .header("Authorization", "YOUR_API_KEY")',
+);
+if (body) {
+  javaLines.push(
+    '            .header("Content-Type", "application/json")',
+    `            .${method === 'GET' ? 'GET()' : `method("${method}", HttpRequest.BodyPublishers.ofString(body))`}`,
+  );
+} else {
+  javaLines.push(`            .${method === 'GET' ? 'GET()' : `method("${method}", HttpRequest.BodyPublishers.noBody())`}`);
+}
+javaLines.push(
+  '            .build();',
+  '',
+  '        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());',
+  '        System.out.println(response.body());',
+  '    }',
+  '}',
+);
+
+const javaSnippet = javaLines.join('\n');
+
 const shikiTheme = 'github-dark';
 
 const curlHtml = await codeToHtml(curlSnippet, { lang: 'bash', theme: shikiTheme });
 const pythonHtml = await codeToHtml(pythonSnippet, { lang: 'python', theme: shikiTheme });
 const typescriptHtml = await codeToHtml(typescriptSnippet, { lang: 'typescript', theme: shikiTheme });
 const goHtml = await codeToHtml(goSnippet, { lang: 'go', theme: shikiTheme });
+const javaHtml = await codeToHtml(javaSnippet, { lang: 'java', theme: shikiTheme });
 
 const snippets = [
   { lang: 'curl', label: 'curl', id: curlId, html: curlHtml, raw: curlSnippet },
   { lang: 'python', label: 'Python', id: pythonId, html: pythonHtml, raw: pythonSnippet },
   { lang: 'typescript', label: 'TypeScript', id: typescriptId, html: typescriptHtml, raw: typescriptSnippet },
   { lang: 'go', label: 'Go', id: goId, html: goHtml, raw: goSnippet },
+  { lang: 'java', label: 'Java', id: javaId, html: javaHtml, raw: javaSnippet },
 ];
 ---
 
