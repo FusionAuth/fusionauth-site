@@ -240,6 +240,7 @@ function checkoutBranch(repoPath: string, branch: string): void {
 function generateSnippets(snippet: SnippetInfo, repoPath: string): void {
   const fileDir = path.dirname(snippet.filepath);
   const sourceDir = path.join(repoPath, fileDir);
+  const filename = path.basename(snippet.filepath);
 
   console.log(`\nProcessing snippet:`);
   console.log(`  Repo: ${snippet.url}`);
@@ -254,16 +255,30 @@ function generateSnippets(snippet: SnippetInfo, repoPath: string): void {
 
   fs.mkdirSync(SNIPPET_OUTPUT_DIR, { recursive: true });
 
-  const command = `npx bluehawk snip "${sourceDir}" --output src/codeSnippets/remote/`;
-  console.log(`  Running: ${command}`);
-
-  try {
-    execSync(command, { stdio: 'inherit' });
-    console.log(`  Snippet generation completed`);
+  if (snippet.tag) {
+    const command = `npx bluehawk snip "${sourceDir}" --output src/codeSnippets/remote/`;
+    console.log(`  Running: ${command}`);
+    try {
+      execSync(command, { stdio: 'inherit' });
+      console.log(`  Snippet generation completed`);
+    }
+    catch (error) {
+      console.error(`  Snippet generation failed: ${error}`);
+      process.exit(1);
+    }
   }
-  catch (error) {
-    console.error(`  Snippet generation failed: ${error}`);
-    process.exit(1);
+  else {
+    const sourceFile = path.join(sourceDir, filename);
+    const command = `npx bluehawk copy "${sourceFile}" --output src/codeSnippets/remote/`;
+    console.log(`  Running: ${command}`);
+    try {
+      execSync(command, { stdio: 'inherit' });
+      console.log(`  File copy completed`);
+    }
+    catch (error) {
+      console.error(`  File copy failed: ${error}`);
+      process.exit(1);
+    }
   }
 }
 
