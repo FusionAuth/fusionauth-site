@@ -22,6 +22,7 @@ const typescriptId = `typescript-${uid}`;
 const goId = `go-${uid}`;
 const javaId = `java-${uid}`;
 const csharpId = `csharp-${uid}`;
+const phpId = `php-${uid}`;
 
 const methodFlag = method === 'GET' ? '-G' : `-X ${method}`;
 const quotedUri = uri.includes('&') ? `'https://your-fusionauth-host${uri}'` : `https://your-fusionauth-host${uri}`;
@@ -205,6 +206,45 @@ csharpLines.push(
 
 const csharpSnippet = csharpLines.join('\n');
 
+const bodyPhpJson = body
+  ? JSON.stringify(JSON.parse(body), null, 4).split('\n').join('\n    ')
+  : null;
+
+const phpLines = [
+  '<?php',
+  '',
+  `$ch = curl_init("https://your-fusionauth-host${uri}");`,
+  'curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);',
+  `curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "${method}");`,
+  'curl_setopt($ch, CURLOPT_HTTPHEADER, [',
+  '    "Authorization: YOUR_API_KEY",',
+];
+
+if (body) {
+  phpLines.push('    "Content-Type: application/json",');
+}
+phpLines.push(']);', '');
+
+if (body) {
+  phpLines.push(
+    `$body = <<<JSON`,
+    `    ${bodyPhpJson}`,
+    `JSON;`,
+    '',
+    'curl_setopt($ch, CURLOPT_POSTFIELDS, $body);',
+    '',
+  );
+}
+
+phpLines.push(
+  '$response = curl_exec($ch);',
+  'curl_close($ch);',
+  '',
+  'echo $response;',
+);
+
+const phpSnippet = phpLines.join('\n');
+
 const shikiTheme = 'github-dark';
 
 const curlHtml = await codeToHtml(curlSnippet, { lang: 'bash', theme: shikiTheme });
@@ -213,6 +253,7 @@ const typescriptHtml = await codeToHtml(typescriptSnippet, { lang: 'typescript',
 const goHtml = await codeToHtml(goSnippet, { lang: 'go', theme: shikiTheme });
 const javaHtml = await codeToHtml(javaSnippet, { lang: 'java', theme: shikiTheme });
 const csharpHtml = await codeToHtml(csharpSnippet, { lang: 'csharp', theme: shikiTheme });
+const phpHtml = await codeToHtml(phpSnippet, { lang: 'php', theme: shikiTheme });
 
 const snippets = [
   { lang: 'curl', label: 'curl', id: curlId, html: curlHtml, raw: curlSnippet },
@@ -221,6 +262,7 @@ const snippets = [
   { lang: 'go', label: 'Go', id: goId, html: goHtml, raw: goSnippet },
   { lang: 'java', label: 'Java', id: javaId, html: javaHtml, raw: javaSnippet },
   { lang: 'csharp', label: 'C#', id: csharpId, html: csharpHtml, raw: csharpSnippet },
+  { lang: 'php', label: 'PHP', id: phpId, html: phpHtml, raw: phpSnippet },
 ];
 ---
 
