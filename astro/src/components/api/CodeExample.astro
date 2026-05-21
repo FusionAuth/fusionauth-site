@@ -3,60 +3,20 @@ import CopyToClipboard from 'src/components/CopyToClipboard.astro';
 import { codeToHtml } from 'shiki';
 
 interface Props {
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  uri: string;
-  body?: string;
+  curl: string;
+  python: string;
 }
 
-const { method, uri, body } = Astro.props;
+const { curl, python } = Astro.props;
 
 const uid = Math.random().toString(36).slice(2, 9);
 const curlId = `curl-${uid}`;
 const pythonId = `python-${uid}`;
 
-const methodFlag = method === 'GET' ? '-G' : `-X ${method}`;
-
-let curlSnippet = `curl ${methodFlag} \\
-  https://your-fusionauth-host${uri} \\
-  -H "Authorization: YOUR_API_KEY"`;
-
-if (body) {
-  curlSnippet += ` \\\n  -H "Content-Type: application/json" \\\n  -d '${body}'`;
-}
-
-const pythonMethod = method.toLowerCase();
-let pythonSnippet = `import requests
-
-headers = {
-    "Authorization": "YOUR_API_KEY",
-}`;
-
-if (body) {
-  pythonSnippet += `
-
-body = ${body}
-
-response = requests.${pythonMethod}(
-    "https://your-fusionauth-host${uri}",
-    headers=headers,
-    json=body,
-)`;
-} else {
-  pythonSnippet += `
-
-response = requests.${pythonMethod}(
-    "https://your-fusionauth-host${uri}",
-    headers=headers,
-)`;
-}
-
-pythonSnippet += `
-print(response.json())`;
-
 const shikiTheme = 'github-dark';
 
-const curlHtml = await codeToHtml(curlSnippet, { lang: 'bash', theme: shikiTheme });
-const pythonHtml = await codeToHtml(pythonSnippet, { lang: 'python', theme: shikiTheme });
+const curlHtml = await codeToHtml(curl, { lang: 'bash', theme: shikiTheme });
+const pythonHtml = await codeToHtml(python, { lang: 'python', theme: shikiTheme });
 ---
 
 <div class="not-prose relative my-4 rounded bg-gray-800" data-code-example>
@@ -75,8 +35,8 @@ const pythonHtml = await codeToHtml(pythonSnippet, { lang: 'python', theme: shik
     </div>
     <CopyToClipboard source={curlId} />
   </div>
-  <span id={curlId} class="hidden">{curlSnippet}</span>
-  <span id={pythonId} class="hidden">{pythonSnippet}</span>
+  <span id={curlId} class="hidden">{curl}</span>
+  <span id={pythonId} class="hidden">{python}</span>
   <div data-panel="curl" class="[&>pre]:overflow-x-auto [&>pre]:px-4 [&>pre]:py-3 [&>pre]:text-sm [&>pre]:leading-relaxed [&>pre]:!bg-transparent [&>pre]:!m-0" set:html={curlHtml} />
   <div data-panel="python" class="hidden [&>pre]:overflow-x-auto [&>pre]:px-4 [&>pre]:py-3 [&>pre]:text-sm [&>pre]:leading-relaxed [&>pre]:!bg-transparent [&>pre]:!m-0" set:html={pythonHtml} />
 </div>
