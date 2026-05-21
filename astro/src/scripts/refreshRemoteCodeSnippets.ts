@@ -12,7 +12,7 @@ import * as path from 'path';
 import { execSync } from 'child_process';
 
 interface SnippetInfo {
-  repo: string;
+  url: string;
   branch: string;
   filepath: string;
   tag?: string;
@@ -110,16 +110,16 @@ function getSnippetsFromFile(filePath: string): SnippetInfo[] {
   while ((match = regex.exec(content)) !== null) {
     const propsStr = match[1];
 
-    const repoMatch = propsStr.match(/repo=["']([^"']+)["']/);
+    const urlMatch = propsStr.match(/url=["']([^"']+)["']/);
     const branchMatch = propsStr.match(/branch=["']([^"']+)["']/);
     const filepathMatch = propsStr.match(/filepath=["']([^"']+)["']/);
     const tagMatch = propsStr.match(/tag=["']([^"']+)["']/);
     const langMatch = propsStr.match(/lang=["']([^"']+)["']/);
     const titleMatch = propsStr.match(/title=["']([^"']+)["']/);
 
-    if (repoMatch && branchMatch && filepathMatch) {
+    if (urlMatch && branchMatch && filepathMatch) {
       snippets.push({
-        repo: repoMatch[1],
+        url: urlMatch[1],
         branch: branchMatch[1],
         filepath: filepathMatch[1],
         tag: tagMatch?.[1],
@@ -138,13 +138,13 @@ function groupSnippetsByRepo(snippets: SnippetInfo[]): Map<string, RepoInfo> {
   const repos = new Map<string, RepoInfo>();
 
   for (const snippet of snippets) {
-    const repoName = getRepoName(snippet.repo);
+    const repoName = getRepoName(snippet.url);
     const existing = repos.get(repoName);
     if (existing)
       existing.branches.add(snippet.branch);
     else
       repos.set(repoName, {
-        url: snippet.repo,
+        url: snippet.url,
         localPath: path.join(CACHE_DIR, repoName),
         branches: new Set([snippet.branch])
       });
@@ -214,7 +214,7 @@ function generateSnippets(snippet: SnippetInfo, repoPath: string): void {
   const sourceDir = path.join(repoPath, fileDir);
 
   console.log(`\nProcessing snippet:`);
-  console.log(`  Repo: ${snippet.repo}`);
+  console.log(`  Repo: ${snippet.url}`);
   console.log(`  Branch: ${snippet.branch}`);
   console.log(`  File: ${snippet.filepath}`);
   console.log(`  Tag: ${snippet.tag || '(full file)'}`);
