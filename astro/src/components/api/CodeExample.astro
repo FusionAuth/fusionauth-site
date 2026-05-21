@@ -1,6 +1,7 @@
 ---
 import CopyToClipboard from 'src/components/CopyToClipboard.astro';
 import { codeToHtml } from 'shiki';
+import generatedSnippets from 'src/data/generated-snippets.json';
 
 interface Props {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -8,16 +9,21 @@ interface Props {
   body?: string;
 }
 
-const { method, uri, body } = Astro.props;
+const { method, uri } = Astro.props;
+
+const basePath = uri.split('?')[0];
+const lookupKey = `${method} ${basePath}`;
+const body: string | null = Astro.props.body ?? (generatedSnippets as Record<string, string | null>)[lookupKey] ?? null;
 
 const uid = Math.random().toString(36).slice(2, 9);
 const curlId = `curl-${uid}`;
 const pythonId = `python-${uid}`;
 
 const methodFlag = method === 'GET' ? '-G' : `-X ${method}`;
+const quotedUri = uri.includes('&') ? `'https://your-fusionauth-host${uri}'` : `https://your-fusionauth-host${uri}`;
 
 let curlSnippet = `curl ${methodFlag} \\
-  https://your-fusionauth-host${uri} \\
+  ${quotedUri} \\
   -H "Authorization: YOUR_API_KEY"`;
 
 if (body) {
@@ -32,9 +38,14 @@ headers = {
 }`;
 
 if (body) {
+  const bodyPython = JSON.stringify(JSON.parse(body), null, 4)
+    .replace(/: true/g, ': True')
+    .replace(/: false/g, ': False')
+    .replace(/: null/g, ': None');
+
   pythonSnippet += `
 
-body = ${body}
+body = ${bodyPython}
 
 response = requests.${pythonMethod}(
     "https://your-fusionauth-host${uri}",
