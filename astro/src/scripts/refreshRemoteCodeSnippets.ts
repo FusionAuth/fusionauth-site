@@ -4,6 +4,10 @@
  * Scans all MDX files for RemoteSnippet components,
  * clones/pulls required repositories,
  * and runs Bluehawk to generate snippets.
+ *
+ * Run this script with:
+ * docker run --init -it --rm --name "app" -v ".:/app" -w "/app" node:26 sh -c "node src/scripts/refreshRemoteCodeSnippets.ts"
+ *
  */
 
 import * as fs from 'fs';
@@ -238,6 +242,7 @@ function checkoutBranch(repoPath: string, branch: string): void {
 }
 
 function generateSnippets(snippet: SnippetInfo, repoPath: string): void {
+  const repoName = getRepoName(snippet.url);
   const fileDir = path.dirname(snippet.filepath);
   const sourceDir = path.join(repoPath, fileDir);
   const filename = path.basename(snippet.filepath);
@@ -253,10 +258,11 @@ function generateSnippets(snippet: SnippetInfo, repoPath: string): void {
     process.exit(1);
   }
 
-  fs.mkdirSync(SNIPPET_OUTPUT_DIR, { recursive: true });
+  const repoOutputDir = path.join(SNIPPET_OUTPUT_DIR, repoName);
+  fs.mkdirSync(repoOutputDir, { recursive: true });
 
   if (snippet.tag) {
-    const command = `npx bluehawk snip "${sourceDir}" --output src/codeSnippets/remote/`;
+    const command = `npx bluehawk snip "${sourceDir}" --output "src/codeSnippets/remote/${repoName}/"`;
     console.log(`  Running: ${command}`);
     try {
       execSync(command, { stdio: 'inherit' });
@@ -269,7 +275,7 @@ function generateSnippets(snippet: SnippetInfo, repoPath: string): void {
   }
   else {
     const sourceFile = path.join(sourceDir, filename);
-    const command = `npx bluehawk copy "${sourceFile}" --output src/codeSnippets/remote/`;
+    const command = `npx bluehawk copy "${sourceFile}" --output "src/codeSnippets/remote/${repoName}/"`;
     console.log(`  Running: ${command}`);
     try {
       execSync(command, { stdio: 'inherit' });

@@ -1,12 +1,19 @@
 ---
 /**
   * Local snippet loader for pre-generated Bluehawk snippets.
-  * Reads from src/codeSnippets/remote/ directory.
+  * Reads from src/codeSnippets/remote/{repo-name}/ directory.
   */
 
 import { Code } from 'astro:components';
 import * as fs from 'fs';
 import * as path from 'path';
+
+function getRepoName(url: string): string {
+  const match = url.match(/\/([^\/]+?)\.git$/);
+  if (match) return match[1];
+  const parts = url.split('/');
+  return parts[parts.length - 1].replace('.git', '') || 'unknown-repo';
+}
 
 export interface Props {
   /**
@@ -59,7 +66,8 @@ function getSnippetFilename(filepath: string, tag?: string): string {
 }
 
 const snippetFilename = getSnippetFilename(filepath, tag);
-const snippetPath = path.join(process.cwd(), 'src', 'codeSnippets', 'remote', snippetFilename);
+const repoName = getRepoName(url);
+const snippetPath = path.join(process.cwd(), 'src', 'codeSnippets', 'remote', repoName, snippetFilename);
 let snippetCode = '';
 
 try {
