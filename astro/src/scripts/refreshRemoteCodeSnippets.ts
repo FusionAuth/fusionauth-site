@@ -34,33 +34,18 @@ const CONTENT_DIR = path.join(process.cwd(), 'src', 'content');
 function main(): void {
   console.log('=== Refresh Code Snippets ===\n');
 
-  console.log('Scanning for MDX files...');
   const mdxFiles = getListOfAllMdxFiles(CONTENT_DIR);
-  console.log(`Found ${mdxFiles.length} MDX files`);
 
-  console.log('\nParsing RemoteSnippet components...');
   const allSnippets = getAllSnippets(mdxFiles);
-  console.log(`\nTotal RemoteSnippet components found: ${allSnippets.length}`);
+  if (allSnippets.length === 0) return console.log('No RemoteSnippet components found. Exiting.');
 
-  if (allSnippets.length === 0) {
-    console.log('No RemoteSnippet components found. Exiting.');
-    return;
-  }
-
-  console.log('\nIdentifying unique repositories...');
   const repos = groupSnippetsByRepo(allSnippets);
-  console.log(`Found ${repos.size} unique repository(ies)`);
-
-  for (const [repoName, repoInfo] of repos)
-    console.log(`  - ${repoName} (${repoInfo.url}) -> ${repoInfo.localPath}`);
 
   console.log('\n=== Cloning/Pulling Repositories ===');
-  for (const [repoName, repoInfo] of repos)
-    cloneOrUpdateRepo(repoInfo);
+  for (const [repoName, repoInfo] of repos) cloneOrUpdateRepo(repoInfo);
 
   console.log('\n=== Generating Snippets ===');
   const processedDirs = new Map<string, string>();
-
   for (const snippet of allSnippets) {
     const repoName = getRepoName(snippet.repo);
     const repoPath = path.join(CACHE_DIR, repoName);
@@ -83,6 +68,7 @@ function main(): void {
 }
 
 function getListOfAllMdxFiles(dir: string): string[] {
+  console.log('Scanning for MDX files...');
   const files: string[] = [];
 
   function walk(currentDir: string) {
@@ -97,10 +83,12 @@ function getListOfAllMdxFiles(dir: string): string[] {
   }
 
   walk(dir);
+  console.log(`Found ${files.length} MDX files`);
   return files;
 }
 
 function getAllSnippets(mdxFiles: string[]): SnippetInfo[] {
+  console.log('\nParsing RemoteSnippet components...');
   const snippets: SnippetInfo[] = [];
   for (const file of mdxFiles) {
     const fileSnippets = getSnippetsFromFile(file);
@@ -108,6 +96,7 @@ function getAllSnippets(mdxFiles: string[]): SnippetInfo[] {
     if (fileSnippets.length > 0)
       console.log(`  ${file}: ${fileSnippets.length} snippet(s)`);
   }
+  console.log(`\nTotal RemoteSnippet components found: ${snippets.length}`);
   return snippets;
 }
 
@@ -145,6 +134,7 @@ function getSnippetsFromFile(filePath: string): SnippetInfo[] {
 }
 
 function groupSnippetsByRepo(snippets: SnippetInfo[]): Map<string, RepoInfo> {
+  console.log('\nIdentifying unique repositories...');
   const repos = new Map<string, RepoInfo>();
 
   for (const snippet of snippets) {
@@ -159,6 +149,10 @@ function groupSnippetsByRepo(snippets: SnippetInfo[]): Map<string, RepoInfo> {
         branches: new Set([snippet.branch])
       });
   }
+
+  console.log(`Found ${repos.size} unique repository(ies)`);
+  for (const [repoName, repoInfo] of repos)
+    console.log(`  - ${repoName} (${repoInfo.url}) -> ${repoInfo.localPath}`);
 
   return repos;
 }
