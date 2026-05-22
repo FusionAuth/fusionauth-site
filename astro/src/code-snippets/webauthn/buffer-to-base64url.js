@@ -1,3 +1,6 @@
+// :remove-start:
+/* eslint-disable no-unused-vars */
+// :remove-end:
 // :snippet-start: buffer-to-base64url
 // :state-start: published
 function bufferToBase64URL(buffer) {
