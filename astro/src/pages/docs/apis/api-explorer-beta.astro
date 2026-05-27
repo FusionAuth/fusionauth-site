@@ -1,0 +1,161 @@
+---
+import '/src/css/style.css';
+import Head from 'src/components/Head.astro';
+import ThemeSelector from 'src/components/ThemeSelector.astro';
+
+const title = "FusionAuth API Explorer";
+const description = "Interactive explorer for the FusionAuth API.";
+---
+<!DOCTYPE html>
+<html lang="en" class="antialiased min-h-full">
+  <Head title={title} description={description} />
+  <style is:global>
+    /* Hide the Astro dev toolbar on this page in local dev. No-op in
+       production where the element isn't injected. */
+    astro-dev-toolbar { display: none !important; }
+
+    body { margin: 0; padding-top: 40px; }
+
+    .explorer-topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #ffffff;
+      font: 13px/1 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: #475569;
+    }
+    html.dark .explorer-topbar {
+      background: #0b1224;
+      border-bottom-color: #1e293b;
+      color: #94a3b8;
+    }
+    .explorer-topbar a {
+      color: #f58320;
+      text-decoration: none;
+    }
+    .explorer-topbar a:hover { text-decoration: underline; }
+    .explorer-topbar .sep { color: #cbd5e1; }
+    html.dark .explorer-topbar .sep { color: #334155; }
+    .explorer-topbar .spacer { flex: 1; }
+
+    /* ThemeSelector's MoonIcon hardcodes text-white (it lives in the dark
+       docs nav by default). On our light topbar that's invisible, so we
+       force the icon to inherit the topbar's foreground color. */
+    .explorer-topbar fa-theme-selector svg { color: inherit !important; }
+
+    #scalar-app { min-height: calc(100vh - 40px); }
+  </style>
+  <body class="antialiased">
+    <nav class="explorer-topbar" aria-label="Breadcrumb">
+      <a href="/docs/">FusionAuth Docs</a>
+      <span class="sep">/</span>
+      <a href="/docs/apis/">APIs</a>
+      <span class="sep">/</span>
+      <span>API Explorer (beta)</span>
+      <span class="spacer"></span>
+      <ThemeSelector />
+    </nav>
+    <div id="scalar-app"></div>
+
+    <script is:inline src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+    <script is:inline>
+      // Theme is owned entirely by ThemeSelector + Head.astro's inline script.
+      // The single source of truth is `documentElement.classList.contains('dark')`.
+      const customCss = `
+        .darklight-reference { display: none !important; }
+        .api-reference-toolbar { display: none !important; }
+
+        aside.t-doc__sidebar {
+          top: 40px !important;
+          height: calc(100vh - 40px) !important;
+        }
+
+        #scalar-app input[type="text"],
+        #scalar-app input[type="password"],
+        #scalar-app input:not([type]) {
+          border: 1px solid var(--scalar-border-color) !important;
+          background: var(--scalar-background-2) !important;
+          border-radius: 4px !important;
+          padding: 4px 8px !important;
+        }
+        #scalar-app input[type="text"]:focus,
+        #scalar-app input[type="password"]:focus,
+        #scalar-app input:not([type]):focus {
+          outline: none !important;
+          border-color: var(--scalar-color-accent) !important;
+          box-shadow: 0 0 0 2px rgba(245, 131, 32, 0.25) !important;
+        }
+
+        /* Set variables on body with html.dark/html:not(.dark) prefix so we
+           outrank Scalar's own body.light-mode / body.dark-mode rules
+           (specificity 0,1,2 vs Scalar's 0,1,1). */
+        html:not(.dark) body, html.dark body {
+          --scalar-color-accent: #f58320;
+          --scalar-background-accent: #fff1e0;
+        }
+        html:not(.dark) body {
+          --scalar-color-1: #0f172a;
+          --scalar-color-2: #334155;
+          --scalar-color-3: #64748b;
+          --scalar-background-1: #ffffff;
+          --scalar-background-2: #f8fafc;
+          --scalar-background-3: #f1f5f9;
+          --scalar-border-color: #e2e8f0;
+          --scalar-sidebar-background-1: #f8fafc;
+          --scalar-sidebar-color-1: #0f172a;
+          --scalar-sidebar-color-2: #475569;
+          --scalar-sidebar-border-color: #e2e8f0;
+          --scalar-sidebar-color-active: #f58320;
+          --scalar-sidebar-background-active: #fff1e0;
+        }
+        html.dark body {
+          --scalar-color-1: #f1f5f9;
+          --scalar-color-2: #cbd5e1;
+          --scalar-color-3: #94a3b8;
+          --scalar-background-1: #0f172a;
+          --scalar-background-2: #1e293b;
+          --scalar-background-3: #334155;
+          --scalar-border-color: #334155;
+          --scalar-sidebar-background-1: #0b1224;
+          --scalar-sidebar-color-1: #f1f5f9;
+          --scalar-sidebar-color-2: #94a3b8;
+          --scalar-sidebar-border-color: #1e293b;
+          --scalar-sidebar-color-active: #f58320;
+          --scalar-sidebar-background-active: rgba(245, 131, 32, 0.12);
+        }
+      `;
+
+      const isDark = () => document.documentElement.classList.contains('dark');
+
+      // Scalar's updateConfiguration replaces (not merges) the config, so we
+      // keep the full object around and pass it every time.
+      const buildConfig = () => ({
+        url: '/openapi.yaml',
+        layout: 'modern',
+        darkMode: isDark(),
+        hideDarkModeToggle: true,
+        agent: { disabled: true },
+        customCss,
+        metaData: { title: 'FusionAuth API Explorer' },
+      });
+
+      const scalar = Scalar.createApiReference('#scalar-app', buildConfig());
+
+      // Re-skin Scalar when ThemeSelector flips html.dark.
+      new MutationObserver(() => {
+        scalar.updateConfiguration(buildConfig());
+      }).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class'],
+      });
+    </script>
+  </body>
+</html>
