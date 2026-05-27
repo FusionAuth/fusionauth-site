@@ -1,0 +1,54 @@
+---
+import Layout from "src/layouts/BlogIndex.astro";
+import { getStaticAuthorPaths, authors } from "src/tools/blog";
+
+export async function getStaticPaths() {
+  const mockPaginate = (data, { params, props = {}, pageSize = 10 }) => {
+    const lastPage = Math.max(1, Math.ceil(data.length / pageSize));
+    const basePath = `/blog/author/${params.author}`;
+    
+    return [{
+      params: { author: params.author }, // No 'page' param needed here
+      props: {
+        ...props,
+        page: {
+          data: data.slice(0, pageSize),
+          start: 0,
+          end: Math.min(pageSize - 1, data.length - 1),
+          size: pageSize,
+          total: data.length,
+          currentPage: 1,
+          lastPage,
+          url: {
+            current: basePath,
+            prev: undefined,
+            next: lastPage > 1 ? `${basePath}/2` : undefined
+          }
+        }
+      }
+    }];
+  };
+
+  return await getStaticAuthorPaths(mockPaginate);
+}
+
+const { page, authorName } = Astro.props;
+const { author } = Astro.params;
+---
+
+<Layout
+  title={"Posts authored by " + authorName}
+  description={"FusionAuth Blog | " + authors[authorName]?.description ||
+    `Read ${authorName}'s posts on mobile development and security practices.`}
+  section="author"
+  sectionTitle="Posts By"
+  subjectRef={author}
+  subjectName={authorName}
+  page={page}
+  isIndexPage={true}
+  showCategories={true}
+  personalLink={{
+    text: authors[authorName]?.linkText,
+    href: authors[authorName]?.linkUrl,
+  }}
+/>

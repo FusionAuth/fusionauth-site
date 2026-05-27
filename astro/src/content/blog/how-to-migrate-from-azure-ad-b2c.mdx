@@ -10,11 +10,6 @@ tags: azure ad b2c, migration
 excerpt_separator: "{/* more */}"
 ---
 import Aside from '../../components/Aside.astro';
-import BulkAfterDiagram from "../../diagrams/docs/guides/bulk-migration-after-azureadb2c.astro";
-import BulkBeforeDiagram from "../../diagrams/docs/guides/bulk-migration-before-azureadb2c.astro";
-import SlowMigrationDiagram from "../../diagrams/docs/guides/slow-migration-azureadb2c.astro";
-import SlowSubsequentDiagram from "../../diagrams/docs/guides/slow-migration-subsequent-azureadb2c.astro";
-
 
 Azure AD B2C is a serverless CIAM offering from Microsoft Azure with integration across many Azure services. It offers authentication and authorization for users. Azure AD B2C supports a number of OAuth grants, including the Authorization Code grant, the Implicit grant and the Client Credentials grant.
 
@@ -24,24 +19,30 @@ At FusionAuth, potential customers are interested in migrating from Azure AD B2C
 
 This blog post will explain why and how you might choose to migrate from Azure AD B2C to another solution. This is more complicated than it might seem because you do not have any way to retrieve users' password hashes from Azure AD B2C. This negatively impacts your ability to migrate them without an unpleasant "reset password" login experience.
 
+<Aside type="caution">
+Azure AD B2C was closed to new customers on May 1, 2025. Its successor is [Microsoft Entra External ID](https://learn.microsoft.com/en-us/entra/external-id/customers/overview-customers-ciam). Existing Azure AD B2C customers are supported until at least May 2030. This post is intended for existing Azure AD B2C customers considering a migration.
+</Aside>
+
 ## The many faces of Azure AD
 
 Azure AD is Microsoft Azure's name for an umbrella of related identity solutions. There are few options, which support different use cases, even though they may be built on the same technology.
 
 <Aside type="note">
-2024 update! [Azure AD is Microsoft Entra ID.](https://learn.microsoft.com/en-us/entra/fundamentals/new-name) But the usage of Azure AD is common. In this document, wherever you see Azure AD, rest assured we mean Microsoft Entra ID as well. Except if it is [Azure AD B2C](https://learn.microsoft.com/en-us/azure/active-directory-b2c/overview). Confused? You're not alone.
+2024 update: [Azure AD is Microsoft Entra ID.](https://learn.microsoft.com/en-us/entra/fundamentals/new-name) But the usage of Azure AD is common. In this document, wherever you see Azure AD, rest assured we mean Microsoft Entra ID as well. Except if it is [Azure AD B2C](https://learn.microsoft.com/en-us/azure/active-directory-b2c/overview).
+
+2025 update: Azure AD B2C is now closed to new customers. Its successor is [Microsoft Entra External ID](https://learn.microsoft.com/en-us/entra/external-id/customers/overview-customers-ciam).
 </Aside>
 
 * Azure AD B2C, their CIAM solution, which lets customers register, login, and manage their profile. Think Auth0, Cognito or FusionAuth.
 * Azure AD, their employee/workforce solution. It's a directory, authentication and authorization system. Think Okta or AWS SSO.
-* Azure AD EI, which is external identity management and used for users outside your organization.
+* Microsoft Entra External ID, which is external identity management and used for users outside your organization.
 * Azure AD DS offers domain services supporting older Windows focused functionality. AD DS offers a lot of what the original Active Directory provided.
 
 This article discusses migrations from Azure AD B2C, not any of the other Azure AD identity solutions.
 
 ## Weaknesses of Azure AD B2C
 
-While [Azure AD B2C](https://azure.microsoft.com/en-us/services/active-directory/external-identities/b2c/) is a low cost auth service and a far better choice than rolling your own auth, it has some downsides.
+While [Azure AD B2C](https://learn.microsoft.com/en-us/azure/active-directory-b2c/overview) is a low cost auth service and a far better choice than rolling your own auth, it has some downsides.
 
 These include:
 
@@ -59,9 +60,13 @@ For whatever reason, you may decide to move your customer and user data from Azu
 
 ## When you shouldn't migrate from Azure AD B2C
 
+<Aside type="note">
+This section applies to existing Azure AD B2C customers. New customers cannot sign up for Azure AD B2C as of May 2025.
+</Aside>
+
 Like any tool, Azure AD B2C has strengths as well as weaknesses. When your application depends on Azure AD B2C's unique features or if the upsides outweigh the downsides, keep on using it.
 
-Azure AD B2C can be budget and developer friendly if you are all in on Azure. For example, if your usage is  under 50,000 MAUs, it is free. If the user interface and other limitations of Azure AD B2C are acceptable, migration doesn't make much sense. Since Azure AD B2C is serverless, it makes it easy to "set and forget" and allows you to focus on other aspects of your application. You know, the features your users want.
+Azure AD B2C can be budget and developer friendly if you are all in on Azure. For existing customers on the P1 tier, usage under 50,000 MAUs per month is included at no extra cost. If the user interface and other limitations of Azure AD B2C are acceptable, migration doesn't make much sense. Since Azure AD B2C is serverless, it makes it easy to "set and forget" and allows you to focus on other aspects of your application. You know, the features your users want.
 
 In addition, if you need custom user login flows and can successfully navigate the XML-based policy implementation, Azure AD B2C can be a good solution.
 
@@ -73,7 +78,7 @@ After you have decided to migrate from Azure AD B2C, the first decision you'll n
 
 This unfortunate choice is required because Azure AD B2C does not let you export password hashes. Choose carefully because often users consider an email asking them to reset their passwords an implicit admission of a data breach.
 
-<Aside type="note">This blog post gives general guidance on migration off of Azure AD B2C to any other auth provider. If you are looking for step by step instructions on how to migrate from Azure AD B2C to FusionAuth, please review our [Azure AD B2C migration guide](/docs/lifecycle/migrate-users/bulk/azureadb2c).</Aside>
+<Aside type="note">This blog post gives general guidance on migration off of Azure AD B2C to any other auth provider. If you are looking for step by step instructions on how to migrate from Azure AD B2C to FusionAuth, please review our [Azure AD B2C migration guide](/docs/lifecycle/migrate-users/provider-specific/azureadb2c).</Aside>
 
 If the answer is yes, you are okay forcing users to reset their password, you can perform a point-in-time bulk migration.
 
@@ -106,11 +111,33 @@ You can either notify the users in bulk via email or update your login screens w
 
 Here's the login flow before the bulk migration:
 
-<BulkBeforeDiagram alt="Bulk migration login request flow before the migration." />
+```mermaid title="Bulk migration login request flow before the migration."
+sequenceDiagram
+
+actor user as User Agent
+participant ad as Azure AD B2C
+
+user ->> ad  : Request login page
+ad -->> user  : Receive login page
+user ->> ad  : Post credentials
+ad ->> ad : Verify credentials
+ad -->> user  : Display results
+```
 
 Here's the login flow after the bulk migration, when Azure AD B2C no longer is involved in the login process:
 
-<BulkAfterDiagram alt="Bulk migration login request flow after the migration." />
+```mermaid title="Bulk migration login request flow after the migration."
+sequenceDiagram
+
+actor user as User Agent
+participant sys as New System
+
+user ->> sys  : Request login page
+sys -->> user  : Receive login page
+user ->> sys  : Post credentials
+sys ->> sys : Verify credentials
+sys -->> user  : Display results
+```
 
 The benefits of a bulk migration include:
 
@@ -137,19 +164,44 @@ The Azure AD B2C OAuth endpoint is monitored by rate limiting systems. If a dyna
 
 Here's a diagram of an initial user login during a slow migration:
 
-<SlowMigrationDiagram alt="Slow migration initial login request flow." />
+```mermaid title="Slow migration initial login request flow."
+sequenceDiagram
+
+actor user as User Agent
+participant sys as New System
+participant ad as Azure AD B2C
+
+user ->> sys : Request login page
+sys -->> user : Receive login page
+user ->> sys : Post credentials
+sys ->> ad : Post credentials
+ad ->> ad  : Verify credentials
+ad -->> sys : Return results of authentication, including user attributes
+sys -->> user : Display results. If authentication successful, store user in New System.
+```
 
 After the initial login, Azure AD B2C is no longer the system of record for that user. Any changes to this user, whether made by themselves, automated processes or customer service team members, must be made in the new system.
 
 In subsequent logins, the original Azure AD B2C system is never consulted, as below.
 
-<SlowSubsequentDiagram alt="Slow migration subsequent login request flow." />
+```mermaid title="Slow migration subsequent login request flow."
+sequenceDiagram
+
+actor user as User Agent
+participant sys as New System
+
+user ->> sys  : Request login page
+sys -->> user  : Receive login page
+user ->> sys  : Post credentials
+sys ->> sys : Verify credentials
+sys -->> user  : Display results.
+```
 
 The basic steps of a slow migration are:
 
 * Set up the new system. Make sure you map all functionality and data from Azure AD B2C to the new system.
 * Determine what constitutes "done" for this migration, since it is unlikely that every single user will log in and be migrated, no matter how long you run these two systems in parallel. You can see [more details on how to calculate that](/docs/lifecycle/migrate-users#migration-timeline).
-* Set up a way for the new system to present user credentials to Azure AD B2C for an authentication event. The exact method will depend on new system features. This can be done with an Azure Function; see [this document](/docs/lifecycle/migrate-users/bulk/azureadb2c#configuring-the-azure-function) for an example which works with FusionAuth.
+* Set up a way for the new system to present user credentials to Azure AD B2C for an authentication event. The exact method will depend on new system features. This can be done with an Azure Function; see [this document](/docs/lifecycle/migrate-users/provider-specific/azureadb2c#configuring-the-azure-function) for an example which works with FusionAuth.
 * Create configuration in the new auth system corresponding to the configuration in Azure AD B2C. You should also customize the user interface, messages, MFA methods and any other Azure AD B2C specific settings that are relevant.
 * Update your applications to point to the new auth system.
 * Wait for the migration to occur as each user logs in. You can run reports periodically to determine if you've migrated enough users to shut down the drip migration.
@@ -162,4 +214,4 @@ Slow migrations have less impact on your users, but take more time. They also ha
 
 I hope you enjoyed this overview of an Azure AD B2C migration. No matter the new system, you'll need to decide between a bulk or slow migration, as well take specific steps to move your data and settings.
 
-If you are looking for step by step instructions on how to move to FusionAuth from Azure AD B2C, please check out our [Azure AD B2C migration guide](/docs/lifecycle/migrate-users/bulk/azureadb2c).
+If you are looking for step by step instructions on how to move to FusionAuth from Azure AD B2C, please check out our [Azure AD B2C migration guide](/docs/lifecycle/migrate-users/provider-specific/azureadb2c).

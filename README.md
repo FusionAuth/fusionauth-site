@@ -1,137 +1,90 @@
-## FusionAuth Site 
+# FusionAuth Site
 
-https://fusionauth.io
+Despite the name, this repo only contains the FusionAuth documentation, articles, developer tools, and blog.
 
-The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? Please report using an issue or submit a pull request.
+This content is hosted in the following subdirectories of `fusionauth.io`:
 
-Thanks!<br/>
-&nbsp;&nbsp;&nbsp;– FusionAuth team
+- [https://fusionauth.io/docs](https://fusionauth.io/docs)
+- [https://fusionauth.io/blog](https://fusionauth.io/blog)
+- [https://fusionauth.io/articles](https://fusionauth.io/articles)
 
-## Review us on G2!
+The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? File an issue or submit a pull request.
 
-https://www.g2.com/products/fusionauth/take_survey 
+# FusionAuth Documentation and Blog
 
-## Building
+## Build
 
-If you want to submit a PR or test a change to fix a link, etc it may be helpful for you to build and run locally.
+To build the site:
 
-### Building on your host machine
+1. Navigate into the `astro` directory, where the docs site lives:
 
-This project is built using astro. You'll need to have node (v20) installed.
+   ```console
+   cd astro
+   ```
 
-#### Install
+1. Install dependencies:
 
-Install these programs:
+   ```console
+   npm install
+   ```
 
-- java
-- node
-- git
+1. Run a local development instance of the site:
 
-Go to the `astro` directory:
+   ```console
+   npm run dev
+   ```
 
-```
-cd astro
-```
+   To view the site, use the link displayed at the end of build output.
+   This development instance automatically rebuilds as you modify local files.
+   Some parts of the site, including site search, won't run on the development instance. To preview those, try a full site build.
 
-Run `npm install`
+To run a full site build:
 
-#### Running Astro In Dev Mode
-
-This is the quickest way to get started, but it only builds pages you visit.
-
-You'll need to be in the `astro` directory.
-
-```
-npm run dev
-```
-
-Then you can visit http://localhost:3000
-
-(It'll pick a different port if you have a process running on port 3000.)
-
-#### Setup Savant
-
-We use the Savant build tool to build the entire website.
-
-In order to fully build and run this project, you'll need to first setup Savant.
-
-Linux or macOS
-
-```
-mkdir ~/savant
-cd ~/savant
-wget http://savant.inversoft.org/org/savantbuild/savant-core/1.0.0/savant-1.0.0.tar.gz
-tar xvfz savant-1.0.0.tar.gz
-ln -s ./savant-1.0.0 current
-export PATH=$PATH:~/savant/current/bin/
+```console
+npm run start
 ```
 
-You may optionally want to add `~/savant/current/bin` to your PATH that is set in your profile so that this change persists. You'll also need to ensure that you have Java >= 8 installed and the environment variable  `JAVA_HOME` is set.
+This may take a minute or two. Output can be noisy, but do pay attention to the output from `astro-link-validator`, which runs at the very end of the `build` step. This check ensures that all internal links on the site point to valid URLs. For development convenience, this check doesn't fail the build, but you should always keep the broken link count at zero before merging into `main`.
 
-### Build The Entire Site
+## Write Content
 
+Always follow the content style guide found in [CONTRIBUTING.md](/CONTRIBUTING.md).
+
+## Lint
+
+To check syntax across the entire site:
+
+```sh
+npm run lint
 ```
-sb serve
+
+> NOTE: Most of the site doesn't currently pass lint checks.
+
+To check syntax in a specific file:
+
+```sh
+npm run lint -- src/components/BlogButton.astro
 ```
 
-For more information on the Savant build tool, checkout [savantbuild.org](http://savantbuild.org/).
+To skip linting when you inevitably include HTML somewhere in an MDX file, use the `eslint-disable-next-line` or `eslint-disable-line`:
 
-### CSS changes
-
-This project depends on CSS from the `fusionauth-style` project.
-
-If you are making changes to the CSS, you'll need to do the following:
-
-* clone that repo, make changes there on a branch
-* when your changes are done, run `sb int` which pushes up an integration build (similar to a maven snapshot) to the savant repo.
-* edit your css dependency var to be something like this (with the appropriate version number):
+```mdx
+{/* eslint-disable-next-line */}
+<a href="https://www.fusionauth.io">FusionAuth</a>
 ```
-fusionauthWebsiteStyleVersion = "0.2.27-{integration}"
-```
-* then you can commit this and other folks can pull down your changes
 
-Each time you make a CSS change, you can run `sb int` in `fusionauth-style` and then `sb css` in this project to pull down the latest CSS.
+## Deploy
 
-#### Releasing CSS changes
+Deploying happens automatically via a GitHub action (one for content, another for redirects) whenever content merges into `main`. Dev server deployments have separate corresponding actions.
 
-Before you merge your site changes with CSS dependencies to `main`:
+## Redirects
 
-* do a CSS version release, which will bump the version (see instructions in that repo for more)
-* update the version number in `site/_includes/_head.liquid`
-* update the dependency in the `fusionauth-site` savant build file.
-* run `sb css`
-* check in the new css files.
+[src/redirects.json](src/redirects.json) specifies our redirect rules. This file is published to s3 and read by a Lambda function that processes redirects for the site. When modifying the file:
 
-
-## Deploying to S3
-
-📝 _This section is only useful if you work for FusionAuth. Sorry!_
-
-Only `main` is ever released. You should work on a feature branch so that nothing is inadvertently released, but you must merge to `main` before you release. On every project, including this site, `main` should always be completely clean and able to be released at anytime.
-
-Deploying happens automatically via a GitHub action when `main` is updated.
-
-## Deploying Redirect Rules
-
-📝 _This section is only useful if you work for FusionAuth. Sorry!_
-
-The [redirects.json](src/redirects.json) file specifies our redirect rules. This file is published to s3 and read by a Lambda function that processes redirects for the site.
-
-* If you are moving a page around, update `redirects`
-* If you are adding a page that is an index page, update `indexPages`
+* Keep items in alphabetical order!
+* If you are moving a page around, update `redirects`.
+* If you are adding a page that is an index page, update `indexPages`.
 * If you are adding a new top level file or directory that's pulled from the S3 bucket, make sure you:
-    * Add a behavior in CloudFront. You'll need to submit a PR in [fusionauth-site-infra](https://github.com/FusionAuth/fusionauth-site-infra/) for this change.
-    * If you are adding a top level file, add an entry to the `s3Paths` array
-    * If you are adding a top level directory, add an entry to the `s3Prefixes` array
-
-⚠️ _When updating this file, please keep items in alpha order._
-
-## Sitemap
-
-📝 _This section is only useful if you work for FusionAuth. Sorry!_
-
-This is the state of things as of Nov 2023.
-
-The sitemap is generated during the Astro build by [@astrojs/sitemap](https://docs.astro.build/en/guides/integrations-guide/sitemap/).
-
-As of today, we still have static sitemaps that were generated by Jekyll, located in [astro/public](astro/public). These static sitemaps reference the sitemap generated by Astro.
+  * Add a behavior in CloudFront. You'll need to submit a PR in [fusionauth-site-infra](https://github.com/FusionAuth/fusionauth-site-infra/) for this change.
+  * If you are adding a top level file, add an entry to the `s3Paths` array.
+  * If you are adding a top level directory, add an entry to the `s3Prefixes` array.

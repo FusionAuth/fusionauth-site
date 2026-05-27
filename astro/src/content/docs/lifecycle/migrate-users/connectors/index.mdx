@@ -1,15 +1,9 @@
 ---
-title: Connectors Overview
+title: Connectors
 description: FusionAuth Connectors allow you to authenticate users against external data sources and optionally migrate them.
-navcategory: premium
-section: lifecycle
-subcategory: migrate users
-tertcategory: connectors
-navOrder: 0
 ---
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import ConnectorDiagram from 'src/diagrams/docs/lifecycle/migrate-users/connectors/_connector-diagram.astro';
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
 
@@ -17,10 +11,8 @@ import { YouTube } from '@astro-community/astro-embed-youtube';
 
 <YouTube id="ks-ppMH6WXw" />
 
-## Overview
-
 <Aside type="version">
-Available since 1.18.0
+Available since `1.18.0`
 </Aside>
 
 Connectors allow you to connect other sources of user data to your FusionAuth instance. Once the connection is created, you may either:
@@ -38,15 +30,38 @@ If you're looking for a Connector not listed here, review the open feature reque
 
 Find Connectors in the administrative user interface by navigating to <Breadcrumb>Settings -> Connectors</Breadcrumb> or use the [Connectors](/docs/apis/connectors/) APIs.
 
-<img src="/img/docs/lifecycle/migrate-users/connectors/connectors-screen.png" alt="Choose what type of Connector to create." width="1200" role="shadowed" />
+![Choose what type of Connector to create.](/img/docs/lifecycle/migrate-users/connectors/connectors-screen.png)
 
 ## Data Flow
 
 If you are using a Connector, then to your end user and application, it is exactly the same as if FusionAuth is authenticating directly against the FusionAuth user datastore. Connector usage is transparent.
 
-Below is a diagram of the data flow for an Authorization Code grant when a Connector is configured. 
+The following diagram shows the data flow for an Authorization Code grant when a Connector is configured:
 
-<ConnectorDiagram />
+```mermaid
+sequenceDiagram
+
+  participant User as User/Browser
+  participant App
+  participant FusionAuth 
+  participant Connector As JSON API or LDAP Connection
+  participant DB as Your Identity Datastore
+
+  User ->> App : View Initial Page<br/>Click Login
+  App -->> User : Redirect User To FusionAuth
+  User ->> FusionAuth : Request Login Page
+  FusionAuth -->> User : Return Login Page
+  User ->> FusionAuth : Provides Credentials
+  FusionAuth ->> Connector : Provides Credentials
+  Connector ->> DB : Provides Credentials
+  DB ->> DB : Verifies Credentials
+  DB -->> Connector : Returns User Data
+  Connector -->> FusionAuth : Returns Data
+  FusionAuth ->> User : Redirect With Authorization Code
+  User ->> App : Request Redirect URI
+  App ->> FusionAuth : Request Tokens
+  FusionAuth -->> App : Return Tokens
+```
 
 ## Authentication
 
@@ -107,7 +122,7 @@ Connectors can be enabled on a per tenant basis. This is done with a Connector p
 
 In the following screenshot you will see that we have enabled two custom Connectors for the Default tenant. The default Connector is present as well. 
 
-<img src="/img/docs/get-started/core-concepts/tenant-connector-tab.png" alt="The Tenant Connector policy configuration tab." width="1200" role="shadowed" />
+![The Tenant Connector policy configuration tab.](/img/docs/get-started/core-concepts/tenant-connector-tab.png)
 
 The order of operations matters for Connectors. The Connector policy rules are applied in order when a user authenticates for the first time. 
 

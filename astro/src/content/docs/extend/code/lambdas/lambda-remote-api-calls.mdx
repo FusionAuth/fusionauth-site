@@ -1,10 +1,7 @@
 ---
-title: Making API Calls From Lambdas
+title: Call an API from a Lambda
 description: An overview of how to make API calls from Lambdas.
-section: extend
-subcategory: code
-tertcategory: lambdas
-navOrder: 10
+order: 10
 ---
 import AdvancedPlanBlurb from 'src/content/docs/_shared/_advanced-plan-blurb.astro';
 import APIBlock from 'src/components/api/APIBlock.astro';
@@ -15,12 +12,11 @@ import InlineField from 'src/components/InlineField.astro';
 import LambdaTypes from 'src/content/docs/_shared/_lambda-types.astro';
 import MembershipLambda from 'src/content/docs/extend/code/_membership-lambda.md';
 import { YouTube } from '@astro-community/astro-embed-youtube';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 
 <AdvancedPlanBlurb />
 
-## Overview
-
-Lambda HTTP Connect allows you to make HTTP requests from within a lambda. Any lambda can make a request to any network accessible URL.
+Lambda HTTP Connect allows you to make HTTP requests from within a lambda with `fetch()`. Lambdas can contact any URL accessible from your FusionAuth instance.
 
 This features allows you to access data from external systems to configure token claims or to add data to a user profile. It also allows you to push profile or other data from FusionAuth to an external system as needed.
 
@@ -30,7 +26,12 @@ Here's a video showing more details about Lambda HTTP Connect:
 
 ## Example Lambda
 
-Here is a FusionAuth lambda that adds additional claims to a JWT based on an HTTP request:
+To make a request, call `fetch()`, passing:
+
+- a string containing a URL
+- optionally, an object containing options to configure the request.
+
+The following lambda makes an HTTP `GET` request to an API hosted at `api.example.com` with the `Content-Type` header set to `application/json`. The lambda uses the response returned from that API to add additional claims to a JWT:
 
 ```javascript title="A lambda which adds claims based on an external API."
 function populate(jwt, user, registration) {
@@ -56,30 +57,8 @@ You can also call FusionAuth APIs with a valid API key:
 
 <MembershipLambda />
 
-Use port 9012, or the configured value for `fusionauth-app.http-local.port`, whenever making a FusionAuth API call in a lambda. Doing so minimizes network traffic contention and improves performance.
+Use the local FusionAuth HTTP port (`fusionauth-app.http-local.port`, default value `9012`), whenever making a FusionAuth API call in a lambda. Doing so minimizes network traffic contention and improves performance.
 
-
-## Headers
-
-You can provide request header values in a number of different ways:
-
-```javascript title="An anonymous object"
-headers: {
-  "Content-Type": "application/json"
-}
-```
-
-```javascript title="A hash or map"
-headers: new Headers({
-   "Content-Type": "application/json"
-})
-```
-
-```javascript title="An array"
-headers: new Headers([
-    ["Content-Type", "application/json"]
-])
-```
 
 ## Options
 
@@ -89,11 +68,9 @@ headers: new Headers([
   Available Since Version 1.55.1
 </Aside>
 
-In general you will want to be certain that any external request you make within a lambda function returns quickly. The duration of the request will be cause additional latency during the FusionAuth request and can reduce the performance of FusionAuth and cause unexpected errors.
+Within lambda functions, external requests should always return quickly. Every moment of delay causes additional latency during the FusionAuth request, which can reduce the performance of FusionAuth or even cause errors. This happens because lambda functions are blocking, rather than asynchronous: FusionAuth must wait for the lambda to complete before the user interaction can complete.
 
-However, in some cases where you know a request may be slow, or the performance of the request is secondary to the request completing, you may need to extend these timeouts. These values are specified in milliseconds.
-
-By default, the HTTP read and connect timeouts are set to 2 seconds. The following is an example of setting the `connectTimeout` and the `readTimeout` on the HTTP request.
+Lambdas use default connect and read timeouts of 2 seconds. But you can modify these timeouts if you know a request may be slow. To specify a timeout, pass the optional second parameter to `fetch()` and assign a value and assign an integer value (in milliseconds) to the `connectTimeout` or `readTimeout` fields in that object:
 
 ```javascript
 var response = fetch("https://api.example.com/api/status", {
@@ -103,16 +80,76 @@ var response = fetch("https://api.example.com/api/status", {
   });
 ```
 
+### Body
+
+By default, `fetch()` does not send a request body. To specify a request body, pass the optional second parameter to `fetch()` and assign a **string** value to the `body` field in that object:
+
+```javascript
+var response = fetch("https://api.example.com/api/status", {
+    method: "PUT",
+    body: "test body pls ignore"
+  });
+```
+
+### Method
+
+By default, `fetch()` issues an HTTP `GET` request. To use a different method, pass the optional second parameter to `fetch()` and pass any valid [HTTP method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods) as a **string** to the `method` field in that object:
+
+```javascript
+var response = fetch("https://api.example.com/api/status", {
+    method: "DELETE"
+  });
+```
+
+### Headers
+
+By default, `fetch()` does not specify any headers. To specify headers in a request, pass the optional second parameter to `fetch()` and assign a value to the `header` field in that object:
+
+```javascript
+var response = fetch("https://example.org", {
+  method: "GET",
+  headers: {
+    "Content-Type": "application/json"
+  }
+});
+```
+
+You can provide request header values in the following ways:
+
+* An anonymous object:
+
+  ```javascript
+  headers: {
+     "Content-Type": "application/json"
+  }
+  ```
+
+* A hash or map:
+
+  ```javascript
+  headers: new Headers({
+     "Content-Type": "application/json"
+  })
+  ```
+
+* An array:
+
+  ```javascript
+  headers: new Headers([
+      ["Content-Type", "application/json"]
+  ])
+  ```
+
 ## Response
 
-A response object will be returned. It will have the following fields:
+`fetch()` returns an object that contains the following fields:
 
 <APIBlock>
   <APIField name="headers" type="Object">
     The headers returned by the response. The keys of this object are the header names. All header keys are lower cased.
   </APIField>
   <APIField name="status" type="Integer">
-    The HTTP status code.
+    The HTTP status code of the response.
   </APIField>
   <APIField name="body" type="String">
     The body of the response.
@@ -121,31 +158,25 @@ A response object will be returned. It will have the following fields:
 
 ## Securing API Keys In Lambdas
 
-Being able to make API requests against FusionAuth can be useful, but requires an API key to be stored in the Lambda code.
+<Aside type="version">
+  Available Since Version 1.64.0
+</Aside>
 
-To secure that API key, you should:
+To securely store secret values used in lambdas, like API keys and application passwords, use a [lambda secret](/docs/extend/code/lambdas#secrets). To create a secret, open the Admin UI and navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>.
 
-* scope your API keys as narrowly as possible (both in terms of tenants and permissions)
-* create a unique API key for each lambda to make revocation easy
-* limit who has access to view lambda code to limit who can see API keys
-* [rotate API keys regularly](/docs/operate/secure-and-monitor/key-rotation)
+To access secrets, use the `context` parameter. Pass a secret **name** to `context.services.secrets.get('<key>')` to retrieve the corresponding secret **value** as a string:
 
-There's an [open GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/1629) which discusses product improvements to API key handling.
+```javascript
+function populate(jwt, user, registration, context) {
+  var apiKey = context.services.secrets.get('my-api-key');
+  if (apiKey) {
+    jwt.apiKeyPresent = true;
+  }
+}
+```
 
 ## Lambda HTTP Connect Limitations
 
-When using Lambda HTTP Connect to make HTTP requests, do not call a FusionAuth API which invokes the calling lambda, because it will fail. For example, in a JWT Populate lambda, do not invoke the Login API.
+Do not call any FusionAuth API that itself invokes the calling lambda: the circular dependency on your lambda will cause the request to fail. For example, in a JWT Populate lambda, do not invoke the Login API.
 
-Requests from a lambda require the lambda to use the GraalJS engine.
-
-HTTP requests will time out after two seconds.
-
-The `fetch` method in a lambda does not implement the [entire `fetch` API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) as implemented in a browser.
-The first argument to `fetch` must always be a string URL.
-Only the following options are supported:
-
-* `method`, which defaults to `GET`
-* `headers`, which defaults to null
-* `body`, which must be a string
-
-
+The `fetch` method in a lambda does not implement the [entire `fetch` API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) as implemented in a browser: for example, the first argument to `fetch` must always be a string.

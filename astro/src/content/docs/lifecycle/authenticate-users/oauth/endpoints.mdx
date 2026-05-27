@@ -1,12 +1,7 @@
 ---
 title: OAuth2 Endpoints
-htmlTitle: "OAuth2 Endpoints | FusionAuth"
 description: This page details FusionAuth's OAuth2 endpoints. Learn about the Authorization Code grant, Implicit grant, and other OAuth2 grants.
-navcategory: login-methods
-section: lifecycle
-subcategory: authenticate users
-tertcategory: oauth
-tags: api consents
+tags: endpoints, oauth2, oauth 2.0, oauth endpoint
 ---
 import Aside from 'src/components/Aside.astro';
 import API from 'src/components/api/API.astro';
@@ -27,8 +22,6 @@ import ClientCredentialsPermissionsExplanation from 'src/content/docs/lifecycle/
 import UserInfoAudClaimLimits from 'src/content/docs/_shared/_userinfo-aud-claim-limits.mdx';
 import UserInfoResponse from 'src/content/docs/_shared/_userinfo-response.mdx';
 import JSON from 'src/components/JSON.astro';
-
-## Overview
 
 In support of [OAuth 2.0 IETF RFC 6749](https://tools.ietf.org/html/rfc6749), [OAuth 2.0 IETF RFC 8628](https://tools.ietf.org/html/rfc8628), [JWK IETF RFC 7517](https://tools.ietf.org/html/rfc7517), and [OAuth 2.0 IETF RFC 7662](https://tools.ietf.org/html/rfc7662), the following endpoints are provided.
 
@@ -78,6 +71,11 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
     The possible values are:
 
     - `S256` - SHA-256
+  </APIField>
+  <APIField name="dpop_jkt" type="String" optional since="1.63.0">
+    The `dpop_jkt` parameter can be provided to bind the authorization code to a DPoP key.
+    When this parameter is provided during the Authorization request, a corresponding <InlineField>DPoP</InlineField> HTTP header is required on the subsequent `POST` to the `/oauth2/token` endpoint.
+    [DPoP](/docs/lifecycle/authenticate-users/oauth/dpop) is an Enterprise feature.
   </APIField>
   <APIField name="idp_hint" type="UUID" optional since="1.19.0">
     An optional unique Identity Provider Id that can allow you to bypass the FusionAuth login page.
@@ -389,7 +387,9 @@ Location: https://piedpiper.com/callback#
 
 ## Logout
 
-This endpoint provides a mechanism to invalidate the user's session held by FusionAuth, this effectively logs the user out of the FusionAuth SSO. Calling this endpoint does not revoke refresh tokens or JWTs. You can revoke the former by using the [Revoke Refresh Tokens API](/docs/apis/jwt). To revoke JWTs, [implement a revocation strategy](/articles/tokens/revoking-jwts).
+This endpoint provides a mechanism to invalidate the user's session held by FusionAuth, this effectively logs the user out of the FusionAuth SSO and any applications by calling a application specific URL.
+
+Calling this endpoint does not revoke refresh tokens or JWTs. You can revoke the former by using the [Revoke Refresh Tokens API](/docs/apis/jwt). To revoke JWTs, [implement a revocation strategy](/articles/tokens/revoking-jwts).
 
 Since `1.10.0` The logout behavior follows that of the [OpenID Connect Front-Channel Logout](https://openid.net/specs/openid-connect-frontchannel-1_0.html) specification.
 
@@ -399,7 +399,7 @@ The Logout URL used for each application is determined using the following prece
 2. The <InlineField>logoutURL</InlineField> configured on the Tenant if defined.
 3. `/`
 
-You can learn more about logout in the [Logout And Session Management guide](/docs/lifecycle/authenticate-users/logout-session-management).
+You can learn more about this behavior in the [Logout And Session Management guide](/docs/lifecycle/authenticate-users/logout-session-management).
 
 ### Request
 
@@ -768,7 +768,7 @@ _Response Codes_
   </APIField>
   <APIField name="token_type" type="String">
     The token type as defined by [RFC 6749 Section 7.1](https://tools.ietf.org/html/rfc6749#section-7.1).
-    This value will always be `Bearer`.
+    This value will be `Bearer` or `DPoP` if a [DPoP Proof](/docs/lifecycle/authenticate-users/oauth/dpop) was provided.
   </APIField>
   <APIField name="userId" type="String">
     The unique Id of the user that has been authenticated.
@@ -895,7 +895,7 @@ _Response Codes_
   </APIField>
   <APIField name="token_type" type="String">
     The token type as defined by [RFC 6749 Section 7.1](https://tools.ietf.org/html/rfc6749#section-7.1).
-    This value will always be `Bearer`.
+    This value will be `Bearer` or `DPoP` if a [DPoP Proof](/docs/lifecycle/authenticate-users/oauth/dpop) was provided.
   </APIField>
   <APIField name="userId" type="String">
     The unique Id of the user that has been authenticated.
@@ -1008,7 +1008,7 @@ _Response Codes_
   </APIField>
   <APIField name="token_type" type="String">
     The token type.
-    The value will be `Bearer`.
+    This value will be `Bearer` or `DPoP` if a [DPoP Proof](/docs/lifecycle/authenticate-users/oauth/dpop) was provided.
   </APIField>
 </APIBlock>
 
@@ -1503,6 +1503,9 @@ This is an example response body when the provided `access_token` was issued on 
     * `TWITTER` - The user was authenticated using Twitter. <AvailableSince since="1.1.0" />
     * `USER_CREATE` - The user was created using the User API. &nbsp; <AvailableSince since="1.16.0" />
   </APIField>
+  <APIField name="cnf" type="Object" since="1.63.0">
+    The confirmation claim, which is present for DPoP tokens. The `jkt` field contains the base64url encoding of the JWK SHA-256 Thumbprint of the DPoP public key (in JWK format) to which the access token is bound.
+  </APIField>
   <APIField name="email" type="String">
     The email address of the user.
   </APIField>
@@ -1565,6 +1568,9 @@ This is an example response body when the provided `access_token` was issued as 
   </APIField>
   <APIField name="aud" type="Object">
     The intended audience of this access token. This value may be a string or an array of string values representing one to many intended entities.
+  </APIField>
+  <APIField name="cnf" type="Object" since="1.63.0">
+    The confirmation claim, which is present for DPoP tokens. The `jkt` field contains the base64url encoding of the JWK SHA-256 Thumbprint of the DPoP public key (in JWK format) to which the access token is bound.
   </APIField>
   <APIField name="exp" type="Long">
     The expiration instant of the access token, expressed as [unix time](/docs/reference/data-types#unix-time).
@@ -1771,6 +1777,7 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `expired_token`
     * `interaction_required`
     * `invalid_client`
+    * `invalid_dpop_proof`
     * `invalid_grant`
     * `invalid_request`
     * `invalid_scope`

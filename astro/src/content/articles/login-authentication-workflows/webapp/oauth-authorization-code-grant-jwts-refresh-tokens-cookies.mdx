@@ -5,7 +5,6 @@ section: Login & Auth Workflows
 author: Brian Pontarelli
 featured: true
 ---
-import Diagram from "../../../../diagrams/articles/login-authentication-workflows/webapp/oauth-authorization-code-grant-jwts-refresh-tokens-cookies.astro";
 import Legend from "../../../../components/articles/login-authentication-workflows/legend.md";
 import OrderedList from "../../../../components/OrderedList.astro";
 import Intro from "../../../../components/articles/login-authentication-workflows/webapp/oauth-intro.md";
@@ -26,7 +25,79 @@ import Step10 from "../../../../components/articles/login-authentication-workflo
 
 <Legend/>
 
-<Diagram/>
+```mermaid errorBoxes={[17, 19]} warningBoxes={[25]} infoBoxes={[21]}
+sequenceDiagram
+  autonumber
+  participant Browser
+  participant Store
+  participant Forums
+  participant FusionAuth
+  participant Hacker
+  Note over Browser,Hacker: Initialize
+  Browser->>Store: GET /
+  Store->>Browser: (HTML, CSS & JavaScript - with login link)
+
+  Note over Browser,Hacker: Login (browser navigates away from WebApp)
+  Browser->>FusionAuth: GET /oauth2/authorize {response_type=code}
+  FusionAuth->>Browser: (Login form HTML)
+  Browser->>FusionAuth: POST /oauth2/authorize (response_type=code)
+  FusionAuth->>Browser: 302 Location: {redirect_uri w/ code}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  Browser->>Store: GET {redirect_uri w/ code}
+  Store->>FusionAuth: POST /oauth2/token<br/>(code, client_secret)
+  FusionAuth->>Store: 200 Ok<br/>(Refresh token and JWT)
+  Store->>Browser: 302 Location: /shopping-cart<br/>[Refresh token and JWT HttpOnly w/ domain: store.example.com]
+
+  Note over Browser,Hacker: Shopping cart load
+  Browser->>Store: GET /shopping-cart<br/>[Refresh token and JWT HttpOnly w/ domain: store.example.com]
+  Store->>Browser: (Shopping cart HTML)
+
+  Note over Browser: JWT expires
+  
+  Note over Browser,Hacker: Shopping cart load
+  Browser->>Store: GET /shopping-cart<br/>[Refresh token and JWT HttpOnly w/ domain: store.example.com]
+  Store->>FusionAuth: POST /oauth2/token or POST /api/jwt/refresh<br/>(grant_type=refresh and refresh token)
+  FusionAuth->>Store: (JWT)
+  Store->>Browser: (Shopping cart HTML)<br/>[New JWT HttpOnly w/ domain: store.example.com]
+
+  Note over Browser: Refresh token expires
+  
+  Note over Browser,Hacker: Re-login
+  Browser->>Store: GET /shopping-cart<br/>[Refresh token and JWT HttpOnly w/ domain: store.example.com]
+  Store->>FusionAuth: POST /oauth2/token or POST /api/jwt/refresh<br/>(grant_type=refresh and refresh token)
+  FusionAuth->>Store: 404 Missing
+  Store->>Browser: 302 Location: /login
+  Browser->>Browser: Login same as above
+
+  Note over Browser,Hacker: SSO login to forums
+
+  Note over Browser,Hacker: Initialize
+  Browser->>Forums: GET /<br/>[No cookies]
+  Forums->>Browser: (HTML, CSS & JavaScript - with login link)
+  
+  Note over Browser,Hacker: Login (browser navigates away from WebApp but auto-logs-in since the session exists)
+  Browser->>FusionAuth: GET /oauth2/authorize {response_type=code}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  FusionAuth->>Browser: 302 Location: {redirect_uri w/ code}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  Browser->>Forums: GET {redirect_uri w/ code}
+  Forums->>FusionAuth: POST /oauth2/token<br/>(code, client_secret)
+  FusionAuth->>Forums: 200 Ok<br/>(Refresh token and JWT)
+  Forums->>Browser: 302 Location: /posts<br/>[Refresh token and JWT HttpOnly w/ domain: forums.example.com]
+
+  Note over Browser,Hacker: Forum load
+  Browser->>Forums: GET /posts<br/>[Refresh token and JWT HttpOnly w/ domain: forums.example.com]
+  Forums->>Browser: (Forum posts HTML)
+
+  Note over Browser,Hacker: Attack vectors
+
+  Note over Browser,Hacker: Stolen refresh token
+  Hacker->>Store: GET /shopping-cart<br/>[Refresh token and bad JWT HttpOnly w/ domain: store.example.com]
+  Store->>FusionAuth: POST /oauth2/token or POST /api/jwt/refresh<br/>(grant_type=refresh and refresh token)
+  FusionAuth->>Store: (JWT)
+  Store->>Hacker: (Shopping cart HTML)<br/>[New JWT HttpOnly w/ domain: store.example.com]
+
+  Note over Browser,Hacker: Stolen JWT
+  Hacker->>Store: GET /shopping-cart<br/>[JWT HttpOnly w/ domain: store.example.com]
+  Store->>Hacker: (Shopping cart HTML)
+```
 
 ## Explanation
 

@@ -1,0 +1,89 @@
+---
+version: "1.61.0"
+name: "Flexible Fox"
+date: 2025-11-13
+---
+import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
+
+<Item category="theme-upgrade">
+Several changes are required to support multiple configurations of various identity provider types that were previously restricted to a single configuration per FusionAuth instance. References to the legacy sign with Google JavaScript library, [deprecated by Google in 2023](https://developers.google.com/identity/sign-in/web/deprecation-and-sunset), have been removed from FusionAuth. Please migrate to the updated [Sign in with Google](https://developers.google.com/identity/gsi/web/guides/overview) integration to continue using the Google identity provider.
+</Item>
+
+<Item category="deprecated">
+**Identity Provider API**
+
+For `/api/identity-provider` PUT/PATCH/DELETE:
+
+The variant of these APIs that resolve the identity provider by a `type` query string parameter are deprecated. Use the variant that provides the `identityProviderId` via a URL path segment instead.
+</Item>
+
+<Item category="known-issue" resolvedIn="1.64.0" issue="3381">
+Long-running Admin UI requests can sometimes duplicate actions.
+</Item>
+
+<Item issue="1841" category="enhancement">
+You can now create multiple instances of any identity provider type, each with its own distinct configuration and reconcile lambda. This is especially useful if you have users mapped to different tenants, and want the ability to have an identity provider of the same type in each tenant, each having its own distinct config.
+</Item>
+<Item issue="3220" category="enhancement">
+Added the ability to set maximum sizes on both the HTTP request header and body. These can be useful for blocking  invalid requests before they are processed by FusionAuth's HTTP server.
+</Item>
+<Item issue="2989" bonusIssue="1736" category="enhancement">
+Added support for the SAML v2.0 ForceAuthn attribute. When using FusionAuth as an IdP, this attribute will force re-authentication of the user, regardless of their SSO session state.
+</Item>
+
+<Item issue="3150" category="fix">
+In version `1.59.0` we started indexing the new `user.phoneNumber` field for searches. `IndexUser` had a new field added, but the doc annotation was missing the version.
+</Item>
+<Item issue="3179" category="fix">
+The `GET /api/user/change-password` endpoint does not allow a `loginId` type of `phoneNumber`. Additionally, client libraries are incorrectly passing a `username` parameter instead of a `loginId` parameter in `checkChangePasswordUsingLoginId` calls. This API endpoint is also lacking documentation.
+</Item>
+<Item issue="3140" category="fix">
+When federating with a Google IdP, there are situations where a user can be re-prompted for authentication when already having valid FusionAuth and Google IdP sessions. SSO should now be honored correctly in these cases.
+</Item>
+<Item issue="2949" category="fix">
+After establishing MFA trust on a device, a user is being re-challenged during a voluntary password reset, even during the trust period. The user should be able to change their password without completing another MFA challenge.
+</Item>
+<Item issue="3208" category="fix">
+During startup, FusionAuth can output duplicate log entries. This was especially present with silent mode enabled. Logging should now be more efficient.
+</Item>
+<Item issue="3227" category="fix">
+When a user first logs into a tenant configured with a connector, they will see an error when MFA is required and/or an updated and stronger password policy is in place. Subsequent logins behave normally.
+</Item>
+<Item issue="3167" category="fix">
+Searches for users using nested searches involving registration fields may return incomplete results in some cases.
+</Item>
+<Item issue="3064" category="fix">
+When using SCIM PATCH to add a user field, exiting fields are being removed. PATCH should now be handled as expected.
+</Item>
+<Item issue="3186" category="fix">
+Performing a user reindex intermittently results in an `email`, `username`, or `phoneNumber` being omitted from Elastic/OpenSearch and not being searchable.
+</Item>
+<Item issue="3225" category="fix">
+Some unwanted JavaScript errors are reported in the browser console on some pages, including the maintenance mode page and the application scope management page. These errors should now be handled more gracefully.
+</Item>
+<Item issue="3111" category="fix">
+SCIM group searches are not properly honoring the `eq` operator. This operator should be doing an exact (but case-insensitive) search, but instead is doing a wildcard search.
+</Item>
+<Item issue="3191" category="fix">
+Webhook `user.delete` events were not populating `email`, `username`, or `phoneNumber` fields when users were deleted under certain circumstances.
+</Item>
+
+<Item category="fix" issue="3069">
+Fixed an issue where the `user.update` webhook event triggered by an Identity Provider login did not include the user's registrations in the `original` field of the event payload.
+</Item>
+
+<Item issue="3176" category="internal">
+Updated the following dependencies:
+* Upgrade `io.fusionauth:fusionauth-jwt` `5.3.2` ->  `5.3.3`
+* Upgrade `io.fusionauth:java-http` `0.3.7` -> `1.4.0`
+* Upgrade `org.freemarker:freemarker` `2.3.33` -> `2.3.34`
+* Upgrade `org.primeframework:prime-email` `0.21.1` -> `0.22.0`
+* Upgrade `org.primeframework:prime-js` `1.7.0` -> `1.8.0`
+* Upgrade `org.primeframework:prime-mvc` `4.36.0` -> `5.6.1`
+* Upgrade `ch.qos.logback` `1.5.16` -> `1.5.19`
+* Upgrade `org.mybatis:mybatis` `3.5.16` -> `3.5.19`
+* Upgrade `com.fasterxml.jackson.*` `2.17.2` -> `2.19.2`
+* Upgrade `org.slf4j:slf4j-api` `2.0.13` -> `2.0.17`
+* Upgrade `org.postgresql:postgresql` `42.7.3` -> `42.7.7`
+* Upgrade `io.fusionauth:fusionauth-samlv2` `1.0.0` -> `1.1.1`
+</Item>

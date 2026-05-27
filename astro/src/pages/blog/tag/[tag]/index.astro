@@ -1,0 +1,54 @@
+---
+import Layout from 'src/layouts/BlogIndex.astro';
+import { getStaticTagPaths } from 'src/tools/blog';
+import { startCase } from 'src/tools/string';
+
+export async function getStaticPaths() {
+  const mockPaginate = (data, { params, props = {}, pageSize = 10 }) => {
+    const lastPage = Math.max(1, Math.ceil(data.length / pageSize));
+    const basePath = `/blog/tag/${params.tag}`;
+    
+    return [{
+      params: { tag: params.tag },
+      props: {
+        ...props,
+        page: {
+          data: data.slice(0, pageSize),
+          start: 0,
+          end: Math.min(pageSize - 1, data.length - 1),
+          size: pageSize,
+          total: data.length,
+          currentPage: 1,
+          lastPage,
+          url: {
+            current: basePath,
+            prev: undefined,
+            next: lastPage > 1 ? `${basePath}/2` : undefined
+          }
+        }
+      }
+    }];
+  };
+
+  const paths = await getStaticTagPaths(mockPaginate);
+
+  // Deduplicate strictly by tag to prevent Astro's self-conflict warnings
+  const uniquePaths = Array.from(
+    new Map(paths.map(p => [p.params.tag, p])).values()
+  );
+
+  return uniquePaths;
+}
+
+const { page, tagName } = Astro.props;
+const { tag } = Astro.params;
+---
+
+<Layout title={startCase(tagName) + " posts"}
+        section="tag"
+        sectionTitle="Tags"
+        subjectRef={tag}
+        subjectName={tagName}
+        page={page}
+        isIndexPage={true}
+        showCategories={true}/>

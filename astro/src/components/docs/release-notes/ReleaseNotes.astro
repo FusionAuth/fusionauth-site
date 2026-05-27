@@ -1,0 +1,132 @@
+---
+import { getCollection } from 'astro:content';
+import { render } from 'astro:content';
+import ReleaseNotesItem from './ReleaseNotesItem.astro';
+export const categories = [
+  { id: 'theme-upgrade', label: 'Theme Upgrade', color: '#e11d48' },
+  { id: 'new-feature', label: 'New Feature', color: '#16a34a' },
+  { id: 'enhancement', label: 'Enhancement', color: '#2563eb' },
+  { id: 'known-issue', label: 'Known Issue', color: '#bb4448' },
+  { id: 'deprecated', label: 'Deprecated', color: '#ffcc48' },
+  { id: 'fix', label: 'Fix', color: '#d97706' },
+  { id: 'security', label: 'Security', color: '#566f98' },
+  { id: 'internal', label: 'Internal', color: '#71717a' },
+  { id: 'breaking-change', label: 'Breaking Change', color: '#aaaa33'},
+  { id: 'database-migration', label: 'Database Migration', color: '#aa1d48' },
+];
+
+export const getCategoryLabel = (id: string) => {
+  const category = categories.find((cat) => cat.id === id);
+  
+  if (category) return category.label;
+
+  // Fallback logic for typos and mistakes: "new-feature" -> "New Feature"
+  return id
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+const allUpdates = await getCollection('releases');
+const updates = allUpdates.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const categoryStyles = categories.map(cat => `
+  /* show when checked */
+  .release-container:has(#toggle-${cat.id}:checked) .release-notes-item-${cat.id} {
+    display: block;
+  }
+  @media (width > 48rem) {
+    .release-container:has(#toggle-${cat.id}:checked) .release-notes-item-${cat.id} {
+      display: flex;
+    }
+  }
+
+  /* active color */
+  .filter-chip:has(#toggle-${cat.id}:checked) {
+    background-color: ${cat.color};
+    color: #fff;
+    border-color: ${cat.color};
+  }
+  /* styling */
+  .badge-${cat.id} {
+    background-color: ${cat.color}22;
+    color: ${cat.color};
+    border: 1px solid ${cat.color}44;
+  }
+`).join('\n');
+---
+
+<div class="release-container">
+  <nav class="filter-controls">
+    {categories.map(cat => (
+      <label class="filter-chip">
+        <input type="checkbox" id={`toggle-${cat.id}`} class="filter-input" />
+        <span>{cat.label}</span>
+      </label>
+    ))}
+  </nav>
+
+  <div class="version-list">
+    {updates.map(async (item) => {
+      const { Content } = await render(item);
+      return (
+        <article class="version">
+          <i class="version-date">{item.data.date.toLocaleDateString("en-UK", {year: "numeric", month: "long", day: "numeric",})}</i>
+          <header>
+            <h2 id={`version-${item.data.version.replaceAll('.', '-')}`} class="release-note group">Version {item.data.version} {item.data.name && `(${item.data.name})`}
+              <a class="anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100" title="copy header link" href={`#version-${item.data.version.replaceAll('.', '-')}`}>#</a>
+            </h2>
+          </header>
+          <div class="content"><Content components={{ReleaseNotesItem}} /></div>
+        </article>
+      );
+    })}
+  </div>
+</div>
+
+<Fragment set:html={`<style>${categoryStyles}</style>`} />
+
+<style is:global>
+    @reference "tailwindcss";
+
+  .release-container:has(.filter-input:checked) [class*="release-notes-item-"] {
+    @apply hidden;
+  }
+
+  .filter-chip {
+    @apply opacity-70 grayscale;
+  }
+
+  .filter-chip:has(input:checked) {
+    @apply grayscale-0 opacity-100;
+  }
+  .filter-controls input {
+    @apply hidden;
+  }
+
+  .filter-controls {
+    @apply flex flex-wrap gap-3;
+  }
+
+  .filter-controls label {
+    @apply 
+      py-2 px-4
+      text-sm text-slate-800 font-medium 
+      bg-slate-100 border border-slate-300 
+      rounded-full cursor-pointer
+      transition ease-in-out;
+  }
+
+  .filter-controls label:has(input:checked) {
+    @apply text-white shadow-lg;
+    background-color: var(--main-accent-color, #083b94);
+    border-color: var(--main-accent-color, #083b94);
+  }
+
+  .filter-controls label:hover {
+    @apply brightness-95;
+  }
+  .version-date {
+    @apply float-right;
+  }
+</style>

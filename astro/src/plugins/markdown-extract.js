@@ -72,11 +72,8 @@ function inlineMarkdownImports(filePath, seen = new Set()) {
       return `<!-- Missing import: ${importPath} -->`;
     }
 
-    // Only inline if it's in src/diagrams or src/content
-    if (
-      resolvedPath.includes(path.normalize('/src/diagrams/')) ||
-      resolvedPath.includes(path.normalize('/src/content/'))
-    ) {
+    // Only inline if it's in src/content
+    if (resolvedPath.includes(path.normalize('/src/content/'))) {
       importMap.set(importName, resolvedPath);
     }
 
