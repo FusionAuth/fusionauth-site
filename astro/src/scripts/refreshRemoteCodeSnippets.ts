@@ -45,7 +45,7 @@ function main(): void {
   const repos = groupSnippetsByRepo(allSnippets);
 
   console.log('\n=== Cloning/Pulling Repositories ===');
-  for (const [repoName, repoInfo] of repos) cloneOrUpdateRepo(repoInfo);
+  for (const [, repoInfo] of repos) cloneOrUpdateRepo(repoInfo);
 
   console.log('\n=== Generating Snippets ===');
   const processedDirs = new Map<string, string>();
