@@ -55,15 +55,20 @@ function main(): void {
     const fileDir = path.dirname(snippet.filepath);
     const dirKey = `${repoName}:${fileDir}`;
 
-    const lastBranch = processedDirs.get(dirKey);
-    if (lastBranch === snippet.branch) {
-      console.log(`  Skipping already processed directory on same branch: ${fileDir}`);
-      continue;
+    // For tagged snippets, bluehawk snip processes the whole directory at once,
+    // so skip if we've already run it for this dir+branch combination.
+    // For untagged snippets, each file is copied individually — never skip.
+    if (snippet.tag) {
+      const lastBranch = processedDirs.get(dirKey);
+      if (lastBranch === snippet.branch) {
+        console.log(`  Skipping already processed directory on same branch: ${fileDir}`);
+        continue;
+      }
     }
 
     checkoutBranch(repoPath, snippet.branch);
     generateSnippets(snippet, repoPath);
-    processedDirs.set(dirKey, snippet.branch);
+    if (snippet.tag) processedDirs.set(dirKey, snippet.branch);
   }
 
   console.log('\n=== Done ===');
