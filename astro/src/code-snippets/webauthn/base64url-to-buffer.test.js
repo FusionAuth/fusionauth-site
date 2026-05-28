@@ -1,14 +1,5 @@
-// :snippet-start: base64url-to-buffer
-// :state-start: published
-function base64URLToBuffer(base64URL) {
-  const base64 = base64URL.replace(/-/g, '+').replace(/_/g, '/');
-  const padLen = (4 - (base64.length % 4)) % 4;
-  return Uint8Array.from(atob(base64.padEnd(base64.length + padLen, '=')), c => c.charCodeAt(0));
-}
-// :state-end:
-// :snippet-end:
+const { base64URLToBuffer } = require('./base64url-to-buffer');
 
-// :remove-start:
 describe('base64URLToBuffer', () => {
   test('decodes a base64url string to the correct bytes', () => {
     // "Hello World" in base64url is SGVsbG8gV29ybGQ
@@ -22,6 +13,4 @@ describe('base64URLToBuffer', () => {
     const result = base64URLToBuffer('YQ');
     expect(Array.from(result)).toEqual([97]);
   });
-
 });
-// :remove-end:

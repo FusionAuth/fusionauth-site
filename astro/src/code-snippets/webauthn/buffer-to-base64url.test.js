@@ -1,22 +1,5 @@
-// :snippet-start: buffer-to-base64url
-// :state-start: published
-function bufferToBase64URL(buffer) {
-  const bytes = new Uint8Array(buffer);
-  let string = '';
-  bytes.forEach(b => string += String.fromCharCode(b));
-
-  const base64 = btoa(string);
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-// :state-end:
-// :snippet-end:
-
-// :remove-start:
-function base64URLToBuffer(base64URL) {
-  const base64 = base64URL.replace(/-/g, '+').replace(/_/g, '/');
-  const padLen = (4 - (base64.length % 4)) % 4;
-  return Uint8Array.from(atob(base64.padEnd(base64.length + padLen, '=')), c => c.charCodeAt(0));
-}
+const { base64URLToBuffer } = require('./base64url-to-buffer');
+const { bufferToBase64URL } = require('./buffer-to-base64url');
 
 describe('bufferToBase64URL', () => {
   test('encodes bytes to a base64url string', () => {
@@ -31,8 +14,6 @@ describe('bufferToBase64URL', () => {
   });
 
   test('replaces + with - and / with _', () => {
-    // Find input that produces + or / in standard base64
-    // 0xFB = 251 produces + in standard base64 (0xFB >> 2 = 0x3E = 62 = '+')
     const result = bufferToBase64URL(new Uint8Array([0xfb, 0xff]));
     expect(result).not.toMatch(/[+/]/);
   });
@@ -44,4 +25,3 @@ describe('bufferToBase64URL', () => {
     expect(Array.from(decoded)).toEqual(Array.from(original));
   });
 });
-// :remove-end:
