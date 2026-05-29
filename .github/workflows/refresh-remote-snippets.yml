@@ -1,0 +1,53 @@
+name: refresh remote code snippets
+
+# Clones external repos, runs Bluehawk to generate snippets, then runs
+# each external repo's own tests from the local clone.
+
+on:
+  pull_request:
+    paths:
+      - 'astro/src/content/**/*.mdx'
+      - 'astro/src/scripts/refreshRemoteCodeSnippets.ts'
+      - 'astro/src/components/RemoteSnippet.astro'
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    name: Refresh remote snippets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: astro
+        run: npm ci
+
+      - name: Refresh remote code snippets
+        working-directory: astro
+        run: node src/scripts/refreshRemoteCodeSnippets.ts
+
+      - name: Verify snippets were generated
+        working-directory: astro
+        run: |
+          if [ ! -d "src/codeSnippets/remote" ] || [ -z "$(ls -A src/codeSnippets/remote)" ]; then
+            echo "ERROR: No snippets generated in src/codeSnippets/remote/"
+            exit 1
+          fi
+          echo "Snippets generated successfully:"
+          find src/codeSnippets/remote -type f | sort
+
+      - name: Run tests from each cloned external repo
+        working-directory: astro
+        run: |
+          for repo in .cache/repos/*/; do
+            if [ -f "${repo}package.json" ] && [ -d "${repo}tests" ]; then
+              echo "=== Running tests in ${repo} ==="
+              npm install --prefix "$repo"
+              npm test --prefix "$repo"
+            fi
+          done
