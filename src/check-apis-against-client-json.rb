@@ -166,6 +166,9 @@ def make_api_path(type)
   if type == "ldap-connector-configuration"
     return base + "connectors/ldap"
   end
+  if type == "user"
+    return base + "users/create"
+  end
   if type == "email-template"
     return base + "emails"
   end
