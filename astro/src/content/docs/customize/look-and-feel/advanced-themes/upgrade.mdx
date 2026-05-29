@@ -13,6 +13,265 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 For an explanation of how to upgrade a custom theme, see [Upgrade an Advanced Theme](/docs/customize/look-and-feel/advanced-themes/upgrade-advanced-theme).
 </Aside>
 
+## Version 1.68.0
+
+### Account and OAuth2 updates for named two-factor methods
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+Version `1.68.0` introduces named two-factor methods and updates account/OAuth2 templates to support naming, editing, and displaying method names. It also includes account layout updates for alert and panel width behavior.
+
+#### Helpers template
+
+##### Macro accountMain
+
+Update `accountMain` to support a wide layout mode:
+
+```diff
+-[#macro accountMain rowClass="row center-xs" colClass="col-xs col-sm-8 col-md-6 col-lg-5 col-xl-4" actionURL="" actionText="Go back" actionDirection="back"]
++[#macro accountMain rowClass="row center-xs" colClass="col-xs col-sm-8 col-md-6 col-lg-5 col-xl-4" actionURL="" actionText="Go back" actionDirection="back" wide=false]
+```
+
+Update container sizing when `wide=true`:
+
+```diff
+-    <div class="w-full max-w-[352px]">
+-      [@printErrorAlerts rowClass="" colClass=""/]
+-      [@printInfoAlerts rowClass="" colClass=""/]
++    <div class="w-full [#if wide == true]max-w-2xl[#else]max-w-[352px][/#if]">
++      <div class="w-full [#if wide == true]max-w-2xl[#else]max-w-[352px][/#if]">
++        [@printErrorAlerts rowClass="" colClass=""/]
++        [@printInfoAlerts rowClass="" colClass=""/]
++      </div>
+       <div class="w-full">
+           [#nested/]
+       </div>
+```
+
+##### Macro alert
+
+Allow alert components to fill parent width:
+
+```diff
+-  <div class="alert [#if type == 'error'] border-error-icon/50 [#else] border-info-icon/60 [/#if] border-1 bg-alert-background rounded-theme p-3 mb-4 w-full max-w-[352px]">
++  <div class="alert [#if type == 'error'] border-error-icon/50 [#else] border-info-icon/60 [/#if] border-1 bg-alert-background rounded-theme p-3 mb-4 w-full">
+```
+
+#### Account index template
+
+Wrap alerts in a fixed-width container and simplify alert macro arguments:
+
+```diff
+-      [@helpers.printErrorAlerts rowClass="flex justify-center" colClass="w-full max-w-[352px]"/]
+-      [@helpers.printInfoAlerts rowClass="flex justify-center" colClass="w-full max-w-[352px]"/]
++      <div class="w-full max-w-[352px]">
++        [@helpers.printErrorAlerts rowClass="" colClass=""/]
++        [@helpers.printInfoAlerts rowClass="" colClass=""/]
++      </div>
+```
+
+#### Account two-factor index template
+
+Use the wider account layout:
+
+```diff
+-    [@helpers.accountMain rowClass="row center" colClass="col-xs-12 col-sm-12 col-md-10 col-lg-8" actionURL="/account/" actionText=theme.message("go-back")]
++    [@helpers.accountMain rowClass="row center" colClass="col-xs-12 col-sm-12 col-md-10 col-lg-8" actionURL="/account/" actionText=theme.message("go-back") wide=true]
+```
+
+Add a two-factor name column:
+
+```diff
+ <tr class="border-b border-slate-400">
+   <th>${theme.message("method")}</th>
++  <th>${theme.message("two-factor-name")}</th>
+   <th>${theme.message("value")}</th>
+   <th class="action">${theme.message("action")}</th>
+ </tr>
+```
+
+Display each method name:
+
+```diff
+ <tr>
+   <td class="py-2"> ${theme.message(method.method)} </td>
++  <td class="py-2"> ${helpers.display(method, "name")} </td>
+   <td class="py-2">
+```
+
+Replace the delete-style disable button with explicit edit/disable links:
+
+```diff
+-                      <td class="action py-2">
+-                       [@helpers.buttonLink type="delete" size="sm" text=theme.message('disable') href="${request.contextPath}/account/two-factor/disable?client_id=${client_id}&methodId=${method.id?url}&tenantId=${tenantId!''}"?no_esc][/@helpers.buttonLink]
+-[#--                       <a class="small-square gray button ml-2 pr-0" href="${request.contextPath}/account/two-factor/disable?client_id=${client_id}&methodId=${method.id?url}&tenantId=${tenantId!''}" data-tooltip="${theme.message('disable')}"> <i class="fa fa-minus"></i> </a>--]
+-                      </td>
++                      <td class="action py-2">
++                        <div class="inline-flex items-center gap-3">
++                           <a href="${request.contextPath}/account/two-factor/edit?client_id=${client_id}&methodId=${method.id?url}&tenantId=${tenantId!''}"
++                              class="text-sm text-link hover:text-link-hover hover:underline">
++                               ${theme.message("edit")}
++                          </a>
++                          <span class="text-slate-300" aria-hidden="true">|</span>
++                          <a href="${request.contextPath}/account/two-factor/disable?client_id=${client_id}&methodId=${method.id?url}&tenantId=${tenantId!''}"
++                             class="text-sm text-link hover:text-link-hover hover:underline">
++                               ${theme.message("disable")}
++                          </a>
++                        </div>
++                      </td>
+```
+
+#### Account two-factor enable template
+
+Persist `twoFactorName` while sending a code:
+
+```diff
+ [@helpers.hidden name="secret" /]
+ [@helpers.hidden name="secretBase32Encoded" /]
++[@helpers.hidden name="twoFactorName" /]
+```
+
+Collect method name when enabling:
+
+```diff
+ [@helpers.hidden name="secret" /]
+ [@helpers.hidden name="secretBase32Encoded" /]
+
++[@helpers.input type="text" name="twoFactorName" id="two-factor-name" label=theme.message("two-factor-name") placeholder="${theme.message('{placeholder}two-factor-name')}" autocapitalize="none" autocorrect="off"/]
+ [@helpers.input type="text" name="code" id="verification-code" label=theme.message("verification-code") placeholder="${theme.message('{placeholder}two-factor-code')}" autocapitalize="none"  autocomplete="one-time-code" autocorrect="off" required=true/]
+```
+
+#### New account two-factor edit template
+
+<Aside type="note">
+This is a new template in `1.68.0`. If your custom theme does not include it, open your theme in the FusionAuth editor and import/copy the default `Account two-factor edit` template as a starting point, then apply your customizations.
+</Aside>
+
+Add a new template to edit a two-factor method name:
+
+```diff
++[#ftl/]
++[#-- @ftlvariable name="client_id" type="java.lang.String" --]
++[#-- @ftlvariable name="methodId" type="java.lang.String" --]
++[#-- @ftlvariable name="twoFactorName" type="java.lang.String" --]
++[#-- @ftlvariable name="tenantId" type="java.util.UUID" --]
++
++[#import "../../_helpers.ftl" as helpers/]
++
++[@helpers.html]
++  [@helpers.head title=theme.message("account-two-factor-edit-page-title")/]
++  [@helpers.body]
++    [@helpers.header]
++      [#-- Custom header code goes here --]
++    [/@helpers.header]
++
++    [@helpers.accountMain rowClass="row center" colClass="col-xs-12 col-sm-12 col-md-10 col-lg-8" actionURL="/account/two-factor/" actionText=theme.message("cancel-go-back")]
++      [@helpers.accountPanelFull title="${theme.message('edit-two-factor')}" ]
++        <fieldset>
++          <p class="mt-0 mb-4">${theme.message("{description}edit-two-factor")}</p>
++
++          [@helpers.structuredForm id="two-factor-form" action="${request.contextPath}/account/two-factor/edit" method="POST"; section]
++            [#if section == "formFields"]
++              [@helpers.hidden name="client_id" /]
++              [@helpers.hidden name="tenantId" /]
++              [@helpers.hidden name="methodId" /]
++
++              [@helpers.input type="text" name="twoFactorName" id="two-factor-name" label=theme.message("two-factor-name") placeholder="${theme.message('{placeholder}two-factor-name')}" autocapitalize="none" autocorrect="off"/]
++            [#elseif section == "buttons"]
++              [@helpers.button icon="save" text=theme.message("save")/]
++            [/#if]
++          [/@helpers.structuredForm]
++        </fieldset>
++      [/@helpers.accountPanelFull]
++    [/@helpers.accountMain]
++
++    [@helpers.footer]
++      [#-- Custom footer code goes here --]
++    [/@helpers.footer]
++
++  [/@helpers.body]
++[/@helpers.html]
+```
+
+#### OAuth2 two-factor enable template
+
+Add the `twoFactorName` template variable:
+
+```diff
+ [#-- @ftlvariable name="trustComputer" type="boolean" --]
+ [#-- @ftlvariable name="twoFactorId" type="java.lang.String" --]
++[#-- @ftlvariable name="twoFactorName" type="java.lang.String" --]
+ [#-- @ftlvariable name="version" type="java.lang.String" --]
+```
+
+Persist `twoFactorName` while sending a code:
+
+```diff
+ [@helpers.hidden name="secret" /]
+ [@helpers.hidden name="secretBase32Encoded" /]
+ [@helpers.hidden name="twoFactorId"/]
++[@helpers.hidden name="twoFactorName"/]
+```
+
+Collect `twoFactorName` when enabling:
+
+```diff
+ [@helpers.hidden name="secretBase32Encoded" /]
+ [@helpers.hidden name="twoFactorId"/]
+
++[@helpers.input type="text" name="twoFactorName" id="two-factor-name" label=theme.message("two-factor-name") placeholder="${theme.message('{placeholder}two-factor-name')}" autocapitalize="none" autocorrect="off" /]
+ [@helpers.input type="text" name="code" id="verification-code" label=theme.message("verification-code") placeholder="${theme.message('{placeholder}two-factor-code')}" autocapitalize="none"  autocomplete="one-time-code" autocorrect="off" required=true/]
+```
+
+#### OAuth2 two-factor methods template
+
+Update radio/input layout classes:
+
+```diff
+-<input class="relative size-4 appearance-none rounded-full border border-input-placeholder bg-input-bg before:absolute before:inset-1 before:rounded-full before:bg-input-bg not-checked:before:hidden checked:border-primary checked:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:border-slate-300 disabled:bg-slate-100 disabled:before:bg-slate-400 forced-colors:appearance-auto forced-colors:before:hidden"
++<input class="relative size-4 shrink-0 appearance-none rounded-full border border-input-placeholder bg-input-bg before:absolute before:inset-1 before:rounded-full before:bg-input-bg not-checked:before:hidden checked:border-primary checked:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:border-slate-300 disabled:bg-slate-100 disabled:before:bg-slate-400 forced-colors:appearance-auto forced-colors:before:hidden"
+```
+
+```diff
+-<label for="method-${optionId}" class="ml-3 block text-sm font-medium text-text">
++<label for="method-${optionId}" class="ml-3 block text-sm font-medium text-text wrap-anywhere">
+```
+
+Show method names in labels when present:
+
+```diff
+ [#if method.method == "email"]
+-  <span class="block">${theme.message("two-factor-method-email")}</span>
++  <span class="block">[#if method.name?has_content]${method.name} (${theme.message("two-factor-method-email")})[#else]${theme.message("two-factor-method-email")}[/#if]</span>
+ ...
+ [#elseif method.method == "authenticator"]
+-  <span class="block">${theme.message("two-factor-method-authenticator")}</span>
++  <span class="block">[#if method.name?has_content]${method.name} (${theme.message("two-factor-method-authenticator")})[#else]${theme.message("two-factor-method-authenticator")}[/#if]</span>
+ ...
+ [#elseif method.method == "sms" && messageType == "Voice"]
+-  <span class="block">${theme.message('two-factor-method-voice')}</span>
++  <span class="block">[#if method.name?has_content]${method.name} (${theme.message('two-factor-method-voice')})[#else]${theme.message('two-factor-method-voice')}[/#if]</span>
+ ...
+ [#elseif method.method == "sms"]
+-  <span class="block">${theme.message('two-factor-method-sms')}</span>
++  <span class="block">[#if method.name?has_content]${method.name} (${theme.message('two-factor-method-sms')})[#else]${theme.message('two-factor-method-sms')}[/#if]</span>
+```
+
+#### Messages
+
+To support these template changes, add/update:
+
+```plaintext
+two-factor-name=Name
+{placeholder}two-factor-name=Enter a name to identify this method
+[tooLong]twoFactorName=Two-factor method name exceeds the maximum length requirement
+account-two-factor-edit-page-title=Edit two-factor
+edit-two-factor=Edit two-factor
+{description}edit-two-factor=Update the name used to identify this two-factor method.
+edit=Edit
+cancel-go-back=Cancel and go back
+```
+
 ## Version 1.65.0
 
 ### Add voice option for sending two-factor codes
