@@ -7,6 +7,7 @@ import tsParser from "@typescript-eslint/parser";
 import astroParser from 'astro-eslint-parser';
 
 export default [
+  {ignores: ["src/codeSnippets/remote/**"]},
   {files: ["**/*.{js,mjs,cjs,ts,md,mdx}"]},
   {languageOptions: { globals: globals.browser }},
   {
