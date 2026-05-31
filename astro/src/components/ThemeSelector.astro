@@ -1,36 +1,173 @@
 ---
-import Icon from './icon/Icon.astro';
+import { Icon } from "astro-iconset/components";
+import MoonIcon from "src/components/icon/MoonIcon.astro";
+
+const themes = [
+  {
+    id: 'light',
+    icon: 'sun',
+    name: 'Light',
+    group: 'group-[.is-light]:opacity-75'
+  },
+  {
+    id: 'dark',
+    icon: 'moon',
+    name: 'Dark',
+    group: 'group-[.is-dark]:opacity-75'
+  },
+  {
+    id: 'system',
+    pack: 'fa7-solid',
+    icon: 'computer',
+    name: 'System',
+    group: 'group-[.is-system]:opacity-75'
+  }
+]
 ---
-<div data-widget="theme-selector" class="relative z-10">
-  <button type="button" class="flex items-center border-slate-500 rounded-lg hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-300 border-0 mt-0 p-0 text-slate-400 w-auto dark:hover:bg-transparent hover:bg-transparent">
-    <span class="text-lg mx-2"><Icon name="moon"></Icon></span>
+<fa-theme-selector class="block relative z-10 group">
+    <button id="theme-selector-button" type="button" aria-label="Theme Selector"
+            class="flex items-center border-slate-500 rounded-lg  hover:text-slate-700  dark:hover:text-slate-300 border-0 mt-0 p-0 text-slate-400 w-auto dark:hover:bg-transparent hover:bg-transparent">
+    <span class="text-lg mx-2"><MoonIcon /></span>
   </button>
 
   <!-- Theme dropdown menu -->
-  <ul class="absolute bg-white border border-slate-900/10 hidden rounded-md shadow-lg top-12 w-36 dark:bg-slate-900 dark:border-slate-100/10 dark:text-slate-200 left-auto right-0">
-    <li class="group">
-      <div class="dark:group-[.active]:bg-slate-800 group-[.active]:bg-slate-100">
-        <button type="button" class="flex font-medium group items-center px-2 py-1 text-sm text-slate-900 w-full dark:text-indigo-200 dark:group-[.active]:text-indigo-400 group-[.active]:text-indigo" data-theme="light">
-          <i class="fa-light fa-sun-bright fa-fw mr-3 text-lg text-slate-500" data-active-class="text-indigo-600 dark:text-indigo-400" data-inactive-class="text-slate-500"></i>
-          Light
+  <ul class="absolute bg-white border border-slate-900/10 hidden rounded-md shadow-lg top-12 w-36 dark:bg-slate-900 dark:border-slate-100/10 dark:text-slate-200 left-auto right-0 group">
+    {themes.map((theme) => (
+      <li>
+        <button type="button" class="flex font-medium items-center gap-2 px-2 py-1 text-sm text-slate-900 w-full dark:text-indigo-200 dark:focus:text-indigo-400 focus:text-indigo-600 focus:bg-slate-100 dark:focus:bg-slate-800 focus:outline-hidden" data-theme={theme.id}>
+          <Icon name={`${theme.pack ?? 'fa7-regular'}:${theme.icon}`} width={22} height={22} class:list={['opacity-35', theme.group] } />
+          {theme.name}
         </button>
-      </div>
-    </li>
-    <li class="group">
-      <div class="dark:group-[.active]:bg-slate-800 group-[.active]:bg-slate-100">
-        <button type="button" class="flex font-medium group items-center px-2 py-1 text-sm text-slate-900 w-full dark:text-indigo-200 dark:group-[.active]:text-indigo-400 group-[.active]:text-indigo" data-theme="dark">
-          <i class="fa-light fa-moon fa-fw mr-3 text-lg text-slate-500" data-active-class="text-indigo-600 dark:text-indigo-400" data-inactive-class="text-slate-500"></i>
-          Dark
-        </button>
-      </div>
-    </li>
-    <li class="group">
-      <div class="dark:group-[.active]:bg-slate-800 group-[.active]:bg-slate-100">
-        <button type="button" class="flex font-medium group items-center px-2 py-1 text-sm text-slate-900 w-full dark:text-indigo-200 dark:group-[.active]:text-indigo-400 group-[.active]:text-indigo" data-theme="system">
-          <i class="fa-light fa-computer-classic fa-fw mr-3 text-lg text-slate-500" data-active-class="text-indigo-600 dark:text-indigo-400" data-inactive-class="text-slate-500"></i>
-          System
-        </button>
-      </div>
-    </li>
+      </li>
+    ))}
   </ul>
-</div>
+</fa-theme-selector>
+
+<script>
+  type Theme = 'system' | 'dark' | 'light';
+
+  class ThemeSelector extends HTMLElement {
+    private darkMatchMedia: MediaQueryList;
+    private open = false;
+    private button: HTMLElement | null = null;
+    private themeButtons: HTMLButtonElement[] = [];
+    private menu: HTMLElement | null = null;
+    private currentTheme: Theme | null = null;
+
+    private closeMenuFn = this.closeMenu.bind(this);
+    private handleKeyDownFn = this.handleKeyDown.bind(this);
+
+    connectedCallback() {
+      this.currentTheme = (localStorage.getItem('theme') ?? 'system') as Theme;
+      this.darkMatchMedia = window.matchMedia('(prefers-color-scheme: dark)');
+
+      this.menu = this.querySelector('ul');
+      this.menu.classList.add(`is-${this.currentTheme}`);
+      this.button = this.querySelector('#theme-selector-button');
+      this.themeButtons = Array.from(this.menu.querySelectorAll('button'));
+
+      this.button.addEventListener('click', this.handleMenu.bind(this));
+      this.themeButtons.forEach(button => {
+        button.addEventListener('click', this.handleThemeChange.bind(this));
+        button.addEventListener('mouseenter', this.handleThemeHover.bind(this));
+      });
+      this.darkMatchMedia.addEventListener('change', this.handlePrefersColorSchemaChange.bind(this));
+      window.addEventListener('storage', this.handleStorageChange.bind(this));
+    }
+
+    disconnectedCallback() {
+      window.removeEventListener('storage', this.handleStorageChange.bind(this));
+
+      this.closeMenu();
+    }
+
+    handleMenu(event: Event) {
+      event.stopPropagation();
+      event.preventDefault();
+      if (this.open) {
+        this.closeMenu();
+        return;
+      }
+      this.openMenu();
+    }
+
+    openMenu() {
+      if (this.open) return;
+
+      document.addEventListener('click', this.closeMenuFn);
+      document.addEventListener('keydown', this.handleKeyDownFn);
+      this.menu.classList.remove('hidden');
+      this.open = true;
+    }
+
+    closeMenu() {
+      if (!this.open) return;
+
+      document.removeEventListener('click', this.closeMenuFn)
+      document.removeEventListener('keydown', this.handleKeyDownFn);
+      this.menu.classList.add('hidden');
+      this.open = false;
+    }
+
+    handlePrefersColorSchemaChange() {
+      if (localStorage.getItem('theme') !== 'system') return;
+
+      this.changeTheme('system');
+    }
+
+    handleThemeHover(event: Event) {
+      const target = event.target as HTMLButtonElement;
+      target.focus();
+    }
+
+    handleThemeChange(event: Event) {
+      const target = event.target as HTMLButtonElement;
+      const theme = target.dataset.theme as Theme;
+      if (theme) {
+        localStorage.setItem('theme', theme);
+        this.menu.classList.remove(`is-${this.currentTheme}`);
+        this.menu.classList.add(`is-${theme}`);
+        this.currentTheme = theme;
+        this.changeTheme(theme as Theme);
+      }
+    }
+
+    changeTheme(theme: Theme) {
+      if (theme === 'system') {
+        theme = this.darkMatchMedia.matches ? 'dark' : 'light';
+      }
+
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+
+      this.closeMenu();
+    }
+
+    handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' || event.key === 'Tab') {
+        this.closeMenu();
+        return;
+      }
+
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.stopPropagation();
+        event.preventDefault();
+
+        const buttons = Array.from(this.themeButtons);
+        const currentIndex = buttons.indexOf(event.target as HTMLButtonElement);
+        const nextIndex = event.key === 'ArrowDown' ? currentIndex + 1 : currentIndex - 1;
+        const nextButton = buttons[nextIndex < 0 ? buttons.length - 1 : nextIndex % buttons.length];
+        nextButton.focus();
+        return;
+      }
+    }
+
+    handleStorageChange(event: StorageEvent) {
+      if (event.key === 'theme') {
+        this.currentTheme = event.newValue as Theme;
+        this.changeTheme(this.currentTheme);
+      }
+    }
+  }
+
+  customElements.define('fa-theme-selector', ThemeSelector);
+</script>

@@ -7,8 +7,8 @@ class EncoderDecoder {
   #encodedEditor;
 
   constructor() {
-    this.#decoded = document.getElementById('decoded-textarea');
-    this.#encoded = document.getElementById('encoded-textarea');
+    this.#decoded = document.querySelector('#decoded-textarea textarea');
+    this.#encoded = document.querySelector('#encoded-textarea textarea');
 
     let options = {
       autofocus: false,

@@ -1,0 +1,85 @@
+---
+import { Icon } from "astro-iconset/components";
+---
+
+<template id="copy-button-template">
+  <div class="relative group">
+    <button title="Copy contents" class="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 group-[.active]:opacity-100 transition-opacity duration-200 p-1.5 text-sm rounded hover:bg-indigo-700 text-white/50 leading-none">
+      <Icon name={`fa7-solid:copy`} class="block h-4 group-[.active]:hidden" size="16" />
+      <Icon name={`fa7-solid:check`} class="h-4 group-[.active]:block hidden" size="16" />
+    </button>
+  </div>
+</template>
+
+<script>
+  const copyButtonTemplate = document.getElementById('copy-button-template') as HTMLTemplateElement;
+
+  class CodeCopyButton {
+    static #codeBlockCounter = 1;
+
+    #timeouts = new WeakMap<HTMLElement, number>();
+
+    constructor() {
+      const pres = document.querySelectorAll('pre.astro-code');
+
+      pres.forEach(pre => {
+        const code = pre.querySelector('code');
+        if (!code) return;
+
+        if (!code.id) {
+          code.id = `code-block-${CodeCopyButton.#codeBlockCounter++}`;
+        }
+
+        const parentNode = pre.parentNode;
+        if (!parentNode) return;
+
+        const wrapper = document.importNode(copyButtonTemplate.content, true);
+        const div = wrapper.querySelector('.group') as HTMLDivElement;
+        const button = wrapper.querySelector('button') as HTMLButtonElement;
+        
+        parentNode.insertBefore(wrapper, pre);
+        div.appendChild(pre);
+
+        button.dataset.copySource = code.id;
+        button.addEventListener('click', (e) => this.#handleCopy(e));
+      });
+    }
+
+    #handleCopy(event: Event) {
+      const copyButton = event.currentTarget as HTMLButtonElement;
+      const id = copyButton.dataset.copySource;
+      if (!id) return;
+      
+      const source = document.getElementById(id);
+
+      if (!source) {
+        console.error(`Invalid copy-source [${id}]`);
+        return;
+      }
+
+      navigator.clipboard
+        .writeText(source.textContent || '')
+        .then(() => {
+          const parent = copyButton.parentNode as HTMLElement;
+          parent.classList.add('active');
+
+          const existingTimeout = this.#timeouts.get(copyButton);
+          if (existingTimeout) {
+            clearTimeout(existingTimeout);
+          }
+
+          const timeoutId = window.setTimeout(() => {
+            parent.classList.remove('active');
+            this.#timeouts.delete(copyButton);
+          }, 1500);
+
+          this.#timeouts.set(copyButton, timeoutId);
+        })
+        .catch(err => {
+          console.error('Failed to copy text: ', err);
+        });
+    }
+  }
+
+  new CodeCopyButton();
+</script>

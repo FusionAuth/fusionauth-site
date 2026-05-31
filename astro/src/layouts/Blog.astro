@@ -1,16 +1,16 @@
 ---
-import '../css/style.css';
-import BlogNewsletterCTA from '../components/BlogNewsletterCTA.astro';
-import HeadComponent from '../components/Head.astro';
-import Nav from '../components/nav/BlogNav.astro';
-import Footer from '../components/Footer.astro';
-import TwitterLink from '../components/blog/TwitterLink.astro';
-import LinkedInLink from '../components/blog/LinkedInLink.astro';
-import SubscribeFooter from '../components/SubscribeFooterCTA.astro';
-import { getHref, mapRelated } from "src/tools/blog";
+import 'src/css/style.css';
+import HeadComponent from 'src/components/Head.astro';
+import Nav from 'src/components/nav/BlogNav.astro';
+import DocSearch from 'src/components/search/DocSearch.astro';
+import Footer from 'src/components/Footer.astro';
+import TwitterLink from 'src/components/blog/TwitterLink.astro';
+import LinkedInLink from 'src/components/blog/LinkedInLink.astro';
+import Subscribe from 'src/components/Subscribe.astro';
+import { getHref, mapRelated } from 'src/tools/blog';
 import { getCollection } from 'astro:content';
-import { getDateString } from '../tools/date';
-import { BlogContent } from '../tools/blog';
+import { getDateString } from 'src/tools/date';
+import { BlogContent } from 'src/tools/blog';
 
 interface Props {
   frontmatter: any;
@@ -37,11 +37,6 @@ const collection = await getCollection<BlogContent>('blog');
 
 const relatedPosts = await mapRelated(collection, 'categories', featuredCategory, slug);
 const relatedTags = await mapRelated(collection, 'tags', featuredTag, slug);
-
-const searchFilters = {
-  author: authors,
-  category: categories,
-}
 
 const markdownStyles = [
   // base
@@ -72,13 +67,36 @@ const markdownStyles = [
 ---
 <!DOCTYPE html>
 <html class="antialiased" lang="en">
-<HeadComponent title={ htmlTitle } canonicalUrl={canonicalUrl} description={description} openGraphImage={image} {searchFilters}></HeadComponent>
+<HeadComponent title={ htmlTitle } canonicalUrl={canonicalUrl} description={description} openGraphImage={image}></HeadComponent>
 <body class="antialiased leading-tight dark:bg-articles-dark dark:bg-slate-900 dark:text-slate-200">
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5P7VLHG"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      // check for mermaid diagrams on page
+      const blocks = document.querySelectorAll("pre code.language-mermaid");
+      if (blocks.length === 0) return; // If no diagrams, stop here. Don't load Mermaid!
+  
+      // import Mermaid only when needed
+      const { default: mermaid } = await import("mermaid");
+      
+      mermaid.initialize({ startOnLoad: false, theme: 'default' });
+      
+      blocks.forEach((block) => {
+        const parent = block.parentElement;
+        const mermaidDiv = document.createElement("div");
+        mermaidDiv.className = "mermaid";
+        mermaidDiv.textContent = block.textContent;
+        parent.replaceWith(mermaidDiv);
+      });
+  
+      await mermaid.run({
+        querySelector: '.mermaid',
+      });
+    });
+  </script>
 <Nav slot="nav" darkModeToggle={true}/>
+<div class="hidden">
+  <DocSearch />
+</div>
 <!-- Hero -->
 <section id="hero" class="bg-slate-900 flex h-auto justify-center relative lg:pt-10 2xl:pt-14">
   <div class="flex flex-col max-w-8xl mx-auto pt-2 px-6 relative lg:mx-auto lg:w-5/6 xl:container xl:w-4/6 2xl:ml-auto 2xl:px-20 2xl:w-7/12">
@@ -90,10 +108,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </a>
         )}
       </ul>
-      <h1 data-pagefind-meta="title" data-pagefind-body class="capitalize font-extrabold leading-10 mb-3 text-3xl text-white lg:text-4xl xl:text-4xl 2xl:text-5xl">
+      <h1 class="capitalize font-extrabold leading-10 mb-3 text-3xl text-white lg:text-4xl xl:text-4xl 2xl:text-5xl">
         { title }
       </h1>
-      <p data-pagefind-meta="description" data-pagefind-body class="font-normal leading-5 mb-1 text-slate-400">
+      <p class="font-normal leading-5 mb-1 text-slate-400">
         { description }
       </p>
     </div>
@@ -139,7 +157,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="md:flex md:flex-col md:justify-start lg:flex-row lg:pt-4 lg:self-start">
         <div id="content" class="mb-16 md:basis-full md:mr-10 md:w-full lg:w-4/6 xl:mr-0 2xl:mr-12">
           <main>
-            <article data-pagefind-body id="blog-article" class:list={markdownStyles}>
+            <article id="blog-article" class:list={markdownStyles}>
               <slot/>
             </article>
             <div id="blog-tags" class="mt-14 max-w-2xl">
@@ -168,7 +186,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </main>
         </div>
         <div id="blog-sidebar" class="block sm:block md:block lg:w-64 ">
-          <BlogNewsletterCTA/>
+          <div class="hidden mb-10 lg:block">
+          <hr class="bg-slate-200 border-t-0 h-0.5 mb-2" />
+          <p class="font-inter leading-6 mb-3 sm:text-base md:leading-7 md:text-lg lg:text-base">
+              Get the best of FusionAuth. Once a month. Directly to your inbox.
+          </p>
+          <Subscribe />
+      </div>
           { relatedTags && relatedTags.length > 0 &&
             <h2 class="capitalize font-bold mb-3 text-slate-800 dark:text-slate-500 text-xl md:font-inter md:font-bold md:leading-tight md:text-xl spellcheck-ignore">More
               on {featuredTag}</h2>
@@ -240,7 +264,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     )}
   </div>
 </section>
-<SubscribeFooter />
 <Footer/>
 </body>
 </html>

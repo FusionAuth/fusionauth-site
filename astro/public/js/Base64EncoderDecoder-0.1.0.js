@@ -9,8 +9,8 @@ class Base64EncoderDecoder {
   #withoutPadding;
 
   constructor() {
-    this.#decoded = document.getElementById('decoded-textarea');
-    this.#encoded = document.getElementById('encoded-textarea');
+    this.#decoded = document.querySelector('#decoded-textarea textarea');
+    this.#encoded = document.querySelector('#encoded-textarea textarea');
     this.#urlSafe = document.getElementById('url_safe');
     this.#urlSafe.addEventListener('change', event => this.#handleChange(event))
     this.#withoutPadding = document.getElementById('without_padding');
