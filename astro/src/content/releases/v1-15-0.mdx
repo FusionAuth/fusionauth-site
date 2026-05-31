@@ -1,0 +1,67 @@
+---
+version: "1.15.0"
+date: 2020-02-17
+---
+import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
+import ReleaseNotesDBMigrate from 'src/components/docs/release-notes/ReleaseNotesDBMigrate.mdx';
+
+<ReleaseNotesDBMigrate />
+
+<Item category="known-issue" resolvedIn="1.15.1">
+Some versions of PostgreSQL may cause an exception when storing breach metrics after enabling FusionAuth Reactor. If you are not using FusionAuth Reactor or you are using MySQL instead of PostgreSQL this issue will not affect you.
+</Item>
+
+<Item category="known-issue" resolvedIn="1.15.3">
+On systems running MySQL, the `1.15.0` migration fails on a `DELIMITER` command and causes the instance table to have a null `license_id`.  If you upgraded to `1.15.0`, have connected our instance to a support contract, and ran the `1.15.0` migration using maintenance mode, you will need to reconnect your license Id in the Reactor tab.
+
+* A workaround for this issue is to download the `fusionauth-database-schema-1.15.0.zip` from [our direct download page](/direct-download), unzip and manually apply the `migrations/mysql/1.15.0.sql` migration.  You may also wait to upgrade until `1.15.3` is available and allow maintenance mode to run the fixed migration.
+</Item>
+
+<Item category="breaking-change">
+In the FusionAuth admin UI you will notice that User, Groups, Applications and Tenants are all now at the top level of the left navigation sidebar. This change has been done to provide quicker access to these frequently accessed menus.
+</Item>
+
+<Item category="new-feature">
+FusionAuth Reactor &#8482;. FusionAuth Reactor is available with all paid plans of FusionAuth. The first feature in the Reactor suite will be breached password detection. All passwords will be checked against a breached list during all password change events, and optionally during login based upon your configuration.
+</Item>
+
+<Item category="new-feature">
+New webhook event for use with FusionAuth Reactor breached password detection. This event when enabled will be fired during login if the user is using a vulnerable password.
+
+* User Password Breach (`user.password.breach`), see [Webhook Events](/docs/extend/events-and-webhooks/events/) for additional information.
+</Item>
+
+<Item category="new-feature">
+New Tenant configuration in support of FusionAuth Reactor and additional password validation rules. This configuration can be found in the Password tab of the Tenant configuration on the [Tenant](/docs/apis/tenants) API.
+
+* `tenant.passwordValidationRules.validateOnLogin` - When enabled the user's password will be validated during login. If the password does not meet the currently configured validation rules the user will be required to change their password. Prior to this release password validation was only ever performed during a change event, you may now optionally enforce your password policy during login.
+* `tenant.passwordValidationRules.breachDetection` - A new object to provide configuration per tenant for password breach detection.
+</Item>
+
+<Item category="new-feature">
+During login, if the user is required to change their password, the Login API, Authorization Code Grant, Implicit Grant and Password Grant will now also return a change reason. This additional value in the response will indicate why the user is being required to change their password.
+
+* See the [Login](/docs/apis/login) API, and corresponding [OAuth endpoints](/docs/lifecycle/authenticate-users/oauth/endpoints) for more detail.
+</Item>
+
+<Item category="security" issue="454" thanks="johnmaia">
+A small window exists after a Refresh Token has expired when this token can still be used under specific circumstances. This symptom only occurs when using the `/api/jwt/refresh` API, and not when using the Refresh Grant using the `/oauth/token` endpoint. In a worst case scenario the Refresh Token may be honored up to 5 hours after the expiration date, in most circumstances it will be much less. This only applies to expired Refresh Tokens, revoking a Refresh Token is not affected.
+</Item>
+
+<Item category="fix" issue="471" thanks="dhait">
+Editing a Group in a Tenant that does not yet have any Applications created causes and exception when you attempt to save the edit form in the FusionAuth admin UI.
+</Item>
+
+<Item category="fix" issue="472">
+When Self Service Registration, if Registration Verification is enabled and Email Verification is disabled the user will not receive a Registration Verification email.
+</Item>
+
+<Item category="fix" issue="479">
+An exception may occur when using the Import User API if you are missing the `applicationId` property in a User Registration. This error should have been found as a validation error and instead an exception occurred.
+
+* Thanks to our friends at Integra Financial Services for reporting the error.
+</Item>
+
+<Item category="enhancement" issue="477">
+Allow Kickstart to better handle varying startup times and delays. A few users reported scenarios where Kickstart would begin before FusionAuth was ready causing Kickstart to fail.
+</Item>

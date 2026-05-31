@@ -1,0 +1,23 @@
+name: check-apis
+
+on:
+  schedule:
+    - cron: '31 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  check_apis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: ruby/setup-ruby@19a43a6a2428d455dbd1b85344698725179c9d8c
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+      - name: Check APIs for completeness against client libs
+        run: |
+          # check out last released version of the client libs
+          tagver=`curl --silent https://account.fusionauth.io/api/version -o - | jq 'last(.versions[-1])'|sed 's/"//g'`
+          git clone --depth 1 --branch $tagver https://github.com/fusionauth/fusionauth-client-builder
+          src/check-apis-against-client-json.rb -f $PWD/src/.checkapis.yaml -c $PWD/fusionauth-client-builder -v
+        shell: bash

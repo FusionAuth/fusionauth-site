@@ -1,12 +1,14 @@
 ---
-import '../css/style.css';
-import HeadComponent from '../components/Head.astro';
-import Nav from '../components/nav/BlogNav.astro';
-import Footer from '../components/Footer.astro';
-import SubscribeFooter from '../components/SubscribeFooterCTA.astro';
-import Icon from '../components/icon/Icon.astro';
+import 'src/css/style.css';
+import HeadComponent from 'src/components/Head.astro';
+import Nav from 'src/components/nav/BlogNav.astro';
+import DocSearch from 'src/components/search/DocSearch.astro';
+import Footer from 'src/components/Footer.astro';
+import Subscribe from 'src/components/Subscribe.astro';
 import { getHref, parseContent } from 'src/tools/blog';
 import { getLatestDateString } from 'src/tools/date';
+import LeftChevronIcon from "src/components/icon/LeftChevronIcon.astro";
+import RightChevronIcon from "src/components/icon/RightChevronIcon.astro";
 
 const { title, section, sectionTitle, subjectRef, subjectName, page, showCategories, path, personalLink, description, isIndexPage = false } = Astro.props;
 const blogs = await Promise.all(page.data.map(parseContent));
@@ -39,19 +41,25 @@ const getPaginationRef = (stop) => {
   if (section === 'latest') {
     return "/blog/latest/" + stop;
   } else {
-    return getHref(subjectRef, section) + stop;
+    if(stop > 1)
+      return getHref(subjectRef, section) + "/" + stop;
+    else
+      return getHref(subjectRef, section);
   }
 }
 
 ---
 <html class="antialiased" lang="en">
 <HeadComponent {title} {description} {isIndexPage} />
-<body class="antialiased leading-tight bg-white dark:bg-slate-900" data-pagefind-ignore="all">
+<body class="antialiased leading-tight bg-white dark:bg-slate-900">
 <Nav slot="nav" darkModeToggle={true}/>
+<div class="hidden">
+  <DocSearch />
+</div>
 <section class="bg-white dark:bg-slate-900 max-w-8xl mx-auto px-4 mb-14 md:mb-20 md:mt-7 lg:mt-9 xl:mt-14 2xl:mb-24 2xl:mt-10">
   <div class="mt-6 mb-11 sm:mb-8">
     <p class="font-medium text-lg text-slate-500 dark:text-slate-200">{sectionTitle}</p>
-    <h1 class="capitalize font-extrabold leading-8 mt-1 text-3xl text-slate-900 lg:text-4xl xl:text-4xl 2xl:text-5xl"> {subjectName}</h1>
+    <h1 class="capitalize font-extrabold leading-8 mt-1 text-3xl dark:text-slate-200 text-slate-900 lg:text-4xl xl:text-4xl 2xl:text-5xl"> {subjectName}</h1>
     {personalLink && personalLink.text &&
       <p class="hover:decoration-auto hover:underline hover:underline-offset-auto text-indigo-600 text-xl lg:text-2xl spellcheck-ignore">
         <a href={personalLink.href}>{personalLink.text} </a>
@@ -160,7 +168,7 @@ const getPaginationRef = (stop) => {
           { page.url.prev &&
             <a href={page.url.prev} class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 dark:text-slate-200 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
               <span class="sr-only">Previous</span>
-              <Icon name="left-chevron"/>
+              <LeftChevronIcon />
             </a>
           }
           { paginationStops.map(stop =>
@@ -177,7 +185,7 @@ const getPaginationRef = (stop) => {
           { page.url.next &&
             <a href={page.url.next} class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 dark:text-slate-200 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
               <span class="sr-only">Next</span>
-              <Icon name="right-chevron"/>
+              <RightChevronIcon />
             </a>
           }
         </nav>
@@ -185,5 +193,20 @@ const getPaginationRef = (stop) => {
     </div>
   </div>
 </section>
-<SubscribeFooter/>
+<section class="bg-slate-900 grid px-7 py-16 2xl:pl-48 2xl:pr-40">
+  <div
+    class="2xl:p-20 border-2 border-indigo-600 border-solid container grid grid-cols-1 lg:flex lg:grid-cols-2 lg:p-10 lg:place-self-center lg:text-left m-auto max-w-8xl mx-auto px-4 py-8 rounded-lg sm:text-center xl:inline-flex xl:mx-20 xl:pt-10">
+    <div class="mb-10 lg:mb-auto lg:pr-14 xl:mb-auto">
+      <h2
+        class="font-bold leading-6 mb-5 text-2xl text-white md:font-Inter md:font-bold md:leading-7 md:text-3xl md:tracking-tight">
+        Subscribe to The FusionAuth Newsletter
+      </h2>
+      <p class="font-Inter font-medium leading-6 text-md text-slate-300">
+        Get updates on techniques, technical guides, and the latest product
+        innovations coming from FusionAuth.
+      </p>
+    </div>
+    <Subscribe />
+  </div>
+</section>
 <Footer/>

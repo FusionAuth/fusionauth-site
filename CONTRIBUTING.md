@@ -11,7 +11,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - From the Link API, note the difference between a FusionAuth User and a 3rd party user: `This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.`
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` or `id` when describing a unique identifier
-- Use `admin UI` instead of `Admin UI` when writing about the admin user interface.
+- Use `Admin UI` instead of `admin UI` when writing about the admin user interface.
 - Use `logged in` instead of `logged-in`
 - `log in` is the verb, `login` is the noun
 - Use `UserInfo` instead of `Userinfo`
@@ -24,14 +24,14 @@ Here are some guidelines to follow when writing documentation (everything under 
 - In general, put screenshot images after the text describing the image. That is "This functionality....\n\n<screenshot of functionality>". However, when describing fields for screens, as in the core concepts section, put the screenshot first.
 - If possible use an SVG for images. Otherwise, a PNG that has been properly minified is acceptable.
 - Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
-- When introducing a code snippet, don't use a : (colon). Instead, just use verbiage before it. "The code to exchange the token is similar to below."
+- When introducing a code snippet, you can use a colon or a period. For example: "The code to exchange the token is:" or "The code to exchange the token is similar to below."
 - Prefer 'You' to 'We'. 'Let's' is acceptable.
 - All code snippets within any documents should have indenting formatted to 2 spaces.
 - Code captions should have the first letter of every word capitalized: This Code Is The Best.
 - All image captions should be one or more complete sentences.
 - Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
 - Single spaces should be used instead of double spaces after a period.
-- Headers should have the first letter of every word capitalized: `This Is The Header Text`. This is true for all headers (h1, h2, h3, h4). This is also known as [Start Case](https://en.wikipedia.org/wiki/Letter_case).
+- Headers should use title case, not start case: `This Is the Header Text`. This is true for all headers (h1, h2, h3, h4). (Disregard the existing start case and sentence case documents in the repository — they are there because the policy has changed three times.)
 - When writing, you have access to Asides. Here's an [example blog post using an Aside](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/log4j-fusionauth.mdx). You can assign the following values to the type: `tip` for tips. `note` for things for the user to be aware of. `important` for things the user should pay attention to. `warn` for dangerous actions like deleting a tenant.
 - For links, don't use the absolute URL for the FusionAuth website (https://fusionauth.io), only relative URLs. This allows us to deploy to our local and staging environments and not get sent over to prod.
 - If you have a list element containing more than one paragraph, indent the second paragraph by the same amount as the start of the text in the first paragraph to make sure that it renders correctly.

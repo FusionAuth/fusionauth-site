@@ -1,4 +1,4 @@
-import {defineConfig} from 'astro/config';
+import {defineConfig, fontProviders} from 'astro/config';
 import compress from "astro-compress";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
@@ -8,12 +8,11 @@ import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
 import * as markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
-import remarkTextr from 'remark-textr';
-import mermaid from 'astro-mermaid';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import linkValidator, { type LinkValidatorOptions } from 'astro-link-validator';
 import { visit } from 'unist-util-visit';
+import icon from "astro-iconset";
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
@@ -72,25 +71,25 @@ const lightboxProvider = () => {
   }
 }
 
-function typographicArrows(input) {
-  return input
-    .replace(/->/g, '→')
-    .replace(/<-/g, '←')
-}
-
 const config = defineConfig({
   build: {
-    format: 'file'
+    format: 'file',
+    concurrency: 12,
   },
+  fonts: [{
+    provider: fontProviders.fontsource(),
+    name: 'Inter',
+    cssVariable: '--font-inter-var',
+    weights: ['300 400 500 600 700 800 900'],
+  }],
   vite: {
     plugins: [tailwindcss(), lightboxProvider()],
+    build: {
+      chunkSizeWarningLimit: 1000,
+    }
   },
   integrations: [
-    mermaid({
-      theme: 'forest',
-      autoTheme: true,
-      enableLog: false,
-    }),
+    icon(),
     mdx(),
     sitemap({
       filter: siteMapFilter
@@ -114,7 +113,7 @@ const config = defineConfig({
         'buildvsbuy', 'auth0-migration', 'community', 'community/forum', 'aws-reinvent22', 'aws-reinvent23', 'pricing', 'download', 'contact',
         'get-started', 'passwordless', 'direct-download', 'jobs', 'careers', 'password-history', 'partners-form', 'partners',
         'resource/all', 'sso', 'kubernetes', 'compare-fusionauth', 'security', 'customers-partners', 'license-faq',
-        'feature-list', 'product-privacy-policy', 'passkeys', '/permify-docs/', '/permify-docs'
+        'feature-list', 'product-privacy-policy', 'passkeys', '/permify-docs/', '/permify-docs', '/legal/data-processing-addendum.pdf'
       ],
       //base: 'https://fusionauth.io',
     })
@@ -123,8 +122,7 @@ const config = defineConfig({
     smartypants: false,
     remarkPlugins: [
       remarkMdx,
-      mermaidTitleFix,
-      [remarkTextr, { plugins: [typographicArrows] }]
+      mermaidTitleFix
     ],
     rehypePlugins: [
       // Tweak GFM task list syntax

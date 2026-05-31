@@ -11,5 +11,5 @@ export const getHref = (
   section: "author" | "category" | "tag"
 ): string =>
   !!name && !!section
-    ? '/blog/' + section + '/' + refCase(name) + '/'
+    ? '/blog/' + section + '/' + refCase(name)
     : "";
