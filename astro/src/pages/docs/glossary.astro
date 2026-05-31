@@ -1,6 +1,12 @@
 ---
 import { getCollection } from 'astro:content';
 import GlossaryCard from "src/components/glossary/GlossaryCard.astro";
+import Layout from '/src/layouts/Docs.astro';
+
+const frontmatter = {
+  title: "Glossary",
+  description: "A list of terms and definitions used in FusionAuth."
+};
 
 const terms = (await getCollection('glossary'))
   .map((term) => ({
@@ -13,8 +19,14 @@ const categories = [...new Set(Object.values(terms).flatMap(term => term.data.ca
   .sort((a, b) => a.localeCompare(b));
 
 const groupedGlossary = Object.groupBy(terms, term => term.normalizedId.toLocaleUpperCase().charAt(0));
+const headings = Object.keys(groupedGlossary).map((letter) => ({
+  depth: 2,
+  slug: `glossary-${letter}`,
+  text: letter,
+}));
 ---
 
+<Layout frontmatter={frontmatter} headings={headings} isIndexPage={false} disableTOC={false}>
 <nav class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 pt-2 pr-2">
   {categories.map(category => (
       <label for={`toggle-${category}`}
@@ -35,7 +47,8 @@ const groupedGlossary = Object.groupBy(terms, term => term.normalizedId.toLocale
     ))}
   </div>
 </section>
-))}
+  ))}
+</Layout>
 
 <script>
   const checkboxes = document.querySelectorAll<HTMLInputElement>('input[name="category-filter"]')
@@ -51,7 +64,7 @@ const groupedGlossary = Object.groupBy(terms, term => term.normalizedId.toLocale
       item.classList.toggle('hidden', !visible)
     });
 
-    window['ScrollSpy']?.reloadHeaders();
+    document.dispatchEvent(new CustomEvent('scroll-spy:reload'));
   }
 
   checkboxes.forEach((checkbox: HTMLInputElement) => {
