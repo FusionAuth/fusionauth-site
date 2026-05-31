@@ -1,0 +1,64 @@
+---
+import { getCollection } from 'astro:content';
+import GlossaryCard from "src/components/glossary/GlossaryCard.astro";
+
+const terms = (await getCollection('glossary'))
+  .map((term) => ({
+    ...term,
+    normalizedId: term.id.replace(/[^a-zA-Z0-9]/g, '').toLocaleLowerCase()
+  }))
+  .sort((a, b) => a.normalizedId.localeCompare(b.normalizedId));
+
+const categories = [...new Set(Object.values(terms).flatMap(term => term.data.categories))]
+  .sort((a, b) => a.localeCompare(b));
+
+const groupedGlossary = Object.groupBy(terms, term => term.normalizedId.toLocaleUpperCase().charAt(0));
+---
+
+<nav class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 pt-2 pr-2">
+  {categories.map(category => (
+      <label for={`toggle-${category}`}
+             class="relative inline-block py-2 px-4 font-medium text-sm cursor-pointer bg-gray-200 rounded-full transition-colors duration-200 ease-in-out has-checked:bg-indigo-500 has-checked:text-white dark:bg-gray-600">
+        <input type="checkbox" id={`toggle-${category}`} name="category-filter" value={category} class="sr-only"/>
+        <span>{category}</span>
+      </label>
+  ))}
+</nav>
+
+{Object.entries(groupedGlossary).map(([key, terms]) => (
+<section class="glossary-section hidden has-[.visible]:block" data-letter={key}>
+  <h2 id={'glossary-' + key}>{key}</h2>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2">
+    {terms.map((term) => (
+        <GlossaryCard {term}/>
+    ))}
+  </div>
+</section>
+))}
+
+<script>
+  const checkboxes = document.querySelectorAll<HTMLInputElement>('input[name="category-filter"]')
+  const glossaryItems = document.querySelectorAll('.glossary-section article');
+
+  const filterChange = () => {
+    const selected = Array.from(checkboxes).filter(checkbox => checkbox.checked).map(checkbox => checkbox.value);
+
+    glossaryItems.forEach((item: HTMLElement) => {
+      const visible = !selected.length || item.dataset['categories']?.split(',').some(category => selected.includes(category));
+
+      item.classList.toggle('visible', visible)
+      item.classList.toggle('hidden', !visible)
+    });
+
+    window['ScrollSpy']?.reloadHeaders();
+  }
+
+  checkboxes.forEach((checkbox: HTMLInputElement) => {
+    checkbox.addEventListener('change', () => {
+      filterChange();
+    });
+  });
+
+  filterChange();
+</script>
