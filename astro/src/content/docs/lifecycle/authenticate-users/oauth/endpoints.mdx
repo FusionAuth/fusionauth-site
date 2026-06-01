@@ -14,7 +14,7 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 import OauthAuthorizeRedirectParameters from 'src/content/docs/_shared/_oauth-authorize-redirect-parameters.mdx';
 import AuthorizationHeader from 'src/content/docs/lifecycle/authenticate-users/oauth/_authorization-header.mdx';
 import DeviceTypeList from 'src/content/docs/_shared/_device-type-list.mdx';
-import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.mdx';
 import ClientCredentialsScopesOmitted from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_scopes_omitted.mdx';
 import ClientCredentialsScopesSingleEntity from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_scopes_single_entity.mdx';
 import ClientCredentialsScopesMultipleEntities from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_scopes_multiple_entities.mdx';
@@ -126,6 +126,15 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
     The URI to redirect to upon a successful request.
     This URI must have been configured previously in the FusionAuth Application OAuth configuration.
     See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
+  </APIField>
+  <APIField name="resource" type="String" optional since="1.67.0">
+    The URI of the target resource server for the requested access token, per [RFC 8707 (Resource Indicators for OAuth 2.0)](https://www.rfc-editor.org/rfc/rfc8707.html).
+
+    To provide multiple URIs, pass each URI as a separate parameter with the same name.
+
+    All provided values must be present in the application's <InlineField>oauthConfiguration.authorizedResourceUris</InlineField>; any invalid value returns an `invalid_target` error.
+
+    When <InlineField>oauthConfiguration.authorizedResourceUris</InlineField> is empty, this parameter is silently ignored. Otherwise, the validated resource URIs are bound to the authorization code and carried forward to the token endpoint.
   </APIField>
   <APIField name="response_mode" type="String" optional since="1.11.0">
     Determines how the result parameters are to be returned to the caller.
@@ -557,6 +566,19 @@ Ensure you are sending these parameters as form encoded data in the request body
     This URI must have been configured previously in the FusionAuth Application OAuth configuration.
     See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
   </APIField>
+  <APIField name="resource" type="String" optional since="1.67.0">
+    The URI of the target resource server, per [RFC 8707 (Resource Indicators for OAuth 2.0)](https://www.rfc-editor.org/rfc/rfc8707.html).
+
+    To provide multiple URIs, pass each URI as a separate parameter with the same name. The following validation rules are applied in order; any failure returns `invalid_target` and the authorization code is immediately invalidated:
+
+    1. If at least one resource URI from the authorize request is still present in the application's <InlineField>oauthConfiguration.authorizedResourceUris</InlineField>, then at least one `resource` value is required here.
+    2. Each provided value must be present in the application's <InlineField>oauthConfiguration.authorizedResourceUris</InlineField>.
+    3. Each provided value must have also been present in the original authorize request.
+
+    When a valid resource is resolved, the issued access token's `aud` claim is set to `["client_id", "https://resource1.example.com", ...]`. When no resource is involved, `aud` remains a plain string containing only the `client_id`.
+
+    The validated resource URIs are also stored in the refresh token's `metaData.resources` field for use in subsequent refresh token grants.
+  </APIField>
 </APIBlock>
 
 ```plaintext title="Example HTTP Request"
@@ -840,6 +862,17 @@ Ensure you are sending these parameters as form encoded data in the request body
   </APIField>
   <APIField name="refresh_token" type="String" required>
     The refresh token that you would like to use to exchange for an access token.
+  </APIField>
+  <APIField name="resource" type="String" optional since="1.67.0">
+    The URI of the target resource server, per [RFC 8707 (Resource Indicators for OAuth 2.0)](https://www.rfc-editor.org/rfc/rfc8707.html).
+
+    To provide multiple URIs, pass each URI as a separate parameter with the same name. Behavior depends on the application's <InlineField>oauthConfiguration.authorizedResourceUris</InlineField>:
+
+    * When <InlineField>oauthConfiguration.authorizedResourceUris</InlineField> is empty, this parameter is silently ignored.
+    * When omitted and <InlineField>oauthConfiguration.authorizedResourceUris</InlineField> is non-empty, the resource URIs stored in the refresh token's `metaData.resources` from the original authorization are automatically applied to the new access token.
+    * When provided, each value must be present in both the application's <InlineField>oauthConfiguration.authorizedResourceUris</InlineField> and the refresh token's `metaData.resources` (i.e. must be a subset of what was authorized originally). Any invalid value returns `invalid_target`.
+
+    The `aud` claim follows the same rules as the authorization code exchange: an array `["client_id", "https://resource1.example.com", ...]` when resources are active, or a plain string `client_id` when they are not.
   </APIField>
   <APIField name="scope" type="String" optional>
     This parameter is optional and if omitted, the same scope requested during the authorization request will be used.
@@ -1474,6 +1507,10 @@ This is an example response body when the provided `access_token` was issued on 
   </APIField>
   <APIField name="aud" type="String">
     The `client_id` that was used to request the access token.
+
+    <Aside type="version" title="Available since 1.67.0">
+      When the application has a non-empty <InlineField>oauthConfiguration.authorizedResourceUris</InlineField> and a `resource` parameter was resolved during the OAuth flow, this value changes from a plain string to an array. The first element is always the `client_id` followed by each resolved resource URI: `["client_id", "https://resource1.example.com", ...]`.
+    </Aside>
   </APIField>
   <APIField name="auth_time" type="Long">
     The time of the initial authentication request, expressed as [unix time](/docs/reference/data-types#unix-time). The value will not change even if the token is re-issued using a Refresh Token.
@@ -1781,6 +1818,7 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `invalid_grant`
     * `invalid_request`
     * `invalid_scope`
+    * `invalid_target`
     * `invalid_token`
     * `login_required`
     * `not_licensed`
