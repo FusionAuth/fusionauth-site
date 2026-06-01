@@ -1,22 +1,22 @@
 ---
 publish_date: 2026-06-02 
 title: Securing Your MCP Server with an Authorization Server
-description: TBD
-authors: Cameron Pavey
+description: MCP servers can expose sensitive data and business logic to AI agents. Learn how to lock them down using OAuth.
+authors: Dan Moore
 image: /img/blogs/zero-trust-idps/zero-trust-and-how-idps-factor-into-it-header-image.png
 categories: Education
-tags: zero trust, identity provider
+tags: mcp, ai, authorization server, oauth, authorization, llm
 excerpt_separator: "{/* more */}"
 ---
 
 
 The Model Context Protocol (MCP) is rapidly becoming the standardized API for large language models (LLMs) and AI agents to interact with the real world—calling APIs, accessing databases, and executing business logic. Like the early days of REST, builders are moving fast, often prioritizing functionality over security.
 
-We’re already seeing the security mistakes we made a decade ago showing up with in this new technology. 
+We’re already seeing the security mistakes we made a decade ago showing up with this new technology. 
 
 {/* more */}
 
-You can see some of these in the MCP [security advisory list](https://github.com/modelcontextprotocol/servers/security/advisories) which lists path traversal, path validation and injectiop issues. But it's not just in the core software, it's also in implmentation. Whether it is [broken tenant isolation](https://www.bleepingcomputer.com/news/security/asana-warns-mcp-ai-feature-exposed-customer-data-to-other-orgs/), [networking misconfiguration](https://composio.dev/content/mcp-vulnerabilities-every-developer-should-know), or [tool poisoining](https://invariantlabs.ai/blog/whatsapp-mcp-exploited), you want to avoid the negative impact. This new way for software to access your systems needs to be thoughtfully secured.
+You can see some of these in the MCP [security advisory list](https://github.com/modelcontextprotocol/servers/security/advisories) which lists path traversal, path validation and injection issues. But it's not just in the core software, it's also in implementation. Whether it is [broken tenant isolation](https://www.bleepingcomputer.com/news/security/asana-warns-mcp-ai-feature-exposed-customer-data-to-other-orgs/), [networking misconfiguration](https://composio.dev/content/mcp-vulnerabilities-every-developer-should-know), or [tool poisoning](https://invariantlabs.ai/blog/whatsapp-mcp-exploited), you want to avoid the negative impact. The pattern is familiar, but the stakes are new. AI agents can act autonomously, which means a misconfigured MCP server allows more damage than a misconfigured REST endpoint.
 
 One way to do this is to require authentication and authorization using an Authorization Server (commonly abbreviated AS). If your MCP server is providing access on the internet to anything confidential or if the data and functionality it offers varies depending on the user making the request, then lock it down. An unauthenticated remote server is fantastic for public documentation (the [FusionAuth docs MCP server](/docs/get-started/download-and-install/development/docs-mcp-server), for example) or non-sensitive, shared resources, but anything beyond that needs a proper security layer.
 
@@ -51,9 +51,9 @@ There are a few ways for this to happen. In the [order recommended by the spec](
 
 * the MCP client can be pre-registered with the AS. This means that some other process created a link between the MCP client and AS. This is referred to as "out of band" but really means "we don't know and we don't care how it happened, as long as it happened". This is similar to showing up to a formal gala party and flashing your invitation. You've been invited and are known before you talk to the person at the door.
 * the MCP client can register at the time it first interacts with the AS. There are two technical paths, [Client ID Metadata Documents (CIMD)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-00) and [Dynamic Client Registration (DCR)](https://datatracker.ietf.org/doc/html/rfc7591). The former is newer but seems to be the future, with the latter being explicitly retained for backwards compatibility. This is similar to a bouncer checking a driver's license at a bar. As long as you meet certain criteria, you're in.
-* prompt the user behind the MCP client to enter credentials. This is like showing up to a party without an invitation and having the host come to the door to personally vouch for you.
+* prompt the user behind the MCP client to enter credentials. I haven't seen this in the wild and am not quite sure how it would work. This is like showing up to a party without an invitation and having the host come to the door to personally vouch for you.
 
-The client registration process can offer additional security at the cost of additional friction. The pre-registration process means that you'll have some kind of system awareness of the MCP clients interacting with your server. CIMD and DCR both allow for locking down which MCP clients can access an AS (and, by extension, a MCP server).
+The client registration process can offer additional security at the cost of additional friction. The pre-registration process means that you'll have some kind of system awareness of the MCP clients interacting with your server. CIMD and DCR both allow for locking down which MCP clients can access an AS (and, by extension, an MCP server).
 
 In all cases, the user will also be authenticated after the client has been registered. Let's see what that looks like.
 
@@ -96,4 +96,4 @@ A few principles to carry forward as you build:
 * Don't stop at the MCP boundary. The specification secures the client-to-server handshake, but your MCP server likely calls downstream services of its own. You are responsible for securing those connections too. Do not forward the user's access token downstream; issue purpose-specific credentials instead.
 * Treat unauthenticated servers as a deliberate choice. An open, unauthenticated MCP server is appropriate for public resources like documentation. Anything involving user data, business logic, or sensitive operations needs a proper security layer. 
 
-Use the infrastructure and protocols outlined by the MCP spec and this article to build secure MCP servers today.
+The tools and infrastructure are here. The specification is clear. The only variable is whether you use these to secure your MCP server before something goes wrong. Or after.
