@@ -31,6 +31,7 @@ IGNORED_FIELD_REGEXPS = [
   /^event\.ipAddress/, # this is a deprecated field
   /^identityProvider\.issuer/, # this is a deprecated field
   /^identityProvider\.data/, # this is non-exposed field: https://github.com/FusionAuth/fusionauth-java-client/blob/main/src/main/java/io/fusionauth/domain/provider/BaseIdentityProvider.java#L29
+  /^user\.legacyIdentifier/, # non-exposed field
 ]
 # option handling
 options = {}
@@ -286,9 +287,6 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
   nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog", "event.user", "event.email", "event.existing", "event.registration", "event.original", "event.method", "event.identityProviderLink", "event.group", "event.refreshToken", "webhookEventLog.event", "event.reason.lambdaResult"]
 
-  # fields that do not need to be included in the doc
-  skipped_attributes = ["user.legacyIdentifier"]
-
   # these are enums represented as strings in the API, but enums in java. We should still see them on the page
   enums = ["lambda.type", "lambda.engineType"]
 
@@ -411,11 +409,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         puts "not traversing #{full_field_name}, but checking if it is in the content of #{api_path}"
       end
       if ! page_content.include? full_field_name
-        if skipped_attributes.include? full_field_name
-          puts "skipping #{full_field_name}, we do not document this field"
-        else
-          missing_fields.append({full_field_name: full_field_name, type: field_type})
-        end
+        missing_fields.append({full_field_name: full_field_name, type: field_type})
       end
       if full_field_name == "entity.type"
         # special case for entity.type.id
