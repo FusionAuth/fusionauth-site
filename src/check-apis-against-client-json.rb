@@ -286,6 +286,9 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
   nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog", "event.user", "event.email", "event.existing", "event.registration", "event.original", "event.method", "event.identityProviderLink", "event.group", "event.refreshToken", "webhookEventLog.event", "event.reason.lambdaResult"]
 
+  # fields that do not need to be included in the doc
+  skipped_attributes = ["user.legacyIdentifier"]
+
   # these are enums represented as strings in the API, but enums in java. We should still see them on the page
   enums = ["lambda.type", "lambda.engineType"]
 
@@ -408,7 +411,11 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         puts "not traversing #{full_field_name}, but checking if it is in the content of #{api_path}"
       end
       if ! page_content.include? full_field_name
-        missing_fields.append({full_field_name: full_field_name, type: field_type})
+        if skipped_attributes.include? full_field_name
+          puts "skipping #{full_field_name}, we do not document this field"
+        else
+          missing_fields.append({full_field_name: full_field_name, type: field_type})
+        end
       end
       if full_field_name == "entity.type"
         # special case for entity.type.id
@@ -417,10 +424,10 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         end
       end
     else
-      #p "need to look up other object for type " + field_type
+      # "need to look up other object for type " + field_type
       files = Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+field_type+".json")
       if options[:verbose] && files.length > 1
-        puts "for field_type: "+ field_type+ ", found " + files.length.to_s + " files, picking closest one"
+        puts "for field_type: " + field_type + ", found " + files.length.to_s + " files, picking closest one"
         puts files
       end
       if files.length == 1
@@ -429,7 +436,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         # lets look in our containing objects
         ancestor_type = t.gsub(/^\..*/,'')
 
-        #special case for application oauth2 config
+        # special case for application oauth2 config
         if field_type == "OAuth2Configuration" and ancestor_type == "application"
           files.each do |mf|
             if mf.include?('oauth2.OAuth2Configuration')
@@ -451,7 +458,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
           end
         end
         unless file
-	  # this is a weird one, it is a inner class but on a supertype
+	        # this is a weird one, it is a inner class but on a supertype
           if options[:verbose]
             puts "handling special case of Identity Provider lambda config"
           end
