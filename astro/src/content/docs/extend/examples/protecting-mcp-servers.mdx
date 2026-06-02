@@ -4,21 +4,21 @@ description: Learn how to protect Model Context Protocol (MCP) servers with OAut
 navcategory: developer
 section: extend
 subcategory: examples
-codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-protected-mcp-server/main
+codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-protected-mcp-server/main
 ---
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
-import {RemoteCode} from '@fusionauth/astro-components';
+import RemoteCode from 'src/components/RemoteCode.astro';
 
-Building a production Model Context Protocol (MCP) server requires you to consider not just the AI-powered tools and services you expose, but also how to control and track which clients can access them. With FusionAuth, you can add OAuth protection to your MCP server, letting you authenticate clients and enforce per-tool scopes, while maintaining full control with a self-hosted Identity Provider.
+Building a production Model Context Protocol (MCP) server requires you to consider not just the tools and services you expose, but also how to control and track which clients can access them. With FusionAuth, you can add OAuth protection to your MCP server, letting you authenticate clients and enforce per-tool scopes, while maintaining full control with a self-hosted authorization server.
 
 Starting with a simple, unprotected MCP server and adding OAuth protection step by step, this guide demonstrates how to:
 
 * Examine a basic MCP server with a simple `get_name` tool.
 * Add FusionAuth OAuth configuration and token validation.
-* Register an MCP client (such as Claude Desktop) and test the protected tool.
+* Register an MCP client, such as Claude Desktop and test the protected tool.
 
 The following tutorial builds a working example of an OAuth-protected MCP server that you can extend with additional tools and security policies.
 
@@ -29,27 +29,18 @@ To follow this guide, you need the following installed:
 * Docker Desktop (ensure it's running).
 * An MCP client such as Claude Desktop or Cursor.
 * Python 3.12 or later (and `pip`).
-* Node.js version 20.18.1 or later (ensure it's available in your PATH).
-* FusionAuth 1.63.0 or later. The Docker stack in this guide uses the `latest` image tag, which satisfies this requirement. If you are running FusionAuth separately, version 1.63.0 or later is required because earlier versions do not advertise S256 PKCE support in the OIDC discovery document, which `mcp-remote` requires.
+* Node.js version 20.18.1 or later (ensure it's available in your path).
+* At least FusionAuth 1.67.0. The Docker stack in this guide uses the `latest` image tag, which satisfies this requirement. If you are running FusionAuth separately, this version or later is required because earlier versions do not support the `resource` parameter.
 
-<Aside type="tip">
-Verify your Node.js installation:
-
-```bash
-node --version  # Should show v20.x.x or higher
-npx --version   # Should show 10.x.x or higher
-```
-</Aside>
-
-You also need a **FusionAuth Essentials license** (or higher). Custom OAuth scopes require an Essentials license. If you already have a paid plan, you can find your license key at [account.fusionauth.io](https://account.fusionauth.io/account/plan/). Otherwise, [contact FusionAuth](/pricing) to obtain one.
+You also need a FusionAuth Essentials or Enterprise license to access custom OAuth scopes. If you already have a paid plan, you can find your license key at [account.fusionauth.io](https://account.fusionauth.io/account/plan/). Otherwise, [contact FusionAuth](/contact) to obtain one.
 
 ## Getting Started
 
 Clone the repository and navigate to the starter code:
 
 ```bash
-git clone https://github.com/fusionauth/fusionauth-protected-mcp-server.git
-cd fusionauth-protected-mcp-server/unprotected-local-mcp
+git clone https://github.com/fusionauth/fusionauth-example-protected-mcp-server.git
+cd fusionauth-example-protected-mcp-server/unprotected-local-mcp
 ```
 
 <Aside type="note">
@@ -77,13 +68,17 @@ Open `kickstart/kickstart.json` and replace the `licenseId` value on line 15:
 
 Replace `YOUR_LICENSE_KEY_HERE` with your actual FusionAuth license key.
 
+<Aside type="caution">
+You can't complete this tutorial without adding in the license key.
+</Aside>
+
 ### Review The Project Structure
 
 The project is structured as follows:
 
 ```
 fusionauth-protected-mcp-server/
-unprotected-local-mcp/          # Starter code (this guide begins here)
+unprotected-local-mcp/          # Starter code 
 ├── docker-compose.yml
 ├── kickstart/
 │   └── kickstart.json
@@ -102,7 +97,7 @@ protected-remote-mcp/           # Remote deployment variant
 
 ## Understanding The Starter Code
 
-Let's examine the starter MCP server before adding authentication.
+Let's examine the starter MCP server, which is open to the world.
 
 ### The Basic MCP Server
 
@@ -124,19 +119,21 @@ Start the Docker stack:
 docker compose up -d
 ```
 
+When you run `docker compose up`, FusionAuth detected a fresh installation and automatically ran the Kickstart configuration in `kickstart/kickstart.json`, which created:
+
+* A test user (`test@example.com`/`password`).
+* An admin user (`admin@example.com`/`password`) with access to the FusionAuth admin UI.
+* An API key.
+
+It also installed the license key to enable advanced features.
+
 Wait about 20 seconds for all services to start, including:
 
 * **FusionAuth:** On port 9011, preconfigured via Kickstart.
 * **MCP Server:** The unprotected starter version on port 8000.
 * **PostgreSQL:** The FusionAuth database.
 
-Check that all services are healthy:
-
-```bash
-docker compose ps
-```
-
-Test the unprotected `get_name` tool:
+Test the unprotected `get_name` tool using the format the MCP server expects:
 
 ```bash
 curl -X POST http://localhost:8000/mcp \
@@ -163,7 +160,7 @@ data: {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"Hello,
 The tool works, but anyone can call it because there's no authentication. Let's fix that.
 
 <Aside type="tip">
-You can log into the FusionAuth admin UI at `http://localhost:9011` to verify the Kickstart configuration. Use the admin credentials:
+You can log into the FusionAuth admin UI at `http://localhost:9011` to examine the Kickstart configuration. Use the admin credentials:
 
 * **Email:** `admin@example.com`
 * **Password:** `password`
@@ -180,10 +177,12 @@ Now, let's add authentication piece by piece to protect the MCP server, starting
 To protect an MCP server, you need to add:
 
 1. **Token Validation:** When a client sends a request, you need to verify that its access token is valid.
-2. **Scope Enforcement:** MCP clients require specific scopes (permissions) to execute tools.
-3. **User Context:** Once a request has been authenticated, you use the token to identify which user made the request.
+1. **Scope Enforcement:** MCP clients require specific scopes (permissions) to execute tools.
+1. **User Context:** Once a request has been authenticated, you use the token to identify which user made the request.
 
-This guide uses FusionAuth's JWT validation endpoint for token validation. It verifies the token's signature using FusionAuth's public keys and returns the token claims, including scopes, if the token is valid.
+This guide uses the [JWT validation API](/docs/apis/jwt#validate-a-jwt) for token validation. This API verifies the token's signature and expiration using FusionAuth's public keys and returns the token claims, including scopes, if the token is valid.
+
+Following these steps will modify the files in `unprotected-local-mcp` but you can see the final versions in the `protected-local-mcp` directory.
 
 ### Step 1: Add Configuration And Imports
 
@@ -191,7 +190,7 @@ To configure the MCP server to connect to FusionAuth and import the OAuth compon
 
 <RemoteCode url={frontmatter.codeRoot + "/protected-local-mcp/mcp-server/server.py"} lang="python" tags="imports"/>
 
-You also need to add the FusionAuth Python client to `mcp-server/requirements.txt`:
+You also need to add the FusionAuth Python client to `mcp-server/requirements.txt`. Here's what that entire file should look like:
 
 <RemoteCode url={frontmatter.codeRoot + "/protected-local-mcp/mcp-server/requirements.txt"} lang="text"/>
 
@@ -201,27 +200,22 @@ In this code:
 * `FUSIONAUTH_EXTERNAL_URL` is the public localhost URL (`http://localhost:9011`), which browsers use during the OAuth flow.
 * `MCP_SERVER_URL` is the public URL of the MCP server, used by FastMCP to construct OAuth redirect URLs.
 
-When you ran `docker compose up`, FusionAuth detected a fresh installation and automatically ran the Kickstart configuration in `kickstart/kickstart.json`, which created:
-
-* A test user (`test@example.com`/`password`).
-* An admin user (`admin@example.com`/`password`) with access to the FusionAuth admin UI.
-* An API key.
-
 ### Step 2: Implement Token Validation
 
-After the configuration variables, add this code to extend the FastMCP `TokenVerifier` base class. You are creating a token verifier, which ensures that the MCP server responds only to properly authorized requests:
+After the configuration variables, add this code, which extends the FastMCP `TokenVerifier` base class. You can add it just after the `logger` variable is declared. Here you are creating a token verifier, which ensures that the MCP server responds only to properly authorized requests:
 
 <RemoteCode url={frontmatter.codeRoot + "/protected-local-mcp/mcp-server/server.py"} lang="python" tags="token-verifier"/>
 
 This token verifier validates access tokens by:
 
 1. Calling FusionAuth's `/api/jwt/validate` endpoint via the FusionAuth Python client. A successful response confirms the token is valid and returns its claims.
-2. Extracting scopes from the `scope` claim in the JWT. FastMCP uses scopes to enforce per-tool access control.
-3. Returning an `AccessToken` object that FastMCP can use.
+1. Extracting scopes from the `scope` claim in the JWT. FastMCP uses scopes to enforce per-tool access control.
+1. Returning an `AccessToken` object that FastMCP can use.
 
 ### Step 3: Enable OAuth On The MCP Server
 
 Wire up authentication to the FastMCP server by replacing the basic `mcp = FastMCP(...)` initialization with the following OAuth-enabled version:
+TODO
 
 <RemoteCode url={frontmatter.codeRoot + "/protected-local-mcp/mcp-server/server.py"} lang="python" tags="mcp-init"/>
 
