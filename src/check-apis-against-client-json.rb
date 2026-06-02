@@ -31,6 +31,7 @@ IGNORED_FIELD_REGEXPS = [
   /^event\.ipAddress/, # this is a deprecated field
   /^identityProvider\.issuer/, # this is a deprecated field
   /^identityProvider\.data/, # this is non-exposed field: https://github.com/FusionAuth/fusionauth-java-client/blob/main/src/main/java/io/fusionauth/domain/provider/BaseIdentityProvider.java#L29
+  /^user\.legacyIdentifier/, # non-exposed field
 ]
 # option handling
 options = {}
@@ -417,10 +418,10 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         end
       end
     else
-      #p "need to look up other object for type " + field_type
+      # "need to look up other object for type " + field_type
       files = Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+field_type+".json")
       if options[:verbose] && files.length > 1
-        puts "for field_type: "+ field_type+ ", found " + files.length.to_s + " files, picking closest one"
+        puts "for field_type: " + field_type + ", found " + files.length.to_s + " files, picking closest one"
         puts files
       end
       if files.length == 1
@@ -429,7 +430,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         # lets look in our containing objects
         ancestor_type = t.gsub(/^\..*/,'')
 
-        #special case for application oauth2 config
+        # special case for application oauth2 config
         if field_type == "OAuth2Configuration" and ancestor_type == "application"
           files.each do |mf|
             if mf.include?('oauth2.OAuth2Configuration')
@@ -451,7 +452,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
           end
         end
         unless file
-	  # this is a weird one, it is a inner class but on a supertype
+	        # this is a weird one, it is a inner class but on a supertype
           if options[:verbose]
             puts "handling special case of Identity Provider lambda config"
           end
