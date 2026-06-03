@@ -11,14 +11,20 @@ class ScrollSpy {
     }
 
     document.addEventListener('scroll', event => this.#handleScroll(event));
+    this.#shift = 100;
 
+    this.reloadHeaders();
+
+    window.ScrollSpy = this;
+  }
+
+  reloadHeaders() {
     this.#headers = [];
     const elements = document.querySelectorAll('h2[id], h3[id]');
     for (const e of elements) {
       this.#headers.push(e);
     }
     this.#headers.sort((one, two) => one.offsetTop - two.offsetTop);
-    this.#shift = 100;
     this.#handleScroll();
   }
 

@@ -21,6 +21,13 @@ const handleScroll = () => {
   group.classList.add('active');
 }
 
+const reloadHeaders = () => {
+  headers = [...document.querySelectorAll<HTMLElement>('h2[id], h3[id]')]
+    .sort((a, b) => a.offsetTop - b.offsetTop);
+
+  handleScroll();
+}
+
 const registerScrollSpy = () => {
   headers = [...document.querySelectorAll<HTMLElement>('h2[id], h3[id]')]
     .sort((a, b) => a.offsetTop - b.offsetTop);
@@ -28,6 +35,7 @@ const registerScrollSpy = () => {
   handleScroll();
 
   document.addEventListener('scroll', throttle(handleScroll, 50));
+  document.addEventListener('scroll-spy:reload', reloadHeaders);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
