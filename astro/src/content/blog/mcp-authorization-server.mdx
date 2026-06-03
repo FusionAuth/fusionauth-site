@@ -36,7 +36,7 @@ Here is the flow that gets an MCP client authenticated and authorized to use you
 1. grant of consent
 1. access token issuance
 1. access token validation 
-1. accessing the MCP functionality
+1. use the MCP
 
 Let's take a look at each of these.
 
@@ -58,12 +58,14 @@ There are a few ways for this to happen. In the [order of evaluation per the spe
 1. **Register the MCP client when it first interacts with the AS**. There are two technical paths, [Client ID Metadata Documents (CIMD)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-00) and [Dynamic Client Registration (DCR)](https://datatracker.ietf.org/doc/html/rfc7591). The former is newer but seems to be the future, with the latter being explicitly retained for backwards compatibility. This is similar to a bouncer checking a driver's license at a bar. As long as you meet certain criteria, you're in.
 1. **Prompt the user for credentials.** I haven't seen this in the wild, but it pushes the coordination work onto the human. This is like showing up to a party without an invitation and having the host come to the door to personally vouch for you.
 
-Which client registration process you choose affects the security/friction tradeoff. Using the pre-registration process means that you'll know which MCP clients can interact with your server.
+Which client registration process you choose affects the security/friction tradeoff.
 
-Using CIMD or DCR, which establish the client just-in-time reduces friction, since an MCP client can register itself with no prior interaction with the AS. However, these methods do support the following security measures:
+* Using the pre-registration process means that you'll know which MCP clients can interact with your server, but you'll have to configure each client in advance.
 
-* the user still must have a valid account at the AS and successfully authenticate
-* they both allow for controlling which MCP clients can register, though that process is not entirely defined in either specification
+* Using CIMD or DCR reduces friction by establishing the client just-in-time: an MCP client can register itself even if it has never before used the AS. But don't worry, these methods don't expose your endpoint to any arbitrary client:
+
+  * the user still must have a valid account at the AS and successfully authenticate
+  * they both allow for controlling which MCP clients can register, though that process is not entirely defined in either specification
 
 ### User Authentication
 
@@ -101,7 +103,7 @@ As a result, an attacker can't trick an LLM into directly revealing the credenti
 
 When it receives the token, the MCP server validates the token, checking fields like the audience, expiration time, issuer, and allowed scopes.
 
-If the AS issued a JWT as an access token, the MCP server should also follow [JWT best practices like verifying the signature](/articles/tokens/building-a-secure-jwt).
+For example, if the AS issued a JWT as an access token, the MCP server should also follow [JWT best practices like verifying the signature](/articles/tokens/building-a-secure-jwt).
 
 
 ### Accessing the MCP Functionality
@@ -118,7 +120,7 @@ There is one admonition: don't pass the access token presented to the MCP server
 
 But this authorization model is critical to the safety of your data.
 
-Consider which users should have access to which services, data and functionality before you expose anything as an MCP server.
+Consider which users should have access to which services, data, and functionality before you expose anything as an MCP server.
 
 ## What's Next?
 
@@ -129,7 +131,7 @@ By delegating authentication and authorization to an AS, you get verified identi
 A few principles to carry forward as you build out your MCP server:
 
 * Limit scopes. An MCP client requesting broad permissions is asking for the AI equivalent of `root`. Design your scopes around the minimum access each client actually needs.
-* Don't stop at the MCP boundary. The specification outlines how OAuth secures the client-to-server handshake, but your MCP server probably calls downstream services of its own. You are responsible for securing those connections too.
 * Treat unauthenticated servers as a deliberate choice. An open, unauthenticated MCP server is appropriate for public resources like documentation. Anything more needs a proper security layer.
+* Don't stop at the MCP boundary. The specification outlines how OAuth secures the client-to-server handshake, but your MCP server probably calls downstream services of its own. You are responsible for securing those connections too.
 
-The tools and infrastructure are here. The specification is clear. Secure your MCP server before something goes wrong, not after.
+The tools and infrastructure are here. Secure your MCP server before something goes wrong, not after.
