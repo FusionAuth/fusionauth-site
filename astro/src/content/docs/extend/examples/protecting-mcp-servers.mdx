@@ -1,5 +1,5 @@
 ---
-title: Protecting MCP Servers With FusionAuth OAuth
+title: Protecting MCP Servers
 description: Learn how to protect Model Context Protocol (MCP) servers with OAuth authentication using FusionAuth.
 navcategory: developer
 section: extend
@@ -43,13 +43,11 @@ git clone https://github.com/fusionauth/fusionauth-example-protected-mcp-server.
 cd fusionauth-example-protected-mcp-server/unprotected-local-mcp
 ```
 
-<Aside type="note">
 This guide walks you through building OAuth protection step by step. If you prefer to skip ahead and see the completed code, navigate to the `protected-local-mcp` folder instead:
 
 ```bash
-cd fusionauth-protected-mcp-server/protected-local-mcp
+cd fusionauth-example-protected-mcp-server/protected-local-mcp
 ```
-</Aside>
 
 ### Configure Your FusionAuth License
 
@@ -77,7 +75,7 @@ You can't complete this tutorial without adding in the license key.
 The project is structured as follows:
 
 ```
-fusionauth-protected-mcp-server/
+fusionauth-example-protected-mcp-server/
 unprotected-local-mcp/          # Starter code 
 ├── docker-compose.yml
 ├── kickstart/
@@ -95,11 +93,11 @@ protected-remote-mcp/           # Remote deployment variant
 └── ...
 ```
 
-## Understanding The Starter Code
+## An  Unprotected MCP Server
 
-Let's examine the starter MCP server, which is open to the world.
+Let's examine the unprotected MCP server, which is open to the world.
 
-### The Basic MCP Server
+### The MCP Server
 
 Open `mcp-server/server.py`:
 
@@ -157,7 +155,9 @@ event: message
 data: {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"Hello, World!"}],"structuredContent":{"result":"Hello, World!"},"isError":false}}
 ```
 
-The tool works, but anyone can call it because there's no authentication. Let's fix that.
+The tool works, but anyone can call it because there's no authentication.
+
+Let's fix that.
 
 <Aside type="tip">
 You can log into the FusionAuth admin UI at `http://localhost:9011` to examine the Kickstart configuration. Use the admin credentials:
@@ -170,7 +170,7 @@ Navigate to <Breadcrumb>Users</Breadcrumb> to see the test user created by the K
 
 ## Adding OAuth Protection
 
-Now, let's add authentication piece by piece to protect the MCP server, starting with configuration and ending with a fully protected server.
+Now, let's add authentication piece by piece to protect the MCP server, starting with configuration and ending with a fully protected MCP server which runs on localhost.
 
 ### OAuth Protection For MCP Servers
 
@@ -242,6 +242,8 @@ This code updates the `get_name` tool so that it:
 1. Falls back to `preferred_username`, then `email`, then the user Id if the UserInfo call fails or no name is available.
 1. Returns a personalized greeting.
 
+For a production MCP server, this is where you'd call out to your database, services, APIs or other functionality that the MCP server exposes.
+
 ### Step 5: Rebuild And Restart
 
 Rebuild the MCP server container with the new code:
@@ -254,11 +256,7 @@ Wait a few seconds for the container to restart. The MCP server now requires OAu
 
 ## Testing OAuth Protection
 
-Let's verify that the authentication works.
-
-### Test Without A Token
-
-Try calling the tool without authentication:
+Let's verify that the authentication works. Try calling the tool without authentication:
 
 ```bash
 curl -X POST http://localhost:8000/mcp \
@@ -281,19 +279,21 @@ You should see an authentication error similar to this one:
 {"error": "invalid_token", "error_description": "Authentication failed. The provided bearer token is invalid, expired, or no longer recognized by the server. To resolve: clear authentication tokens in your MCP client and reconnect. Your client should automatically re-register and obtain new tokens."}
 ```
 
-This indicates that the tool is now protected. Now let's get a valid access token for a user.
+This indicates that the tool is now protected and that you need a valid access token to call the `get_name` tool.
+
+Let's get a valid access token for a user.
 
 ## Registering MCP Clients As OAuth Clients
 
 The first step is to register anything that is going to be requesting a token as an OAuth client. Before MCP clients like Claude Desktop or Cursor can connect to your protected MCP server, you need to register them in FusionAuth.
 
 <Aside type="tip">
-Right now all MCP client registration needs to take place out-of-band and before the MCP client connects to FusionAuth. For example, you can do this registration on-demand using the API in a developer portal. There are a couple of open issues for supporting [Dynamic Client Registration](https://github.com/fusionAuth/fusionauth-issues/issues/1125) and [Client ID Metadata Documents](https://github.com/FusionAuth/fusionauth-issues/issues/3230). When these are implemented, the registration process will change. 
+Right now all MCP client registration needs to take place out-of-band and before the MCP client connects to FusionAuth. For example, you can do this registration on-demand using the API in a developer portal. There are a couple of open issues for supporting [Dynamic Client Registration](https://github.com/fusionAuth/fusionauth-issues/issues/1125) and [Client ID Metadata Documents](https://github.com/FusionAuth/fusionauth-issues/issues/3230).
 </Aside>
 
 ### The Registration Process
 
-Each MCP client needs its own dedicated OAuth application in FusionAuth. This means if you want to support both Claude Desktop and Cursor, you register two separate applications, one per client. When an MCP client initiates the OAuth grant, it looks like this:
+Each MCP client needs its own dedicated OAuth application in FusionAuth. This means if you want to support both Claude Desktop and Cursor, you register two separate applications. When an MCP client initiates the OAuth grant, it looks like this:
 
 1. The MCP client redirects the user to FusionAuth to log in.
 1. The user authenticates.
@@ -325,7 +325,7 @@ This includes the following key configuration values:
 * `clientAuthenticationPolicy: "NotRequiredWhenUsingPKCE"` means that no client secret is needed when PKCE is used.
 * `scopeHandlingPolicy: "Strict"` only allows scopes that are explicitly registered on the application.
 
-The script returns the generated client Id and the full MCP configuration block to paste into your client config.
+The script returns the generated client Id and a full MCP configuration block to paste into common client configuration.
 
 ### Run The Client Registration Script
 
@@ -377,7 +377,7 @@ Setup complete!
         "3334",
         "--allow-http",
         "--static-oauth-client-info",
-        "{\"client_id\":\"9436b02d-9305-4772-a237-5fabcf6e7f6a\"}"
+        "{\"client_id\":\"9436b02d-9305-4772-a237-5fabcf6e7f6a\",\"scope\":\"openid profile get_name\"}"
       ]
     }
   }
@@ -389,7 +389,7 @@ Test user credentials:
   Password: password
 ```
 
-The script outputs the complete MCP client configuration for Claude Desktop, including the pre-registered client Id. 
+The script outputs the complete MCP client configuration for Claude Desktop, including the pre-registered client Id. Your client Id will be different than the one above, which starts with `9436b02d`.
 
 You can also verify the client registration in the FusionAuth admin UI by navigating to <Breadcrumb>Applications</Breadcrumb> to see the new client.
 
@@ -412,7 +412,7 @@ MCP clients which use configuration files to enable MCP servers often use the fo
         "3334",
         "--allow-http",
         "--static-oauth-client-info",
-        "{\"client_id\":\"YOUR_CLIENT_ID_HERE\"}"
+        "{\"client_id\":\"YOUR_CLIENT_ID_HERE\",\"scope\":\"openid profile get_name\"}"
       ]
     }
   }
@@ -517,10 +517,8 @@ When an MCP client connects to the MCP server, here's what happens:
 1. **API calls:** The MCP client includes the access token in requests to the MCP server.
 1. **Validation:** The MCP server validates tokens using FusionAuth's JWT validation endpoint before executing tools.
 
-<Aside type="warn">
-The MCP server should never forward the access token provided to downstream services. This is prohibited by the [token passthrough](https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices#token-passthrough) section of the MCP security best practices.
-
-How the MCP server properly accesses such resources is beyond the scope of this document.
+<Aside type="caution">
+The MCP server should never forward the access token provided to downstream services. This is prohibited by the [token passthrough](https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices#token-passthrough) section of the MCP security best practices. How the MCP server properly accesses such resources is beyond the scope of this document.
 </Aside>
 
 ### Token Validation Approach
@@ -630,7 +628,7 @@ Update your config to point at the public URL and remove `--allow-http` and the 
         "mcp-remote",
         "https://mcp.example.com/mcp",
         "--static-oauth-client-info",
-        {\"client_id\":\"YOUR_CLIENT_ID_HERE\",\"scope\":\"openid profile get_name\"}"
+        "{\"client_id\":\"YOUR_CLIENT_ID_HERE\",\"scope\":\"openid profile get_name\"}"
       ]
     }
   }
