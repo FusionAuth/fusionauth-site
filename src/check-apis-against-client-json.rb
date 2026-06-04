@@ -6,12 +6,6 @@ require 'uri'
 require 'optparse'
 require 'yaml'
 
-
-# TODO
-# support checking example JSON
-# support warning for fields that exist in html but not in the json and vice versa
-
-
 IGNORED_FIELD_REGEXPS = [
   /^(?!event).*\.tenantId/, # toplevel tenantId always ignored, except when checking events, as that is handled implicitly via API key locking or header if there is more than one tenant
   /^user\.salt/, # never send user.salt, only used by Import API
@@ -91,7 +85,6 @@ def handle_event_field_exceptions(ignore, type, full_field_name)
 end
 
 # what our dashed type is -> what the path is in the url
-# no hash at end of url as of feb 2022
 def make_api_path(type)
   base = "apis/"
 
@@ -281,7 +274,7 @@ end
 # noinspection t
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
 
-  # these are leafs of the tree and aren't fields with possible subfields.
+  # these are leafs of the tree and aren't fields with possible subfields
   known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double", "EventType", "SortedSet" ]
 
   # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
