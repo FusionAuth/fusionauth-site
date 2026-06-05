@@ -10,8 +10,6 @@ tags: ldap, connectors, netcore
 excerpt_separator: "{/* more */}"
 ---
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import InlineField from 'src/components/InlineField.astro';
-import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 Microsoft's Active Directory is a common enterprise user data store. If you are building apps for users authenticated by Active Directory, you might want to connect FusionAuth to it. Another common use case is to have some applications for internal users which should be authenticated against Active Directory and other applications for people outside your organization, with user data stored in FusionAuth. FusionAuth can act as a CIAM for your external users, but delegate authentication of internal accounts to Active Directory.
 
@@ -98,13 +96,13 @@ To set up this application in FusionAuth, navigate to <Breadcrumb>Settings -> Ke
 
 ![Adding an RSA key in Key Master.](/img/blogs/active-directory-connector/fusionauth-add-rsa-key.png)
 
-Create an application called "Internal Payroll App". This is what you are going to let John have access to. In the <Breadcrumb>OAuth</Breadcrumb> tab, add a <InlineField>redirect URL</InlineField> of "http://localhost:5000/signin-oidc". Add a <InlineField>logout redirect</InlineField> of "http://localhost:5000/".
+Create an application called "Internal Payroll App". This is what you are going to let John have access to. In the <Breadcrumb>OAuth</Breadcrumb> tab, add a **redirect URL** of `http://localhost:5000/signin-oidc`. Add a **logout redirect** of `http://localhost:5000/`.
 
 Navigate to the <Breadcrumb>JWT</Breadcrumb> tab. Enable JWT application configuration and change the signing keys to the just created RSA key pair: "For Internal Payroll App".
 
 ![Configuring the application's JWT settings to sign with the generated RSA keypair.](/img/blogs/active-directory-connector/fusionauth-jwt-config.png)
 
-Save the application and then view it by clicking on the green magnifying glass. Scroll down to the <InlineUIElement>OAuth configuration</InlineUIElement> section, noting the <InlineField>Client ID</InlineField> and <InlineField>Client Secret</InlineField> values, which you'll need when configuring the web application in a bit:
+Save the application and then view it by clicking on the green magnifying glass. Scroll down to the OAuth configuration section, noting the **Client ID** and **Client Secret** values, which you'll need when configuring the web application in a bit:
 
 ![Viewing the application's OAuth settings to record the Client ID and Client Secret values.](/img/blogs/active-directory-connector/fusionauth-oauth-config.png)
 
@@ -200,7 +198,7 @@ function guidToString(b64)
 }
 ```
 
-The functions `guidToString` and `decodeBase64` convert the `objectGUID` attribute, stored as a set of bytes in Active Directory, to a FusionAuth friendly UUID. 
+The functions `guidToString` and `decodeBase64` convert the `objectGUID` attribute, stored as a set of bytes in Active Directory, to a FusionAuth friendly UUID.
 
 If you are using version 1.19.7 or later, use the built in function instead: `FusionAuth.ActiveDirectory.b64GuidToString(userAttributes['objectGuid;binary'])`. See [the LDAP lambda docs](/docs/extend/code/lambdas/reconcile/ldap-connector-reconcile) for more information about that function.
 
@@ -212,14 +210,14 @@ Next, navigate to <Breadcrumb>Settings -> Connectors</Breadcrumb>. Create a new 
 
 Configure the LDAP Connector by providing or modifying the following info:
 
-* The "LDAP URL", which is the DNS or IP address of your Active Directory server or servers (if load balanced). Because I'm in the same subnet as one of the servers, I'm using `ldap://192.168.0.59`, a private address.
-* The security method, which is either "None", "LDAPS" (LDAP over SSL) or "STARTTLS" (LDAP over TLS). Make sure you modify the schema of the LDAP URL if needed.
+* The **LDAP URL**, which is the DNS or IP address of your Active Directory server or servers (if load balanced). Because I'm in the same subnet as one of the servers, I'm using `ldap://192.168.0.59`, a private address.
+* The security method, which is either `None`, `LDAPS` (LDAP over SSL) or `STARTTLS` (LDAP over TLS). Make sure you modify the schema of the LDAP URL if needed.
 * Optionally change the timeouts. If the Connector can't connect or read from the LDAP server for longer than the respective timeout, an error will be logged and the attempt to authenticate for a user associated with this Connector will fail.
-* Set "Reconcile lambda" to the previously created lambda, `ldapconnector` in my case.
-* Update the "Base structure" to the distinguished name (DN) where the user search should start. To search the entire directory, you'd use a structure such as `DC=piedpiper,DC=com`. If you want to search against only the accounting org, which makes sense for a payroll app, add the organization: `OU=accounting,DC=piedpiper,DC=com`.
-* Update the "System Account DN", which is basically the account which searches Active Directory for the user who is authenticating. This user needs at least read access to the directory from the "Base structure". I used the `Admin` account. Make sure you use the DN, not just the username; for example: `CN=Admin,OU=accounting,DC=piedpiper,DC=com`. You also need to provide the password for this account.
-* Configure the "Login Identifier Attribute". This attribute contains the username for accounts in the LDAP directory. For my Active Directory instance that is `userPrincipalName`.
-* Set the "Identifying Attribute". This is the entry attribute name that is the first component of the DN of entries in the directory. For my Active Directory instance, `cn` is the correct value.
+* Set **Reconcile lambda** to the previously created lambda, `ldapconnector` in my case.
+* Update the **Base structure** to the distinguished name (DN) where the user search should start. To search the entire directory, you'd use a structure such as `DC=piedpiper,DC=com`. If you want to search against only the accounting org, which makes sense for a payroll app, add the organization: `OU=accounting,DC=piedpiper,DC=com`.
+* Update the **System Account DN**, which is basically the account which searches Active Directory for the user who is authenticating. This user needs at least read access to the directory from the **Base structure**. I used the `Admin` account. Make sure you use the DN, not just the username; for example: `CN=Admin,OU=accounting,DC=piedpiper,DC=com`. You also need to provide the password for this account.
+* Configure the **Login Identifier Attribute**. This attribute contains the username for accounts in the LDAP directory. For my Active Directory instance that is `userPrincipalName`.
+* Set the **Identifying Attribute**. This is the entry attribute name that is the first component of the DN of entries in the directory. For my Active Directory instance, `cn` is the correct value.
 
 After all of the above are configured, you'll also want to specify which directory attributes to request from Active Directory. Anything stored in the Active Directory instance can be delivered to FusionAuth, as long as the authenticating user has permissions to retrieve it. AWS Microsoft Managed AD [runs Windows Server 2012](https://docs.aws.amazon.com/directoryservice/latest/admin-guide/directory_microsoft_ad.html), so this is [the list of available user attributes](https://docs.microsoft.com/en-us/windows/win32/adschema/c-user#windows-server-2012). 
 
@@ -237,9 +235,9 @@ After you've added everything, the configuration will look like this, though of 
 
 After you've set up the Connector, you need to tell FusionAuth how to use it. In the administrative user interface, navigate to <Breadcrumb>Tenants</Breadcrumb>, then to the <Breadcrumb>Default</Breadcrumb> tenant. Go to the <Breadcrumb>Connectors</Breadcrumb> tab.
 
-Click <InlineUIElement>Add policy</InlineUIElement> and select the Connector. You may optionally enter the email domain or domains for which this Connector should be used; add multiple domains on separate lines. You can also leave the value of `*` which will cause this Connector to be checked for users with any email address, which is what this post will do.
+Click <Breadcrumb>Add policy</Breadcrumb> and select the Connector. You may optionally enter the email domain or domains for which this Connector should be used; add multiple domains on separate lines. You can also leave the value of `*` which will cause this Connector to be checked for users with any email address, which is what this post will do.
 
-If you check the "Migrate User" option, this configures FusionAuth to check Active Directory for user attributes, including the password, only at the first authentication of each user. You can read more [about migration here](/docs/lifecycle/migrate-users/connectors/). For this post, Active Directory will remain the system of record, so leave it unchecked and save the policy entry.
+If you check the <Breadcrumb>Migrate User</Breadcrumb> option, this configures FusionAuth to check Active Directory for user attributes, including the password, only at the first authentication of each user. You can read more [about migration here](/docs/lifecycle/migrate-users/connectors/). For this post, Active Directory will remain the system of record, so leave it unchecked and save the policy entry.
 
 ![Setting up the policy for the Active Directory Connector.](/img/blogs/active-directory-connector/fusionauth-tenant-connector-policy.png)
 
@@ -289,11 +287,11 @@ Finally, you get to sign in! Visit `http://localhost:5000` with an incognito bro
 
 ![The initial app webpage.](/img/blogs/active-directory-connector/webapp-initial-page.png)
 
-To log in, click the <InlineUIElement>Secure</InlineUIElement> link and you'll be taken to the FusionAuth login page. These can of course be [themed](/docs/customize/look-and-feel/), but for now the default look and feel will have to do.
+To log in, click the <Breadcrumb>Secure</Breadcrumb> link and you'll be taken to the FusionAuth login page. These can of course be [themed](/docs/customize/look-and-feel/), but for now the default look and feel will have to do.
 
 ![The log in pages for the web application.](/img/blogs/active-directory-connector/webapp-login-page.png)
 
-Sign in with the Active Directory user you added (John's login if you are following along) and you'll be redirected back to a profile page. Note that I used `john@danadtest.fusionauth.io` as the username. That corresponds to the "User UPN logon" value configured when this account was created in Active Directory. This is also the `userPrincipalName` value, what the "Login Identifier Attribute" value was in the Connector config.
+Sign in with the Active Directory user you added (John's login if you are following along) and you'll be redirected back to a profile page. Note that I used `john@danadtest.fusionauth.io` as the username. That corresponds to the **User UPN logon** value configured when this account was created in Active Directory. This is also the `userPrincipalName` value, what the **Login Identifier Attribute** value was in the Connector config.
 
 ![The web application profile page.](/img/blogs/active-directory-connector/webapp-secured-page.png)
 

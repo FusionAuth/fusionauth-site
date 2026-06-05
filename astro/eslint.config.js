@@ -66,4 +66,16 @@ export default [
       }
     }
   },
+  {
+    files: ['src/code-snippets/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+      }
+    },
+    rules: {
+      'no-unused-vars': 'off',
+    }
+  },
 ];
