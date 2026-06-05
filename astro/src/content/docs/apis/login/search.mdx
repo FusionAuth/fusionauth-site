@@ -1,0 +1,135 @@
+---
+title: Search Login Records
+description: API documentation for the FusionAuth Search Login Records API.
+order: 6
+---
+import InlineField from 'src/components/InlineField.astro';
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import JSON from 'src/components/JSON.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import LoginEvents from 'src/content/docs/_shared/_login_events.mdx';
+import TryInExplorer from 'src/components/api/TryInExplorer.astro';
+
+<Aside type="version">
+Available Since Version 1.7.0
+</Aside>
+
+This API allows you to search and paginate through the Login Records. Login Records are created in the following scenarios:
+
+<LoginEvents />
+
+You can limit the number of Login Records retained by navigating to <Breadcrumb>Settings -> System -> Advanced -> Login record settings</Breadcrumb> and configuring automatic deletion of Login Records after a certain number of days.
+
+<TryInExplorer method="POST" path="/api/system/login-record/search" tag="system" />
+
+## Request
+
+### Using GET parameters
+
+<API method="GET" uri="/api/system/login-record/search?applicationId={applicationId}&start={start}&end={end}&userId={userId}" authentication={["global-api-key"]} title="Searches for Login Records given search criteria"/>
+
+When calling the API using a `GET` request you will send the search criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional>
+    The unique Id of the Application used to narrow the search results to logins for a particular application.
+  </APIField>
+  <APIField name="end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="retrieveTotal" type="Boolean" optional defaults="false">
+    Set this to `true` if you want the total possible results returned in the response. With a very large number of login records settings this value to `true` will increase the response time of this request.
+  </APIField>
+  <APIField name="start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="startRow" type="Integer" optional defaults="0">
+    The offset into the total results. In order to paginate the results, increment this value by the <InlineField>numberOfResults</InlineField> for subsequent requests.
+  </APIField>
+  <APIField name="userId" type="String" optional>
+    The unique Id of the User used to narrow the search results to login records for a particular user.
+  </APIField>
+</APIBlock>
+
+### Using a request body
+
+<API method="POST" uri="/api/system/login-record/search" authentication={["global-api-key"]} title="Searches for Login Records given search criteria"/>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="retrieveTotal" type="Boolean" optional defaults="false">
+    Set this to `true` if you want the total possible results returned in the response. With a very large number of login records settings this value to `true` will increase the response time of this request.
+  </APIField>
+  <APIField name="search.applicationId" type="UUID" optional>
+    The unique Id of the Application used to narrow the search results to logins for a particular application.
+  </APIField>
+  <APIField name="search.end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="search.numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="search.start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="search.startRow" type="Integer" optional defaults="0">
+    The offset into the total results. In order to paginate the results, increment this value by the <InlineField>numberOfResults</InlineField> for subsequent requests.
+  </APIField>
+  <APIField name="search.userId" type="UUID" optional>
+    The unique Id of the User used to narrow the search results to login records for a particular user.
+  </APIField>
+</APIBlock>
+
+## Response
+
+The response for this API will contain all login records matching the search criteria in paginated format.
+
+<StandardGetResponseCodes />
+
+### Response Body
+
+<APIBlock>
+  <APIField name="logins" type="Array">
+    The list of Login Records returned by the search.
+  </APIField>
+  <APIField name="logins[x].applicationId" type="UUID">
+    The unique Id of the application.
+  </APIField>
+  <APIField name="logins[x].applicationName" type="String">
+    The name of the application. Because the application name may be modified after the login event occurred, only the <InlineField>applicationId</InlineField> should be considered immutable for historical purposes when identifying the application.
+  </APIField>
+  <APIField name="logins[x].loginId" type="String">
+    The identity used to log in. Because an identity may be modified after the login event occurred, only the <InlineField>userId</InlineField> should be considered immutable for historical purposes when identifying the user.
+
+    In version `1.59.0` and later, the <InlineField>loginId</InlineField> is stored in the login record when the correct value can be identified. In these cases the <InlineField>loginIdType</InlineField> will be populated.
+  </APIField>
+  <APIField name="logins[x].loginIdType" type="String" since="1.59.0">
+    The type of identity used to log in. A missing value on the response indicates the login was not associated with a specific identity, or the login record was created prior to version `1.59.0`.
+  </APIField>
+  <APIField name="logins[x].instant" type="Long">
+    The [instant](/docs/reference/data-types#instants) when the login occurred.
+  </APIField>
+  <APIField name="logins[x].ipAddress" type="String">
+    The recorded IP address for this login record.
+  </APIField>
+  <APIField name="logins[x].userId" type="UUID">
+    The unique Id of the user.
+  </APIField>
+  <APIField name="total" type="Long">
+    The total number of login records available. This will only be provided in the response when <InlineField>retrieveTotal</InlineField> was set to `true` on the request.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="login-records/search/response.json" />
