@@ -863,9 +863,9 @@ With most of these options, you'll eventually modify each downstream application
 
 #### Customize The New Token
 
-The [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate) allows you to add in custom claims, call APIs, and modify most claims. If you can make the token issued by FusionAuth look like those of the source issuer, then you can switch identity providers without modifying downstream applications. You can modify claims such as the `iss`/issuer and `aud`/audience.
+The [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate) allows you to add in custom claims, call APIs, and modify most claims. If you can make the token issued by FusionAuth look like those of the source issuer, then you can switch identity providers without modifying downstream applications. You can modify claims such as the `iss` (issuer) and `aud` (audience) claims.
 
-If you're already using a standard OIDC/OAuth flow leveraging OIDC discovery at `/.well-known/openid-configuration`, you may be able to import your signing keys enabling a seamless identity provider switch.
+If you're already using a standard OIDC/OAuth flow leveraging OIDC discovery at `/.well-known/openid-configuration`, you may be able to import your signing keys enabling a seamless identity provider switch. This does depend on the legacy provider supporting exporting private keys.
 
 This is the most straightforward choice. The other options all require changing the legacy identity provider or other parts of your system. 
 
@@ -877,13 +877,13 @@ With this solution, modify the legacy identity provider to delegate to FusionAut
 
 During a second phase, which may last for weeks, months or years, modify each downstream application to understand FusionAuth tokens. At the same time, you modify them to point at FusionAuth for user authentication instead of the legacy identity provider.
 
-Eventually, after all the applications have been modified, you can decommission your previous identity provider.
+Eventually, after all the applications have been modified, you can decommission your legacy identity provider.
 
 #### Wrap The Token
 
 With this solution, the user is authenticating against FusionAuth and including the legacy token in the FusionAuth-issued access token. You can add it using the [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate), retrieving the token via an [API call](/docs/extend/code/lambdas/lambda-remote-api-calls) protected by a [regularly rotated secret](/docs/extend/code/lambdas/#secrets). You can add the token to a custom claim; `legacyToken` is a natural choice.
 
-This approach adds complexity and token bloat, but allows a transparent migration with minimal impact on the downstream applications. If the legacy token is large, the size of the FusionAuth issued token may be large. That may impact performance, transmission or storage.
+This approach adds complexity and token bloat, but allows a transparent migration with minimal impact on the downstream applications. If the legacy token is large, the size of the FusionAuth-issued token may be large. That may impact performance, transmission or storage.
 
 You'll have to modify the legacy identity provider to have such an endpoint. Make sure you protect this endpoint and lock access down just to FusionAuth, because anyone calling it can log in as a user. Consider adding logic limiting token creation to certain applications or for certain sets of users.
 
@@ -891,7 +891,7 @@ Then, before your downstream application consumes the token, unwrap the FusionAu
 
 To minimize impact on your downstream applications, the token unwrapping should take place at a proxy or the client.
 
-Over time, modify each downstream application to understand FusionAuth tokens. Eventually, after all the applications have been modified, you can decommission your previous identity provider and remove the code that adds the `legacyToken` claim.
+Over time, modify each downstream application to understand FusionAuth tokens. Eventually, after all the applications have been modified, you can decommission your legacy identity provider and remove the code that adds the `legacyToken` claim.
 
 #### Exchange The Token
 
@@ -903,7 +903,7 @@ To minimize impact on your downstream applications, the token exchange should ta
 
 This solution is similar to the token wrapping solution, but keeps the token smaller. The tradeoff is that getting the legacy token is more complex. Retrieving the legacy token requires a server-side network call rather than a simple claim extraction.
 
-Over time, modify each downstream application to understand FusionAuth tokens. Eventually, after all the applications have been modified, you can decommission your previous identity provider and remove the token exchange endpoints.
+Over time, modify each downstream application to understand FusionAuth tokens. Eventually, after all the applications have been modified, you can decommission your legacy identity provider and remove the token exchange endpoints.
 
 ## Provider-Specific Migration Guides
 
