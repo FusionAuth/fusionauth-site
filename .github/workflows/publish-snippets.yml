@@ -1,0 +1,45 @@
+name: publish code snippets to external repos
+
+# Runs on merge to main when code-snippets source files change.
+# Requires a GitHub PAT with write access to the target external repos,
+# stored as the secret SNIPPET_PUBLISH_TOKEN in this repo's settings.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'astro/src/code-snippets/**'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: astro
+        run: npm ci
+
+      - name: Push webauthn snippets to external repo
+        env:
+          TARGET_REPO: https://x-access-token:${{ secrets.SNIPPET_PUBLISH_TOKEN }}@github.com/FusionAuth/fusionauth-example-javascript-webauthn.git
+        working-directory: astro
+        run: |
+          npx bluehawk --plugin node_modules/bluehawk-plugin-git git copy \
+            --to-repo "$TARGET_REPO" \
+            --branch main \
+            --state published \
+            --delete-everything \
+            -i "package*.json" \
+            -i "*.lock" \
+            -i "node_modules" \
+            --commit-message "chore: update snippets from fusionauth-site ${{ github.sha }}" \
+            src/code-snippets/webauthn
+
