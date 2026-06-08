@@ -151,6 +151,19 @@ async function main() {
     },
   ];
 
+  spec.info.description = `\
+This tool uses the [FusionAuth OpenAPI specification](https://github.com/fusionauth/fusionauth-openapi) to let you explore the FusionAuth APIs interactively against a local FusionAuth instance. For setup instructions see the [API Explorer Guide](/docs/apis/api-explorer-guide).
+
+## Using the explorer
+
+Once you have entered your API key in the **Authentication** panel above:
+
+- Select an endpoint from the sidebar to see its parameters and request body schema.
+- Fill in the required fields and click **Send** to make a live request against your local instance.
+- Use the **Client Libraries** panel to get generated code examples in Shell, Ruby, Node.js, PHP, Python, and more.
+- Deep links work natively — you can share a URL that opens directly to a specific endpoint.
+- Use the **Download OpenAPI Document** link to download the full spec.`;
+
   const out = stringify(spec, { lineWidth: 0 });
   await mkdir(dirname(OUT_PATH), { recursive: true });
   await writeFile(OUT_PATH, out);
