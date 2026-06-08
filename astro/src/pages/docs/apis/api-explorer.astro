@@ -46,6 +46,54 @@ const description = "Interactive explorer for the FusionAuth API.";
     html.dark .explorer-topbar .sep { color: #334155; }
     .explorer-topbar .spacer { flex: 1; }
 
+    .version-switcher {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .version-switcher label {
+      white-space: nowrap;
+      font-size: 12px;
+      color: inherit;
+    }
+    .version-switcher input {
+      width: 260px;
+      height: 24px;
+      padding: 0 7px;
+      font-size: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      background: #f8fafc;
+      color: #0f172a;
+      outline: none;
+    }
+    html.dark .version-switcher input {
+      border-color: #334155;
+      background: #1e293b;
+      color: #f1f5f9;
+    }
+    .version-switcher input:focus {
+      border-color: #f58320;
+      box-shadow: 0 0 0 2px rgba(245, 131, 32, 0.25);
+    }
+    .version-switcher button {
+      height: 24px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid #f58320;
+      border-radius: 4px;
+      background: #f58320;
+      color: #ffffff;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .version-switcher button:hover { background: #e0721a; border-color: #e0721a; }
+    .version-switcher .reset-link {
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
     /* ThemeSelector's MoonIcon hardcodes text-white (it lives in the dark
        docs nav by default). On our light topbar that's invisible, so we
        force the icon to inherit the topbar's foreground color. */
@@ -61,6 +109,17 @@ const description = "Interactive explorer for the FusionAuth API.";
       <span class="sep">/</span>
       <span>API Explorer</span>
       <span class="spacer"></span>
+      <div class="version-switcher">
+        <label for="spec-url-input">Version:</label>
+        <input
+          id="spec-url-input"
+          type="text"
+          placeholder="https://raw.githubusercontent.com/FusionAuth/fusionauth-openapi/1.40.0/openapi.yaml"
+          aria-label="OpenAPI spec URL"
+        />
+        <button id="spec-url-load">Load</button>
+        <a href="#" id="spec-url-reset" class="reset-link" style="display:none">Reset</a>
+      </div>
       <ThemeSelector />
     </nav>
 
@@ -136,10 +195,13 @@ const description = "Interactive explorer for the FusionAuth API.";
 
       const isDark = () => document.documentElement.classList.contains('dark');
 
+      const DEFAULT_URL = '/openapi.yaml';
+      let activeUrl = DEFAULT_URL;
+
       // Scalar's updateConfiguration replaces (not merges) the config, so we
       // keep the full object around and pass it every time.
       const buildConfig = () => ({
-        url: '/openapi.yaml',
+        url: activeUrl,
         layout: 'modern',
         darkMode: isDark(),
         hideDarkModeToggle: true,
@@ -156,6 +218,30 @@ const description = "Interactive explorer for the FusionAuth API.";
       }).observe(document.documentElement, {
         attributes: true,
         attributeFilter: ['class'],
+      });
+
+      // Version switcher
+      const specInput  = document.getElementById('spec-url-input');
+      const loadBtn    = document.getElementById('spec-url-load');
+      const resetLink  = document.getElementById('spec-url-reset');
+
+      function loadSpec(url) {
+        activeUrl = url.trim() || DEFAULT_URL;
+        scalar.updateConfiguration({ ...buildConfig(), url: activeUrl });
+        const isCustom = activeUrl !== DEFAULT_URL;
+        resetLink.style.display = isCustom ? 'inline' : 'none';
+        specInput.value = isCustom ? activeUrl : '';
+      }
+
+      loadBtn.addEventListener('click', () => loadSpec(specInput.value));
+
+      specInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') loadSpec(specInput.value);
+      });
+
+      resetLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadSpec(DEFAULT_URL);
       });
     </script>
   </body>
