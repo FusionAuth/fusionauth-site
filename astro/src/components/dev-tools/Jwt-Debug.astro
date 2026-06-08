@@ -38,7 +38,6 @@ import { Icon } from "astro-iconset/components";
   </div>
 </div>
 
-
 <script>
   "use strict";
   import { json } from "@codemirror/lang-json";
@@ -50,6 +49,16 @@ import { Icon } from "astro-iconset/components";
   } from "@codemirror/view";
   import { basicSetup } from "codemirror";
   import { verify } from "jsonwebtoken-esm";
+  import * as jose from "jose";
+
+  function stringIsJSON(toCheck: string) {
+    try {
+      window.JSON.parse(toCheck);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 
   const defaultToken =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTc4MDU5NzE4NH0.HNmmMl_Uj3ZaBlUz16cNPD2c11Ysw_8OPUEjOXbF1sY";
@@ -80,10 +89,20 @@ import { Icon } from "astro-iconset/components";
   async function verifyJwt(jwt: string, secret: string = defaultSecret) {
     try {
       clearError();
-      const decoded = verify(jwt, secret, {
-        algorithms: ["HS256", "HS512", "HS384", "RS256", "RS384", "RS512"],
-      });
-      return decoded;
+      if (stringIsJSON(secret)) {
+        // Runs to work through JWKS
+        const JWKS = jose.createLocalJWKSet({
+          keys: [window.JSON.parse(secret)],
+        });
+        const { payload } = await jose.jwtVerify(jwt, JWKS);
+        return payload;
+      } else {
+        // If we detect this is a regular string, it's probably PEM or HMACs
+        const decoded = verify(jwt, secret, {
+          algorithms: ["HS256", "HS512", "HS384", "RS256", "RS384", "RS512"],
+        });
+        return decoded;
+      }
     } catch (e) {
       console.log(e);
       displayError("The Secret or Public Key is invalid");
@@ -224,9 +243,13 @@ import { Icon } from "astro-iconset/components";
         if (update.docChanged) {
           const programUpdated = isProgrammatic(update.transactions);
           if (!programUpdated) {
-            const { headers, payload } = decodeJwt(update.state.doc.text[0]);
+            const currentToken = update.state.doc.text[0];
+            const currentSecret = secretEditor.state.doc.text.join("");
+            const { headers, payload } = decodeJwt(currentToken);
+
             dispatchChange(headersEditor, headers);
             dispatchChange(payloadEditor, payload);
+            verifyJwt(currentToken, currentSecret);
           }
         }
       }),
