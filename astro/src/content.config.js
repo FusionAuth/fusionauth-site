@@ -80,6 +80,7 @@ const blogCollection = defineCollection({
     ),
     htmlTitle: z.string().optional(),
     image: z.string().optional(),
+    ogImage: z.string().optional(),
     authors: z.string().optional(), // comma-separated string
     categories: z.string().optional(), // comma-separated string
     tags: z.string().optional(), // comma-separated string
