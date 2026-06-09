@@ -46,7 +46,7 @@ how to migrate other repos:
 - set access to readonly for all git uses other than documentation account
 - copy the contents of the repository into a new folder in `astro/src/code-example-repositories`
 - add a  `repositoryUrl.txt` with the url
-- add a `tests` folder with a `tests.sh` file to run all tests
+- add a `tests` folder with a `tests.sh` file to run all tests using Docker
 - switch the repository annotation format from RemoteCode to Bluehawk
 - use LocalCode instead of RemoteCode in the accompanying article
 - test the build, snippet generation, and repository export
