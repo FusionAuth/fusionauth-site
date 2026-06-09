@@ -28,7 +28,6 @@ The following scripts are used in `.github/workflows`:
 - `validate-bluehawk.yml` — Validate the syntax of the annotations in each local code example.
 
 todo:
-- upgrade export script to use repo name in a loop
 - upgrade text script to use test.sh in a loop
 - upgrade generation script to export to subfolders - change webauthn article to use these
 - upgrade script names in package.json
