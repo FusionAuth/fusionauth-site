@@ -42,6 +42,16 @@ todo:
 old:
 - This script uses the plugin https://github.com/cbush/bluehawk-plugin-git.
 
+how to migrate other repos:
+- create a main branch, make it the primary branch, delete all other branches
+- set access to readonly for all git uses other than documentation account
+- copy the contents of the repository into a new folder in `astro/src/code-example-repositories`
+- add a  `repositoryUrl.txt` with the url
+- add a `tests` folder with a `tests.sh` file to run all tests
+- switch the repository annotation format from RemoteCode to Bluehawk
+- use LocalCode instead of RemoteCode in the accompanying article
+- test the build, snippet generation, and repository export
+
 ## Build
 
 To build the site:
