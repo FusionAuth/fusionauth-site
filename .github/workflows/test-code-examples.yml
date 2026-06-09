@@ -13,15 +13,18 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - name: Set up Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: '24'
+      - name: Run all code example tests
+        run: |
+          set -euo pipefail
+          for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
+            REPOSITORY_NAME=$(basename "$LOCAL_REPOSITORY_PATH")
+            TEST_SCRIPT="${LOCAL_REPOSITORY_PATH}tests/test.sh"
 
-      - name: Install dependencies
-        working-directory: astro/src/code-example-repositories/webauthn
-        run: npm install
+            if [ ! -f "$TEST_SCRIPT" ]; then
+              echo "Error: $REPOSITORY_NAME has no tests/test.sh" >&2
+              exit 1
+            fi
 
-      - name: Run tests
-        working-directory: astro/src/code-example-repositories/webauthn/tests
-        run: tests.sh
+            echo "Testing $REPOSITORY_NAME"
+            (cd "$LOCAL_REPOSITORY_PATH" && bash tests/test.sh) # cd into the repository as the working directory for the test
+          done
