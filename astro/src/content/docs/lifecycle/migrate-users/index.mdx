@@ -863,7 +863,7 @@ With most of these options, you'll eventually modify each downstream application
 
 #### Customize The New Token
 
-The [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate) allows you to add in custom claims, call APIs, and modify most claims. If you can make the token issued by FusionAuth look like those of the source issuer, then you can switch identity providers without modifying downstream applications. You can modify claims such as the `iss` (issuer) and `aud` (audience) claims.
+The [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate) allows you to add in custom claims, call APIs, and modify most claims. If you can make the token issued by FusionAuth look like those of the legacy identity provider, then you can switch identity providers without modifying downstream applications. You can modify claims such as the `iss` (issuer) and `aud` (audience) claims.
 
 If you're already using a standard OIDC/OAuth flow leveraging OIDC discovery at `/.well-known/openid-configuration`, you may be able to import your signing keys enabling a seamless identity provider switch. This does depend on the legacy provider supporting exporting private keys.
 
@@ -881,7 +881,7 @@ Eventually, after all the applications have been modified, you can decommission 
 
 #### Wrap The Token
 
-With this solution, the user is authenticating against FusionAuth and including the legacy token in the FusionAuth-issued access token. You can add it using the [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate), retrieving the token via an [API call](/docs/extend/code/lambdas/lambda-remote-api-calls) protected by a [regularly rotated secret](/docs/extend/code/lambdas/#secrets). You can add the token to a custom claim; `legacyToken` is a natural choice.
+With this solution, the user authenticates with FusionAuth. FusionAuth requests the legacy token from the legacy identity provider. FusionAuth then includes the legacy token in the FusionAuth-issued token using the [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate). You can add the token to a custom claim; `legacyToken` is a natural choice.
 
 This approach adds complexity and token bloat, but allows a transparent migration with minimal impact on the downstream applications. If the legacy token is large, the size of the FusionAuth-issued token may be large. That may impact performance, transmission or storage.
 
@@ -895,7 +895,7 @@ Over time, modify each downstream application to understand FusionAuth tokens. E
 
 #### Exchange The Token
 
-With this solution, the user is authenticating against FusionAuth, but the resulting access token is exchanged for a legacy access token.
+With this solution, the user authenticates with FusionAuth, but the downstream application uses the FusionAuth token to request a legacy access token.
 
 You'll need to modify the legacy identity provider to take a FusionAuth access token and exchange it for a legacy token tied to the same user. Then the legacy token can be used by services as needed. Make sure to secure this exchange endpoint, including validating the presented access token as well as the caller. Consider adding logic limiting token exchange to certain applications or for certain sets of users.
 
