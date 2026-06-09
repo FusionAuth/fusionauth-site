@@ -15,32 +15,31 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 		REPOSITORY_NAME=$(basename "$LOCAL_REPOSITORY_PATH")
 		URL_FILE="${LOCAL_REPOSITORY_PATH}repositoryUrl.txt"
 
-		# Skip if the repository does not have a URL file
 		if [ ! -f "$URL_FILE" ]; then
-			echo "Skipping $REPOSITORY_NAME — no repositoryUrl.txt"
-			continue
+			echo "Error: $REPOSITORY_NAME has no repositoryUrl.txt" >&2
+			exit 1
 		fi
 
-		REPOSITORY_URL=$(cat "$URL_FILE" | tr -d '[:space:]')
-		REMOTE_URL="https://x-access-token:${GITHUB_TOKEN}@${REPOSITORY_URL}"
+		PARTIAL_REMOTE_URL=$(cat "$URL_FILE" | tr -d '[:space:]')
+		REMOTE_URL="https://x-access-token:${GITHUB_TOKEN}@${PARTIAL_REMOTE_URL}"
 
-		echo "Publishing $REPOSITORY_NAME to $REPOSITORY_URL"
+		echo "Publishing $REPOSITORY_NAME"
 
 		# Process local files with Bluehawk to strip annotations but not generate snippets
 		cd astro
-		PROCESSED_DIRECTORY=$(mktemp -d /tmp/bluehawk-processed.XXXXXX)
+		LOCAL_CLEANED_REPOSITORY_PATH=$(mktemp -d /tmp/bluehawk-processed.XXXXXX)
 		npx bluehawk copy --state published \
 			-i "repositoryUrl.txt" \
 			-i "tests" \
-			--output "$PROCESSED_DIRECTORY" \
+			--output "$LOCAL_CLEANED_REPOSITORY_PATH" \
 			"$LOCAL_REPOSITORY_PATH"
 		cd "$OLDPWD"
 
 		# Clone the remote repository
-		CLONE_DIRECTORY=$(mktemp -d /tmp/code-example-repository.XXXXXX)
-		git clone "$REMOTE_URL" "$CLONE_DIRECTORY"
+		LOCAL_CLONED_REPOSITORY_PATH=$(mktemp -d /tmp/code-example-repository.XXXXXX)
+		git clone "$REMOTE_URL" "$LOCAL_CLONED_REPOSITORY_PATH"
 
-		cd "$CLONE_DIRECTORY"
+		cd "$LOCAL_CLONED_REPOSITORY_PATH"
 
 		# Push to every branch that already exists in the remote
 		for BRANCH in $(git branch -r | grep -v HEAD | sed 's/  origin\///'); do
@@ -49,7 +48,7 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 			# Replace the entire working tree with the processed files to mirror exactly
 			git rm -rf .
 			git clean -fdxq
-			cp -r "$PROCESSED_DIRECTORY/." .
+			cp -r "$LOCAL_CLEANED_REPOSITORY_PATH/." .
 
 			# Commit if there are changes
 			git add -A
@@ -63,5 +62,5 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 
 		# Remove temporary folders
 		cd "$OLDPWD"
-		rm -rf "$PROCESSED_DIRECTORY" "$CLONE_DIRECTORY"
+		rm -rf "$LOCAL_CLEANED_REPOSITORY_PATH" "$LOCAL_CLONED_REPOSITORY_PATH"
 done
