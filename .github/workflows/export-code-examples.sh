@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 # Publishes code examples from local directories to external repositories.
 # Loops through every directory in astro/src/code-example-repositories/, strips Bluehawk annotations, and mirrors the content to the remote repository specified in repositoryUrl.txt.
 
@@ -7,11 +6,14 @@
 #   $1 — The GitHub access token for pushing to external repositories.
 #   $2 — The source commit SHA of the documentation repository to include in the commit message of the code example repository.
 
+set -euo pipefail # crash on any error
+
 GITHUB_TOKEN="$1"
 DOCUMENTATION_COMMIT_HASH="$2"
 
 
 for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
+
 		REPOSITORY_NAME=$(basename "$LOCAL_REPOSITORY_PATH")
 		URL_FILE="${LOCAL_REPOSITORY_PATH}repositoryUrl.txt"
 
@@ -38,27 +40,22 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 		# Clone the remote repository
 		LOCAL_CLONED_REPOSITORY_PATH=$(mktemp -d /tmp/code-example-repository.XXXXXX)
 		git clone "$REMOTE_URL" "$LOCAL_CLONED_REPOSITORY_PATH"
-
 		cd "$LOCAL_CLONED_REPOSITORY_PATH"
 
-		# Push to every branch that already exists in the remote
-		for BRANCH in $(git branch -r | grep -v HEAD | sed 's/  origin\///'); do
-			git checkout "$BRANCH"
+		# Checkout main branch, crash if it doesn't exist
+		git checkout main || exit 1
 
-			# Replace the entire working tree with the processed files to mirror exactly
-			git rm -rf .
-			git clean -fdxq
-			cp -r "$LOCAL_CLEANED_REPOSITORY_PATH/." .
+		# Replace the entire working tree with the processed files to mirror exactly
+		git rm -rf .
+		git clean -fdxq
+		cp -r "$LOCAL_CLEANED_REPOSITORY_PATH/." .
 
-			# Commit if there are changes
-			git add -A
-			if git diff --cached --quiet; then
-				echo "No changes for $BRANCH"
-			else
-				git commit -m "chore: update from fusionauth-site ${DOCUMENTATION_COMMIT_HASH}"
-				git push origin "$BRANCH"
-			fi
-		done
+		# Commit if there are changes
+		git add -A
+		if ! git diff --cached --quiet; then
+			git commit -m "chore: update from fusionauth-site ${DOCUMENTATION_COMMIT_HASH}"
+			git push origin main
+		fi
 
 		# Remove temporary folders
 		cd "$OLDPWD"
