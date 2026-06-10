@@ -1,3 +1,4 @@
+// :snippet-start: 1
 import { useNavigate } from 'react-router-dom';
 import { useFusionAuth } from '@fusionauth/react-sdk';
 import { useEffect } from 'react';
@@ -41,3 +42,4 @@ export default function Home() {
     </div>
   );
 };
+// :snippet-end:

@@ -1,3 +1,4 @@
+// :snippet-start: 1
 import { useNavigate } from 'react-router-dom';
 
 export default function Account() {
@@ -14,3 +15,4 @@ export default function Account() {
     </div>
   );
 }
+// :snippet-end:
