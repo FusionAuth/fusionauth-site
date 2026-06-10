@@ -1,4 +1,3 @@
-// :snippet-start: 1
 import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
@@ -22,4 +21,3 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </StrictMode>
 );
-// :snippet-end:

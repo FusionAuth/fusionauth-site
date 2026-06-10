@@ -1,5 +1,6 @@
 ---
-// Local snippet loader for code stored in src/generated-code-snippets.
+// Local snippet loader for code stored in src/generated-code-snippets or src/code-example-repositories.
+// Auto-detects: paths containing ".snippet." read from generated snippets; all others read directly from source repos.
 
 import { CodeLanguage } from 'astro';
 import { Code } from 'astro:components';
@@ -8,8 +9,9 @@ import path from 'path';
 
 export interface Props {
   /**
-   * File path relative to astro/src/generated-code-snippets
-   * E.g., "extend/code/lambdas/samlv2-response-populate/signature.js"
+   * File path relative to src/code-example-repositories (source) or src/generated-code-snippets (snippet).
+   * Snippet paths contain ".snippet." in the filename, e.g. "webauthn/base64url-to-buffer.snippet.base64url-to-buffer.js"
+   * Source paths point directly to repo files, e.g. "fusionauth-quickstart-react-main/react-frontend-steps/1-customized/src/main.tsx"
    */
   src: string;
 
@@ -29,14 +31,14 @@ export interface Props {
 
 const { src, lang = 'plaintext', title, ...rest } = Astro.props;
 
-const snippetPath = path.join(process.cwd(), 'src', 'codeSnippets', 'local', src);
+const snippetPath = src.includes('.snippet.') ? path.join(process.cwd(), 'src', 'generated-code-snippets', src) : path.join(process.cwd(), 'src', 'code-example-repositories', src);
 let snippetCode = '';
 
 try {
   snippetCode = fs.readFileSync(snippetPath, 'utf-8');
 }
 catch (err) {
-  throw new Error(`Failed to read local snippet file at [${snippetPath}]: ${(err as Error).message}`);
+  throw new Error(`Failed to read local code file at [${snippetPath}]: ${(err as Error).message}`);
 }
 
 ---
