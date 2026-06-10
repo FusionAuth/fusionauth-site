@@ -28,7 +28,6 @@ The following scripts are used in `.github/workflows`:
 - `export-code-examples.yml` — Pushes each local code example to its readonly external repository. Each repository must have a `repositoryUrl.txt` file that says what URL (without the `https://`) to export the files. The Bluehawk annotations, `repositoryUrl.txt` file, and `tests` folder are removed before publishing.
 
 todo:
-- import react quicktart repo
 - add bluehawk annotations to react quickstart, add empty test.sh, add repo name
 - use localcode in the article
 - ask ai if results in scripts properyl return errors on console and to github workflow
@@ -44,7 +43,7 @@ how to migrate other repos:
 - set access to readonly for all git uses other than documentation account
 - copy the contents of the repository into a new folder in `astro/src/code-example-repositories`
 - add a  `repositoryUrl.txt` with the url
-- add a `tests` folder with a `tests.sh` file to run all tests using Docker
+- add a `tests` folder with a `test.sh` file to run all tests using Docker
 - switch the repository annotation format from RemoteCode to Bluehawk
 - use LocalCode instead of RemoteCode in the accompanying article
 - test the build, snippet generation, and repository export
