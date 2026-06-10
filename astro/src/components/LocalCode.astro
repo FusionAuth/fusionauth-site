@@ -1,17 +1,44 @@
 ---
+// Local snippet loader for code stored in src/generated-code-snippets.
+
+import { CodeLanguage } from 'astro';
 import { Code } from 'astro:components';
 import fs from 'fs';
 import path from 'path';
 
-interface Props {
+export interface Props {
+  /**
+   * File path relative to astro/src/generated-code-snippets
+   * E.g., "extend/code/lambdas/samlv2-response-populate/signature.js"
+   */
   src: string;
-  lang?: string;
+
+  /**
+   * The language of your code.
+   * Bluehawk supports all languages listed here: https://github.com/shikijs/shiki/blob/main/docs/languages.md#all-languages
+   *
+   * @default "plaintext"
+   */
+  lang: CodeLanguage;
+
+  /**
+   * The title of the code section, shown as a piece of text above the block.
+   */
   title?: string;
 }
 
-const { src, lang = 'plaintext', title }: Props = Astro.props;
+const { src, lang = 'plaintext', title, ...rest } = Astro.props;
 
-const content = fs.readFileSync(path.resolve(src), { encoding: 'utf-8' }).trim();
+const snippetPath = path.join(process.cwd(), 'src', 'codeSnippets', 'local', src);
+let snippetCode = '';
+
+try {
+  snippetCode = fs.readFileSync(snippetPath, 'utf-8');
+}
+catch (err) {
+  throw new Error(`Failed to read local snippet file at [${snippetPath}]: ${(err as Error).message}`);
+}
+
 ---
-{title && <p><em>{title}</em></p>}
-<Code code={content} lang={lang} />
+{(title === '' || title === undefined) ? null : (<p data-title={title}><em>{title}</em></p>)}
+<Code code={snippetCode} lang={lang} {...rest}/>
