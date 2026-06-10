@@ -42,7 +42,7 @@ git clone https://github.com/fusionauth/fusionauth-example-protected-mcp-server.
 cd fusionauth-example-protected-mcp-server/unprotected-local-mcp
 ```
 
-This guide walks you through adding OAuth protection to an existing MCP server. If you prefer to skip ahead and see a working solution, navigate to the `protected-local-mcp` folder instead:
+This guide walks you through adding OAuth protection to an existing MCP server, built on the FastMCP python framework. If you prefer to skip ahead and see a working solution, navigate to the `protected-local-mcp` folder instead:
 
 ```console
 cd fusionauth-example-protected-mcp-server/protected-local-mcp
@@ -168,7 +168,7 @@ This guide uses the [JWT validation API](/docs/apis/jwt#validate-a-jwt) for toke
 
 ### Step 1: Add Configuration And Imports
 
-To configure the MCP server to connect to FusionAuth and import the OAuth components from FastMCP, replace the existing imports at the top of `server.py` with the following:
+To configure the MCP server to connect to FusionAuth and import needed OAuth packages, replace the existing imports at the top of `server.py` with the following:
 
 <RemoteCode url={frontmatter.codeRoot + "/protected-local-mcp/mcp-server/server.py"} lang="python" tags="imports"/>
 
@@ -180,7 +180,7 @@ In this code:
 
 * `FUSIONAUTH_URL` is the internal Docker network address (`http://fusionauth:9011`), which the MCP server container uses to reach FusionAuth.
 * `FUSIONAUTH_EXTERNAL_URL` is the public localhost URL (`http://localhost:9011`), which browsers use during the OAuth flow.
-* `MCP_SERVER_URL` is the public URL of the MCP server, used by FastMCP to construct OAuth redirect URLs.
+* `MCP_SERVER_URL` is the public URL of the MCP server, used to construct OAuth redirect URLs.
 
 ### Step 2: Implement Token Validation
 
@@ -198,22 +198,22 @@ The token stored by the MCP server is used by the `get_name` tool to get informa
 
 ### Step 3: Enable OAuth On The MCP Server
 
-Wire up authentication to the FastMCP server by replacing the basic `mcp = FastMCP(...)` initialization with the following OAuth-enabled version:
+Wire up authentication to the server by replacing the basic `mcp = FastMCP(...)` initialization with the following OAuth-enabled version:
 
 <RemoteCode url={frontmatter.codeRoot + "/protected-local-mcp/mcp-server/server.py"} lang="python" tags="mcp-init"/>
 
 This updated initialization does the following:
 
-* **Creates a token verifier with `required_scopes=["get_name"]`:** Only tokens containing the `get_name` scope can execute tools. FastMCP enforces this automatically before each tool call.
+* **Creates a token verifier with `required_scopes=["get_name"]`:** Only tokens containing the `get_name` scope can execute tools. The MCP server framework enforces this automatically before each tool call.
 * **Sets `scopes_supported` on `RemoteAuthProvider`:** This tells MCP clients which scopes to request during the OAuth flow. Including `openid` and `profile` ensures FusionAuth returns user profile data from the UserInfo endpoint.
 * **Points `authorization_servers` at FusionAuth's external URL:** MCP clients use this to discover OAuth endpoints.
-* **Passes `auth=auth` to FastMCP:** This enables OAuth protection on the MCP server using the `RemoteAuthProvider`.
+* **Passes `auth=auth` to the constructor:** This enables OAuth protection on the MCP server using the `RemoteAuthProvider`.
 
 Now all tool calls made to this MCP server require a valid access token with the `get_name` scope. Any client without a token receives a `401 Unauthorized` response.
 
 ### Step 4: Access Authenticated User Information
 
-With authentication enabled, you can now access information about the authenticated user. FastMCP provides a `get_access_token()` dependency that gives you the validated token in your tools.
+With authentication enabled, you can now access information about the authenticated user. The FastMCP framework provides a `get_access_token()` dependency that gives you the validated token in your tools.
 
 Replace the entire `get_name` tool definition with the following implementation:
 
@@ -525,7 +525,7 @@ The setup script creates the `get_name` scope on each client application it crea
 The `required_scopes=["get_name"]` parameter in the token validation ensures that:
 
 * Only tokens containing the `get_name` scope can execute tools.
-* FastMCP automatically validates scopes before tool execution.
+* The MCP server framework automatically validates scopes before tool execution.
 
 Users must be registered to an application with this scope to obtain a token containing it.
 
