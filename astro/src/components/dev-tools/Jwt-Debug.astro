@@ -90,13 +90,13 @@ import { Icon } from "astro-iconset/components";
     }
   }
 
-  async function verifyJwt(jwt: string, secret: string = defaultSecret) {
+  async function verifyJwt(jwt: string, secret: string = defaultSecret, alg: string = "RSA256") {
     try {
       clearError();
       if (stringIsJSON(secret)) {
         let JWKS
         const jsonSecret = window.JSON.parse(secret)
-        console.log('is json')
+
         if (jsonSecret.keys) {
           JWKS = jose.createLocalJWKSet(jsonSecret)
         } else {
@@ -109,11 +109,12 @@ import { Icon } from "astro-iconset/components";
       } else {
         // If we detect this is a regular string, it's probably PEM or HMACs and can go through as a string
         const decoded = verify(jwt, secret, {
-          algorithms: ["HS256", "HS512", "HS384", "RS256", "RS384", "RS512"],
+          algorithms: ["HS256", "HS512", "HS384", "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"],
         });
         return decoded;
       }
     } catch (e: any) {
+      console.log(e)
       if (e.name === "TypeError") {
         displayError("The Public Key you entered is does not match the current token")
       } else {
