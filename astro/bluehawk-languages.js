@@ -1,43 +1,39 @@
 export function register({ bluehawk }) {
-  bluehawk.addLanguage(["yml", "yaml"], {
+  bluehawk.addLanguage(["yml"], {
     languageId: "yaml",
-    lineComments: [/^#/],
+    lineComments: [/#/],
   });
   bluehawk.addLanguage("css", {
     languageId: "css",
     blockComments: [[/\/\*/, /\*\//]],
   });
-  bluehawk.addLanguage(["sh", "bash", "zsh"], {
+  bluehawk.addLanguage(["bash", "zsh"], {
     languageId: "shell",
-    lineComments: [/^#/],
+    lineComments: [/#/],
   });
   bluehawk.addLanguage(["ini", "cfg", "conf", "env"], {
     languageId: "ini",
-    lineComments: [/^#/],
+    lineComments: [/#/],
   });
   bluehawk.addLanguage("toml", {
     languageId: "toml",
-    lineComments: [/^#/],
-  });
-  bluehawk.addLanguage("xml", {
-    languageId: "xml",
-    blockComments: [/<!--/, /-->/],
+    lineComments: [/#/],
   });
   bluehawk.addLanguage("sql", {
     languageId: "sql",
-    lineComments: [/^--/],
+    lineComments: [/--/],
     blockComments: [[/\/\*/, /\*\//]],
   });
   bluehawk.addLanguage(["graphql", "gql"], {
     languageId: "graphql",
-    lineComments: [/^#/],
+    lineComments: [/#/],
   });
   bluehawk.addLanguage("properties", {
     languageId: "properties",
-    lineComments: [/^#/],
+    lineComments: [/#/],
   });
   bluehawk.addLanguage(["dockerfile", "containerfile"], {
     languageId: "dockerfile",
-    lineComments: [/^#/],
+    lineComments: [/#/],
   });
 }
