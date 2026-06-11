@@ -166,6 +166,10 @@ To protect an MCP server, you need to add:
 
 This guide uses the [JWT validation API](/docs/apis/jwt#validate-a-jwt) for token validation. This API verifies the token's signature and expiration using FusionAuth's public keys and returns the token claims, including scopes, if the token is valid.
 
+<Aside type="note">
+If you try to use FusionAuth's introspect endpoint, it will return a 401. Introspection requires that the credentials used to call the endpoint belong to the same application that issued the token. Because the MCP server is a separate FusionAuth application for each MCP client, it cannot introspect the client's tokens. See [this open GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/3010) for details. The `/api/jwt/validate` endpoint does not have this restriction.
+</Aside>
+
 ### Step 1: Add Configuration And Imports
 
 To configure the MCP server to connect to FusionAuth and import needed OAuth packages, replace the existing imports at the top of `server.py` with the following:
@@ -195,6 +199,8 @@ This code implements a token verifier that ensures that the MCP server responds 
 1. Returns an `AccessToken` object that is stored for future use.
 
 The token stored by the MCP server is used by the `get_name` tool to get information from FusionAuth about the user who authenticated. In general the token will be exchanged for a different one and used for requests from downstream servers.
+
+The MCP server should never forward the access token provided to downstream services. This is prohibited by the [token passthrough section](https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices#token-passthrough) of the MCP security best practices document. How the MCP server properly accesses such resources is beyond the scope of this document.
 
 ### Step 3: Enable OAuth On The MCP Server
 
@@ -380,19 +386,17 @@ Test user credentials:
   Password: password
 ```
 
-The script outputs the complete MCP client configuration for Claude Desktop, including the pre-registered client Id. Your client Id will be different than the one above, which starts with `9436b02d`.
+The script outputs the complete MCP client configuration for Claude Desktop, including the pre-registered client Id.
 
-You can also verify the client registration in the FusionAuth Admin UI by navigating to <Breadcrumb>Applications</Breadcrumb> to see the new client.
+Your client Id will be different than the one above, which starts with `9436b02d`.
+
+It also outputs a test user that you'll use to log in to FusionAuth when prompted.
 
 ## Configuring Your MCP Client
 
-Now let's configure the MCP client to connect to the OAuth-protected MCP server. This section covers the config file approach used by many MCP clients. CLI tools with native HTTP transport support are covered in the [Deploying A Remote MCP Server](#deploying-a-remote-mcp-server) section.
+Next, configure the MCP client to connect to the OAuth-protected MCP server. The configuration output by the script looks like this: 
 
-### Configuration Format
-
-MCP clients which use configuration files to enable MCP servers often use the following configuration structure:
-
-```json
+```
 {
   "mcpServers": {
     "name-server": {
@@ -403,51 +407,34 @@ MCP clients which use configuration files to enable MCP servers often use the fo
         "3334",
         "--allow-http",
         "--static-oauth-client-info",
-        "{\"client_id\":\"YOUR_CLIENT_ID_HERE\",\"scope\":\"openid profile get_name\"}"
+        "{\"client_id\":\"9436b02d-9305-4772-a237-5fabcf6e7f6a\",\"scope\":\"openid profile get_name\"}"
       ]
     }
   }
 }
 ```
 
-Replace `YOUR_CLIENT_ID_HERE` with the client Id output by the registration script for the client you just set up.
+The important configuration parameters are:
 
-This file uses the `npx` to run the `mcp-remote` npm package, because this MCP client doesn't support native HTTP connections to MCP servers. Instead they expect to communicate over standard input/output. `mcp-remote`, or a solution like it, is required to connect to any HTTP-based MCP server, regardless of whether auth is involved.
+* the location of the MCP server: `http://localhost:8000/mcp` and the fact it is running over HTTP, not TLS
+* the port of the MCP server: `3334`
+* the OAuth client information, including the `client_id` and the `scope` values
 
-The `args` parameters do the following:
+The best way to set up your MCP client is to follow the instructions from your MCP client's documentation. Here are instructions for common MCP clients.
 
-* `--allow-http` allows non-HTTPS connections for local development.
-* `--static-oauth-client-info` provides the preregistered client Id from the setup script. By passing a pre-registered client Id, `mcp-remote` bypasses DCR entirely.
-
-### For Claude Desktop
-
-1. Open Claude Desktop.
-1. Navigate to <Breadcrumb>Settings -> Developer</Breadcrumb>.
-1. Click <InlineUIElement>Edit Config</InlineUIElement>.
-1. Add the configuration above.
-1. Save the file.
-
-### For Cursor
-
-1. Press `Cmd + Shift + P` (macOS) or `Ctrl + Shift + P` (Windows and Linux).
-1. Type `MCP` and select <InlineUIElement>Open MCP Settings</InlineUIElement>.
-1. Click <InlineUIElement>New MCP Server</InlineUIElement>.
-1. Add the configuration above.
-1. Save the file.
+* [ChatGPT](https://developers.openai.com/api/docs/guides/developer-mode)
+* [Claude](https://support.claude.com/en/articles/11176164-use-connectors-to-extend-claude-s-capabilities)
+* [Claude Code](https://code.claude.com/docs/en/mcp)
+* [Cursor](https://cursor.com/docs/mcp)
+* [MCP docs on connecting to local MCP servers](https://modelcontextprotocol.io/docs/develop/connect-local-servers);the [mcp-remote proxy](https://www.npmjs.com/package/mcp-remote) is useful for this situation
 
 ## Testing The Protected Server
 
-Restart your MCP client to load the new configuration.
-
-When your MCP client starts, it does the following:
+Restart your MCP client, if needed, to load the new configuration. When your MCP client starts, it does the following:
 
 1. Discovers the OAuth configuration from the MCP server.
 1. Opens your browser to FusionAuth's login page.
-1. Asks you to authenticate.
-
-<Aside type="note">
-If the OAuth flow doesn't start or you encounter errors, consult the [Troubleshooting section](#troubleshooting) below.
-</Aside>
+1. Asks you to authenticate; use the test user.
 
 ### Log In
 
@@ -458,12 +445,13 @@ When the browser opens, log in with the test credentials:
 
 ![The login screen.](/img/docs/extend/examples/protecting-mcp-servers/login-page.png)
 
-If you see an "Invalid redirect_uri" error, your MCP client is using a port or callback path that wasn't registered by the setup script. See the [Troubleshooting section](#troubleshooting) below.
+If you see an "Invalid redirect_uri" error, your MCP client is using a port or callback path that wasn't registered by the setup script. OAuth clients redirect users back to a specific URL after authentication. If FusionAuth doesn't recognize the redirect URL, it rejects the request. The setup script registers exact redirect URLs for port `3334` by default.
+
+If your MCP client uses a different port, pass `--port` to the setup script to register the correct port, or add the missing URL manually by logging into the admin UI and navigating to <Breadcrumb>Applications -> [Your Client] -> OAuth -> Authorized redirect URLs</Breadcrumb> in the FusionAuth admin UI. Once done, log out of the admin UI to keep your admin and test user sessions separate.
 
 ### Consent to Scopes
 
 You'll be prompted to consent to allow the application to access your name and profile details.
-
 
 ![The consent screen.](/img/docs/extend/examples/protecting-mcp-servers/consent-page.png)
 
@@ -478,55 +466,16 @@ After you log in, FusionAuth directs you to an "Authorization successful!" page 
 Once authorized, your MCP client has access to the MCP server's tools. Ask your MCP client:
 
 ```
+call the get_name tool
+```
 
-This indicates the tool successfully validated the access token, and executed the tool call. In this case, the call retrieved your user information from FusionAuth.
+And you should see a response similar to:
 
-<Aside type="note">
-If the tool doesn't appear immediately after the OAuth flow, completely quit, remove the `~/.mcp-auth directory`, and restart your MCP client. The client needs to reload with the newly obtained access token. See the [Troubleshooting section](#troubleshooting) for more common issues.
-</Aside>
+```
+The get_name tool returned "Test User"
+```
 
-## How It Works
-
-Now that you've built and tested the OAuth-protected MCP server, let's review the key concepts.
-
-### The OAuth Flow
-
-When an MCP client connects to the MCP server, here's what happens:
-
-1. **Discovery:** The MCP client discovers OAuth endpoints from FusionAuth's OpenID Connect configuration.
-1. **Authorization:** The MCP client redirects the user's browser to FusionAuth's login page.
-1. **Authentication:** The user logs in and is redirected back to the MCP client.
-1. **Token exchange:** FusionAuth returns an authorization code, which the MCP client exchanges for an access token.
-1. **API calls:** The MCP client includes the access token in requests to the MCP server.
-1. **Validation:** The MCP server validates tokens using FusionAuth's JWT validation endpoint before executing tools.
-
-<Aside type="caution">
-The MCP server should never forward the access token provided to downstream services. This is prohibited by the [token passthrough](https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices#token-passthrough) section of the MCP security best practices. How the MCP server properly accesses such resources is beyond the scope of this document.
-</Aside>
-
-### Token Validation Approach
-
-The MCP server validates tokens using the FusionAuth Python client's `validate_jwt` method, which calls FusionAuth's `/api/jwt/validate` endpoint. This endpoint:
-
-* Verifies the JWT signature using FusionAuth's public keys.
-* Confirms the token has not expired.
-* Returns the token claims, including the `scope` field, if the token is valid.
-* Does not require client credentials.
-
-<Aside type="note">
-If you try to use FusionAuth's introspect endpoint here, it will return a 401. Introspection requires that the credentials used to call the endpoint belong to the same application that issued the token. Because the MCP server is a separate FusionAuth application from each MCP client, it cannot introspect the client's tokens. See [FusionAuth issue #3010](https://github.com/FusionAuth/fusionauth-issues/issues/3010) for details. The `/api/jwt/validate` endpoint does not have this restriction.
-</Aside>
-
-### Scope Enforcement
-
-The setup script creates the `get_name` scope on each client application it creates.
-
-The `required_scopes=["get_name"]` parameter in the token validation ensures that:
-
-* Only tokens containing the `get_name` scope can execute tools.
-* The MCP server framework automatically validates scopes before tool execution.
-
-Users must be registered to an application with this scope to obtain a token containing it.
+The MCP client validated the access token and executed the tool call. In this case, the call retrieved your first and last name from FusionAuth. 
 
 ## Production Considerations
 
