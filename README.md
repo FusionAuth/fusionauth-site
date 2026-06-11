@@ -28,10 +28,10 @@ The following scripts are used in `.github/workflows`:
 - `export-code-examples.yml` — Pushes each local code example to its readonly external repository. Each repository must have a `repositoryUrl.txt` file that says what URL (without the `https://`) to export the files. The Bluehawk annotations, `repositoryUrl.txt` file, and `tests` folder are removed before publishing.
 
 todo:
-- add bluehawk annotations to react quickstart, add empty test.sh, add repo name
-- use localcode in the article
-- ask ai if results in scripts properyl return errors on console and to github workflow
-- text export
+- local scripts
+- test scripts - check invalid bluehawk check syntax actually errors
+- test guides
+- test on github somehow
 - make note for nathan to set external repo access to readonly and disallow pull requests. update external repo readme to point users to docs repo instead
 - write plan to follow for all repos needing to be imported - readonly, disallow pull requests, import code, set url and tests, annotate with bluehawk, update guide to localcode
 

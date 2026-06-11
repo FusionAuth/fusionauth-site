@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # Publishes code examples from local directories to external repositories.
 # Loops through every directory in astro/src/code-example-repositories/, strips Bluehawk annotations, and mirrors the content to the remote repository specified in repositoryUrl.txt.
 
