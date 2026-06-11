@@ -28,8 +28,7 @@ The following scripts are used in `.github/workflows`:
 - `export-code-examples.yml` — Pushes each local code example to its readonly external repository. Each repository must have a `repositoryUrl.txt` file that says what URL (without the `https://`) to export the files. The Bluehawk annotations, `repositoryUrl.txt` file, and `tests` folder are removed before publishing.
 
 todo:
-- local scripts
-- test scripts - check invalid bluehawk check syntax actually errors
+- test scripts - snippet gen, build
 - test guides
 - test on github somehow
 - make note for nathan to set external repo access to readonly and disallow pull requests. update external repo readme to point users to docs repo instead
@@ -46,7 +45,10 @@ how to migrate other repos:
 - add a `tests` folder with a `test.sh` file to run all tests using Docker
 - switch the repository annotation format from RemoteCode to Bluehawk
 - use LocalCode instead of RemoteCode in the accompanying article
-- test the build, snippet generation, and repository export
+- test the build, snippet generation, and repository export in repo root
+   - docker run --init --rm -it -v ".:/app" -w "/app" node:26 bash -c "cd astro && npm run validate-code-snippets"
+   - docker run --init --rm -it -v ".:/app" -w "/app" node:26 bash -c "cd astro && npm run generate-code-snippets"
+
 
 ## Build
 
