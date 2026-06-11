@@ -14,7 +14,7 @@ The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs
 
 Code examples accompanying guides each have their own repository.
 
-There is currently work in progress to move each repository into the folder into this documentation repository: `astro/src/code-example-repositories`. This local folder is where the code examples are maintained and updated. This folder is pushed to the external repositories, which are now readonly to all users except the documentation account.
+There is currently work in progress to move each repository into the folder in this documentation repository: `astro/src/code-example-repositories`. This local folder is where the code examples are maintained and updated. This folder is pushed to the external repositories, which are now readonly to all users except the documentation account.
 
 All code examples have only one branch, `main`, because otherwise the documentation repository would be polluted with multiple branch names, and we wouldn't know which branches relate which code repositories when trying to export to remote repositories.
 
