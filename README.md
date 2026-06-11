@@ -32,7 +32,7 @@ The following scripts are used in `.github/workflows` when pushing to GitHub:
 - `test-code-examples.yml` — Runs the unit/integration tests for every local code example. Each repository must have a `tests` folder with a `test.sh` file that runs all its tests and returns a result. The tests workflow cannot use Github actions to install programming frameworks and versions, because each code example has different needs. Instead, each example uses Docker to run the tests with its own Docker image.
 - `export-code-examples.yml` — Pushes each local code example to its readonly external repository. Each repository must have a `repositoryUrl.txt` file that says what URL (without the `https://`) to export the files. The Bluehawk annotations, `repositoryUrl.txt` file, and `tests` folder are removed before publishing.
 
-## How to migrate a repository from RemoteCode to local with BlueHhawk
+### How to migrate a repository from RemoteCode to local with BlueHhawk
 
 - In the remote repository, create a main branch, make it the primary branch, delete all other branches
 - Set access to readonly for all git users other than documentation account
@@ -43,7 +43,7 @@ The following scripts are used in `.github/workflows` when pushing to GitHub:
 - Use `LocalCode` instead of `RemoteCode` in the accompanying article
 - Test the tests, snippet generation, documentation build, and repository export in repo root
 
-## TODO
+### TODO
 
 - test github workflows somehow
 - make note for nathan to set external repo access to readonly and disallow pull requests. update external repo readme to point users to docs repo instead
