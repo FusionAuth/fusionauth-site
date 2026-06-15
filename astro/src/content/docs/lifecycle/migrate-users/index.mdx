@@ -668,21 +668,11 @@ There's an [open issue discussing how to improve this experience](https://github
 
 ##### Other Options
 
-You have two other options in this case, both of which require integration work.
+Alternatively, you can fire off an event when a user visits the forgot password page.
 
-You can look for failed logins.
-
-* Set up a webhook for [failed login](/docs/extend/events-and-webhooks/events/user/login/user-login-failed).
-* Check to see if the email address exists in your legacy user data store.
-* If the user exists, migrate the user data via the [User API](/docs/apis/users#create-a-user), setting **sendSetPasswordEmail** to `true`.
-
-This will force the user to reset their password, which may be a surprise to them, but will let them continue to access their account without contacting customer service. If you pursue this option, make sure you consider the content of the Set Password email template.
-
-You can fire off an event to an API of your own when a user visits the forgot password page.
-
-* Write JavaScript code that runs on the forgot password page. Install it via a custom theme. The JavaScript can fire an event with the user's email to an API endpoint written by you. Fire this event whenever a user submits a 'forgot password' form.
-* Have the API endpoint look up the user in the legacy system. If the user exists in the legacy system, query to see whether they exist in FusionAuth.
-* If they do not exist in FusionAuth but do in the legacy system, migrate the profile data.
+* Write JavaScript code that runs on the forgot password page. Install it via a custom theme. The JavaScript can fire an event with the user's email to an API endpoint written by you. Fire this event whenever a user submits a 'forgot password' form, hitting an API endpoint of your choice.
+* When an event hits the endpoint, look up the user in the legacy system. If the user exists in the legacy system, query to see whether they exist in FusionAuth.
+* If they do not exist in FusionAuth but do in the legacy system, migrate the user data via the [User API](/docs/apis/users#create-a-user), setting **sendSetPasswordEmail** to `true`.
 * After they are migrated, trigger the [reset password email via FusionAuth API](/docs/apis/users#start-forgot-password-workflow).
 
 #### The Registration Use Case
@@ -849,6 +839,71 @@ Use timestamps to break the load up into phases based on the last modified times
 Depending on how long it takes you to run a bulk load, you may need to repeat this cycle a few times.
 
 If you don't have timestamps, things get more complicated, but you may be able to split users deterministically into groups, track users in a separate datastore, or add a `processed_timestamp` column to your existing user datastore to achieve the same goal.
+
+### Downstream Application Token Use
+
+If you architected your system to use tokens issued by an identity provider, migration can be complex. You might have many applications depending on the token structure of your legacy identity provider, applications might be owned by different teams or even organizations, and updating them all at the same time can be difficult.
+
+In this situation, migrating downstream applications to use tokens issued by FusionAuth could be a large effort. To make this easier, there are a few options.
+
+Each option involves your legacy identity provider, the legacy tokens it issues, FusionAuth as the new provider, FusionAuth-issued access tokens, as well as the downstream applications.
+
+This section also ignores modifying clients to access the new identity provider at a different hostname and path, usually solved with a proxy. It instead focuses on the access token differences.
+
+Here's a summary table of the options:
+
+| Option | Requires modifying legacy IdP | Additional infrastructure | Token size impact | Complexity |
+|---|---|---|---|---|
+| **Customize The New Token** | No | No | None | Low |
+| **Identity Swap** | Yes, to delegate auth to FusionAuth | No | None | Medium |
+| **Wrap The Token** | Yes, to add token retrieval endpoint | Possibly a proxy | High | Medium |
+| **Exchange The Token** | Yes, to add token exchange endpoint | Yes, a proxy | None | Medium |
+
+With most of these options, you'll eventually modify each downstream application to understand FusionAuth tokens, sunset the legacy identity provider and revert any system changes.
+
+#### Customize The New Token
+
+The [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate) allows you to add in custom claims, call APIs, and modify most claims. If you can make the token issued by FusionAuth look like those of the legacy identity provider, then you can switch identity providers without modifying downstream applications. You can modify claims such as the `iss` (issuer) and `aud` (audience) claims.
+
+If you're already using a standard OIDC/OAuth flow leveraging OIDC discovery at `/.well-known/openid-configuration`, you may be able to import your signing keys enabling a seamless identity provider switch. This does depend on the legacy provider supporting exporting private keys.
+
+This is the most straightforward choice. The other options all require changing the legacy identity provider or other parts of your system. 
+
+However, there are [reserved claims](/docs/extend/code/lambdas/jwt-populate#jwt-object), and if one of those has a format that is incompatible with what your applications expect, then this won't work for you. It also won't work if one of your migration goals is to change the structure or content of your tokens.
+
+#### Identity Swap
+
+With this solution, modify the legacy identity provider to delegate to FusionAuth, using the [Login API](/docs/apis/login). All identity data is moved into FusionAuth in an initial phase. When a user authenticates, FusionAuth is the source of truth, but the tokens are issued by the legacy identity provider.
+
+During a second phase, which may last for weeks, months or years, modify each downstream application to understand FusionAuth tokens. At the same time, you modify them to point at FusionAuth for user authentication instead of the legacy identity provider.
+
+Eventually, after all the applications have been modified, you can decommission your legacy identity provider.
+
+#### Wrap The Token
+
+With this solution, the user authenticates with FusionAuth. FusionAuth requests the legacy token from the legacy identity provider. FusionAuth then includes the legacy token in the FusionAuth-issued token using the [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate). You can add the token to a custom claim; `legacyToken` is a natural choice.
+
+This approach adds complexity and token bloat, but allows a transparent migration with minimal impact on the downstream applications. If the legacy token is large, the size of the FusionAuth-issued token may be large. That may impact performance, transmission or storage.
+
+You'll have to modify the legacy identity provider to have such an endpoint. Make sure you protect this endpoint and lock access down just to FusionAuth, because anyone calling it can log in as a user. Consider adding logic limiting token creation to certain applications or for certain sets of users.
+
+Then, before your downstream application consumes the token, unwrap the FusionAuth token by retrieving the older access token from the `legacyToken` claim. Forward on the value of that claim.
+
+To minimize impact on your downstream applications, the token unwrapping should take place at a proxy or the client.
+
+Over time, modify each downstream application to understand FusionAuth tokens. Eventually, after all the applications have been modified, you can decommission your legacy identity provider and remove the code that adds the `legacyToken` claim.
+
+#### Exchange The Token
+
+With this solution, the user authenticates with FusionAuth, but the downstream application uses the FusionAuth token to request a legacy access token.
+
+You'll need to modify the legacy identity provider to take a FusionAuth access token and exchange it for a legacy token tied to the same user. Then the legacy token can be used by services as needed. Make sure to secure this exchange endpoint, including validating the presented access token as well as the caller. Consider adding logic limiting token exchange to certain applications or for certain sets of users.
+
+To minimize impact on your downstream applications, the token exchange should take place at a proxy. Client code shouldn't be making complicated token exchange requests.
+
+This solution is similar to the token wrapping solution, but keeps the token smaller. The tradeoff is that getting the legacy token is more complex. Retrieving the legacy token requires a server-side network call rather than a simple claim extraction.
+
+Over time, modify each downstream application to understand FusionAuth tokens. Eventually, after all the applications have been modified, you can decommission your legacy identity provider and remove the token exchange endpoints.
 
 ## Provider-Specific Migration Guides
 
