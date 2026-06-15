@@ -37,7 +37,7 @@ The following scripts are used in `.github/workflows` when pushing to GitHub:
 - In the remote repository, create a main branch, make it the primary branch, delete all other branches
 - Set access to readonly for all git users other than documentation account
 - Copy the contents of the repository into a new folder in `astro/src/code-example-repositories`
-- Add a  `repositoryUrl.txt` with the url of the remote (without `https://`)
+- Add a `repositoryUrl.txt` with the url of the remote (without `https://`)
 - Add a `tests` folder with a `test.sh` file to run all tests using Docker (use `node:26` if possible to avoid multiple images)
 - Switch the repository annotation format from RemoteCode to Bluehawk in the source files (if you use the entire file you don't need annotations)
 - Use `LocalCode` instead of `RemoteCode` in the accompanying article
