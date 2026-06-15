@@ -78,4 +78,15 @@ export default [
       'no-unused-vars': 'off',
     }
   },
+  {
+    files: ['src/code-example-repositories/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      }
+    },
+    rules: {
+      'no-unused-vars': 'off',
+    }
+  },
 ];
