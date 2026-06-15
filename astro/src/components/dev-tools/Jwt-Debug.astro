@@ -1,99 +1,248 @@
 ---
-
+import { Icon } from "astro-iconset/components";
 ---
 
-<div class="gap-y-6 grid md:grid-cols-2 md:grid-rows-[auto,auto] gap-5 my-8 md:min-h-[300px]">
-    <div
-      id="encoded-textarea"
-      class="row-span-2 flex-1 border-0 rounded text-sm w-full focus:outline-none focus:ring-0"
-    >
-      <span class="label block font-medium mb-1">JSON Web Token (JWT)</span>
-    </div>
+<div id="notificationPanel" class="success">
+  <Icon name="fa7-solid:check" class="inline h-4 icon icon-success" />
+  <Icon name="fa7-solid:x" class="inline h-4 icon icon-error" />
+  <p class="notificationMessage inline"></p>
+</div>
+
+<div
+  class="gap-y-6 grid md:grid-cols-2 md:grid-rows-[auto,auto,auto] gap-5 mt-4 mb-8 md:min-h-[300px]"
+>
+  <div
+    id="encoded-textarea"
+    class="row-span-3 flex-1 border-0 rounded text-sm w-full focus:outline-none focus:ring-0"
+  >
+    <span class="label block font-medium mb-1">JSON Web Token (JWT) <span class="fieldHelp">Paste your JWT or examine the default</span></span>
+  </div>
   <div
     id="header-textarea"
     class="flex-1 h-[min-content] border-0 rounded text-sm w-full focus:outline-none focus:ring-0"
   >
-    <span class="label block font-medium mb-1">Header</span>
+    <span class="label block font-medium mb-1">Header 
+      <span class="fieldHelp">Header derived from the first string in the JWT (modifying changes the JWT)</span>
+    </span>
   </div>
 
   <div
     id="payload-textarea"
     class="flex-1 border-0 rounded text-sm focus:outline-none focus:ring-0"
   >
-    <span class="label block font-medium mb-1">Payload</span>
+    <span class="label block font-medium mb-1">Payload
+      <span class="fieldHelp">Payload derived from the second string in the JWT (modifying changes the JWT)</span>
+    </span>
+  </div>
+  <div
+    id="secret-text"
+    class="flex-1 border-0 rounded text-sm focus:outline-none focus:ring-0"
+  >
+    <span class="label block font-medium mb-1">Signature validation <span id="signatureHelp" class="fieldHelp">Enter your Secret, PEM, or JWK depending on the signing algorithm.</span></span>
   </div>
 </div>
 
 <script>
   "use strict";
   import { json } from "@codemirror/lang-json";
-  import { MatchDecorator, ViewPlugin, Decoration, EditorView } from "@codemirror/view";
-  import {basicSetup} from "codemirror";
+  import {
+    MatchDecorator,
+    ViewPlugin,
+    Decoration,
+    EditorView,
+  } from "@codemirror/view";
+  import { basicSetup } from "codemirror";
+  import { verify } from "jsonwebtoken-esm";
+  import * as jose from "jose";
+
+  function stringIsJSON(toCheck: string) {
+    try {
+      window.JSON.parse(toCheck)
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 
   const defaultToken =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE0ODUxMzczODQsImlzcyI6ImFjbWUuY29tIiwic3ViIjoiMjlhYzBjMTgtMGI0YS00MmNmLTgyZmMtMDNkNTcwMzE4YTFkIiwiYXBwbGljYXRpb25JZCI6Ijc5MTAzNzM0LTk3YWItNGQxYS1hZjM3LWUwMDZkMDVkMjk1MiIsInJvbGVzIjpbXX0.uTekOEtlWN8C4wGNeL2C-HtI10OM8VKnDsW-WG4TSi0";
+  const defaultSecret =
+    "dqTl/KjAFRqmdpz7ZlFspWgo8Fkbp1Lzd8sd8ea66XM=";
   const { headers, payload } = decodeJwt(defaultToken);
 
-  function decodeJwt(stringToDecode) {
+  function displayError(error: string) {
+    const notificationPanel = document.getElementById("notificationPanel");
+    if (notificationPanel) {
+      notificationPanel.classList.add("error");
+      notificationPanel.classList.remove("success");
+      notificationPanel.querySelector(".notificationMessage").innerText = error;
+    }
+  }
+
+  function clearError() {
+    const notificationPanel = document.getElementById("notificationPanel");
+
+    if (notificationPanel) {
+      notificationPanel.classList.remove("error");
+      notificationPanel.classList.add("success");
+      notificationPanel.querySelector(".notificationMessage").innerText =
+        `JWT and Signature are valid`;
+    }
+  }
+
+  async function verifyJwt(jwt: string, secret: string = defaultSecret, alg: string = "RSA256") {
+    try {
+      clearError();
+      if (stringIsJSON(secret)) {
+        let JWKS
+        const jsonSecret = window.JSON.parse(secret)
+
+        if (jsonSecret.keys) {
+          JWKS = jose.createLocalJWKSet(jsonSecret)
+        } else {
+          JWKS = jose.createLocalJWKSet({
+            keys: [jsonSecret],
+          });
+        }
+        const { payload } = await jose.jwtVerify(jwt, JWKS);
+        return payload;
+      } else {
+        // If we detect this is a regular string, it's probably PEM or HMACs and can go through as a string
+        const decoded = verify(jwt, secret, {
+          algorithms: ["HS256", "HS512", "HS384", "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"],
+        });
+        return decoded;
+      }
+    } catch (e: any) {
+      console.log(e)
+      if (e.name === "TypeError") {
+        displayError("The Public Key you entered is does not match the current token")
+      } else {
+        displayError("The Secret or Public Key gave the following error: " + e.message);
+      }
+    }
+  }
+
+  function decodeJwt(stringToDecode: string, secret: string = defaultSecret) {
     const s = stringToDecode.split(".");
     let headers, payload;
     try {
+      clearError();
       headers = window.JSON.stringify(
         window.JSON.parse(window.atob(s[0])),
         null,
         2,
-    );
-    } catch(e) {
-      headers = window.JSON.stringify({
-        "error": "Token header is invalid"
-      }, null, 2)
+      );
+    } catch (e) {
+      headers = window.JSON.stringify(
+        {
+          error: "Token header is invalid",
+        },
+        null,
+        2,
+      );
+      displayError("Token header is invalid");
     }
-    
+
     try {
+      clearError();
       payload = window.JSON.stringify(
         window.JSON.parse(window.atob(s[1])),
         null,
         2,
       );
-    } catch(e) {
-      payload = window.JSON.stringify({
-        "error": "Token payload is invalid"
-      }, null, 2)
-
+    } catch (e) {
+      displayError("Token payload is invalid");
+      payload = window.JSON.stringify(
+        {
+          error: "Token payload is invalid",
+        },
+        null,
+        2,
+      );
     }
-    return { payload, headers };
+
+    try {
+      clearError();
+      verifyJwt(`${s[0]}.${s[1]}.${s[2]}`, secret);
+    } catch (e) {
+      displayError(e.message);
+      console.log(e);
+    }
+
+    return { payload, headers, secret };
   }
 
   // Function to check if this change is applied via one of our programmatic shifts
   function isProgrammatic(transactions) {
-    if (transactions.length == 0 ||
-        (transactions.length > 0 &&
-         typeof transactions[0].annotations[0].value !== "number")) {
+    if (
+      transactions.length == 0 ||
+      (transactions.length > 0 &&
+        typeof transactions[0].annotations[0].value !== "number")
+    ) {
       return false;
     }
     return true;
   }
 
+  function dispatchChange(editor: EditorView, data: string) {
+    editor.dispatch({
+      changes: {
+        from: 0,
+        to: editor.state.doc.length,
+        insert: data,
+      },
+    });
+  }
 
   // Decorator for color coding the token
   const tokenDec = Decoration.mark({ class: "headerDec" }); // This adds a className to the text that matches the regex.
 
   const tokenDecorator = new MatchDecorator({
     regexp: /([^.]+)/g,
-    decoration: () => tokenDec
+    decoration: () => tokenDec,
   });
   const tokenColors = ViewPlugin.define(
     (view) => {
-      return ({
-      decorations: tokenDecorator.createDeco(view),
-      update(u) {
-        this.decorations = tokenDecorator.updateDeco(u, this.decorations);
-      },
-    })},
+      return {
+        decorations: tokenDecorator.createDeco(view),
+        update(u) {
+          this.decorations = tokenDecorator.updateDeco(u, this.decorations);
+        },
+      };
+    },
     {
       decorations: (v) => v.decorations,
     },
   );
+
+  const secretEditor = new EditorView({
+    parent: document.getElementById("secret-text"),
+    doc: defaultSecret,
+
+    extensions: [
+      basicSetup,
+      tokenColors,
+      EditorView.lineWrapping,
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          const programUpdated = isProgrammatic(update.transactions);
+          if (!programUpdated) {
+            try {
+              clearError();
+              const currentToken = tokenEditor.state.doc.text[0];
+              const docText = update.state.doc.text.join("");
+
+              verifyJwt(currentToken, docText);
+            } catch (e) {
+              console.log(e);
+              displayError(e.message);
+            }
+          }
+        }
+      }),
+    ],
+  });
 
   // Inits CodeMirror for Tokens
   const tokenEditor = new EditorView({
@@ -101,29 +250,20 @@
     doc: defaultToken,
 
     extensions: [
-      // basicSetup,
+      basicSetup,
       tokenColors,
       EditorView.lineWrapping,
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           const programUpdated = isProgrammatic(update.transactions);
           if (!programUpdated) {
-            const { headers, payload } = decodeJwt(update.state.doc.text[0]);
+            const currentToken = update.state.doc.text[0];
+            const currentSecret = secretEditor.state.doc.text.join("");
+            const { headers, payload } = decodeJwt(currentToken);
 
-            headersEditor.dispatch({
-              changes: {
-                from: 0,
-                to: headersEditor.state.doc.length,
-                insert: headers,
-              },
-            });
-            payloadEditor.dispatch({
-              changes: {
-                from: 0,
-                to: payloadEditor.state.doc.length,
-                insert: payload,
-              },
-            });
+            dispatchChange(headersEditor, headers);
+            dispatchChange(payloadEditor, payload);
+            verifyJwt(currentToken, currentSecret);
           }
         }
       }),
@@ -151,7 +291,7 @@
               changes: {
                 from: 0,
                 to: tokenEditor.state.doc.length,
-                insert: `${updatedHeader}.${currentToken[1]}`,
+                insert: `${updatedHeader}.${currentToken[1]}.${currentToken[2]}`,
               },
             });
           }
@@ -169,20 +309,21 @@
       basicSetup,
       EditorView.lineWrapping,
       json(),
-      EditorView.updateListener.of((update) => {
+      EditorView.updateListener.of(async (update) => {
         if (update.docChanged) {
           const programUpdated = isProgrammatic(update.transactions);
           if (!programUpdated) {
             const docText = update.state.doc.text.join("");
 
-            const currentToken = tokenEditor.state.doc.text[0].split(".");
+            const currentToken = tokenEditor.state.doc.text[0];
+            const currentTokenArray = currentToken.split(".");
             const updatedPayload = window.btoa(docText);
 
             tokenEditor.dispatch({
               changes: {
                 from: 0,
                 to: tokenEditor.state.doc.length,
-                insert: `${currentToken[0]}.${updatedPayload}`,
+                insert: `${currentTokenArray[0]}.${updatedPayload}.${currentTokenArray[2]}`,
               },
             });
           }
@@ -195,11 +336,18 @@
 <style is:global>
   @reference "tailwindcss";
 
+  .fieldHelp {
+    @apply  block mt-1 font-light text-xs italic;
+  }
+
   #encoded-textarea {
     @apply grid grid-rows-[min-content_minmax(0,1fr)];
   }
   #header-textarea .cm-editor {
     @apply md:max-h-[max-content];
+  }
+  #secret-text .cm-editor {
+    max-height: 400px;
   }
   #payload-textarea .cm-editor {
     @apply md:max-h-[max-content];
@@ -207,8 +355,12 @@
   .cm-editor {
     @apply flex-1 bg-white rounded-md border border-slate-400 p-2;
   }
-  .cm-editor { max-height: 100%; }
-  .cm-scroller { overflow: auto }
+  .cm-editor {
+    max-height: 100%;
+  }
+  .cm-scroller {
+    overflow: auto;
+  }
 
   .dark .cm-editor {
     @apply bg-slate-900;
@@ -261,6 +413,9 @@
   .dark .headerDec:nth-of-type(3):hover {
     @apply bg-red-900;
   }
+  .dark .ͼc {
+    @apply text-blue-400;
+  }
   .cm-line {
     @apply text-indigo-800;
   }
@@ -271,12 +426,38 @@
     @apply text-red-700;
   }
   .ͼd {
-    @apply text-green-700
+    @apply text-green-700;
   }
   .dark .ͼe {
     @apply text-orange-300;
   }
   .dark .ͼd {
     @apply text-green-300;
+  }
+  #notificationPanel:empty {
+    @apply hidden;
+  }
+  #notificationPanel {
+    @apply px-4 py-3 rounded relative mb-0 mt-5;
+  }
+  #notificationPanel.success {
+    @apply bg-green-100 border border-green-400 text-green-700;
+  }
+  .dark #notificationPanel.success {
+    @apply bg-green-900 text-green-300;
+  }
+    .dark #notificationPanel.error {
+    @apply bg-red-900 text-red-300;
+  }
+  .icon-error,
+  .icon-success {
+    @apply hidden;
+  }
+  #notificationPanel.error {
+    @apply bg-red-100 border border-red-400 text-red-700;
+  }
+  .error .icon-error,
+  .success .icon-success {
+    @apply inline;
   }
 </style>
