@@ -30,14 +30,14 @@ Here are the commands you can use with code snippets locally:
 The following scripts are used in `.github/workflows` when pushing to GitHub:
 - `validate-bluehawk.yml` — Validate the syntax of the annotations in each local code example.
 - `test-code-examples.yml` — Runs the unit/integration tests for every local code example. Each repository must have a `tests` folder with a `test.sh` file that runs all its tests and returns a result. The tests workflow cannot use Github actions to install programming frameworks and versions, because each code example has different needs. Instead, each example uses Docker to run the tests with its own Docker image.
-- `export-code-examples.yml` — Pushes each local code example to its readonly external repository. Each repository must have a `repositoryUrl.txt` file that says what URL (without the `https://`) to export the files. The Bluehawk annotations, `repositoryUrl.txt` file, and `tests` folder are removed before publishing.
+- `export-code-examples.yml` — Pushes each local code example to its readonly external repository. Each repository must have a `repositoryUrl.txt` file that says what URL (without the `https://` and ending in `.git`) to export the files. The Bluehawk annotations, `repositoryUrl.txt` file, and `tests` folder are removed before publishing.
 
 ### How to migrate a repository from RemoteCode to local with BlueHhawk
 
 - In the remote repository, create a main branch, make it the primary branch, delete all other branches
 - Set access to readonly for all git users other than documentation account
 - Copy the contents of the repository into a new folder in `astro/src/code-example-repositories`
-- Add a  `repositoryUrl.txt` with the url of the remote (without `https://`)
+- Add a `repositoryUrl.txt` with the url of the remote (without `https://`)
 - Add a `tests` folder with a `test.sh` file to run all tests using Docker (use `node:26` if possible to avoid multiple images)
 - Switch the repository annotation format from RemoteCode to Bluehawk in the source files (if you use the entire file you don't need annotations)
 - Use `LocalCode` instead of `RemoteCode` in the accompanying article
