@@ -6,12 +6,6 @@ require 'uri'
 require 'optparse'
 require 'yaml'
 
-
-# TODO
-# support checking example JSON
-# support warning for fields that exist in html but not in the json and vice versa
-
-
 IGNORED_FIELD_REGEXPS = [
   /^(?!event).*\.tenantId/, # toplevel tenantId always ignored, except when checking events, as that is handled implicitly via API key locking or header if there is more than one tenant
   /^user\.salt/, # never send user.salt, only used by Import API
@@ -31,6 +25,7 @@ IGNORED_FIELD_REGEXPS = [
   /^event\.ipAddress/, # this is a deprecated field
   /^identityProvider\.issuer/, # this is a deprecated field
   /^identityProvider\.data/, # this is non-exposed field: https://github.com/FusionAuth/fusionauth-java-client/blob/main/src/main/java/io/fusionauth/domain/provider/BaseIdentityProvider.java#L29
+  /^user\.legacyIdentifier/, # non-exposed field
 ]
 # option handling
 options = {}
@@ -90,7 +85,6 @@ def handle_event_field_exceptions(ignore, type, full_field_name)
 end
 
 # what our dashed type is -> what the path is in the url
-# no hash at end of url as of feb 2022
 def make_api_path(type)
   base = "apis/"
 
@@ -283,7 +277,7 @@ end
 # noinspection t
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
 
-  # these are leafs of the tree and aren't fields with possible subfields.
+  # these are leafs of the tree and aren't fields with possible subfields
   known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double", "EventType", "SortedSet" ]
 
   # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
@@ -420,10 +414,10 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         end
       end
     else
-      #p "need to look up other object for type " + field_type
+      # "need to look up other object for type " + field_type
       files = Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+field_type+".json")
       if options[:verbose] && files.length > 1
-        puts "for field_type: "+ field_type+ ", found " + files.length.to_s + " files, picking closest one"
+        puts "for field_type: " + field_type + ", found " + files.length.to_s + " files, picking closest one"
         puts files
       end
       if files.length == 1
@@ -432,7 +426,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         # lets look in our containing objects
         ancestor_type = t.gsub(/^\..*/,'')
 
-        #special case for application oauth2 config
+        # special case for application oauth2 config
         if field_type == "OAuth2Configuration" and ancestor_type == "application"
           files.each do |mf|
             if mf.include?('oauth2.OAuth2Configuration')
@@ -454,7 +448,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
           end
         end
         unless file
-	  # this is a weird one, it is a inner class but on a supertype
+	        # this is a weird one, it is a inner class but on a supertype
           if options[:verbose]
             puts "handling special case of Identity Provider lambda config"
           end

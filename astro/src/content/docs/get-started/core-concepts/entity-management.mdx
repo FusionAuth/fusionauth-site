@@ -27,7 +27,7 @@ _Enter Entities._ Entities allow you to model everything right from FusionAuth! 
 ### Typecasting
 
 - Entities can have a type.
-- For example, an Entity could be a type of  `lock`, `car`, `company`, `corporate division`, `computer`, or `API`
+- For example, an Entity could be a type of  `lock`, `car`, `company`, `corporate division`, `computer`, `AI agent`, or `API`
 - Entity Types can define permissions.
 - You are limited only by your business need and imagination!
 
@@ -42,18 +42,49 @@ _Enter Entities._ Entities allow you to model everything right from FusionAuth! 
 - Corporate relationship modeling
 - Per use device permissions
 - Internet IoT
+- Controlling agent to agent communication
 
-Below is an example diagram using the client credentials grant, and an email Entity Type.
+Below is an diagram using the client credentials grant, where a customer is getting a token from FusionAuth with permissions for the EmailService to send an email.
 
-![Client Credentials Grant Diagram](/img/docs/get-started/core-concepts/client-credentials-grant-diagram.png)
+```mermaid title="Successful Client Credentials Grant."
+graph LR
+    A["Source: Customer #1"] --> CCG
+    B["Target: EmailService"] --> CCG
+
+    subgraph AUTH["Authentication"]
+        subgraph CCG["Client Credentials Grant"]
+            S1["Customer #1 provides client_id, client_secret & scope (ent:<id> perm:SendEmail)"]
+            S2["FusionAuth verifies client_id & client_secret"]
+            S3["FusionAuth checks permissions"]
+            S4["FusionAuth generates access token with permissions granted to Customer #1 for EmailService"]
+            S1 --> S2 --> S3 --> S4
+        end
+    end
+
+    CCG --> D["Valid Token"]
+```
+
+Consider instead the case where the customer does not have permissions for the EmailService.
+
+```mermaid title="Failed Client Credentials Grant."
+graph LR
+    A["Source: Customer #2"] --> CCG
+    B["Target: EmailService"] --> CCG
+
+    subgraph AUTH["Authentication"]
+        subgraph CCG["Client Credentials Grant"]
+            S1["Customer #1 provides client_id, client_secret & scope (ent:<id> perm:SendEmail)"]
+            S2["FusionAuth verifies client_id & client_secret"]
+            S3["FusionAuth checks permissions"]
+            S4["FusionAuth returns an error"]
+            S1 --> S2 --> S3 --> S4
+        end
+    end
+```
 
 ### Can't I Just Use a Group?
 
-In some cases, Groups work as a model for such ideas like `customers`. However, the flexibility of Groups is limited by their lack of typecasting (very much needed as use cases evolve). Additionally, Groups do not have a hierarchical model or permissions functionality built in.
-
-{/* Here's a brief video covering some aspects of Entity Management: */}
-{/*  Placeholder for a video in the future */}
-{/* video::DaZbwrA7M90[youtube,width=560,height=315] */}
+In some cases, Groups work as a model for such ideas like `customers`. However, the flexibility of Groups is limited by their lack of typing (very much needed as use cases evolve). Additionally, Groups do not have permissions functionality built in.
 
 ## Entity Types
 
@@ -106,7 +137,7 @@ Add and manage custom permissions.
 
 Controls the JWT settings used for this entity type.
 
-![Create an Entity Type - JWT tab](/img/docs/get-started/core-concepts/entity-type-add-jwt-tab.png)
+![Create an Entity Type - <Breadcrumb>JWT</Breadcrumb> tab](/img/docs/get-started/core-concepts/entity-type-add-jwt-tab.png)
 
 <APIBlock>
   <APIField name="Enabled" optional>
@@ -175,7 +206,7 @@ This functionality has been available since 1.36.0
 
 When configuring FusionAuth to accept SCIM requests, you must create a SCIM server Entity and a SCIM client Entity. These entities will be used by the Client Credentials grant which will provide the access token which is used to authenticate calls to the SCIM endpoints. These entities must be of the Entity Type configured in the Tenant SCIM configuration. They also must have the SCIM permissions granted to successfully call [SCIM API endpoints](/docs/apis/scim/) requiring authentication.
 
-The necessary Entity Types can be created by navigating to Entity <Breadcrumb>Management > Entity Types</Breadcrumb> and selecting the clicking the drop down Add button in the top right of the page. In most cases you will find these two entity types have been created for you by FusionAuth.
+The necessary Entity Types can be created by navigating to Entity <Breadcrumb>Management > Entity Types</Breadcrumb> and selecting the clicking the drop down <Breadcrumb>Add</Breadcrumb> button in the top right of the page. In most cases you will find these two entity types have been created for you by FusionAuth.
 
 The default entity types are named **\[FusionAuth Default] SCIM client** and **\[FusionAuth Default] SCIM server**. Below is a screenshot of adding a new Entity Type for the SCIM Server, but if you wish to use the default Entity Type, you do not need to create an additional Entity Type.
 
@@ -192,6 +223,54 @@ The default entity types are named **\[FusionAuth Default] SCIM client** and **\
 It is not currently possible to utilize an OAuth2 grant to retrieve user permissions to an entity. Please review [GitHub Issue #1295](https://github.com/FusionAuth/fusionauth-issues/issues/1295/) and vote if you would like to see this capability in FusionAuth.
 
 It is also not possible to rename or otherwise customize scopes used with Entity Management. Please review [GitHub Issue #1481](https://github.com/FusionAuth/fusionauth-issues/issues/1481) and vote if you would like to see this capability in FusionAuth.
+
+## Agents
+
+FusionAuth entities can be used to represent AI agents. You can create an Entity Type of `AI Agent` with a permission of `execute`.
+
+Each agent can be given a unique identity and a secret, uniquely identifying them.
+
+Agents can obtain tokens via the client credentials grant and present them to other services.
+
+Agent identities can be created and destroyed via the Entity API; when destroyed, their secrets are no longer valid.
+
+You can also search for agents using the Entity Search API.
+
+Agent metadata, such as the user or job that created the agent and a system prompt for that agent, can be stored in the entity `data` field.
+
+### Agent Permissions
+
+You can grant agents permissions to call other agents. This provides a deterministic set of guardrails around the agent system.
+
+For example, suppose you have a system with agents A, B, and C. With entities, you can build a permission graph such that:
+
+* agent A can call agent B
+* agent B can call agent C
+* agent A cannot call agent C
+* agent B cannot call agent A
+* agent C cannot call either A or B
+
+```mermaid title="Agentic permissions."
+flowchart LR
+    A([Agent A])
+    B([Agent B])
+    C([Agent C])
+
+    A -->|"<span style='color:green'>✓ can call</span>"| B
+    B -->|"<span style='color:green'>✓ can call</span>"| C
+    A -.->|"<span style='color:red'>✗ cannot call</span>"| C
+    B -.->|"<span style='color:red'>✗ cannot call</span>"| A
+    C -.->|"<span style='color:red'>✗ cannot call</span>"| A
+    C -.->|"<span style='color:red'>✗ cannot call</span>"| B
+```
+
+Whenever an agent wants to call another agent, they:
+
+1. present their id, secret, and desired target to FusionAuth, who returns an access token or error, depending on agent permissions 
+1. present their access token to the other agent, who verifies the token, then accepts or denies the request
+
+This permission graph can be managed using entities or [FusionAuth FGA](/docs/extend/fine-grained-authorization).
+
 
 ## More Information
 
