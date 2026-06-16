@@ -1,6 +1,6 @@
 ---
 title: Install a Search Engine
-description: Learn how to install the FusionAuth Search bundle.
+description: Learn how to install a search engine for your FusionAuth instance.
 order: 5
 ---
 import ElasticsearchVersion from 'src/content/docs/_shared/_elasticsearch-version.mdx';
@@ -8,216 +8,119 @@ import ElasticsearchRam from 'src/content/docs/_shared/_elasticsearch-ram.mdx';
 import Aside from 'src/components/Aside.astro';
 import Tabs from 'src/components/Tabs.astro';
 import TabItem from 'src/components/TabItem.astro';
+import Steps from 'src/components/Steps.astro';
 
-This page explains how to install FusionAuth Search, which provides full-text search. This service may be horizontally scaled using Elasticsearch clustering.
+This page explains how to install a full-text search engine for your FusionAuth instance. To follow these instructions, you must first configure Docker and Docker Compose.
 
 <ElasticsearchVersion />
 
 <ElasticsearchRam />
 
-## Download the Package
+<Steps>
+1. Create a directory named `opensearch`, and use our template `docker-compose.yml` file:
 
-Navigate to the [Downloads](/download/) page and find FusionAuth Search package for your target platform.
+			```yaml
+			---
+			services:
+			  opensearch-node1:
+			    image: opensearchproject/opensearch:2
+			    container_name: opensearch-node1
+			    environment:
+			      - cluster.name=opensearch-cluster
+			      - node.name=opensearch-node1
+			      - discovery.seed_hosts=opensearch-node1,opensearch-node2
+			      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2
+			      - bootstrap.memory_lock=true  # along with the memlock settings below, disables swapping
+			      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m  # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+			      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}    # Sets the demo admin user password when using demo configuration, required for OpenSearch 2.12 and higher
+			    ulimits:
+			      memlock:
+			        soft: -1
+			        hard: -1
+			      nofile:
+			        soft: 65536  # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
+			        hard: 65536
+			    volumes:
+			      - opensearch-data1:/usr/share/opensearch/data
+			    ports:
+			      - 9200:9200
+			      - 9600:9600  # required for Performance Analyzer
+			    networks:
+			      - opensearch-net
+			  opensearch-node2:
+			    image: opensearchproject/opensearch:2
+			    container_name: opensearch-node2
+			    environment:
+			      - cluster.name=opensearch-cluster
+			      - node.name=opensearch-node2
+			      - discovery.seed_hosts=opensearch-node1,opensearch-node2
+			      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2
+			      - bootstrap.memory_lock=true
+			      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+			      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+			    ulimits:
+			      memlock:
+			        soft: -1
+			        hard: -1
+			      nofile:
+			        soft: 65536
+			        hard: 65536
+			    volumes:
+			      - opensearch-data2:/usr/share/opensearch/data
+			    networks:
+			      - opensearch-net
+			  opensearch-dashboards:
+			    image: opensearchproject/opensearch-dashboards:2
+			    container_name: opensearch-dashboards
+			    ports:
+			      - 5601:5601
+			    expose:
+			      - '5601'
+			    environment:
+			      OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]'
+			    networks:
+			      - opensearch-net
 
-## Install the Package
+			volumes:
+			  opensearch-data1:
+			  opensearch-data2:
 
-<Tabs>
-	<TabItem label="Red Hat">
+			networks:
+			  opensearch-net:
 
-	To install on a Red Hat system, use the RPM bundle. Execute this command to install the FusionAuth Search RPM (replace `<version>` with
- 	the correct version number):
-	
-	```console
-	sudo rpm -i fusionauth-search<version>.rpm
-	```
-	</TabItem>
-	<TabItem label="Debian">
+			```
 
-	To install on a Debian system, use the DEB bundle. Execute this command to install the FusionAuth Search DEB (replace `<version>` with
- 	the correct version number):
-	
-	```console
-	sudo dpkg -i fusionauth-search<version>.deb
-	```
+			For installation instructions without using Docker Compose, see the [OpenSearch Install and Configure guide](https://docs.opensearch.org/latest/install-and-configure/) for your platform).
 
-	</TabItem>
-	<TabItem label="macOS">
+1. To download, install, and start your OpenSearch instance, run the following command:
 
-	To install on macOS, use the `.zip` bundle. Extract the `fusionauth-search` zip bundle anywhere on the file system. Remember where you extract the file.
-	 This location will be referred to as `FUSIONAUTH_HOME`. We suggest extracting this file to a directory such as `/usr/local/fusionauth`.
+   ```console
+   docker-compose up
+   ```
 
-	Once the zip bundle has been extracted, the directory structure should look similar to this. If you installed somewhere other the default `FUSIONAUTH_HOME`,
-	 your directory structure will be different, this is only for shown as an example.
+   It may take a few minutes to download and install dependencies.
 
-	```
-	/usr/local/fusionauth/bin
-	/usr/local/fusionauth/config
-	/usr/local/fusionauth/config/fusionauth.properties
-	/usr/local/fusionauth/fusionauth-search
-	```
-	</TabItem>
-	<TabItem label="macOS with Homebrew">
+1. Once the service starts, you can find your OpenSearch Dashboard at [http://localhost:5601/](http://localhost:5601/).
 
-	Install OpenSearch:
-	
-   	```console
-   	brew install opensearch
-   	```
-	
-	</TabItem>
-	<TabItem label="Windows (Package)">
+1. Once you have OpenSearch running, stop FusionAuth -- we'll be editing the configuration file.
 
-	Extract the `fusionauth-search` zip bundle anywhere on the file system. Remember where you extract
-	 the file. This location will be referred to as `FUSIONAUTH_HOME`. We suggest extracting this file to a directory such as `\fusionauth` on Windows.
+1. Locate your FusionAuth configuration file named `fusionauth.properties` in the [documented location](/docs/reference/configuration#configuration-file). Make the following changes:
 
-	Once the zip bundle has been extracted, the directory structure should look similar to this:
+   1. Set `fusionauth-app.search-servers` to the URL of your OpenSearch instance:
 
-	```
-	\fusionauth\bin
-	\fusionauth\config
-	\fusionauth\config\fusionauth.properties
-	\fusionauth\fusionauth-search\
-	```
-	</TabItem>
-	<TabItem label="Windows Service">
+   ```console
+   fusionauth-app.search-servers=http://localhost:9200
+   ```
 
-	1. Extract the `fusionauth-search` zip bundle anywhere on the file system. Remember where you extract
-	 the file. This location will be referred to as `FUSIONAUTH_HOME`. We suggest extracting this file to a directory such as `\fusionauth` on Windows. Once the zip bundle has been extracted, the directory structure should look similar to this:
+   1. Set `fusionauth-app.search-engine-type` to `elasticsearch` (this value works for both Elasticsearch and OpenSearch instances).
 
-	   ```
-	   \fusionauth\bin
-	   \fusionauth\config
-	   \fusionauth\config\fusionauth.properties
-	   \fusionauth\fusionauth-search\
-	   ```
-	
-	1. Navigate into `FUSIONAUTH_HOME`:
+   ```console
+   fusionauth-app.search-engine-type=elasticsearch
+   ```
 
-	   ```powershell
-	   cd \fusionauth\fusionauth-search\elasticsearch\bin
-	   ```
+1. Restart FusionAuth to test your changes.
+</Steps>
 
-	1. Run the following command to install FusionAuth as a Windows Service:
-
-	   ```powershell
-	   \fusionauth\fusionauth-search\elasticsearch\bin> FusionAuthSearch.exe /install
-	   ```
-	</TabItem>
-</Tabs>
-
-## Configuration
-
-If you will be running more than one search engine service, or the search engine is installed on a separate server than the FusionAuth App service,
-you will need to modify the default configuration in the `fusionauth.properties` file.
-
-If you have installed the Search Engine service on the same server that is running FusionAuth App no further configuration is required.
-
-Each server running the FusionAuth Search service will need to be added to the configuration. To do this, you will need to edit the
-`fusionauth.properties` configuration file. More information about this configuration file is located in the [Configuration Reference](/docs/reference/configuration) section.
-
-The following examples assume that FusionAuth App and FusionAuth Search can communicate either on `localhost` if running on the same
-system, or if running on separate systems that a site local connection exists between both servers. If you require communication between
-FusionAuth App and FusionAuth Search on a public IP address, you will also need to modify the `fusionauth-search.hosts` property
-on the server running FusionAuth Search. The default value will only bind to localhost and site local IP addresses. See the
-[Configuration Reference](/docs/reference/configuration) for more information on configuring the `fusionauth-search.hosts` property.
-
-The following examples also assume the default port as specified by the `fusionauth-search.transport-port` property. If this value has been
-modified, adjust the examples accordingly.
-
-
-### Example Configuration 1
-The following is an example where FusionAuth Search is running on the same server as FusionAuth. This is the default configuration,
-if this is how you have your system configured, no change to `fusionauth.properties` is required.
-
-```ini title="fusionauth.properties"
-fusionauth-search.servers=localhost:9020
-fusionauth-app.search-engine-type=elasticsearch
-fusionauth-app.search-servers=http://localhost:9021
-```
-
-
-### Example Configuration 2
-The following is an example where the FusionAuth Search is running on a separate system than the FusionAuth App and the FusionAuth
-Search Engine has an IP Address of `192.168.1.41`.
-
-We'll refer to the server running FusionAuth App as System 1, and the server running FusionAuth Search as System 2.
-
-```ini title="fusionauth.properties on System 1"
-fusionauth-search.servers=192.168.1.41:9020
-fusionauth-app.search-engine-type=elasticsearch
-fusionauth-app.search-servers=http://192.168.1.41:9021
-```
-
-```ini title="fusionauth.properties on System 2"
-fusionauth-search.servers=localhost:9020
-fusionauth-app.search-engine-type=elasticsearch
-fusionauth-app.search-servers=http://localhost:9021
-```
-
-### Example Configuration 3
 <Aside type="note">
-When configuring multiple Elasticsearch nodes, you will need to modify the service discovery settings in the shipped `elasticsearch.yml`.  See [Elasticsearch's Discovery and cluster formation settings](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-discovery-settings.html) documentation in configuring multiple nodes.
+When configuring multiple Elasticsearch nodes, you will need to modify the service discovery settings in the shipped `elasticsearch.yml`. See [Elasticsearch's Discovery and cluster formation settings](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-discovery-settings.html) documentation in configuring multiple nodes.
 </Aside>
-
-The following is an example where FusionAuth Search is running on the same server as FusionAuth App, and another server also has
-both the FusionAuth App and the FusionAuth Search installed.
-
-We will refer to these systems as System 1 and System 2, where System 1 has an IP address of `192.168.1.41` and System 2 has an IP address
-of `192.168.1.42`.
-
-
-```ini title="fusionauth.properties on System 1"
-fusionauth-search.servers=localhost:9020,192.168.1.42:9020
-fusionauth-app.search-engine-type=elasticsearch
-fusionauth-app.search-servers=http://localhost:9021,http://192.168.1.42:9021
-```
-
-```ini title="fusionauth.properties on System 2"
-fusionauth-search.servers=localhost:9020,192.168.1.41:9020
-fusionauth-app.search-engine-type=elasticsearch
-fusionauth-app.search-servers=http://localhost:9021,http://192.168.1.41:9021
-```
-
-## Start FusionAuth Search
-
-FusionAuth Search Engine should now be ready to run. Use the instructions below to start FusionAuth Search. The search engine should be started
-first before the FusionAuth App service.
-
-<Tabs>
-	<TabItem label="Linux">
-
-	```console
-	sudo systemctl start fusionauth-search
-	```
-
-	</TabItem>
-	<TabItem label="macOS">
-
-	```console
-	<FUSIONAUTH_HOME>/fusionauth-search/elasticsearch/bin/elasticsearch -d
-	```
-
-	</TabItem>
-	<TabItem label="macOS with Homebrew">
-	
-	Start OpenSearch with Homebrew services:
-	
-   	```console
-   	brew services start opensearch
-   	```
-	</TabItem>
-	<TabItem label="Windows (Package)">
-
-	```powershell
-	\fusionauth\fusionauth-search\elasticsearch\bin\elasticsearch.bat
-	```
-
-	</TabItem>
-	<TabItem label="Windows Service">
-
-	```powershell
-	net start FusionAuthSearch
-	```
-
-	</TabItem>
-</Tabs>
