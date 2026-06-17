@@ -21,7 +21,7 @@ const description = "Interactive explorer for the FusionAuth API.";
       top: 65px;
       left: 0;
       right: 0;
-      z-index: 1000;
+      z-index: 40;
       height: 40px;
       display: flex;
       align-items: center;
@@ -87,42 +87,18 @@ const description = "Interactive explorer for the FusionAuth API.";
       color: #94a3b8;
       padding: 0 2px;
     }
-    .version-switcher input[type="text"] {
-      height: 24px;
-      width: 220px;
-      padding: 0 7px;
+    .download-label {
       font-size: 12px;
-      border: 1px solid #cbd5e1;
-      border-radius: 4px;
-      background: #f8fafc;
-      color: #0f172a;
-      outline: none;
-    }
-    html.dark .version-switcher input[type="text"] {
-      border-color: #334155;
-      background: #1e293b;
-      color: #f1f5f9;
-    }
-    .version-switcher input[type="text"]:focus {
-      border-color: #f58320;
-      box-shadow: 0 0 0 2px rgba(245, 131, 32, 0.25);
-    }
-    .version-switcher input[type="text"]::placeholder {
-      color: #94a3b8;
-    }
-    .version-switcher button {
-      height: 24px;
-      padding: 0 10px;
-      font-size: 12px;
-      font-weight: 500;
-      border: 1px solid #f58320;
-      border-radius: 4px;
-      background: #f58320;
-      color: #fff;
-      cursor: pointer;
+      color: inherit;
       white-space: nowrap;
     }
-    .version-switcher button:hover { background: #e0721a; border-color: #e0721a; }
+    .version-switcher a {
+      font-size: 12px;
+      color: #f58320;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .version-switcher a:hover { text-decoration: underline; }
 
     /* ThemeSelector's MoonIcon hardcodes text-white (it lives in the dark
        docs nav by default). On our light topbar that's invisible, so we
@@ -139,9 +115,11 @@ const description = "Interactive explorer for the FusionAuth API.";
         <label for="version-select">Version:</label>
         <span id="version-loading" class="loading">Loading…</span>
         <select id="version-select" style="display:none" aria-label="API spec version"></select>
-        <span class="sep">or</span>
-        <input id="spec-url-input" type="text" placeholder="Paste a raw openapi.yaml URL" aria-label="Custom OpenAPI spec URL" />
-        <button id="spec-url-load">Load</button>
+        <span class="sep">·</span>
+        <span class="download-label">Download:</span>
+        <a id="download-yaml" href="#">YAML</a>
+        <span class="sep">·</span>
+        <a id="download-json" href="#">JSON</a>
       </div>
       <span class="spacer"></span>
     </nav>
@@ -149,16 +127,29 @@ const description = "Interactive explorer for the FusionAuth API.";
     <div id="scalar-app"></div>
 
     <script is:inline src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
     <script is:inline>
       // Theme is owned entirely by ThemeSelector + Head.astro's inline script.
       // The single source of truth is `documentElement.classList.contains('dark')`.
       const customCss = `
         .darklight-reference { display: none !important; }
         .api-reference-toolbar { display: none !important; }
+        .download-container { display: none !important; }
+
+        .badge {
+          display: inline-flex !important;
+          align-items: center !important;
+          padding: 5px 6px 3px !important;
+          line-height: 1 !important;
+        }
 
         aside.t-doc__sidebar {
           top: 105px !important;
           height: calc(100vh - 105px) !important;
+        }
+
+        #scalar-app [id] {
+          scroll-margin-top: 105px !important;
         }
 
         #scalar-app input[type="text"],
@@ -273,27 +264,41 @@ const description = "Interactive explorer for the FusionAuth API.";
           versionLoading.textContent = 'Version list unavailable';
         });
 
-      versionSelect.addEventListener('change', () => {
-        activeUrl = versionSelect.value;
-        specUrlInput.value = '';
-        scalar.updateConfiguration(buildConfig());
-      });
+      // Download links — both use blob to force download regardless of content-type
+      const downloadYaml = document.getElementById('download-yaml');
+      const downloadJson = document.getElementById('download-json');
 
-      // URL input — overrides the dropdown
-      const specUrlInput = document.getElementById('spec-url-input');
-      const specUrlLoad  = document.getElementById('spec-url-load');
-
-      function loadCustomUrl() {
-        const url = specUrlInput.value.trim();
-        if (!url) return;
-        activeUrl = url;
-        versionSelect.value = '';
-        scalar.updateConfiguration(buildConfig());
+      async function triggerDownload(content, filename, type) {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
       }
 
-      specUrlLoad.addEventListener('click', loadCustomUrl);
-      specUrlInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') loadCustomUrl();
+      downloadYaml.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const resp = await fetch(activeUrl);
+        const text = await resp.text();
+        const filename = (activeUrl.split('/').pop() || 'openapi').replace(/\.json$/, '.yaml');
+        triggerDownload(text, filename, 'application/yaml');
+      });
+
+      downloadJson.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const resp = await fetch(activeUrl);
+        const yamlText = await resp.text();
+        const obj = jsyaml.load(yamlText);
+        const json = JSON.stringify(obj, null, 2);
+        const filename = (activeUrl.split('/').pop() || 'openapi').replace(/\.yaml$/, '.json');
+        triggerDownload(json, filename, 'application/json');
+      });
+
+      versionSelect.addEventListener('change', () => {
+        activeUrl = versionSelect.value;
+        scalar.updateConfiguration(buildConfig());
       });
     </script>
   </body>
