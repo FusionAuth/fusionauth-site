@@ -34,11 +34,12 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 		ABS_REPOSITORY_PATH="$(pwd)/$LOCAL_REPOSITORY_PATH"
 		cd astro
 		LOCAL_CLEANED_REPOSITORY_PATH=$(mktemp -d /tmp/bluehawk-processed.XXXXXX)
+		RELATIVE_LOCAL_REPOSITORY_PATH="${LOCAL_REPOSITORY_PATH#astro/}"
 		npx bluehawk copy --state published \
 			-i "repositoryUrl.txt" \
 			-i "tests" \
 			--output "$LOCAL_CLEANED_REPOSITORY_PATH" \
-			"$ABS_REPOSITORY_PATH"
+			"$RELATIVE_LOCAL_REPOSITORY_PATH"
 		cd "$OLDPWD"
 
 		# Clone the remote repository
@@ -51,6 +52,10 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 
 		# Checkout target branch, crash if it doesn't exist
 		git checkout "$BRANCH" || exit 1
+
+		# Configure git identity for this temporary repository
+		git config user.email "github-actions[bot]@users.noreply.github.com"
+		git config user.name "github-actions[bot]"
 
 		# Replace the entire working tree with the processed files to mirror exactly
 		git rm -rf .
