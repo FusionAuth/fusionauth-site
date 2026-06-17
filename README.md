@@ -41,7 +41,8 @@ The following scripts are used in `.github/workflows` when pushing to GitHub:
 - Add a `tests` folder with a `test.sh` file to run all tests using Docker (use `node:26` if possible to avoid multiple images)
 - Switch the repository annotation format from RemoteCode to Bluehawk in the source files (if you use the entire file you don't need annotations)
 - Use `LocalCode` instead of `RemoteCode` in the accompanying article
-- Test the tests, snippet generation, documentation build, and repository export in repo root
+- Run `npm run validate-code-snippets && npm run generate-code-snippets` to create the code snippets for display in the article
+- Test the tests, snippet generation, and documentation build and create a pull request to the main FusionAuth branch
 
 ## Build
 
