@@ -68,7 +68,7 @@ export default [
     }
   },
   {
-    files: ['src/code-snippets/**/*.js'],
+    files: ['src/code-example-repositories/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.node,
