@@ -29,7 +29,6 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 		echo "Publishing $REPOSITORY_NAME"
 
 		# Process local files with Bluehawk to strip annotations but not generate snippets
-		ABS_REPOSITORY_PATH="$(pwd)/$LOCAL_REPOSITORY_PATH"
 		cd astro
 		LOCAL_CLEANED_REPOSITORY_PATH=$(mktemp -d /tmp/bluehawk-processed.XXXXXX)
 		RELATIVE_LOCAL_REPOSITORY_PATH="${LOCAL_REPOSITORY_PATH#astro/}"
@@ -44,9 +43,6 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 		LOCAL_CLONED_REPOSITORY_PATH=$(mktemp -d /tmp/code-example-repository.XXXXXX)
 		git clone "$REMOTE_URL" "$LOCAL_CLONED_REPOSITORY_PATH"
 		cd "$LOCAL_CLONED_REPOSITORY_PATH"
-
-		git config user.email "actions@github.com"
-		git config user.name "GitHub Actions"
 
 		# Checkout main branch, crash if it doesn't exist
 		git checkout main || exit 1
