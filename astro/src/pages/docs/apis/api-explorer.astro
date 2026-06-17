@@ -124,6 +124,19 @@ const description = "Interactive explorer for the FusionAuth API.";
     }
     .version-switcher button:hover { background: #e0721a; border-color: #e0721a; }
 
+    .download-label {
+      font-size: 12px;
+      color: inherit;
+      white-space: nowrap;
+    }
+    .version-switcher a {
+      font-size: 12px;
+      color: #f58320;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .version-switcher a:hover { text-decoration: underline; }
+
     /* ThemeSelector's MoonIcon hardcodes text-white (it lives in the dark
        docs nav by default). On our light topbar that's invisible, so we
        force the icon to inherit the topbar's foreground color. */
@@ -142,6 +155,11 @@ const description = "Interactive explorer for the FusionAuth API.";
         <span class="sep">or</span>
         <input id="spec-url-input" type="text" placeholder="Paste a raw openapi.yaml URL" aria-label="Custom OpenAPI spec URL" />
         <button id="spec-url-load">Load</button>
+        <span class="sep">·</span>
+        <span class="download-label">Download:</span>
+        <a id="download-yaml" href="#">YAML</a>
+        <span class="sep">·</span>
+        <a id="download-json" href="#">JSON</a>
       </div>
       <span class="spacer"></span>
     </nav>
@@ -149,12 +167,14 @@ const description = "Interactive explorer for the FusionAuth API.";
     <div id="scalar-app"></div>
 
     <script is:inline src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
     <script is:inline>
       // Theme is owned entirely by ThemeSelector + Head.astro's inline script.
       // The single source of truth is `documentElement.classList.contains('dark')`.
       const customCss = `
         .darklight-reference { display: none !important; }
         .api-reference-toolbar { display: none !important; }
+        .scalar-download-button { display: none !important; }
 
         aside.t-doc__sidebar {
           top: 105px !important;
@@ -273,10 +293,47 @@ const description = "Interactive explorer for the FusionAuth API.";
           versionLoading.textContent = 'Version list unavailable';
         });
 
+      // Download links — both use blob to force download regardless of content-type
+      const downloadYaml = document.getElementById('download-yaml');
+      const downloadJson = document.getElementById('download-json');
+
+      function updateDownloadLinks() {}
+
+      async function triggerDownload(content, filename, type) {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      downloadYaml.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const resp = await fetch(activeUrl);
+        const text = await resp.text();
+        const filename = (activeUrl.split('/').pop() || 'openapi').replace(/\.json$/, '.yaml');
+        triggerDownload(text, filename, 'application/yaml');
+      });
+
+      downloadJson.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const resp = await fetch(activeUrl);
+        const yamlText = await resp.text();
+        const obj = jsyaml.load(yamlText);
+        const json = JSON.stringify(obj, null, 2);
+        const filename = (activeUrl.split('/').pop() || 'openapi').replace(/\.yaml$/, '.json');
+        triggerDownload(json, filename, 'application/json');
+      });
+
+      updateDownloadLinks();
+
       versionSelect.addEventListener('change', () => {
         activeUrl = versionSelect.value;
         specUrlInput.value = '';
         scalar.updateConfiguration(buildConfig());
+        updateDownloadLinks();
       });
 
       // URL input — overrides the dropdown
@@ -289,6 +346,7 @@ const description = "Interactive explorer for the FusionAuth API.";
         activeUrl = url;
         versionSelect.value = '';
         scalar.updateConfiguration(buildConfig());
+        updateDownloadLinks();
       }
 
       specUrlLoad.addEventListener('click', loadCustomUrl);
