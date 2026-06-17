@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 # Publishes code examples from local directories to external repositories.
-# Loops through every directory in astro/src/code-example-repositories/, strips Bluehawk annotations, and mirrors the content to the remote repository and branch specified in repositoryUrl.txt.
-# repositoryUrl.txt format: "<url> <branch>" e.g. "github.com/FusionAuth/fusionauth-quickstart-javascript-nextjs-web main"
+# Loops through every directory in astro/src/code-example-repositories/, strips Bluehawk annotations, and mirrors the content to the remote repository specified in repositoryUrl.txt.
 
 # Arguments:
 #   $1 — The GitHub access token for pushing to external repositories.
@@ -24,11 +23,10 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 			exit 1
 		fi
 
-		read -r PARTIAL_REMOTE_URL BRANCH < "$URL_FILE" || true
-		BRANCH="${BRANCH:-main}"
+		PARTIAL_REMOTE_URL=$(cat "$URL_FILE" | tr -d '[:space:]')
 		REMOTE_URL="https://x-access-token:${GITHUB_TOKEN}@${PARTIAL_REMOTE_URL}"
 
-		echo "Publishing $REPOSITORY_NAME to $PARTIAL_REMOTE_URL ($BRANCH)"
+		echo "Publishing $REPOSITORY_NAME"
 
 		# Process local files with Bluehawk to strip annotations but not generate snippets
 		ABS_REPOSITORY_PATH="$(pwd)/$LOCAL_REPOSITORY_PATH"
@@ -50,8 +48,8 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 		git config user.email "actions@github.com"
 		git config user.name "GitHub Actions"
 
-		# Checkout target branch, crash if it doesn't exist
-		git checkout "$BRANCH" || exit 1
+		# Checkout main branch, crash if it doesn't exist
+		git checkout main || exit 1
 
 		# Configure git identity for this temporary repository
 		git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -66,7 +64,7 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 		git add -A
 		if ! git diff --cached --quiet; then
 			git commit -m "chore: update from fusionauth-site ${DOCUMENTATION_COMMIT_HASH}"
-			git push origin "$BRANCH"
+			git push origin main
 		fi
 
 		# Remove temporary folders
