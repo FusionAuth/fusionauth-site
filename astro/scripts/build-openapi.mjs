@@ -162,7 +162,7 @@ Once you have entered your API key in the **Authentication** panel above:
 - Fill in the required fields and click **Send** to make a live request against your local instance.
 - Use the **Client Libraries** panel to get generated code examples in Shell, Ruby, Node.js, PHP, Python, and more.
 - Deep links work natively. You can share a URL that opens directly to a specific endpoint.
-- Use the **Download OpenAPI Document** link to download the full spec.`;
+- Use the **YAML** or **JSON** links in the toolbar to download the full spec.`;
 
   const out = stringify(spec, { lineWidth: 0 });
   await mkdir(dirname(OUT_PATH), { recursive: true });
