@@ -1,4 +1,4 @@
-const { base64URLToBuffer } = require('./base64url-to-buffer');
+const { base64URLToBuffer } = require('../base64url-to-buffer');
 
 describe('base64URLToBuffer', () => {
   test('decodes a base64url string to the correct bytes', () => {
