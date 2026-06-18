@@ -1,2 +1,0 @@
-var verifyKey *rsa.PublicKey
-
