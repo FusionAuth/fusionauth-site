@@ -24,6 +24,12 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 		fi
 
 		PARTIAL_REMOTE_URL=$(cat "$URL_FILE" | tr -d '[:space:]')
+
+		if [ "$PARTIAL_REMOTE_URL" = "internal" ]; then
+			echo "Skipping $REPOSITORY_NAME (internal)"
+			continue
+		fi
+
 		REMOTE_URL="https://x-access-token:${GITHUB_TOKEN}@${PARTIAL_REMOTE_URL}"
 
 		echo "Publishing $REPOSITORY_NAME"
