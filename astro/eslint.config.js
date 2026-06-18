@@ -68,7 +68,7 @@ export default [
     }
   },
   {
-    files: ['src/code-example-repositories/**/*.js', 'src/code-example-internal/**/*.js'],
+    files: ['src/code-example-repositories/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -80,7 +80,7 @@ export default [
     }
   },
   {
-    files: ['src/code-example-repositories/**/*.js', 'src/code-example-internal/**/*.js'],
+    files: ['src/code-example-repositories/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.node,
