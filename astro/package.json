@@ -5,13 +5,15 @@
 	"scripts": {
 		"dev": "astro dev --port 3000",
 		"start": "astro build && astro preview",
-		"build": "mkdir -p src/code-snippets/generated && npx bluehawk snip src/code-snippets --output src/code-snippets/generated --state published -i node_modules -i \"package*.json\" -i \"*.lock\" && astro build",
-		"dev-build": "mkdir -p src/code-snippets/generated && npx bluehawk snip src/code-snippets --output src/code-snippets/generated --state published -i node_modules -i \"package*.json\" -i \"*.lock\" && DEV=true astro build",
+		"build": "npm run generate-code-snippets && astro build",
+		"dev-build": "npm run generate-code-snippets && DEV=true astro build",
+		"generate-code-snippets": "mkdir -p src/generated-code-snippets && for repo in src/code-example-repositories/*/; do mkdir -p \"src/generated-code-snippets/$(basename \"$repo\")\" && npx --yes bluehawk snip \"$repo\" --output \"src/generated-code-snippets/$(basename \"$repo\")\" --plugin bluehawk-languages.js --ignore 'node_modules' --ignore '.gitignore' --ignore '.DS_Store' --ignore 'package*.json' --ignore '*.lock' --ignore 'repositoryUrl.txt' --ignore 'tests' --ignore 'LICENSE' --ignore 'SECURITY.md' 2>&1 | grep -v 'parsed file' | grep -v 'found binary file'; done && find src/generated-code-snippets -type d -empty -delete",
 		"preview": "astro preview",
 		"astro": "astro",
 		"lint": "eslint",
 		"lint-pr": "node ../src/scripts/lint-recent-files.mjs",
-		"bluehawk-check": "npx bluehawk check -i \"*.md\" -i \"package*.json\" -i \"*.lock\" -i \"node_modules\" src/code-snippets"
+		"test-code-examples": "bash ../src/scripts/test-code-examples.sh",
+		"validate-code-snippets": "npx --yes bluehawk check --plugin bluehawk-languages.js --ignore 'node_modules' --ignore '.gitignore' --ignore '.DS_Store' --ignore 'package*.json' --ignore '*.lock' --ignore 'repositoryUrl.txt' --ignore 'tests' --ignore 'LICENSE' --ignore 'SECURITY.md' src/code-example-repositories 2>&1 | grep -v 'parsed file' | grep -v 'found binary file' || true"
 	},
 	"dependencies": {
 		"@astro-community/astro-embed-youtube": "^0.5.10",

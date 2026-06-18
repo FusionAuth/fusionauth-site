@@ -1,17 +1,48 @@
 ---
+// Local snippet loader for code stored in src/generated-code-snippets or src/code-example-repositories.
+// Auto-detects: paths containing ".snippet." read from generated snippets; all others read from code-example-repositories.
+
+import { CodeLanguage } from 'astro';
 import { Code } from 'astro:components';
 import fs from 'fs';
 import path from 'path';
 
-interface Props {
+export interface Props {
+  /**
+   * File path relative to src/code-example-repositories (source) or src/generated-code-snippets (snippet).
+   * Snippet paths contain ".snippet." in the filename, e.g. "webauthn/base64url-to-buffer.snippet.base64url-to-buffer.js"
+   * Source paths point directly to repo files, e.g. "fusionauth-quickstart-react-main/react-frontend-steps/1-customized/src/main.tsx"
+   */
   src: string;
-  lang?: string;
+
+  /**
+   * The language of your code.
+   * Bluehawk supports all languages listed here: https://github.com/shikijs/shiki/blob/main/docs/languages.md#all-languages
+   *
+   * @default "plaintext"
+   */
+  lang: CodeLanguage;
+
+  /**
+   * The title of the code section, shown as a piece of text above the block.
+   */
   title?: string;
 }
 
-const { src, lang = 'plaintext', title }: Props = Astro.props;
+const { src, lang = 'plaintext', title, ...rest } = Astro.props;
 
-const content = fs.readFileSync(path.resolve(src), { encoding: 'utf-8' }).trim();
+const snippetPath = src.includes('.snippet.')
+  ? path.join(process.cwd(), 'src', 'generated-code-snippets', src)
+  : path.join(process.cwd(), 'src', 'code-example-repositories', src);
+let snippetCode = '';
+
+try {
+  snippetCode = fs.readFileSync(snippetPath, 'utf-8').trim();
+}
+catch (err) {
+  throw new Error(`Failed to read local code file at [${snippetPath}]: ${(err as Error).message}`);
+}
+
 ---
-{title && <p><em>{title}</em></p>}
-<Code code={content} lang={lang} />
+{(title === '' || title === undefined) ? null : (<p data-title={title}><em>{title}</em></p>)}
+<Code code={snippetCode} lang={lang} {...rest}/>
