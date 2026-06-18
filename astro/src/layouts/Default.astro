@@ -154,8 +154,7 @@ const cleanedHtmlTitle = htmlTitle
   <!-- Left sidebar -->
   <div id="side-nav" class:list={sideNavStyles}>
     <script is:inline>
-      // restore the scroll position when a new page loads
-      document.addEventListener('DOMContentLoaded', () => {
+      const restoreSideBarPosition = () => {
         const sidebar = document.getElementById('side-nav');
         if (sidebar) {
           const savedPos = sessionStorage.getItem('sidebarScrollPos');
@@ -163,10 +162,16 @@ const cleanedHtmlTitle = htmlTitle
             sidebar.scrollTop = parseInt(savedPos, 10);
           }
         }
-      });
+      }
+
+      document.addEventListener('astro:after-swap', restoreSideBarPosition);
+
+      // restore the scroll position when a new page loads
+      document.addEventListener('DOMContentLoaded', restoreSideBarPosition);
 
       // save the scroll position in session storage right before leaving the current page
-      window.addEventListener('beforeunload', () => {
+      document.addEventListener('astro:before-preparation', () => {
+          console.log('saving scroll position');
         const sidebar = document.getElementById('side-nav');
         if (sidebar) {
           sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop.toString());
