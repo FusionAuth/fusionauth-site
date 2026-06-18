@@ -80,7 +80,7 @@ app.get('/oauth-callback',
     (req, res) => res.redirect('/')
 );
 
-app.get('/logout', (req, res) => {
+app.get('/logout', (req, res, next) => {
     // Clear the local Express session
     req.logout((err) => {
         if (err) return next(err);
