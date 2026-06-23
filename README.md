@@ -26,6 +26,7 @@ Here are the commands you can use with code snippets locally (in the `astro` fol
 - Test the examples: `npm run test-code-examples` (you need Docker installed)
 - Validate snippets: `npm run validate-code-snippets`
 - Generate snippets: `npm run generate-code-snippets`
+- Start a local development server and generate snippets first: `npm run dev`
 - Build the documentation: `npm run build`
 - Start a local server and then browse to localhost:3000 `npm run start`
 
