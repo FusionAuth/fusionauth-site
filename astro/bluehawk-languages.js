@@ -1,4 +1,6 @@
 export function register({ bluehawk }) {
+  // Bluehawk 1.6.0 only includes a small built-in language set; these cover
+  // common example-file extensions that otherwise warn or fail during snip/copy.
   bluehawk.addLanguage(["yml"], {
     languageId: "yaml",
     lineComments: [/#/],
