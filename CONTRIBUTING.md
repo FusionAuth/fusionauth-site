@@ -142,8 +142,8 @@ If it is inline (for a field), use <AvailableSince since="1.5.0"> - [AvailableSi
 - We currently use [FontAwesome v6](https://fontawesome.com/) to render icons, so you can use them to refer to UI buttons, like this:
     ```jsx
     <IconButton icon="edit" />
-    <IconButton icon="copy" />
-    <IconButton icon="fa-search" />
+    <IconButton icon="add" />
+    <IconButton icon="view" />
     ```
 
   ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
@@ -154,7 +154,7 @@ Import the component:
 import Icon from 'src/components/icon/Icon.astro';
 
 ...
-    <IconButton name="plus" />
+    <IconButton name="add" />
 ```
 
 Review [the component for all options and icons](astro/src/components/icon/Icon.astro).
