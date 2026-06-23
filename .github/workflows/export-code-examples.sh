@@ -9,6 +9,11 @@
 
 set -euo pipefail # crash on any error
 
+if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
+	echo "Usage: export-code-examples.sh <github-token> <commit-sha>" >&2
+	exit 1
+fi
+
 GITHUB_TOKEN="$1"
 DOCUMENTATION_COMMIT_HASH="$2"
 
@@ -41,6 +46,7 @@ for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
 		npx bluehawk copy --state published \
 			-i "repositoryUrl.txt" \
 			-i "tests" \
+			-i "node_modules" \
 			--output "$LOCAL_CLEANED_REPOSITORY_PATH" \
 			"$RELATIVE_LOCAL_REPOSITORY_PATH"
 		cd "$OLDPWD"
