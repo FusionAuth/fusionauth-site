@@ -1,0 +1,137 @@
+---
+publish_date: 2026-06-15
+title: Protect an MCP server with an Authorization Server
+description: MCP servers can expose sensitive data and business logic to AI agents. Learn how to lock them down using OAuth.
+authors: Dan Moore
+image: /img/blogs/protecting-mcp-server/protecting-an-mcp-server.png
+categories: Education
+tags: mcp, ai, authorization server, oauth, authorization, llm
+excerpt_separator: "{/* more */}"
+---
+
+
+The Model Context Protocol (MCP) is rapidly becoming the standardized API for large language models (LLMs) to interact with business logic. Like the early days of REST, builders are moving fast, often prioritizing functionality over security.
+
+We’re already seeing the security mistakes we made a decade ago showing up with this new technology. 
+
+{/* more */}
+
+You can see some of these in the MCP [security advisory list](https://github.com/modelcontextprotocol/servers/security/advisories), which lists path traversal, path validation, and injection issues. From [broken tenant isolation](https://www.bleepingcomputer.com/news/security/asana-warns-mcp-ai-feature-exposed-customer-data-to-other-orgs/), to [networking misconfiguration](https://composio.dev/content/mcp-vulnerabilities-every-developer-should-know), to [tool poisoning](https://invariantlabs.ai/blog/whatsapp-mcp-exploited), you want to avoid the negative impact. Because agents act autonomously, a misconfigured MCP server allows more damage than a REST endpoint.
+
+The simplest mitigation? Require authentication and authorization using an Authorization Server (AS). Lock down your MCP server if it provides access to anything confidential, or if the data and functionality it offers varies depending on the user making the request. You don't need authentication for public documentation or shared resources (like our [FusionAuth docs MCP server](/docs/get-started/download-and-install/development/docs-mcp-server)), but anything beyond that needs a proper security layer.
+
+Actually, they need two. One in front of the MCP server, which is what this post will discuss. And one behind it, which is touched on but is not covered by the standard.
+
+The MCP specification does not enforce security at the protocol level, so "left to the implementer" often becomes "skipped until a breach forces re-evaluation". Don't let that be you.
+
+Luckily, MCP does specify a way for you to secure your remote server with OAuth. I guess we learned something from the mistakes of the REST era.
+
+This approach delegates authentication to an AS, which verifies who the user is and what their permissions are before the request hits your server. This is done through the OAuth Authorization Code grant, using well-known concepts like scopes and consents. While there's an [MCP extension which allows for client credentials access](https://modelcontextprotocol.io/extensions/auth/oauth-client-credentials), this post focuses on the more typical "on-behalf-of" flow, where the user explicitly grants the MCP client access to the MCP server on their behalf.
+
+Here is the flow that gets an MCP client authenticated and authorized to use your protected remote MCP server:
+
+1. MCP server discovery
+1. MCP client registration
+1. user authentication 
+1. grant of consent
+1. access token issuance
+1. access token validation 
+1. use the MCP
+
+Let's take a look at each of these.
+
+### MCP Server Discovery
+
+First, the MCP client (like Claude Desktop or an AI agent) needs to be configured with the location of your MCP server. How this is done depends on your MCP client, but can range from editing a JSON file to adding a URL to a form.
+
+When the client first hits your MCP server, the server says, “I don’t know you. Go here to get me credentials”. [RFC 9728](https://datatracker.ietf.org/doc/html/rfc9728) outlines the technical details of this redirection.
+
+This response sends the client to an AS trusted by the MCP server.
+
+### Client Registration
+
+When the MCP client gets to the AS, the AS needs to know some things about it.
+
+There are a few ways for this to happen. In the [order of evaluation per the spec](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization#client-registration-approaches):
+
+1. **Pre-register the MCP client with the AS**. This means that some other process created a link between the MCP client and AS. This is referred to as "out of band" but really means "we don't know and we don't care how it happened, as long as it happened". This is similar to showing up to a formal gala party and flashing your invitation. You've been invited and are known before you talk to the person at the door.
+1. **Register the MCP client when it first interacts with the AS**. There are two technical paths, [Client ID Metadata Documents (CIMD)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-00) and [Dynamic Client Registration (DCR)](https://datatracker.ietf.org/doc/html/rfc7591). The former is newer but seems to be the future, with the latter being explicitly retained for backwards compatibility. This is similar to a bouncer checking a driver's license at a bar. As long as you meet certain criteria, you're in.
+1. **Prompt the user for credentials.** I haven't seen this in the wild, but it pushes the coordination work onto the human. This is like showing up to a party without an invitation and having the host come to the door to personally vouch for you.
+
+Which client registration process you choose affects the security/friction tradeoff.
+
+* Using the pre-registration process means that you'll know which MCP clients can interact with your server, but you'll have to configure each client in advance.
+
+* Using CIMD or DCR reduces friction by establishing the client just-in-time: an MCP client can register itself even if it has never before used the AS. But don't worry, these methods don't expose your endpoint to any arbitrary client:
+
+  * the user still must have a valid account at the AS and successfully authenticate
+  * they both allow for controlling which MCP clients can register, though that process is not entirely defined in either specification
+
+### User Authentication
+
+After the AS recognizes the MCP client, the user needs to log in.
+
+The authentication process can take any form which satisfies the AS: password, passkey, third-party single sign-on (SSO), or multi-factor authentication (MFA). The MCP client doesn't really care.
+
+### Grant of Consent
+
+Typically, the AS presents the user with a consent screen asking for the [OAuth scopes](/blog/how-to-design-oauth-scopes) that the MCP client needs. While it depends on your implementation, a single scope corresponds to a set of tools that the MCP client can access.
+
+For example, a scope of `account:read` could map to the following fictitious endpoints and methods:
+
+* `GET /api/v1/account`: retrieve the authenticated user's full account profile
+* `GET /api/v1/account/usage`: fetch usage metrics for an account 
+* `GET /api/v1/account/billing`: read billing details
+* `GET /api/v1/account/members`: list the users/members associated with the account, if any
+* `GET /api/v1/account/preferences`: retrieve account-level preferences and config settings
+
+A scope of `account:write` might, on the other hand, grant access to endpoints and methods like `PUT /api/v1/account` or `POST /api/v1/account/members`.
+
+You can also include more typical scopes like `offline_access` for refresh tokens and OIDC scopes such as `profile`.
+
+Scopes can be required or optional, but the user should always have the option to cancel the authentication if they feel the permissions requested by the MCP client are too broad.
+
+### Access Token Issuance 
+
+Upon successful user authentication and consent, the AS issues a time-bound OAuth access token to the client. The MCP client stores it and then presents this token to the protected MCP server.
+
+One of the security benefits of MCP when compared with other agentic tooling is that the MCP client holds the token and does not share the token with the LLM. Instead, the token is transparently added to requests by the MCP client. 
+
+As a result, an attacker can't trick an LLM into directly revealing the credential.
+
+### Access Token Validation
+
+When it receives the token, the MCP server validates the token, checking fields like the audience, expiration time, issuer, and allowed scopes.
+
+For example, if the AS issued a JWT as an access token, the MCP server should also follow [JWT best practices like verifying the signature](/articles/tokens/building-a-secure-jwt).
+
+
+### Accessing the MCP Functionality
+
+If the token is valid, the MCP server proceeds, executing the requested call based on the verified identity. The data or functionality that the MCP client needs for the user's original request is now available.
+
+As mentioned above, a critical consideration that this post isn't going to spend time on is the authentication and authorization layers behind the MCP server. It's being skipped for these reasons:
+
+* it is specific to your functionality or data
+* it probably exists already
+* it's not deeply covered in the MCP specification
+
+The spec has only one piece of advice for those deeper layers: don't pass the access token presented to the MCP server to downstream services. But correctly implementing this authorization model is critical to the safety of your data.
+
+Consider which users should have access to which services, data, and functionality before you expose anything as an MCP server.
+
+## What's Next?
+
+MCP is moving fast, and the security mistakes of the REST era are already showing up in the wild. The good news is that the MCP specification doesn't leave you to invent a security model from scratch. It leans on OAuth, a battle-tested standard with years of expert scrutiny and a mature ecosystem behind it.
+
+By delegating authentication and authorization to an AS, you get verified identities, user-controlled consent, and time-limited access tokens.
+
+A few principles to carry forward as you build out your MCP server:
+
+* Limit scopes. An MCP client requesting broad permissions is asking for the AI equivalent of `root`. Design your scopes around the minimum access each client actually needs.
+* Treat unauthenticated servers as a deliberate choice. An open, unauthenticated MCP server is appropriate for public resources like documentation. Anything more needs a proper security layer.
+* Don't stop at the MCP boundary. The specification outlines how OAuth secures the client-to-server handshake, but your MCP server probably calls downstream services of its own. You are responsible for securing those connections too.
+
+The tools and infrastructure are here. Secure your MCP server before something goes wrong, not after.
+
+[Learn how to protect your MCP server with FusionAuth](/docs/extend/examples/controlling-access-mcp-server).
