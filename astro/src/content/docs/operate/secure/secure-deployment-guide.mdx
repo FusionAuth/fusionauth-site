@@ -7,11 +7,15 @@ import Breadcrumb from 'src/components/Breadcrumb.astro';
 
 This guide covers operational security hardening for FusionAuth in production. It is organized into three parts:
 
-- **Universal Hardening** — applies to every FusionAuth deployment regardless of hosting model.
-- **Self-Hosted Infrastructure** — applies only when you operate the servers, database, and search engine yourself.
-- **Deployment-Specific Guidance** — additional hardening for FusionAuth Cloud, Docker, Kubernetes, bare metal, multi-node clusters, and air-gapped environments.
+* **Universal Hardening** — applies to every FusionAuth deployment regardless of hosting model.
+* **Self-Hosted Infrastructure** — applies only when you operate the servers, database, and search engine yourself.
+* **Deployment-Specific Guidance** — additional hardening for FusionAuth Cloud, Docker, Kubernetes, bare metal, multi-node clusters, and air-gapped environments.
 
 Within each part, sections are independent — implement what applies to your deployment. The deployment-specific sections build on top of the universal and self-hosted sections, so start with those before moving to your deployment type.
+
+<Aside type="note">
+The [FusionAuth CLI](/docs/customize/cli) can validate that some recommended configuration settings have been applied to an instance. Use it to automate checks against the guidance in this document.
+</Aside>
 
 ## Universal Hardening
 
@@ -27,7 +31,7 @@ On a fresh FusionAuth install, the initial setup creates a single User with the 
 Application-level MFA policy overrides (requiring MFA only for the FusionAuth Admin Application while leaving it optional for other Applications) require the Enterprise plan. On other plans, MFA policy is Tenant-wide.
 </Aside>
 
-**Use least-privilege admin roles.** FusionAuth provides [over 30 built-in roles](/docs/get-started/core-concepts/roles) for the Admin Application, including `admin` (full access), `user_manager`, `user_support_manager` (tier-1 support), `audit_log_viewer`, `api_key_manager`, and others. Assign Users the minimum role required for their function rather than granting `admin` to everyone. Custom admin roles are not supported — use the built-in set.
+**Use least-privilege admin roles.** FusionAuth provides [built-in roles](/docs/get-started/core-concepts/roles) for the Admin Application, including `admin` (full access), `user_manager`, `user_support_manager` (tier-1 support), `audit_log_viewer`, `api_key_manager`, and others. Assign Users the minimum role required for their function rather than granting `admin` to everyone. Custom admin roles are not supported — use the built-in set.
 
 ### Password Policy
 
@@ -37,7 +41,7 @@ Navigate to <Breadcrumb>Tenants -> Your Tenant -> Password</Breadcrumb> to confi
 
 | Setting | Default | Recommendation |
 |---------|---------|----------------|
-| Minimum length | 8 | 10–12 for User accounts, 16+ for admin and service accounts |
+| Minimum length | 8 | 10–12 characters. For admin and service accounts, use 16+ characters — this is organizational policy, not enforced by FusionAuth (password policy is Tenant-wide) |
 | Require mixed case | Off | Enable |
 | Require number | Off | Enable |
 | Require non-alphanumeric | Off | Consider enabling |
@@ -45,6 +49,8 @@ Navigate to <Breadcrumb>Tenants -> Your Tenant -> Password</Breadcrumb> to confi
 | Breached password detection | Off | Enable if licensed (Starter plan and above) |
 
 **Breached password detection** checks passwords against a dataset of known compromised credentials in real time. It is available on any paid plan (Starter and above) and requires outbound network connectivity to FusionAuth servers. When enabled, it blocks compromised passwords at registration and password change. For login, you can configure the behavior to record the event, notify the User via email, or force a mandatory password reset before granting access. See [Breached Password Detection](/docs/operate/secure/breached-password-detection) for details.
+
+FusionAuth also supports passwordless authentication methods including [passkeys/WebAuthn](/docs/lifecycle/authenticate-users/passwordless/webauthn-passkeys) and Identity Provider login (OIDC, SAML). The [Login Validation lambda](/docs/extend/code/lambdas/login-validation) can enforce which authentication methods are permitted per-Application.
 
 ### Session and Token Management
 
@@ -68,30 +74,38 @@ Refresh tokens control how long a User stays authenticated without re-entering c
 
 #### SSO Session Timeout
 
-FusionAuth creates an SSO session when the `rememberDevice` parameter is set to `true` during login. On the hosted login page, this is controlled by the "Keep me signed in" checkbox — though the Theme can hardcode this value to always create SSO sessions without user interaction. SSO sessions allow authentication to other Applications in the same Tenant without re-entering credentials. Configure the session timeout at <Breadcrumb>Tenants -> Your Tenant -> OAuth -> Session timeout</Breadcrumb>. The default is 3600 seconds (1 hour). See [Single Sign-On](/docs/lifecycle/authenticate-users/single-sign-on) for details.
+FusionAuth creates an SSO session when the `rememberDevice` parameter is set to `true` during login. On the hosted login page, this is controlled by the "Keep me signed in" checkbox — though the Theme can hardcode this value to always create SSO sessions without user interaction. SSO sessions allow authentication to other Applications in the same Tenant without re-entering credentials. Configure the session timeout at <Breadcrumb>Tenants -> Your Tenant -> OAuth -> Session timeout</Breadcrumb>. See [Single Sign-On](/docs/lifecycle/authenticate-users/single-sign-on) for details.
+
+Shorter timeouts reduce the window during which a stolen session cookie grants access to other Applications in the Tenant, but require Users to re-authenticate more frequently. 30 minutes to 2 hours is typical for production deployments.
 
 #### Invalidating Sessions
 
-FusionAuth does not provide built-in concurrent session limiting. To enforce single-session access, listen for the `user.login.success` [webhook](/docs/extend/events-and-webhooks/) event and revoke existing refresh tokens for the User via the API.
+FusionAuth does not provide built-in concurrent session limiting. To enforce single-session access, listen for the `user.login.success` [webhook](/docs/extend/events-and-webhooks) event and revoke existing refresh tokens for the User via the API.
 
 To terminate all active sessions for a specific User, revoke their refresh tokens: navigate to <Breadcrumb>Users -> [User]</Breadcrumb> and select **Delete All Refresh Tokens**, or call `DELETE /api/jwt/refresh?userId={userId}`.
+
+<Aside type="note">
+The above applies when using centralized sessions. With application-managed sessions, FusionAuth does not track session lifetime — revoking refresh tokens does not automatically invalidate sessions in other Applications. See [Logout and Session Management](/docs/lifecycle/authenticate-users/logout-session-management) for details.
+</Aside>
 
 ### Login Form Security
 
 FusionAuth's hosted login pages provide several protections against account enumeration by default:
 
-- **Login failure messages.** The default error message is the same whether the username does not exist or the password is incorrect.
-- **Forgot password flow.** The response is identical regardless of whether the submitted email address exists. If the email does not match a User, no email is sent, but the response is the same.
+* **Login failure messages.** The default error message is the same whether the username does not exist or the password is incorrect.
+* **Forgot password flow.** The response is identical regardless of whether the submitted email address exists. If the email does not match a User, no email is sent, but the response is the same.
+
+Self-service registration may also reveal whether an account already exists when a duplicate email is submitted. Test this behavior with your configuration and Theme.
 
 Two account states produce distinct responses on the hosted login page that confirm an account exists:
 
-- **Locked accounts.** The default Theme displays a distinct locked account message. To normalize this, edit the locked account message in your Theme's message properties to use the same text as the generic login failure message. See the [FusionAuth localization repository](https://github.com/FusionAuth/fusionauth-localization) for the default message keys.
-- **Email verification required.** FusionAuth displays a verification prompt instead of a login failure. You can customize the page in your Theme, but you cannot suppress the flow without disabling email verification.
+* **Locked accounts.** The default Theme displays a distinct locked account message. To normalize this, edit the locked account message in your Theme's message properties to use the same text as the generic login failure message. See the [FusionAuth localization repository](https://github.com/FusionAuth/fusionauth-localization) for the default message keys.
+* **Email verification required.** FusionAuth displays a verification prompt instead of a login failure. You can customize the page in your Theme, but you cannot suppress the flow without disabling email verification.
 
 Two additional states produce distinct responses only after valid credentials have been submitted. These confirm that the credentials are correct, not merely that an account exists:
 
-- **Multi-factor authentication.** The MFA challenge screen appears after successful first-factor authentication. This flow cannot be hidden without disabling MFA.
-- **Password change required.** A redirect to the password change form occurs after successful authentication. This flow cannot be hidden without disabling forced password changes.
+* **Multi-factor authentication.** The MFA challenge screen appears after successful first-factor authentication. This flow cannot be hidden without disabling MFA.
+* **Password change required.** A redirect to the password change form occurs after successful authentication. This flow cannot be hidden without disabling forced password changes.
 
 These post-authentication flows are standard in identity providers. Hiding them is not recommended, as doing so would degrade core security functionality.
 
@@ -101,7 +115,7 @@ In a multi-tenant FusionAuth deployment, each Tenant has its own Applications wi
 
 When `/oauth2/authorize` receives a valid `client_id`, FusionAuth renders a login page. When it receives an invalid `client_id`, FusionAuth renders an error page. This differential response is required by the OAuth 2.0 specification ([RFC 6749 §4.1.2.1](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1)) — the authorization server must not redirect when the client identifier is invalid.
 
-**Server-side tenant resolution.** Your application should resolve the Tenant and `client_id` on the server side before redirecting the User to FusionAuth. Users should never construct or see the `/oauth2/authorize` URL directly. When your application cannot resolve a Tenant identifier, return the same response as a valid Tenant rather than forwarding the unresolved request to FusionAuth.
+**Server-side tenant resolution.** Your application should resolve the Tenant and `client_id` on the server side before redirecting the User to FusionAuth. Users should never construct or see the `/oauth2/authorize` URL directly. When your application cannot resolve a Tenant identifier, return the same response as a valid Tenant rather than forwarding the unresolved request to FusionAuth. You can verify tenant resolution by retrieving [the Application by ID](/docs/apis/applications#retrieve-an-application) and confirming the `tenantId` in the response matches the expected Tenant.
 
 If you are using the [Login API](/docs/apis/login) directly, your application controls the full response and can normalize error messages and timing. If you are using [hosted login pages](/docs/get-started/core-concepts/integration-points#hosted-login-pages), Tenant resolution must happen in your application before the redirect to `/oauth2/authorize`.
 
@@ -133,11 +147,11 @@ Applications using `http://` redirect URIs are especially exposed — authorizat
 
 ### CORS Configuration
 
-FusionAuth's CORS filter is **disabled by default**. When disabled, FusionAuth does not send CORS headers — cross-origin API calls from browser Applications will fail.
+FusionAuth's CORS filter is **disabled by default**. When disabled, FusionAuth does not send CORS headers — cross-origin API calls from browser applications will fail.
 
-If your Application makes direct API calls to FusionAuth from a browser (for example, a single-page application calling `/oauth2/token`), enable and configure the CORS filter at <Breadcrumb>Settings -> System -> CORS</Breadcrumb>.
+If your application makes direct API calls to FusionAuth from a browser (for example, a single-page application calling `/oauth2/token`), enable and configure the CORS filter at <Breadcrumb>Settings -> System -> CORS</Breadcrumb>.
 
-When enabled, **Allowed methods** defaults to `GET` and `OPTIONS` only. You must add `POST` for the token endpoint and any other methods your Application uses.
+When enabled, **Allowed methods** defaults to `GET` and `OPTIONS` only. You must add `POST` for the token endpoint and any other methods your application uses.
 
 <Aside type="caution">
 Do not use `*` as an allowed origin when **Allow credentials** is enabled. The CORS specification forbids this combination and browsers will reject the response. List each Application origin explicitly.
@@ -147,22 +161,22 @@ If you encounter unexpected CORS 403 errors, enable **Debug mode** under CORS se
 
 Server-side OAuth flows (authorization code with a backend) do not require CORS configuration because the browser never makes direct cross-origin requests to FusionAuth.
 
+<Aside type="note">
+CORS settings are system-wide and apply across all Tenants. There is no per-Tenant CORS override. If different Applications in different Tenants require different CORS origins, all origins must be listed in the single CORS configuration.
+</Aside>
+
 ### Cryptographic Key Management
 
 FusionAuth manages cryptographic keys through [Key Master](/docs/operate/secure/key-master) at <Breadcrumb>Settings -> Key Master</Breadcrumb>. Key Master handles RSA, ECDSA, HMAC, and EdDSA keys used for JWT signing, SAML assertions, and webhook signatures.
-
-<Aside type="version">
-EdDSA (Ed25519) key support is available since version `1.62.0`.
-</Aside>
 
 #### Rotating Signing Keys
 
 To rotate a JWT signing key with no downtime:
 
 1. Create the new asymmetric key in Key Master with the same algorithm as the current key. The key is available in `/.well-known/jwks.json` alongside the existing key. (HMAC keys are not published to the JWKS endpoint.)
-3. Update the Tenant or Application JWT configuration to sign new tokens with the new key.
-4. Wait until all tokens signed by the old key have expired (at minimum, the access token TTL).
-5. Remove the old key assignment and delete it from Key Master.
+2. Update the Tenant or Application JWT configuration to sign new tokens with the new key.
+3. Wait until all tokens signed by the old key have expired (at minimum, the access token TTL).
+4. Remove the old key assignment and delete it from Key Master.
 
 Resource servers that validate tokens by fetching the JWKS endpoint will see both keys during the overlap window and can verify tokens signed by either key.
 
@@ -180,13 +194,19 @@ FusionAuth API Keys should follow the principle of least privilege. Navigate to 
 
 **Endpoint restrictions.** The **Endpoints** section in the key editor lists every API endpoint with toggles for each HTTP method. Restrict each key to only the endpoints it needs. An API Key with no endpoint restrictions is a super-key with full API access.
 
-**Key rotation.** FusionAuth does not enforce automatic API Key expiration. To rotate a key with no downtime, create the new key, update all consumers, verify the old key is no longer in use, then delete it. Running two keys in parallel during the transition avoids service interruption.
+**Non-retrievable keys.** When creating an API Key, set `retrievable` to `false`. The key value is returned only once at creation and cannot be retrieved afterward. Use this for keys distributed to external consumers.
+
+**Key expiration.** Set an expiration time on API Keys to limit their useful lifetime. Expired keys return a `401` response.
+
+**Key rotation.** To rotate a key with no downtime, create the new key, update all consumers, verify the old key is no longer in use, then delete it. Running two keys in parallel during the transition avoids service interruption.
+
+**Emergency access key.** Maintain one unrestricted API Key stored securely outside your normal infrastructure (for example, in a hardware security module or break-glass vault). This key provides recovery access if a misconfiguration locks you out of the Admin UI or OAuth endpoints. Do not use this key for routine operations.
 
 ### Monitoring and Audit Logging
 
 #### Webhook Configuration
 
-FusionAuth delivers security events via [webhooks](/docs/extend/events-and-webhooks/). Setting up webhooks requires two steps:
+FusionAuth delivers security events via [webhooks](/docs/extend/events-and-webhooks). Setting up webhooks requires two steps:
 
 1. **Create the webhook.** Navigate to <Breadcrumb>Settings -> Webhooks</Breadcrumb> and add a new webhook with the target URL and signing secret.
 2. **Enable events at the Tenant level.** Navigate to <Breadcrumb>Tenants -> Your Tenant -> Webhooks</Breadcrumb> and enable each event type you want to receive.
@@ -197,38 +217,57 @@ Both steps are required. If you create a webhook but do not enable the event typ
 
 #### Key Events to Monitor
 
-- `user.login.failed` — repeated failures from the same IP or targeting the same account may indicate credential stuffing or brute-force attacks.
-- `user.login.success` — monitor for logins from unexpected locations or at unusual times.
-- `user.login.suspicious` — fires when Advanced Threat Detection identifies a login as a potential threat. Requires the Enterprise plan.
-- `user.password.breach` — fires when a breached password is detected during login. Requires any paid plan (Starter and above).
+* `user.login.failed` — repeated failures from the same IP or targeting the same account may indicate credential stuffing or brute-force attacks.
+* `user.login.success` — monitor for logins from unexpected locations or at unusual times.
+* `user.login.suspicious` — fires when Advanced Threat Detection identifies a login as a potential threat. Requires the Enterprise plan.
+* `user.password.breach` — fires when a breached password is detected during login. Requires any paid plan (Starter and above).
 
 #### Webhook Security
 
-- Use HTTPS endpoints for all webhook URLs.
-- Configure a webhook signing key so your receiver can verify that events originated from FusionAuth.
-- Validate the signature on every received event before processing.
+* Use HTTPS endpoints for all webhook URLs.
+* Configure a webhook signing key so your receiver can verify that events originated from FusionAuth.
+* Validate the signature on every received event before processing.
+* Restrict your webhook receiver to accept connections only from your FusionAuth instance's IP addresses.
+
+If you are forwarding events to a SIEM or logging system, configure the events as **non-transactional**. Transactional events block the triggering operation (such as a login) until the webhook completes — a temporarily unavailable log collector should not prevent Users from authenticating.
 
 See [Securing Webhooks](/docs/extend/events-and-webhooks/securing) for details.
 
 #### Audit Log
 
-The FusionAuth audit log records administrative actions such as User creation, Application configuration changes, and key modifications. Review this log regularly and forward it to a centralized logging system.
+The FusionAuth audit log records administrative actions performed through the Admin UI — such as User creation, Application configuration changes, and key modifications. Actions performed via the API are not automatically recorded in the audit log. To capture API activity, supplement the audit log with reverse proxy access logs or use the [Audit Log API](/docs/apis/audit-logs) to insert custom entries from your application. Review the audit log regularly and forward it to a centralized logging system.
 
 <Aside type="note">
 In multi-tenant deployments, audit log records are not isolated by Tenant. All administrative actions across all Tenants appear in the same audit log. If your compliance requirements mandate Tenant-isolated audit trails, consider running separate FusionAuth instances per Tenant.
 </Aside>
 
+### IP Access Control Lists (Enterprise)
+
+Enterprise plan customers can restrict access to OAuth, account, and registration endpoints by IP address. Navigate to <Breadcrumb>Applications -> Your App -> Security</Breadcrumb> to configure an IP access control list per Application.
+
+<Aside type="note">
+IP ACLs control access to hosted login pages and OAuth endpoints — not the Admin UI. To restrict Admin UI access by IP, configure your reverse proxy to block requests to `/admin/` from unauthorized source IPs (see [Reverse Proxy](#reverse-proxy)).
+</Aside>
+
+### Password Hashing Plugins
+
+If you use [custom password hashing plugins](/docs/extend/code/password-hashes/custom-password-hashing) (typically for migrating Users from legacy systems), audit the plugin code thoroughly. Plugins execute inside the FusionAuth runtime and process plaintext passwords — a malicious or poorly written plugin could exfiltrate credentials.
+
 ## Self-Hosted Infrastructure
 
-The following applies only when you operate the servers, database, and search engine yourself. If you are using [FusionAuth Cloud](/docs/get-started/run-in-the-cloud/cloud), these concerns are managed for you — skip to [Deployment-Specific Guidance](#deployment-specific-guidance).
+The following applies only when you operate the servers, database, and search infrastructure yourself. If you are using [FusionAuth Cloud](/docs/get-started/run-in-the-cloud/cloud), these concerns are managed for you — skip to [Deployment-Specific Guidance](#deployment-specific-guidance).
+
+FusionAuth configuration can be set through environment variables, Java system properties, or the `fusionauth.properties` file. Environment variables take precedence, followed by system properties, then the properties file. This guide uses `fusionauth.properties` syntax in examples — the equivalent environment variable name is the property name uppercased with periods and dashes replaced by underscores (for example, `database.url` becomes `DATABASE_URL`). See the [configuration reference](/docs/reference/configuration) for details.
 
 ### Reverse Proxy
 
-Running FusionAuth behind a reverse proxy is the recommended production architecture. While FusionAuth can terminate TLS directly (via `fusionauth-app.https.enabled`, available since version 1.43.0 — see the [configuration reference](/docs/reference/configuration)), most production deployments handle TLS termination at the proxy layer. See the [proxy setup guide](/docs/operate/deploy/proxy-setup) for base configuration.
+Running FusionAuth behind a reverse proxy is the recommended production architecture. While FusionAuth can terminate TLS directly (via `fusionauth-app.https.enabled` — see the [configuration reference](/docs/reference/configuration)), most production deployments handle TLS termination at the proxy layer. See the [proxy setup guide](/docs/operate/deploy/proxy-setup) for base configuration.
 
 Your reverse proxy should enforce TLS 1.2 or higher for all client-facing traffic and redirect HTTP requests to HTTPS. FusionAuth communicates with the proxy over HTTP on a private network — ensure this internal traffic is not exposed to public networks.
 
-**Restrict Admin UI access.** FusionAuth's IP access control lists apply to OAuth, account, and registration endpoints — not to the Admin UI directly. To restrict Admin UI access by IP, configure your reverse proxy to block requests to `/admin/` from unauthorized source IPs.
+**Restrict Admin UI access.** To restrict Admin UI access by IP, configure your reverse proxy to block requests to `/admin/` from unauthorized source IPs.
+
+If your custom Theme includes security-relevant modifications (such as consent flows or additional authentication prompts), block the `bypassTheme` query parameter at your reverse proxy. This parameter renders the default FusionAuth Theme, bypassing any customizations.
 
 ### Trusted Proxy Configuration
 
@@ -236,27 +275,23 @@ FusionAuth uses the `X-Forwarded-For` header to determine client IP addresses fo
 
 Navigate to <Breadcrumb>Settings -> System -> Networking</Breadcrumb> and set the trust policy to `Only Configured`. Add the IP addresses of your reverse proxy servers to the trusted proxies list. See [Networking Configuration](/docs/operate/secure/networking) for details.
 
-<Aside type="version">
-The trusted proxy configuration is available since version `1.49.0`.
-</Aside>
-
 <Aside type="caution">
 If you have an IP-based access control list configured on an Application, saving an incorrect set of trusted proxies can make OAuth endpoints inaccessible. Verify your proxy IP addresses and ensure you have a direct-access fallback before changing the trust policy.
 </Aside>
 
 ### Pre-Authentication Rate Limiting
 
-FusionAuth's [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) provides rate limiting for identity-scoped events: failed logins, forgot password requests, email verification, passwordless login, registration verification, two-factor code delivery, and phone verification. These rate limits apply per email address or phone number.
+FusionAuth's [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) provides rate limiting for identity-scoped events. These rate limits apply per email address or phone number.
 
 Requests that do not involve an identity — such as probing `/oauth2/authorize` with invalid `client_id` values to enumerate Tenants — are not covered by these rate limits. Configure per-IP rate limiting in your reverse proxy or WAF for the `/oauth2/` endpoints to protect against this type of brute-force probing.
 
 <Aside type="caution">
-Set the burst value high enough to accommodate legitimate traffic spikes. In enterprise SSO deployments, a single User opening multiple Applications simultaneously generates a burst of concurrent requests to `/oauth2/authorize`. A burst value that is too low causes intermittent 503 errors on login initiation.
+Set the burst value high enough to accommodate legitimate traffic spikes. In enterprise SSO deployments, a single User opening multiple Applications simultaneously generates a burst of concurrent requests to `/oauth2/authorize`. A burst value that is too low causes intermittent errors.
 </Aside>
 
 ### Database Connection Security
 
-FusionAuth connects to your database (PostgreSQL or MySQL) over an unencrypted connection by default. Enable TLS by appending SSL parameters to the JDBC URL in `fusionauth.properties`:
+FusionAuth connects to your database (PostgreSQL or MySQL) over an unencrypted connection by default. Enable TLS by appending SSL parameters to the JDBC URL:
 
 ```properties
 database.url=jdbc:postgresql://hostname:5432/fusionauth?ssl=true&sslmode=verify-full
@@ -270,21 +305,21 @@ If you deploy FusionAuth via Helm, the chart provides `database.tls` and `databa
 
 For MySQL deployments on managed services that require explicit TLS version selection, append `enabledTLSProtocols=TLSv1.2` to the connection URL or set `FUSIONAUTH_APP_ADDITIONAL_JAVA_ARGS="-Djdk.tls.client.protocols=TLSv1.2"`.
 
-### Search Engine Hardening
+### Search Service Hardening
 
 FusionAuth's bundled search service (Elasticsearch) stores a full index of User data — email addresses, usernames, User Ids, registration data, and custom data. Unauthenticated access to this index is a critical exposure.
 
 The bundled search binds to localhost (`_local_`) by default on ports `9020` (cluster coordination) and `9021` (HTTP). For single-node deployments, this is the correct configuration — no external ports should be opened.
 
-For external Elasticsearch or OpenSearch clusters, HTTP basic authentication is supported (since version 1.16.0). Credentials are embedded in the URL and stored in plaintext in `fusionauth.properties` — protect this file with appropriate filesystem permissions (see [Bare Metal and Package Installs](#bare-metal-and-package-installs)):
+For external Elasticsearch or OpenSearch clusters, HTTP basic authentication is supported. Credentials are embedded in the URL and stored in plaintext in configuration — protect this configuration with appropriate access controls (see [Bare Metal and Package Installs](#bare-metal-and-package-installs)):
 
 ```properties
 fusionauth-app.search-servers=https://user:password@myelasticsearchcluster.com:9200
 ```
 
-FusionAuth supports Elasticsearch 7.6.1–7.17.x and OpenSearch 2.x (since version 1.42.0). See the [system requirements](/docs/get-started/download-and-install/system-requirements) for current compatibility.
+See the [system requirements](/docs/get-started/download-and-install/system-requirements) for current search engine version compatibility.
 
-If the external cluster uses a custom CA certificate, import it into the Java truststore. See [Custom Certificate Authority](/docs/operate/secure/#custom-certificate-authority).
+If the external cluster uses a custom CA certificate, import it into the Java truststore. See [Custom Certificate Authority](/docs/operate/secure#custom-certificate-authority).
 
 ### HTTP Security Headers
 
@@ -303,11 +338,11 @@ Do not add a second `X-Frame-Options` header — FusionAuth already sets this an
 If you need to allow FusionAuth login pages to load in an iframe for a specific origin, add the URL to **Authorized request origin URLs** in the Application's OAuth configuration. The recommended approach for token renewal is to use refresh tokens rather than iframe-based silent renewal.
 </Aside>
 
-**Content Security Policy.** FusionAuth's default Themes use inline JavaScript and inline styles. A strict CSP that blocks `unsafe-inline` for `script-src` will break the hosted login pages. Audit your Theme for inline scripts before deploying a CSP. Start with `Content-Security-Policy-Report-Only` to identify violations before enforcing restrictions. See [Advanced Themes](/docs/customize/look-and-feel/advanced-themes/) for details on custom Theme development.
+**Content Security Policy.** FusionAuth's default Themes use inline JavaScript and inline styles. A strict CSP that blocks `unsafe-inline` for `script-src` will break the hosted login pages. Audit your Theme for inline scripts before deploying a CSP. Start with `Content-Security-Policy-Report-Only` to identify violations before enforcing restrictions. See [Advanced Themes](/docs/customize/look-and-feel/advanced-themes) for details on custom Theme development.
 
 ### Kickstart Security
 
-[Kickstart](/docs/get-started/download-and-install/development/kickstart) is a JSON-based bootstrapping mechanism that pre-configures FusionAuth on first boot. It runs only when no API Keys, Users, or Tenants exist — it will not execute on a previously configured instance.
+[Kickstart](/docs/get-started/download-and-install/development/kickstart) is a JSON-based bootstrapping mechanism that pre-configures FusionAuth on first boot. It is primarily used in development and CI/CD environments, not production. Kickstart runs only when no API Keys, Users, or Tenants exist — it will not execute on a previously configured instance.
 
 Kickstart files can contain sensitive data: API Keys, User passwords, client secrets, and any value you would otherwise submit via the API. Use environment variable substitution to keep secrets out of the file:
 
@@ -324,50 +359,23 @@ After initial provisioning, remove or restrict access to the Kickstart file on d
 
 ### Upgrades and Patching
 
-Keep FusionAuth up to date to receive security fixes. The upgrade process:
+Keep FusionAuth up to date to receive security fixes. Always back up the database before upgrading — database migrations are forward-only with no automated rollback. Review release notes for breaking changes and test in a non-production environment before upgrading production. See the [upgrade guide](/docs/operate/deploy/upgrade) for detailed procedures.
 
-1. **Back up the database.** Database migrations are forward-only — there is no automated rollback.
-2. **Review release notes** for every version between your current version and the target. Pay attention to breaking changes in Themes, APIs, and configuration.
-3. **Test in a non-production environment** before upgrading production, especially when skipping multiple versions.
-4. **Stop FusionAuth, deploy the new version, and start it.** Database migrations run automatically on startup.
-
-FusionAuth supports upgrading across multiple minor versions, though the recommended practice is to migrate one minor version at a time and test at each step. Custom Themes may break when skipping versions that introduced new FreeMarker templates. If the hosted login page returns a 500 error after upgrading, append `?bypassTheme=true` to the URL to access the default Theme and diagnose the issue.
-
-To roll back a failed upgrade, stop FusionAuth, restore the pre-upgrade database backup, and redeploy the previous version.
-
-**Monitoring for security releases.** FusionAuth publishes security-relevant updates in the [release notes](/docs/release-notes). Monitor release notes to stay informed of security fixes. See the [upgrade guide](/docs/operate/deploy/upgrade) for detailed procedures.
+**Monitoring for security releases.** Subscribe to the [release notes RSS feed](/docs/releases.xml) for automated notifications. FusionAuth customers can join the security announcement email list by logging into [account.fusionauth.io](https://account.fusionauth.io) and assigning the `Security Officer` role to their account — see the [security page](/docs/operate/secure) for details.
 
 ## Deployment-Specific Guidance
 
 ### FusionAuth Cloud
 
-[FusionAuth Cloud](/docs/get-started/run-in-the-cloud/cloud) is a fully managed deployment. FusionAuth operates the database, search engine, TLS certificates, backups, and infrastructure security. Your responsibility is limited to product-level configuration.
+[FusionAuth Cloud](/docs/get-started/run-in-the-cloud/cloud) is a fully managed deployment. FusionAuth operates the database, search service, TLS certificates, backups, and infrastructure security. Your responsibility is limited to product-level configuration — apply all items in [Universal Hardening](#universal-hardening) above. The [Self-Hosted Infrastructure](#self-hosted-infrastructure) section does not apply to Cloud deployments.
 
 **What FusionAuth Cloud manages for you:**
-- TLS termination and certificate provisioning (including custom domains)
-- Database operations and encryption
-- Search service (Elasticsearch)
-- DDoS protection and network firewalls
-- Infrastructure patching and upgrades (you schedule the timing)
-- Backups (Business and HA tiers: 3-day retention)
-
-**What you are responsible for:**
-- All items in [Universal Hardening](#universal-hardening) above
-- Application and Tenant configuration
-- API Key scoping and rotation
-- Theme customization
-- Webhook configuration and endpoint security
-
-**Sections of this guide that do not apply to Cloud deployments** (managed by FusionAuth):
-
-- Reverse Proxy
-- Trusted Proxy Configuration
-- Pre-Authentication Rate Limiting
-- Database Connection Security
-- Search Engine Hardening
-- HTTP Security Headers
-- Kickstart Security
-- Upgrades and Patching
+* TLS termination and certificate provisioning (including custom domains)
+* Database operations and encryption
+* Search service (OpenSearch)
+* DDoS protection and network firewalls
+* Infrastructure patching and upgrades (you schedule the timing)
+* Backups (Business and HA tiers: 3-day retention, 30 days after a version upgrade)
 
 <Aside type="note">
 If you place your own reverse proxy (such as Cloudflare or Nginx) in front of FusionAuth Cloud, ensure it forwards the correct client IP. Proxies that mask client IPs can undermine FusionAuth Cloud's built-in DDoS protection. See the [proxy setup guide](/docs/operate/deploy/proxy-setup) for FusionAuth Cloud proxy requirements.
@@ -377,7 +385,7 @@ If you place your own reverse proxy (such as Cloudflare or Nginx) in front of Fu
 
 ### Docker
 
-The [Docker installation guide](/docs/get-started/download-and-install/docker) provides Compose examples that are designed for development and do not include production security configuration.
+The [Docker installation guide](/docs/get-started/download-and-install/docker) provides Docker Compose examples that are designed for development and do not include production security configuration.
 
 For production Docker deployments, apply all items in [Self-Hosted Infrastructure](#self-hosted-infrastructure) above, plus:
 
@@ -398,18 +406,18 @@ FusionAuth provides deployment guides for [EKS](/docs/get-started/download-and-i
 For production Kubernetes deployments, apply all items in [Self-Hosted Infrastructure](#self-hosted-infrastructure) above, plus:
 
 **Secrets management.** Store database credentials and API Keys in Kubernetes Secrets. The FusionAuth Helm chart supports referencing a pre-existing Secret for database credentials — the Secret must contain a `password` key and optionally a `rootpassword` key. See the [Kubernetes deployment guide](/docs/get-started/download-and-install/kubernetes/fusionauth-deployment) for configuration details. For stronger isolation, use an external secrets manager integrated via the External Secrets Operator, HashiCorp Vault Agent, or your cloud provider's secrets CSI driver:
-- AWS: [Secrets Manager with EKS](https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver.html)
-- GCP: [Secret Manager with GKE](https://cloud.google.com/secret-manager/docs/using-other-products#google-kubernetes-engine)
-- Azure: [Key Vault with AKS](https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-driver)
+* AWS: [Secrets Manager with EKS](https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver.html)
+* GCP: [Secret Manager with GKE](https://cloud.google.com/secret-manager/docs/using-other-products#google-kubernetes-engine)
+* Azure: [Key Vault with AKS](https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-driver)
 
 **Network policies.** Restrict traffic to FusionAuth pods so that only your application pods and the load balancer can reach port 9011. Deny ingress from all other sources. Restrict egress to the database, search service, and any required external services (such as SMTP or webhook targets):
-- [Kubernetes network policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [EKS network policy support](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
-- [GKE network policy](https://cloud.google.com/kubernetes-engine/docs/how-to/network-policy)
-- [AKS network policies](https://learn.microsoft.com/en-us/azure/aks/use-network-policies)
+* [Kubernetes network policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+* [EKS network policy support](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+* [GKE network policy](https://cloud.google.com/kubernetes-engine/docs/how-to/network-policy)
+* [AKS network policies](https://learn.microsoft.com/en-us/azure/aks/use-network-policies)
 
 **Pod security.** Apply Pod Security Standards to FusionAuth pods. At minimum, configure a security context that drops all capabilities and prevents privilege escalation:
-- [Kubernetes Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
+* [Kubernetes Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 
 **Ingress and TLS.** Terminate TLS at the Ingress controller or load balancer. Use cert-manager or your cloud provider's certificate service for automated certificate provisioning and renewal. Ensure the Ingress forwards the `X-Forwarded-For` and `X-Forwarded-Proto` headers to FusionAuth.
 
@@ -425,13 +433,13 @@ The [FusionAuth application installation guide](/docs/get-started/download-and-i
 
 **Runtime mode.** Set `fusionauth-app.runtime-mode=production` in `fusionauth.properties`. Development mode enables Maintenance Mode, which exposes sensitive configuration through a web interface. See the [configuration reference](/docs/reference/configuration) for details.
 
-**Default credentials.** FusionAuth example configurations use `fusionauth` as the default database username. Change all database credentials to strong, unique values before deploying to production. See the [configuration reference](/docs/reference/configuration) for the relevant properties.
+**Default credentials.** Change all database passwords to strong, unique values before deploying to production. Do not use example credentials from documentation or quickstart guides. See the [configuration reference](/docs/reference/configuration) for the relevant properties.
 
 ### Multi-Node Clusters
 
 The [cluster deployment guide](/docs/operate/deploy/cluster) covers multi-node FusionAuth installations. In addition to all single-node hardening:
 
-**Inter-node communication.** All FusionAuth nodes must communicate over a private network. If nodes span network boundaries, use TLS for inter-node communication and install the required certificates in each node's Java truststore. See [Custom Certificate Authority](/docs/operate/secure/#custom-certificate-authority) for truststore import instructions.
+**Inter-node communication.** All FusionAuth nodes must communicate over a private network. If nodes span network boundaries, use TLS for inter-node communication and install the required certificates in each node's Java truststore. See [Custom Certificate Authority](/docs/operate/secure#custom-certificate-authority) for truststore import instructions.
 
 **Load balancer as sole entry point.** FusionAuth nodes should not be directly accessible from the public internet. Route all traffic through a load balancer. Configure the load balancer to forward `X-Forwarded-For`, `X-Forwarded-Proto`, `X-Forwarded-Host`, and `X-Forwarded-Server` headers.
 
@@ -443,11 +451,7 @@ The [cluster deployment guide](/docs/operate/deploy/cluster) covers multi-node F
 
 The [air-gapping guide](/docs/get-started/download-and-install/reference/air-gapping) covers deploying FusionAuth without outbound internet access. Air-gapped deployments require an Enterprise license with manual activation.
 
-**Feature limitations.** Two security features require outbound connectivity to FusionAuth servers and are unavailable in air-gapped environments:
-- **Breached password detection** — passwords cannot be checked against the compromised credentials dataset.
-- **Advanced Threat Detection** — threat scoring and some rate limiting features are unavailable.
-
-Plan your password policy and rate limiting strategy accordingly, relying on complexity requirements and proxy-layer rate limiting instead.
+**Feature limitations.** Security features which require outbound connectivity to FusionAuth servers are unavailable in air-gapped environments (currently including breached password detection, Advanced Threat Detection, and Intelligent MFA). Plan your password policy and rate limiting strategy accordingly, relying on complexity requirements and proxy-layer rate limiting instead.
 
 **Upgrade process.** Download FusionAuth packages on a connected machine and transfer them to the air-gapped environment. Out-of-band SQL migration scripts are available for environments where the FusionAuth application cannot run database migrations directly. See the [upgrade guide](/docs/operate/deploy/upgrade) for details.
 
@@ -459,36 +463,30 @@ Plan your password policy and rate limiting strategy accordingly, relying on com
 
 ### All Deployments
 
-- [ ] MFA enabled for all admin accounts
-- [ ] Admin Users assigned least-privilege roles
-- [ ] Password policy configured: minimum length increased, complexity enabled
+- [ ] Admin account security configured per [Admin Account Security](#admin-account-security)
+- [ ] Password policy hardened per [Password Policy](#password-policy)
 - [ ] Breached password detection enabled (if licensed and network-connected)
-- [ ] Access token lifetime set to 15 minutes or less
-- [ ] Refresh token usage policy set to `OneTimeUse`
+- [ ] Token lifetimes and refresh token policy configured per [Session and Token Management](#session-and-token-management)
 - [ ] SSO session timeout configured
-- [ ] Locked account message normalized in Theme to match generic login failure
-- [ ] Forgot password flow verified to return uniform responses
-- [ ] PKCE set to `Required` (or `Not required when using client authentication`) on all Applications using the Authorization Code grant
+- [ ] Login form enumeration vectors addressed per [Login Form Security](#login-form-security)
+- [ ] PKCE configured per [Authorization Code Security (PKCE)](#authorization-code-security-pkce)
 - [ ] CORS configured with explicit origins (if using browser-based API calls)
-- [ ] API Keys scoped to individual Tenants and restricted to required endpoints
+- [ ] API Keys scoped and managed per [API Key Management](#api-key-management)
 - [ ] Cryptographic key rotation schedule established
-- [ ] Webhooks created AND events enabled at the Tenant level
-- [ ] `user.login.failed` and `user.login.suspicious` events forwarded to SIEM
-- [ ] Audit log monitored for unexpected administrative actions
-- [ ] Webhook transport secured with HTTPS and signing keys
+- [ ] Webhooks configured per [Monitoring and Audit Logging](#monitoring-and-audit-logging)
+- [ ] Security events forwarded to SIEM
+- [ ] Audit log monitored (note: covers Admin UI actions only — supplement with access logs for API activity)
 
 ### Self-Hosted Additional
 
 - [ ] TLS 1.2+ enforced on all client-facing traffic
-- [ ] FusionAuth behind a reverse proxy, not directly exposed to the internet
-- [ ] Reverse proxy restricts access to `/admin/` by source IP
-- [ ] Proxy trust policy set to `Only Configured` with explicit proxy IPs
-- [ ] Per-IP rate limiting on `/oauth2/` endpoints at the proxy layer
-- [ ] Database connection encrypted (TLS via JDBC URL parameters)
+- [ ] FusionAuth behind a reverse proxy per [Reverse Proxy](#reverse-proxy)
+- [ ] Proxy trust policy set to `Only Configured` per [Trusted Proxy Configuration](#trusted-proxy-configuration)
+- [ ] Rate limiting configured per [Pre-Authentication Rate Limiting](#pre-authentication-rate-limiting)
+- [ ] Database connection encrypted per [Database Connection Security](#database-connection-security)
 - [ ] Database credentials changed from defaults
-- [ ] FusionAuth Search bound to localhost or private network only
-- [ ] `Strict-Transport-Security` and other security headers set in the proxy
-- [ ] No duplicate `X-Frame-Options` header (FusionAuth already sets this)
+- [ ] Search service secured per [Search Service Hardening](#search-service-hardening)
+- [ ] Security headers set in proxy per [HTTP Security Headers](#http-security-headers)
 - [ ] Runtime mode set to `production`
 - [ ] Configuration files readable only by the FusionAuth service user
 - [ ] Kickstart file removed or access-restricted after provisioning
@@ -497,10 +495,9 @@ Plan your password policy and rate limiting strategy accordingly, relying on com
 
 ### Multi-Tenant Additional
 
-- [ ] Tenant resolution handled server-side in your Application
+- [ ] Tenant resolution handled server-side per [Multi-Tenant Enumeration Prevention](#multi-tenant-enumeration-prevention)
 - [ ] OAuth error template customized to remove `oauthJSONError` output
 - [ ] Error page Theme applied to default Tenant
-- [ ] Subdomain isolation or equivalent anti-enumeration pattern in place
 
 ### Kubernetes Additional
 
