@@ -129,6 +129,10 @@ def make_api_path(type)
     return [base + "themes/advanced-themes", base + "themes/simple-themes"]
   end
 
+  if type == "user"
+    return base + "users/create"
+  end
+
   if type == "identity-provider-link"
     return base + "identity-providers/links"
   end
