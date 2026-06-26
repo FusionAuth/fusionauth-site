@@ -129,6 +129,31 @@ def make_api_path(type)
     return [base + "themes/advanced-themes", base + "themes/simple-themes"]
   end
 
+  if type == "application"
+    return [
+      base + "applications/create-an-application",
+      base + "applications/retrieve-an-application",
+      base + "applications/update-an-application",
+      base + "applications/search-for-applications",
+      base + "applications/create-an-application-role",
+      base + "applications/update-an-application-role",
+      base + "applications/retrieve-oauth-configuration"
+    ]
+  end
+
+  if type == "group"
+    return [
+      base + "groups/create-a-group",
+      base + "groups/retrieve-a-group",
+      base + "groups/update-a-group",
+      base + "groups/search-for-groups",
+      base + "groups/add-users-to-a-group",
+      base + "groups/update-users-in-a-group",
+      base + "groups/remove-users-from-a-group",
+      base + "groups/search-for-group-members"
+    ]
+  end
+
   if type == "user"
     return base + "users/create"
   end
@@ -214,12 +239,19 @@ def fetch_doc(url, options)
   if options[:pr]
     # Convert the URL to a local file path
     local_path = url.gsub(options[:siteurl] + "/docs", "astro/dist/docs") + ".html"
-    puts "checking " + local_path
-    if File.exist?(local_path)
-      return File.read(local_path)
-    else
-      return nil
+    local_paths = [
+      local_path,
+      url.gsub(options[:siteurl] + "/docs", "astro/dist/docs") + "/index.html"
+    ]
+
+    local_paths.each do |path|
+      puts "checking " + path
+      if File.exist?(path)
+        return File.read(path)
+      end
     end
+
+    return nil
   else
     res = Net::HTTP.get_response(URI.parse(url))
     return res.code == "200" ? res.body : nil
