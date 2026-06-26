@@ -1,0 +1,79 @@
+---
+title: UserInfo
+description: API documentation for the FusionAuth UserInfo OAuth2 endpoint.
+order: 6
+---
+import Aside from 'src/components/Aside.astro';
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import UserInfoAudClaimLimits from 'src/content/docs/_shared/_userinfo-aud-claim-limits.mdx';
+import UserInfoResponse from 'src/content/docs/_shared/_userinfo-response.mdx';
+
+<span id="userinfo"></span>
+
+This is an implementation of the OpenID Connect UserInfo endpoint as defined by the [OpenID Connect Section 5.3](http://openid.net/specs/openid-connect-core-1_0.html#UserInfo).
+This endpoint may be called using the `GET` or the `POST` HTTP method.
+
+<Aside type="note">
+  In version `1.50.0` and later, the UserInfo response can be customized with a lambda using the **oauthConfiguration.userinfoPopulateLambda** value of the application object. See [UserInfo populate lambda](/docs/extend/code/lambdas/userinfo-populate).
+</Aside>
+
+## Request
+
+Returns the Claims about the authenticated End-User.
+
+<API method="GET" uri="/oauth2/userinfo"/>
+
+Returns the Claims about the authenticated End-User.
+
+<API method="POST" uri="/oauth2/userinfo"/>
+
+### Request Headers
+
+<APIBlock>
+  <APIField name="Authorization" type="String" required>
+    The access token issued by FusionAuth as a result of completing one of the supported authorization grants.
+
+    Example header:
+
+    ```
+    Authorization: Bearer [access_token]
+    ```
+
+    <Aside type="caution">
+      <UserInfoAudClaimLimits />
+    </Aside>
+
+    <Aside type="note">
+      In version `1.50.0` and later when the application's **oauthConfiguration.scopeHandlingPolicy** is set to `Strict`, to use a token with this endpoint, the token must:
+
+      * Be an access token
+      * Contain the `openid` scope in the **scope** claim
+    </Aside>
+  </APIField>
+</APIBlock>
+
+## Response
+
+<Aside type="note">
+  In version `1.50.0` and later the UserInfo response changes based on the **oauthConfiguration.scopeHandlingPolicy** value of the application object.
+
+  * In `Strict` mode the response claims are populated based on the **scope** values of the provided token and available information on the user object. This behavior more closely aligns with the OpenID Connect 1.0 specification recommendations.
+  * In `Compatibility` mode the response claims are populated based on available information on the user object only and include some claims from the provided token. This is behavior allows for backwards compatibility with versions of FusionAuth before 1.50.0.
+</Aside>
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                        |
+|------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. The response will contain a JSON body.                                                                                                                                                 |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [<Breadcrumb>OAuth Error</Breadcrumb> section](/docs/apis/oauth/oauth-error) of the API documentation. |
+| 401  | The `Authorization` header containing the access token is missing or malformed.                                                                                                                                    |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                           |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                           |
+
+### Response Body
+
+<UserInfoResponse show_since={true} />
