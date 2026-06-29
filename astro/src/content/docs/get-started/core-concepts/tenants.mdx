@@ -6,6 +6,7 @@ order: 0
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
 import AdvancedPlanBlurb from 'src/content/docs/_shared/_advanced-plan-blurb.mdx';
+import Aside from 'src/components/Aside.astro';
 import AvailableSince from 'src/components/api/AvailableSince.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import DefaultSMTPConfigurationProperties from 'src/content/docs/_shared/default-smtp-configuration-properties.mdx';
@@ -15,6 +16,7 @@ import EnterprisePlanBlurbApi from 'src/content/docs/_shared/_enterprise-plan-bl
 import Icon from 'src/components/icon/Icon.astro';
 import LicensedPlanBlurb from 'src/content/docs/_shared/_licensed-plan-blurb.mdx';
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.mdx';
+import PremiumPlanBlurbApi from 'src/content/docs/_shared/_premium-plan-blurb-api.mdx';
 import RefreshTokenSettings from 'src/content/docs/get-started/core-concepts/_refresh-token-settings.mdx';
 import TenantJsonWebTokenSettings from 'src/content/docs/get-started/core-concepts/_tenant-json-web-token-settings.mdx';
 import TenantWebhooksTable from 'src/content/docs/get-started/core-concepts/_tenant-webhooks-table.mdx';
@@ -310,13 +312,19 @@ Once you have configured your email settings, you may test your configuration wi
 
 <APIBlock>
   <APIField name="On login" optional>
-    When set to `Enabled`, a two-factor challenge will be required during login when a user has configured one or more two-factor methods. When set to `Disabled`, even when a user has one or more two-factor methods configured, a two-factor challenge will not be required during login. When set to `Required`, a two-factor challenge will be required during login. If a user does not have configured two-factor methods, they will not be able to log in.
+    If a policy requires a two-factor challenge on login and the user has not already configured a two-factor method, then they will be required to configure one.
+
+    Risk-based policies use FusionAuth's **Intelligent MFA**, which combines multiple signals to decide when to issue an MFA challenge.
 
     Supported values include:
 
-    * Enabled. A challenge will be required during login when an eligible method is available.
-    * Disabled. A challenge will not be required during login.
-    * Required. A challenge will be required during login. &nbsp; <AvailableSince since="1.42.0"/>
+    * Disabled: Never challenge during login, even if a user has configured a two-factor method
+    * Enabled: Only challenge if user has configured an eligible MFA method
+    * Challenge On Medium Risk: Only challenge on medium or high login risk &nbsp; <AvailableSince since="1.68.0"/>
+    * Challenge On High Risk: Only challenge on high login risk &nbsp; <AvailableSince since="1.68.0"/>
+    * Required: Always challenge during login &nbsp; <AvailableSince since="1.42.0"/>
+
+    <PremiumPlanBlurbApi feature="an Intelligent MFA Policy" />
   </APIField>
   <APIField name="MFA requirement lambda" optional>
     The MFA requirement lambda that will be invoked during logins, password changes, and MFA Status API calls. FusionAuth uses this lambda to determine whether to challenge the user with MFA. Will be overridden by any MFA requirement lambda provided by the application.
@@ -326,6 +334,9 @@ Once you have configured your email settings, you may test your configuration wi
     * Change FusionAuth’s MFA decision for a user.
     * Trigger a suspicious login event based on your criteria. &nbsp; <AvailableSince since="1.62.0"/>
     <EnterprisePlanBlurb />
+  </APIField>
+  <APIField name="Debug Enabled">
+    When enabled, writes debug information to the event log during login for multi-factor authentication decisions.
   </APIField>
 </APIBlock>
 
@@ -783,6 +794,51 @@ See [invisible reCAPTCHA](/docs/customize/look-and-feel/advanced-themes/helpers#
     This configuration is applied to all registration API requests and self-service registration pages for all applications in this tenant.
   </APIField>
 </APIBlock>
+
+### Client risk configuration
+
+<Aside type="version">
+  Available since 1.68.0
+</Aside>
+
+<EnterprisePlanBlurb />
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, allows configuration of which risk signals are included in the composite risk score. The score is available to MFA policies, and the MFA requirement lambda. Disabled signals are excluded from all risk calculations. Disabling all signals sets the risk score to HIGH.
+  </APIField>
+  <APIField name="Blocklisted IP" type="Boolean" optional defaults="true">
+    Checks whether the client's IP address appears on a blocklist.
+  </APIField>
+  <APIField name="Bot detected" type="Boolean" optional defaults="true">
+    Detects bot interactions with the browser window.
+  </APIField>
+  <APIField name="Dormant account" type="Boolean" optional defaults="true">
+    Checks if the user has not logged in for a long period of time.
+  </APIField>
+  <APIField name="Dormant password" type="Boolean" optional defaults="true">
+    Checks if the user's password has not been changed for a long period of time.
+  </APIField>
+  <APIField name="Impossible travel" type="Boolean" optional defaults="true">
+    Tracks geographic locations for login attempts. Flags a login as high risk if it occurs sooner than it would take to physically travel from the previous location to the current location.
+  </APIField>
+  <APIField name="Recent identity change" type="Boolean" optional defaults="true">
+    Checks if the user's login ID has been changed recently.
+  </APIField>
+  <APIField name="Recent password change" type="Boolean" optional defaults="true">
+    Checks if the user's password has been changed recently.
+  </APIField>
+  <APIField name="Suspicious user agent" type="Boolean" optional defaults="true">
+    Checks whether the client's user agent has been flagged as suspicious.
+  </APIField>
+  <APIField name="Unrecognized device" type="Boolean" optional defaults="true">
+    Checks whether the request originates from an unrecognized device.
+  </APIField>
+  <APIField name="Untrusted device" type="Boolean" optional defaults="true">
+    Checks if the request originates from a device that is not in the user's trusted device list.
+  </APIField>
+</APIBlock>
+
 
 #### Rate limit settings
 
