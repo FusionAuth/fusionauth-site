@@ -1,6 +1,7 @@
 import {defineConfig, fontProviders} from 'astro/config';
 import compress from "astro-compress";
 import mdx from "@astrojs/mdx";
+import { unified } from '@astrojs/markdown-remark';
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from '@tailwindcss/vite';
 import indexPages from "astro-index-pages/index.js";
@@ -90,7 +91,40 @@ const config = defineConfig({
   },
   integrations: [
     icon(),
-    mdx(),
+    mdx({
+      syntaxHighlight: {
+        type: "shiki",
+        excludeLangs: ["mermaid"]
+      },
+      processor: unified({
+          remarkPlugins: [
+          remarkMdx,
+          mermaidTitleFix
+        ],
+        rehypePlugins: [
+          rehypeTasklistEnhancer(),
+          rehypeSlug,
+          [
+            rehypeAutolinkHeadings,
+            {
+              behavior: 'append',
+              content: {
+                type: 'text',
+                value: '#',
+              },
+              properties: {
+                title: ['link to header'],
+                class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
+              },
+              headingProperties: {
+                class: 'group'
+              }
+            },
+          ],
+        ],
+        smartypants: false,
+      })
+    }),
     sitemap({
       filter: siteMapFilter
     }),
@@ -101,11 +135,11 @@ const config = defineConfig({
       SVG: false,
       HTML: false,
     }),
-    // only run link validator in the dev environment
-    process.env.DEV && linkValidator({
+    // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
+    process.env.PROD !== 'true' && linkValidator({
       checkExternal: false,
       externalTimeout: 10,
-      failOnBrokenLinks: false,
+      failOnBrokenLinks: true,
       verbose: false,
       exclude: [ //destination URLs to exclude from checking -- NOT files!
         '/platform/', '/cdn/', '/dev-tools/', '/tech-papers/', '/feature/', '/features/', '/webinar/',
@@ -118,40 +152,6 @@ const config = defineConfig({
       //base: 'https://fusionauth.io',
     })
   ],
-  markdown: {
-    smartypants: false,
-    remarkPlugins: [
-      remarkMdx,
-      mermaidTitleFix
-    ],
-    rehypePlugins: [
-      // Tweak GFM task list syntax
-      // @ts-ignore
-      rehypeTasklistEnhancer(),
-      rehypeSlug,
-      [
-        rehypeAutolinkHeadings,
-        {
-          behavior: 'append',
-          content: {
-            type: 'text',
-            value: '#',
-          },
-          properties: {
-            title: ['link to header'],
-            class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
-          },
-          headingProperties: {
-            class: 'group'
-          }
-        },
-      ],
-    ],
-    syntaxHighlight: {
-      type: "shiki",
-      excludeLangs: ["mermaid"]
-    }
-  },
   site: 'https://fusionauth.io/',
 });
 
