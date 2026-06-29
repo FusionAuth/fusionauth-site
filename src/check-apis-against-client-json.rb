@@ -174,9 +174,91 @@ def make_api_path(type)
     return base + "connectors/generic"
   end
 
-  if type == "family"
-    return base + "families"
+  if type == "audit-log"
+    return [
+      base + "audit-logs/add-an-entry-to-the-audit-log",
+      base + "audit-logs/retrieve-an-audit-log",
+      base + "audit-logs/search-the-audit-log",
+      base + "audit-logs/export-audit-logs"
+    ]
   end
+
+  if type == "lambda"
+    return [
+      base + "lambdas/create-a-lambda",
+      base + "lambdas/retrieve-a-lambda",
+      base + "lambdas/search-for-lambdas",
+      base + "lambdas/update-a-lambda",
+      base + "lambdas/delete-a-lambda"
+    ]
+  end
+
+  if type == "webhook"
+    return [
+      base + "webhooks/create-a-webhook",
+      base + "webhooks/retrieve-a-webhook",
+      base + "webhooks/search-for-webhooks",
+      base + "webhooks/update-a-webhook",
+      base + "webhooks/delete-a-webhook"
+    ]
+  end
+
+  if type == "api-key"
+    return [
+      base + "api-keys/create-an-api-key",
+      base + "api-keys/retrieve-an-api-key",
+      base + "api-keys/update-an-api-key",
+      base + "api-keys/delete-an-api-key"
+    ]
+  end
+
+  if type == "consent"
+    return [
+      base + "consents/create-a-consent",
+      base + "consents/retrieve-a-consent",
+      base + "consents/update-a-consent",
+      base + "consents/delete-a-consent",
+      base + "consents/search-for-consents",
+      base + "consents/grant-a-user-consent",
+      base + "consents/retrieve-a-user-consent",
+      base + "consents/update-a-user-consent",
+      base + "consents/revoke-a-user-consent"
+    ]
+  end
+
+  if type == "key"
+    return [
+      base + "keys/retrieve-a-key",
+      base + "keys/update-a-key",
+      base + "keys/delete-a-key",
+      base + "keys/search-for-keys",
+      base + "keys/generate-a-key",
+      base + "keys/import-a-key"
+    ]
+  end
+
+  if type == "tenant"
+    return [
+      base + "tenants/create-a-tenant",
+      base + "tenants/retrieve-a-tenant",
+      base + "tenants/search-for-tenants",
+      base + "tenants/update-a-tenant",
+      base + "tenants/delete-a-tenant",
+      base + "tenants/retrieve-the-password-validation-rules"
+    ]
+  end
+
+  if type == "family"
+    return [
+      base + "families/add-a-user-to-a-family",
+      base + "families/retrieve-a-family",
+      base + "families/update-a-family",
+      base + "families/remove-a-user-from-a-family",
+      base + "families/retrieve-pending-family-members",
+      base + "families/request-parental-approval"
+    ]
+  end
+
   if type == "entity"
     return base + "entities/entities"
   end
@@ -189,9 +271,37 @@ def make_api_path(type)
   if type == "ldap-connector-configuration"
     return base + "connectors/ldap"
   end
+
   if type == "email-template"
-    return base + "emails"
+    return [
+      base + "emails/create-an-email-template",
+      base + "emails/retrieve-an-email-template",
+      base + "emails/search-for-email-templates",
+      base + "emails/update-an-email-template",
+      base + "emails/delete-an-email-template",
+      base + "emails/preview-an-email-template",
+      base + "emails/send-an-email"
+    ]
   end
+
+  if type == "user-comment"
+    return [
+      base + "user-comments/add-a-comment-to-a-user",
+      base + "user-comments/retrieve-a-users-comments",
+      base + "user-comments/search-for-user-comments"
+    ]
+  end
+
+  if type == "user-action"
+    return [
+      base + "user-actions/create-a-user-action",
+      base + "user-actions/retrieve-a-user-action",
+      base + "user-actions/update-a-user-action",
+      base + "user-actions/delete-a-user-action",
+      base + "user-actions/reactivate-a-user-action"
+    ]
+  end
+
   if type == "form"
     return base + "custom-forms/forms"
   end
