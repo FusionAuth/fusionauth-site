@@ -138,6 +138,58 @@ _Response Codes_
 | 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                          |
 | 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                            |
 
+## Update Multi-Factor Method
+
+This API updates the display name of a single configured multi-factor method for a User.
+
+This operation only updates the method display name. It does not modify the MFA method type or delivery configuration.
+
+### Request
+
+<API method="PUT" uri="/api/user/two-factor/{userId}?methodId={methodId}" authentication={["api-key"]} title="Update a single multi-factor method by User Id"/>
+
+<AvailableSince since="1.68.0"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The Id of the User for whom to update Multi-Factor authentication.
+  </APIField>
+  <APIField name="methodId" type="String" required>
+    The Id of the multi-factor method to update.
+  </APIField>
+</APIBlock>
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="name" type="String" optional>
+    The display name for the configured multi-factor method.
+
+    The maximum length is 256 characters.
+
+    If omitted, the method name will be cleared.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="two-factor/update-request.json" />
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                         |
+|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. The response will be empty.                                                                                                                             |
+| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                            |
+| 401  | You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication). |
+| 404  | The User does not exist. The response will be empty.                                                                                                                                |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                          |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                            |
+
 ## Generate a Secret
 
 This API is used to generate a new multi-factor secret for use when enabling multi-factor authentication for a User. This is provided
@@ -517,7 +569,11 @@ This API is used to generate a list of Recovery Codes. When creating new codes, 
 
 ### Response
 
-The response for this API contains an array of size 10 of Recovery Codes that were created.
+The response for this API contains an array of Recovery Codes that were created. In both standard and FIPS modes, 10 codes are returned. In standard mode, codes use the format `XXXXX-XXXXX`. In FIPS mode, codes use the format `XXXXXXX-XXXXXXX`.
+
+<Aside type="note">
+  The returned codes are the only time they are available in plaintext — they are hashed at rest and cannot be retrieved afterward. Store them securely and provide them to the user immediately. Since `1.68.0`.
+</Aside>
 
 <StandardPostResponseCodes never_search_error />
 
@@ -541,6 +597,10 @@ This API is used to retrieve Recovery Codes for a User.
 
 <DeprecatedSince since="1.64.0">This endpoint is deprecated. To provide access to a user's recovery codes, [generate new recovery codes](/docs/apis/two-factor#generate-recovery-codes) and deliver those</DeprecatedSince>
 
+<Aside type="caution" title="Always returns empty list since 1.68.0">
+  As of `1.68.0`, this endpoint always returns an empty list. Recovery codes are now hashed at rest and cannot be retrieved in plaintext. To provide a user with recovery codes, generate a new set.
+</Aside>
+
 #### Request Parameters
 
 <APIBlock>
@@ -551,7 +611,7 @@ This API is used to retrieve Recovery Codes for a User.
 
 ### Response
 
-The response for this API contains the remaining Recovery Codes that are assigned to the User. Each time one is used it is removed, so this response will contain between 0 and 10 codes.
+The response for this API contains the remaining Recovery Codes that are assigned to the User. Each time one is used it is removed, so this response will contain between 0 and 10 codes. Prior to `1.68.0`, this returned remaining codes. As of `1.68.0`, this always returns an empty list.
 
 <StandardPostResponseCodes never_search_error />
 

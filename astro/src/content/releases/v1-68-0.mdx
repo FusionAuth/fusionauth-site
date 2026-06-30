@@ -1,0 +1,124 @@
+---
+version: "1.68.0"
+name: "Intelligent Kamfa"
+date: 2026-06-30
+description: "FusionAuth 1.68.0 makes MFA easier to configure and more robust than ever before."
+---
+import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
+
+<Item category="breaking-change">
+The [Retrieve Recovery Codes](/docs/apis/two-factor#retrieve-recovery-codes) endpoint (`GET /api/user/two-factor/recovery-code/{userId}`) (deprecated since `1.64.0`), now always returns an empty list. Because recovery codes are now hashed at rest, they can no longer be retrieved in plaintext after creation.
+
+If you need to provide a user access to their recovery codes, use the [Generate Recovery Codes](/docs/apis/two-factor#generate-recovery-codes) API (`POST /api/user/two-factor/recovery-code/{userId}`) to generate a new set.
+</Item>
+
+<Item category="new-feature" issue="3502">
+Introduced [Intelligent MFA](/docs/lifecycle/authenticate-users/contextual-multi-factor#intelligent-mfa), which uses a collection of signals to trigger MFA challenges for users based on the unique risk level of a given login attempt.
+</Item>
+
+<Item category="new-feature">
+To support Intelligent MFA, added three new MFA lifecycle webhooks:
+* [User Two-Factor Challenge](/docs/extend/events-and-webhooks/events/user/user-two-factor-challenge)
+* [User Two-Factor Failed Attempt](/docs/extend/events-and-webhooks/events/user/user-two-factor-failed-attempt)
+* [User Two-Factor Success](/docs/extend/events-and-webhooks/events/user/user-two-factor-success)
+</Item>
+
+<Item category="new-feature" issue="457">
+Email and message templates can now build links using the new `baseUrl` [variable](/docs/customize/email-and-messages/message-templates-replacement-variables), instead of hard-coding a URL.
+</Item>
+
+<Item category="new-feature" issue="3473">
+Created the [MFA Deleter](/docs/get-started/core-concepts/roles#the-mfa_deleter-role) role, a granular permission that enables a user to remove an MFA method from a user account without full FusionAuth administrator permissions.
+</Item>
+
+<Item category="enhancement">
+When importing users via the [Import Users API](/docs/apis/users#import-users) with plaintext recovery codes, FusionAuth will now hash each code during import. For large imports containing many users with recovery codes, this will increase import time.
+
+To avoid this overhead, you may pre-hash recovery codes before import and provide `twoFactor.recoveryCodeEncryptionScheme` and `twoFactor.recoveryCodeWorkFactor` alongside the pre-hashed values in `twoFactor.recoveryCodes`. For more information, see the [Import Users API](/docs/apis/users#import-users).
+</Item>
+
+<Item category="enhancement" issue="2739">
+Users can now add a custom name for each TOTP Authenticator associated with their account. This makes it easier to identify and remove outdated TOTP methods.
+</Item>
+
+<Item category="fix" issue="3323" >
+When creating an Application in an instance with only a single Tenant, FusionAuth no longer displays a Tenant dropdown with a single entry. Instead, the application automatically uses the only Tenant.
+</Item>
+
+<Item category="fix" issue="3519" since="1.52.0">
+Fixed an issue where supplying a value of any type other than a `long` for instant fields (e.g. `insertInstant`) returned a `500` status code.
+</Item>
+
+<Item category="fix" issue="3517" since="1.67.0">
+Fixed an issue where users that lacked the privilege to remove an MFA method (e.g. `user_manager`) would see a (non-functional) **Delete** button for MFA methods on the User Management page of the Admin UI.
+</Item>
+
+<Item category="fix" issue="3497" since="1.66.0">
+Changed the default Tenant issuer from `acme.com`, which is not a valid URL, to the public base URL (which ought to be a valid URL).
+</Item>
+
+<Item category="fix" issue="3311" since="1.62.1">
+Fixed an issue with the SCIM `PATCH` `/api/scim/resource/v2/Users` endpoint where re-activating a deactivated user could fail and return a `400` status code.
+</Item>
+
+<Item category="fix" issue="3109" since="1.57.1">
+Hosted login pages now display errors produced by the login validation lambda before presenting an MFA challenge to the user.
+</Item>
+
+<Item category="fix" issue="3394">
+Fixed an issue where, on the OAuth2 logout page, `registeredLogoutURLs` and `currentUser` were empty or null.
+</Item>
+
+<Item category="fix" issue="3503" since="1.66.0">
+Fixed an issue where Connectors configured for a specific domain in a Tenant could be called for users outside of that domain.
+</Item>
+
+<Item category="security">
+FusionAuth now hashes [MFA recovery codes](/docs/lifecycle/authenticate-users/multi-factor-authentication#recovery-codes) at rest using `salted-pbkdf2-hmac-sha256`, the same algorithm used by default for password hashing. Existing recovery codes will continue to work without interruption. Their codes will be migrated to the hashed format automatically when they next regenerate their codes.
+</Item>
+
+<Item category="sdk">
+Released [Swift SDK for iOS](/docs/sdks/swift-sdk) `1.3.0` with support for iOS `26.5.x`.
+</Item>
+
+<Item category="sdk">
+Released [Kotlin SDK for Android](/docs/sdks/android-sdk) `1.2.0` with support for Android API Level `36`.
+</Item>
+
+<Item category="sdk">
+Released [React SDK](/docs/sdks/react-sdk) `2.6.0` with support for React `19.2.x`.
+</Item>
+
+<Item category="sdk">
+Released [Angular SDK](/docs/sdks/angular-sdk) `2.0.0` with support for Angular `22.0.x`.
+</Item>
+
+<Item category="sdk">
+Released [Vue SDK](/docs/sdks/vue-sdk) `1.3.0` with support for Vue `3.5.x`.
+</Item>
+
+<Item category="internal" issue="3480">
+Updated the following dependencies:
+
+Java:
+
+* `com.fasterxml.jackson.core:jackson-core`: `2.21.1` -> `2.21.4`
+* `com.fasterxml.jackson.core:jackson-databind`: `2.21.1` -> `2.21.4`
+* `com.fasterxml.jackson.dataformat:jackson-dataformat-cbor`: `2.21.1` -> `2.21.4`
+* `com.inversoft:inversoft-license`: `4.15.0` -> `4.16.0`
+* `com.inversoft:jackson5`: `3.0.1` -> `3.1.0`
+* `io.fusionauth:fusionauth-usage-stats-common`: `0.10.0` -> `0.13.0`
+* `org.ow2.asm:asm`: `9.5.0` -> `9.10.1`
+* `org.primeframework:prime-mvc`: `5.10.2` -> `5.10.4`
+
+Javascript:
+
+* `@rolobits/is-human-cadence`: added `1.5.1`
+* `balanced-match`: removed (was `1.0.2`)
+* `brace-expansion`: removed (was `1.1.13`)
+* `cli/node_modules/balanced-match`: added `1.0.2`
+* `cli/node_modules/brace-expansion`: added `1.1.15`
+* `codemirror`: `5.65.20` -> `5.65.21`
+* `jshint/node_modules/balanced-match`: added `1.0.2`
+* `jshint/node_modules/brace-expansion`: added `1.1.15`
+</Item>
