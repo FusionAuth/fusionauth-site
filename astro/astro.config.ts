@@ -134,6 +134,7 @@ const config = defineConfig({
       Image: false,
       SVG: false,
       HTML: false,
+      CSS: false,
     }),
     // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
     process.env.PROD !== 'true' && linkValidator({
