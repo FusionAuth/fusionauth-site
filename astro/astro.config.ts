@@ -86,7 +86,7 @@ const config = defineConfig({
   vite: {
     plugins: [tailwindcss(), lightboxProvider()],
     build: {
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 1111,
     }
   },
   integrations: [
