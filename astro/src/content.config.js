@@ -102,10 +102,31 @@ const jsonCollection = defineCollection({
   })
 })
 
+const directDownloadVersions = defineCollection({
+  loader: async () => {
+    const response = await fetch('https://account.fusionauth.io/api/version');
+    const data = await response.json();
+    
+    return data.versions.reverse().map((version) => ({
+      id: version.replace(/\./g, '_'),
+      version: version,
+      mVersion: version.replace(/-/g, '.'),
+      releaseNotesLink: `/docs/release-notes#version-${version.replace(/\./g, '-')}`
+    }));
+  },
+  schema: z.object({
+    id: z.string(),
+    version: z.string(),
+    mVersion: z.string(),
+    releaseNotesLink: z.string()
+  })
+});
+
 export const collections = {
   'docs': docsCollection,
   'articles': articlesCollection,
   'releases': releasesCollection,
   'json': jsonCollection,
   'blog': blogCollection,
+  'direct-download-versions': directDownloadVersions,
 };
