@@ -1,5 +1,5 @@
 // Copy the API Explorer's browser-bundle dependencies from node_modules into
-// public/vendor/ so api-explorer.astro can serve them locally instead of
+// public/docs/vendor/ so api-explorer.astro can serve them locally instead of
 // loading them from jsdelivr at runtime.
 //
 // Runs from npm pre-hooks (predev, prebuild). Skip with SKIP_VENDOR=1 when
@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT_DIR = join(ROOT, 'public', 'vendor');
+const OUT_DIR = join(ROOT, 'public', 'docs', 'vendor');
 
 const FILES = [
   {
