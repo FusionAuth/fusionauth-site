@@ -1,0 +1,101 @@
+---
+title: Retrieve Multi-Factor Status
+description: API documentation for the FusionAuth Retrieve Multi-Factor Status API.
+order: 500
+---
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import Aside from 'src/components/Aside.astro';
+import AvailableSince from 'src/components/api/AvailableSince.astro';
+import JSON from 'src/components/JSON.astro';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+import TryInExplorer from 'src/components/api/TryInExplorer.astro';
+
+Retrieves a user's multi-factor status. This is helpful to understand if a user has multi-factor authentication enabled, and if the user will be required to perform a multi-factor challenge during the next login request.
+
+This API may also be used to identify if an existing multi-factor trust value obtained during a multi-factor login is expired, or valid for a specific application when configured to restrict multi-factor trust.
+
+<Aside>
+    Since version 1.62.0, prefer the POST method for this endpoint, which provides more information to MFA requirement lambda functions.
+</Aside>
+
+<TryInExplorer method="GET" path="/api/two-factor/status/{twoFactorTrustId}" tag="two-factor" />
+
+## Request
+
+<API method="GET" uri="/api/two-factor/status/{twoFactorTrustId}" authentication={["api-key"]} title="Retrieve multi-factor status"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Request Parameters
+
+<APIBlock>
+  <APIField name="applicationId" type="String" optional>
+    A unique application Id. When Application multi-factor configuration is enabled, providing this parameter will ensure the returned status applies to the expected result when attempting to login into this application.
+  </APIField>
+  <APIField name="twoFactorTrustId" type="String" optional>
+    The existing multi-factor trust obtained by completing a multi-factor login. This is the value that allows you to bypass multi-factor during the next login attempt.
+  </APIField>
+  <APIField name="userId" type="String" required>
+    The unique Id of the user for which to retrieve multi-factor status.
+  </APIField>
+</APIBlock>
+
+<API method="POST" uri="/api/two-factor/status" authentication={["api-key"]} title="Retrieve multi-factor status using request payload"/>
+<AvailableSince since="1.62.0"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Request Body
+
+<APIBlock>
+    <APIField name="action" type="String" optional defaults="login">
+        The action the user is attempting to perform. This value may be used by an MFA requirement lambda to determine if multi-factor authentication should be required.
+
+        Valid values are:
+        * `changePassword`
+        * `login`
+        * `stepUp`
+    </APIField>
+    <APIField name="applicationId" type="String" optional>
+        A unique application Id. When Application multi-factor configuration is enabled, providing this parameter will ensure the returned status applies to the expected result when attempting to login into this application.
+    </APIField>
+    <APIField name="accessToken" type="String" optional>
+        An access token (not an Id token) returned by FusionAuth as the result of a successful authentication. The encoded access token will be available in `context.accessToken` in an MFA requirement lambda function. See the [MFA requirement lambda](/docs/extend/code/lambdas/mfa-requirement) documentation. This must be a valid token that was issued and signed by FusionAuth.
+    </APIField>
+    <APIField name="twoFactorTrustId" type="String" optional>
+        The existing multi-factor trust obtained by completing a multi-factor login. This is the value that allows you to bypass multi-factor during the next login attempt.
+    </APIField>
+    <APIField name="userId" type="String" required>
+        The unique Id of the user for which to retrieve multi-factor status.
+    </APIField>
+</APIBlock>
+
+<JSON title="Example POST Request JSON" src="two-factor/status/request.json" />
+
+## Response
+
+Response Codes
+
+| Code | Description                                                                                                                                                                                                                                          |
+|------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The user does not have multi-factor enabled, a challenge is not required, or the provided trust is still valid for the next login.                                                                                                                                                |
+| 242  | The user has multi-factor authentication enabled. Since version `1.42.0`, this status code is also returned when multi-factor authentication is required.  The user will be required to complete a multi-factor challenge during the next login attempt. This status code can also be used to determine whether step up is required.|
+| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                                                                                             |
+| 401  | You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication).                                                                  |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                                                                                           |
+
+
+### Response Body
+
+<APIBlock>
+  <APIField name="trusts" type="Array">
+    An array of one or more trust configurations.
+  </APIField>
+  <APIField name="twoFactorTrustId" type="String">
+    The value provided in the **twoFactorTrustId** on the request.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="two-factor/status/response.json" />

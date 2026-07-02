@@ -1,0 +1,113 @@
+---
+title: Export Login Records
+description: API documentation for the FusionAuth Export Login Records API.
+order: 700
+---
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import Aside from 'src/components/Aside.astro';
+import TryInExplorer from 'src/components/api/TryInExplorer.astro';
+
+<Aside type="version">
+Available Since Version 1.7.0
+</Aside>
+
+This API is used to export Login Records, the response will be a compressed zip archive of CSV files.
+
+<TryInExplorer method="GET" path="/api/system/login-record/export" tag="system" />
+
+## Request
+
+### Using GET parameters
+
+<API method="GET" uri="/api/system/login-record/export?applicationId={applicationId}&start={start}&end={end}&userId={userId}" authentication={["global-api-key"]} title="Export the Login Records matching the criteria"/>
+
+When calling the API using a `GET` request you will send the export criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional>
+    The unique Id of the Application used to reduce the export result to logins for a particular application.
+  </APIField>
+  <APIField name="dateTimeSecondsFormat" type="String" optional>
+    The format string used to format the date and time columns in the export result.
+
+    When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the [DateTimeFormatter patterns](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html) for additional examples.
+  </APIField>
+  <APIField name="end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="userId" type="UUID" optional>
+    The unique Id of the User used to reduce the export result to logins for a particular user.
+  </APIField>
+  <APIField name="zoneId" type="String" optional>
+    The [time zone](/docs/reference/data-types#time-zone) used to adjust the stored UTC time in the export result.
+
+    For example:
+
+    > `America/Denver` or `US/Mountain`
+
+    When this parameter is omitted the configured default report time zone will be used. See **reportTimezone** in the [System Configuration API](/docs/apis/system).
+  </APIField>
+</APIBlock>
+
+### Using a request body
+
+<API method="POST" uri="/api/system/login-record/export" authentication={["global-api-key"]} title="Export the Login Records matching the criteria"/>
+
+When calling the API using a `POST` request you will send the export criteria in a JSON request body.
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="criteria.applicationId" type="UUID" optional>
+    The unique Id of the Application used to reduce the export result to logins for a particular application.
+  </APIField>
+  <APIField name="criteria.end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to include in the export.
+  </APIField>
+  <APIField name="criteria.start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to include in the export.
+  </APIField>
+  <APIField name="criteria.userId" type="UUID" optional>
+    The unique Id of the User used to reduce the export result to logins for a particular user.
+  </APIField>
+  <APIField name="dateTimeSecondsFormat" type="String" optional>
+    The format string used to format the date and time columns in the export result.
+
+    When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the [DateTimeFormatter patterns](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html) for additional examples.
+  </APIField>
+  <APIField name="zoneId" type="String" optional>
+    The [time zone](/docs/reference/data-types#time-zone) used to adjust the stored UTC time in the export result.
+
+    For example:
+
+    > `America/Denver` or `US/Mountain`
+
+    When this parameter is omitted the configured default report time zone will be used. See **reportTimezone** in the [System Configuration API](/docs/apis/system).
+  </APIField>
+</APIBlock>
+
+## Response
+
+The response for this API will contain a compressed zip of the login records.
+
+In version `1.59.0` and later, the export file contains **Identity value** and **Identity type** columns. If a login record is associated with a particular identity, those values will be reflected in the export. Older login records and new login records not associated with a particular identity will omit values for these columns in the export.
+
+<StandardGetResponseCodes success_code="200" success_message="The request was successful. The response will be a compressed archive byte stream with a `Content-Type` of `application/zip`." />
+
+```plaintext title="Sample file export"
+"User Id ","Identity value ","Identity type ","Time ","Application Id ","IP Address ","City ","Country ","Zipcode ","Region ","Latitude ","Longitude "
+00000000-0000-0000-0000-000000000001,,,5/12/2025 02:46:44 PM MDT,,107.170.227.24,San Francisco,US,,CA,37.7309,-122.3886
+00000000-0000-0000-0000-000000000001,richard@piedpiper.com,email,5/12/2025 12:25:12 AM MDT,3c219e58-ed0e-4b18-ad48-f4f92793ae32,127.0.0.1,,,,,,
+```
+
+<Aside type="note">
+The location information is only included in exports when [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) is enabled.
+</Aside>

@@ -1,0 +1,103 @@
+---
+title: Complete Multi-Factor Authentication
+description: API documentation for the FusionAuth Complete Multi-Factor Authentication API.
+order: 300
+---
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import XFusionauthTenantIdHeaderScopedOperationRowOnly from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.mdx';
+import LoginApplicationidParameter from 'src/content/docs/apis/_login-applicationId-parameter.mdx';
+import LoginMetadataDevice from 'src/content/docs/apis/_login-metadata-device.mdx';
+import JSON from 'src/components/JSON.astro';
+import UserResponseBody from 'src/content/docs/apis/_user-response-body.mdx';
+import TryInExplorer from 'src/components/api/TryInExplorer.astro';
+
+The Multi-Factor Login API is used to complete the authentication process when a `242` status code is returned by the Login API or as the last step of a [Step Up Procedure](/docs/lifecycle/authenticate-users/multi-factor-authentication#step-up-auth).
+
+<TryInExplorer method="POST" path="/api/two-factor/login" tag="two-factor" />
+
+## Request
+
+Complete a login request when a User has Multi-Factor authentication enabled.
+
+<API method="POST" uri="/api/two-factor/login" authentication={["none"]} title="Complete a Multi-Factor Login"/>
+
+### Request Headers
+
+<APIBlock>
+  <APIField name="X-Forwarded-For" type="String" optional>
+    The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is generally preferred to specify the IP address in the request body. If it is not provided in the request body, this header value will be used if available. If provided in both places, the request body value takes precedence.
+  </APIField>
+  <XFusionauthTenantIdHeaderScopedOperationRowOnly />
+</APIBlock>
+
+### Request Body
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional>
+    <LoginApplicationidParameter />
+  </APIField>
+  <APIField name="code" type="String" required>
+    The Multi-Factor verification code. This may also be a recovery code.
+  </APIField>
+  <APIField name="ipAddress" type="String" optional>
+    The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will be stored in the User login history.
+  </APIField>
+</APIBlock>
+
+<LoginMetadataDevice />
+
+  <APIField name="noJWT" type="Boolean" optional defaults="false">
+    When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` field, and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
+  </APIField>
+  <APIField name="trustComputer" type="Boolean" optional defaults="false">
+    When this value is set to true the response will contain a Multi-Factor Trust identifier. This can be used on subsequent Login requests to allow the Multi-Factor challenge to be bypassed.
+  </APIField>
+  <APIField name="twoFactorId" type="String" required>
+    An Id generated and returned in the response body during the initial authentication attempt.
+
+    The default duration of this identifier is 5 minutes. This means that you have 5 minutes to complete the request to this API after calling the Login API. Once the identifier has expired you will need to call the Login API again to restart the process.
+
+    This duration can be modified using the Tenant API or in the FusionAuth UI.
+  </APIField>
+<JSON title="Example Request JSON" src="login/two-factor/request.json" />
+
+## Response
+
+The response for this API contains the User object.
+{/*  keep in sync with _login-response-codes.adoc */}
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The authentication was successful. The response will contain the User object that was authenticated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 202  | The user was authenticated successfully. The user is not registered for the application specified by `applicationId` on the request. The response will contain the User object that was authenticated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 203  | The user was authenticated successfully. The user is required to change their password, the response will contain the `changePasswordId` to be used on the [Change Password](/docs/apis/users/change-password) API. Since version `1.15.0`, the response will also contain a `changePasswordReason` field which can have one of the following values:<ul><li>`Administrative` - An administrator has required this user to change their password.</li><li>`Breached` - The password has been found to have belonged to a breached dataset and must be changed, per the Reactor configuration.</li><li>`Expired` - The password has expired, per the expiration setting in the tenant configuration. </li><li>`Validation` - The password fails the validation rules configured in the tenant password settings. </li></ul> <JSON title="Example Response JSON" src="login/login-change-password-response.json" /> {/* eslint-disable-line */} |
+| 212  | The user's email address (if an email address or username was used to authenticate) or phone number has not yet been verified. The response will contain the User object that was authenticated. If the tenant verification strategy has been set to `FormField`, the response will contain the verification Id that was generated for the user.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 213  | The user's registration has not yet been verified. The response will contain the User object that was authenticated. If the verification strategy has been set to `FormField`, the response will contain the **registrationVerificationId** that was generated for the user.<br/>Prior to version `1.27.0`, this status code was not returned, and you will see a `200` instead. {/* eslint-disable-line */}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 404  | The `twoFactorId` was invalid or expired. You will need to authenticate again using the [Login](/docs/apis/login/authenticate) API. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 409  | The user is currently in an action that has prevented login. The response will contain the actions that prevented login. <JSON title="Example Response JSON" src="login/login-prevented-response.json" />                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 410  | The user has expired. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 421  | The `code` request parameter is not valid. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 504  | One or more Webhook endpoints returned an invalid response or were unreachable. Based on the transaction configuration for this event your action cannot be completed. A stack trace is provided and logged in the FusionAuth log files.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+
+<UserResponseBody login_response two_factor_login_response />
+
+### Response Cookies
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The encoded access token. This cookie is written in the response as an HTTP Only session cookie.
+  </APIField>
+  <APIField name="refresh_token" type="String">
+    The refresh token. This cookie is written in the response as an HTTP Only persistent cookie. The cookie expiration is configured in the JWT configuration for the application or the global JWT configuration.
+  </APIField>
+  <APIField name="fusionauth.trust" type="String">
+    The Multi-Factor Trust identifier. This value is returned when `trustComputer` was set to `true` on the request. This value can be used by subsequent login requests to bypass the Multi-Factor challenge. This cookie is written in the response as an HTTP Only persistent cookie.
+  </APIField>
+</APIBlock>

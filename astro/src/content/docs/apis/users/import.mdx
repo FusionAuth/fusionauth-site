@@ -1,0 +1,71 @@
+---
+title: Import Users
+description: API documentation for the FusionAuth Import Users API.
+order: 800
+---
+import API from 'src/components/api/API.astro';
+import ImportUsersRequestBody from 'src/content/docs/apis/_import-users-request-body.mdx';
+import JSON from 'src/components/JSON.astro';
+import RemoteCode from 'src/components/RemoteCode.astro';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import XFusionauthTenantIdHeaderCreateOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-create-operation.mdx';
+import TryInExplorer from 'src/components/api/TryInExplorer.astro';
+
+This API is used to bulk import multiple Users into FusionAuth. Each User must have at least an **email** or a **username**, and a **password** (plaintext or hash). If you don't have the User's password, you can set this field to a long random string and require the User to reset their password at their next login. This request is useful for migrating data from an existing database into FusionAuth. Additionally, you can provide an Id for each User inside the JSON User object of the request body. When using this API, the recommended batch size per request is dependent on deployment scale (note: 100,000 users per request is a reasonable batch size for a production capable deployment). After completing an import, you should [reindex the Elasticsearch database](/docs/lifecycle/manage-users/search#reindexing-elasticsearch) as well.
+
+You should not make multiple calls to this API in parallel. Multiple sequential calls to this API are fine.
+
+<TryInExplorer method="POST" path="/api/user/import" />
+
+## Request
+
+<API method="POST" uri="/api/user/import" authentication={["api-key"]} title="Import Multiple Users"/>
+
+<XFusionauthTenantIdHeaderCreateOperation />
+
+<ImportUsersRequestBody />
+
+## Response
+
+Only a status code is available on the Import API, no JSON body will be returned.
+
+<StandardPostResponseCodes webhook_event />
+
+
+## Password Hashes
+
+Password hashes can be imported into FusionAuth. This allows users to transparently use their old passwords while at no time exposing the plaintext password. This section contains details about importing specific password hashes.
+
+You can also learn more about hashes in the [password hashing reference](/docs/reference/password-hashes), and you can [implement your own custom hash](/docs/extend/code/password-hashes/custom-password-hashing) as well.
+
+## Encoding
+
+The standard FusionAuth password hashing schemes require the password hash to be a base64 encoded string.  If your password hashes are encoded in a different format, they will need to either be converted and imported as base64, or you can create a custom plugin using an alternative encoding.  You can see an example of converting below.
+
+It is recommended to use a base64 encoded string, but if importing hashes from a legacy system that uses base16, base32, or another encoding, import the hash in the same format the plugin produces.
+
+<RemoteCode lang="ruby" title="Example of Converting a Base16 Password Hash Value to Base64"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-scripts/main/import-helpers/convert-md5-hexadecimal-to-base64.rb" />
+
+## Bcrypt
+
+When importing a bcrypt hash, you may have a value such as:
+
+`$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+
+This single string represents the bcrypt version, factor, salt and hash.
+
+The number before the final `$` is the factor, the 22 characters after the final `$` is the salt and the last 31 characters are the hash.
+
+For the above bcrypt hash, `10` is the factor and should be placed in the **factor** field.  `N9qo8uLOickgx2ZMRZoMye` is the salt and should be placed in the **salt** field.  `IjZAgcfl7p92ldGxad68LJZdL17lhWy` is the hash value and should be placed in the **password** field.
+
+## MD5
+
+When importing an MD5 password hash, you may not have a salt. If this is the case, use the empty string, `''`, as the salt. You may still use the salted MD5 plugin provided by FusionAuth.
+
+MD5 is commonly stored in hexadecimal format, such as `25d55ad283aa400af464c76d713c07ad`. The FusionAuth Import Users API requires imported password hashes to be base64 encoded. Convert any hexadecimal values to base64 before importing, or the import will not work.
+
+Here is an example ruby script to convert hexadecimal values to base64 encoded:
+
+<RemoteCode lang="ruby" title="Convert a Hexadecimal Password Hash Value to Base64"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-scripts/main/import-helpers/convert-md5-hexadecimal-to-base64.rb" />
