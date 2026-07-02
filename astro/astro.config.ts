@@ -1,5 +1,4 @@
 import {defineConfig, fontProviders} from 'astro/config';
-import compress from "astro-compress";
 import mdx from "@astrojs/mdx";
 import { unified } from '@astrojs/markdown-remark';
 import sitemap from "@astrojs/sitemap";
@@ -86,7 +85,7 @@ const config = defineConfig({
   vite: {
     plugins: [tailwindcss(), lightboxProvider()],
     build: {
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 1111,
     }
   },
   integrations: [
@@ -130,11 +129,6 @@ const config = defineConfig({
     }),
     indexPages(),
     markdownExtract.default(),
-    compress({
-      Image: false,
-      SVG: false,
-      HTML: false,
-    }),
     // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
     process.env.PROD !== 'true' && linkValidator({
       checkExternal: false,
