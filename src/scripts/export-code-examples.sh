@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+# Publishes code examples from local directories to external repositories.
+# Loops through every directory in astro/src/code-example-repositories/, strips Bluehawk annotations, and mirrors the content to the remote repository specified in repositoryUrl.txt.
+
+# Arguments:
+#   $1 — The GitHub access token for pushing to external repositories.
+#   $2 — The source commit SHA of the documentation repository to include in the commit message of the code example repository.
+
+set -euo pipefail # crash on any error
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$REPO_ROOT"
+
+if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
+	echo "Usage: export-code-examples.sh <github-token> <commit-sha>" >&2
+	exit 1
+fi
+
+GITHUB_TOKEN="$1"
+DOCUMENTATION_COMMIT_HASH="$2"
+
+
+for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
+
+	REPOSITORY_NAME=$(basename "$LOCAL_REPOSITORY_PATH")
+	URL_FILE="${LOCAL_REPOSITORY_PATH}repositoryUrl.txt"
+
+	if [ ! -f "$URL_FILE" ]; then
+		echo "Error: $REPOSITORY_NAME has no repositoryUrl.txt" >&2
+		exit 1
+	fi
+
+	PARTIAL_REMOTE_URL=$(cat "$URL_FILE" | tr -d '[:space:]')
+
+	if [ "$PARTIAL_REMOTE_URL" = "internal" ]; then
+		echo "Skipping $REPOSITORY_NAME (internal)"
+		continue
+	fi
+
+	REMOTE_URL="https://x-access-token:${GITHUB_TOKEN}@${PARTIAL_REMOTE_URL}"
+
+	echo "Publishing $REPOSITORY_NAME"
+
+	# Process local files with Bluehawk to strip annotations but not generate snippets
+	LOCAL_CLEANED_REPOSITORY_PATH=$(mktemp -d /tmp/bluehawk-processed.XXXXXX)
+	RELATIVE_LOCAL_REPOSITORY_PATH="${LOCAL_REPOSITORY_PATH#astro/}"
+	(
+		cd astro
+		npx bluehawk copy --state published \
+			-i "repositoryUrl.txt" \
+			-i "tests" \
+			-i "node_modules" \
+			--output "$LOCAL_CLEANED_REPOSITORY_PATH" \
+			"$RELATIVE_LOCAL_REPOSITORY_PATH"
+	)
+
+	# Clone the remote repository
+	LOCAL_CLONED_REPOSITORY_PATH=$(mktemp -d /tmp/code-example-repository.XXXXXX)
+	git clone "$REMOTE_URL" "$LOCAL_CLONED_REPOSITORY_PATH"
+	cd "$LOCAL_CLONED_REPOSITORY_PATH"
+
+	# Checkout main branch, crash if it doesn't exist
+	git checkout main || exit 1
+
+	# Configure git identity for this temporary repository
+	git config user.email "github-actions[bot]@users.noreply.github.com"
+	git config user.name "github-actions[bot]"
+
+	# Replace the entire working tree with the processed files to mirror exactly
+	git rm -rf .
+	git clean -fdxq
+	cp -r "$LOCAL_CLEANED_REPOSITORY_PATH/." .
+
+	# Commit if there are changes
+	git add -A
+	if ! git diff --cached --quiet; then
+		git commit -m "chore: update from fusionauth-site ${DOCUMENTATION_COMMIT_HASH}"
+		git push origin main
+	fi
+
+	# Remove temporary folders
+	cd "$REPO_ROOT"
+	rm -rf "$LOCAL_CLEANED_REPOSITORY_PATH" "$LOCAL_CLONED_REPOSITORY_PATH"
+done

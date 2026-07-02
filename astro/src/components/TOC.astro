@@ -1,27 +1,121 @@
 ---
-const { toc, depth = 1, maxDepth = 4, ...props } = Astro.props;
-const headings = toc.filter((it) => it.depth === depth);
-// const headings = toc;
-const notFirstLevel = depth !== 2;
+const { maxDepth = 4 } = Astro.props;
 ---
-<ul id="toc-list" class:list={["space-y-3", {"ml-4": notFirstLevel, "pt-3": notFirstLevel, "pt-5": !notFirstLevel}]} data-widget="scroll-spy">
-  {
-    headings.map((it, idx) => {
-      const nextHeading = headings[idx + 1];
-      const subHeadings = toc.slice(
-        (toc as any).indexOf(it) + 1,
-        nextHeading ? (toc as any).indexOf(nextHeading) : undefined
-      );
-      return (
-        <li>
-          <div class="group" data-widget="scroll-spy-item">
-            <a href={"#" + it.slug} class="block font-medium text-slate-600 text-sm dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900">
-              {it.text.replaceAll('#', '')}
-            </a>
-          </div>
-          {(subHeadings.length > 0 && it.depth < maxDepth) ? <Astro.self toc={subHeadings} depth={it.depth + 1} {maxDepth} {...props}/> : null}
-        </li>
-      )
-    })
-  }
-</ul>
+
+<nav id="toc-container" class="overflow-y-auto max-h-[calc(100vh-100px)]"></nav>
+
+<script define:vars={{ maxDepth }}>
+  document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById('toc-container');
+    
+    const rawHeadings = Array.from(document.querySelectorAll('h2, h3, h4, h5, h6'))
+      .filter(h => h.id)
+      .map(h => ({
+        id: h.id,
+        text: h.textContent.replace(/#/g, '').trim(),
+        depth: parseInt(h.tagName.substring(1), 10)
+      }));
+
+    if (rawHeadings.length === 0) return;
+
+    const minDepth = Math.min(...rawHeadings.map(h => h.depth));
+
+    function buildTOC(toc, currentDepth) {
+      const headings = toc.filter(h => h.depth === currentDepth);
+      if (headings.length === 0) return null;
+
+      const notFirstLevel = currentDepth > minDepth;
+
+      const ul = document.createElement('ul');
+      ul.setAttribute('data-widget', 'scroll-spy');
+      
+      ul.classList.add("space-y-3");
+      if (notFirstLevel) {
+        ul.classList.add("ml-4", "pt-3");
+      } else {
+        ul.classList.add("pt-5");
+        ul.id = "toc-list";
+      }
+
+      headings.forEach((heading, idx) => {
+        const nextHeading = headings[idx + 1];
+        
+        const startIndex = toc.findIndex(h => h.id === heading.id) + 1;
+        const endIndex = nextHeading 
+          ? toc.findIndex(h => h.id === nextHeading.id) 
+          : toc.length;
+          
+        const subHeadings = toc.slice(startIndex, endIndex);
+
+        const li = document.createElement('li');
+
+        const div = document.createElement('div');
+        div.className = "group";
+        div.setAttribute('data-widget', 'scroll-spy-item');
+
+        const a = document.createElement('a');
+        a.href = "#" + heading.id;
+        a.className = "block font-medium text-slate-600 text-sm dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900 transition-colors";
+        a.textContent = heading.text;
+
+        div.appendChild(a);
+        li.appendChild(div);
+
+        if (subHeadings.length > 0 && currentDepth < maxDepth) {
+          const subUl = buildTOC(subHeadings, currentDepth + 1);
+          if (subUl) {
+            li.appendChild(subUl);
+          }
+        }
+
+        ul.appendChild(li);
+      });
+
+      return ul;
+    }
+
+    const tocTree = buildTOC(rawHeadings, minDepth);
+    if (tocTree) {
+      container.appendChild(tocTree);
+    }
+
+    // Map the raw headings to their actual DOM elements
+    const headingElements = rawHeadings.map(h => document.getElementById(h.id)).filter(Boolean);
+    const tocGroups = Array.from(container.querySelectorAll('.group'));
+
+    const updateScrollSpy = () => {
+      let activeHeading = headingElements[0];
+      
+      // Find the last heading that has crossed a specific top threshold (e.g., 150px)
+      for (const el of headingElements) {
+        if (el.getBoundingClientRect().top < 150) {
+          activeHeading = el;
+        } else {
+          break; // Stop iterating once we find a heading below the active viewport area
+        }
+      }
+
+      if (activeHeading) {
+        // Clear active state from all items
+        tocGroups.forEach(group => group.classList.remove('active'));
+        
+        // Find the active link and apply the class
+        const activeLink = container.querySelector(`a[href="#${activeHeading.id}"]`);
+        if (activeLink) {
+          const activeGroup = activeLink.closest('.group');
+          activeGroup.classList.add('active');
+          
+          // Auto-scroll the TOC container to keep the active item in view
+          // block: "nearest" ensures the main page doesn't jump, only the TOC scrollbar
+          activeGroup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    };
+
+    // Attach passive listener for maximum scroll performance
+    window.addEventListener('scroll', updateScrollSpy, { passive: true });
+    
+    // Fire once on load to set the initial active state
+    updateScrollSpy();
+  });
+</script>

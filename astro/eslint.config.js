@@ -80,17 +80,6 @@ export default [
     }
   },
   {
-    files: ['src/code-example-repositories/**/*.js'],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-      }
-    },
-    rules: {
-      'no-unused-vars': 'off',
-    }
-  },
-  {
     files: ['src/generated-code-snippets/**/*.js'],
     rules: {
       'no-unused-vars': 'off',

@@ -1,7 +1,7 @@
 ---
 import AvailableSince from './AvailableSince.astro';
 import ReadOnly from './ReadOnly.astro';
-import Optional from './Optional.astro';
+import { marked } from 'marked';
 
 interface Props {
   name: string;
@@ -18,24 +18,60 @@ interface Props {
   show_since?: boolean;
 }
 
-const { name, description, type, required, optional, immutable, since, defaults, deprecated, renderif=true, show_since=true, readonly }: Props = Astro.props;
+const {
+  name,
+  description,
+  type,
+  required,
+  optional,
+  immutable,
+  since,
+  defaults,
+  deprecated,
+  renderif = true,
+  show_since = true,
+  readonly
+} = Astro.props;
+
+const rawSlotContent = await Astro.slots.render('default');
+let parsedMarkdownHTML = '';
+if (rawSlotContent) {
+  const trimmedContent = rawSlotContent.replace(/^[ \t]+/gm, '');
+  parsedMarkdownHTML = marked.parse(trimmedContent);
+}
 ---
-{/*If you put the API field inside a conditional block it can break the markdown parsing, `renderif` solves that problem  */}
-{/* Note: if you use a description parameter instead of a body, you'll get a single-line version */}
-{ renderif && <div class='border-t border-slate-300 dark:border-slate-800'>
-  <div class="flex flex-wrap mt-6 space-x-3 items-baseline">
-    <code class="api-field-name">{ name }</code>
-    { type && <span class="dark:text-gray-400 text-gray-500 text-sm pt-1">{type}</span> }
-    { description && <span class="px-3">{description}</span> }
-    { required && <span class="px-[6px] py-1 rounded-md text-orange-500 border-orange-500 border-2 dark:font-semibold font-bold uppercase text-xs dark:text-[10px]">required</span> }
-    { defaults && <span class="pt-1 dark:text-gray-400 text-gray-500 text-sm justify-center">Defaults to {defaults}</span> }
-    { show_since && since && <AvailableSince since={since} /> }
-    { immutable && <span class="px-3 text-orange-500 text-sm font-semibold uppercase">Immutable</span> }
-    { deprecated && <span class="text-red-700 text-sm">DEPRECATED</span> }
-    { readonly && <ReadOnly /> }
+<div class:list={['border-t border-slate-300 dark:border-slate-800', { hidden: !renderif }]}>
+  <div class="flex flex-wrap items-baseline mt-6 space-x-3">
+    <code class="api-field-name">{name}</code>
+
+    {type && <span class="pt-1 text-sm text-gray-500 dark:text-gray-400">{type}</span>}
+    {description && <span class="px-3">{description}</span>}
+
+    {required && (
+      <span class="px-[6px] py-1 text-xs font-bold uppercase border-2 rounded-md text-orange-500 border-orange-500 dark:font-semibold dark:text-[10px]">
+        required
+      </span>
+    )}
+
+    {optional && (
+      <span class="px-[6px] py-1 text-xs font-bold uppercase border-2 rounded-md text-purple-500 border-purple-500 dark:font-semibold dark:text-[10px]">
+        optional
+      </span>
+    )}
+
+    {defaults && (
+      <span class="pt-1 text-sm text-gray-500 justify-center dark:text-gray-400">
+        Defaults to {defaults}
+      </span>
+    )}
+
+    {show_since && since && <AvailableSince since={since} />}
+    {immutable && <span class="px-3 text-sm font-semibold text-orange-500 uppercase">Immutable</span>}
+    {deprecated && <span class="text-sm text-red-700">DEPRECATED</span>}
+    {readonly && <ReadOnly />}
   </div>
-  <div class="ml-4 mb-7 font-normal text-sm">
-    <slot></slot>
+
+  <div class="mb-7 ml-4 text-sm font-normal">
+    <div class="mb-7 ml-4 text-sm font-normal" set:html={parsedMarkdownHTML}></div>
   </div>
 </div>
-}

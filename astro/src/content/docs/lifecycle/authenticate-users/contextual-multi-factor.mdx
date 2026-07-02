@@ -3,6 +3,7 @@ title: Contextual Multi-Factor Authentication (MFA)
 description: Learn about how FusionAuth decides to trigger multi-factor authentication (MFA) in the login flow.
 tags: context mfa, contextual mfa, context 2fa, 2fa context, mfa context, how mfa, determine mfa, mfa detect, context
 ---
+import Aside from 'src/components/Aside.astro';
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.mdx';
 import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.mdx';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
@@ -177,9 +178,174 @@ The following contextual MFA features are limited to the specified plan.
 
 ## MFA Challenges After Identity Provider Login
 
-If a user logs in with an Identity Provider such as Google or OIDC, FusionAuth does not challenge for MFA. [FusionAuth trusts that the correct MFA challenge process happens at Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/#account-security). 
+If a user logs in with an Identity Provider such as Google or OIDC, FusionAuth does not challenge for MFA. [FusionAuth trusts that the correct MFA challenge process happens at Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/#account-security).
 
-There's an [open issue to add a policy to allow for more control](https://github.com/FusionAuth/fusionauth-issues/issues/2005) in this scenario.
+You can override this by using an [MFA requirement lambda](/docs/extend/code/lambdas/mfa-requirement) and examining the `authenticationType` parameter.
+
+## Intelligent MFA
+
+<Aside type="version">
+Available since `1.68.0`
+</Aside>
+
+<PremiumPlanBlurb />
+
+Intelligent MFA uses risk signals integrated into FusionAuth to determine the risk level of a login attempt. Risk signals include (but are not limited to) the following:
+
+* `BotDetected` - The browser library signals that the user is a bot.
+* `BlocklistedIp` - The IP address is blocklisted.
+* `DormantAccount` - The user hasn't logged in for a long time.
+* `DormantPassword` - The password hasn't been changed for a long time.
+* `ImpossibleTravel` - The distance between recent logins exceeds the possible value a person can travel within the allotted time frame.
+* `RecentIdentityChange` - The user recently changed their identity.
+* `RecentPasswordChange` - The user recently changed their password.
+* `SuspiciousUserAgent` - The user agent is suspicious.
+* `UnrecognizedDevice` - The device has not been recognized.
+* `UntrustedDevice` - The device is not trusted.
+
+To use these risk signals when determining whether to present an MFA challenge to a user, you can:
+
+* choose a tenant login policy of `ChallengeOnHighRisk` or `ChallengeOnMediumRisk`
+* manually use these signals or the aggregate risk level (`LOW`, `MEDIUM`, or `HIGH`) using the `context` of an [MFA requirement lambda](/docs/extend/code/lambdas/mfa-requirement).
+
+### Roll Out Intelligent MFA
+
+Every user population is different. With Intelligent MFA, you want to reduce challenges for legitimate users, but still challenge when our proprietary algorithm indicates a possibility of an attacker or account takeover.
+
+The rollout options differ by plan, because only the Enterprise plan can observe risk without acting on it.
+
+### With an Enterprise Plan
+
+On the Enterprise plan, any configured MFA requirement lambda logs `risk` and `riskSignals` to the event log when debug is enabled. You can use this behavior to measure first, then enforce.
+
+1. Collect a baseline.
+    * Enable the `user.two-factor.challenge`, `user.two-factor.success`, and `user.two-factor.failed_attempt` webhooks and collect MFA metrics. You can also read the numbers on the <Breadcrumb>Reactor</Breadcrumb> tab.
+    * Calculate your current challenge rate, which is the number of MFA challenges per DAU or logins. You can pull the denominator using the [reporting API](/docs/apis/reports) or the [login API, respectively](/docs/apis/login#export-login-records).
+    * You can also collect the number of MFA-related customer support requests.
+1. Gather the risk scores but do not apply the policy.
+    * Enable an [MFA requirement lambda](/docs/extend/code/lambdas/mfa-requirement), but mimic your existing policy so that behavior does not change for your users; see [below for sample lambdas](#sample-mfa-requirement-lambdas). 
+    * Enable the **debug** toggle on the tenant <Breadcrumb>Multi-Factor</Breadcrumb> tab to log the user Id, composite risk, and riskSignals. If you do not already use an MFA requirement lambda, adding one means the MFA requirement decision to the lambda. You can use the sample MFA requirement lambdas below.
+1. Capture the logs.
+    * Set up an [event log create webhook](/docs/extend/events-and-webhooks/events/event-log-create) to capture the logs. Discard any that are not MFA composite risk log events. Store the values, including the composite score and the user Id in a database to analyze.
+1. Analyze the logs. 
+    * From the log data, compare the count of `HIGH` and `MEDIUM` composite scores to the count of challenges in your baseline.
+    * Review a sample of `HIGH` scores to see if they are legitimate users and `LOW` scores to see if they are not. The two risk policies ignore "trust this device", so users currently skipped by a trusted device are re-evaluated on risk and may be challenged.
+1. Pilot risk-based MFA. 
+    * Apply an application-level risk-based policy to one non-critical application.
+    * Modify the lambda to challenge on `HIGH` risk for this application. 
+    * Keep reviewing the log data and verify challenge volume matches the shadow estimate.
+    * Collect the number of MFA related customer support requests and compare it to the baseline, scaled based on the relative number of logins for this application.
+1. Widen risk based MFA rollout.
+    * Expand the application based configuration to more applications. Choose whether to challenge on high or medium/high per application. Use the MFA requirement lambda for any per-application exceptions.
+    * Turn off MFA debugging as you roll risk scoring MFA out further and have more confidence in how your users interact with the MFA challenge.
+1. Monitor the rollout.
+    * Continue to calculate your challenge and challenge success rates.
+    * You can also watch the suspicious login webhook (the `threatsDetected` value) for trends in which threats your users detect.
+
+To roll back at any step, revert the policy or the lambda. This is a configuration change only.
+
+### Without an Enterprise Plan
+
+On other paid plans, risk signals are calculated only when a risk policy is enabled, and the policy enforces immediately. There is no shadow mode, so roll out small and reversibly.
+
+1. Record baseline data. Record your current challenge rate from the Reactor tab counts.
+1. Pilot risk based MFA. Set "Challenge On High Risk" on a dedicated low-traffic or internal tenant.
+1. Measure the impact. Compare the Reactor counts for this tenant to your baseline.
+1. Widen the rollout. Enable the policy on additional tenants, one at a time.
+
+To roll back, set the policy to your previous MFA policy.
+
+### Example MFA Requirement Lambdas
+
+The following example MFA requirement lambda mimics the `Disabled` tenant policy:
+
+```javascript
+function checkRequired(result, user, registration, context) {
+  result.required = false;
+}
+```
+
+This lambda mimics the `Enabled` tenant policy:
+
+```javascript
+function checkRequired(result, user, registration, context) {
+  var methods = (user.twoFactor && user.twoFactor.methods) || [];
+  result.required = methods.length > 0;
+}
+```
+
+The following lambda mimics the `Required` tenant policy:
+
+```javascript
+function checkRequired(result, user, registration, context) {
+  result.required = true;
+}
+```
+
+The following lambda mimics an application policy:
+
+```javascript
+// Returns true when an existing two-factor trust should bypass the challenge,
+// per the application's applicationMultiFactorTrustPolicy.
+function hasValidTrust(context) {
+  // Default to 'Any' to match FusionAuth's default trust behavior when unset.
+  var trustPolicy = (context.policies && context.policies.applicationMultiFactorTrustPolicy) || 'Any';
+
+  // 'None' never honors an existing trust.
+  if (trustPolicy === 'None') {
+    return false;
+  }
+
+  var trust = context.mfaTrust;
+  if (!trust) {
+    return false;
+  }
+
+  // Reject an expired trust.
+  if (trust.expirationInstant && trust.expirationInstant <= Date.now()) {
+    return false;
+  }
+
+  // 'This' only honors a trust established by the current application.
+  if (trustPolicy === 'This') {
+    var currentAppId = context.application && context.application.id;
+    return !!currentAppId && trust.applicationId === currentAppId;
+  }
+
+  // 'Any' honors a valid trust from any application.
+  return true;
+}
+
+function checkRequired(result, user, registration, context) {
+  var policies = context.policies || {};
+
+  // Effective login policy: the application overrides the tenant when set.
+  var loginPolicy = policies.applicationLoginPolicy || policies.tenantLoginPolicy;
+
+  // Does the user have a configured MFA method?
+  var methods = (user.twoFactor && user.twoFactor.methods) || [];
+  var hasMethod = methods.length > 0;
+
+  // Base requirement from the login policy.
+  var required;
+  if (loginPolicy === 'Required') {
+    required = true;       // always challenge; FusionAuth forces enrollment if no method exists
+  } else if (loginPolicy === 'Enabled') {
+    required = hasMethod;  // challenge only when the user has a method
+  } else {
+    required = false;      // Disabled, or no policy set
+  }
+
+  // Honor the application trust policy. An existing trust only matters
+  // when a challenge would otherwise occur.
+  if (required && hasValidTrust(context)) {
+    required = false;
+  }
+
+  result.required = required;
+}
+
+```
 
 ## Custom MFA Logic
 
@@ -189,7 +355,7 @@ To customize MFA to meet your needs, use one of the following methods:
 
 ### MFA Requirement Lambda
 
-Under <Breadcrumb> Customization -> Lambdas </Breadcrumb>, create a new Lambda of type `MFA requirement lambda`.
+Under <Breadcrumb> Customization -> Lambdas</Breadcrumb>, create a new Lambda of type `MFA requirement lambda`.
 
 The following example forces an MFA check for any user whose email address includes the string 'gilfoyle':
 
@@ -234,3 +400,4 @@ For more information, see the [step-up authentication](/docs/lifecycle/authentic
 There's an [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/2357) about unexpected MFA behavior and workarounds when a user logs in with an identity provider but SSOs to an application with a login policy of `Required`.
 
 If a user signs up with an MFA method that is allowed for a tenant, such as email, and the tenant configuration changes later to disable that MFA method, the user can still use that MFA method. Users cannot, however, add disabled MFA methods. If you are disabling an MFA method previously in use, it's recommended you search for users using that method and remove it using a script, updating each user.
+
