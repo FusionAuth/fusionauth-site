@@ -5,132 +5,29 @@ import DocsNav from 'src/components/nav/DocsNav.astro';
 
 const title = "FusionAuth API Explorer";
 const description = "Interactive explorer for the FusionAuth API.";
+
+// Fetch the default OpenAPI spec at BUILD time
+const LATEST_OPENAPI_URL = 'https://raw.githubusercontent.com/FusionAuth/fusionauth-openapi/main/openapi.yaml';
+const response = await fetch(LATEST_OPENAPI_URL);
+const bundledSpec = await response.text();
 ---
 <!DOCTYPE html>
 <html lang="en" class="antialiased min-h-full">
   <Head title={title} description={description} />
   <style is:global>
-    /* Hide the Astro dev toolbar on this page in local dev. No-op in
-       production where the element isn't injected. */
     astro-dev-toolbar { display: none !important; }
-
     body { margin: 0; }
-
-    .explorer-topbar {
-      position: sticky;
-      top: 65px;
-      left: 0;
-      right: 0;
-      z-index: 40;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0 16px;
-      border-bottom: 1px solid #e2e8f0;
-      background: #ffffff;
-      font: 13px/1 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-      color: #475569;
-    }
-    html.dark .explorer-topbar {
-      background: #0b1224;
-      border-bottom-color: #1e293b;
-      color: #94a3b8;
-    }
-    .explorer-topbar a {
-      color: #f58320;
-      text-decoration: none;
-    }
-    .explorer-topbar a:hover { text-decoration: underline; }
-    .explorer-topbar .sep { color: #cbd5e1; }
-    html.dark .explorer-topbar .sep { color: #334155; }
-    .explorer-topbar .spacer { flex: 1; }
-
-    .version-switcher {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .version-switcher label {
-      white-space: nowrap;
-      font-size: 12px;
-      color: inherit;
-    }
-    .version-switcher select {
-      height: 24px;
-      padding: 0 24px 0 7px;
-      font-size: 12px;
-      border: 1px solid #cbd5e1;
-      border-radius: 4px;
-      background: #f8fafc;
-      color: #0f172a;
-      outline: none;
-      cursor: pointer;
-      appearance: auto;
-    }
-    html.dark .version-switcher select {
-      border-color: #334155;
-      background: #1e293b;
-      color: #f1f5f9;
-    }
-    .version-switcher select:focus {
-      border-color: #f58320;
-      box-shadow: 0 0 0 2px rgba(245, 131, 32, 0.25);
-    }
-    .version-switcher .loading {
-      font-size: 12px;
-      color: inherit;
-      opacity: 0.6;
-    }
-    .version-switcher .sep {
-      font-size: 12px;
-      color: #94a3b8;
-      padding: 0 2px;
-    }
-    .download-label {
-      font-size: 12px;
-      color: inherit;
-      white-space: nowrap;
-    }
-    .version-switcher a {
-      font-size: 12px;
-      color: #f58320;
-      text-decoration: none;
-      white-space: nowrap;
-    }
-    .version-switcher a:hover { text-decoration: underline; }
-
-    /* ThemeSelector's MoonIcon hardcodes text-white (it lives in the dark
-       docs nav by default). On our light topbar that's invisible, so we
-       force the icon to inherit the topbar's foreground color. */
-    .explorer-topbar fa-theme-selector svg { color: inherit !important; }
-
-    #scalar-app { min-height: calc(100vh - 105px); }
+    
+    #scalar-app { min-height: calc(100vh - 65px); }
   </style>
   <body class="antialiased">
     <DocsNav noSideNav={true} darkModeToggle={true} />
-    <nav class="explorer-topbar">
-      <span class="spacer"></span>
-      <div class="version-switcher">
-        <label for="version-select">Version:</label>
-        <span id="version-loading" class="loading">Loading...</span>
-        <select id="version-select" style="display:none" aria-label="API spec version"></select>
-        <span class="sep">&middot;</span>
-        <span class="download-label">Download:</span>
-        <a id="download-yaml" href="#">YAML</a>
-        <span class="sep">&middot;</span>
-        <a id="download-json" href="#">JSON</a>
-      </div>
-      <span class="spacer"></span>
-    </nav>
 
     <div id="scalar-app"></div>
 
     <script is:inline src="/docs/vendor/scalar-api-reference.js"></script>
     <script is:inline src="/docs/vendor/js-yaml.min.js"></script>
-    <script is:inline>
-      // Theme is owned entirely by ThemeSelector + Head.astro's inline script.
-      // The single source of truth is `documentElement.classList.contains('dark')`.
+    <script is:inline define:vars={{ bundledSpec }}>
       const customCss = `
         .darklight-reference { display: none !important; }
         .api-reference-toolbar { display: none !important; }
@@ -144,12 +41,12 @@ const description = "Interactive explorer for the FusionAuth API.";
         }
 
         aside.t-doc__sidebar {
-          top: 105px !important;
-          height: calc(100vh - 105px) !important;
+          top: 65px !important;
+          height: calc(100vh - 65px) !important;
         }
 
         #scalar-app [id] {
-          scroll-margin-top: 105px !important;
+          scroll-margin-top: 65px !important;
         }
 
         #scalar-app input[type="text"],
@@ -168,9 +65,6 @@ const description = "Interactive explorer for the FusionAuth API.";
           box-shadow: 0 0 0 2px rgba(245, 131, 32, 0.25) !important;
         }
 
-        /* Set variables on body with html.dark/html:not(.dark) prefix so we
-           outrank Scalar's own body.light-mode / body.dark-mode rules
-           (specificity 0,1,2 vs Scalar's 0,1,1). */
         html:not(.dark) body, html.dark body {
           --scalar-color-accent: #f58320;
           --scalar-background-accent: #fff1e0;
@@ -209,24 +103,18 @@ const description = "Interactive explorer for the FusionAuth API.";
 
       const isDark = () => document.documentElement.classList.contains('dark');
 
-      const DEFAULT_URL = '/openapi.yaml';
-      let activeUrl = DEFAULT_URL;
-
-      // Scalar's updateConfiguration replaces (not merges) the config, so we
-      // keep the full object around and pass it every time.
       const buildConfig = () => ({
-        url: activeUrl,
         layout: 'modern',
         darkMode: isDark(),
         hideDarkModeToggle: true,
         agent: { disabled: true },
         customCss,
         metaData: { title: 'FusionAuth API Explorer' },
+        spec: { content: bundledSpec } 
       });
 
       const scalar = Scalar.createApiReference('#scalar-app', buildConfig());
 
-      // Re-skin Scalar when ThemeSelector flips html.dark.
       new MutationObserver(() => {
         scalar.updateConfiguration(buildConfig());
       }).observe(document.documentElement, {
@@ -234,41 +122,7 @@ const description = "Interactive explorer for the FusionAuth API.";
         attributeFilter: ['class'],
       });
 
-      // Version switcher: populate from GitHub tags API, switch spec on change.
-      const versionSelect  = document.getElementById('version-select');
-      const versionLoading = document.getElementById('version-loading');
-
-      const TAGS_URL = 'https://api.github.com/repos/FusionAuth/fusionauth-openapi/tags?per_page=100';
-      const RAW_BASE = 'https://raw.githubusercontent.com/FusionAuth/fusionauth-openapi';
-
-      fetch(TAGS_URL)
-        .then(r => r.json())
-        .then(tags => {
-          // Current (built-in) spec always first
-          const current = document.createElement('option');
-          current.value = DEFAULT_URL;
-          current.textContent = 'Current (latest)';
-          versionSelect.appendChild(current);
-
-          tags.forEach(tag => {
-            const opt = document.createElement('option');
-            opt.value = `${RAW_BASE}/${tag.name}/openapi.yaml`;
-            opt.textContent = tag.name;
-            versionSelect.appendChild(opt);
-          });
-
-          versionLoading.style.display = 'none';
-          versionSelect.style.display = '';
-        })
-        .catch(() => {
-          versionLoading.textContent = 'Version list unavailable';
-        });
-
-      // Download links use blobs to force download regardless of content-type.
-      const downloadYaml = document.getElementById('download-yaml');
-      const downloadJson = document.getElementById('download-json');
-
-      async function triggerDownload(content, filename, type) {
+      function triggerDownload(content, filename, type) {
         const blob = new Blob([content], { type });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -278,27 +132,55 @@ const description = "Interactive explorer for the FusionAuth API.";
         URL.revokeObjectURL(url);
       }
 
-      downloadYaml.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const resp = await fetch(activeUrl);
-        const text = await resp.text();
-        const filename = (activeUrl.split('/').pop() || 'openapi').replace(/\.json$/, '.yaml');
-        triggerDownload(text, filename, 'application/yaml');
+      const scalarObserver = new MutationObserver(() => {
+        const containerId = 'custom-inline-downloads';
+        if (document.getElementById(containerId)) return;
+
+        const title = document.querySelector('#scalar-app h1');
+        if (title) {
+          const dlDiv = document.createElement('div');
+          dlDiv.id = containerId;
+          
+          dlDiv.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+            padding: 8px 14px;
+            background: var(--scalar-background-2);
+            border: 1px solid var(--scalar-border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+          `;
+          
+          dlDiv.innerHTML = `
+            <span style="color: var(--scalar-color-3)">Download OpenAPI Spec:</span>
+            <a href="#" id="dl-yaml" style="color: var(--scalar-color-accent); text-decoration: none;">YAML</a>
+            <span style="color: var(--scalar-border-color)">&middot;</span>
+            <a href="#" id="dl-json" style="color: var(--scalar-color-accent); text-decoration: none;">JSON</a>
+          `;
+          
+          title.parentNode.insertBefore(dlDiv, title.nextSibling);
+
+          document.getElementById('dl-yaml').addEventListener('click', (e) => {
+            e.preventDefault();
+            triggerDownload(bundledSpec, 'openapi.yaml', 'application/yaml');
+          });
+
+          document.getElementById('dl-json').addEventListener('click', (e) => {
+            e.preventDefault();
+            const obj = jsyaml.load(bundledSpec);
+            const json = JSON.stringify(obj, null, 2);
+            triggerDownload(json, 'openapi.json', 'application/json');
+          });
+        }
       });
 
-      downloadJson.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const resp = await fetch(activeUrl);
-        const yamlText = await resp.text();
-        const obj = jsyaml.load(yamlText);
-        const json = JSON.stringify(obj, null, 2);
-        const filename = (activeUrl.split('/').pop() || 'openapi').replace(/\.yaml$/, '.json');
-        triggerDownload(json, filename, 'application/json');
-      });
-
-      versionSelect.addEventListener('change', () => {
-        activeUrl = versionSelect.value;
-        scalar.updateConfiguration(buildConfig());
+      // Observe the app container to catch the render cycle
+      scalarObserver.observe(document.getElementById('scalar-app'), { 
+        childList: true, 
+        subtree: true 
       });
     </script>
   </body>
