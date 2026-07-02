@@ -18,7 +18,7 @@ const FILES = [
     dest: join(OUT_DIR, 'scalar-api-reference.js'),
   },
   {
-    src: join(ROOT, 'node_modules', 'js-yaml', 'dist', 'js-yaml.min.js'),
+    src: join(ROOT, 'node_modules', 'js-yaml', 'dist', 'js-yaml.js'),
     dest: join(OUT_DIR, 'js-yaml.min.js'),
   },
 ];
