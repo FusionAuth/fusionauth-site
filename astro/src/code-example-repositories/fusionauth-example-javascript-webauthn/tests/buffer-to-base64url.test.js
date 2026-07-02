@@ -1,5 +1,5 @@
-const { base64URLToBuffer } = require('./base64url-to-buffer');
-const { bufferToBase64URL } = require('./buffer-to-base64url');
+const { base64URLToBuffer } = require('../base64url-to-buffer');
+const { bufferToBase64URL } = require('../buffer-to-base64url');
 
 describe('bufferToBase64URL', () => {
   test('encodes bytes to a base64url string', () => {

@@ -2,7 +2,7 @@
 const { maxDepth = 4 } = Astro.props;
 ---
 
-<nav id="toc-container"></nav>
+<nav id="toc-container" class="overflow-y-auto max-h-[calc(100vh-100px)]"></nav>
 
 <script define:vars={{ maxDepth }}>
   document.addEventListener("DOMContentLoaded", () => {
@@ -55,7 +55,7 @@ const { maxDepth = 4 } = Astro.props;
 
         const a = document.createElement('a');
         a.href = "#" + heading.id;
-        a.className = "block font-medium text-slate-600 text-sm dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900";
+        a.className = "block font-medium text-slate-600 text-sm dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900 transition-colors";
         a.textContent = heading.text;
 
         div.appendChild(a);
@@ -78,5 +78,44 @@ const { maxDepth = 4 } = Astro.props;
     if (tocTree) {
       container.appendChild(tocTree);
     }
+
+    // Map the raw headings to their actual DOM elements
+    const headingElements = rawHeadings.map(h => document.getElementById(h.id)).filter(Boolean);
+    const tocGroups = Array.from(container.querySelectorAll('.group'));
+
+    const updateScrollSpy = () => {
+      let activeHeading = headingElements[0];
+      
+      // Find the last heading that has crossed a specific top threshold (e.g., 150px)
+      for (const el of headingElements) {
+        if (el.getBoundingClientRect().top < 150) {
+          activeHeading = el;
+        } else {
+          break; // Stop iterating once we find a heading below the active viewport area
+        }
+      }
+
+      if (activeHeading) {
+        // Clear active state from all items
+        tocGroups.forEach(group => group.classList.remove('active'));
+        
+        // Find the active link and apply the class
+        const activeLink = container.querySelector(`a[href="#${activeHeading.id}"]`);
+        if (activeLink) {
+          const activeGroup = activeLink.closest('.group');
+          activeGroup.classList.add('active');
+          
+          // Auto-scroll the TOC container to keep the active item in view
+          // block: "nearest" ensures the main page doesn't jump, only the TOC scrollbar
+          activeGroup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    };
+
+    // Attach passive listener for maximum scroll performance
+    window.addEventListener('scroll', updateScrollSpy, { passive: true });
+    
+    // Fire once on load to set the initial active state
+    updateScrollSpy();
   });
 </script>

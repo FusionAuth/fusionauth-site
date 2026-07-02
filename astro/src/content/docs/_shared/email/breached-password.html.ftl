@@ -5,8 +5,9 @@
 
 <p>Follow this link to change your password.</p>
 
-<a href="http://localhost:9011/password/forgot?client_id=${(application.oauthConfiguration.clientId)!''}&email=${user.email?url}&tenantId=${user.tenantId}">
-  http://localhost:9011/password/forgot?client_id=${(application.oauthConfiguration.clientId)!''}&email=${user.email?url}&tenantId=${user.tenantId}
+[#assign url = "${baseUrl}/password/forgot?client_id=${(application.oauthConfiguration.clientId)!''}&email=${user.email?url}&tenantId=${user.tenantId}" /]
+<a href="${url?html}">
+  ${url?html}
 </a>
 
 - FusionAuth Admin

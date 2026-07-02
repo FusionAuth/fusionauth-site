@@ -5,8 +5,7 @@ In order to secure your account, it is recommended to change your password at yo
 
 Follow this link to change your password.
 
-http://localhost:9011/password/forgot?client_id=${(application.oauthConfiguration.clientId)!''}&email=${user.email?url}&tenantId=${user.tenantId}
+${baseUrl}/password/forgot?client_id=${(application.oauthConfiguration.clientId)!''}&email=${user.email?url}&tenantId=${user.tenantId}
 
 - FusionAuth Admin
-
 
