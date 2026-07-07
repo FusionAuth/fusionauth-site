@@ -14,14 +14,19 @@ import LoginResponseCodesAuthenticated from 'src/content/docs/apis/_login-respon
 import UserResponseBody from 'src/content/docs/apis/_user-response-body.mdx';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 
-This API is used to login using a One Time Password that has been returned from the Change Password API. The login request is nearly identical, however the `oneTimePasswordId` will take the place of both the `loginId` and the `password` properties.
+This API is used to login using a One Time Password that has been returned from the [Change a User's Password](/docs/apis/users/change-password) API. The login request is nearly identical, however the `oneTimePasswordId` will take the place of both the `loginId` and the `password` properties.
 
 
 ## Request
 
-By default, this API will require authentication when called with an **applicationId**. Authentication may be disabled per Application, see **application.loginConfiguration.requireAuthentication** in the [Application API](/docs/apis/applications) or navigate to <Breadcrumb>Applications -> Edit -> Security</Breadcrumb> in the user interface.
+By default, this API requires API key authentication. Which setting controls this depends on whether the request includes an **applicationId**:
 
-<API method="POST" uri="/api/login" authentication={['none', 'api-key']} title=" Authenticate a User"/>
+* With an **applicationId**, authentication is controlled by **application.loginConfiguration.requireAuthentication**, see the [Application API](/docs/apis/applications) or navigate to <Breadcrumb>Applications -> Edit -> Security</Breadcrumb> in the user interface.
+* Without an **applicationId**, authentication is controlled by **tenant.loginConfiguration.requireAuthentication**, see the [Tenant API](/docs/apis/tenants) or the <Breadcrumb>Security</Breadcrumb> tab in the Tenant configuration.
+
+Both settings default to requiring authentication.
+
+<API method="POST" uri="/api/login" authentication={['none', 'api-key']} title="Authenticate a User with a One Time Password"/>
 
 ### Request Headers
 
@@ -42,7 +47,7 @@ By default, this API will require authentication when called with an **applicati
     The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will be stored in the User login history.
   </APIField>
   <APIField name="oneTimePassword" type="String" required>
-    The one time password returned by the Change Password API. This value takes the place of the **loginId** and the **password** fields.
+    The one time password returned by the [Change a User's Password](/docs/apis/users/change-password) API. This value takes the place of the **loginId** and the **password** fields.
   </APIField>
   <LoginMetadataDevice />
   <APIField name="noJWT" type="Boolean" optional defaults="false">
@@ -51,7 +56,7 @@ By default, this API will require authentication when called with an **applicati
     This optional parameter may be helpful when performing high volume authentication requests and the JWT is not being utilized, in this scenario removing the additional latency required to issue and sign the JWT may have a measurable cumulative effect on performance.
   </APIField>
   <APIField name="twoFactorTrustId" type="String" optional>
-    The Multi-Factor Trust identifier returned by the Multi-Factor Login API response. This value may be provided to bypass the Multi-Factor challenge when a User has Multi-Factor enabled.
+    The Multi-Factor Trust identifier returned by the [Complete Multi-Factor Authentication](/docs/apis/login/complete-mfa) API response. This value may be provided to bypass the Multi-Factor challenge when a User has Multi-Factor enabled.
   </APIField>
 </APIBlock>
 
@@ -59,7 +64,7 @@ By default, this API will require authentication when called with an **applicati
 
 ## Response
 
-The response for this API contains the User object.
+The response for this API contains the User object. If authentication succeeds, the **token** field contains the JWT you'll use to identify the user on subsequent requests, see the [JWTs & Refresh Token API](/docs/apis/jwt) for how to validate and refresh it. To end the session, see [Logout a User](/docs/apis/login/logout).
 
 <LoginResponseCodesAuthenticated />
 
