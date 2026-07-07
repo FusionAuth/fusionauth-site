@@ -61,13 +61,15 @@ Depending on [your license](#license-limitations), you can configure MFA policie
 
 ### Tenant MFA Configuration
 
-Tenant configuration applies to all applications within a tenant. The MFA policy has three values:
+Tenant configuration applies to all applications within a tenant. The MFA policy has the following values:
 
 * `Disabled`: no MFA challenge occurs
 * `Enabled`: an MFA challenge occurs only if the user has a valid MFA method
 * `Required`: an MFA challenge always occurs, requires users without MFA to configure an MFA method
+* `ChallengeOnHighRisk`: see [Intelligent MFA](#intelligent-mfa) for more
+* `ChallengeOnMediumRisk`: see [Intelligent MFA](#intelligent-mfa) for more
 
-Here's a diagram of the MFA challenge logic when the tenant has a policy for MFA.
+Here's a diagram of the MFA challenge logic when the tenant has a policy for MFA that is not an Intelligent MFA policy.
 
 ```mermaid title="Tenant MFA decision logic."
 graph TD
@@ -103,6 +105,8 @@ With an active application MFA configuration, there is an MFA policy with three 
 * `Disabled`: no MFA challenge occurs
 * `Enabled`: an MFA challenge occurs only if the user has a valid MFA method
 * `Required`: an MFA challenge always occurs, requires users without MFA to configure an MFA method
+* `ChallengeOnHighRisk`: see [Intelligent MFA](#intelligent-mfa) for more
+* `ChallengeOnMediumRisk`: see [Intelligent MFA](#intelligent-mfa) for more
 
 An additional trust policy determines if an application accepts the results of other MFA challenges with the following options:
 
@@ -118,7 +122,7 @@ Here's a table outline possible scenarios for different trust policies.
 | `This`          | A gambling application which uses real money in a suite which has other fantasy gaming apps. | The other fantasy gaming apps might not require MFA at all, but if they do, it's not a high enough level of security for the "real money" gambling application. |
 | `None`          | An internal admin dashboard | Access should be strictly controlled and user friction is not an issue. |
 
-Here's a diagram of MFA challenge logic when the application has a policy for MFA.
+Here's a diagram of the MFA challenge logic when the application has a policy for MFA that is not an Intelligent MFA policy.
 
 ```mermaid title="Diagram of application MFA decision logic."
 graph TD
@@ -206,7 +210,7 @@ Intelligent MFA uses risk signals integrated into FusionAuth to determine the ri
 To use these risk signals when determining whether to present an MFA challenge to a user, you can:
 
 * choose a tenant login policy of `ChallengeOnHighRisk` or `ChallengeOnMediumRisk`
-* manually use these signals or the aggregate risk level (`LOW`, `MEDIUM`, or `HIGH`) using the `context` of an [MFA requirement lambda](/docs/extend/code/lambdas/mfa-requirement).
+* manually use the aggregate risk level (`LOW`, `MEDIUM`, or `HIGH`) in the `context` of an [MFA requirement lambda](/docs/extend/code/lambdas/mfa-requirement)
 
 ### Roll Out Intelligent MFA
 
@@ -214,7 +218,7 @@ Every user population is different. With Intelligent MFA, you want to reduce cha
 
 The rollout options differ by plan, because only the Enterprise plan can observe risk without acting on it.
 
-### With an Enterprise Plan
+#### With an Enterprise Plan
 
 On the Enterprise plan, any configured MFA requirement lambda logs `risk` and `riskSignals` to the event log when debug is enabled. You can use this behavior to measure first, then enforce.
 
@@ -244,7 +248,7 @@ On the Enterprise plan, any configured MFA requirement lambda logs `risk` and `r
 
 To roll back at any step, revert the policy or the lambda. This is a configuration change only.
 
-### Without an Enterprise Plan
+#### Without an Enterprise Plan
 
 On other paid plans, risk signals are calculated only when a risk policy is enabled, and the policy enforces immediately. There is no shadow mode, so roll out small and reversibly.
 
@@ -347,6 +351,14 @@ function checkRequired(result, user, registration, context) {
 
 ```
 
+### Client Risk Configuration
+
+<EnterprisePlanBlurb />
+
+Under <Breadcrumb> Tenants -> Your Tenant -> Security</Breadcrumb>, navigate to the `Client risk configuration` section. There you can enable or disable individual signals by changing the `Customize risk signals` toggle.
+
+If a signal is disabled, it will not be included in any intelligent MFA risk calculations.
+
 ## Custom MFA Logic
 
 You may need more granularity on who is challenged for an additional factor during login. For example, you might want everyone who is a member of a certain group or has a certain `user.data` field to complete an MFA challenge.
@@ -354,6 +366,8 @@ You may need more granularity on who is challenged for an additional factor duri
 To customize MFA to meet your needs, use one of the following methods:
 
 ### MFA Requirement Lambda
+
+<EnterprisePlanBlurb />
 
 Under <Breadcrumb> Customization -> Lambdas</Breadcrumb>, create a new Lambda of type `MFA requirement lambda`.
 
