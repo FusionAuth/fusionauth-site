@@ -1,0 +1,77 @@
+---
+publish_date: 2026-07-08
+title: The MFA Decision Happened, You Just Don't Know Why
+description: FusionAuth 1.68 ships Intelligent MFA with deterministic, rules-based risk scoring — included in your plan, on your infrastructure and with no add-on fees.
+authors: Brad McCarty
+image: /img/blogs/intelligent-mfa/imfa.png
+categories: Company
+tags: mfa, intelligent mfa, risk-based authentication, adaptive mfa, ciam, security, compliance
+excerpt_separator: "{/* more */}"
+---
+
+Every login to your app triggers a risk decision. Something evaluated the request and decided whether to challenge the user or let them through. In almost every auth stack, that something is an ML model running in your vendor's cloud.
+
+You get the verdict. You don't get the reasoning. And depending on which vendor you're on, you're paying a lot for that arrangement.
+
+{/* more */}
+
+Your last auth renewal probably didn't include a line item for risk-based MFA. Now it does, because SOC 2 auditors want to see the logic behind control decisions. It's not enough to say that MFA is enabled. Your procurement team is asking why adaptive MFA costs extra when the base contract already looked expensive. And that per-MAU surcharge from your cloud provider? It scales with every campaign, every acquisition push, every seasonal spike. You signed for authentication. The bill includes a lot more.
+
+FusionAuth 1.68 ships Intelligent MFA. Ten signals. Deterministic scoring. Included in your plan, with no add-on or per-user fee. FusionAuth is the only commercially-supported CIAM platform with risk-based MFA that runs entirely on infrastructure you control. No cloud scoring dependency, no black-box model.
+
+## What Intelligent MFA Scores
+
+FusionAuth's risk engine evaluates ten signals:
+
+- `UnrecognizedDevice`
+- `BlocklistedIp`
+- `UntrustedDevice`
+- `DormantPassword`
+- `DormantAccount`
+- `RecentPasswordChange`
+- `RecentIdentityAdded`
+- `SuspiciousUserAgent`
+- `BotDetected`
+- `ImpossibleTravel` *(Enterprise only)*
+
+The scoring is deterministic. You get rules you can read, with no AI-driven model in the path. Signal names are public. Per-signal scores are visible in debug logs. Composite scores surface in your event log, and on Enterprise they feed the MFA webhooks.
+
+When a compliance auditor asks why a specific user was challenged on a specific date, you have a traceable answer: these named signals fired, the composite score was HIGH, the policy triggered a challenge. A cloud risk engine hands back the verdict and keeps the reasoning on its own infrastructure.
+
+A returning user on a known device with a recent login scores LOW. No challenge, no friction. A login from a known threat actor IP, on an unrecognized device, with a password unchanged for eight months? Each signal stacks. The composite goes HIGH. The policy triggers automatically. No custom code required beyond enabling the policy in the admin UI.
+
+A single strong signal (like impossible travel or a blocklisted IP) is enough to trigger a challenge on its own. A cluster of moderate signals can also combine into a composite that warrants one, even when no single signal is alarming in isolation.
+
+## The Infrastructure Answer You'll Have
+
+Cloud-hosted risk scoring adds a third-party processing dependency to your auth pipeline. Every scored login sends signal data to your vendor's infrastructure. For teams with GDPR obligations, contractual data residency restrictions, or regulated-industry requirements, that's a compliance problem sitting inside the solution you bought to solve compliance problems.
+
+FusionAuth's risk engine runs on your infrastructure, whether on-prem, self-hosted, or FusionAuth Cloud. User authentication data doesn't leave your network to get a risk score.
+
+Eight of the ten signals run entirely on local data. The two threat-intelligence signals (BlocklistedIp and SuspiciousUserAgent) default to MEDIUM without an external connection. They resolve with live IP reputation and user agent data when a connection exists. You get more coverage when connected, and a working policy when you aren't.
+
+## What Your Current Vendor Has
+
+Auth0's adaptive MFA evaluates three signals: device, impossible travel, and IP. The scoring happens in their cloud. What comes back is a binary: challenge or pass. The logic that produced it isn't yours to inspect, which means it's not yours to control.
+
+On Auth0, adaptive MFA requires the Enterprise tier plus a paid Adaptive MFA add-on. AWS Cognito's adaptive authentication lives in the Plus tier, and enabling advanced security features on other tiers carries a per-MAU surcharge that can increase a 100,000-user bill from ~$495 to over $4,700. Okta sells risk-based MFA as a per-user add-on on top of a $3,000/month Enterprise base.
+
+None of these show up when you sign the original contract. They show up when you need the feature, when an auditor asks why you don't have it, or when a campaign spikes login volume and your bill follows.
+
+## The Feature and the Plans
+
+Intelligent MFA in Starter and Essentials includes the tenant-level risk policy, nine signals, debug logging, and MFA reporting on the Reactor tab (cumulative counts of challenges, successes, and failures). No add-on, no per-user fee, no separate purchase for the risk layer. For many B2C teams who want to stop challenging every login, that's enough.
+
+Enterprise adds the tenth signal (`ImpossibleTravel`), application-level risk policy so you can set different thresholds per app, Lambda access to the composite risk score for custom override logic, and three MFA lifecycle webhooks (`user.two-factor.challenge`, `user.two-factor.success`, `user.two-factor.failed_attempt`) that feed your SIEM without adding login latency. The webhooks are Enterprise-only.
+
+If your compliance team needs SIEM integration or your security team needs per-application policy, Enterprise is the right tier. If you need the friction reduction and the audit trail at the tenant level, Starter covers it.
+
+For teams that need more control, the MFA Lambda on Enterprise receives the composite risk score and can apply custom logic. That means you can suppress a challenge for a known internal IP range, force one regardless of score for high-value transactions, or anything else that would otherwise require a separate risk-scoring service.
+
+If you're evaluating now, ask to see Intelligent MFA in your [demo](/contact). Our Solutions Engineers will walk you through the full flow, from policy configuration to a scored login with debug output. It takes about 15 minutes in a real environment. What you bring back to your security team: a scored login, the debug output that produced it, and a clear answer to "why was this user challenged."
+
+Already on FusionAuth? Upgrade to 1.68 and Intelligent MFA is waiting in your Admin UI — no migration, no add-on purchase. Enable the policy in your tenant configuration and you're scoring logins.
+
+---
+
+*Competitive pricing claims verified July 2026 from public documentation. Auth0 adaptive MFA: Enterprise plan + Adaptive MFA add-on required (auth0.com/docs). AWS Cognito adaptive authentication: included in Plus tier; advanced security features carry an additional per-MAU surcharge on other tiers (aws.amazon.com/cognito/pricing). Okta Customer Identity: Enterprise base at $3,000/mo billed annually; add-ons priced by MAU (okta.com/pricing). Pricing subject to change.*
