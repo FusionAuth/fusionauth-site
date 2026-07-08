@@ -4,8 +4,6 @@ description: Learn about how FusionAuth decides to trigger multi-factor authenti
 tags: context mfa, contextual mfa, context 2fa, 2fa context, mfa context, how mfa, determine mfa, mfa detect, context
 ---
 import Aside from 'src/components/Aside.astro';
-import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.mdx';
-import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.mdx';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 
 This page explains why and how FusionAuth asks for MFA during the login process.
@@ -61,13 +59,15 @@ Depending on [your license](#license-limitations), you can configure MFA policie
 
 ### Tenant MFA Configuration
 
-Tenant configuration applies to all applications within a tenant. The MFA policy has three values:
+Tenant configuration applies to all applications within a tenant. The MFA policy has the following values:
 
 * `Disabled`: no MFA challenge occurs
 * `Enabled`: an MFA challenge occurs only if the user has a valid MFA method
 * `Required`: an MFA challenge always occurs, requires users without MFA to configure an MFA method
+* `ChallengeOnHighRisk`: see [Intelligent MFA](#intelligent-mfa) for more
+* `ChallengeOnMediumRisk`: see [Intelligent MFA](#intelligent-mfa) for more
 
-Here's a diagram of the MFA challenge logic when the tenant has a policy for MFA.
+Here's a diagram of the MFA challenge logic when the tenant has a policy for MFA that is not an Intelligent MFA policy.
 
 ```mermaid title="Tenant MFA decision logic."
 graph TD
@@ -98,11 +98,13 @@ graph TD
 
 Application configuration applies to a single application within a tenant. Application policies always supersede the tenant policy.
 
-With an active application MFA configuration, there is an MFA policy with three possible values:
+With an active application MFA configuration, there is an MFA policy with the following possible values:
 
 * `Disabled`: no MFA challenge occurs
 * `Enabled`: an MFA challenge occurs only if the user has a valid MFA method
 * `Required`: an MFA challenge always occurs, requires users without MFA to configure an MFA method
+* `ChallengeOnHighRisk`: see [Intelligent MFA](#intelligent-mfa) for more
+* `ChallengeOnMediumRisk`: see [Intelligent MFA](#intelligent-mfa) for more
 
 An additional trust policy determines if an application accepts the results of other MFA challenges with the following options:
 
@@ -118,7 +120,7 @@ Here's a table outline possible scenarios for different trust policies.
 | `This`          | A gambling application which uses real money in a suite which has other fantasy gaming apps. | The other fantasy gaming apps might not require MFA at all, but if they do, it's not a high enough level of security for the "real money" gambling application. |
 | `None`          | An internal admin dashboard | Access should be strictly controlled and user friction is not an issue. |
 
-Here's a diagram of MFA challenge logic when the application has a policy for MFA.
+Here's a diagram of the MFA challenge logic when the application has a policy for MFA that is not an Intelligent MFA policy.
 
 ```mermaid title="Diagram of application MFA decision logic."
 graph TD
@@ -162,10 +164,15 @@ The following contextual MFA features are limited to the specified plan.
 
 * Application MFA policies
 * Suspicious Login Contextual Check
+* MFA Requirement Lambda, Including Risk Score
+* Impossible Travel Intelligent MFA Signal
+* Client Risk Configuration
 
 ### Any Paid Plan
 
 * Email MFA
+* Intelligent MFA Policies
+* Nine Intelligent MFA Signals
 * SMS MFA
 * User MFA Enrollment Account Management Pages
 
@@ -188,8 +195,6 @@ You can override this by using an [MFA requirement lambda](/docs/extend/code/lam
 Available since `1.68.0`
 </Aside>
 
-<PremiumPlanBlurb />
-
 Intelligent MFA uses risk signals integrated into FusionAuth to determine the risk level of a login attempt. Risk signals include (but are not limited to) the following:
 
 * `BotDetected` - The browser library signals that the user is a bot.
@@ -206,7 +211,7 @@ Intelligent MFA uses risk signals integrated into FusionAuth to determine the ri
 To use these risk signals when determining whether to present an MFA challenge to a user, you can:
 
 * choose a tenant login policy of `ChallengeOnHighRisk` or `ChallengeOnMediumRisk`
-* manually use these signals or the aggregate risk level (`LOW`, `MEDIUM`, or `HIGH`) using the `context` of an [MFA requirement lambda](/docs/extend/code/lambdas/mfa-requirement).
+* manually use the aggregate risk level (`LOW`, `MEDIUM`, or `HIGH`) in the `context` of an [MFA requirement lambda](/docs/extend/code/lambdas/mfa-requirement)
 
 ### Roll Out Intelligent MFA
 
@@ -214,7 +219,7 @@ Every user population is different. With Intelligent MFA, you want to reduce cha
 
 The rollout options differ by plan, because only the Enterprise plan can observe risk without acting on it.
 
-### With an Enterprise Plan
+#### With an Enterprise Plan
 
 On the Enterprise plan, any configured MFA requirement lambda logs `risk` and `riskSignals` to the event log when debug is enabled. You can use this behavior to measure first, then enforce.
 
@@ -244,7 +249,7 @@ On the Enterprise plan, any configured MFA requirement lambda logs `risk` and `r
 
 To roll back at any step, revert the policy or the lambda. This is a configuration change only.
 
-### Without an Enterprise Plan
+#### Without an Enterprise Plan
 
 On other paid plans, risk signals are calculated only when a risk policy is enabled, and the policy enforces immediately. There is no shadow mode, so roll out small and reversibly.
 
@@ -346,6 +351,12 @@ function checkRequired(result, user, registration, context) {
 }
 
 ```
+
+### Client Risk Configuration
+
+Under <Breadcrumb> Tenants -> Your Tenant -> Security</Breadcrumb>, navigate to the `Client risk configuration` section. There you can enable or disable individual signals by changing the `Customize risk signals` toggle.
+
+If a signal is disabled, it will not be included in any intelligent MFA risk calculations.
 
 ## Custom MFA Logic
 
