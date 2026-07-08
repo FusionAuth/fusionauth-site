@@ -1,110 +1,82 @@
 ---
-publish_date: 2026-04-30
-title: Announcing FusionAuth 1.65 - Tenant Manager SSO Tasmanian Mountain Skink
-description: "FusionAuth 1.65.0 emerges from brumation with self-service SSO configuration for tenants, custom favicons for simple themes, and a voice option for MFA accessibility."
+publish_date: 2026-06-30
+title: Announcing FusionAuth 1.68 - Intelligent Kamfa
+description: "FusionAuth 1.68.0 puts its considerable brain power to the task of optimizing MFA challenge logic."
 authors: Nathan Contino
-image: /img/blogs/release-1-65/fusionauth-1-65.png
+image: /img/blogs/release-1-68/fusionauth-1-68.png
 categories: Release Updates, Product
-tags: release notes, bugfixes, tenant manager, sso, favicon, mfa, voice mfa
+tags: release notes, bugfixes, mfa, intelligent mfa
 excerpt_separator: "{/* more */}"
 ---
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 
-In the Northern Hemisphere, the world awakens with springtime splendor: the earth turns a vibrant emerald, daffodils burst into bloom, and FusionAuth marks the season with the release of version `1.65.0`.
+Say hello to FusionAuth `1.68.0`! In honor of our significant improvements to FusionAuth's MFA challenge flow, we've decided to name this one the **Intelligent Kamfa**, after a particularly brainy species of fish:
 
-Meanwhile in the Southern Hemisphere, autumn is settling in. But at least one species is hard at work, eating bugs to prepare for brumation (reptilian hibernation): the [Tasmanian mountain skink](https://nre.tas.gov.au/wildlife-management/fauna-of-tasmania/reptiles-and-frogs/tasmanian-lizards/mountain-skink).
+![an image of a red kamfa fish with the caption 'intelligent kamfa presented an mfa challenge', image credit to redditor u/TorontoFishGuy](/img/blogs/release-1-68/kamfa.jpg "the intelligent kamfa")
 
-Out of respect for this noble creature's acronym, we named this release the
-Tenant Manager SSO<sup>Tasmanian Mountain Skink</sup>.
+This version includes a new way of configuring MFA, new MFA challenge webhooks, a new variable for email and message templates, hashing for account recovery codes, custom names for TOTP authenticators, and updates for each of our SDKs.
 
-If that sounds like a mouthful, call it TMS<sup>TMS</sup>.
+## Intelligent MFA
 
-![an image of a Tasmanian mountain skink, the mascot of this release, dubbed tms^tms](/img/blogs/release-1-65/tms.jpg "the tms^tms")
+At this point, everyone on the internet is all too aware of multi-factor authentication (MFA) challenges. You provide your username and password. You get a text message, an email, a code in your authenticator app, or even a phone call. Type in the code, and you get access to your account. It works, but it can be tedious, especially if your authentication provider requires MFA challenges often.
 
-This version includes a self-service SSO solution for Tenant Manager, a new identity provider testing API, a way to set custom favicons in simple themes, a voice option for MFA for improved accessibility, a declarative way to reconcile user identities, a new limited option for self-service incomplete user registration, and a new way to filter logs by tenant. And just like the real Tasmanian mountain skink, this release eats up plenty of bugs!
+Currently, FusionAuth provides an incredibly flexible method of triggering MFA challenges using the [MFA Requirement Lambda](/docs/extend/code/lambdas/mfa-requirement). But not all of our users want to write and test custom JavaScript just to decide when to challenge users for a second factor. That's why we created **Intelligent MFA**, our own 'secret sauce' of variables that detect high-risk situations and automatically challenge users for an MFA code.
 
-Unfortunately, we weren't able to ship the skink-like functionality of regrowing arms. But we did manage to improve the performance of multi-node clusters (and plenty of other performance and reliability improvements), which is basically the same thing.
+Many of our users spend a lot of time tweaking their configurations to minimize these MFA challenges. Logging in from your usual browser on your usual computer at your house? No need for a challenge. Logging in from an unknown browser on a never-before-seen mobile device in a foreign country? Yep, we're gonna need a code.
 
-## Self-Service SSO in Tenant Manager
+![intelligent kamfa](/img/blogs/release-1-68/pokekamfa.jpg "intelligent kamfa determines exactly when to present an MFA challenge")
 
-For the first time, tenant administrators can configure SSO entirely within [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager).
+If you already use the MFA Requirement Lambda, have no fear: you can still use your custom logic. In fact, you can incorporate these new signals into your lambda using the `context` object:
 
-First, ask your FusionAuth admin to enable Self-Service SSO in the FusionAuth Admin UI -- they'll only have to do this once:
+* `BotDetected` - The browser library signals that the user is a bot.
+* `BlocklistedIp` - The IP address is blocklisted.
+* `DormantAccount` - The user hasn't logged in for a long time.
+* `DormantPassword` - The password hasn't been changed for a long time.
+* `ImpossibleTravel` - The distance between recent logins exceeds the possible value a person can travel within the allotted time frame.
+* `RecentIdentityChange` - The user recently changed their identity.
+* `RecentPasswordChange` - The user recently changed their password.
+* `SuspiciousUserAgent` - The user agent is suspicious.
+* `UnrecognizedDevice` - The device has not been recognized.
+* `UntrustedDevice` - The device is not trusted.
 
-![Complete Registration Settings](/img/docs/lifecycle/register-users/complete-registration-settings.png)
+To learn more about rolling out Intelligent MFA in your FusionAuth instance, see the [Intelligent MFA documentation](/docs/lifecycle/authenticate-users/contextual-multi-factor#intelligent-mfa).
 
-From there, tenant administrators can configure, test, and enable SSO in Tenant Manager using the <Breadcrumb>Single Sign-On</Breadcrumb> page:
+## MFA Challenge Webhooks
 
-![Edit identity provider](/img/docs/lifecycle/manage-users/tenant-manager/edit-idp.png)
+To support Intelligent MFA, we have added three new MFA lifecycle webhooks:
 
-## Identity Provider Testing API
+* [User Two-Factor Challenge](/docs/extend/events-and-webhooks/events/user/user-two-factor-challenge)
+* [User Two-Factor Failed Attempt](/docs/extend/events-and-webhooks/events/user/user-two-factor-failed-attempt)
+* [User Two-Factor Success](/docs/extend/events-and-webhooks/events/user/user-two-factor-success)
 
-To support self-service SSO in Tenant Manager, we created a whole new [API for testing identity provider configurations](/docs/apis/identity-providers/test), and a UI in Tenant Manager for visual testing. Tenant administrators can use these tests to verify an identity provider configuration before enabling an identity provider.
+## BaseUrl Variable
 
-To test an identity provider, open the <Breadcrumb>Single Sign-On</Breadcrumb> page, expand the action menu for an identity provider, and click <Breadcrumb>Test</Breadcrumb>.
+Email and message templates can now build links using the new `baseUrl` variable, instead of hard-coding a URL.
 
-The connection test start page shows a summary of your configuration.
+## Hashed Recovery Codes
 
-Click <Breadcrumb>Start Test</Breadcrumb> to begin the test.
+FusionAuth now hashes [MFA recovery codes](/docs/lifecycle/authenticate-users/multi-factor-authentication#recovery-codes) at rest using `salted-pbkdf2-hmac-sha256`, the same algorithm used by default for password hashing. Existing recovery codes will continue to work without interruption. This keeps user recovery codes as secure as possible. However, this security comes with some trade-offs:
 
-![Connection Test Start View](/img/docs/lifecycle/manage-users/tenant-manager/test-start.png)
+* When importing users via the [Import Users API](/docs/apis/users#import-users) with plaintext recovery codes, FusionAuth will now hash each code during import. This could increase the time required to complete large imports containing many users with recovery codes. To avoid this overhead, you may pre-hash recovery codes before import and provide `twoFactor.recoveryCodeEncryptionScheme` and `twoFactor.recoveryCodeWorkFactor` alongside the pre-hashed values in `twoFactor.recoveryCodes`. For more information, see the [Import Users API](/docs/apis/users#import-users).
+* The [Retrieve Recovery Codes](/docs/apis/two-factor#retrieve-recovery-codes) endpoint (`GET /api/user/two-factor/recovery-code/{userId}`) (deprecated since `1.64.0`), now always returns an empty list. Because recovery codes are now hashed at rest, they can no longer be retrieved in plaintext after creation. If you need to provide a user access to their recovery codes, use the [Generate Recovery Codes](/docs/apis/two-factor#generate-recovery-codes) API (`POST /api/user/two-factor/recovery-code/{userId}`) to generate a new set.
 
-Complete the login flow using an identity provider, and you'll see the test success page:
+## Custom Names for Two-Factor Methods
 
-![Connection Test Completion View](/img/docs/lifecycle/manage-users/tenant-manager/test-completion.png)
+Users can now specify a custom name when adding a two-factor method. This helps to disambiguate during MFA method selection and management.
+You can rename existing methods using the API or self-service.
 
-If your login flow works, you can click <Breadcrumb>Enable for production</Breadcrumb> to ship SSO to your users.
+## SDKs
 
-If your login flow doesn't work, you'll see the test failure page, which provides logs and other information you can use to debug the problems with your configuration. Keep testing until your configuration works.
+Together with this FusionAuth release, we are releasing the following new SDK versions:
 
-## Custom Favicons for Simple Themes
-
-As we know, our users love customization. That's why we have now added an option to [upload your own favicon](/docs/customize/look-and-feel/simple-theme-editor#favicon) for hosted login pages using simple themes:
-
-![Theme image controls](/img/docs/customize/look-and-feel/simple-theme-editor/images.png)
-
-I'd say more, but that about explains it. I guess I can fill this extra space with a fun fact about Tasmanian mountain skinks. Did you know that, when preparing for brumation (the reptilian hibernation I mentioned before), lizards store both fat _and_ glycogen? While mammals rely primarily on fat reserves for hibernation, reptiles going into brumation use a mixture of fat and glycogen.
-
-Anyway, now that we've filled up this section, back to the exciting features:
-
-## Voice MFA
-
-Accessibility is for everyone. Even if you have the sharpest eyes and best hearing, you're bound to have a friend or loved one who isn't so lucky. That's why we added a new voice option for [multi-factor authentication (MFA)](/docs/lifecycle/authenticate-users/multi-factor-authentication), allowing users to receive codes via audio instead of text.
-
-In the MFA settings for a tenant, find the <Breadcrumb>Phone</Breadcrumb> section. Enable the **Voice enabled** toggle to `enable` MFA audio codes!
-
-![Tenant Configuration - MFA Phone settings](/img/docs/get-started/core-concepts/tenant-configuration-mfa-phone-settings.png)
-
-Wow, that was another short one. OK, I guess I can fit another fun fact about Tasmanian mountain skinks: it's also known as the _heath cool-skink_. Which, aside from sounding like a character from Wuthering Heights, is almost as cool as the species name, _orocryptum_, a combination of the Greek words **oros** (mountain) and **kryptos** (hidden), because the Tasmanian mountain skink lives in the mountains and proved pretty difficult to discover.
-
-Enough fun, let's talk about declarative configuration!
-
-## Declarative User Reconciliation
-
-Many of our users currently use reconcile lambdas like our [OIDC reconcile lambda](/docs/extend/code/lambdas/reconcile/openid-connect-response-reconcile) to reconcile user identities across identity providers. But it turns out we didn't need anything as powerful as a lambda to define reconciliation for self-service SSO in Tenant Manager.
-
-We just needed [attribute mappings](/docs/lifecycle/authenticate-users/identity-providers/#attribute-mappings). In fact, to use Tenant Manager SSO, you need to configure attribute mappings -- a reconcile lambda just won't do.
-
-Attribute mappings allow you to map claims from an identity provider response directly to FusionAuth user and registration fields. FusionAuth admins can configure these key-value pairs using the [Identity Provider API](/docs/apis/identity-providers/) or the identity provider configuration page in the Admin UI. Tenant administrators can customize them for their tenants in [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager#attribute-mappings).
-
-During reconciliation, FusionAuth reads the claims in the identity provider response based on your configured attribute mappings. FusionAuth assigns the retrieved values to the corresponding key on the FusionAuth user or registration. But don't worry, all attribute mappings are optional; if FusionAuth can't retrieve a claim value or set a key, it omits the mapping, but reconciliation continues.
-
-## Self-Service Incomplete User Registration
-
-This release also adds a new [self-service option for applications](/docs/lifecycle/register-users/complete-registration) that allows users to complete an existing (but incomplete) registration, without opening the door for entirely new users to create accounts. We call it **complete registration**.
-
-![Complete Registration](/img/docs/get-started/core-concepts/application-complete-registration-self-service-basic.png)
-
-When complete registration is enabled on an application, FusionAuth checks whether a registered user lacks any user or registration data required by the configured form. After authenticating, the user must supply that data before completing the hosted login flow.
-
-To enable complete registration for an application, go to the <Breadcrumb>Self-service-registration</Breadcrumb> settings and select `complete registration` from the **Registration mode** dropdown.
-
-## Filter Logs by Tenant
-
-Finally, we added the `auditLog.tenantId` field to the [Audit Logs API](/docs/apis/audit-logs). Now you can filter audit logs by tenant using the API and in [Tenant Manager](/docs/lifecycle/manage-users/tenant-manager). This should make it that much easier to debug problems that only impact a single tenant.
+* [Swift SDK for iOS](/docs/sdks/swift-sdk) `1.3.0` with support for iOS `26.5.x`.
+* [Kotlin SDK for Android](/docs/sdks/android-sdk) `1.2.0` with support for Android API Level `36`.
+* [React SDK](/docs/sdks/react-sdk) `2.6.0` with support for React `19.2.x`.
+* [Angular SDK](/docs/sdks/angular-sdk) `2.0.0` with support for Angular `22.0.x`.
+* [Vue SDK](/docs/sdks/vue-sdk) `1.3.0` with support for Vue `3.5.x`.
 
 * * *
 
-We also fixed a large number of bugs: for a full list, take a look at entries marked with the **fix** category in the [release notes](/docs/release-notes#version-1-65-0).
+We also fixed a large number of bugs: for a full list, take a look at entries marked with the **fix** category in the [release notes](/docs/release-notes#version-1-68-0).
 
-Thanks again for using FusionAuth! Don't forget to say "thank you" to any Tasmanian mountain skinks you meet out there.
+Thanks again for using FusionAuth! And if you happen to own a kamfa fish, remember: it might be more intelligent than you think.
