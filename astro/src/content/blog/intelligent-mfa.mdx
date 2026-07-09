@@ -1,0 +1,85 @@
+---
+publish_date: 2026-07-09
+title: Intelligent MFA Should Challenge Risk, Not Loyal Customers
+description: FusionAuth 1.68 ships Intelligent MFA — 10 risk signals, scored inside your own deployment, and included in every paid plan because identity is critical infrastructure.
+authors: Andrew Hatfield
+image: /img/blogs/intelligent-mfa/intelligent_mfa.png
+categories: Product
+tags: mfa, intelligent mfa, risk-based authentication, adaptive mfa, ciam, security, compliance
+excerpt_separator: "{/* more */}"
+---
+
+# Intelligent MFA Should Challenge Risk, Not Loyal Customers
+
+There's an old line in security: the most secure system is the one that's switched off. It's also completely useless. Every authentication decision you make sits somewhere between locked down and usable, and MFA is supposed to help with both.
+
+Turn MFA on the usual way and you feel it straight away. The customer who logs in every morning from the same two-year-old laptop, in the same city they always log in from, gets challenged exactly like a login from an IP you've never seen at 3am. Standard MFA treats them the same, because it has no idea they're different.
+
+## The sameness costs you two ways
+
+If you've turned MFA on, that sameness shows up as abandonment at the login screen, support tickets from customers locked out of their own accounts, rising help desk load, and the slow NPS drift that eventually reads as churn. It's a business hit that compounds every week.
+
+If you've held off on enabling MFA — and plenty of teams have, specifically to avoid that friction — every account is protected by a password and nothing else. A stolen credential exposes the user to account takeover, credential stuffing works quietly, and your security team hears about it from a customer complaint rather than a log alert.
+
+Both problems come from the same gap. Standard MFA has no intelligence about risk. It can't tell your regulars from a threat, so it either challenges everyone or protects no one.
+
+## What FusionAuth 1.68 changes
+
+Intelligent MFA scores every login against 10 risk signals:
+
+- Unrecognized device
+- Untrusted device
+- Blocklisted IP
+- Suspicious user agent
+- Bot detection
+- Dormant account
+- Dormant password
+- Recent password change
+- Recent identity change
+- Impossible travel _(Enterprise only)_
+
+Each login gets a single risk classification: low, medium, or high. Familiar device, trusted IP, normal login pattern, and the customer signs straight in. Unknown device, a bad-reputation IP, a login from a country they've never used, and they get challenged.
+
+It's what [Shivam Jain](https://www.linkedin.com/in/shivamjain49/), Kitchen Stadium's Engineering Project Lead, asked us for:
+
+> "Multi-factor authentication should trigger on different IP, different machine, or after a long time"
+
+     ![Intelligent MFA scores each login inside your deployment and challenges only risky sessions](/img/blogs/intelligent-mfa/intelligent-mfa-arch-flow.png)
+
+You choose how aggressive to be with two built-in policies: challenge only high-risk logins, or challenge medium-risk and above. No custom code either way.
+
+Auth0's adaptive MFA, for comparison, scores three signals. Ten is a far richer, more realistic read of what's actually happening at your login screen.
+
+And you don't have to switch it on and hope. You can see how the policy behaves against your own real login traffic before you enforce it — your environment, your users, not a vendor's model telling you what usually happens to companies like yours.
+
+## Included, because identity is critical infrastructure
+
+We believe identity is critical infrastructure, so Intelligent MFA is included in every paid plan. No artificial forced tier upgrades or expensive per-user add-ons.
+
+The other vendors go the other way and punish you for growing. Cognito puts risk-based adaptive authentication in its top Plus tier — $0.02 per monthly active user, with no free tier. At 500,000 users that's $10,000 a month, and there's no way to buy the capability without buying the whole tier. Auth0 pushes you onto their Enterprise plan and then forces you to buy the adaptive MFA add-on on top. Your success shouldn't come with a growth tax for a capability we believe you should have anyway.
+
+## Prove it to an auditor
+
+Regulated teams have a harder question to answer. Cloud vendors either run undocumented risk engines or machine-learning models that are probabilistic by nature. Either way, you get a challenge or a pass, but no way to show why. That becomes a problem the moment a SOC 2, ISO 27001, or NIST 800-63B audit asks you to prove how a decision got made. "That's what the software did" doesn't cut it.
+
+Intelligent MFA is deterministic: a rules-based engine over a published set of signals, applied the same way every time. When an auditor asks how your MFA works, you show them the policy. It's architecture by design, not a black box you're asked to trust. The composite score is exposed, and the per-signal details are recorded in your event log for when you need to reconstruct a specific decision.
+
+With Enterprise, MFA events flow into your SIEM through dedicated webhooks, and a Lambda can read the composite score and override the decision in your own code — force a challenge on a high-value transaction, or wave through a known service account.
+
+## The scoring stays inside your network
+
+All of this runs inside your own deployment — your instance, your network. You are not exposing your users' private authentication data to a shared, third-party platform to get scored. Whether you run FusionAuth yourself or we run a dedicated, isolated instance for you, the risk decision stays inside your boundary.
+
+For a bank, a hospital, or anyone with mandatory data residency or sovereignty requirements, shared multi-tenant cloud infrastructure struggles to meet your needs. It's also why Intelligent MFA works in air-gapped environments, where every SaaS vendor simply can't run: eight of the ten signals score on local data, and the two that rely on a live threat feed default to medium when there's no connection.
+
+## What to do now
+
+Already on FusionAuth? Upgrade to 1.68, open your tenant risk policy, and set it to challenge high-risk logins only. Your regulars stop hitting the wall today. It's a setting, not a project.
+
+Held off on enabling MFA because of the friction? This is the version that removes the reason. Turn it on with a high-only policy, watch how it behaves against your real traffic first, then enforce it.
+
+Still evaluating? Get a real [demo](/contact) with two logins scored by the risk engine — one clean, one suspicious — and watch exactly where it challenges and where it doesn't. That's what you bring back to your security team.
+
+---
+
+_Competitive claims verified July 2026 from public documentation. Auth0 adaptive MFA: Enterprise plan plus a separate adaptive MFA add-on (auth0.com/docs). AWS Cognito adaptive authentication: metered per monthly active user on the Plus tier (aws.amazon.com/cognito/pricing). Pricing subject to change._
