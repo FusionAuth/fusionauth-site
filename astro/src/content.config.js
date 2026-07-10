@@ -1,5 +1,6 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
+import yaml from 'js-yaml';
 
 const releasesCollection = defineCollection({
   loader: glob({
@@ -123,6 +124,39 @@ const directDownloadVersions = defineCollection({
   })
 });
 
+const apiEndpoints = defineCollection({
+  loader: {
+    name: 'openapi-endpoints',
+    load: async ({ store }) => {
+      const response = await fetch('https://raw.githubusercontent.com/FusionAuth/fusionauth-openapi/main/openapi.yaml');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch OpenAPI spec: ${response.statusText}`);
+      }
+      
+      const file = await response.text();
+      
+      const spec = yaml.load(file);
+      
+      store.set({
+        id: 'base-spec',
+        data: { openapi: spec.openapi, info: spec.info, servers: spec.servers, components: spec.components }
+      });
+
+      for (const [path, methods] of Object.entries(spec.paths)) {
+        for (const [method, operation] of Object.entries(methods)) {
+          if (['parameters', 'servers', '$ref', 'summary', 'description'].includes(method)) continue;
+          
+          // Ensure consistent ID generation
+          const id = `${method}-${path.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
+          
+          store.set({ id, data: { path, method, operation } });
+        }
+      }
+    }
+  }
+});
+
 export const collections = {
   'docs': docsCollection,
   'articles': articlesCollection,
@@ -130,4 +164,5 @@ export const collections = {
   'json': jsonCollection,
   'blog': blogCollection,
   'direct-download-versions': directDownloadVersions,
+  'api-endpoints': apiEndpoints,
 };

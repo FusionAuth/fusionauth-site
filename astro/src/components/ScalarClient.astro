@@ -1,0 +1,194 @@
+---
+import { getEntry } from 'astro:content';
+
+export interface Props {
+  path: string;
+  method: string;
+}
+
+const { path, method } = Astro.props;
+
+// remove query string
+const noQueryPath = path.split('?')[0];
+
+const id = `${method}-${noQueryPath.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
+
+const endpoint = await getEntry('api-endpoints', id);
+const baseSpec = await getEntry('api-endpoints', 'base-spec');
+
+if (!endpoint || !baseSpec) {
+  throw new Error(`Endpoint not found in Collection for ${method.toUpperCase()} ${path}. Expected ID: ${id}`);
+}
+
+function findRefs(obj: any, refs = new Set<string>()) {
+  if (!obj || typeof obj !== 'object') return refs;
+  if (Array.isArray(obj)) {
+    for (const item of obj) findRefs(item, refs);
+  } else {
+    if (obj['$ref'] && typeof obj['$ref'] === 'string') {
+      refs.add(obj['$ref']);
+    }
+    for (const key in obj) findRefs(obj[key], refs);
+  }
+  return refs;
+}
+
+function extractUsedComponents(operation: any, fullComponents: any) {
+  if (!fullComponents) return {};
+
+  const isolatedComponents: any = {};
+  
+  if (fullComponents.securitySchemes) {
+    isolatedComponents.securitySchemes = fullComponents.securitySchemes;
+  }
+
+  const processedRefs = new Set<string>();
+  const queue = Array.from(findRefs(operation));
+
+  while (queue.length > 0) {
+    const ref = queue.shift();
+    if (!ref || processedRefs.has(ref)) continue;
+    processedRefs.add(ref);
+
+    const parts = ref.replace('#/components/', '').split('/');
+    if (parts.length === 2) {
+      const type = parts[0]; 
+      const name = parts[1]; 
+
+      if (fullComponents[type] && fullComponents[type][name]) {
+        if (!isolatedComponents[type]) isolatedComponents[type] = {};
+        
+        const componentDef = fullComponents[type][name];
+        isolatedComponents[type][name] = componentDef;
+
+        const nestedRefs = findRefs(componentDef);
+        nestedRefs.forEach(nestedRef => queue.push(nestedRef));
+      }
+    }
+  }
+
+  return isolatedComponents;
+}
+
+// Build the final optimized payload
+const isolatedSpec = {
+  ...baseSpec.data,
+  components: extractUsedComponents(endpoint.data.operation, baseSpec.data.components),
+  paths: {
+    [endpoint.data.path]: {
+      [endpoint.data.method]: endpoint.data.operation
+    }
+  }
+};
+---
+
+<div class="scalar-client-mount" id={`scalar-${id}`}></div>
+
+<!-- Load the file you are ALREADY copying via your vendor script -->
+<script is:inline src="/docs/vendor/scalar-api-reference.js"></script>
+
+<script is:inline define:vars={{ id, isolatedSpec }}>
+  const containerId = `scalar-${id}`;
+  const container = document.getElementById(containerId);
+
+  if (container && !container.hasAttribute('data-initialized')) {
+    
+    // Your exact custom CSS for dark mode and layout
+    const customCss = `
+      .darklight-reference { display: none !important; }
+      .api-reference-toolbar { display: none !important; }
+      .download-container { display: none !important; }
+
+      .scalar-client-mount h3 {
+        font-family: monospace !important;
+      }
+
+      .badge {
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 5px 6px 3px !important;
+        line-height: 1 !important;
+      }
+
+      aside.t-doc__sidebar {
+        top: 65px !important;
+        height: calc(100vh - 65px) !important;
+      }
+
+      #scalar-app [id] {
+        scroll-margin-top: 65px !important;
+      }
+
+      #scalar-app input[type="text"],
+      #scalar-app input[type="password"],
+      #scalar-app input:not([type]) {
+        border: 1px solid var(--scalar-border-color) !important;
+        background: var(--scalar-background-2) !important;
+        border-radius: 4px !important;
+        padding: 4px 8px !important;
+      }
+      #scalar-app input[type="text"]:focus,
+      #scalar-app input[type="password"]:focus,
+      #scalar-app input:not([type]):focus {
+        outline: none !important;
+        border-color: var(--scalar-color-accent) !important;
+        box-shadow: 0 0 0 2px rgba(245, 131, 32, 0.25) !important;
+      }
+
+      html:not(.dark) body, html.dark body {
+        --scalar-color-accent: #f58320;
+        --scalar-background-accent: #fff1e0;
+      }
+      html:not(.dark) body {
+        --scalar-color-1: #0f172a;
+        --scalar-color-2: #334155;
+        --scalar-color-3: #64748b;
+        --scalar-background-1: #ffffff;
+        --scalar-background-2: #f8fafc;
+        --scalar-background-3: #f1f5f9;
+        --scalar-border-color: #e2e8f0;
+        --scalar-sidebar-background-1: #f8fafc;
+        --scalar-sidebar-color-1: #0f172a;
+        --scalar-sidebar-color-2: #475569;
+        --scalar-sidebar-border-color: #e2e8f0;
+        --scalar-sidebar-color-active: #f58320;
+        --scalar-sidebar-background-active: #fff1e0;
+      }
+      html.dark body {
+        --scalar-color-1: #f1f5f9;
+        --scalar-color-2: #cbd5e1;
+        --scalar-color-3: #94a3b8;
+        --scalar-background-1: #0f172a;
+        --scalar-background-2: #1e293b;
+        --scalar-background-3: #334155;
+        --scalar-border-color: #334155;
+        --scalar-sidebar-background-1: #0b1224;
+        --scalar-sidebar-color-1: #f1f5f9;
+        --scalar-sidebar-color-2: #94a3b8;
+        --scalar-sidebar-border-color: #1e293b;
+        --scalar-sidebar-color-active: #f58320;
+        --scalar-sidebar-background-active: rgba(245, 131, 32, 0.12);
+      }
+    `;
+
+    const isDark = () => document.documentElement.classList.contains('dark');
+
+    const buildConfig = () => ({
+      layout: 'modern',
+      darkMode: isDark(),
+      hideDarkModeToggle: true,
+      agent: { disabled: true },
+      customCss,
+      showSidebar: false,
+      withDefaultFonts: false,
+      spec: { content: isolatedSpec } 
+    });
+
+    if (window.Scalar && typeof window.Scalar.createApiReference === 'function') {
+      window.Scalar.createApiReference('#' + containerId, buildConfig());
+      container.setAttribute('data-initialized', 'true');
+    } else {
+      console.error("Scalar vendor script failed to load or 'Scalar.createApiReference' is missing.");
+    }
+  }
+</script>
