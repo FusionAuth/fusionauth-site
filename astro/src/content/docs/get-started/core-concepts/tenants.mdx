@@ -101,10 +101,10 @@ A majority of your FusionAuth configuration is managed at the Tenant-level.  Som
 
 #### Username settings
 
-Enable **Unique usernames** to allow multiple users suggest the same username. If there are any collisions, FusionAuth will transparently create a unique username by appending a suffix. The user will continue to use the username without the suffix.
+Enable **Append unique suffix to usernames** to allow multiple users suggest the same username. If there are any collisions, FusionAuth will transparently create a unique username by appending a suffix. The user will continue to use the username without the suffix.
 
 <APIBlock>
-  <APIField name="Unique usernames" optional defaults="false" since="1.27.0">
+  <APIField name="Append unique suffix to usernames" optional defaults="false" since="1.27.0">
     When `true`, FusionAuth will handle username collisions.
 
 <PremiumPlanBlurb />
@@ -140,8 +140,8 @@ If you click on the <Breadcrumb>Add policy</Breadcrumb> button on this page you 
   <APIField name="Domains" optional defaults='["*"]'>
     One or more line separated domains to be used to filter incoming authentication requests. To match all incoming email addresses, a single entry using an asterisk `*` can be used.
   </APIField>
-  <APIField name="Migrate user" optional>
-    When selected, migrate the user from the Connector into FusionAuth so that future authentications will use FusionAuth and not the Connector.
+  <APIField name="Migrate to FusionAuth" optional>
+    When selected, copy the user from the external Connector into FusionAuth so future logins authenticate against FusionAuth directly.
   </APIField>
 </APIBlock>
 
@@ -187,16 +187,19 @@ Control Email and Phone Number identity verification and template settings from 
   <APIField name="Unverified behavior" optional since="1.27.0">
     The way a user is handled during the login process when they do not have a verified email address or phone number.
   </APIField>
-  <APIField name="Allow change when gated" optional since="1.27.0">
-    When enabled, the user is allowed to change their email address or phone number when they are gated because they haven't verified their identity.
+  <APIField name="Allow email change while verification is pending" optional since="1.27.0">
+    When enabled, the user is allowed to change their email address when they are gated because they haven't verified their email.
   </APIField>
-  <APIField name="Delete unverified users" optional>
+  <APIField name="Allow phone number change while verification is pending" optional since="1.59.0">
+    When enabled, the user is allowed to change their phone number when they are gated because they haven't verified their phone number.
+  </APIField>
+  <APIField name="Enable auto-deletion of unverified users" optional>
     When enabled, users who have not verified their email address or phone number after a configurable duration since being created will be permanently deleted.
   </APIField>
   <APIField name="Delete after" required>
     The duration since creation that a user must exist before being deleted for having an unverified email address or phone number.
 
-    Required when the **Delete unverified users** toggle is enabled.
+    Required when the **Enable auto-deletion of unverified users** toggle is enabled.
   </APIField>
 </APIBlock>
 
@@ -226,7 +229,7 @@ Once you have configured your email settings, you may test your configuration wi
   <APIField name="Username" optional>
     The username of the outgoing SMTP mail server authentication.
   </APIField>
-  <APIField name="Change password" optional>
+  <APIField name="Set SMTP password" optional>
     When enabled, you may modify the SMTP password, when the **Password** field is not displayed the current password will not be modified.
   </APIField>
   <APIField name="Password" required>
@@ -252,8 +255,8 @@ Once you have configured your email settings, you may test your configuration wi
   <APIField name="Additional Headers" optional since="1.32.0">
     One or more line separated SMTP headers to be added to each outgoing email. The header name and value should be separated by an equals sign. ( i.e. `X-SES-CONFIGURATION-SET=Value`).
   </APIField>
-  <APIField name="Debug enabled" optional since="1.37.0">
-    When enabled SMTP and JavaMail debug information will be output to the Event Log.
+  <APIField name="Enable debug logging" optional since="1.37.0">
+    Creates event log entries to help debug SMTP and email delivery errors. Check <Breadcrumb>System -> Event Log</Breadcrumb>.
   </APIField>
 </APIBlock>
 
@@ -263,18 +266,18 @@ Once you have configured your email settings, you may test your configuration wi
 #### Form Fields
 
 <APIBlock>
-  <APIField name="Enabled" optional>
+  <APIField name="Enable family settings" optional>
     When enabled, you may model parent-child user relationships, and observe parental approval and age validation on user creation.
   </APIField>
   <APIField name="Maximum child age" required>
     The maximum age a user can be to be considered a child.
 
-    Required when the **Enabled** toggle is `enabled`.
+    Required when the **Enable family settings** toggle is `enabled`.
   </APIField>
   <APIField name="Minimum owner age" required>
     The minimum age a user must be to create a family.
 
-    Required when the **Enabled** toggle is `enabled`.
+    Required when the **Enable family settings** toggle is `enabled`.
   </APIField>
   <APIField name="Allow child registrations" required>
     When enabled, allow children to register themselves without requiring a parent to create their account for them.
@@ -291,13 +294,13 @@ Once you have configured your email settings, you may test your configuration wi
   <APIField name="Parent email required during registration" optional>
     When enabled, child users must provide their parent's email address during the registration process.
   </APIField>
-  <APIField name="Delete unverified children" optional>
+  <APIField name="Enable auto-deletion of unverified children" optional>
     When enabled, child user accounts that have not been verified by a parent after a configured period will be automatically deleted.
   </APIField>
   <APIField name="Delete after" required>
     The number of days before a child account that has not yet been verified by a parent is automatically deleted.
 
-    Required when the **Delete unverified children** toggle is enabled.
+    Required when the **Enable auto-deletion of unverified children** toggle is enabled.
   </APIField>
 </APIBlock>
 
@@ -311,7 +314,7 @@ Once you have configured your email settings, you may test your configuration wi
 ![Tenant Configuration - MFA policy settings](/img/docs/get-started/core-concepts/tenant-configuration-mfa-policy-settings.png)
 
 <APIBlock>
-  <APIField name="On login" optional>
+  <APIField name="On login policy" optional>
     If a policy requires a two-factor challenge on login and the user has not already configured a two-factor method, then they will be required to configure one.
 
     Risk-based policies use FusionAuth's **Intelligent MFA**, which combines multiple signals to decide when to issue an MFA challenge.
@@ -345,7 +348,7 @@ Once you have configured your email settings, you may test your configuration wi
 ![Tenant Configuration - MFA authenticator settings](/img/docs/get-started/core-concepts/tenant-configuration-mfa-authenticator-settings.png)
 
 <APIBlock>
-  <APIField name="Enabled" optional>
+  <APIField name="Enable authenticator (TOTP) MFA" optional>
     When enabled, users may use an authenticator application to complete a multi-factor authentication request.
   </APIField>
 </APIBlock>
@@ -355,13 +358,13 @@ Once you have configured your email settings, you may test your configuration wi
 ![Tenant Configuration - MFA email settings](/img/docs/get-started/core-concepts/tenant-configuration-mfa-email-settings.png)
 
 <APIBlock>
-  <APIField name="Enabled" optional>
+  <APIField name="Enable email MFA" optional>
     When enabled, users may use an email address to complete a multi-factor authentication request.
   </APIField>
   <APIField name="Template" required>
     The email template to use when a multi-factor authentication request is sent to the User's email address.
 
-    Required when the **Enabled** toggle is `enabled`.
+    Required when the **Enable email MFA** toggle is `enabled`.
   </APIField>
 </APIBlock>
 
@@ -369,34 +372,34 @@ Once you have configured your email settings, you may test your configuration wi
 
 ![Tenant Configuration - MFA Phone settings](/img/docs/get-started/core-concepts/tenant-configuration-mfa-phone-settings.png)
 
-Enabling either or both of the **SMS enabled** or **Voice enabled** toggles in this section allows users to use a mobile phone number to complete a multi-factor authentication request.
+Enabling either or both of the **Enable SMS MFA** or **Enable voice MFA** toggles in this section allows users to use a mobile phone number to complete a multi-factor authentication request.
 
 <APIBlock>
-  <APIField name="SMS enabled" optional>
+  <APIField name="Enable SMS MFA" optional>
     When enabled, users can receive two-factor codes on their mobile phone via SMS.
   </APIField>
   <APIField name="SMS messenger" required>
     The Messenger used to send codes via SMS.
 
-    Required when the **SMS enabled** toggle is `enabled`.
+    Required when the **Enable SMS MFA** toggle is `enabled`.
   </APIField>
   <APIField name="SMS template" required>
     The SMS template to use.
 
-    Required when the **SMS enabled** toggle is `enabled`.
+    Required when the **Enable SMS MFA** toggle is `enabled`.
   </APIField>
-  <APIField name="Voice enabled" optional>
+  <APIField name="Enable voice MFA" optional>
     When enabled, users can receive two-factor codes on their mobile phone via voice message.
   </APIField>
   <APIField name="Voice messenger" required>
     The Messenger used to send codes via voice.
 
-    Required when the **Voice enabled** toggle is `enabled`.
+    Required when the **Enable voice MFA** toggle is `enabled`.
   </APIField>
   <APIField name="Voice template" required>
     The voice template to use.
 
-    Required when the **Voice enabled** toggle is `enabled`.
+    Required when the **Enable voice MFA** toggle is `enabled`.
   </APIField>
 </APIBlock>
 
@@ -437,8 +440,8 @@ Enabling either or both of the **SMS enabled** or **Voice enabled** toggles in t
 
     If this value is left blank, the **Issuer** value will be used.
   </APIField>
-  <APIField name="Debug enabled" optional>
-    Enable debug to create an event log to assist you in debugging integration errors.
+  <APIField name="Enable debug logging" optional>
+    Creates event log entries to help debug WebAuthn integration errors. Check <Breadcrumb>System -> Event Log</Breadcrumb>.
   </APIField>
 </APIBlock>
 
@@ -449,7 +452,7 @@ Enabling either or both of the **SMS enabled** or **Voice enabled** toggles in t
 The settings in this section affect the availability and behavior of the WebAuthn bootstrap workflow. The bootstrap workflow is used when the user must "bootstrap" the authentication process by identifying themselves prior to the WebAuthn ceremony and can be used to authenticate from a new device using WebAuthn.
 
 <APIBlock>
-  <APIField name="Enabled" optional>
+  <APIField name="Enable passkey authentication" optional>
     When enabled, the WebAuthn bootstrap workflow can be used to authenticate users via WebAuthn from new or repeat devices.
 
     The availability of the bootstrap workflow can be overridden at the application level on the [WebAuthn Tab of the Application settings](/docs/get-started/core-concepts/applications#webauthn).
@@ -526,7 +529,7 @@ The settings in this section affect the availability and behavior of the WebAuth
   <APIField name="Client credentials populate lambda" optional since="1.28.0">
     The lambda that will be called to populate the JWT during a client credentials grant.
   </APIField>
-  <APIField name="Allow access token bootstrap" since="1.56.0">
+  <APIField name="Allow access token bootstrap to create SSO session" since="1.56.0">
     When enabled, an SSO session can be created after login by providing an access token as a bearer token in a request to the OAuth2 Authorize endpoint.
   </APIField>
 </APIBlock>
@@ -567,7 +570,7 @@ The settings in this section affect the availability and behavior of the WebAuth
   <APIField name="Cancel action on password reset" since="1.42.0">
     Indicates whether you want the user to be able to self-service unlock their account prior to the action duration by completing a password reset workflow.
   </APIField>
-  <APIField name="Email user" since="1.42.0">
+  <APIField name="Email user when action is taken" since="1.42.0">
     Indicates you would like to email the user when the user's account is locked due to this action being taken. This requires the User Action specified by the **User action** to also be configured for email. If the User Action is not configured to be able to email the user, this configuration will be ignored.
 
     The email template configuration will be in the User Action.
@@ -579,7 +582,7 @@ The settings in this section affect the availability and behavior of the WebAuth
 #### Breach detection settings
 
 <APIBlock>
-  <APIField name="Enabled" optional>
+  <APIField name="Enable breached password detection" optional>
     When enabled, users' login Id and password will be checked against public breached password databases on user creation, password change, and (optionally) on login.  Purchase of a FusionAuth plan is required to enable this feature.
   </APIField>
   <APIField name="Match mode" optional>
@@ -688,7 +691,7 @@ The SCIM server configuration to enable incoming SCIM client provisioning reques
 #### SCIM server settings
 
 <APIBlock>
-  <APIField name="Enabled" optional>
+  <APIField name="Enable SCIM server" optional>
     When enabled, FusionAuth will act as a SCIM server and the SCIM API endpoints will be functional.
   </APIField>
   <APIField name="Client entity type" required>
@@ -758,7 +761,7 @@ CAPTCHA is supported on multiple theme templates, when enabled. You can further 
 See [invisible reCAPTCHA](/docs/customize/look-and-feel/advanced-themes/helpers#invisible-recaptcha) for information on enabling an invisible reCAPTCHA badge on the page.
 
 <APIBlock>
-  <APIField name="Enabled" optional>
+  <APIField name="Enable CAPTCHA" optional>
     When enabled, CAPTCHA is used to help increase security of a form submission on the FusionAuth themed pages.
   </APIField>
   <APIField name="Method" required>
