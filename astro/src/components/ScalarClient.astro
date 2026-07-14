@@ -1,5 +1,6 @@
 ---
-import { getEntry } from 'astro:content';
+import { getEntry } from "astro:content";
+import Accordion from "src/components/Accordion.astro";
 
 export interface Props {
   path: string;
@@ -15,76 +16,79 @@ const id = `${method}-${noQueryPath.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase(
 
 const endpoint = await getEntry('api-endpoints', id);
 const baseSpec = await getEntry('api-endpoints', 'base-spec');
+let isolatedSpec = "";
+const doesNotExist = !endpoint || !baseSpec;
 
-if (!endpoint || !baseSpec) {
-  throw new Error(`Endpoint not found in Collection for ${method.toUpperCase()} ${path}. Expected ID: ${id}`);
-}
-
-function findRefs(obj: any, refs = new Set<string>()) {
-  if (!obj || typeof obj !== 'object') return refs;
-  if (Array.isArray(obj)) {
-    for (const item of obj) findRefs(item, refs);
-  } else {
-    if (obj['$ref'] && typeof obj['$ref'] === 'string') {
-      refs.add(obj['$ref']);
+if (doesNotExist) {
+  console.log(`Endpoint not found in Collection for ${method.toUpperCase()} ${path}. Expected ID: ${id}`);
+} else {
+  function findRefs(obj: any, refs = new Set<string>()) {
+    if (!obj || typeof obj !== 'object') return refs;
+    if (Array.isArray(obj)) {
+      for (const item of obj) findRefs(item, refs);
+    } else {
+      if (obj['$ref'] && typeof obj['$ref'] === 'string') {
+        refs.add(obj['$ref']);
+      }
+      for (const key in obj) findRefs(obj[key], refs);
     }
-    for (const key in obj) findRefs(obj[key], refs);
-  }
-  return refs;
-}
-
-function extractUsedComponents(operation: any, fullComponents: any) {
-  if (!fullComponents) return {};
-
-  const isolatedComponents: any = {};
-  
-  if (fullComponents.securitySchemes) {
-    isolatedComponents.securitySchemes = fullComponents.securitySchemes;
+    return refs;
   }
 
-  const processedRefs = new Set<string>();
-  const queue = Array.from(findRefs(operation));
+  function extractUsedComponents(operation: any, fullComponents: any) {
+    if (!fullComponents) return {};
 
-  while (queue.length > 0) {
-    const ref = queue.shift();
-    if (!ref || processedRefs.has(ref)) continue;
-    processedRefs.add(ref);
+    const isolatedComponents: any = {};
+    
+    if (fullComponents.securitySchemes) {
+      isolatedComponents.securitySchemes = fullComponents.securitySchemes;
+    }
 
-    const parts = ref.replace('#/components/', '').split('/');
-    if (parts.length === 2) {
-      const type = parts[0]; 
-      const name = parts[1]; 
+    const processedRefs = new Set<string>();
+    const queue = Array.from(findRefs(operation));
 
-      if (fullComponents[type] && fullComponents[type][name]) {
-        if (!isolatedComponents[type]) isolatedComponents[type] = {};
-        
-        const componentDef = fullComponents[type][name];
-        isolatedComponents[type][name] = componentDef;
+    while (queue.length > 0) {
+      const ref = queue.shift();
+      if (!ref || processedRefs.has(ref)) continue;
+      processedRefs.add(ref);
 
-        const nestedRefs = findRefs(componentDef);
-        nestedRefs.forEach(nestedRef => queue.push(nestedRef));
+      const parts = ref.replace('#/components/', '').split('/');
+      if (parts.length === 2) {
+        const type = parts[0]; 
+        const name = parts[1]; 
+
+        if (fullComponents[type] && fullComponents[type][name]) {
+          if (!isolatedComponents[type]) isolatedComponents[type] = {};
+          
+          const componentDef = fullComponents[type][name];
+          isolatedComponents[type][name] = componentDef;
+
+          const nestedRefs = findRefs(componentDef);
+          nestedRefs.forEach(nestedRef => queue.push(nestedRef));
+        }
       }
     }
+
+    return isolatedComponents;
   }
 
-  return isolatedComponents;
-}
-
-// Build the final optimized payload
-const isolatedSpec = {
-  ...baseSpec.data,
-  components: extractUsedComponents(endpoint.data.operation, baseSpec.data.components),
-  paths: {
-    [endpoint.data.path]: {
-      [endpoint.data.method]: endpoint.data.operation
+  // Build the final optimized payload
+  isolatedSpec = {
+    ...baseSpec.data,
+    components: extractUsedComponents(endpoint.data.operation, baseSpec.data.components),
+    paths: {
+      [endpoint.data.path]: {
+        [endpoint.data.method]: endpoint.data.operation
+      }
     }
-  }
-};
+  };
+}
 ---
-
+{!doesNotExist && <>
+<Accordion>
+<span slot="title">Test</span>
 <div class="scalar-client-mount" id={`scalar-${id}`}></div>
 
-<!-- Load the file you are ALREADY copying via your vendor script -->
 <script is:inline src="/docs/vendor/scalar-api-reference.js"></script>
 
 <script is:inline define:vars={{ id, isolatedSpec }}>
@@ -92,8 +96,6 @@ const isolatedSpec = {
   const container = document.getElementById(containerId);
 
   if (container && !container.hasAttribute('data-initialized')) {
-    
-    // Your exact custom CSS for dark mode and layout
     const customCss = `
       .darklight-reference { display: none !important; }
       .api-reference-toolbar { display: none !important; }
@@ -101,6 +103,40 @@ const isolatedSpec = {
 
       .scalar-client-mount h3 {
         font-family: monospace !important;
+      }
+
+      .scalar-client-mount .section-content .badge {
+        display: none !important;
+      }
+
+      .scalar-client-mount .introduction-description {
+        display: none;
+      }
+
+      .scalar-client-mount .introduction-description-heading {
+        display: none;
+      }
+
+      .scalar-client-mount .section-header-wrapper {
+        display: none;
+      }
+
+      .scalar-client-mount .scalar-reference-intro-clients {
+        display: none;
+      }
+
+      .scalar-client-mount .operation-title {
+        display: none;
+      }
+
+      .scalar-client-mount .section {
+        padding-top: 0px;
+        padding-bottom: 0px;
+      }
+
+      .scalar-client-mount .section-container {
+        border-top-width: 0px;
+        border-bottom-width: 0px;
       }
 
       .badge {
@@ -192,3 +228,5 @@ const isolatedSpec = {
     }
   }
 </script>
+</Accordion>
+</>}
