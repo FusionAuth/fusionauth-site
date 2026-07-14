@@ -577,6 +577,30 @@ You may notice FusionAuth Cloud now supports a `[uuid].durable.fusionauth.io` CN
 
 `auth.piedpiper.com CNAME [uuid].durable.fusionauth.io`
 
+## Using a Proxy with FusionAuth Cloud
+
+If you are using a proxy in front of your FusionAuth Cloud instance, there are a few requirements to be aware of.
+
+The latest FusionAuth Cloud instances use [Server Name Indication (SNI)](https://en.wikipedia.org/wiki/Server_Name_Indication) to negotiate TLS connections. Ensure your proxy supports SNI for its connection back to your FusionAuth Cloud deployment.
+
+In order for FusionAuth to provision TLS certificates for your custom domains, your proxy must handle ACM HTTP validation requests made over port 80. Configure a redirect rule so that an HTTP request with a path matching `^/\.well-known/pki-validation/[0-9a-f]{32}\.txt$` is redirected to `https://validation.us-east-1.acm-validations.aws/121700706967/` with the original request path appended.
+
+For example, if your custom domain is `auth.example.com`, a request to:
+
+```
+http://auth.example.com/.well-known/pki-validation/abc123def456abc123def456abc123de.txt
+```
+
+should be redirected to:
+
+```
+https://validation.us-east-1.acm-validations.aws/121700706967/.well-known/pki-validation/abc123def456abc123def456abc123de.txt
+```
+
+Additionally, ensure you have configured DDoS and other protections correctly. FusionAuth Cloud's built-in protection depends in part on receiving correct client IP addresses; a proxy may mask or modify those addresses and render this protection less effective.
+
+For general proxy configuration, including required headers, see the [FusionAuth and Proxies](/docs/operate/deploy/proxy-setup) documentation.
+
 ## Accessing User Data
 
 If you need to export user data from FusionAuth Cloud, because you are migrating away from FusionAuth or setting up a production instance in your data center, open a [support ticket](https://account.fusionauth.io/account/support/). Your data is yours!

@@ -174,6 +174,8 @@ With message based MFA methods, the user enters the code they've been sent. In t
 
 After your application has the code, enable MFA for this user with this API call. You must specify the method the code is associated with.
 
+You may optionally include a `name` field to give the method a user-friendly label (for example, `Work email` or `Work authenticator`).
+
 ```shell title="Enable MFA Sample Curl Script for the Email Method"
 API_KEY=...
 USER_ID=...
@@ -209,6 +211,8 @@ curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'ht
 <JSON title="Enable MFA for TOTP Method Request JSON" src="two-factor/enable-authenticator-request.json" />
 
 Now that the user has two MFA methods associated with their account, the user is prompted to choose a method when logging in:
+
+If you provided a method name during enrollment, that name will be shown in this list.
 
 ![MFA prompt screen at login with multiple factors enabled.](/img/docs/lifecycle/authenticate-users/authentication-challenge-multiple-factors.png)
 
@@ -469,6 +473,23 @@ Navigate to <Breadcrumb>Users -> The User</Breadcrumb> and manage the user. Then
 
 ![Delete an MFA method from the admin screen.](/img/docs/lifecycle/authenticate-users/delete-factor-admin-view.png)
 
+When removing a method in the Admin UI, behavior depends on the acting user's role:
+
+* `admin` can remove a method from another user without entering a one-time code.
+* `mfa_deleter` can also remove a method from another user without entering a one-time code, but only when additional safeguards are met.
+* `user_manager`, `user_support_manager`, and `user_support_viewer` can only remove their own methods and must complete the standard verification-code flow.
+
+The `mfa_deleter` role has the following limitations:
+
+* The target user cannot be registered to the FusionAuth admin application.
+* The target user must be notifiable through at least one verified primary identity and the corresponding tenant template configuration:
+  * verified email + configured `tenant.emailConfiguration.adminTwoFactorMethodRemoveEmailTemplateId`, or
+  * verified phone number + configured `tenant.phoneConfiguration.adminTwoFactorMethodRemoveTemplateId`.
+
+If these safeguards are not met, method removal is blocked in the Admin UI.
+
+Successful administrative removals attempt to notify the target user using the configured tenant templates.
+
 A user may also remove an MFA method by using the self service account management (if you have a paid plan) by clicking the `-` link. [Learn more about that here.](/docs/lifecycle/manage-users/account-management/)
 
 ![Self service management of MFA methods.](/img/docs/lifecycle/authenticate-users/user-self-serve-manage-factors.png)
@@ -668,17 +689,13 @@ If you have other MFA methods that you'd like to use with FusionAuth, you have a
 There are times when you might want to force a user to provide an additional factor of authentication before they ever get access to your application.
 For example, you might require MFA when a user logs into an accounting application, but not when they log in to a customer support application.
 
-In FusionAuth, this is controlled by the Login Policy setting. This can be configured at the tenant level, or, if you have the Enterprise plan, at the application level. There are three values for any tenant login policy:
+In FusionAuth, this is controlled by the Login Policy setting. This can be configured at the tenant level, or, if you have the Enterprise plan, at the application level. Tenant login policies support the following values:
 
-* Enabled
-* Disabled
-* Required
-
-When the login policy is `Enabled`, a two-factor challenge will be required during login when a user has configured one or more two-factor methods.
-
-When the login policy is `Disabled`, even when a user has one or more two-factor methods configured, a two-factor challenge will not be required during login.
-
-When the login policy is `Required`, a two-factor challenge will be required during login. If a user does not have configured two-factor methods, they will not be able to log in.
+* `Enabled`: requires a two-factor challenge when a user has configured one or more two-factor methods.
+* `Disabled`: does not require a two-factor challenge, even when a user has one or more two-factor methods configured
+* `Required`: requires a two-factor challenge; if a user does not have configured two-factor methods, they will not be able to log in.
+* `ChallengeOnHighRisk`: requires a two-factor challenge when [Intelligent MFA](/docs/lifecycle/authenticate-users/contextual-multi-factor#intelligent-mfa)detects a high level of risk for a login attempt
+* `ChallengeOnMediumRisk`: requires a two-factor challenge when [Intelligent MFA](/docs/lifecycle/authenticate-users/contextual-multi-factor#intelligent-mfa) detects a medium level of risk for a login attempt
 
 You can learn more about the logic behind MFA challenges in the [Contextual Multi-Factor](/docs/lifecycle/authenticate-users/contextual-multi-factor) documentation.
 

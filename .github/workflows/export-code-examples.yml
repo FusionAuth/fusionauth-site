@@ -1,0 +1,30 @@
+# Runs on merge to main when any example code repositories change.
+# Requires a GitHub PAT with write access to the external repositories, stored as the secret SNIPPET_PUBLISH_TOKEN in this repository's settings.
+
+name: Publish code examples to external repositories
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'astro/src/code-example-repositories/**'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        working-directory: astro
+        run: npm ci
+
+      - name: Publish code examples to external repositories
+        run: bash src/scripts/export-code-examples.sh ${{ secrets.SNIPPET_PUBLISH_TOKEN }} ${{ github.sha }}
