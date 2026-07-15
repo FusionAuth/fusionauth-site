@@ -2,107 +2,130 @@
 title: Ruby on Rails API
 description: QuickStart Integration of a Ruby on Rails API with FusionAuth.
 htmlTitle: FusionAuth QuickStart for Ruby on Rails API
-codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api/main
 ---
+
 import Aside from 'src/components/Aside.astro';
-import DockerSpinup from 'src/components/quickstarts/DockerSpinup.astro';
-import Intro from 'src/components/quickstarts/Intro.astro';
-import {Content as LoginArchitectureApi} from 'src/components/quickstarts/LoginArchitectureApi.mdx';
-import NextStepsApi from 'src/components/quickstarts/NextStepsApi.astro';
 import LocalCode from 'src/components/LocalCode.astro';
 import QuickstartTshirtCTA from 'src/components/quickstarts/QuickstartTshirtCTA.astro'
 
-<Intro technology="Ruby on Rails"
-       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api"
-       api/>
+This quickstart secures a Ruby on Rails API resource server with FusionAuth using a preconfigured, local version of FusionAuth in the following steps:
+
+1. Run FusionAuth with Docker.
+1. Create a new Rails API application.
+1. Add routes, JWT-based authentication, and controllers for two protected endpoints.
+1. Get a token and call the protected endpoints.
+
+You'll be building the API for ChangeBank, a bank that converts dollars into coins. It has two endpoints:
+
+* `make-change`: Call this with a `total` amount to get back the number of quarters, dimes, nickels, and pennies needed to make change. The `customer` and `teller` roles can both call this endpoint.
+* `panic`: Tellers call this endpoint to alert the police in case of an incident. Only the `teller` role can call this endpoint.
+
+Both endpoints require a valid JSON Web Token (JWT) in the `Authorization` header, and the JWT's `roles` claim must contain the role required by the endpoint.
 
 ## Prerequisites
 
-- [Ruby 2.7.x](https://rubyonrails.org/): This QuickStart was built using Ruby 2.7. This example may work on different versions of Rails, but it has not been tested.
-- [Rails 7.0.x.x](https://rubyonrails.org/): This QuickStart was built using Rails 7.0.7.2. This example may work on different versions of Rails, but it has not been tested.
-- [SQLite](https://www.sqlite.org/download.html): This QuickStart was built using sqlite3 (please note MacOS comes with sqlite3).
-- [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. Ensure you also have [docker compose](https://docs.docker.com/compose/) installed.
-- (Alternatively, you can [Install FusionAuth Manually](/docs/get-started/download-and-install/)).
+This QuickStart requires:
 
-## General Architecture
+* [Ruby](https://www.ruby-lang.org/en/downloads/) 2.7.x — this quickstart's `Gemfile` pins Ruby 2.7.5, which is [end-of-life](https://www.ruby-lang.org/en/downloads/branches/) and won't be available through most current OS package managers. Install it with a Ruby version manager such as [rbenv](https://github.com/rbenv/rbenv) or [rvm](https://rvm.io/).
+* [Rails](https://rubyonrails.org/) 7.0.x
+* [SQLite](https://www.sqlite.org/download.html) (macOS includes sqlite3 by default)
+* [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later, with [Docker Compose](https://docs.docker.com/compose/)
+* On macOS and Windows, one of the following container management tools:
+  * [Docker desktop](https://www.docker.com/products/docker-desktop/)
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use Orbstack for `docker compose` commands after install, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
 
-<LoginArchitectureApi />
+## Install and run FusionAuth
 
-## Getting Started
+To begin, clone the [GitHub repository for this Quickstart](https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api) to your local machine:
 
-In this section, you'll get FusionAuth up and running and create a resource server which will serve the API.
-
-### Clone The Code
-
-First off, grab the code from the repository and change into that directory.
-
-```
+```bash
 git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api
 cd fusionauth-quickstart-ruby-on-rails-api
 ```
 
-### Run FusionAuth Via Docker
+Open OrbStack or Docker Compose to start the docker daemon, then start a local instance of FusionAuth:
 
-<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} api />
+```bash
+docker compose up -d
+```
 
-## Create Your Ruby on Rails Resource Server Application
-
-Now you are going to create a Ruby on Rails API application. While this section builds a simple API, you can use the same configuration to integrate an existing API with FusionAuth.
-
-We are going to be building an API backend for a banking application called ChangeBank. This API will have two endpoints:
-- `make-change`: This endpoint will allow you to call GET with a `total` amount and receive a response indicating how many nickels and pennies are needed to make change. Valid roles are `customer` and `teller`.
-- `panic`: Tellers may call this endpoint to call the police in case of an incident. The only valid role is `teller`.
-
-Both endpoints will be protected such that a valid JSON web token (JWT) will be required in the `Authorization` header in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
+If you see an error that reads "Is the docker daemon running?", make sure your container management tool is accepting commands. Depending on your tool:
+* to use Docker Compose, Docker Compose must be open
+* to use Orbstack, enable OrbStack to run as the docker daemon with `docker context use orbstack`, then open the Orbstack app
+* to use Podman, replace `docker` in the above command with `podman`
 
 <Aside type="note">
-If you simply want to run the application , there is a completed version in the 'complete-application' directory. You can use the following commands to get it up and running if you do not want to create your own.
+During the Docker Compose process, the included `kickstart/kickstart.json` file uses the FusionAuth API to configure FusionAuth to a working state, including:
+
+* Generating an API key and configuring CORS
+* Creating the ChangeBank application, with a client Id of `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
+* Creating an admin user (`admin@example.com`, password `password`)
+* Creating a teller user (`teller@example.com`, password `password`) with the `teller` role
+* Creating a customer user (`customer@example.com`, password `password`) with the `customer` role
+</Aside>
+
+Once Docker Compose completes, open a browser window and navigate to the admin UI of your FusionAuth instance at [http://localhost:9011/admin](http://localhost:9011/admin). Log in with the admin credentials above to confirm FusionAuth is running and configured.
+
+<Aside type="note">
+If you ever want to reset FusionAuth to this initial state, delete the volumes created by Docker Compose with `docker compose down -v`, then run `docker compose up -d` again.
+</Aside>
+
+## Create the Rails API application
+
+While this section builds a simple API from scratch, you can apply the same configuration to secure an existing Rails API with FusionAuth.
+
+<Aside type="note">
+If you just want to run the finished application, there's a completed version in the `complete-application` directory:
 
 ```shell
 cd complete-application
 bundle install
-bundle e rails s -p 4001
+bundle exec rails s -p 4001
 ```
 
-You can then follow the instructions in the [Run the API](#run-the-api) section started at Get a Token.
+Skip ahead to [Get a token](#get-a-token) to try it.
 </Aside>
 
-### Initialize The Application
+### Initialize the application
 
-Initialize the Ruby on Rails application using the following:
+From the repository root, generate a new Rails API application:
 
-```
+```shell
 rails new your-application --api
 cd your-application
 ```
 
-Once this is complete, you will see a new directory called `your-application` with several sub directories.
+This creates a new `your-application` directory with the standard Rails API project structure.
 
-You need to add the following lines to the `Gemfile` in the application root directory to include two new dependencies:
+### Add dependencies
+
+Add the following two gems to the `Gemfile` in the application root:
 
 ```shell
 gem 'rack-jwt', git: 'https://github.com/FusionAuth/rack-jwt'
 gem 'dotenv-rails'
 ```
 
-Your full `Gemfile` will now look like
+Your full `Gemfile` should now look like:
 
 <LocalCode src="fusionauth-quickstart-ruby-on-rails-api-main/complete-application/Gemfile" lang="text" />
 
-Then, install these new gems, by issuing the following command in your terminal window.
+Install the new gems:
 
 ```shell
 bundle install
 ```
-### Update Routes Config
 
-Update `/config/routes.rb` to include the two new routes that will be created for `/make-change` and `/panic`. Your `routes.rb` file should now match the below code.
+### Add routes
+
+Update `config/routes.rb` to add routes for `/make-change` and `/panic`:
 
 <LocalCode src="fusionauth-quickstart-ruby-on-rails-api-main/complete-application/config/routes.rb" lang="ruby" />
 
-### Add Security
+### Add JWT authentication
 
-Create a new file to hold your environment variables directly in the `your-application` directory called `.env.development`. You will need to add two variables that are used to call your FusionAuth instance `FUSIONAUTH_LOCATION` and `CLIENT_ID`, with the values that match below.
+Create a file called `.env.development` in the `your-application` directory to hold the environment variables `FUSIONAUTH_LOCATION` and `CLIENT_ID`:
 
 ```
 # for rails
@@ -112,11 +135,11 @@ FUSIONAUTH_LOCATION=http://localhost:9011
 CLIENT_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
 ```
 
-Utilizing the environment variables you just added, you can now setup JSON Web Token (JWT) based authentication. Create a new file  `config/initializers/jwt_rack.rb`. This initializer is used to hold configuration settings that are made after all of the frameworks and plugins are loaded. 
+Using those variables, set up JWT-based authentication with a new initializer at `config/initializers/jwt_rack.rb`:
 
 <LocalCode src="fusionauth-quickstart-ruby-on-rails-api-main/complete-application/config/initializers/jwt_rack.rb" lang="ruby" />
 
-Having this code protects your endpoints from anonymous users and passes the JWT payload to the controller. The JWT payload includes `roles` encoded in the JWT you receive from FusionAuth. The decoded payload of a JWT for a `teller` might look like this:
+This protects your endpoints from anonymous requests and passes the decoded JWT payload, including the `roles` claim, to your controllers. A decoded JWT for a `teller` looks like this:
 
 ```json
 {
@@ -138,37 +161,35 @@ Having this code protects your endpoints from anonymous users and passes the JWT
 }
 ```
 
-### Add Controllers
+### Add controllers
 
-Create a new file for the MakeChangeController `app/controllers/make_change_controller.rb`. This controller will verify that the authenticated user has either the `teller` or `customer` role. It then takes in the URL parameter `total` to calculate which coins will be returned in the JSON payload.
+Create `app/controllers/make_change_controller.rb`. This controller checks for the `teller` or `customer` role, then takes the `total` URL parameter and calculates the coins needed to make change:
 
 <LocalCode src="fusionauth-quickstart-ruby-on-rails-api-main/complete-application/app/controllers/make_change_controller.rb" lang="ruby" />
 
-Create a new file for the PanicController `app/controllers/panic_controller.rb`. This controller will verify that the authenticated user has only the `teller` role. It will respond with `Proper role not found for user.` if this role is not found. This route also verifies that this is a `POST` request and if this is not true it will respond with `Only POST method is supported.` If both of these tests are passed the controller will return a successful message of `We've called the police!`.
+Create `app/controllers/panic_controller.rb`. This controller checks for the `teller` role, responding with `Proper role not found for user.` if the role is missing. It also verifies the request is a `POST`, responding with `Only POST method is supported.` if not. Otherwise, it returns `We've called the police!`:
 
 <LocalCode src="fusionauth-quickstart-ruby-on-rails-api-main/complete-application/app/controllers/panic_controller.rb" lang="ruby" />
 
 ## Run the API
 
-Start the API resource server by running:
-
-In a command shell window, navigate to the root directory of your application and run the following command to start the server.
+Start the API resource server. In a terminal window, navigate to the root directory of your application (`your-application`) and run:
 
 ```shell
-bundle e rails s -p 4001
+bundle exec rails s -p 4001
 ```
 
-### Get a Token
-
-There are [several ways to acquire a token](/docs/lifecycle/authenticate-users/oauth/) in FusionAuth, but for this example you will use the [Login API](/docs/apis/login) to keep things simple.
-
 <Aside type="note">
-You will want to leave the server running in one terminal and open another terminal for the following commands.
+Leave the server running in this terminal and open a new terminal window for the remaining commands.
 </Aside>
 
-First let's try the requests as the `teller@example.com` user. Based on the configuration this user has the `teller` role and should be able to use both `/make-change` and `/panic`.
+### Get a token
 
-Acquire an access token for `teller@example.com` by making the following request
+There are [several ways to acquire a token](/docs/lifecycle/authenticate-users/oauth/) in FusionAuth, but this quickstart uses the [Login API](/docs/apis/login) to keep things simple.
+
+First, try the requests as `teller@example.com`, who has the `teller` role and can call both `/make-change` and `/panic`.
+
+Acquire an access token for `teller@example.com`:
 
 ```shell
 curl --location 'http://localhost:9011/api/login' \
@@ -180,7 +201,8 @@ curl --location 'http://localhost:9011/api/login' \
   "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
 }'
 ```
-Your response should look like the below JSON. Grab the token field (which begins with ey).
+
+Your response should look like this. Grab the `token` field (it begins with `ey`):
 
 ```json
 {
@@ -192,20 +214,20 @@ Your response should look like the below JSON. Grab the token field (which begin
 }
 ```
 
-### Make the Request
+### Call the protected endpoints
 
 <Aside type="note">
-The code is set up to extract the token from either a cookie or the Authorization header so depending on your preference you can replace `--cookie 'app.at=<your_token>'` with `--header 'Authorization: Bearer <your_token>'` when making requests to the API.
+The code extracts the token from either a cookie or the `Authorization` header, so you can replace `--cookie 'app.at=<your_token>'` with `--header 'Authorization: Bearer <your_token>'` in the commands below if you prefer.
 </Aside>
 
-Make a request to `/make-change` with a query parameter `total=1.02`. Use the `token` as the `app.at` cookie.
+Call `/make-change` with a query parameter `total=1.02`, using the `token` as the `app.at` cookie:
 
 ```shell
 curl 'http://localhost:4001/make-change?total=1.02' \
 --cookie 'app.at=<your_token>'
 ```
 
-Alternatively you can make the same request by passing your token in the `Authorization` header.
+Or pass the token in the `Authorization` header instead:
 
 ```shell
 curl --location 'http://localhost:4001/make-change?total=1.02' \
@@ -238,18 +260,16 @@ Your response should look like this:
 }
 ```
 
-You were authorized, success! You can try making the request without the `--cookie` or with a different string rather than a valid token, and see that you are denied access.
+You're authorized, success! Try the request again without `--cookie`, or with an invalid token, and you'll be denied access.
 
-Next call the `/panic` endpoint because you are in trouble!
+Now call `/panic`, since you're in trouble:
 
 ```shell
 curl --location --request POST 'http://localhost:4001/panic' \
 --cookie 'app.at=<your_token>'
 ```
 
-This is a `POST` not a `GET` because you want all your emergency calls to be non-idempotent.
-
-Your response should look like this:
+This is a `POST`, not a `GET`, because emergency calls should be non-idempotent. Your response should look like this:
 
 ```json
 {"message":"We've called the police!"}
@@ -257,7 +277,7 @@ Your response should look like this:
 
 Nice, help is on the way!
 
-Now let's try as `customer@example.com` who has the role `customer`. Acquire a token for `customer@example.com`.
+Now try the same requests as `customer@example.com`, who has the `customer` role. Acquire a token for `customer@example.com`:
 
 ```shell
 curl --location 'http://localhost:9011/api/login' \
@@ -270,7 +290,7 @@ curl --location 'http://localhost:9011/api/login' \
 }'
 ```
 
-Your response should look like the below JSON. Grab the token field (which begins with ey).
+Your response should look like this. Grab the `token` field:
 
 ```json
 {
@@ -282,7 +302,7 @@ Your response should look like the below JSON. Grab the token field (which begin
 }
 ```
 
-Now use that token to call `/make-change` with a query parameter `total=3.24`
+Call `/make-change` with `total=3.24`:
 
 ```shell
 curl --location 'http://localhost:4001/make-change?total=3.24' \
@@ -315,48 +335,58 @@ Your response should look like this:
 }
 ```
 
-So far so good. Now let's try to call the `/panic` endpoint. (We're adding the `-i` flag to see the headers of the response)
+So far so good. Now call `/panic`. Add the `-i` flag to see the response headers:
 
 ```shell
 curl -i --request POST 'http://localhost:4001/panic' \
 --cookie 'app.at=<your_token>'
 ```
 
-You will get a `401 Unauthorized` response with the following message.
+Since `customer@example.com` doesn't have the `teller` role, you'll get a `401 Unauthorized` response:
 
 ```json
 {"message":"Proper role not found for user."}
 ```
 
-Uh oh, I guess you are not allowed to do that.
-
-Enjoy your secured resource server!
+Uh oh, customers aren't allowed to call the police. Your secured resource server is working as designed.
 
 <QuickstartTshirtCTA/>
 
-## Next Steps
+## Next steps
 
-<NextStepsApi />
+This is a quick introduction to using FusionAuth to secure an API. To learn more about integrating FusionAuth with your product, see [Get Started](/docs/get-started).
+
+For a production API, consider:
+
+* Using the [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant) instead of the Login API, which keeps credentials within FusionAuth. You can customize the [hosted login pages](/docs/customize/look-and-feel/).
+* Using the [Client Credentials grant](/docs/lifecycle/authenticate-users/oauth/#example-client-credentials-grant) to generate a token when calling the API from another service.
+* Customizing [token expiration times and policies](/docs/lifecycle/authenticate-users/oauth/#configure-application-oauth-settings) in FusionAuth.
+* Making sure you know how to [securely consume a token](/articles/tokens/building-a-secure-jwt#consuming-a-jwt).
+* Securing your API [using an API gateway](/docs/extend/examples/api-gateways/) rather than at the framework layer.
+
+FusionAuth has many other features (including [Social Login](/docs/lifecycle/authenticate-users/identity-providers/#social-identity-providers), [Single Sign-On](/docs/lifecycle/authenticate-users/single-sign-on), [Passwordless](/docs/lifecycle/authenticate-users/passwordless/webauthn-passkeys), [Multi-factor Authentication](/docs/lifecycle/authenticate-users/multi-factor-authentication)), most of which are free. Some require additional licensing. For details, see the [pricing page](/pricing).
+
+You can ask general questions in [the FusionAuth forum](/community/forum).
 
 ## Troubleshooting
 
 * I get `This site can't be reached localhost refused to connect.` when I call the Login API.
 
-Ensure FusionAuth is running in the Docker container. You should be able to login as the admin user, `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
+  Ensure FusionAuth is running in the Docker container. You should be able to log in as the admin user, `admin@example.com` with a password of `password`, at [http://localhost:9011/admin](http://localhost:9011/admin).
 
 * The `/panic` endpoint doesn't work when I call it.
 
-Make sure you are making a `POST` call and using a token with the `teller` role.
+  Make sure you're making a `POST` call and using a token with the `teller` role.
 
-* It still doesn't work
+* It still doesn't work.
 
-You can always pull down a complete running application and compare what's different.
+  Pull down a complete running application and compare what's different:
 
-```
-git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api.git
-cd fusionauth-quickstart-ruby-on-rails-api
-docker compose up -d
-cd complete-application
-bundle install
-bundle e rails s -p 4001
-```
+  ```
+  git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api.git
+  cd fusionauth-quickstart-ruby-on-rails-api
+  docker compose up -d
+  cd complete-application
+  bundle install
+  bundle exec rails s -p 4001
+  ```
