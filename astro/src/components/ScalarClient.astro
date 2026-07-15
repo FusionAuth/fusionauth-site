@@ -1,6 +1,7 @@
 ---
 import { getEntry } from "astro:content";
 import Accordion from "src/components/Accordion.astro";
+import { ScalarComponent } from '@scalar/astro'
 
 export interface Props {
   path: string;
@@ -16,133 +17,54 @@ const id = `${method}-${noQueryPath.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase(
 
 const endpoint = await getEntry('api-endpoints', id);
 const baseSpec = await getEntry('api-endpoints', 'base-spec');
-let isolatedSpec = "";
-const doesNotExist = !endpoint || !baseSpec;
-
-if (doesNotExist) {
-  console.log(`Endpoint not found in Collection for ${method.toUpperCase()} ${path}. Expected ID: ${id}`);
-} else {
-  function findRefs(obj: any, refs = new Set<string>()) {
-    if (!obj || typeof obj !== 'object') return refs;
-    if (Array.isArray(obj)) {
-      for (const item of obj) findRefs(item, refs);
-    } else {
-      if (obj['$ref'] && typeof obj['$ref'] === 'string') {
-        refs.add(obj['$ref']);
-      }
-      for (const key in obj) findRefs(obj[key], refs);
-    }
-    return refs;
-  }
-
-  function extractUsedComponents(operation: any, fullComponents: any) {
-    if (!fullComponents) return {};
-
-    const isolatedComponents: any = {};
-    
-    if (fullComponents.securitySchemes) {
-      isolatedComponents.securitySchemes = fullComponents.securitySchemes;
-    }
-
-    const processedRefs = new Set<string>();
-    const queue = Array.from(findRefs(operation));
-
-    while (queue.length > 0) {
-      const ref = queue.shift();
-      if (!ref || processedRefs.has(ref)) continue;
-      processedRefs.add(ref);
-
-      const parts = ref.replace('#/components/', '').split('/');
-      if (parts.length === 2) {
-        const type = parts[0]; 
-        const name = parts[1]; 
-
-        if (fullComponents[type] && fullComponents[type][name]) {
-          if (!isolatedComponents[type]) isolatedComponents[type] = {};
-          
-          const componentDef = fullComponents[type][name];
-          isolatedComponents[type][name] = componentDef;
-
-          const nestedRefs = findRefs(componentDef);
-          nestedRefs.forEach(nestedRef => queue.push(nestedRef));
-        }
-      }
-    }
-
-    return isolatedComponents;
-  }
-
-  // Build the final optimized payload
-  isolatedSpec = {
-    ...baseSpec.data,
-    components: extractUsedComponents(endpoint.data.operation, baseSpec.data.components),
-    paths: {
-      [endpoint.data.path]: {
-        [endpoint.data.method]: endpoint.data.operation
-      }
-    }
-  };
-}
----
-{!doesNotExist && <>
-<Accordion>
-<span slot="title">Sample & OpenAPI Spec</span>
-<div class="scalar-client-mount" id={`scalar-${id}`}></div>
-
-<script is:inline src="/docs/vendor/scalar-api-reference.js"></script>
-
-<script is:inline define:vars={{ id, isolatedSpec }}>
-  const containerId = `scalar-${id}`;
-  const container = document.getElementById(containerId);
-
-  if (container && !container.hasAttribute('data-initialized')) {
-    const customCss = `
+let isolatedSpec = {};
+const customCss = `
       .darklight-reference { display: none !important; }
       .api-reference-toolbar { display: none !important; }
       .download-container { display: none !important; }
 
-      .scalar-client-mount h3 {
+      .scalar-app h3 {
         font-family: monospace !important;
       }
 
-      .scalar-client-mount .section-column {
+      .scalar-app .section-column {
         min-height: 0px;
       }
 
-      .scalar-client-mount .section-columns {
+      .scalar-app .section-columns {
         display: inline;
       }
 
-      .scalar-client-mount .section-content .badge {
+      .scalar-app .section-content .badge {
         display: none !important;
       }
 
-      .scalar-client-mount .introduction-description {
+      .scalar-app .introduction-description {
         display: none;
       }
 
-      .scalar-client-mount .introduction-description-heading {
+      .scalar-app .introduction-description-heading {
         display: none;
       }
 
-      .scalar-client-mount .section-header-wrapper {
+      .scalar-app .section-header-wrapper {
         display: none;
       }
 
-      .scalar-client-mount .scalar-reference-intro-clients {
+      .scalar-app .scalar-reference-intro-clients {
         display: none;
       }
 
-      .scalar-client-mount .operation-title {
+      .scalar-app .operation-title {
         display: none;
       }
 
-      .scalar-client-mount .section {
+      .scalar-app .section {
         padding-top: 10px;
         padding-bottom: 0px;
       }
 
-      .scalar-client-mount .section-container {
+      .scalar-app .section-container {
         border-top-width: 0px;
         border-bottom-width: 0px;
       }
@@ -214,27 +136,89 @@ if (doesNotExist) {
         --scalar-sidebar-background-active: rgba(245, 131, 32, 0.12);
       }
     `;
+const doesNotExist = !endpoint || !baseSpec;
 
-    const isDark = () => document.documentElement.classList.contains('dark');
-
-    const buildConfig = () => ({
-      layout: 'modern',
-      darkMode: isDark(),
-      hideDarkModeToggle: true,
-      agent: { disabled: true },
-      customCss,
-      showSidebar: false,
-      withDefaultFonts: false,
-      spec: { content: isolatedSpec } 
-    });
-
-    if (window.Scalar && typeof window.Scalar.createApiReference === 'function') {
-      window.Scalar.createApiReference('#' + containerId, buildConfig());
-      container.setAttribute('data-initialized', 'true');
+if (doesNotExist) {
+  console.log(`Endpoint not found in Collection for ${method.toUpperCase()} ${path}. Expected ID: ${id}`);
+} else {
+  function findRefs(obj: any, refs = new Set<string>()) {
+    if (!obj || typeof obj !== 'object') return refs;
+    if (Array.isArray(obj)) {
+      for (const item of obj) findRefs(item, refs);
     } else {
-      console.error("Scalar vendor script failed to load or 'Scalar.createApiReference' is missing.");
+      if (obj['$ref'] && typeof obj['$ref'] === 'string') {
+        refs.add(obj['$ref']);
+      }
+      for (const key in obj) findRefs(obj[key], refs);
     }
+    return refs;
   }
-</script>
+
+  function extractUsedComponents(operation: any, fullComponents: any) {
+    if (!fullComponents) return {};
+
+    const isolatedComponents: any = {};
+    
+    if (fullComponents.securitySchemes) {
+      isolatedComponents.securitySchemes = fullComponents.securitySchemes;
+    }
+
+    const processedRefs = new Set<string>();
+    const queue = Array.from(findRefs(operation));
+
+    while (queue.length > 0) {
+      const ref = queue.shift();
+      if (!ref || processedRefs.has(ref)) continue;
+      processedRefs.add(ref);
+
+      const parts = ref.replace('#/components/', '').split('/');
+      if (parts.length === 2) {
+        const type = parts[0]; 
+        const name = parts[1]; 
+
+        if (fullComponents[type] && fullComponents[type][name]) {
+          if (!isolatedComponents[type]) isolatedComponents[type] = {};
+          
+          const componentDef = fullComponents[type][name];
+          isolatedComponents[type][name] = componentDef;
+
+          const nestedRefs = findRefs(componentDef);
+          nestedRefs.forEach(nestedRef => queue.push(nestedRef));
+        }
+      }
+    }
+
+    return isolatedComponents;
+  }
+
+  // Build the final optimized payload
+  isolatedSpec = {
+    ...baseSpec.data,
+    components: extractUsedComponents(endpoint.data.operation, baseSpec.data.components),
+    paths: {
+      [endpoint.data.path]: {
+        [endpoint.data.method]: endpoint.data.operation
+      }
+    }
+  };
+}
+---
+{!doesNotExist && <>
+<Accordion>
+<span slot="title">Sample & OpenAPI Spec</span>
+<ScalarComponent
+  renderMode="client"
+  configuration={{
+    layout: 'modern',
+    darkMode: false,
+    hideDarkModeToggle: true,
+    customCss, // Standard JS key-value shorthand
+    agent: { disabled: true },
+    showSidebar: false,
+    withDefaultFonts: false,
+    content: isolatedSpec
+  }}
+/>
 </Accordion>
+
 </>}
