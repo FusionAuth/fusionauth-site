@@ -1,19 +1,22 @@
 ---
 title: Remix
-description: QuickStart integration of Javascript Remix web application with FusionAuth.
+description: QuickStart a Remix web application with FusionAuth.
 htmlTitle: FusionAuth QuickStart for Remix
-codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-remix-web/main
 ---
 import Aside from 'src/components/Aside.astro';
-import DockerSpinup from 'src/components/quickstarts/DockerSpinup.astro';
-import Intro from 'src/components/quickstarts/Intro.astro';
-import {Content as LoginArchitectureWeb} from 'src/components/quickstarts/LoginArchitectureWeb.mdx';
-import NextSteps from 'src/components/quickstarts/NextSteps.astro';
 import LocalCode from 'src/components/LocalCode.astro';
 import QuickstartTshirtCTA from 'src/components/quickstarts/QuickstartTshirtCTA.astro'
 
-<Intro technology="Remix"
-       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-javascript-remix-web"/>
+This QuickStart adds login to a Remix web app using a preconfigured, local version of FusionAuth in the following steps:
+
+1. Run FusionAuth with Docker.
+1. Create a new Remix application with React Router's scaffolding tool.
+1. Add an Authenticator service and routes for login, logout, and the OAuth callback.
+1. Add account and change pages that are only reachable when logged in.
+
+You'll be building the app for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins. It'll have areas reserved for users who have logged in as well as public facing sections.
+
+The Docker Compose file and source code for a complete application are available at [https://github.com/FusionAuth/fusionauth-quickstart-javascript-remix-web](https://github.com/FusionAuth/fusionauth-quickstart-javascript-remix-web).
 
 ## Prerequisites
 
@@ -24,7 +27,42 @@ For this QuickStart, you'll need:
 
 ## General Architecture
 
-<LoginArchitectureWeb />
+Here's a typical application login flow before FusionAuth:
+
+```mermaid title="Request flow during login before FusionAuth"
+sequenceDiagram
+    participant User
+    participant App as Application
+
+    User ->> App : View Homepage
+    User ->> App : Click Login Link
+    App ->> User : Show Login Form
+    User ->> App : Fill Out and Submit Login Form
+    App ->> App : Authenticates User
+    App ->> User : Display User's Account or Other Info
+```
+And here's the same application login flow after introducing FusionAuth:
+
+```mermaid title="Request flow during login after FusionAuth"
+sequenceDiagram
+    participant User
+    participant App as Application
+    participant FusionAuth
+
+    User ->> App : View Homepage
+    User ->> App : Click Login Link (to FusionAuth)
+    User ->> FusionAuth : View Login Form
+    FusionAuth ->> User : Show Login Form
+    User ->> FusionAuth : Fill Out and Submit Login Form
+    FusionAuth ->> FusionAuth : Authenticates User
+    FusionAuth ->> User: Go to Redirect URI
+    User ->> App: Request the Redirect URI
+    App ->> FusionAuth : Is User Authenticated?
+    FusionAuth ->> App : User is Authenticated
+    App ->> User : Display User's Account or Other Info
+```
+
+In general, you are introducing FusionAuth in order to normalize and consolidate user data. This helps make sure it is consistent and up-to-date as well as offloading your login security and functionality to FusionAuth.
 
 ## Getting Started
 
@@ -49,84 +87,110 @@ All the files you'll create in this guide already exist in the `complete-applica
 
 ### Run FusionAuth Via Docker
 
-<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
+You'll find a Docker Compose file (`docker-compose.yml`) and an environment variables configuration file (`.env`) in the root directory of the repo.
+
+Assuming you have Docker installed, you can stand up FusionAuth on your machine with the following.
+
+```shell
+docker compose up -d
+```
+
+Here you are using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
+
+<Aside type="note">
+If you ever want to reset the FusionAuth application, you need to delete the volumes created by Docker Compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
+</Aside>
+
+FusionAuth will be initially configured with these settings:
+
+* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
+* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
+* Your example username is `richard@example.com` and the password is `password`.
+* Your admin username is `admin@example.com` and the password is `password`.
+* The base URL of FusionAuth is `http://localhost:9011/`.
+
+You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want to, but with Docker and Kickstart, everything will already be configured correctly.
+
+<Aside type="caution">
+The `.env` file contains passwords. In a real application, always add this file to your `.gitignore` file and never commit secrets to version control.
+</Aside>
 
 ### Create A Basic Remix Application
 
 Next, you'll set up a basic Remix app using React Router's scaffolding tool. While this guide builds a new project, you can use the same method to integrate your existing project with FusionAuth.
 
-Create the default starter project.
+1. Create the default starter project.
 
-```shell
-npx create-react-router@latest mysite
-```
+   ```shell
+   npx create-react-router@latest mysite
+   ```
 
-If `create-react-router` isn't on your machine, npx will prompt you to install it. Confirm the installation with a `y` input.
+   If `create-react-router` isn't on your machine, npx will prompt you to install it. Confirm the installation with a `y` input.
 
-When prompted, choose **No** for the deployment target ("Do you want me to set up that too?"). This guide runs the app on Vite's built-in server, not a specific hosting target.
+   When prompted, choose **No** for the deployment target ("Do you want me to set up that too?"). This guide runs the app on Vite's built-in server, not a specific hosting target.
 
-Change into the new project and pin the dev server to port 3000. Open `mysite/vite.config.ts` and add a `server` block:
+1. Change into the new project and pin the dev server to port 3000. Open `mysite/vite.config.ts` and add a `server` block:
 
-```ts
-import { reactRouter } from "@react-router/dev/vite";
-import { defineConfig } from "vite";
+   ```ts
+   import { reactRouter } from "@react-router/dev/vite";
+   import { defineConfig } from "vite";
 
-export default defineConfig({
-  plugins: [reactRouter()],
-  resolve: {
-    tsconfigPaths: true,
-  },
-  server: {
-    port: 3000,
-  },
-});
-```
+   export default defineConfig({
+     plugins: [reactRouter()],
+     resolve: {
+       tsconfigPaths: true,
+     },
+     server: {
+       port: 3000,
+     },
+   });
+   ```
 
-<Aside type="caution">
-By default, the Vite dev server runs on port `5173`. This QuickStart, however, expects the Vite dev server to run on port `3000`. Without this change, your OAuth login flow will fail with a redirect URI mismatch.
-</Aside>
+   <Aside type="caution">
+   By default, the Vite dev server runs on port `5173`. This Quickstart, however, expects the Vite dev server to run on port `3000`. Without this change, your OAuth login flow will fail with a redirect URI mismatch.
+   </Aside>
 
-Add additional npm packages the site will use using the commands below.
+1. Add additional npm packages the site will use using the commands below.
 
-```shell
-cd mysite
-npm install remix-auth remix-auth-oauth2 jwt-decode
-```
+   ```shell
+   cd mysite
+   npm install remix-auth remix-auth-oauth2 jwt-decode
+   ```
 
-The two Remix authentication packages allow you to use FusionAuth without needing to know how OAuth works. The JWT package will provide your app with the user details returned from FusionAuth.
+   The two Remix authentication packages allow you to use FusionAuth without needing to know how OAuth works. The JWT package will provide your app with the user details returned from FusionAuth.
 
-Now create the `.env` file in your `mysite` folder and add the following to it (note that this is a different environment file to the one in the root folder used by Docker for FusionAuth). Vite's dev server automatically loads variables from this file, making them available to your server-side code via `process.env`.
+1. Create the `.env` file in your `mysite` folder and add the following to it (note that this is a different environment file to the one in the root folder used by Docker for FusionAuth). Vite's dev server automatically loads variables from this file, making them available to your server-side code via `process.env`.
 
-<LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/.env" lang="shell" />
+   <LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/.env" lang="shell" />
 
 ### Preliminary Setup
 
 Before you configure authentication, you need to change the default files created by the scaffolding tool.
 
-First, **delete the scaffolded `mysite/app/routes/home.tsx` file and the `mysite/app/welcome/` folder.** You'll add your own routes as you go, so these defaults aren't needed.
+1. **Delete the scaffolded `mysite/app/routes/home.tsx` file and the `mysite/app/welcome/` folder.** You'll add your own routes as you go, so these defaults aren't needed.
 
-Next, replace the contents of the file `mysite/app/root.tsx` with the following code.
+1. Replace the contents of the file `mysite/app/root.tsx` with the following code.
 
-<LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/root.tsx" lang="tsx" />
+   <LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/root.tsx" lang="tsx" />
 
-This is what these changes do:
-- Import the app's styling with `import "~/css/changebank.css";` at the top.
-- Specify the `<head>` content for the page (title and CSS link) in `meta` and the `Layout` component.
-- Define an `ErrorBoundary` so unhandled route errors render a plain error page instead of crashing.
+   This is what these changes do:
+   - Import the app's styling with `import "~/css/changebank.css";` at the top.
+   - Specify the `<head>` content for the page (title and CSS link) in `meta` and the `Layout` component.
+   - Define an `ErrorBoundary` so unhandled route errors render a plain error page instead of crashing.
 
-Routes are no longer discovered automatically by filename. Instead, `mysite/app/routes.ts` lists every route explicitly. Create it with the following content. You'll add to this file as you create each route below.
+1. Routes are no longer discovered automatically by filename. Instead, `mysite/app/routes.ts` lists every route explicitly. Create it with the following content. You'll add to this file as you create each route below.
 
-```ts
-import { type RouteConfig, index, route } from "@react-router/dev/routes";
+   ```ts
+   import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
-export default [
-  index("routes/_index.tsx"),
-] satisfies RouteConfig;
-```
+   export default [
+     index("routes/_index.tsx"),
+   ] satisfies RouteConfig;
+   ```
 
-<Aside type="tip">
-If you'd rather keep the older filename-based routing convention (where a file's name determines its URL), you can install the `@react-router/fs-routes` package instead of listing routes by hand. This guide uses explicit registration since it's the more current, idiomatic approach.
-</Aside>
+   <Aside type="tip">
+   If you'd rather keep the older filename-based routing convention (where a file's name determines its URL), you can install the `@react-router/fs-routes` package instead of listing routes by hand. This guide uses explicit registration since it's the more current, idiomatic approach.
+   </Aside>
 
 ## Authentication
 
@@ -139,84 +203,86 @@ Authentication in Remix requires two parts:
 
 The `app` folder in the `mysite` project holds all your code. The `routes` folder holds your application's pages. Let's make a `services` folder to keep your authentication code separate.
 
-```shell
-mkdir app/services
-```
+1. Create the folder.
 
-In this `services` folder, add a file called `session.server.ts` and copy in the following code (this guide follows the example from the [Remix Auth README](https://github.com/sergiodxa/remix-auth)).
+   ```shell
+   mkdir app/services
+   ```
 
-<LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/services/session.server.ts" lang="ts" />
+1. In this `services` folder, add a file called `session.server.ts` and copy in the following code (this guide follows the example from the [Remix Auth README](https://github.com/sergiodxa/remix-auth)).
 
-This code provides a way for the app to store cookies that maintain the user's session. (If you'd prefer to use file-based sessions instead of cookie-based, you can read about it in an earlier [blog post about using Remix](/blog/remix-demo).)
+   <LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/services/session.server.ts" lang="ts" />
 
-Next, create an authentication file in the `services` folder, `auth.server.ts`, that uses the session provider you just created.
+   This code provides a way for the app to store cookies that maintain the user's session. (If you'd prefer to use file-based sessions instead of cookie-based, you can read about it in an earlier [blog post about using Remix](/blog/remix-demo).)
 
-<LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/services/auth.server.ts" lang="ts" />
+1. Create an authentication file in the `services` folder, `auth.server.ts`, that uses the session provider you just created.
 
-In the line `new Authenticator<User>()`, the type parameter specifies which user details you want to keep in the session. This example uses a single string containing the user's email, but you could define an object with more details or just a user Id.
+   <LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/services/auth.server.ts" lang="ts" />
 
-In `authOptions`, you specify the FusionAuth URLs stored in the `.env` file, which match those created by Kickstart when you ran the Docker command to start FusionAuth.
+   In the line `new Authenticator<User>()`, the type parameter specifies which user details you want to keep in the session. This example uses a single string containing the user's email, but you could define an object with more details or just a user Id.
 
-Finally, `authStrategy` returns the user's email, decoded from the ID token returned by FusionAuth.
+   In `authOptions`, you specify the FusionAuth URLs stored in the `.env` file, which match those created by Kickstart when you ran the Docker command to start FusionAuth.
 
-<Aside type="caution">
-Unlike some older authentication setups, `authenticator.authenticate()` here only returns the logged-in user, and no longer commits anything to the session automatically. Each route below is responsible for reading, updating, and saving the session cookie itself.
-</Aside>
+   Finally, `authStrategy` returns the user's email, decoded from the ID token returned by FusionAuth.
+
+   <Aside type="caution">
+   Unlike some older authentication setups, `authenticator.authenticate()` here only returns the logged-in user, and no longer commits anything to the session automatically. Each route below is responsible for reading, updating, and saving the session cookie itself.
+   </Aside>
 
 ### Routes
 
-Create the homepage of your app at `mysite/app/routes/_index.tsx` with the following code:
+1. Create the homepage of your app at `mysite/app/routes/_index.tsx` with the following code:
 
-<LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/routes/_index.tsx" lang="tsx" />
+   <LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/routes/_index.tsx" lang="tsx" />
 
-Remix extends React with a few more custom elements that automatically hide the difference between client and server from the programmer. For example, the line `<Link to="/login" className="button-lg">Login</Link>` allows the app to load the linked page in the background without a separate page refresh.
+   Remix extends React with a few more custom elements that automatically hide the difference between client and server from the programmer. For example, the line `<Link to="/login" className="button-lg">Login</Link>` allows the app to load the linked page in the background without a separate page refresh.
 
-If you have not worked with React before, there are a few differences from normal HTML to note:
+   If you have not worked with React before, there are a few differences from normal HTML to note:
 
-- The **class** attribute is replaced by `className`, as `class` is a reserved word in JavaScript.
-- To add JavaScript values into your HTML, you wrap the value in `{  }`.
-- The `style` values are not strings but object literals in braces, wrapped in more braces.
+   - The **class** attribute is replaced by `className`, as `class` is a reserved word in JavaScript.
+   - To add JavaScript values into your HTML, you wrap the value in `{  }`.
+   - The `style` values are not strings but object literals in braces, wrapped in more braces.
 
-The `_index.tsx` file checks the session cookie for a logged-in user, and redirects to the account page if one is found. This check does not call FusionAuth; it only reads the user's existing cookie.
+   The `_index.tsx` file checks the session cookie for a logged-in user, and redirects to the account page if one is found. This check does not call FusionAuth; it only reads the user's existing cookie.
 
-<Aside type="caution">
-Note that this code runs in a `loader` function on the server, not the client. `loader` functions run for GET requests and always execute before any HTML is returned to the client. By contrast, the `default` function (that returns HTML) is exported from a route and runs only in the browser (unless the user browses directly to the route without already being on the site). Since routes mix server-side and client-side code in the same file, it is essential not to put any authentication handling or secrets in the client-side code.
-</Aside>
+   <Aside type="caution">
+   Note that this code runs in a `loader` function on the server, not the client. `loader` functions run for GET requests and always execute before any HTML is returned to the client. By contrast, the `default` function (that returns HTML) is exported from a route and runs only in the browser (unless the user browses directly to the route without already being on the site). Since routes mix server-side and client-side code in the same file, it is essential not to put any authentication handling or secrets in the client-side code.
+   </Aside>
 
-The link you created looks for a login route, so let's code it. Create the file `mysite/app/routes/login.tsx` and add the following code to it.
+1. The link you created looks for a login route, so let's code it. Create the file `mysite/app/routes/login.tsx` and add the following code to it.
 
-<LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/routes/login.tsx" lang="tsx" />
+   <LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/routes/login.tsx" lang="tsx" />
 
-This route is purely server-side, as it exports no default function. Instead, the GET loader function redirects the user to FusionAuth. (The user will automatically be logged in without visiting FusionAuth if they already have a session cookie in their browser).
+   This route is purely server-side, as it exports no default function. Instead, the GET loader function redirects the user to FusionAuth. (The user will automatically be logged in without visiting FusionAuth if they already have a session cookie in their browser).
 
-Now create the file `mysite/app/routes/logout.tsx` and add the following code to it.
+1. Create the file `mysite/app/routes/logout.tsx` and add the following code to it.
 
-<LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/routes/logout.tsx" lang="tsx" />
+   <LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/routes/logout.tsx" lang="tsx" />
 
-When a user browses to this route, their session cookie is destroyed and they're redirected to the home page.
+   When a user browses to this route, their session cookie is destroyed and they're redirected to the home page.
 
-The final route to create is `mysite/app/routes/auth.callback.tsx`.
+1. The final route to create is `mysite/app/routes/auth.callback.tsx`.
 
-<LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/routes/auth.callback.tsx" lang="tsx" />
+   <LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/routes/auth.callback.tsx" lang="tsx" />
 
-This is where FusionAuth redirects the user after authentication. `authenticator.authenticate` completes the OAuth2 token exchange and returns the user's email; the route then stores that email in the session cookie itself before redirecting to the account page.
+   This is where FusionAuth redirects the user after authentication. `authenticator.authenticate` completes the OAuth2 token exchange and returns the user's email; the route then stores that email in the session cookie itself before redirecting to the account page.
 
-<Aside type="tip">
-If you are wondering why `auth.callback.tsx` has two dots, it's because this routing convention treats the first dot as a slash in the URL, `/auth/callback`.
-</Aside>
+   <Aside type="tip">
+   If you are wondering why `auth.callback.tsx` has two dots, it's because this routing convention treats the first dot as a slash in the URL, `/auth/callback`.
+   </Aside>
 
-Now add all the routes to `mysite/app/routes.ts`, replacing its contents with:
+1. Add all the routes to `mysite/app/routes.ts`, replacing its contents with:
 
-```ts
-import { type RouteConfig, index, route } from "@react-router/dev/routes";
+   ```ts
+   import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
-export default [
-  index("routes/_index.tsx"),
-  route("login", "routes/login.tsx"),
-  route("logout", "routes/logout.tsx"),
-  route("auth/callback", "routes/auth.callback.tsx"),
-] satisfies RouteConfig;
-```
+   export default [
+     index("routes/_index.tsx"),
+     route("login", "routes/login.tsx"),
+     route("logout", "routes/logout.tsx"),
+     route("auth/callback", "routes/auth.callback.tsx"),
+   ] satisfies RouteConfig;
+   ```
 
 <Aside type="caution">
 A route file that isn't listed in `routes.ts` won't be reachable, even if it exists in the `routes` folder. This is different from older filename-convention routing, which automatically served any file under `routes/`.
@@ -226,72 +292,75 @@ A route file that isn't listed in `routes.ts` won't be reachable, even if it exi
 
 Now that authentication is done, the last task is to create two example pages that a user can access only when logged in.
 
-Copy over some CSS and an image from the example app.
+1. Copy over some CSS and an image from the example app.
 
-```shell
-mkdir app/css
-cp ../complete-application/app/css/changebank.css ./app/css/changebank.css
-cp ../complete-application/public/money.jpg ./public/money.jpg
-```
+   ```shell
+   mkdir app/css
+   cp ../complete-application/app/css/changebank.css ./app/css/changebank.css
+   cp ../complete-application/public/money.jpg ./public/money.jpg
+   ```
 
-Add the account page `mysite/app/routes/account.tsx` with the following code.
+1. Add the account page `mysite/app/routes/account.tsx` with the following code.
 
-<LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/routes/account.tsx" lang="tsx" />
+   <LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/routes/account.tsx" lang="tsx" />
 
-The `loader` function at the top of the page checks the session cookie and redirects to `/login` if there's no logged-in user. Any page you create that needs the user to be authenticated requires a check like this.
+   The `loader` function at the top of the page checks the session cookie and redirects to `/login` if there's no logged-in user. Any page you create that needs the user to be authenticated requires a check like this.
 
-The `loaderData` prop passed into the `Account` component provides whatever data the loader function returns for use in the HTML. It's used in the line `<p className="header-email">{email}</p>`.
+   The `loaderData` prop passed into the `Account` component provides whatever data the loader function returns for use in the HTML. It's used in the line `<p className="header-email">{email}</p>`.
 
-The final page you need is `mysite/app/routes/change.tsx`, with the following code.
+1. Add the final page, `mysite/app/routes/change.tsx`, with the following code.
 
-<LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/routes/change.tsx" lang="tsx" />
+   <LocalCode src="fusionauth-quickstart-javascript-remix-web-main/complete-application/app/routes/change.tsx" lang="tsx" />
 
-This page has identical authentication functionality to the Account page and some pure React code that updates the DOM whenever the state changes.
+   This page has identical authentication functionality to the Account page and some pure React code that updates the DOM whenever the state changes.
 
-<Aside type="tip">
-Note that `ChangeEvent` is imported with `import type` rather than as a regular import, since it's only a TypeScript type, not a value.
-</Aside>
+   <Aside type="tip">
+   Note that `ChangeEvent` is imported with `import type` rather than as a regular import, since it's only a TypeScript type, not a value.
+   </Aside>
 
-Finally, add both pages to `mysite/app/routes.ts`:
+1. Add both pages to `mysite/app/routes.ts`:
 
-```ts
-import { type RouteConfig, index, route } from "@react-router/dev/routes";
+   ```ts
+   import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
-export default [
-  index("routes/_index.tsx"),
-  route("login", "routes/login.tsx"),
-  route("logout", "routes/logout.tsx"),
-  route("auth/callback", "routes/auth.callback.tsx"),
-  route("account", "routes/account.tsx"),
-  route("change", "routes/change.tsx"),
-] satisfies RouteConfig;
-```
+   export default [
+     index("routes/_index.tsx"),
+     route("login", "routes/login.tsx"),
+     route("logout", "routes/logout.tsx"),
+     route("auth/callback", "routes/auth.callback.tsx"),
+     route("account", "routes/account.tsx"),
+     route("change", "routes/change.tsx"),
+   ] satisfies RouteConfig;
+   ```
 
 ## Run The Application
 
-Start the server from the root `mysite` directory.
+1. Start the server from the root `mysite` directory.
 
-```shell
-npm run dev
-```
+   ```shell
+   npm run dev
+   ```
 
-You can now browse to [the app](http://localhost:3000).
+1. Browse to [the app](http://localhost:3000).
 
-Log in using `richard@example.com` and `password`. The change page will allow you to enter a number. Log out and verify that you can't browse to the [account page](http://localhost:3000/account).
+1. Log in using `richard@example.com` and `password`. The change page will allow you to enter a number. Log out and verify that you can't browse to the [account page](http://localhost:3000/account).
 
 <QuickstartTshirtCTA/>
 
-## Next Steps
+## Next steps
 
-<NextSteps />
+This is a quick introduction to using FusionAuth for user authentication. To learn more about integrating FusionAuth with your product, see [Get Started](/docs/get-started).
 
-### Remix Authentication
+For a production application, consider:
 
-- [React Router Docs](https://reactrouter.com)
-- [Passport.js authentication concepts](https://www.passportjs.org/concepts/authentication/downloads/html/)
-- [Remix Auth](https://github.com/sergiodxa/remix-auth)
-- [Remix-Auth-Oauth2 Docs](https://github.com/sergiodxa/remix-auth-oauth2)
+* [Customizing the hosted login pages](/docs/customize/look-and-feel/) so FusionAuth's login, registration, and other pages match your brand.
+* Choosing [password rules](/docs/get-started/core-concepts/tenants#password) and a [hashing algorithm](/docs/reference/password-hashes) that meet your security needs.
+* Customizing [token expiration times and policies](/docs/lifecycle/authenticate-users/oauth/#configure-application-oauth-settings) in FusionAuth.
+* Reading more about [Remix Auth](https://github.com/sergiodxa/remix-auth) and the [Remix-Auth-OAuth2 strategy](https://github.com/sergiodxa/remix-auth-oauth2) this guide is built on, or [Passport.js authentication concepts](https://www.passportjs.org/concepts/authentication/downloads/html/), which Remix Auth is modeled on.
 
+FusionAuth has many other features (including [Social Login](/docs/lifecycle/authenticate-users/identity-providers/#social-identity-providers), [Single Sign-On](/docs/lifecycle/authenticate-users/single-sign-on), [Passwordless](/docs/lifecycle/authenticate-users/passwordless/webauthn-passkeys), [Multi-factor Authentication](/docs/lifecycle/authenticate-users/multi-factor-authentication)), most of which are free. Some require additional licensing. For details, see the [pricing page](/pricing).
+
+You can ask general questions in [the FusionAuth forum](/community/forum).
 
 ## Troubleshooting
 
