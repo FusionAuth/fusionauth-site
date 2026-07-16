@@ -5,6 +5,7 @@ tags: context mfa, contextual mfa, context 2fa, 2fa context, mfa context, how mf
 ---
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
+import { YouTube } from '@astro-community/astro-embed-youtube';
 
 This page explains why and how FusionAuth asks for MFA during the login process.
 
@@ -195,6 +196,8 @@ You can override this by using an [MFA requirement lambda](/docs/extend/code/lam
 Available since `1.68.0`
 </Aside>
 
+<YouTube id="WwVH_ODLIJU" />
+
 Intelligent MFA uses risk signals integrated into FusionAuth to determine the risk level of a login attempt. Risk signals include (but are not limited to) the following:
 
 * `BotDetected` - The browser library signals that the user is a bot.
@@ -223,20 +226,20 @@ The rollout options differ by plan, because only the Enterprise plan can observe
 
 On the Enterprise plan, any configured MFA requirement lambda logs `risk` and `riskSignals` to the event log when debug is enabled. You can use this behavior to measure first, then enforce.
 
-1. Collect a baseline.
+1. Collect a baseline (optional).
     * Enable the `user.two-factor.challenge`, `user.two-factor.success`, and `user.two-factor.failed_attempt` webhooks and collect MFA metrics. You can also read the numbers on the <Breadcrumb>Reactor</Breadcrumb> tab.
     * Calculate your current challenge rate, which is the number of MFA challenges per DAU or logins. You can pull the denominator using the [reporting API](/docs/apis/reports) or the [login API, respectively](/docs/apis/login#export-login-records).
     * You can also collect the number of MFA-related customer support requests.
-1. Gather the risk scores but do not apply the policy.
+1. Gather the risk scores but do not apply the policy (optional).
     * Enable an [MFA requirement lambda](/docs/extend/code/lambdas/mfa-requirement), but mimic your existing policy so that behavior does not change for your users; see [below for sample lambdas](#sample-mfa-requirement-lambdas). 
     * Enable the **debug** toggle on the tenant <Breadcrumb>Multi-Factor</Breadcrumb> tab to log the user Id, composite risk, and riskSignals. If you do not already use an MFA requirement lambda, adding one means the MFA requirement decision is delegated to the lambda. You can use the sample MFA requirement lambdas below.
-1. Capture the logs.
+1. Capture the logs (optional).
     * Set up an [event log create webhook](/docs/extend/events-and-webhooks/events/event-log-create) to capture the logs. Discard any that are not MFA composite risk log events. Store the values, including the composite score and the user Id in a database to analyze.
-1. Analyze the logs. 
+1. Analyze the logs (optional).
     * From the log data, compare the count of `HIGH` and `MEDIUM` composite scores to the count of challenges in your baseline.
     * Review a sample of `HIGH` scores to see if they are legitimate users and `LOW` scores to see if they are not. The two risk policies ignore "trust this device", so users currently skipped by a trusted device are re-evaluated on risk and may be challenged.
 1. Pilot risk-based MFA. 
-    * Apply an application-level risk-based policy to one non-critical application.
+    * Apply an application-level risk-based policy to one non-critical application. This will **require users who don't have MFA to enable it**.
     * Modify the lambda to challenge on `HIGH` risk for this application. 
     * Keep reviewing the log data and verify challenge volume matches the shadow estimate.
     * Collect the number of MFA related customer support requests and compare it to the baseline, scaled based on the relative number of logins for this application.
@@ -247,7 +250,7 @@ On the Enterprise plan, any configured MFA requirement lambda logs `risk` and `r
     * Continue to calculate your challenge and challenge success rates.
     * You can also watch the suspicious login webhook (the `threatsDetected` value) for trends in which threats your users detect.
 
-To roll back at any step, revert the policy or the lambda. This is a configuration change only.
+To roll back, revert the policy or the lambda to the previous value. This is a configuration change only.
 
 #### Without an Enterprise Plan
 
@@ -402,7 +405,7 @@ This is similar to doing a conditional step-up authentication on the interstitia
 
 ## MFA Challenges Outside Of The Login Process
 
-If you need to prompt for MFA outside of the login process, use step-up authentication. For example, you could display an MFA challenge when a user performs a high-risk action like initiating a money transfer. Use the [2FA API](/docs/apis/two-factor#start-multi-factor) to perform this process.
+If you need to prompt for MFA outside of the login process, use step-up authentication. For example, you could display an MFA challenge when a user performs a high-risk action like initiating a money transfer. Use the [2FA API](/docs/apis/two-factor/start-multi-factor) to perform this process.
 
 For more information, see the [step-up authentication](/docs/lifecycle/authenticate-users/multi-factor-authentication#step-up-auth) documentation.
 
