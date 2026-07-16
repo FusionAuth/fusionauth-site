@@ -1,0 +1,110 @@
+---
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+import parse, { Parser, type SelectorFunction } from '../RemoteValue/parsers';
+export { Parser };
+
+/**
+ * Component to fetch values from local files in code example repositories, optionally passing a selector to extract a value from the file
+ * (e.g. a JSON object).
+ *
+ * Import:
+ * import {LocalValue} from 'src/components/astro-components';
+ *
+ * Complete usage syntax:
+ * <LocalValue path="fusionauth-quickstart-ruby-on-rails-web/kickstart/kickstart.json" selector="$.variables.applicationId" parser={one of Parser values} default="default value" />
+ *
+ * Common usage syntax:
+ * <LocalValue path="fusionauth-quickstart-ruby-on-rails-web/kickstart/kickstart.json" selector="$.variables.applicationId" />
+ *
+ * Props:
+ * path: relative path to the file within src/code-example-repositories/
+ * parser: value from the Enum exported by LocalValue.astro. If not defined, the component will use the file extension
+ *          from the path.
+ * selector: parser-dependent syntax to extract the value from the file. It can also be a callback function that
+ *          will be called with the entire file as an argument and should return the value to extract.
+ *          E.g. for JSON, we use jsonpath-plus to provide an XPath-based syntax.
+ * defaultValue: default value if we cannot retrieve the element (otherwise, we'll render "unknown").
+ *          This is recommended in case you ever change the file and the selector doesn't work anymore.
+ *
+ * These three examples return the same "applicationId" value from the Rails kickstart config:
+ * <LocalValue path="fusionauth-quickstart-ruby-on-rails-web/kickstart/kickstart.json"
+ *             selector="$.variables.applicationId" />
+ * <LocalValue path="fusionauth-quickstart-ruby-on-rails-web/kickstart/kickstart.json"
+ *             selector="$.requests[?(@.url =~ /\/api\/application/)].body.application.name" />
+ * <LocalValue path="fusionauth-quickstart-ruby-on-rails-web/kickstart/kickstart.json"
+ *             selector={(element) => element.variables.applicationId} />
+ *
+ * If you need to render the value inside a <Code> component, you need to pass a callback function as a child component:
+ * <LocalValue
+ *     path="fusionauth-quickstart-ruby-on-rails-web/kickstart/kickstart.json"
+ *     selector="$.requests[?(@.url =~ /\/api\/application/)].body.application.oauthConfiguration.clientSecret">
+ *     {(value) => <Code lang="shel" code={`FUSIONAUTH_CLIENT_SECRET="${value}"`} />}
+ * </LocalValue>
+ */
+
+/**
+ * Available props.
+ */
+export interface Props {
+  /**
+   * Relative path to the file within src/code-example-repositories/.
+   */
+  path: string;
+
+  /**
+   * Selector to extract the value from the content.
+   * This is parser-specific but is normally some kind of XPath.
+   * E.g. JSONPath syntax for JSON objects (https://www.npmjs.com/package/jsonpath-plus)
+   */
+  selector: string | SelectorFunction;
+
+  /**
+   * Optional parser name. If no one was informed, we'll use the file extension.
+   */
+  parser?: Parser;
+
+  /**
+   * Default value if there's an error retrieving file.
+   * @default "unknown"
+   */
+  default?: string;
+}
+
+// Extracting props
+const { path, selector, parser, default: defaultValue = 'unknown' } = Astro.props;
+
+// Value that will be rendered
+let value;
+
+const filePath = resolve('src/code-example-repositories', path);
+
+try {
+  value = readFileSync(filePath, 'utf-8');
+} catch (error) {
+  throw new Error(`Failed to read local value file at [${filePath}]: ${error}`);
+}
+
+// Using the selector to look up the value
+// If you don't provide a selector, the entire file will be returned
+if ((value !== null) && (selector !== null)) {
+  // Extract parser from file extension if not provided
+  let localParser = parser;
+  if (!localParser) {
+    const ext = filePath.substring(filePath.lastIndexOf('.') + 1);
+    localParser = ext as Parser;
+  }
+  value = parse(filePath, value, selector, localParser);
+}
+
+// Default value
+if ((value === null) || (value === '')) {
+  value = defaultValue;
+}
+
+// @link https://docs.astro.build/en/reference/api-reference/#astroslotsrender
+const html = (Astro.slots.has('default'))
+  ? await Astro.slots.render('default', [value])
+  : value;
+---
+<Fragment set:html={html}/>
