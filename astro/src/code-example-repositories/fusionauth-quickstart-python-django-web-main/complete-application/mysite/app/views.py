@@ -1,5 +1,4 @@
 from json import loads
-from math import ceil
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.conf import settings
@@ -31,8 +30,8 @@ def change(request):
         try:
             if dollar_amt_param:
                 dollar_amt = float(dollar_amt_param)
-                nickels = int(dollar_amt / 0.05)
-                pennies = ceil((dollar_amt - (0.05 * nickels)) / 0.01)
+                total_cents = round(dollar_amt * 100)
+                nickels, pennies = divmod(total_cents, 5)
                 change["total"] = "{:,.2f}".format(dollar_amt)
                 change["nickels"] = "{:,d}".format(nickels)
                 change["pennies"] = "{:,d}".format(pennies)
