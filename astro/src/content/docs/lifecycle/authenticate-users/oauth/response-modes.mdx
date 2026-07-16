@@ -1,0 +1,90 @@
+---
+title: OAuth Response Modes
+description: Learn about OAuth 2.0 response modes (query, fragment, form_post) and when to use each one.
+tags: oauth, response mode, form_post, fragment, query
+---
+import Aside from 'src/components/Aside.astro';
+
+The `response_mode` parameter controls how the authorization server delivers response parameters back to the client after an authorization request. FusionAuth supports three response modes: `query`, `fragment`, and `form_post`.
+
+## Default Behavior
+
+When the `response_mode` parameter is not provided on the authorization request, FusionAuth selects a default based on the `response_type`:
+
+| response_type              | Default response_mode |
+|----------------------------|-----------------------|
+| `code`                     | `query`               |
+| `token`                    | `fragment`            |
+| `token id_token`           | `fragment`            |
+| `id_token`                 | `fragment`            |
+
+These defaults align with the OAuth 2.0 and OpenID Connect specifications. In most cases, you only need to explicitly set `response_mode` when you want to use `form_post`.
+
+## Query
+
+When `response_mode=query`, the response parameters are appended to the redirect URI as query string parameters.
+
+```plaintext
+HTTP/1.1 302 Found
+Location: https://app.example.com/callback?
+           code=pU2DHOWjSCVh6NJKi1ClhBYNKfuqbZVT
+           &iss=https%3A%2F%2Fauth.example.com
+           &state=abc123
+```
+
+This mode is the default for the Authorization Code Grant. It is appropriate here because the authorization code is short-lived and single-use, limiting the risk of exposure through browser history or referrer headers.
+
+<Aside type="caution">
+  The `query` response mode can only be used when `response_type` is set to `code`. Using it with token-bearing response types (`token`, `id_token`) would expose sensitive credentials in the URL, which is logged by browsers, proxies, and web servers.
+</Aside>
+
+## Fragment
+
+When `response_mode=fragment`, the response parameters are appended to the redirect URI after the `#` fragment delimiter.
+
+```plaintext
+HTTP/1.1 302 Found
+Location: https://app.example.com/callback#
+           access_token=eyJhbGciOiJSUzI1NiIs...
+           &iss=https%3A%2F%2Fauth.example.com
+           &token_type=Bearer
+           &expires_in=3599
+           &state=abc123
+```
+
+This mode is the default for the Implicit Grant. Fragment values are not sent to the server in HTTP requests, which means the tokens are only accessible to client-side JavaScript running in the browser. This provides a layer of protection against tokens leaking to intermediaries.
+
+## Form Post
+
+When `response_mode=form_post`, the authorization server returns an HTML document containing a form with the response parameters as hidden fields. The form auto-submits via a POST request to the redirect URI.
+
+```plaintext
+HTTP/1.1 200 OK
+Content-Type: text/html
+
+<html>
+<body onload="document.forms[0].submit()">
+  <form method="post" action="https://app.example.com/callback">
+    <input type="hidden" name="code" value="pU2DHOWjSCVh6NJKi1ClhBYNKfuqbZVT"/>
+    <input type="hidden" name="iss" value="https://auth.example.com"/>
+    <input type="hidden" name="state" value="abc123"/>
+  </form>
+</body>
+</html>
+```
+
+The client receives the parameters in the POST request body rather than in the URL.
+
+### When to Use Form Post
+
+The `form_post` response mode is useful when:
+
+- **Avoiding URL exposure** — Response parameters are delivered in the request body, keeping them out of browser history, referrer headers, and server access logs. This is particularly valuable when the response includes an `id_token` (which may contain user claims).
+- **Server-side processing** — Your redirect endpoint is a traditional server-side handler that processes POST requests. The parameters arrive as standard form-encoded fields, which eliminates the need for client-side JavaScript to parse fragments.
+- **Authorization Code Grant with additional security** — While the authorization code is already short-lived, `form_post` prevents the code from appearing in the URL entirely. This reduces the attack surface in environments with aggressive URL logging or caching.
+
+### Considerations
+
+- The client's redirect URI must accept POST requests when using `form_post`. If your endpoint only handles GET requests, the form submission will fail.
+- The `form_post` mode is defined in the [OAuth 2.0 Form Post Response Mode](https://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html) specification.
+- This mode works with both the Authorization Code Grant (`response_type=code`) and the Implicit Grant (`response_type=token`, `token id_token`, or `id_token`).

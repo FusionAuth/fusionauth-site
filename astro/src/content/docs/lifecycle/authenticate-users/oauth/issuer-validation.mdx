@@ -1,0 +1,66 @@
+---
+title: OAuth Issuer Validation
+description: Learn how to validate the authorization response issuer parameter (RFC 9207) to prevent mix-up attacks.
+tags: oauth, issuer, rfc 9207, mix-up attack
+---
+import Aside from 'src/components/Aside.astro';
+
+<Aside type="version">
+  Available since `1.69.0`
+</Aside>
+
+FusionAuth includes the `iss` parameter in authorization responses as defined by [RFC 9207 - OAuth 2.0 Authorization Server Issuer Identification](https://www.rfc-editor.org/rfc/rfc9207). This parameter helps clients prevent mix-up attacks when interacting with multiple authorization servers.
+
+## Overview
+
+A mix-up attack occurs when a malicious authorization server tricks a client into sending an authorization code or tokens to the wrong endpoint. By including the `iss` parameter in every authorization response, the client can verify that the response came from the expected authorization server before proceeding with the token exchange.
+
+FusionAuth returns the `iss` parameter on all successful responses from the `/oauth2/authorize` endpoint, including both the Authorization Code Grant and Implicit Grant flows.
+
+## The Issuer Value
+
+The value of the `iss` parameter is the issuer configured on the tenant. This value is treated as an opaque string for comparison purposes.
+
+<Aside type="caution">
+  To be spec-compliant with [RFC 9207 Section 2](https://www.rfc-editor.org/rfc/rfc9207#section-2), the issuer value must be a URL that uses the `https` scheme with no query or fragment components. If you intend to validate the `iss` parameter, configure your tenant issuer accordingly (e.g. `https://auth.example.com`).
+</Aside>
+
+## Validating the Issuer
+
+Clients should validate the `iss` parameter by comparing it against the authorization server's metadata. The expected issuer value can be obtained from the [OpenID Connect Discovery](/docs/apis/oauth#openid-configuration) endpoint at `/.well-known/openid-configuration` in the `issuer` field.
+
+### Validation Steps
+
+1. Before initiating the authorization request, retrieve or cache the authorization server metadata from the `/.well-known/openid-configuration` endpoint.
+2. When the authorization response is received (at your redirect URI), extract the `iss` parameter.
+3. Compare the `iss` value from the response to the `issuer` value from the authorization server metadata using exact string comparison.
+4. If the values do not match, reject the response and do not proceed with the token exchange.
+
+### Example
+
+After a successful authorization code grant, the redirect to your application will include the `iss` parameter:
+
+```plaintext
+GET /callback?code=pU2DHOWjSCVh6NJKi1ClhBYNKfuqbZVT
+              &iss=https%3A%2F%2Fauth.example.com
+              &state=abc123
+```
+
+Your client should then verify:
+
+```
+iss == metadata.issuer
+"https://auth.example.com" == "https://auth.example.com"  ✓
+```
+
+If you are using multiple authorization servers or identity providers, this check ensures the response originated from the server you expected.
+
+## When To Validate
+
+RFC 9207 recommends that clients always validate the `iss` parameter when it is present. This is particularly important when:
+
+- Your application interacts with multiple authorization servers or identity providers.
+- You are building a multi-tenant application where each tenant may use a different issuer.
+- You want defense-in-depth against authorization response manipulation.
+
+Even when interacting with a single authorization server, validating the `iss` parameter is a low-cost security measure that protects against future configuration changes or attacks.
