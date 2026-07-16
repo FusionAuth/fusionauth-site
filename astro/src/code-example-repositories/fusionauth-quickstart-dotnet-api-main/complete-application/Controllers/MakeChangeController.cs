@@ -15,8 +15,9 @@ namespace Controllers
             var change = new Change();
             change.Total = total;
 
-            change.Nickels = Convert.ToInt32(Math.Floor(total / 0.05));
-            change.Pennies = Convert.ToInt32(Math.Round((total - 0.05 * change.Nickels) / 0.01));
+            var totalCents = Convert.ToInt32(Math.Round(total * 100));
+            change.Nickels = totalCents / 5;
+            change.Pennies = totalCents % 5;
             return change;
         }
     }
