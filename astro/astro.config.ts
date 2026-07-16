@@ -83,7 +83,10 @@ const config = defineConfig({
     weights: ['300 400 500 600 700 800 900'],
   }],
   vite: {
-    plugins: [tailwindcss(), lightboxProvider()],
+    plugins: [
+      tailwindcss(),
+      lightboxProvider(),
+    ],
     build: {
       chunkSizeWarningLimit: 1111,
     }
