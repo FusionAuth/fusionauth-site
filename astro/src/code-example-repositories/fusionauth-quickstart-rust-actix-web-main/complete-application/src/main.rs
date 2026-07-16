@@ -99,14 +99,14 @@ fn calculate_change(amount: &str, state: &mut HashMap::<&str, String>) -> () {
             return;
         }
     };
-    let rounded_total = (total * 100.0).floor() / 100.0;
+    let total_cents = (total * 100.0).round() as i64;
 
     state.insert("isError", (!amount.chars().all(|c| c.is_digit(10) || c == '.')).to_string());
-    state.insert("total", format!("{:.2}", rounded_total));
+    state.insert("total", format!("{:.2}", total_cents as f64 / 100.0));
 
-    let nickels = (rounded_total / 0.05).floor().abs();
+    let nickels = total_cents / 5;
     state.insert("nickels", format!("{}", nickels));
 
-    let pennies = ((rounded_total - (0.05 * nickels)) / 0.01).round().abs();
+    let pennies = total_cents % 5;
     state.insert("pennies", format!("{}", pennies));
 }
