@@ -2,11 +2,15 @@
 const { maxDepth = 4 } = Astro.props;
 ---
 
-<nav id="toc-container" class="overflow-y-auto max-h-[calc(100vh-135px)]"></nav>
+<nav id="toc-container" data-max-depth={maxDepth} class="overflow-y-auto max-h-[calc(100vh-135px)]"></nav>
 
-<script define:vars={{ maxDepth }}>
+<script is:inline>
   document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById('toc-container');
+    if (!container) return;
+
+    // Pull the prop from the dataset since we are using an inline script
+    const maxDepth = parseInt(container.getAttribute('data-max-depth') || '4', 10);
     
     // Map HTTP methods to standard OpenAPI Tailwind colors
     const methodColors = {
@@ -17,7 +21,7 @@ const { maxDepth = 4 } = Astro.props;
       'DELETE': 'text-red-600 dark:text-red-400'
     };
 
-    // keep track of the heading depth as we parse the DOM in order
+    // Keep track of the heading depth as we parse the DOM in order
     let lastHeadingDepth = 2; 
 
     const rawHeadings = Array.from(document.querySelectorAll('h2, h3, h4, h5, h6, [data-toc-type="api"]'))
@@ -30,8 +34,6 @@ const { maxDepth = 4 } = Astro.props;
         let depth;
 
         if (isApi) {
-          // CHANGE THIS LINE: 
-          // Use "lastHeadingDepth" to make it a sibling, or "lastHeadingDepth + 1" to nest it.
           depth = lastHeadingDepth; 
         } else {
           depth = parseInt(h.tagName.substring(1), 10);
@@ -91,8 +93,6 @@ const { maxDepth = 4 } = Astro.props;
           a.className = "block font-mono text-xs text-slate-600 dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900 transition-colors break-all";
           
           const methodSpan = document.createElement('span');
-          
-          // Apply dynamic colors based on the HTTP method, fallback to yellow
           const colorClass = methodColors[heading.method] || 'text-yellow-600 dark:text-yellow-400';
           methodSpan.className = `font-bold pr-1.5 uppercase text-[10px] ${colorClass}`;
           methodSpan.textContent = heading.method;
@@ -131,18 +131,24 @@ const { maxDepth = 4 } = Astro.props;
     const headingElements = rawHeadings.map(h => document.getElementById(h.id)).filter(Boolean);
     const tocGroups = Array.from(container.querySelectorAll('.group'));
 
+    let currentActiveId = null;
+    let isTicking = false;
+
     const updateScrollSpy = () => {
       let activeHeading = headingElements[0];
       
-      for (const el of headingElements) {
-        if (el.getBoundingClientRect().top < 150) {
-          activeHeading = el;
-        } else {
-          break; 
+      // Iterate backward to efficiently find the last header that crossed the threshold
+      for (let i = headingElements.length - 1; i >= 0; i--) {
+        if (headingElements[i].getBoundingClientRect().top < 150) {
+          activeHeading = headingElements[i];
+          break;
         }
       }
 
-      if (activeHeading) {
+      // ONLY touch the DOM if the active section actually changed
+      if (activeHeading && activeHeading.id !== currentActiveId) {
+        currentActiveId = activeHeading.id;
+        
         tocGroups.forEach(group => group.classList.remove('active'));
         
         const activeLink = container.querySelector(`a[href="#${activeHeading.id}"]`);
@@ -154,7 +160,18 @@ const { maxDepth = 4 } = Astro.props;
       }
     };
 
-    window.addEventListener('scroll', updateScrollSpy, { passive: true });
-    updateScrollSpy();
+    // Throttle scroll events to match the browser's refresh rate
+    const onScroll = () => {
+      if (!isTicking) {
+        window.requestAnimationFrame(() => {
+          updateScrollSpy();
+          isTicking = false;
+        });
+        isTicking = true;
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    updateScrollSpy(); // Initial check on load
   });
 </script>
