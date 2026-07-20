@@ -16,34 +16,10 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
-  search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.27
-    environment:
-      cluster.name: fusionauth
-      bootstrap.memory_lock: "true"
-      discovery.type: single-node
-      ES_JAVA_OPTS: ${ES_JAVA_OPTS}
-    healthcheck:
-      test: [ "CMD", "curl",  "--fail" ,"--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://localhost:9200/" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - search_net
-    restart: unless-stopped
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - search_data:/usr/share/elasticsearch/data
-
   fusionauth:
     image: fusionauth/fusionauth-app:latest
     depends_on:
       db:
-        condition: service_healthy
-      search:
         condition: service_healthy
     environment:
 
@@ -57,11 +33,8 @@ services:
       FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
       FUSIONAUTH_APP_RUNTIME_MODE: development
       FUSIONAUTH_APP_URL: http://fusionauth:9011
-      SEARCH_SERVERS: http://search:9200
-      SEARCH_TYPE: elasticsearch
     networks:
       - db_net
-      - search_net
     restart: unless-stopped
     ports:
       - 9011:9011
@@ -72,10 +45,7 @@ services:
 networks:
   db_net:
     driver: bridge
-  search_net:
-    driver: bridge
 
 volumes:
   db_data:
   fusionauth_config:
-  search_data:
