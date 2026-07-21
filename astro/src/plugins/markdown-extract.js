@@ -1,6 +1,6 @@
-// src/plugins/markdown-extract.ts
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 function extractFrontmatter(markdown) {
   const frontmatterMatch = markdown.match(/^---([\s\S]*?)---/);
@@ -9,7 +9,6 @@ function extractFrontmatter(markdown) {
   const fmContent = frontmatterMatch[1];
   const contentWithoutFM = markdown.slice(frontmatterMatch[0].length).trimStart();
 
-  // Simple frontmatter parse for title and description (YAML-ish)
   const lines = fmContent.split(/\r?\n/);
   let title = null;
   let description = null;
@@ -31,7 +30,6 @@ function walk(dir, extFilter = ['.md', '.mdx']) {
 
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = path.join(dir, entry.name);
-    // console.log('processing: '+entry.name);
 
     if (entry.isDirectory()) {
       results.push(...walk(fullPath, extFilter));
@@ -45,7 +43,6 @@ function walk(dir, extFilter = ['.md', '.mdx']) {
 
 const importRegex = /^\s*import\s+.*?['"](.+?)['"]\s*;?\s*$/gm;
 
-
 function inlineMarkdownImports(filePath, seen = new Set()) {
   if (seen.has(filePath)) {
     console.warn(`Skipping already inlined file: ${filePath}`);
@@ -55,14 +52,11 @@ function inlineMarkdownImports(filePath, seen = new Set()) {
   seen.add(filePath);
 
   let content = fs.readFileSync(filePath, 'utf-8');
-
-  // Map of import name => file path (only for inlining)
   const importMap = new Map();
 
-  // Strip ALL import statements, but collect paths we care about
   content = content.replace(importRegex, (match, importPath) => {
     const importNameMatch = match.match(/import\s+(\w+)\s+from/);
-    if (!importNameMatch) return ''; // remove malformed import
+    if (!importNameMatch) return '';
 
     const importName = importNameMatch[1];
     const resolvedPath = path.resolve('./', importPath);
@@ -72,16 +66,13 @@ function inlineMarkdownImports(filePath, seen = new Set()) {
       return `<!-- Missing import: ${importPath} -->`;
     }
 
-    // Only inline if it's in src/content
     if (resolvedPath.includes(path.normalize('/src/content/'))) {
       importMap.set(importName, resolvedPath);
     }
 
-    // Regardless of whether we inline, we remove the import line
     return '';
   });
 
-  // Replace usages of inlined components with their content
   for (const [name, resolvedPath] of importMap.entries()) {
     const componentTagRegex = new RegExp(`<${name}(\\s*[^>]*)?\\s*/>`, 'g');
     const inlinedContent = inlineMarkdownImports(resolvedPath, seen);
@@ -98,39 +89,113 @@ function inlineMarkdownImports(filePath, seen = new Set()) {
   if (description) header += `${description}\n\n`;
 
   return header + bodyContent;
-
 }
 
 function rewritePath(relPath) {
-  if (relPath.endsWith('/index.mdx')) {
-    return relPath.replace(/\/index\.mdx$/, '.mdx');
+  if (relPath.endsWith('/index.mdx') || relPath.endsWith('/index.md')) {
+    return relPath.replace(/\/index\.(mdx|md)$/, '.md');
+  }
+  if (relPath.endsWith('.mdx')) {
+    return relPath.replace(/\.mdx$/, '.md');
   }
   return relPath;
 }
 
+function generateLlmsTxt(contentFiles, contentDir) {
+  let output = `# FusionAuth Documentation\n\n`;
+  output += `> Comprehensive documentation for FusionAuth CIAM, APIs, Quickstarts, and custom integrations.\n\n`;
+  output += `## Core Documentation\n\n`;
+
+  for (const file of contentFiles) {
+    const rawContent = fs.readFileSync(file, 'utf-8');
+    const { title, description } = extractFrontmatter(rawContent);
+
+    const relPath = rewritePath(path.relative(contentDir, file));
+    const publicUrl = `/docs/${relPath}`;
+
+    const linkTitle = title || path.basename(relPath, '.md');
+    const descText = description ? `: ${description}` : '';
+
+    output += `- [${linkTitle}](${publicUrl})${descText}\n`;
+  }
+
+  return output;
+}
 
 export default function markdownExtractIntegration() {
   return {
     name: 'markdown-extract',
     hooks: {
+      // 1. Dev Mode: Serve /docs/llms.txt and /docs/.well-known/llms.txt
+      'astro:server:setup': ({ server }) => {
+        server.middlewares.use((req, res, next) => {
+          if (
+            req.url === '/docs/llms.txt' || 
+            req.url === '/docs/.well-known/llms.txt'
+          ) {
+            const contentDir = path.resolve('./src/content/docs');
+            const contentFiles = walk(contentDir);
+            const llmsContent = generateLlmsTxt(contentFiles, contentDir);
+
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            res.end(llmsContent);
+            return;
+          }
+
+          if (req.url && req.url.startsWith('/docs/') && req.url.endsWith('.md')) {
+            const contentDir = path.resolve('./src/content/docs');
+            const subPath = req.url.replace('/docs/', '').replace(/\.md$/, '');
+            let sourceFile = path.join(contentDir, `${subPath}.mdx`);
+            if (!fs.existsSync(sourceFile)) {
+              sourceFile = path.join(contentDir, `${subPath}.md`);
+            }
+            if (!fs.existsSync(sourceFile)) {
+              sourceFile = path.join(contentDir, subPath, 'index.mdx');
+            }
+
+            if (fs.existsSync(sourceFile)) {
+              const inlinedContent = inlineMarkdownImports(sourceFile);
+              res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+              res.end(inlinedContent);
+              return;
+            }
+          }
+          next();
+        });
+      },
+
+      // 2. Build Mode: Write static .md files + /docs/llms.txt into dist/
       'astro:build:done': async ({ dir }) => {
-        console.log('Copying content collection entries...');
+        console.log('Generating markdown docs and /docs/llms.txt...');
+        const distDir = typeof dir === 'string' 
+          ? dir 
+          : (dir instanceof URL ? fileURLToPath(dir) : fileURLToPath(new URL(dir)));
+
         const contentDir = path.resolve('./src/content/docs');
         const contentFiles = walk(contentDir);
 
         for (const file of contentFiles) {
-          // console.log(file);
           const relPath = rewritePath(path.relative(contentDir, file));
-          const outPath = path.join(dir.pathname || dir,'docs', relPath);
+          const outPath = path.join(distDir, 'docs', relPath);
           const inlinedContent = inlineMarkdownImports(file);
 
           fs.mkdirSync(path.dirname(outPath), { recursive: true });
           fs.writeFileSync(outPath, inlinedContent, 'utf-8');
-          // fs.copyFileSync(file, outPath);
-          console.log(`Wrote content: ${relPath}`);
         }
+
+        const llmsContent = generateLlmsTxt(contentFiles, contentDir);
+        const docsDir = path.join(distDir, 'docs');
+
+        // Write /docs/llms.txt
+        fs.writeFileSync(path.join(docsDir, 'llms.txt'), llmsContent, 'utf-8');
+
+        // Write /docs/.well-known/llms.txt
+        const docsWellKnownDir = path.join(docsDir, '.well-known');
+        fs.mkdirSync(docsWellKnownDir, { recursive: true });
+        fs.writeFileSync(path.join(docsWellKnownDir, 'llms.txt'), llmsContent, 'utf-8');
+
+        console.log('Wrote /docs/llms.txt and /docs/.well-known/llms.txt successfully!');
       }
     }
-  }
+  };
 }
-
