@@ -25,16 +25,25 @@ const themes = [
 ]
 ---
 <fa-theme-selector class="block relative z-10 group">
-    <button id="theme-selector-button" type="button" aria-label="Theme Selector"
-            class="flex items-center border-slate-500 rounded-lg hover:text-slate-700 dark:hover:text-slate-300 border-0 mt-0 p-0 text-slate-400 w-auto dark:hover:bg-transparent hover:bg-transparent">
+  
+  <!-- MOBILE TOGGLE BUTTON (Visible only on small screens) -->
+  <button id="mobile-theme-toggle" type="button" aria-label="Toggle Theme"
+          class="flex lg:hidden items-center justify-center h-7 w-7 text-slate-400 hover:text-white transition-colors">
+    <span class="hidden dark:block"><Icon name="fa7-solid:sun" width={22} height={22} /></span>
+    <span class="block dark:hidden"><Icon name="fa7-solid:moon" width={22} height={22} /></span>
+  </button>
+
+  <!-- DESKTOP DROPDOWN BUTTON (Visible only on large screens) -->
+  <button id="desktop-theme-button" type="button" aria-label="Theme Selector"
+          class="hidden lg:flex items-center border-slate-500 rounded-md hover:text-slate-700 dark:hover:text-slate-300 border-0 mt-0 p-0 text-slate-400 w-auto dark:hover:bg-transparent hover:bg-transparent">
     <span class="text-lg mx-2"><MoonIcon /></span>
   </button>
 
-  <!-- Theme dropdown menu -->
-  <ul class="absolute bg-white border border-slate-900/10 hidden rounded-md shadow-lg top-12 w-36 dark:bg-slate-900 dark:border-slate-100/10 dark:text-slate-200 left-auto right-0 group">
+  <!-- Theme dropdown menu (Desktop Only) -->
+  <ul class="absolute bg-white border border-slate-500 dark:border-slate-800 hidden rounded-md shadow-xl top-12 w-36 dark:bg-slate-900 dark:text-slate-200 left-auto right-0 group lg:overflow-hidden m-0 p-0 flex flex-col">
     {themes.map((theme) => (
-      <li>
-        <button type="button" class="flex font-medium items-center gap-2 px-2 py-1 text-sm text-slate-900 w-full dark:text-indigo-200 dark:focus:text-indigo-400 focus:text-indigo-600 focus:bg-slate-100 dark:focus:bg-slate-800 focus:outline-hidden" data-theme={theme.id}>
+      <li class="m-0 p-0">
+        <button type="button" class="flex font-medium items-center gap-2 px-3 py-2 text-sm text-slate-900 w-full dark:text-slate-200 focus:outline-hidden hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" data-theme={theme.id}>
           <Icon name={`${theme.pack ?? 'fa7-regular'}:${theme.icon}`} width={22} height={22} class:list={['opacity-35', theme.group] } />
           {theme.name}
         </button>
@@ -49,7 +58,8 @@ const themes = [
   class ThemeSelector extends HTMLElement {
     private darkMatchMedia: MediaQueryList;
     private open = false;
-    private button: HTMLElement | null = null;
+    private desktopButton: HTMLElement | null = null;
+    private mobileButton: HTMLElement | null = null;
     private themeButtons: HTMLButtonElement[] = [];
     private menu: HTMLElement | null = null;
     private currentTheme: Theme | null = null;
@@ -63,22 +73,42 @@ const themes = [
 
       this.menu = this.querySelector('ul');
       this.menu.classList.add(`is-${this.currentTheme}`);
-      this.button = this.querySelector('#theme-selector-button');
-      this.themeButtons = Array.from(this.menu.querySelectorAll('button'));
+      
+      this.desktopButton = this.querySelector('#desktop-theme-button');
+      this.mobileButton = this.querySelector('#mobile-theme-toggle');
+      this.themeButtons = Array.from(this.menu.querySelectorAll('ul button'));
 
-      this.button.addEventListener('click', this.handleMenu.bind(this));
+      // Bind the respective buttons
+      this.desktopButton?.addEventListener('click', this.handleMenu.bind(this));
+      this.mobileButton?.addEventListener('click', this.handleMobileToggle.bind(this));
+      
       this.themeButtons.forEach(button => {
         button.addEventListener('click', this.handleThemeChange.bind(this));
         button.addEventListener('mouseenter', this.handleThemeHover.bind(this));
       });
+      
       this.darkMatchMedia.addEventListener('change', this.handlePrefersColorSchemaChange.bind(this));
       window.addEventListener('storage', this.handleStorageChange.bind(this));
     }
 
     disconnectedCallback() {
       window.removeEventListener('storage', this.handleStorageChange.bind(this));
-
       this.closeMenu();
+    }
+    
+    handleMobileToggle(event: Event) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      const isDark = document.documentElement.classList.contains('dark');
+      const newTheme = isDark ? 'light' : 'dark';
+      
+      this.menu.classList.remove(`is-${this.currentTheme}`);
+      this.menu.classList.add(`is-${newTheme}`);
+      this.currentTheme = newTheme;
+      
+      localStorage.setItem('theme', newTheme);
+      this.changeTheme(newTheme);
     }
 
     handleMenu(event: Event) {
@@ -93,19 +123,17 @@ const themes = [
 
     openMenu() {
       if (this.open) return;
-
       document.addEventListener('click', this.closeMenuFn);
-      document.addEventListener('touchstart', this.closeMenuFn); 
       document.addEventListener('keydown', this.handleKeyDownFn);
       this.menu.classList.remove('hidden');
       this.open = true;
     }
 
-    closeMenu() {
+    closeMenu(event?: Event) {
       if (!this.open) return;
+      if (event && this.contains(event.target as Node)) return;
 
       document.removeEventListener('click', this.closeMenuFn);
-      document.removeEventListener('touchstart', this.closeMenuFn);
       document.removeEventListener('keydown', this.handleKeyDownFn);
       this.menu.classList.add('hidden');
       this.open = false;
@@ -113,7 +141,6 @@ const themes = [
 
     handlePrefersColorSchemaChange() {
       if (localStorage.getItem('theme') !== 'system') return;
-
       this.changeTheme('system');
     }
 
@@ -138,9 +165,7 @@ const themes = [
       if (theme === 'system') {
         theme = this.darkMatchMedia.matches ? 'dark' : 'light';
       }
-
       document.documentElement.classList.toggle('dark', theme === 'dark');
-
       this.closeMenu();
     }
 
