@@ -29,7 +29,16 @@ export const getCategoryLabel = (id: string) => {
 };
 
 const allUpdates = await getCollection('releases');
-const updates = allUpdates.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const updates = allUpdates.sort((a, b) => {
+  // sort by date
+  const dateDiff = b.data.date.valueOf() - a.data.date.valueOf();
+  
+  // If dates are different, return the date difference
+  if (dateDiff !== 0) return dateDiff;
+  
+  // resolve date ties by version (1.58.1 and 1.58.2, for example)
+  return b.data.version.localeCompare(a.data.version, undefined, { numeric: true });
+});
 
 const categoryStyles = categories.map(cat => `
   /* show when checked */
@@ -58,7 +67,7 @@ const categoryStyles = categories.map(cat => `
 ---
 
 <div class="release-container">
-  <nav class="filter-controls">
+  <nav class="filter-controls lg:sticky lg:top-30 z-11 py-1 bg-white dark:bg-slate-900">
     {categories.map(cat => (
       <label class="filter-chip">
         <input type="checkbox" id={`toggle-${cat.id}`} class="filter-input" />
@@ -71,13 +80,17 @@ const categoryStyles = categories.map(cat => `
     {updates.map(async (item) => {
       const { Content } = await render(item);
       return (
-        <article class="version">
-          <i class="version-date">{item.data.date.toLocaleDateString("en-UK", {year: "numeric", month: "long", day: "numeric",})}</i>
-          <header>
-            <h2 id={`version-${item.data.version.replaceAll('.', '-')}`} class="release-note group">Version {item.data.version} {item.data.name && `(${item.data.name})`}
+        <article class="version relative">
+          <header class="sticky lg:top-46 top-16 z-10 flex flex-wrap items-baseline justify-between py-3 mb-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <h2 id={`version-${item.data.version.replaceAll('.', '-')}`} class="release-note group m-0">
+              Version {item.data.version} {item.data.name && `(${item.data.name})`}
               <a class="anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100" title="copy header link" href={`#version-${item.data.version.replaceAll('.', '-')}`}>#</a>
             </h2>
+            <i class="version-date text-slate-500 text-sm">
+              {item.data.date.toLocaleDateString("en-UK", {year: "numeric", month: "long", day: "numeric",})}
+            </i>
           </header>
+          
           <div class="content"><Content components={{ReleaseNotesItem}} /></div>
         </article>
       );
@@ -126,8 +139,5 @@ const categoryStyles = categories.map(cat => `
 
   .filter-controls label:hover {
     @apply brightness-95;
-  }
-  .version-date {
-    @apply float-right;
   }
 </style>

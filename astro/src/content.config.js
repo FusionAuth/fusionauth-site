@@ -62,6 +62,7 @@ const docsCollection = defineCollection({
     order: z.number().default(1000),
     idpDisplayName: z.string().optional(),
     sideNavSimple: z.boolean().default(false),
+    hideBgImage: z.boolean().optional(),
   }),
 });
 
