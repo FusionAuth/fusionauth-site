@@ -22,6 +22,9 @@ echo "Syntax-checking complete-application Ruby files..."
 docker run --rm -v "$PROJECT_DIR/complete-application:/app" -w /app ruby:2.7.5 sh -c \
   "find app config -name '*.rb' -print0 | xargs -0 -n1 ruby -c"
 
+echo "Pulling latest FusionAuth image..."
+docker compose pull
+
 echo "Starting FusionAuth..."
 docker compose up -d
 
@@ -36,7 +39,7 @@ docker logs -f rails-api &
 LOGS_PID=$!
 
 echo "Waiting for FusionAuth to be ready..."
-until curl -sf http://localhost:9011 > /dev/null 2>&1; do
+until curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "<title>Login"; do
   echo "  Waiting for FusionAuth..."
   sleep 5
 done
