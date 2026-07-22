@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import { render } from 'astro:content';
 import ReleaseNotesItem from './ReleaseNotesItem.astro';
+
 export const categories = [
   { id: 'theme-upgrade', label: 'Theme Upgrade', color: '#e11d48' },
   { id: 'new-feature', label: 'New Feature', color: '#16a34a' },
@@ -18,7 +19,6 @@ export const categories = [
 
 export const getCategoryLabel = (id: string) => {
   const category = categories.find((cat) => cat.id === id);
-  
   if (category) return category.label;
 
   // Fallback logic for typos and mistakes: "new-feature" -> "New Feature"
@@ -30,18 +30,17 @@ export const getCategoryLabel = (id: string) => {
 
 const allUpdates = await getCollection('releases');
 const updates = allUpdates.sort((a, b) => {
-  // sort by date
+  // Sort by date
   const dateDiff = b.data.date.valueOf() - a.data.date.valueOf();
-  
-  // If dates are different, return the date difference
   if (dateDiff !== 0) return dateDiff;
   
-  // resolve date ties by version (1.58.1 and 1.58.2, for example)
+  // Resolve date ties by version (e.g., 1.58.1 and 1.58.2)
   return b.data.version.localeCompare(a.data.version, undefined, { numeric: true });
 });
 
+// Dynamically generate styles for filtering logic and colored badges
 const categoryStyles = categories.map(cat => `
-  /* show when checked */
+  /* Filtering display logic */
   .release-container:has(#toggle-${cat.id}:checked) .release-notes-item-${cat.id} {
     display: block;
   }
@@ -51,13 +50,14 @@ const categoryStyles = categories.map(cat => `
     }
   }
 
-  /* active color */
+  /* Active chip color override */
   .filter-chip:has(#toggle-${cat.id}:checked) {
-    background-color: ${cat.color};
-    color: #fff;
-    border-color: ${cat.color};
+    background-color: ${cat.color} !important;
+    border-color: ${cat.color} !important;
+    color: #fff !important;
   }
-  /* styling */
+
+  /* Release item badge colors */
   .badge-${cat.id} {
     background-color: ${cat.color}22;
     color: ${cat.color};
@@ -80,18 +80,21 @@ const categoryStyles = categories.map(cat => `
     {updates.map(async (item) => {
       const { Content } = await render(item);
       return (
-        <article class="version relative">
-          <header class="sticky lg:top-46 top-16 z-10 flex flex-wrap items-baseline justify-between py-3 mb-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-            <h2 id={`version-${item.data.version.replaceAll('.', '-')}`} class="release-note group m-0">
+        <article id={`version-${item.data.version.replaceAll('.', '-')}`} class="version relative">
+          
+          <header class="sticky lg:top-52 top-24 z-10 flex flex-wrap items-baseline justify-between py-3 mb-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            
+            <h2 class="release-note group m-0">
               Version {item.data.version} {item.data.name && `(${item.data.name})`}
-              <a class="anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100" title="copy header link" href={`#version-${item.data.version.replaceAll('.', '-')}`}>#</a>
+              <a class="anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100 transition-opacity" title="copy header link" href={`#version-${item.data.version.replaceAll('.', '-')}`}>#</a>
             </h2>
+            
             <i class="version-date text-slate-500 text-sm">
-              {item.data.date.toLocaleDateString("en-UK", {year: "numeric", month: "long", day: "numeric",})}
+              {item.data.date.toLocaleDateString("en-UK", { year: "numeric", month: "long", day: "numeric" })}
             </i>
           </header>
           
-          <div class="content"><Content components={{ReleaseNotesItem}} /></div>
+          <div class="content"><Content components={{ ReleaseNotesItem }} /></div>
         </article>
       );
     })}
@@ -101,43 +104,50 @@ const categoryStyles = categories.map(cat => `
 <Fragment set:html={`<style>${categoryStyles}</style>`} />
 
 <style is:global>
-    @reference "tailwindcss";
+  @reference "tailwindcss";
 
+  /* scroll padding to work around stickies */
+  html:has(.release-container) {
+    scroll-padding-top: 100px;
+    scroll-behavior: smooth;
+  }
+
+  @media (min-width: 1024px) {
+    html:has(.release-container) {
+      scroll-padding-top: 240px; /* Adjust this pixel height to match your sticky header stack */
+    }
+  }
+
+  /* Hide all items if ANY filter is active, unless explicitly shown by the dynamic category CSS */
   .release-container:has(.filter-input:checked) [class*="release-notes-item-"] {
-    @apply hidden;
-  }
-
-  .filter-chip {
-    @apply opacity-70 grayscale;
-  }
-
-  .filter-chip:has(input:checked) {
-    @apply grayscale-0 opacity-100;
-  }
-  .filter-controls input {
     @apply hidden;
   }
 
   .filter-controls {
     @apply flex flex-wrap gap-3;
+    
+    input {
+      @apply hidden;
+    }
   }
 
-  .filter-controls label {
+  .filter-chip {
     @apply 
-      py-2 px-4
-      text-sm text-slate-800 font-medium 
-      bg-slate-100 border border-slate-300 
-      rounded-full cursor-pointer
-      transition ease-in-out;
+      py-2 px-4 text-sm font-medium rounded-full cursor-pointer transition ease-in-out
+      opacity-70 grayscale
+      text-slate-700 bg-slate-100 border border-slate-300
+      dark:text-slate-300 dark:bg-slate-800 dark:border-slate-700;
+
+    span {
+      color: inherit;
+    }
   }
 
-  .filter-controls label:has(input:checked) {
-    @apply text-white shadow-lg;
-    background-color: var(--main-accent-color, #083b94);
-    border-color: var(--main-accent-color, #083b94);
+  .filter-chip:hover {
+    @apply brightness-95 dark:brightness-110;
   }
 
-  .filter-controls label:hover {
-    @apply brightness-95;
+  .filter-chip:has(input:checked) {
+    @apply grayscale-0 opacity-100 shadow-sm dark:shadow-none;
   }
 </style>

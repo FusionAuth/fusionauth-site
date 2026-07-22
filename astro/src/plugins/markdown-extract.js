@@ -33,7 +33,11 @@ function htmlToLLMMarkdown(htmlString) {
   const title = $('meta[property="og:title"]').attr('content') || $('title').text();
   const description = $('meta[name="description"]').attr('content') || '';
 
-  containerNode.find('script, style, svg, button, .not-prose.hidden, nav, footer, aside').remove();
+  // Removes hidden tabs, SVGs, mobile menus, aria-hidden junk, AND the .sr-only LLM directive
+  containerNode.find(`
+    script, style, svg, button, nav, footer, aside, 
+    .not-prose.hidden, [aria-hidden="true"], .hidden, .sr-only, dialog, noscript
+  `).remove();
 
   const rawHtml = containerNode.html();
   const markdownContent = turndownService.turndown(rawHtml);
@@ -118,17 +122,15 @@ export default function markdownExtractIntegration() {
           : (dir instanceof URL ? fileURLToPath(dir) : fileURLToPath(new URL(dir)));
         
         const htmlFiles = walkHtmlFiles(distDir);
-        
-        // Use a Map to group links by their top-level category
         const docsCategories = new Map();
 
+        // Process all HTML files into Markdown
         for (const htmlFile of htmlFiles) {
           let htmlContent = fs.readFileSync(htmlFile, 'utf-8');
           const relPath = path.relative(distDir, htmlFile);
           const mdPublicUrl = `/${relPath.replace(/\.html$/, '.md').replace(/\\/g, '/')}`;
 
           let htmlChanged = false;
-
           if (htmlContent.includes('id="llm-md-link"')) {
             htmlContent = htmlContent.replace(
               /<link\s+id="llm-md-link"\s+([^>]+)?href="([^"]+)"([^>]*)>/,
@@ -136,12 +138,10 @@ export default function markdownExtractIntegration() {
             );
             htmlChanged = true;
           }
-
           if (htmlContent.includes('LLM_MD_PATH_PLACEHOLDER')) {
             htmlContent = htmlContent.replaceAll('LLM_MD_PATH_PLACEHOLDER', mdPublicUrl);
             htmlChanged = true;
           }
-
           if (htmlChanged) {
             fs.writeFileSync(htmlFile, htmlContent, 'utf-8');
           }
@@ -158,7 +158,6 @@ export default function markdownExtractIntegration() {
             const description = $('meta[name="description"]').attr('content') || '';
             const descText = description ? `: ${description}` : '';
             
-            // Extract the top-level directory (e.g., ['', 'docs', 'get-started', 'page.md'])
             const pathParts = mdPublicUrl.split('/');
             const folderName = pathParts[2];
             const categoryName = formatCategoryName(folderName);
@@ -169,32 +168,39 @@ export default function markdownExtractIntegration() {
             docsCategories.get(categoryName).push(`- [${title}](${mdPublicUrl})${descText}`);
           }
         }
-
-        // Now, assemble the llms.txt content using the grouped categories
-        let llmsTxt = `# FusionAuth Documentation\n\n`;
-        llmsTxt += `> Comprehensive documentation for FusionAuth CIAM, APIs, Quickstarts, and custom integrations.\n\n`;
-
-        // Ensure "Overview" (root-level docs) appears first if it exists
+        
+        const docsDir = path.join(distDir, 'docs');
+        fs.mkdirSync(docsDir, { recursive: true });
+        
+        let rootLlmsTxt = `# FusionAuth Documentation\n\n> Comprehensive documentation for FusionAuth CIAM, APIs, Quickstarts, and custom integrations.\n\n## Documentation Sections\n\n`;
+        
+        // Ensure "Overview" links are placed directly in the root file
         if (docsCategories.has('Overview')) {
-          llmsTxt += `## Overview\n\n${docsCategories.get('Overview').join('\n')}\n\n`;
+          rootLlmsTxt += docsCategories.get('Overview').join('\n') + '\n\n';
           docsCategories.delete('Overview');
         }
 
-        // Sort the remaining categories alphabetically and append them
+        // For all other categories, create a separate sub-index file
         const sortedCategories = Array.from(docsCategories.keys()).sort();
         for (const cat of sortedCategories) {
-          llmsTxt += `## ${cat}\n\n${docsCategories.get(cat).join('\n')}\n\n`;
+          const safeFileName = `llms-${cat.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.txt`;
+          const catFilePath = path.join(docsDir, safeFileName);
+          
+          const catLlmsTxt = `# ${cat} Documentation\n\n${docsCategories.get(cat).join('\n')}\n`;
+          fs.writeFileSync(catFilePath, catLlmsTxt, 'utf-8');
+          
+          // Add a link from the root index to this sub-index
+          rootLlmsTxt += `- [${cat} Documentation](/docs/${safeFileName})\n`;
         }
 
-        const docsDir = path.join(distDir, 'docs');
-        fs.mkdirSync(docsDir, { recursive: true });
-        fs.writeFileSync(path.join(docsDir, 'llms.txt'), llmsTxt, 'utf-8');
+        // Save the root index
+        fs.writeFileSync(path.join(docsDir, 'llms.txt'), rootLlmsTxt, 'utf-8');
         
         const wellKnownDir = path.join(docsDir, '.well-known');
         fs.mkdirSync(wellKnownDir, { recursive: true });
-        fs.writeFileSync(path.join(wellKnownDir, 'llms.txt'), llmsTxt, 'utf-8');
+        fs.writeFileSync(path.join(wellKnownDir, 'llms.txt'), rootLlmsTxt, 'utf-8');
 
-        console.log(`Successfully synced HTML links and generated categorized llms.txt!`);
+        console.log(`Successfully synced HTML links and generated hub-and-spoke llms.txt!`);
       }
     }
   };
