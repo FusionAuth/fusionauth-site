@@ -127,11 +127,22 @@ export default function markdownExtractIntegration() {
           const relPath = path.relative(distDir, htmlFile);
           const mdPublicUrl = `/${relPath.replace(/\.html$/, '.md').replace(/\\/g, '/')}`;
 
+          let htmlChanged = false;
+
           if (htmlContent.includes('id="llm-md-link"')) {
             htmlContent = htmlContent.replace(
               /<link\s+id="llm-md-link"\s+([^>]+)?href="([^"]+)"([^>]*)>/,
               () => `<link rel="alternate" type="text/markdown" title="Page Markdown Source" href="${mdPublicUrl}">`
             );
+            htmlChanged = true;
+          }
+
+          if (htmlContent.includes('LLM_MD_PATH_PLACEHOLDER')) {
+            htmlContent = htmlContent.replaceAll('LLM_MD_PATH_PLACEHOLDER', mdPublicUrl);
+            htmlChanged = true;
+          }
+
+          if (htmlChanged) {
             fs.writeFileSync(htmlFile, htmlContent, 'utf-8');
           }
 
