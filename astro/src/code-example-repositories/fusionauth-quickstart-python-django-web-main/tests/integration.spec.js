@@ -1,40 +1,76 @@
 const { test, expect } = require('@playwright/test');
 
+function trackPageDiagnostics(page) {
+  const consoleMessages = [];
+  const pageErrors = [];
+
+  page.on('console', msg => {
+    consoleMessages.push(`[${msg.type()}] ${msg.text()}`);
+  });
+
+  page.on('pageerror', err => {
+    pageErrors.push(err.message);
+  });
+
+  return async () => {
+    console.log('\n=== DEBUG INFO ===');
+    console.log('Page URL:', page.url());
+    console.log('Page HTML:', await page.content());
+    console.log('\nConsole messages:', consoleMessages);
+    console.log('\nPage errors:', pageErrors);
+    console.log('=== END DEBUG ===\n');
+  };
+}
+
 test('FusionAuth admin login', async ({ page }) => {
-  await page.goto('http://localhost:9011/admin/');
-  await page.waitForLoadState('networkidle');
+  const dumpDiagnostics = trackPageDiagnostics(page);
 
-  await page.getByPlaceholder('Login').fill('admin@example.com');
-  await page.getByPlaceholder('Password').fill('password');
-  await page.getByRole('button', { name: 'Submit' }).click();
+  try {
+    await page.goto('http://localhost:9011/admin/');
+    await page.waitForLoadState('networkidle');
 
-  await expect(page).toHaveURL(/\/admin\//);
-  await expect(page.getByRole('button', { name: 'admin@example.com' })).toBeVisible();
+    await page.getByPlaceholder('Login').fill('admin@example.com');
+    await page.getByPlaceholder('Password').fill('password');
+    await page.getByRole('button', { name: 'Submit' }).click();
+
+    await expect(page).toHaveURL(/\/admin\//);
+    await expect(page.getByRole('button', { name: 'admin@example.com' })).toBeVisible();
+  } catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
 });
 
 test('Django app OIDC login via FusionAuth', async ({ page }) => {
-  await page.goto('http://localhost:8000');
+  const dumpDiagnostics = trackPageDiagnostics(page);
 
-  await expect(page.getByRole('heading', { name: /Welcome to Changebank/i })).toBeVisible();
+  try {
+    await page.goto('http://localhost:8000');
 
-  await page.getByRole('link', { name: /Login/i }).click();
+    await expect(page.getByRole('heading', { name: /Welcome to Changebank/i })).toBeVisible();
 
-  await page.waitForURL(/localhost:9011/);
+    await page.getByRole('link', { name: /Login/i }).click();
 
-  await page.getByPlaceholder('Login').fill('richard@example.com');
-  await page.getByPlaceholder('Password').fill('password');
-  await page.getByRole('button', { name: 'Submit' }).click();
+    await page.waitForURL(/localhost:9011/);
 
-  await page.waitForURL(/localhost:8000\/app\/account/);
+    await page.getByPlaceholder('Login').fill('richard@example.com');
+    await page.getByPlaceholder('Password').fill('password');
+    await page.getByRole('button', { name: 'Submit' }).click();
 
-  await expect(page.getByText('richard@example.com')).toBeVisible();
-  await expect(page.getByRole('button', { name: /Logout/i })).toBeVisible();
+    await page.waitForURL(/localhost:8000\/app\/account/);
 
-  await page.getByRole('button', { name: /Logout/i }).click();
+    await expect(page.getByText('richard@example.com')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Logout/i })).toBeVisible();
 
-  // FusionAuth's front-channel logout notifies the app via a hidden iframe
-  // rather than redirecting the browser tab back to it, so re-navigate
-  // explicitly to confirm the app-level session was actually cleared.
-  await page.goto('http://localhost:8000/app/');
-  await expect(page.getByRole('link', { name: /Login/i })).toBeVisible();
+    await page.getByRole('button', { name: /Logout/i }).click();
+
+    // FusionAuth's front-channel logout notifies the app via a hidden iframe
+    // rather than redirecting the browser tab back to it, so re-navigate
+    // explicitly to confirm the app-level session was actually cleared.
+    await page.goto('http://localhost:8000/app/');
+    await expect(page.getByRole('link', { name: /Login/i })).toBeVisible();
+  } catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
 });

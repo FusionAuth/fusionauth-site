@@ -20,6 +20,9 @@ echo "Installing dependencies and running Django checks..."
 docker run --rm -v "$PROJECT_DIR/complete-application:/app" -w /app python:3.8 sh -c \
   "pip install -q -r requirements.txt && cd mysite && python manage.py check"
 
+echo "Pulling latest FusionAuth image..."
+docker compose pull
+
 echo "Starting FusionAuth..."
 docker compose up -d
 
