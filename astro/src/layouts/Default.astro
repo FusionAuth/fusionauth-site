@@ -8,7 +8,6 @@ import TOC from 'src/components/TOC.astro';
 import { specialCaps } from 'src/tools/string';
 import { Marked } from 'marked';
 import Kapa from 'src/components/Kapa.astro';
-import { Icon } from 'astro-iconset/components';
 import CodeCopyButton from 'src/components/CodeCopyButton.astro';
 
 interface Props {
@@ -16,7 +15,7 @@ interface Props {
   date?: string;
   description?: string;
   disableTOC?: boolean;
-  frontmatter?: Record<string, any>,
+  frontmatter?: Record<string, any>;
   headings?: any[];
   htmlTitle?: string;
   icon?: string;
@@ -55,7 +54,7 @@ let {
   maxTocDepth,
   isIndexPage = false,
   hideBgImage = false,
-}: Props = Astro.props;
+} = Astro.props;
 
 author = frontmatter?.author ?? author;
 date = frontmatter?.date ?? date;
@@ -63,143 +62,116 @@ description = frontmatter?.description ?? description;
 icon = frontmatter?.icon ?? icon;
 darkIcon = frontmatter?.darkIcon ?? darkIcon;
 image = frontmatter?.image ?? image;
-section = frontmatter?.section ?? section;
 title = frontmatter?.title ?? title;
 htmlTitle = frontmatter?.htmlTitle ?? title;
 disableTOC = frontmatter?.disableTOC ?? disableTOC;
 hideBgImage = frontmatter?.hideBgImage ?? frontmatter?.hidebgImage ?? hideBgImage;
 
-const articleStyles = [
-  "col-start-1 row-start-1 lg:col-auto lg:row-auto",
-  "order-1 lg:order-2",
-  "pb-24 prose prose-slate dark:prose-invert max-w-none min-w-0 w-full",
-  "prose-a:no-underline prose-a:border-b-1 dark:prose-a:text-indigo-400 dark:prose-a:border-b-indigo-400 prose-a:border-b-indigo-700 prose-a:text-indigo-700 dark:prose-a:hover:text-orange-200 dark:prose-a:hover:border-b-orange-200 prose-a:hover:text-orange-800 prose-a:hover:border-b-orange-800",
-  "prose-code:font-normal dark:prose-code:bg-slate-700/80 prose-code:bg-slate-200/80 prose-code:rounded-sm prose-code:break-words prose-code:px-0.5 prose-code:py-0.4",
-  "dark:prose-headings:text-slate-200 prose-headings:scroll-mt-24 prose-headings:text-slate-800 prose-headings:mb-4",
-  "prose-h2:mt-8",
-  "prose-li:text-sm",
-  "prose-p:text-sm prose-p:font-normal prose-p:leading-6 dark:prose-p:text-slate-300 prose-p:text-slate-800",
-  "prose-span:text-slate-800 dark:prose-span:text-slate-300",
-  "prose-table:block prose-table:rounded prose-table:overflow-x-scroll",
-  "prose-td:border prose-td-border-collapse prose-td:border-opacity-75 prose-td:border-slate-400 dark:prose-td:border-slate-700 prose-td:px-4 prose-td:text-sm prose-td:font-normal prose-td:leading-5",
-  "prose-th:border prose-th-border-collapse prose-th:border-opacity-75 prose-th:border-slate-400 dark:prose-th:border-slate-700 prose-th:px-4 prose-th:py-4 prose-th:text-base prose-th:font-semi-bold prose-th:leading-5",
-  "even:prose-tr:bg-slate-100 dark:even:prose-tr:bg-slate-800/50",
-];
-
-const mainStyles = [
-  "mx-auto max-w-8xl px-4 pt-8",
-  "grid grid-cols-1 lg:flex 2xl:container"
-];
-
-const sideNavStyles = [
-  "col-start-1 row-start-1 lg:col-auto lg:row-auto",
-  "order-2 lg:order-1",
-  "hidden dark:bg-slate-900 bg-white sticky top-11 h-[calc(100vh-44px)] w-64 -ml-4 -mt-8 z-40 shadow-2xl lg:shadow-none",
-  "lg:block lg:bg-opacity-0 lg:w-full lg:max-w-[270px] lg:ml-0 lg:mt-0 lg:px-0 lg:pt-0 lg:mr-6 lg:py-0 lg:top-[calc(6rem+1px)] lg:self-start overflow-y-auto lg:max-h-[calc(100vh-100px)] lg:h-auto"
-];
-
-const tocStyles = [
-  "order-3 lg:order-3",
-  "bottom-0 hidden overflow-hidden pb-10 pt-0 xl:block w-full max-w-[240px] ml-6 sticky top-24 self-start lg:max-h-[calc(100vh-100px)] z-10"
-];
+const mainStyles = "mx-auto max-w-8xl px-4 pt-8 grid grid-cols-1 lg:flex 2xl:container";
+const sideNavStyles = "col-start-1 row-start-1 lg:col-auto lg:row-auto order-2 lg:order-1 hidden dark:bg-slate-900 bg-white sticky top-11 h-[calc(100vh-44px)] w-64 -ml-4 -mt-8 z-40 shadow-2xl lg:shadow-none lg:block lg:bg-opacity-0 lg:w-full lg:max-w-[270px] lg:ml-0 lg:mt-0 lg:px-0 lg:pt-0 lg:mr-6 lg:py-0 lg:top-[calc(6rem+1px)] lg:self-start overflow-y-auto lg:max-h-[calc(100vh-100px)] lg:h-auto";
+const tocStyles = "order-3 lg:order-3 bottom-0 hidden overflow-hidden pb-10 pt-0 xl:block w-full max-w-[240px] ml-6 sticky top-24 self-start lg:max-h-[calc(100vh-100px)] z-10";
 
 const isProd = import.meta.env.PROD as boolean;
 const mdPath = isProd ? "LLM_MD_PATH_PLACEHOLDER" : Astro.url.pathname + "?format=md";
 
 const remark = new Marked();
 const markdownifiedTitle = remark.parseInline(htmlTitle);
-const cleanedHtmlTitle = htmlTitle
-  .replace(/[#*`_~]/g, '')
-  .replace(/\[(.*?)\]\(.*?\)/g, '$1')
-  .trim();
+const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.*?\)/g, '$1').trim();
 ---
 
 <!DOCTYPE html>
 <html class="antialiased min-h-full" lang="en">
-<Head title={`${cleanedHtmlTitle} | FusionAuth Docs`} description={description} canonicalUrl={frontmatter.canonicalUrl} {isIndexPage} {openGraphImage} />
+<Head title={`${cleanedHtmlTitle} | FusionAuth Docs`} description={description} canonicalUrl={frontmatter?.canonicalUrl} {isIndexPage} {openGraphImage} />
 <body class:list={[
   "font-sans antialiased bg-white min-h-full text-slate-700 dark:bg-slate-900 dark:text-slate-200",
   !hideBgImage && "bg-articles bg-right-top bg-no-repeat dark:bg-articles-dark"
 ]}>  
+  
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      const blocks = document.querySelectorAll("pre code.language-mermaid");
-      if (blocks.length === 0) return; 
- 
-      const { default: mermaid } = await import("mermaid");
-      mermaid.initialize({ startOnLoad: false, theme: 'default' });
- 
-      blocks.forEach((block) => {
-        const parent = block.parentElement;
-        const mermaidDiv = document.createElement("div");
-        mermaidDiv.className = "mermaid";
-        mermaidDiv.textContent = block.textContent;
-        parent.replaceWith(mermaidDiv);
+    // scroll to the current page in the left sidebar
+    const sidebar = document.getElementById('side-nav');
+    if (sidebar) {
+      const savedPos = sessionStorage.getItem('sidebarScrollPos');
+      if (savedPos !== null) sidebar.scrollTop = parseInt(savedPos, 10);
+      window.addEventListener('beforeunload', () => {
+        sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop.toString());
       });
- 
-      await mermaid.run({
-        querySelector: '.mermaid',
-      });
-    });
+    }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const copyBtn = document.getElementById("copy-md-btn");
-      if (copyBtn) {
-        copyBtn.addEventListener("click", async () => {
-          try {
-            const url = copyBtn.getAttribute("data-url");
-            const res = await fetch(url);
-            if (!res.ok) throw new Error("Failed to fetch markdown");
-            const text = await res.text();
-            await navigator.clipboard.writeText(text);
-            
-            const originalHtml = copyBtn.innerHTML;
-            copyBtn.innerHTML = `
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-              <span class="hidden sm:inline text-emerald-600 dark:text-emerald-400 font-medium">Copied!</span>
-            `;
-            
-            setTimeout(() => {
-              copyBtn.innerHTML = originalHtml;
-            }, 2000);
-          } catch (err) {
-            console.error("Copy failed", err);
-          }
+    // mermaid Initialization (Deferred natively by Astro)
+    const blocks = document.querySelectorAll("pre code.language-mermaid");
+    if (blocks.length > 0) {
+      import("mermaid").then(({ default: mermaid }) => {
+        mermaid.initialize({ startOnLoad: false, theme: 'default' });
+        blocks.forEach((block) => {
+          const mermaidDiv = document.createElement("div");
+          mermaidDiv.className = "mermaid";
+          mermaidDiv.textContent = block.textContent || "";
+          if (block.parentElement) block.parentElement.replaceWith(mermaidDiv);
         });
-      }
-    });
+        mermaid.run({ querySelector: '.mermaid' });
+      });
+    }
+
+    // copy Button Logic
+    const copyBtn = document.getElementById("copy-md-btn");
+    if (copyBtn) {
+      copyBtn.addEventListener("click", async () => {
+        try {
+          const url = copyBtn.getAttribute("data-url");
+          if (!url) return;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Failed to fetch markdown");
+          const text = await res.text();
+          await navigator.clipboard.writeText(text);
+          
+          const originalHtml = copyBtn.innerHTML;
+          copyBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+            <span class="hidden sm:inline text-emerald-600 dark:text-emerald-400 font-medium">Copied!</span>
+          `;
+          setTimeout(() => copyBtn.innerHTML = originalHtml, 2000);
+        } catch (err) {
+          console.error("Copy failed", err);
+        }
+      });
+    }
   </script>
   
   <slot name="nav"/>
   
-  <main class:list={mainStyles}>
+  <main class={mainStyles}>
     
-    <article class:list={articleStyles}>
+    <article class="fusion-article">
+      <div class="sr-only">
+        🤖 For AI agents: The complete documentation index is available at <a href="/docs/llms.txt">/docs/llms.txt</a>. 
+        A markdown version of this page is available at <a href={mdPath}>{mdPath}</a>.
+      </div>
       
       <div class="flex items-start justify-between w-full">
-        <!-- Left Side: Breadcrumbs, Title, Author -->
         <div class="flex-grow">
-          {breadcrumbs.length > 0 && <div class="flex flex-row not-prose hidden lg:block items-center pb-6">
-            { breadcrumbs.map((crumb, i) => <>
-              <a href={crumb.href} class="font-medium text-slate-500 mb-4 mt-0 text-sm hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:underline capitalize">{ specialCaps(crumb.title) }</a>
-              { i !== breadcrumbs.length - 1 && <span class="mx-2 text-slate-500">/</span> }
-            </>) }
-          </div> }
+          {breadcrumbs.length > 0 && 
+            <div class="flex flex-row not-prose hidden lg:block items-center pb-6">
+              {breadcrumbs.map((crumb, i) => (
+                <>
+                  <a href={crumb.href} class="font-medium text-slate-500 mb-4 mt-0 text-sm hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:underline capitalize">{specialCaps(crumb.title)}</a>
+                  {i !== breadcrumbs.length - 1 && <span class="mx-2 text-slate-500">/</span>}
+                </>
+              ))}
+            </div>
+          }
 
           <h1 class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]} set:html={markdownifiedTitle}></h1>
 
-          {author &&
-            <p class="m-0 text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>
-          }
+          {author && <p class="m-0 text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>}
         </div>
         
         <div class="flex flex-col items-end shrink-0 ml-4 sm:ml-8 mr-0 sm:mr-4 gap-4 not-prose">
-          
           <div class="flex items-center gap-2">
-            { contribute && <GitHubEdit {...Astro.props} /> }
+            {contribute && <GitHubEdit {...Astro.props} />}
             
-            <a href={mdPath} target="_blank" title="View Markdown" class="text-xs text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded px-2.5 py-1.5 transition-colors bg-white dark:bg-slate-900 shadow-sm hover:shadow">
-              <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5"><path d="M14.85 3H1.15C.52 3 0 3.52 0 4.15v7.7c0 .63.52 1.15 1.15 1.15h13.7c.63 0 1.15-.52 1.15-1.15v-7.7C16 3.52 15.48 3 14.85 3zM9 11H7V5.5L4.5 8 2 5.5V11H1V4h1l2.5 2.5L7 4h2v7zm4.5 0L11 8h1.5V4h1v4H15l-1.5 3z" fill="currentColor"/></svg>
+            <a href={mdPath} target="_blank" rel="noopener noreferrer" title="View Markdown" class="text-xs text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded px-2.5 py-1.5 transition-colors bg-white dark:bg-slate-900 shadow-sm hover:shadow">
+              <svg viewBox="0 0 16 16" fill="none" class="w-3.5 h-3.5"><path d="M14.85 3H1.15C.52 3 0 3.52 0 4.15v7.7c0 .63.52 1.15 1.15 1.15h13.7c.63 0 1.15-.52 1.15-1.15v-7.7C16 3.52 15.48 3 14.85 3zM9 11H7V5.5L4.5 8 2 5.5V11H1V4h1l2.5 2.5L7 4h2v7zm4.5 0L11 8h1.5V4h1v4H15l-1.5 3z" fill="currentColor"/></svg>
               <span class="font-medium hidden sm:inline">MD</span>
             </a>
             
@@ -209,13 +181,8 @@ const cleanedHtmlTitle = htmlTitle
             </button>
           </div>
 
-          <!-- Documentation Icons -->
-          {icon &&
-            <img src={icon} alt={title} class="w-20 my-0 dark:hidden"/>
-          }
-          {darkIcon &&
-            <img src={darkIcon} alt={title} class="w-20 my-0 hidden dark:block" />
-          }
+          {icon && <img src={icon} alt={title} class="w-20 my-0 dark:hidden"/>}
+          {darkIcon && <img src={darkIcon} alt={title} class="w-20 my-0 hidden dark:block" />}
         </div>
       </div>
 
@@ -225,42 +192,18 @@ const cleanedHtmlTitle = htmlTitle
 
     </article>
 
-    <div id="side-nav" class:list={sideNavStyles}>
-      <script is:inline>
-        document.addEventListener('DOMContentLoaded', () => {
-          const sidebar = document.getElementById('side-nav');
-          if (sidebar) {
-            const savedPos = sessionStorage.getItem('sidebarScrollPos');
-            if (savedPos !== null) {
-              sidebar.scrollTop = parseInt(savedPos, 10);
-            }
-          }
-        });
-
-        window.addEventListener('beforeunload', () => {
-          const sidebar = document.getElementById('side-nav');
-          if (sidebar) {
-            sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop.toString());
-          }
-        });
-      </script>
+    <div id="side-nav" class={sideNavStyles}>
       <div class="relative">
-          <div class="bg-white hidden pb-1 pr-2 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
-            <DocSearch />
-          </div>
+        <div class="bg-white hidden pb-1 pr-2 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
+          <DocSearch />
+        </div>
 
-        { Astro.slots.has('sideNav') &&
-            <slot name="sideNav"></slot>
-        }
-
-        { !Astro.slots.has('sideNav') && <>
-          <Navigation items={sideMenu}/>
-        </>}
+        {Astro.slots.has('sideNav') ? <slot name="sideNav"></slot> : <Navigation items={sideMenu}/>}
       </div>
     </div>
 
     {!disableTOC &&
-      <aside class:list={tocStyles}>
+      <aside class={tocStyles}>
         <h3 class="font-semibold text-sm">On this page</h3>
         <nav>
           <TOC maxDepth={maxTocDepth}/>
@@ -268,6 +211,7 @@ const cleanedHtmlTitle = htmlTitle
       </aside>
     }
   </main>
+  
   <Kapa />
   <CodeCopyButton />
 </body>

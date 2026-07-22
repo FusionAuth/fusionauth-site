@@ -1,5 +1,4 @@
 @import "tailwindcss";
-
 @plugin "@tailwindcss/typography";
 
 /* Restore Manual Dark Mode */
@@ -7,7 +6,6 @@
 
 @theme {
   /* --- Background Images --- */
-  /* v4 requires the 'image' prefix for custom background utilities */
   --background-image-hero: url("/img/heroes/dots-code.svg");
   --background-image-articles: radial-gradient(circle 768px at top right, rgb(199,210,254,0.95) 0%, rgba(255,255,255,0.95) 80%, rgba(255,255,255,1.0) 100%), url("/img/texture/grid.svg");
   --background-image-articles-dark: radial-gradient(circle 768px at top right, rgba(55,48,163,0.75) 0%, rgba(15,23,42,0.75) 80%, rgba(15,23,42,1.0) 100%), url("/img/texture/grid.svg");
@@ -52,7 +50,7 @@
 }
 
 @layer components {
-  /* Strict direct-child selector for the chevron */
+  /* --- Sidebar Navigation --- */
   details[open] > summary .chevron-icon {
     @apply rotate-90;
   }
@@ -80,446 +78,229 @@
   .sidebar-state-default {
     @apply text-gray-500 dark:text-gray-400;
   }
+
+  /* --- Article Prose Layout --- */
+  .fusion-article {
+    @apply 
+      /* Layout */
+      order-1 lg:order-2 col-start-1 row-start-1 lg:col-auto lg:row-auto
+      /* Base */
+      pb-24 prose prose-slate dark:prose-invert max-w-none min-w-0 w-full
+      /* Links */
+      prose-a:no-underline prose-a:border-b dark:prose-a:text-indigo-400 
+      dark:prose-a:border-b-indigo-400 prose-a:border-b-indigo-700 
+      prose-a:text-indigo-700 dark:prose-a:hover:text-orange-200 
+      dark:prose-a:hover:border-b-orange-200 prose-a:hover:text-orange-800 
+      prose-a:hover:border-b-orange-800
+      /* Code */
+      prose-code:font-normal dark:prose-code:bg-slate-700/80 
+      prose-code:bg-slate-200/80 prose-code:rounded-sm prose-code:break-words 
+      prose-code:px-0.5 prose-code:py-0.5
+      /* Headings */
+      dark:prose-headings:text-slate-200 prose-headings:scroll-mt-24 
+      prose-headings:text-slate-800 prose-headings:mb-4 prose-h2:mt-8
+      /* Text */
+      prose-li:text-sm prose-p:text-sm prose-p:font-normal prose-p:leading-6 
+      dark:prose-p:text-slate-300 prose-p:text-slate-800
+      /* Tables */
+      prose-table:block prose-table:rounded prose-table:overflow-x-scroll
+      prose-th:border prose-th:border-slate-400/75 dark:prose-th:border-slate-700 
+      prose-th:px-4 prose-th:py-4 prose-th:text-base prose-th:font-semibold prose-th:leading-5
+      prose-td:border prose-td:border-slate-400/75 dark:prose-td:border-slate-700 
+      prose-td:px-4 prose-td:text-sm prose-td:font-normal prose-td:leading-5
+      even:prose-tr:bg-slate-100 dark:even:prose-tr:bg-slate-800/50;
+
+    /* 1. Target spans natively */
+    span {
+      @apply text-slate-800 dark:text-slate-300;
+    }
+
+    /* 2. Enforce text wrapping & bold styling */
+    code, strong {
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    strong code { font-weight: 700 !important; }
+
+    /* 3. Remove markdown backticks */
+    code::before, 
+    code::after {
+      content: "" !important;
+      display: none;
+    }
+
+    /* 4. Astro Code Blocks (Restores 9pt font and purple backgrounds!) */
+    .astro-code {
+      background-color: var(--color-code-background-light) !important;
+      font-size: 9pt !important;
+    }
+    pre code {
+      background-color: transparent !important;
+      border-width: 0 !important;
+      padding: 0 !important;
+    }
+
+    /* 5. Continuous lists fix */
+    ul + ul { margin-top: -.75em !important; }
+
+    /* 6. Block quote historical styles */
+    blockquote p:first-of-type::before,
+    blockquote p:first-of-type::after {
+      content: none !important;
+    }
+    h5 { font-weight: 500; }
+  }
+
+  /* Dark mode code block override */
+  .dark .fusion-article .astro-code {
+    background-color: var(--color-code-background-dark) !important;
+  }
 }
 
 /* --- Fix Typography (Tildes/Backticks) & CSS Overrides --- */
 @layer base {
-  /* tell OS-level chrome like scrollbars to respect dark mode */
-  html {
-    color-scheme: light;
-  }
+  html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
 
-  html.dark {
-    color-scheme: dark;
-  }
-
-  /* don't let bold or monospace text bloat past the normal end of a line ever */
-  /* instead, force it to a new line, break it if it won't fit on a line */
-  .prose code {
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-  .prose strong {
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-
-  /* remove the backticks/tildes added by the typography plugin */
-  .prose code::before, 
-  .prose code::after {
-    content: "" !important;
-    display: none;
-  }
-
-  /* preserve bold styling for bold inline code like **`fusionauth_host`** */
-  .prose strong code {
-    font-weight: 700 !important;
-  }
-
-  /* add uncopyable bash prompt at the beginning of console code blocks */
+  /* Bash prompts */
   pre[data-language="console"]::before {
     content: "$ ";
     color: var(--color-slate-500);
     user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
   }
-
-  /* add uncopyable bash prompt at the beginning of console code blocks */
   pre[data-language="powershell"]::before {
     content: "PS> ";
     color: var(--color-slate-500);
     user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
   }
 
-  /* workaround for astro quirk: included mdx files can't actually form continuous lists, so we just make subsequent lists look continuous */
-  .prose ul + ul {
-    margin-top: -.75em !important;
-  }
-
-  /* code block backgrounds */
-  .prose .astro-code {
-    background-color: var(--color-code-background-light) !important;
-    font-size: 9pt !important;
-  }
-
-  .dark .prose .astro-code {
-    background-color: var(--color-code-background-dark) !important;
-  }
-
-  /* remove indent and potential background styling from code blocks */
-  .prose pre code {
-    background-color: transparent !important;
-    border-width: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* block quote historical */
-  .prose blockquote p:first-of-type::before,
-  .prose blockquote p:first-of-type::after {
-    content: none !important;
-  }
-
-  .prose h5 {
-    font-weight: 500;
-  }
-
-  /* provide nice titles for code blocks */
+  /* Code block titles */
   [data-title]:has(+ div > .astro-code) {
-    @apply block w-full m-0 mt-6 px-2 pt-1 pb-0! mb-0! rounded-t-md border border-slate-700 bg-indigo-900;
+    @apply block w-full m-0 mt-6 px-2 pt-1 pb-0! mb-0! rounded-t-md border border-slate-700 bg-indigo-900 not-italic font-mono text-[0.7rem]! tracking-wide text-white!;
   }
   [data-title]:has(+ div > .astro-code) > em {
     @apply not-italic font-mono text-[0.7rem] tracking-wide text-white;
   }
-  [data-title]:has(+ div > .astro-code) {
-    @apply not-italic font-mono text-[0.7rem]! tracking-wide text-white!;
-  }
   [data-title] + div > .astro-code {
-    @apply mt-0!;
-    @apply m-0 rounded-t-none! border border-t-0 border-indigo-900;
+    @apply mt-0! m-0 rounded-t-none! border border-t-0 border-indigo-900;
   }
-  /* code block titles in dark mode */
+  
   .dark [data-title] + div > .astro-code  {
     @apply bg-slate-800 border-slate-700 text-slate-100;
   } 
   .dark [data-title]:has(+ div > .astro-code) {
-      @apply border-slate-700;
+    @apply border-slate-700;
   }
 
-  /* provide nice titles for mermaid diagrams */
+  /* Mermaid diagram titles */
   .mermaid:has(+ p[data-title-bottom]) {
     @apply mb-0! pb-0! border-slate-700;
   }
   .mermaid + [data-title-bottom] {
-    @apply block w-full m-0! px-4 py-0! rounded-b-md;
-    @apply text-[0.7rem] italic text-center tracking-wide;
+    @apply block w-full m-0! px-4 py-0! rounded-b-md text-[0.7rem] italic text-center tracking-wide;
   }
 }
 
 /* --- Handle Article Background Logic --- */
-.bg-articles {
-  background-image: var(--background-image-articles);
-}
+.bg-articles { background-image: var(--background-image-articles); }
+.dark .bg-articles { background-image: var(--background-image-articles-dark); }
 
-.dark .bg-articles {
-  background-image: var(--background-image-articles-dark);
-}
-
-/* prevent white flash of content before mermaid diagram renders clientside */
+/* Prevent white flash of content before mermaid diagram renders clientside */
 .dark pre.mermaid:not([data-processed]) {
   background: var(--color-code-background-dark) !important;
 }
 
-/* mermaid diagram styles */
+/* --- Mermaid Global Styles (Nested) --- */
+foreignObject { overflow: visible; }
+
 [id^="mermaid-"] {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: auto;
   font-size: 16px !important;
-  width: 100%
-}
+  width: 100%;
 
-[id^="mermaid-"] .error-icon {
-  fill: red !important;
-}
-
-[id^="mermaid-"] .error-text {
-  fill: red !important;
-  stroke: red !important;
-}
-
-[id^="mermaid-"] .marker {
-  fill: #1e293b !important;
-  stroke: #1e293b !important;
-}
-
-.dark [id^="mermaid-"] .marker {
-  fill: #e2e8f0 !important;
-  stroke: #e2e8f0 !important;
-}
-
-[id^="mermaid-"] .marker.cross {
-  stroke: red !important;
-}
-
-[id^="mermaid-"] .actor {
-  stroke: #1e293b !important;
-  fill: #e2e8f0 !important;
-}
-
-.dark [id^="mermaid-"] .actor {
-  stroke: #94a3b8 !important;
-  fill: #1e293b !important;
-}
-
-[id^="mermaid-"] text.actor > tspan {
-  fill: #1e293b !important;
-  stroke: none !important;
-}
-
-.dark [id^="mermaid-"] text.actor > tspan {
-  fill: #f8fafc !important;
-  stroke: none !important;
-}
-
-[id^="mermaid-"] .actor-line {
-  stroke: #1e293b !important;
-}
-
-.dark [id^="mermaid-"] .actor-line {
-  stroke: #94a3b8 !important;
-}
-
-[id^="mermaid-"] .messageLine0 {
-  stroke: #64748b !important;
-}
-
-.dark [id^="mermaid-"] .messageLine0 {
-  stroke: #e2e8f0 !important;
-}
-
-[id^="mermaid-"] .messageLine1 {
-  stroke: #64748b !important;
-}
-
-.dark [id^="mermaid-"] .messageLine1 {
-  stroke: #e2e8f0 !important;
-}
-
-[id^="mermaid-"] #arrowhead path {
-  fill: #64748b !important;
-  stroke: #64748b !important;
-}
-
-[id^="mermaid-"] .flowchart-link {
-  stroke: #64748b !important;
-}
-
-.dark [id^="mermaid-"] #arrowhead path {
-  fill: #e2e8f0 !important;
-  stroke: #e2e8f0 !important;
-}
-
-.dark [id^="mermaid-"] .flowchart-link {
-  stroke: #e2e8f0 !important;
-}
-
-[id^="mermaid-"] .sequenceNumber {
-  stroke: #eee !important;
-}
-
-.dark [id^="mermaid-"] .sequenceNumber {
-  fill: #334155 !important;
-}
-
-[id^="mermaid-"] #sequencenumber circle {
-  r: 9px;
-}
-
-[id^="mermaid-"] #crosshead path {
-  fill: #64748b !important;
-  stroke: #64748b !important;
-}
-
-.dark [id^="mermaid-"] #crosshead path {
-  fill: #e2e8f0 !important;
-  stroke: #e2e8f0 !important;
-}
-
-[id^="mermaid-"] .messageText {
-  fill: #1e293b !important;
-  stroke: none !important;
-}
-
-.dark [id^="mermaid-"] .messageText {
-  fill: #f8fafc !important;
-  stroke: none !important;
-}
-
-[id^="mermaid-"] .labelBox {
-  fill: #c7d2fe !important;
-  stroke: #818cf8 !important;
-}
-
-.dark [id^="mermaid-"] .labelBox {
-  fill: #3730a3 !important;
-  stroke: #818cf8 !important;
-}
-
-[id^="mermaid-"] .labelText, [id^="mermaid-"] .labelText > tspan {
-  fill: #1e293b !important;
-  stroke: none !important;
-}
-
-.dark [id^="mermaid-"] .labelText, [id^="mermaid-"] .labelText > tspan {
-  fill: #f8fafc !important;
-  stroke: none !important;
-}
-
-[id^="mermaid-"] .loopText, [id^="mermaid-"] .loopText > tspan {
-  fill: #f8fafc !important;
-  stroke: none !important;
-}
-
-[id^="mermaid-"] .loopLine {
-  fill: #c7d2fe !important;
-  stroke: #818cf8 !important;
-}
-
-.dark [id^="mermaid-"] .loopLine {
-  fill: #3730a3 !important;
-  stroke: #818cf8 !important;
-}
-
-[id^="mermaid-"] .note {
-  fill: #c7d2fe !important;
-  stroke: #818cf8 !important;
-}
-
-.dark [id^="mermaid-"] .note {
-  fill: #3730a3 !important;
-  stroke: #818cf8 !important;
-}
-
-[id^="mermaid-"] .noteText, [id^="mermaid-"] .noteText > tspan {
-  fill: #1e293b !important;
-  stroke: none !important;
-}
-
-.dark [id^="mermaid-"] .noteText, .dark [id^="mermaid-"] .noteText > tspan {
-  fill: #f1f5f9 !important;
-  stroke: none !important;
-}
-
-[id^="mermaid-"] .activation0 {
-  fill: #e2e8f0 !important;
-  stroke: #94a3b8 !important;
-}
-
-.dark [id^="mermaid-"] .activation0 {
-  fill: #1e293b !important;
-  stroke: #94a3b8 !important;
-}
-
-[id^="mermaid-"] .activation1 {
-  fill: red !important;
-  stroke: red !important;
-}
-
-[id^="mermaid-"] .activation2 {
-  fill: red !important;
-  stroke: red !important;
-}
-
-[id^="mermaid-"] .actorPopupMenuPanel {
-  fill: red !important;
-}
-
-[id^="mermaid-"] .actor-man line {
-  fill: #e2e8f0 !important;
-  stroke: #94a3b8 !important;
-}
-
-.dark [id^="mermaid-"] .actor-man line {
-  fill: #e2e8f0 !important;
-  stroke: #94a3b8 !important;
-}
-
-[id^="mermaid-"] .actor-man circle {
-  fill: #e2e8f0 !important;
-  stroke: #94a3b8 !important;
-}
-
-.dark [id^="mermaid-"] .actor-man circle {
-  fill: #1e293b !important;
-  stroke: #94a3b8 !important;
-}
-
-[id^="mermaid-"] line {
-  stroke: #cbd5e1 !important;
-  fill: #cbd5e1 !important;
-}
-
-.dark [id^="mermaid-"] line {
-  stroke: #64748b !important;
-  fill: #64748b !important;
-}
-
-foreignObject {
-  overflow: visible;
-}
-
-
-[id^="mermaid-"] {
-  .cluster rect {
-    fill: none !important;
+  /* Base overrides */
+  p { color: #000 !important; }
+  > * { stroke: #1e293b !important; }
+  
+  line { stroke: #cbd5e1 !important; fill: #cbd5e1 !important; }
+  .cluster rect { fill: none !important; }
+  
+  .error-icon { fill: red !important; }
+  .error-text { fill: red !important; stroke: red !important; }
+  
+  /* Markers & Lines */
+  .marker { fill: #1e293b !important; stroke: #1e293b !important; }
+  .marker.cross { stroke: red !important; }
+  .messageLine0, .messageLine1 { stroke: #64748b !important; }
+  .flowchart-link { stroke: #64748b !important; }
+  #arrowhead path, #crosshead path { fill: #64748b !important; stroke: #64748b !important; }
+  #arrowhead { fill: #1e293b !important; }
+  
+  /* Text & Labels */
+  .messageText, .labelText, .labelText > tspan, .noteText, .noteText > tspan { 
+    fill: #1e293b !important; stroke: none !important; 
   }
-  p {
-    color: #000 !important;
-  }
-  > * {
+  .loopText, .loopText > tspan { fill: #f8fafc !important; stroke: none !important; }
+  .labelBox, .loopLine, .note { fill: #c7d2fe !important; stroke: #818cf8 !important; }
+  .nodeLabel p { color: #1e293b !important; }
+  .edgeLabel p { background-color: #e2e8f0 !important; color: #1e293b !important; }
+
+  /* Sequence Elements */
+  .sequenceNumber { stroke: #eee !important; }
+  #sequencenumber circle { r: 9px; }
+  
+  .actor { stroke: #1e293b !important; fill: #e2e8f0 !important; }
+  text.actor > tspan { fill: #1e293b !important; stroke: none !important; }
+  .actor-line { stroke: #1e293b !important; }
+  .actor-man line { fill: #e2e8f0 !important; stroke: #94a3b8 !important; }
+  .actor-man circle { fill: #e2e8f0 !important; stroke: #94a3b8 !important; }
+  .actorPopupMenuPanel { fill: red !important; }
+  
+  .activation0 { fill: #e2e8f0 !important; stroke: #94a3b8 !important; }
+  .activation1, .activation2 { fill: red !important; stroke: red !important; }
+  
+  /* Node Objects */
+  .node :is(rect, circle, ellipse, polygon, path) {
     stroke: #1e293b !important;
-  }
-  /* line text label colors */
-  > .messageText {
-    stroke: none !important;
-    fill: #1e293b !important;
-  }
-  /* arrowhead (arrow lines) colors */
-  #arrowhead {
-    fill: #1e293b !important;
-  }
-  .nodeLabel p {
-    color: #1e293b !important;
-  }
-  .edgeLabel p {
-    background-color: #e2e8f0 !important;
-    color: #1e293b !important;
-  }
-}
-
-/* MERMAID DARK MODE */
-.dark [id^="mermaid-"] {
-  .cluster rect {
-    fill: none !important;
-  }
-  > * {
-    stroke: #94a3b8 !important;
-  }
-  /* line text label colors */
-  .messageText {
-    stroke: none !important;
     fill: #e2e8f0 !important;
   }
-  /* arrowhead (arrow lines) colors */
-  #arrowhead {
-    fill: #64748b !important;
-  }
-  .nodeLabel p {
-    color: #FFF !important;
-  }
-  .edgeLabel p {
-    background-color: #1e293b !important;
-    color: #FFF !important;
-  }
 }
 
-/* --- Entities (Node Objects) --- */
-[id^="mermaid-"] .node rect,
-[id^="mermaid-"] .node circle,
-[id^="mermaid-"] .node ellipse,
-[id^="mermaid-"] .node polygon,
-[id^="mermaid-"] .node path {
-  stroke: #1e293b !important;
-  fill: #e2e8f0 !important;
-}
+/* --- Mermaid Dark Mode Styles (Nested) --- */
+.dark [id^="mermaid-"] {
+  > * { stroke: #94a3b8 !important; }
+  
+  line { stroke: #64748b !important; fill: #64748b !important; }
+  .cluster rect { fill: none !important; }
 
-.dark [id^="mermaid-"] .node rect,
-.dark [id^="mermaid-"] .node circle,
-.dark [id^="mermaid-"] .node ellipse,
-.dark [id^="mermaid-"] .node polygon,
-.dark [id^="mermaid-"] .node path {
-  stroke: #94a3b8 !important;
-  fill: #1e293b !important;
+  /* Markers & Lines */
+  .marker { fill: #e2e8f0 !important; stroke: #e2e8f0 !important; }
+  .messageLine0, .messageLine1 { stroke: #e2e8f0 !important; }
+  .flowchart-link { stroke: #e2e8f0 !important; }
+  #arrowhead path, #crosshead path { fill: #e2e8f0 !important; stroke: #e2e8f0 !important; }
+  #arrowhead { fill: #64748b !important; }
+
+  /* Text & Labels */
+  .messageText, .labelText, .labelText > tspan { fill: #f8fafc !important; stroke: none !important; }
+  .noteText, .noteText > tspan { fill: #f1f5f9 !important; stroke: none !important; }
+  .labelBox, .loopLine, .note { fill: #3730a3 !important; stroke: #818cf8 !important; }
+  .nodeLabel p { color: #FFF !important; }
+  .edgeLabel p { background-color: #1e293b !important; color: #FFF !important; }
+
+  /* Sequence Elements */
+  .sequenceNumber { fill: #334155 !important; }
+  
+  .actor { stroke: #94a3b8 !important; fill: #1e293b !important; }
+  text.actor > tspan { fill: #f8fafc !important; stroke: none !important; }
+  .actor-line { stroke: #94a3b8 !important; }
+  .actor-man circle { fill: #1e293b !important; stroke: #94a3b8 !important; }
+  
+  .activation0 { fill: #1e293b !important; stroke: #94a3b8 !important; }
+  
+  /* Node Objects */
+  .node :is(rect, circle, ellipse, polygon, path) {
+    stroke: #94a3b8 !important;
+    fill: #1e293b !important;
+  }
 }
