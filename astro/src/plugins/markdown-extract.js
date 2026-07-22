@@ -1,200 +1,200 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as cheerio from 'cheerio';
+import TurndownService from 'turndown';
+import { gfm } from 'turndown-plugin-gfm';
 
-function extractFrontmatter(markdown) {
-  const frontmatterMatch = markdown.match(/^---([\s\S]*?)---/);
-  if (!frontmatterMatch) return { title: null, description: null, content: markdown };
+const turndownService = new TurndownService({
+  headingStyle: 'atx',
+  codeBlockStyle: 'fenced',
+  emDelimiter: '*',
+});
+turndownService.use(gfm);
 
-  const fmContent = frontmatterMatch[1];
-  const contentWithoutFM = markdown.slice(frontmatterMatch[0].length).trimStart();
-
-  const lines = fmContent.split(/\r?\n/);
-  let title = null;
-  let description = null;
-
-  for (const line of lines) {
-    const [key, ...rest] = line.split(':');
-    if (!key) continue;
-    const value = rest.join(':').trim();
-
-    if (key.trim() === 'title') title = value;
-    if (key.trim() === 'description') description = value;
+turndownService.addRule('cardsToLinks', {
+  filter: (node) => node.nodeName === 'A' && node.getAttribute('href'),
+  replacement: (content, node) => {
+    const href = node.getAttribute('href');
+    const text = node.textContent.trim().replace(/\s+/g, ' ');
+    return text ? `[${text}](${href})` : '';
   }
+});
 
-  return { title, description, content: contentWithoutFM };
+function htmlToLLMMarkdown(htmlString) {
+  const $ = cheerio.load(htmlString);
+  
+  let containerNode = $('article').first();
+  if (!containerNode.length) containerNode = $('main').first();
+  if (!containerNode.length) containerNode = $('body').first();
+  
+  if (!containerNode.length) return '';
+
+  const title = $('meta[property="og:title"]').attr('content') || $('title').text();
+  const description = $('meta[name="description"]').attr('content') || '';
+
+  containerNode.find('script, style, svg, button, .not-prose.hidden, nav, footer, aside').remove();
+
+  const rawHtml = containerNode.html();
+  const markdownContent = turndownService.turndown(rawHtml);
+
+  let output = `> For the complete documentation index, see [llms.txt](/docs/llms.txt)\n\n`;
+  if (title) output += `# ${title}\n\n`;
+  if (description) output += `${description}\n\n`;
+  
+  output += markdownContent;
+  return output;
 }
 
-function walk(dir, extFilter = ['.md', '.mdx']) {
+function walkHtmlFiles(dir) {
   const results = [];
-
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = path.join(dir, entry.name);
-
     if (entry.isDirectory()) {
-      results.push(...walk(fullPath, extFilter));
-    } else if (!entry.name.startsWith('_') && extFilter.includes(path.extname(entry.name))) {
+      results.push(...walkHtmlFiles(fullPath));
+    } else if (entry.name.endsWith('.html')) {
       results.push(fullPath);
     }
   }
-
   return results;
 }
 
-const importRegex = /^\s*import\s+.*?['"](.+?)['"]\s*;?\s*$/gm;
-
-function inlineMarkdownImports(filePath, seen = new Set()) {
-  if (seen.has(filePath)) {
-    console.warn(`Skipping already inlined file: ${filePath}`);
-    return '';
-  }
-
-  seen.add(filePath);
-
-  let content = fs.readFileSync(filePath, 'utf-8');
-  const importMap = new Map();
-
-  content = content.replace(importRegex, (match, importPath) => {
-    const importNameMatch = match.match(/import\s+(\w+)\s+from/);
-    if (!importNameMatch) return '';
-
-    const importName = importNameMatch[1];
-    const resolvedPath = path.resolve('./', importPath);
-
-    if (!fs.existsSync(resolvedPath)) {
-      console.warn(`Import not found: ${resolvedPath}`);
-      return `<!-- Missing import: ${importPath} -->`;
-    }
-
-    if (resolvedPath.includes(path.normalize('/src/content/'))) {
-      importMap.set(importName, resolvedPath);
-    }
-
-    return '';
-  });
-
-  for (const [name, resolvedPath] of importMap.entries()) {
-    const componentTagRegex = new RegExp(`<${name}(\\s*[^>]*)?\\s*/>`, 'g');
-    const inlinedContent = inlineMarkdownImports(resolvedPath, seen);
-    content = content.replace(
-      componentTagRegex,
-      inlinedContent
-    );
-  }
-
-  const { title, description, content: bodyContent } = extractFrontmatter(content);
-
-  let header = '';
-  if (title) header += `# ${title}\n\n`;
-  if (description) header += `${description}\n\n`;
-
-  return header + bodyContent;
-}
-
-function rewritePath(relPath) {
-  if (relPath.endsWith('/index.mdx') || relPath.endsWith('/index.md')) {
-    return relPath.replace(/\/index\.(mdx|md)$/, '.md');
-  }
-  if (relPath.endsWith('.mdx')) {
-    return relPath.replace(/\.mdx$/, '.md');
-  }
-  return relPath;
-}
-
-function generateLlmsTxt(contentFiles, contentDir) {
-  let output = `# FusionAuth Documentation\n\n`;
-  output += `> Comprehensive documentation for FusionAuth CIAM, APIs, Quickstarts, and custom integrations.\n\n`;
-  output += `## Core Documentation\n\n`;
-
-  for (const file of contentFiles) {
-    const rawContent = fs.readFileSync(file, 'utf-8');
-    const { title, description } = extractFrontmatter(rawContent);
-
-    const relPath = rewritePath(path.relative(contentDir, file));
-    const publicUrl = `/docs/${relPath}`;
-
-    const linkTitle = title || path.basename(relPath, '.md');
-    const descText = description ? `: ${description}` : '';
-
-    output += `- [${linkTitle}](${publicUrl})${descText}\n`;
-  }
-
-  return output;
+// Helper to format a folder like "get-started" into "Get Started"
+function formatCategoryName(folderName) {
+  if (!folderName || folderName.endsWith('.md')) return 'Overview';
+  
+  // Handle common acronyms
+  const lower = folderName.toLowerCase();
+  if (lower === 'sdks') return 'SDKs';
+  if (lower === 'api') return 'API';
+  if (lower === 'ciam') return 'CIAM';
+  if (lower === 'oauth') return 'OAuth';
+  
+  // Capitalize hyphenated words
+  return folderName
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 export default function markdownExtractIntegration() {
   return {
-    name: 'markdown-extract',
+    name: 'html-to-markdown-llm',
     hooks: {
-      // 1. Dev Mode: Serve /docs/llms.txt and /docs/.well-known/llms.txt
       'astro:server:setup': ({ server }) => {
-        server.middlewares.use((req, res, next) => {
-          if (
-            req.url === '/docs/llms.txt' || 
-            req.url === '/docs/.well-known/llms.txt'
-          ) {
-            const contentDir = path.resolve('./src/content/docs');
-            const contentFiles = walk(contentDir);
-            const llmsContent = generateLlmsTxt(contentFiles, contentDir);
-
+        server.middlewares.use(async (req, res, next) => {
+          if (req.url === '/docs/llms.txt' || req.url === '/docs/.well-known/llms.txt') {
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-            res.end(llmsContent);
+            res.end(`# FusionAuth Docs (Dev Mode)\n\nRun the production build to generate the full llms.txt index.`);
             return;
           }
 
-          if (req.url && req.url.startsWith('/docs/') && req.url.endsWith('.md')) {
-            const contentDir = path.resolve('./src/content/docs');
-            const subPath = req.url.replace('/docs/', '').replace(/\.md$/, '');
-            let sourceFile = path.join(contentDir, `${subPath}.mdx`);
-            if (!fs.existsSync(sourceFile)) {
-              sourceFile = path.join(contentDir, `${subPath}.md`);
-            }
-            if (!fs.existsSync(sourceFile)) {
-              sourceFile = path.join(contentDir, subPath, 'index.mdx');
-            }
-
-            if (fs.existsSync(sourceFile)) {
-              const inlinedContent = inlineMarkdownImports(sourceFile);
-              res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-              res.end(inlinedContent);
-              return;
+          if (req.url && req.url.includes('?format=md')) {
+            try {
+              const htmlRoute = req.url.split('?')[0];
+              const devServerUrl = `http://${req.headers.host}${htmlRoute}`;
+              const response = await fetch(devServerUrl);
+              
+              if (response.ok) {
+                const htmlString = await response.text();
+                const mdString = htmlToLLMMarkdown(htmlString);
+                
+                res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+                res.end(mdString);
+                return;
+              }
+            } catch (err) {
+              console.error(`Error generating MD for ${req.url}:`, err);
             }
           }
           next();
         });
       },
 
-      // 2. Build Mode: Write static .md files + /docs/llms.txt into dist/
       'astro:build:done': async ({ dir }) => {
-        console.log('Generating markdown docs and /docs/llms.txt...');
+        console.log('Post-processing HTML into LLM-friendly Markdown...');
         const distDir = typeof dir === 'string' 
           ? dir 
           : (dir instanceof URL ? fileURLToPath(dir) : fileURLToPath(new URL(dir)));
+        
+        const htmlFiles = walkHtmlFiles(distDir);
+        
+        // Use a Map to group links by their top-level category
+        const docsCategories = new Map();
 
-        const contentDir = path.resolve('./src/content/docs');
-        const contentFiles = walk(contentDir);
+        for (const htmlFile of htmlFiles) {
+          let htmlContent = fs.readFileSync(htmlFile, 'utf-8');
+          const relPath = path.relative(distDir, htmlFile);
+          const mdPublicUrl = `/${relPath.replace(/\.html$/, '.md').replace(/\\/g, '/')}`;
 
-        for (const file of contentFiles) {
-          const relPath = rewritePath(path.relative(contentDir, file));
-          const outPath = path.join(distDir, 'docs', relPath);
-          const inlinedContent = inlineMarkdownImports(file);
+          let htmlChanged = false;
 
-          fs.mkdirSync(path.dirname(outPath), { recursive: true });
-          fs.writeFileSync(outPath, inlinedContent, 'utf-8');
+          if (htmlContent.includes('id="llm-md-link"')) {
+            htmlContent = htmlContent.replace(
+              /<link\s+id="llm-md-link"\s+([^>]+)?href="([^"]+)"([^>]*)>/,
+              () => `<link rel="alternate" type="text/markdown" title="Page Markdown Source" href="${mdPublicUrl}">`
+            );
+            htmlChanged = true;
+          }
+
+          if (htmlContent.includes('LLM_MD_PATH_PLACEHOLDER')) {
+            htmlContent = htmlContent.replaceAll('LLM_MD_PATH_PLACEHOLDER', mdPublicUrl);
+            htmlChanged = true;
+          }
+
+          if (htmlChanged) {
+            fs.writeFileSync(htmlFile, htmlContent, 'utf-8');
+          }
+
+          const mdContent = htmlToLLMMarkdown(htmlContent);
+          if (!mdContent) continue; 
+
+          const mdFilePath = htmlFile.replace(/\.html$/, '.md');
+          fs.writeFileSync(mdFilePath, mdContent, 'utf-8');
+
+          if (mdPublicUrl.startsWith('/docs/')) {
+            const $ = cheerio.load(htmlContent);
+            const title = $('meta[property="og:title"]').attr('content') || $('title').text().split('|')[0].trim();
+            const description = $('meta[name="description"]').attr('content') || '';
+            const descText = description ? `: ${description}` : '';
+            
+            // Extract the top-level directory (e.g., ['', 'docs', 'get-started', 'page.md'])
+            const pathParts = mdPublicUrl.split('/');
+            const folderName = pathParts[2];
+            const categoryName = formatCategoryName(folderName);
+
+            if (!docsCategories.has(categoryName)) {
+              docsCategories.set(categoryName, []);
+            }
+            docsCategories.get(categoryName).push(`- [${title}](${mdPublicUrl})${descText}`);
+          }
         }
 
-        const llmsContent = generateLlmsTxt(contentFiles, contentDir);
+        // Now, assemble the llms.txt content using the grouped categories
+        let llmsTxt = `# FusionAuth Documentation\n\n`;
+        llmsTxt += `> Comprehensive documentation for FusionAuth CIAM, APIs, Quickstarts, and custom integrations.\n\n`;
+
+        // Ensure "Overview" (root-level docs) appears first if it exists
+        if (docsCategories.has('Overview')) {
+          llmsTxt += `## Overview\n\n${docsCategories.get('Overview').join('\n')}\n\n`;
+          docsCategories.delete('Overview');
+        }
+
+        // Sort the remaining categories alphabetically and append them
+        const sortedCategories = Array.from(docsCategories.keys()).sort();
+        for (const cat of sortedCategories) {
+          llmsTxt += `## ${cat}\n\n${docsCategories.get(cat).join('\n')}\n\n`;
+        }
+
         const docsDir = path.join(distDir, 'docs');
+        fs.mkdirSync(docsDir, { recursive: true });
+        fs.writeFileSync(path.join(docsDir, 'llms.txt'), llmsTxt, 'utf-8');
+        
+        const wellKnownDir = path.join(docsDir, '.well-known');
+        fs.mkdirSync(wellKnownDir, { recursive: true });
+        fs.writeFileSync(path.join(wellKnownDir, 'llms.txt'), llmsTxt, 'utf-8');
 
-        // Write /docs/llms.txt
-        fs.writeFileSync(path.join(docsDir, 'llms.txt'), llmsContent, 'utf-8');
-
-        // Write /docs/.well-known/llms.txt
-        const docsWellKnownDir = path.join(docsDir, '.well-known');
-        fs.mkdirSync(docsWellKnownDir, { recursive: true });
-        fs.writeFileSync(path.join(docsWellKnownDir, 'llms.txt'), llmsContent, 'utf-8');
-
-        console.log('Wrote /docs/llms.txt and /docs/.well-known/llms.txt successfully!');
+        console.log(`Successfully synced HTML links and generated categorized llms.txt!`);
       }
     }
   };
