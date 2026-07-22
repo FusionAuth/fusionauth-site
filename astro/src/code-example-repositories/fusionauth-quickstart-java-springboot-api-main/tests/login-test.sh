@@ -22,10 +22,17 @@ assert_status() {
   local description="$1"
   local expected="$2"
   local actual="$3"
+  local body_file="${4:-}"
   if [ "$actual" = "$expected" ]; then
     echo "  PASS: $description (expected $expected, got $actual)"
   else
     echo "  FAIL: $description (expected $expected, got $actual)"
+    if [ -n "$body_file" ] && [ -f "$body_file" ]; then
+      echo "  --- Response body ---"
+      cat "$body_file"
+      echo ""
+      echo "  --- End response body ---"
+    fi
     FAIL=1
   fi
 }
@@ -38,23 +45,23 @@ CUSTOMER_TOKEN=$(login "customer@example.com" "password")
 
 echo "Testing /make-change..."
 CODE=$(curl -s -o /tmp/springboot-mc-teller.json -w "%{http_code}" "$APP_URL/make-change?total=1.02" --cookie "app.at=$TELLER_TOKEN")
-assert_status "teller can call /make-change" 200 "$CODE"
+assert_status "teller can call /make-change" 200 "$CODE" /tmp/springboot-mc-teller.json
 
-CODE=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/make-change?total=1.02" --cookie "app.at=$CUSTOMER_TOKEN")
-assert_status "customer can call /make-change" 200 "$CODE"
+CODE=$(curl -s -o /tmp/springboot-mc-customer.json -w "%{http_code}" "$APP_URL/make-change?total=1.02" --cookie "app.at=$CUSTOMER_TOKEN")
+assert_status "customer can call /make-change" 200 "$CODE" /tmp/springboot-mc-customer.json
 
-CODE=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/make-change?total=1.02")
-assert_status "no token on /make-change is rejected" 401 "$CODE"
+CODE=$(curl -s -o /tmp/springboot-mc-notoken.json -w "%{http_code}" "$APP_URL/make-change?total=1.02")
+assert_status "no token on /make-change is rejected" 401 "$CODE" /tmp/springboot-mc-notoken.json
 
 echo "Testing /panic..."
-CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$APP_URL/panic" --cookie "app.at=$TELLER_TOKEN")
-assert_status "teller can call /panic" 200 "$CODE"
+CODE=$(curl -s -o /tmp/springboot-panic-teller.json -w "%{http_code}" -X POST "$APP_URL/panic" --cookie "app.at=$TELLER_TOKEN")
+assert_status "teller can call /panic" 200 "$CODE" /tmp/springboot-panic-teller.json
 
-CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$APP_URL/panic" --cookie "app.at=$CUSTOMER_TOKEN")
-assert_status "customer is denied /panic" 403 "$CODE"
+CODE=$(curl -s -o /tmp/springboot-panic-customer.json -w "%{http_code}" -X POST "$APP_URL/panic" --cookie "app.at=$CUSTOMER_TOKEN")
+assert_status "customer is denied /panic" 403 "$CODE" /tmp/springboot-panic-customer.json
 
-CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$APP_URL/panic")
-assert_status "no token on /panic is rejected" 401 "$CODE"
+CODE=$(curl -s -o /tmp/springboot-panic-notoken.json -w "%{http_code}" -X POST "$APP_URL/panic")
+assert_status "no token on /panic is rejected" 401 "$CODE" /tmp/springboot-panic-notoken.json
 
 if [ "$FAIL" -eq 0 ]; then
   echo "All login/authorization checks passed."
