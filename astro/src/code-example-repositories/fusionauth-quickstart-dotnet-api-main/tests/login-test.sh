@@ -22,10 +22,17 @@ assert_status() {
   local description="$1"
   local expected="$2"
   local actual="$3"
+  local body_file="${4:-}"
   if [ "$actual" = "$expected" ]; then
     echo "  PASS: $description (expected $expected, got $actual)"
   else
     echo "  FAIL: $description (expected $expected, got $actual)"
+    if [ -n "$body_file" ] && [ -f "$body_file" ]; then
+      echo "  --- Response body ---"
+      cat "$body_file"
+      echo ""
+      echo "  --- End response body ---"
+    fi
     FAIL=1
   fi
 }
@@ -38,23 +45,23 @@ CUSTOMER_TOKEN=$(login "customer@example.com" "password")
 
 echo "Testing /MakeChange..."
 CODE=$(curl -s -o /tmp/dotnet-mc-teller.json -w "%{http_code}" "$APP_URL/MakeChange?total=1.02" --cookie "app.at=$TELLER_TOKEN")
-assert_status "teller can call /MakeChange" 200 "$CODE"
+assert_status "teller can call /MakeChange" 200 "$CODE" /tmp/dotnet-mc-teller.json
 
-CODE=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/MakeChange?total=1.02" --cookie "app.at=$CUSTOMER_TOKEN")
-assert_status "customer can call /MakeChange" 200 "$CODE"
+CODE=$(curl -s -o /tmp/dotnet-mc-customer.json -w "%{http_code}" "$APP_URL/MakeChange?total=1.02" --cookie "app.at=$CUSTOMER_TOKEN")
+assert_status "customer can call /MakeChange" 200 "$CODE" /tmp/dotnet-mc-customer.json
 
-CODE=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/MakeChange?total=1.02")
-assert_status "no token on /MakeChange is rejected" 401 "$CODE"
+CODE=$(curl -s -o /tmp/dotnet-mc-notoken.json -w "%{http_code}" "$APP_URL/MakeChange?total=1.02")
+assert_status "no token on /MakeChange is rejected" 401 "$CODE" /tmp/dotnet-mc-notoken.json
 
 echo "Testing /Panic..."
-CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$APP_URL/Panic" --cookie "app.at=$TELLER_TOKEN")
-assert_status "teller can call /Panic" 200 "$CODE"
+CODE=$(curl -s -o /tmp/dotnet-panic-teller.json -w "%{http_code}" -X POST "$APP_URL/Panic" --cookie "app.at=$TELLER_TOKEN")
+assert_status "teller can call /Panic" 200 "$CODE" /tmp/dotnet-panic-teller.json
 
-CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$APP_URL/Panic" --cookie "app.at=$CUSTOMER_TOKEN")
-assert_status "customer is denied /Panic" 403 "$CODE"
+CODE=$(curl -s -o /tmp/dotnet-panic-customer.json -w "%{http_code}" -X POST "$APP_URL/Panic" --cookie "app.at=$CUSTOMER_TOKEN")
+assert_status "customer is denied /Panic" 403 "$CODE" /tmp/dotnet-panic-customer.json
 
-CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$APP_URL/Panic")
-assert_status "no token on /Panic is rejected" 401 "$CODE"
+CODE=$(curl -s -o /tmp/dotnet-panic-notoken.json -w "%{http_code}" -X POST "$APP_URL/Panic")
+assert_status "no token on /Panic is rejected" 401 "$CODE" /tmp/dotnet-panic-notoken.json
 
 if [ "$FAIL" -eq 0 ]; then
   echo "All login/authorization checks passed."

@@ -18,6 +18,9 @@ docker compose -f docker-compose.yml config > /dev/null
 echo "Building complete-application..."
 docker run --rm -v "$PROJECT_DIR/complete-application:/app" -w /app mcr.microsoft.com/dotnet/sdk:7.0 dotnet build
 
+echo "Pulling latest FusionAuth image..."
+docker compose pull
+
 echo "Starting FusionAuth..."
 docker compose up -d
 
