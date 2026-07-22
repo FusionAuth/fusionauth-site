@@ -130,9 +130,7 @@ export default function markdownExtractIntegration() {
           if (htmlContent.includes('id="llm-md-link"')) {
             htmlContent = htmlContent.replace(
               /<link\s+id="llm-md-link"\s+([^>]+)?href="([^"]+)"([^>]*)>/,
-              (match, beforePart, oldHref, afterPart) => {
-                return `<link rel="alternate" type="text/markdown" title="Page Markdown Source" href="${mdPublicUrl}">`;
-              }
+              () => `<link rel="alternate" type="text/markdown" title="Page Markdown Source" href="${mdPublicUrl}">`
             );
             fs.writeFileSync(htmlFile, htmlContent, 'utf-8');
           }
