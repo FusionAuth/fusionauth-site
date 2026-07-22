@@ -4,7 +4,6 @@ import { unified } from '@astrojs/markdown-remark';
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from '@tailwindcss/vite';
 import indexPages from "astro-index-pages/index.js";
-import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
 import markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
@@ -104,7 +103,6 @@ const config = defineConfig({
           mermaidTitleFix
         ],
         rehypePlugins: [
-          rehypeTasklistEnhancer(),
           rehypeSlug,
           [
             rehypeAutolinkHeadings,
