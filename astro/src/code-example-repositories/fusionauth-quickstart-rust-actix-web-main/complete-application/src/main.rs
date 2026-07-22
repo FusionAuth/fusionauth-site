@@ -28,7 +28,7 @@ async fn main() -> std::io::Result<()> {
             .service(fs::Files::new("/static", "static").show_files_listing())
             .app_data(handlebars_ref.clone())
     })
-    .bind(("127.0.0.1", 9012))?
+    .bind(("0.0.0.0", 9012))?
     .run()
     .await
 }
