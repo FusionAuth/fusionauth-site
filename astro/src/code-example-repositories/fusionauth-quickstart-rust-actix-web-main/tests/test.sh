@@ -20,6 +20,9 @@ echo "Building complete-application..."
 docker run --rm -v "$PROJECT_DIR/complete-application:/app" -w /app rust:1.90 sh -c \
   "apt-get update -qq && apt-get install -y -qq pkg-config libssl-dev >/dev/null 2>&1 && cargo build"
 
+echo "Pulling latest FusionAuth image..."
+docker compose pull
+
 echo "Starting FusionAuth..."
 docker compose up -d
 
@@ -34,7 +37,7 @@ docker logs -f rust-actix &
 LOGS_PID=$!
 
 echo "Waiting for FusionAuth to be ready..."
-until curl -sf http://localhost:9011 > /dev/null 2>&1; do
+until curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "Login | FusionAuth"; do
   echo "  Waiting for FusionAuth..."
   sleep 5
 done
