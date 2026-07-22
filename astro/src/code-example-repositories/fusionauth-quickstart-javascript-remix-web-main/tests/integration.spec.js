@@ -15,7 +15,11 @@ function trackPageDiagnostics(page) {
   return async () => {
     console.log('\n=== DEBUG INFO ===');
     console.log('Page URL:', page.url());
-    console.log('Page HTML:', await page.content());
+    try {
+      console.log('Page HTML:', await page.content());
+    } catch (contentError) {
+      console.log('Page HTML: <unavailable, page/context already closed>', contentError.message);
+    }
     console.log('\nConsole messages:', consoleMessages);
     console.log('\nPage errors:', pageErrors);
     console.log('=== END DEBUG ===\n');
