@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 import indexPages from "astro-index-pages/index.js";
 import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
-import * as markdownExtract from './src/plugins/markdown-extract.js';
+import markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
@@ -131,7 +131,7 @@ const config = defineConfig({
       filter: siteMapFilter
     }),
     indexPages(),
-    markdownExtract.default(),
+    markdownExtract(),
     // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
     process.env.PROD !== 'true' && linkValidator({
       checkExternal: false,
