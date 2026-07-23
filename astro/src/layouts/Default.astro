@@ -9,6 +9,7 @@ import { specialCaps } from 'src/tools/string';
 import { Marked } from 'marked';
 import Kapa from 'src/components/Kapa.astro';
 import CodeCopyButton from 'src/components/CodeCopyButton.astro';
+import { Icon } from "astro-iconset/components";
 
 interface Props {
   author?: string;
@@ -31,6 +32,7 @@ interface Props {
   noBreadcrumb: boolean;
   isIndexPage?: boolean;
   hideBgImage?: boolean;
+  rssUrl?: string;
 }
 
 let {
@@ -54,6 +56,7 @@ let {
   maxTocDepth,
   isIndexPage = false,
   hideBgImage = false,
+  rssUrl,
 } = Astro.props;
 
 author = frontmatter?.author ?? author;
@@ -66,6 +69,7 @@ title = frontmatter?.title ?? title;
 htmlTitle = frontmatter?.htmlTitle ?? title;
 disableTOC = frontmatter?.disableTOC ?? disableTOC;
 hideBgImage = frontmatter?.hideBgImage ?? frontmatter?.hidebgImage ?? hideBgImage;
+rssUrl = frontmatter?.rssUrl ?? frontmatter?.rssUrl ?? rssUrl;
 
 const mainStyles = "mx-auto max-w-8xl px-4 pt-8 grid grid-cols-1 lg:flex 2xl:container";
 const sideNavStyles = "col-start-1 row-start-1 lg:col-auto lg:row-auto order-2 lg:order-1 hidden dark:bg-slate-900 bg-white sticky top-11 h-[calc(100vh-44px)] w-64 -ml-4 -mt-8 z-40 shadow-2xl lg:shadow-none lg:block lg:bg-opacity-0 lg:w-full lg:max-w-[270px] lg:ml-0 lg:mt-0 lg:px-0 lg:pt-0 lg:mr-6 lg:py-0 lg:top-[calc(6rem+1px)] lg:self-start overflow-y-auto lg:max-h-[calc(100vh-100px)] lg:h-auto";
@@ -77,6 +81,7 @@ const mdPath = isProd ? "LLM_MD_PATH_PLACEHOLDER" : Astro.url.pathname + "?forma
 const remark = new Marked();
 const markdownifiedTitle = remark.parseInline(htmlTitle);
 const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.*?\)/g, '$1').trim();
+const contentHtml = await Astro.slots.render('default');
 ---
 
 <!DOCTYPE html>
@@ -161,7 +166,22 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
             </div>
           }
 
-          <h1 class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]} set:html={markdownifiedTitle}></h1>
+            <h1 class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]}>
+              <span set:html={markdownifiedTitle} />
+              
+              {rssUrl && (
+                <a 
+                  href={rssUrl} 
+                  title={`${frontmatter.title} RSS Feed`}
+                  class="not-prose no-underline hover:no-underline border-b-0 inline-flex items-center align-middle ml-3 text-orange-500 hover:text-orange-600 transition-colors"
+                >
+                  <Icon 
+                    name="fa7-solid:rss" 
+                    class="h-6 w-6 shrink-0" 
+                  />
+                </a>
+              )}
+            </h1>
 
           {author && <p class="m-0 text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>}
         </div>
@@ -206,7 +226,7 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
       <aside class={tocStyles}>
         <h3 class="font-semibold text-sm">On this page</h3>
         <nav>
-          <TOC maxDepth={maxTocDepth}/>
+          <TOC maxDepth={maxTocDepth} htmlContent={contentHtml} />
         </nav>
       </aside>
     }

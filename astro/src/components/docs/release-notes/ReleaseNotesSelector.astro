@@ -1,26 +1,122 @@
 ---
+import { getCollection } from 'astro:content';
+
+const allUpdates = await getCollection('releases');
+const updates = allUpdates.sort((a, b) => {
+  const dateDiff = b.data.date.valueOf() - a.data.date.valueOf();
+  if (dateDiff !== 0) return dateDiff;
+  return b.data.version.localeCompare(a.data.version, undefined, { numeric: true });
+});
 ---
 
-<label class="sticky lg:top-16 top-11 z-11 py-5 bg-white dark:bg-slate-900">
-  <select id="release-notes-version" class="border-2 border-gray-300 dark:border-gray-600 focus-ring-indigo-300 h-10 px-2 dark:text-slate-300 dark:bg-slate-800 text-slate-900 bg-gray-100" style="width: 100%;"></select>
-</label>
+<div class="sticky lg:top-14 top-11 z-10 py-3 bg-white dark:bg-slate-900">
+  <label for="release-notes-version" class="sr-only">Jump to a release version</label>
+  <select 
+    id="release-notes-version" 
+    class="w-full border-2 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-300 h-10 px-2 dark:text-slate-300 dark:bg-slate-800 text-slate-900 bg-gray-100 rounded-md cursor-pointer"
+    onchange="if (this.value) window.location.hash = this.value;"
+  >
+    <option value="">Jump to a version...</option>
+    {updates.map((item) => {
+      const versionId = `version-${item.data.version.replaceAll('.', '-')}`;
+      const label = `Version ${item.data.version}${item.data.name ? ` (${item.data.name})` : ''}`;
+      return <option value={versionId}>{label}</option>;
+    })}
+  </select>
+</div>
 
-<slot />
+<script is:inline>
+  const initVersionSpy = () => {
+    const selectEl = document.getElementById('release-notes-version');
+    if (!selectEl) return;
 
-<script>
-  let options = '';
-  const elements = document.querySelectorAll('h2.release-note');
+    const placeholderOption = selectEl.querySelector('option[value=""]');
+    const versions = Array.from(document.querySelectorAll('article.version[id]'));
+    if (versions.length === 0) return;
 
-  for (let i = 0; i < elements.length; i++) {
-    const element = elements[i];
-    options += '<option value="' + element.id + '">' + element.innerHTML.trim().replaceAll('#', '') + '</option>\n';
-  }
+    const HEADER_OFFSET = 210;
+    let currentActiveId = null;
+    let isTicking = false;
+    let hasUserInteracted = false;
 
-  const select = document.getElementById('release-notes-version') as HTMLSelectElement;
-  if (select) {
-    select.insertAdjacentHTML('beforeend', options);
-    select.addEventListener('change', function() {
-      window.location.hash = select.options[select.selectedIndex].value;
+    // Helper to hide and disable the placeholder
+    const disablePlaceholder = () => {
+      if (placeholderOption && !placeholderOption.disabled) {
+        placeholderOption.disabled = true;
+        placeholderOption.hidden = true;
+      }
+    };
+
+    const updateScrollSpy = () => {
+      // Don't auto-select a version if user is still at the top of the page on initial load
+      if (window.scrollY === 0 && !hasUserInteracted) {
+        return;
+      }
+
+      let activeArticle = versions[0];
+
+      for (let i = versions.length - 1; i >= 0; i--) {
+        if (versions[i].getBoundingClientRect().top < HEADER_OFFSET) {
+          activeArticle = versions[i];
+          break;
+        }
+      }
+
+      if (activeArticle) {
+        if (activeArticle.id !== currentActiveId) {
+          currentActiveId = activeArticle.id;
+          selectEl.value = activeArticle.id;
+        }
+        disablePlaceholder();
+      }
+    };
+
+    const onScroll = () => {
+      if (window.scrollY > 0) {
+        hasUserInteracted = true;
+      }
+      if (!isTicking) {
+        window.requestAnimationFrame(() => {
+          updateScrollSpy();
+          isTicking = false;
+        });
+        isTicking = true;
+      }
+    };
+
+    // Hide placeholder immediately if the user selects an option manually
+    selectEl.addEventListener('change', () => {
+      hasUserInteracted = true;
+      disablePlaceholder();
     });
-  }
+
+    // Re-anchor scroll position on CSS filter toggles
+    const filterControls = document.querySelector('.filter-controls');
+    if (filterControls) {
+      filterControls.addEventListener('change', () => {
+        const targetVersion = versions.find(a => a.id === currentActiveId) || versions[0];
+
+        window.requestAnimationFrame(() => {
+          if (targetVersion && hasUserInteracted) {
+            const currentTop = targetVersion.getBoundingClientRect().top;
+            const adjustment = currentTop - HEADER_OFFSET;
+
+            window.scrollBy({
+              top: adjustment,
+              behavior: 'instant'
+            });
+          }
+          updateScrollSpy();
+        });
+      });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    
+    // Initial check (will keep placeholder if page loads at scrollY === 0)
+    updateScrollSpy();
+  };
+
+  document.addEventListener('DOMContentLoaded', initVersionSpy);
+  document.addEventListener('astro:page-load', initVersionSpy);
 </script>
