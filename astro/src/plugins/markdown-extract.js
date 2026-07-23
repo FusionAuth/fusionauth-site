@@ -21,6 +21,11 @@ turndownService.addRule('cardsToLinks', {
   }
 });
 
+turndownService.addRule('tabLabels', {
+  filter: (node) => node.nodeName === 'LABEL' && (node.getAttribute('class') || '').includes('tab-label'),
+  replacement: (content) => `\n### ${content.trim()}\n\n`
+});
+
 function htmlToLLMMarkdown(htmlString) {
   const $ = cheerio.load(htmlString);
   
@@ -32,6 +37,9 @@ function htmlToLLMMarkdown(htmlString) {
 
   const title = $('meta[property="og:title"]').attr('content') || $('title').text();
   const description = $('meta[name="description"]').attr('content') || '';
+
+  // remove the 'hidden' class from tab panels, we actually want this in markdown output
+  containerNode.find('.tab-panel').removeClass('hidden');
 
   // Removes hidden tabs, SVGs, mobile menus, aria-hidden junk, AND the .sr-only LLM directive
   containerNode.find(`
