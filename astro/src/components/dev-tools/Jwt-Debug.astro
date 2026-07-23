@@ -1,235 +1,468 @@
 ---
 import { Icon } from "astro-iconset/components";
-import Textarea from "src/components/Textarea.astro";
 ---
 
-<div id="notificationPanel" class="hidden px-4 py-3 rounded relative mb-4 mt-5 transition-colors duration-200">
-  <Icon name="fa7-solid:check" class="inline h-4 mr-2 icon icon-success hidden" />
-  <Icon name="fa7-solid:x" class="inline h-4 mr-2 icon icon-error hidden" />
-  <p class="notificationMessage inline font-medium"></p>
+<div id="notificationPanel" class="success">
+  <Icon name="fa7-solid:check" class="inline h-4 icon icon-success" />
+  <Icon name="fa7-solid:x" class="inline h-4 icon icon-error" />
+  <p class="notificationMessage inline"></p>
 </div>
 
-<form class="gap-y-6 grid md:grid-cols-2 gap-5 mt-4 mb-8">
-  <div class="row-span-3 flex flex-col h-full">
-    <Textarea 
-      id="encoded-textarea" 
-      name="encoded-textarea" 
-      label="JSON Web Token (JWT)" 
-      required={false} 
-      instructions="Paste your JWT or examine the default." 
-    />
+<div
+  class="gap-y-6 grid md:grid-cols-2 md:grid-rows-[auto,auto,auto] gap-5 mt-4 mb-8 md:min-h-[300px]"
+>
+  <div
+    id="encoded-textarea"
+    class="row-span-3 flex-1 border-0 rounded text-sm w-full focus:outline-none focus:ring-0"
+  >
+    <span class="label block font-medium mb-1">JSON Web Token (JWT) <span class="fieldHelp">Paste your JWT or examine the default</span></span>
   </div>
-  
-  <div class="flex flex-col">
-    <Textarea 
-      id="header-textarea" 
-      name="header-textarea" 
-      label="Header" 
-      required={false} 
-      instructions="Header derived from the first string in the JWT (modifying changes the JWT)." 
-    />
+  <div
+    id="header-textarea"
+    class="flex-1 h-[min-content] border-0 rounded text-sm w-full focus:outline-none focus:ring-0"
+  >
+    <span class="label block font-medium mb-1">Header 
+      <span class="fieldHelp">Header derived from the first string in the JWT (modifying changes the JWT)</span>
+    </span>
   </div>
-  
-  <div class="flex flex-col">
-    <Textarea 
-      id="payload-textarea" 
-      name="payload-textarea" 
-      label="Payload" 
-      required={false} 
-      instructions="Payload derived from the second string in the JWT (modifying changes the JWT)." 
-    />
-  </div>
-  
-  <div class="flex flex-col">
-    <Textarea 
-      id="secret-text" 
-      name="secret-text" 
-      label="Signature validation" 
-      required={false} 
-      instructions="Enter your Secret, PEM, or JWK depending on the signing algorithm." 
-    />
-  </div>
-</form>
 
-<div class="disclaimer border border-yellow-400 bg-yellow-50 dark:border-yellow-400 dark:bg-yellow-800 rounded px-4 py-3 mb-10 flex items-start gap-3">
-  <Icon name="fa7-solid:circle-exclamation" class="inline shrink-0 text-xl text-yellow-600 mt-0.5" />
-  <p class="text-sm italic m-0">FusionAuth respects and protects your data, which never leaves this page. But please don't paste real production tokens here. Treat production JWTs like passwords! Whenever possible, use local development tokens for debugging.</p>
+  <div
+    id="payload-textarea"
+    class="flex-1 border-0 rounded text-sm focus:outline-none focus:ring-0"
+  >
+    <span class="label block font-medium mb-1">Payload
+      <span class="fieldHelp">Payload derived from the second string in the JWT (modifying changes the JWT)</span>
+    </span>
+  </div>
+  <div
+    id="secret-text"
+    class="flex-1 border-0 rounded text-sm focus:outline-none focus:ring-0"
+  >
+    <span class="label block font-medium mb-1">Signature validation <span id="signatureHelp" class="fieldHelp">Enter your Secret, PEM, or JWK depending on the signing algorithm.</span></span>
+  </div>
+</div>
+
+<div class="disclaimer border border-yellow-400 bg-yellow-50 dark:border-yellow-400 dark:bg-yellow-800 rounded px-4 mb-10 flex items-center gap-2">
+  <Icon name="fa7-solid:circle-exclamation" class="inline shrink-0 text-3xl text-yellow-600" />
+  <p class="text-xs italic">FusionAuth respects and protects your data, which never leaves this page. But please don't paste real production tokens here. Treat production JWTs like passwords! Whenever possible, use local development tokens for debugging.</p>
 </div>
 
 <script>
-  import * as jose from "jose";
+  "use strict";
+  import { json } from "@codemirror/lang-json";
+  import {
+    MatchDecorator,
+    ViewPlugin,
+    Decoration,
+    EditorView,
+  } from "@codemirror/view";
+  import { basicSetup } from "codemirror";
   import { verify } from "jsonwebtoken-esm";
+  import * as jose from "jose";
 
-  const defaultToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE0ODUxMzczODQsImlzcyI6ImFjbWUuY29tIiwic3ViIjoiMjlhYzBjMTgtMGI0YS00MmNmLTgyZmMtMDNkNTcwMzE4YTFkIiwiYXBwbGljYXRpb25JZCI6Ijc5MTAzNzM0LTk3YWItNGQxYS1hZjM3LWUwMDZkMDVkMjk1MiIsInJvbGVzIjpbXX0.uTekOEtlWN8C4wGNeL2C-HtI10OM8VKnDsW-WG4TSi0";
-  const defaultSecret = "dqTl/KjAFRqmdpz7ZlFspWgo8Fkbp1Lzd8sd8ea66XM=";
-
-  // DOM Elements (Checks if the component wraps the ID or if it's on the input itself)
-  const getField = (id) => {
-    const el = document.getElementById(id);
-    if (!el) return null;
-    return el.tagName === 'TEXTAREA' || el.tagName === 'INPUT' ? el : el.querySelector('textarea, input');
-  };
-
-  const tokenInput = getField("encoded-textarea");
-  const headerInput = getField("header-textarea");
-  const payloadInput = getField("payload-textarea");
-  const secretInput = getField("secret-text");
-  
-  const notificationPanel = document.getElementById("notificationPanel");
-  const notificationMessage = notificationPanel?.querySelector(".notificationMessage");
-  const iconSuccess = notificationPanel?.querySelector(".icon-success");
-  const iconError = notificationPanel?.querySelector(".icon-error");
-
-  function stringIsJSON(toCheck) {
+  function stringIsJSON(toCheck: string) {
     try {
-      JSON.parse(toCheck);
+      window.JSON.parse(toCheck)
       return true;
     } catch (e) {
       return false;
     }
   }
 
-  function displayError(error) {
-    if (!notificationPanel) return;
-    notificationPanel.classList.remove("hidden", "bg-green-100", "border-green-400", "text-green-700");
-    notificationPanel.classList.add("bg-red-100", "border", "border-red-400", "text-red-700", "dark:bg-red-900", "dark:text-red-300");
-    if (iconSuccess) iconSuccess.classList.add("hidden");
-    if (iconError) iconError.classList.remove("hidden");
-    if (notificationMessage) notificationMessage.innerText = error;
+  const defaultToken =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE0ODUxMzczODQsImlzcyI6ImFjbWUuY29tIiwic3ViIjoiMjlhYzBjMTgtMGI0YS00MmNmLTgyZmMtMDNkNTcwMzE4YTFkIiwiYXBwbGljYXRpb25JZCI6Ijc5MTAzNzM0LTk3YWItNGQxYS1hZjM3LWUwMDZkMDVkMjk1MiIsInJvbGVzIjpbXX0.uTekOEtlWN8C4wGNeL2C-HtI10OM8VKnDsW-WG4TSi0";
+  const defaultSecret =
+    "dqTl/KjAFRqmdpz7ZlFspWgo8Fkbp1Lzd8sd8ea66XM=";
+  const { headers, payload } = decodeJwt(defaultToken);
+
+  function displayError(error: string) {
+    const notificationPanel = document.getElementById("notificationPanel");
+    if (notificationPanel) {
+      notificationPanel.classList.add("error");
+      notificationPanel.classList.remove("success");
+      notificationPanel.querySelector(".notificationMessage").innerText = error;
+    }
   }
 
   function clearError() {
-    if (!notificationPanel) return;
-    notificationPanel.classList.remove("hidden", "bg-red-100", "border-red-400", "text-red-700", "dark:bg-red-900", "dark:text-red-300");
-    notificationPanel.classList.add("bg-green-100", "border", "border-green-400", "text-green-700", "dark:bg-green-900", "dark:text-green-300");
-    if (iconError) iconError.classList.add("hidden");
-    if (iconSuccess) iconSuccess.classList.remove("hidden");
-    if (notificationMessage) notificationMessage.innerText = "JWT and Signature are valid";
-  }
+    const notificationPanel = document.getElementById("notificationPanel");
 
-  function decodeBase64Url(str) {
-    let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-    const pad = base64.length % 4;
-    if (pad) base64 += '='.repeat(4 - pad);
-    try {
-        return decodeURIComponent(window.atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-    } catch (e) {
-        return window.atob(base64);
+    if (notificationPanel) {
+      notificationPanel.classList.remove("error");
+      notificationPanel.classList.add("success");
+      notificationPanel.querySelector(".notificationMessage").innerText =
+        `JWT and Signature are valid`;
     }
   }
 
-  function encodeBase64Url(str) {
-    const base64 = window.btoa(unescape(encodeURIComponent(str)));
-    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  }
-
-  async function verifyJwt(jwt, secret = defaultSecret) {
-    if (!jwt || jwt.split('.').length !== 3) return;
+  async function verifyJwt(jwt: string, secret: string = defaultSecret, alg: string = "RSA256") {
     try {
       clearError();
       if (stringIsJSON(secret)) {
-        let JWKS;
-        const jsonSecret = JSON.parse(secret);
+        let JWKS
+        const jsonSecret = window.JSON.parse(secret)
+
         if (jsonSecret.keys) {
-          JWKS = jose.createLocalJWKSet(jsonSecret);
+          JWKS = jose.createLocalJWKSet(jsonSecret)
         } else {
-          JWKS = jose.createLocalJWKSet({ keys: [jsonSecret] });
+          JWKS = jose.createLocalJWKSet({
+            keys: [jsonSecret],
+          });
         }
-        await jose.jwtVerify(jwt, JWKS);
+        const { payload } = await jose.jwtVerify(jwt, JWKS);
+        return payload;
       } else {
-        verify(jwt, secret, {
+        // If we detect this is a regular string, it's probably PEM or HMACs and can go through as a string
+        const decoded = verify(jwt, secret, {
           algorithms: ["HS256", "HS512", "HS384", "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"],
         });
+        return decoded;
       }
-    } catch (e) {
+    } catch (e: any) {
+      console.log(e)
       if (e.name === "TypeError") {
-        displayError("The public key does not match the current token.");
+        displayError("The public key does not match the current token.")
       } else {
-        displayError("Verification error: " + e.message);
+        displayError("The Secret or Public Key gave the following error: " + e.message);
       }
     }
   }
 
-  function updateFromToken() {
-    const token = tokenInput.value;
-    const parts = token.split(".");
-    let head = "", pay = "";
-
-    if (parts.length > 0 && parts[0]) {
-      try {
-        head = JSON.stringify(JSON.parse(decodeBase64Url(parts[0])), null, 2);
-      } catch(e) {
-        head = "Invalid Header";
-        displayError("Token header is invalid");
-      }
-    }
-    if (parts.length > 1 && parts[1]) {
-      try {
-        pay = JSON.stringify(JSON.parse(decodeBase64Url(parts[1])), null, 2);
-      } catch(e) {
-        pay = "Invalid Payload";
-        displayError("Token payload is invalid");
-      }
-    }
-
-    headerInput.value = head;
-    payloadInput.value = pay;
-
-    if (parts.length === 3) {
-      verifyJwt(token, secretInput.value);
-    } else {
-      displayError("JWT must have 3 parts (Header, Payload, Signature).");
-    }
-  }
-
-  function updateFromParts() {
-    let newHead, newPay;
+  function decodeJwt(stringToDecode: string, secret: string = defaultSecret) {
+    const s = stringToDecode.split(".");
+    let headers, payload;
     try {
-      newHead = encodeBase64Url(JSON.stringify(JSON.parse(headerInput.value)));
-    } catch(e) { return; } // Ignore invalid JSON while typing
+      clearError();
+      headers = window.JSON.stringify(
+        window.JSON.parse(window.atob(s[0])),
+        null,
+        2,
+      );
+    } catch (e) {
+      headers = window.JSON.stringify(
+        {
+          error: "Token header is invalid",
+        },
+        null,
+        2,
+      );
+      displayError("Token header is invalid");
+    }
 
     try {
-      newPay = encodeBase64Url(JSON.stringify(JSON.parse(payloadInput.value)));
-    } catch(e) { return; } 
+      clearError();
+      payload = window.JSON.stringify(
+        window.JSON.parse(window.atob(s[1])),
+        null,
+        2,
+      );
+    } catch (e) {
+      displayError("Token payload is invalid");
+      payload = window.JSON.stringify(
+        {
+          error: "Token payload is invalid",
+        },
+        null,
+        2,
+      );
+    }
 
-    const parts = tokenInput.value.split(".");
-    const sig = parts.length === 3 ? parts[2] : "";
+    try {
+      clearError();
+      verifyJwt(`${s[0]}.${s[1]}.${s[2]}`, secret);
+    } catch (e) {
+      displayError(e.message);
+      console.log(e);
+    }
 
-    const newToken = `${newHead}.${newPay}.${sig}`;
-    tokenInput.value = newToken;
-    verifyJwt(newToken, secretInput.value);
+    return { payload, headers, secret };
   }
 
-  // Bind Events on mount
-  if (tokenInput && headerInput && payloadInput && secretInput) {
-    // Set Defaults
-    tokenInput.value = defaultToken;
-    secretInput.value = defaultSecret;
-
-    // Listeners
-    tokenInput.addEventListener("input", updateFromToken);
-    secretInput.addEventListener("input", () => verifyJwt(tokenInput.value, secretInput.value));
-    headerInput.addEventListener("input", updateFromParts);
-    payloadInput.addEventListener("input", updateFromParts);
-
-    // Initial Trigger
-    updateFromToken();
+  // Function to check if this change is applied via one of our programmatic shifts
+  function isProgrammatic(transactions) {
+    if (
+      transactions.length == 0 ||
+      (transactions.length > 0 &&
+        typeof transactions[0].annotations[0].value !== "number")
+    ) {
+      return false;
+    }
+    return true;
   }
+
+  function dispatchChange(editor: EditorView, data: string) {
+    editor.dispatch({
+      changes: {
+        from: 0,
+        to: editor.state.doc.length,
+        insert: data,
+      },
+    });
+  }
+
+  // Decorator for color coding the token
+  const tokenDec = Decoration.mark({ class: "headerDec" }); // This adds a className to the text that matches the regex.
+
+  const tokenDecorator = new MatchDecorator({
+    regexp: /([^.]+)/g,
+    decoration: () => tokenDec,
+  });
+  const tokenColors = ViewPlugin.define(
+    (view) => {
+      return {
+        decorations: tokenDecorator.createDeco(view),
+        update(u) {
+          this.decorations = tokenDecorator.updateDeco(u, this.decorations);
+        },
+      };
+    },
+    {
+      decorations: (v) => v.decorations,
+    },
+  );
+
+  const secretEditor = new EditorView({
+    parent: document.getElementById("secret-text"),
+    doc: defaultSecret,
+
+    extensions: [
+      basicSetup,
+      tokenColors,
+      EditorView.lineWrapping,
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          const programUpdated = isProgrammatic(update.transactions);
+          if (!programUpdated) {
+            try {
+              clearError();
+              const currentToken = tokenEditor.state.doc.text[0];
+              const docText = update.state.doc.text.join("");
+
+              verifyJwt(currentToken, docText);
+            } catch (e) {
+              console.log(e);
+              displayError(e.message);
+            }
+          }
+        }
+      }),
+    ],
+  });
+
+  // Inits CodeMirror for Tokens
+  const tokenEditor = new EditorView({
+    parent: document.getElementById("encoded-textarea"),
+    doc: defaultToken,
+
+    extensions: [
+      basicSetup,
+      tokenColors,
+      EditorView.lineWrapping,
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          const programUpdated = isProgrammatic(update.transactions);
+          if (!programUpdated) {
+            const currentToken = update.state.doc.text[0];
+            const currentSecret = secretEditor.state.doc.text.join("");
+            const { headers, payload } = decodeJwt(currentToken);
+
+            dispatchChange(headersEditor, headers);
+            dispatchChange(payloadEditor, payload);
+            verifyJwt(currentToken, currentSecret);
+          }
+        }
+      }),
+    ],
+  });
+
+  // Inits CodeMirror for Header
+  const headersEditor = new EditorView({
+    parent: document.getElementById("header-textarea"),
+    doc: headers,
+
+    extensions: [
+      basicSetup,
+      EditorView.lineWrapping,
+      json(),
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          const programUpdated = isProgrammatic(update.transactions);
+          if (!programUpdated) {
+            const currentToken = tokenEditor.state.doc.text[0].split(".");
+            const docText = update.state.doc.text.join("");
+            const updatedHeader = window.btoa(docText);
+
+            tokenEditor.dispatch({
+              changes: {
+                from: 0,
+                to: tokenEditor.state.doc.length,
+                insert: `${updatedHeader}.${currentToken[1]}.${currentToken[2]}`,
+              },
+            });
+          }
+        }
+      }),
+    ],
+  });
+
+  // Inits CodeMirror for Payload
+
+  const payloadEditor = new EditorView({
+    parent: document.getElementById("payload-textarea"),
+    doc: payload,
+    extensions: [
+      basicSetup,
+      EditorView.lineWrapping,
+      json(),
+      EditorView.updateListener.of(async (update) => {
+        if (update.docChanged) {
+          const programUpdated = isProgrammatic(update.transactions);
+          if (!programUpdated) {
+            const docText = update.state.doc.text.join("");
+
+            const currentToken = tokenEditor.state.doc.text[0];
+            const currentTokenArray = currentToken.split(".");
+            const updatedPayload = window.btoa(docText);
+
+            tokenEditor.dispatch({
+              changes: {
+                from: 0,
+                to: tokenEditor.state.doc.length,
+                insert: `${currentTokenArray[0]}.${updatedPayload}.${currentTokenArray[2]}`,
+              },
+            });
+          }
+        }
+      }),
+    ],
+  });
 </script>
 
-<style>
-  /* Ensure the textareas have a good minimum height for viewing JSON objects */
-  :global(#encoded-textarea),
-  :global(#encoded-textarea textarea) {
-    min-height: 250px;
-    height: 100%;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+<style is:global>
+  @reference "tailwindcss";
+
+  .fieldHelp {
+    @apply  block mt-1 font-light text-xs italic;
   }
-  
-  :global(#header-textarea textarea), 
-  :global(#payload-textarea textarea), 
-  :global(#secret-text textarea) {
-    min-height: 120px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  #encoded-textarea {
+    @apply grid grid-rows-[min-content_minmax(0,1fr)];
+  }
+  #header-textarea .cm-editor {
+    @apply md:max-h-[max-content];
+  }
+  #secret-text .cm-editor {
+    max-height: 400px;
+  }
+  #payload-textarea .cm-editor {
+    @apply md:max-h-[max-content];
+  }
+  .cm-editor {
+    @apply flex-1 bg-white rounded-md border border-slate-400 p-2;
+  }
+  .cm-editor {
+    max-height: 100%;
+  }
+  .cm-scroller {
+    overflow: auto;
+  }
+
+  .dark .cm-editor {
+    @apply bg-slate-900;
+  }
+  .dark .cm-focused .cm-cursor {
+    border-left: 1px solid white !important;
+  }
+  .cm-editor .cm-activeLine {
+    background: transparent;
+  }
+  .cm-editor .cm-gutters.cm-gutters-before {
+    display: none;
+  }
+  .cm-gutters {
+    min-height: initial !important;
+  }
+  .headerDec:first-of-type {
+    @apply text-green-600;
+  }
+  .headerDec:first-of-type:hover {
+    @apply bg-green-100;
+  }
+  .dark .headerDec:first-of-type:hover {
+    @apply bg-green-900;
+  }
+  .headerDec:nth-of-type(2) {
+    @apply text-indigo-600;
+  }
+  .headerDec:nth-of-type(2):hover {
+    @apply bg-indigo-100;
+  }
+  .dark .headerDec:nth-of-type(2):hover {
+    @apply bg-indigo-700;
+  }
+  .dark .headerDec:first-of-type {
+    @apply text-green-300;
+  }
+  .dark .headerDec:nth-of-type(2) {
+    @apply text-indigo-300;
+  }
+  .headerDec:nth-of-type(3) {
+    @apply text-red-600;
+  }
+  .headerDec:nth-of-type(3):hover {
+    @apply bg-red-100;
+  }
+  .dark .headerDec:nth-of-type(3) {
+    @apply text-red-500;
+  }
+  .dark .headerDec:nth-of-type(3):hover {
+    @apply bg-red-900;
+  }
+  .dark .ͼc {
+    @apply text-blue-400;
+  }
+  .cm-line {
+    @apply text-indigo-800;
+  }
+  .dark .cm-line {
+    @apply text-indigo-100;
+  }
+  .ͼe {
+    @apply text-red-700;
+  }
+  .ͼd {
+    @apply text-green-700;
+  }
+  .dark .ͼe {
+    @apply text-orange-300;
+  }
+  .dark .ͼd {
+    @apply text-green-300;
+  }
+  #notificationPanel:empty {
+    @apply hidden;
+  }
+  #notificationPanel {
+    @apply px-4 py-3 rounded relative mb-0 mt-5;
+  }
+  #notificationPanel.success {
+    @apply bg-green-100 border border-green-400 text-green-700;
+  }
+  .dark #notificationPanel.success {
+    @apply bg-green-900 text-green-300;
+  }
+    .dark #notificationPanel.error {
+    @apply bg-red-900 text-red-300;
+  }
+  .icon-error,
+  .icon-success {
+    @apply hidden;
+  }
+  #notificationPanel.error {
+    @apply bg-red-100 border border-red-400 text-red-700;
+  }
+  .error .icon-error,
+  .success .icon-success {
+    @apply inline;
   }
 </style>
