@@ -54,6 +54,38 @@ export const mermaidTitleFix = () => {
   };
 };
 
+export const rehypeCopyButton = () => {
+  return (tree) => {
+    visit(tree, 'element', (node, index, parent) => {
+      // Find the code blocks
+      if (node.tagName === 'pre') {
+        
+        // insert new copy code button in a div next to the code block
+        const wrapper = {
+          type: 'element',
+          tagName: 'div',
+          properties: { 
+            className: ['relative', 'group'] 
+          },
+          children: [
+            node,
+            {
+              type: 'element',
+              tagName: 'copy-code-button',
+              properties: {},
+              children: []
+            }
+          ]
+        };
+
+        parent.children[index] = wrapper;
+        
+        return [visit.SKIP, index + 1];
+      }
+    });
+  };
+};
+
 const lightboxProvider = () => {
   return {
     name: 'mdx-lightbox-provider',
@@ -104,6 +136,7 @@ const config = defineConfig({
         ],
         rehypePlugins: [
           rehypeSlug,
+          rehypeCopyButton,
           [
             rehypeAutolinkHeadings,
             {

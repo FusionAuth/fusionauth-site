@@ -118,7 +118,7 @@ const contentHtml = await Astro.slots.render('default');
       });
     }
 
-    // copy Button Logic
+    // copy markdown button
     const copyBtn = document.getElementById("copy-md-btn");
     if (copyBtn) {
       copyBtn.addEventListener("click", async () => {
@@ -140,6 +140,55 @@ const contentHtml = await Astro.slots.render('default');
           console.error("Copy failed", err);
         }
       });
+    }
+
+    // copy code button for code blocks
+    class CopyCodeButton extends HTMLElement {
+      connectedCallback() {
+        this.innerHTML = `
+          <button title="Copy contents" class="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 text-sm rounded hover:bg-indigo-700 text-white/50 leading-none">
+            <i class="fa-solid fa-copy block"></i>
+            <i class="fa-solid fa-check hidden"></i>
+          </button>
+        `;
+    
+        const btn = this.querySelector('button');
+        const iconCopy = this.querySelector('.fa-copy');
+        const iconCheck = this.querySelector('.fa-check');
+    
+        btn.addEventListener('click', async () => {
+          // Look up to the wrapper div, then down to the code element
+          const wrapper = this.closest('.relative.group');
+          const codeElement = wrapper?.querySelector('code');
+          if (!codeElement) return;
+    
+          try {
+            await navigator.clipboard.writeText(codeElement.innerText);
+            
+            // Swap FA icons
+            iconCopy.classList.replace('block', 'hidden');
+            iconCheck.classList.replace('hidden', 'block');
+            
+            // Lock the button visibility
+            btn.classList.remove('opacity-0', 'group-hover:opacity-100');
+            
+            setTimeout(() => {
+              // Swap back
+              iconCopy.classList.replace('hidden', 'block');
+              iconCheck.classList.replace('block', 'hidden');
+              
+              // Restore hover visibility
+              btn.classList.add('opacity-0', 'group-hover:opacity-100');
+            }, 1500);
+          } catch (err) {
+            console.error('Failed to copy: ', err);
+          }
+        });
+      }
+    }
+    
+    if (!customElements.get('copy-code-button')) {
+      customElements.define('copy-code-button', CopyCodeButton);
     }
   </script>
   
