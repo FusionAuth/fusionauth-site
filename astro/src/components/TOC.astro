@@ -1,135 +1,104 @@
 ---
-const { maxDepth = 4 } = Astro.props;
----
+import { parse } from 'node-html-parser';
 
-<nav id="toc-container" data-max-depth={maxDepth} class="overflow-y-auto max-h-[calc(100vh-135px)]"></nav>
+const { maxDepth = 4, htmlContent = '' } = Astro.props;
+
+// fully rendered HTML passed from the default layout
+const root = parse(htmlContent);
+
+const methodColors = {
+  'GET': 'text-blue-600 dark:text-blue-400',
+  'POST': 'text-green-600 dark:text-green-400',
+  'PUT': 'text-orange-600 dark:text-orange-400',
+  'PATCH': 'text-teal-600 dark:text-teal-400',
+  'DELETE': 'text-red-600 dark:text-red-400'
+};
+
+let lastHeadingDepth = 2;
+
+const rawHeadings = Array.from(root.querySelectorAll('h2, h3, h4, h5, h6, [data-toc-type="api"]'))
+  .filter(h => h.id)
+  .map(h => {
+    const isApi = h.hasAttribute('data-toc-type');
+    let depth;
+
+    if (isApi) {
+      depth = lastHeadingDepth;
+    } else {
+      depth = parseInt(h.tagName.substring(1), 10);
+      lastHeadingDepth = depth;
+    }
+
+    return {
+      id: h.id,
+      text: isApi ? h.getAttribute('data-toc-text') : h.textContent.replace(/#/g, '').trim(),
+      depth: depth,
+      isApi: isApi,
+      method: isApi ? h.getAttribute('data-toc-method') : null
+    };
+  });
+
+let tocHtml = '';
+
+if (rawHeadings.length > 0) {
+  const minDepth = Math.min(...rawHeadings.map(h => h.depth));
+
+  function buildTOCString(toc, currentDepth) {
+    const headings = toc.filter(h => h.depth === currentDepth);
+    if (headings.length === 0) return '';
+
+    const isRoot = currentDepth === minDepth;
+    const ulClass = isRoot ? "space-y-3 pt-5" : "space-y-3 ml-4 pt-3";
+    const ulId = isRoot ? 'id="toc-list"' : '';
+
+    let html = `<ul ${ulId} class="${ulClass}" data-widget="scroll-spy">`;
+
+    headings.forEach((heading, idx) => {
+      const nextHeading = headings[idx + 1];
+      const startIndex = toc.findIndex(h => h.id === heading.id) + 1;
+      const endIndex = nextHeading ? toc.findIndex(h => h.id === nextHeading.id) : toc.length;
+      const subHeadings = toc.slice(startIndex, endIndex);
+
+      html += `<li><div class="group" data-widget="scroll-spy-item">`;
+
+      if (heading.isApi) {
+        const colorClass = methodColors[heading.method] || 'text-yellow-600 dark:text-yellow-400';
+        html += `<a href="#${heading.id}" class="block font-mono text-xs text-slate-600 dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900 transition-colors break-all">
+                   <span class="font-bold pr-1.5 uppercase text-[10px] ${colorClass}">${heading.method}</span>
+                   <span>${heading.text}</span>
+                 </a>`;
+      } else {
+        html += `<a href="#${heading.id}" class="block font-medium text-slate-600 text-sm dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900 transition-colors">${heading.text}</a>`;
+      }
+
+      html += `</div>`;
+
+      if (subHeadings.length > 0 && currentDepth < maxDepth) {
+        html += buildTOCString(subHeadings, currentDepth + 1);
+      }
+
+      html += `</li>`;
+    });
+
+    html += `</ul>`;
+    return html;
+  }
+
+  tocHtml = buildTOCString(rawHeadings, minDepth);
+}
+---
+<nav id="toc-container" class="overflow-y-auto max-h-[calc(100vh-135px)]" set:html={tocHtml}></nav>
 
 <script is:inline>
   document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById('toc-container');
     if (!container) return;
 
-    // Pull the prop from the dataset since we are using an inline script
-    const maxDepth = parseInt(container.getAttribute('data-max-depth') || '4', 10);
-    
-    // Map HTTP methods to standard OpenAPI Tailwind colors
-    const methodColors = {
-      'GET': 'text-blue-600 dark:text-blue-400',
-      'POST': 'text-green-600 dark:text-green-400',
-      'PUT': 'text-orange-600 dark:text-orange-400',
-      'PATCH': 'text-teal-600 dark:text-teal-400',
-      'DELETE': 'text-red-600 dark:text-red-400'
-    };
+    // headers from the DOM to track their position
+    const headingElements = Array.from(document.querySelectorAll('h2[id], h3[id], h4[id], h5[id], h6[id], [data-toc-type="api"][id]'));
+    const tocGroups = Array.from(container.querySelectorAll('[data-widget="scroll-spy-item"]'));
 
-    // Keep track of the heading depth as we parse the DOM in order
-    let lastHeadingDepth = 2; 
-
-    const rawHeadings = Array.from(document.querySelectorAll('h2, h3, h4, h5, h6, [data-toc-type="api"]'))
-      .filter(h => {
-        if (!h.id) return false;
-        return h.offsetParent !== null || h.getBoundingClientRect().height > 0;
-      })
-      .map(h => {
-        const isApi = h.hasAttribute('data-toc-type');
-        let depth;
-
-        if (isApi) {
-          depth = lastHeadingDepth; 
-        } else {
-          depth = parseInt(h.tagName.substring(1), 10);
-          lastHeadingDepth = depth; 
-        }
-
-        return {
-          id: h.id,
-          text: isApi ? h.getAttribute('data-toc-text') : h.textContent.replace(/#/g, '').trim(),
-          depth: depth,
-          isApi: isApi,
-          method: isApi ? h.getAttribute('data-toc-method') : null
-        };
-      });
-
-    if (rawHeadings.length === 0) return;
-
-    const minDepth = Math.min(...rawHeadings.map(h => h.depth));
-
-    function buildTOC(toc, currentDepth) {
-      const headings = toc.filter(h => h.depth === currentDepth);
-      if (headings.length === 0) return null;
-
-      const notFirstLevel = currentDepth > minDepth;
-
-      const ul = document.createElement('ul');
-      ul.setAttribute('data-widget', 'scroll-spy');
-      
-      ul.classList.add("space-y-3");
-      if (notFirstLevel) {
-        ul.classList.add("ml-4", "pt-3");
-      } else {
-        ul.classList.add("pt-5");
-        ul.id = "toc-list";
-      }
-
-      headings.forEach((heading, idx) => {
-        const nextHeading = headings[idx + 1];
-        
-        const startIndex = toc.findIndex(h => h.id === heading.id) + 1;
-        const endIndex = nextHeading 
-          ? toc.findIndex(h => h.id === nextHeading.id) 
-          : toc.length;
-          
-        const subHeadings = toc.slice(startIndex, endIndex);
-
-        const li = document.createElement('li');
-
-        const div = document.createElement('div');
-        div.className = "group";
-        div.setAttribute('data-widget', 'scroll-spy-item');
-
-        const a = document.createElement('a');
-        a.href = "#" + heading.id;
-
-        if (heading.isApi) {
-          a.className = "block font-mono text-xs text-slate-600 dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900 transition-colors break-all";
-          
-          const methodSpan = document.createElement('span');
-          const colorClass = methodColors[heading.method] || 'text-yellow-600 dark:text-yellow-400';
-          methodSpan.className = `font-bold pr-1.5 uppercase text-[10px] ${colorClass}`;
-          methodSpan.textContent = heading.method;
-          
-          const pathSpan = document.createElement('span');
-          pathSpan.textContent = heading.text;
-          
-          a.appendChild(methodSpan);
-          a.appendChild(pathSpan);
-        } else {
-          a.className = "block font-medium text-slate-600 text-sm dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900 transition-colors";
-          a.textContent = heading.text;
-        }
-
-        div.appendChild(a);
-        li.appendChild(div);
-
-        if (subHeadings.length > 0 && currentDepth < maxDepth) {
-          const subUl = buildTOC(subHeadings, currentDepth + 1);
-          if (subUl) {
-            li.appendChild(subUl);
-          }
-        }
-
-        ul.appendChild(li);
-      });
-
-      return ul;
-    }
-
-    const tocTree = buildTOC(rawHeadings, minDepth);
-    if (tocTree) {
-      container.appendChild(tocTree);
-    }
-
-    const headingElements = rawHeadings.map(h => document.getElementById(h.id)).filter(Boolean);
-    const tocGroups = Array.from(container.querySelectorAll('.group'));
+    if (headingElements.length === 0 || tocGroups.length === 0) return;
 
     let currentActiveId = null;
     let isTicking = false;
@@ -137,7 +106,7 @@ const { maxDepth = 4 } = Astro.props;
     const updateScrollSpy = () => {
       let activeHeading = headingElements[0];
       
-      // Iterate backward to efficiently find the last header that crossed the threshold
+      // find the last header that crossed the threshold
       for (let i = headingElements.length - 1; i >= 0; i--) {
         if (headingElements[i].getBoundingClientRect().top < 150) {
           activeHeading = headingElements[i];
@@ -145,7 +114,6 @@ const { maxDepth = 4 } = Astro.props;
         }
       }
 
-      // ONLY touch the DOM if the active section actually changed
       if (activeHeading && activeHeading.id !== currentActiveId) {
         currentActiveId = activeHeading.id;
         
@@ -153,14 +121,15 @@ const { maxDepth = 4 } = Astro.props;
         
         const activeLink = container.querySelector(`a[href="#${activeHeading.id}"]`);
         if (activeLink) {
-          const activeGroup = activeLink.closest('.group');
-          activeGroup.classList.add('active');
-          activeGroup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          const activeGroup = activeLink.closest('[data-widget="scroll-spy-item"]');
+          if (activeGroup) {
+            activeGroup.classList.add('active');
+            activeGroup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
         }
       }
     };
 
-    // Throttle scroll events to match the browser's refresh rate
     const onScroll = () => {
       if (!isTicking) {
         window.requestAnimationFrame(() => {
@@ -172,6 +141,6 @@ const { maxDepth = 4 } = Astro.props;
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    updateScrollSpy(); // Initial check on load
+    updateScrollSpy(); // initial check on load
   });
 </script>
