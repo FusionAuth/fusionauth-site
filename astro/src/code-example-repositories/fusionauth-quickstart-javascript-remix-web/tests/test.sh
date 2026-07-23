@@ -17,7 +17,7 @@ cd "$PROJECT_DIR"
 docker compose -f docker-compose.yml config > /dev/null
 
 echo "Type-checking complete-application..."
-docker run --rm -v "$PROJECT_DIR/complete-application:/app" -w /app node:22 sh -c "npm install && npm run typecheck"
+docker run --rm -v "$PROJECT_DIR/complete-application:/app" -w /app node:26 sh -c "npm install && npm run typecheck"
 
 echo "Pulling latest FusionAuth image..."
 docker compose pull
@@ -26,7 +26,7 @@ echo "Starting FusionAuth..."
 docker compose up -d
 
 echo "Starting Remix app..."
-docker run --network host --name remix --rm -v "$PROJECT_DIR/complete-application":/app -w /app node:22 sh -c "npm install && npm run dev -- --host" &
+docker run --network host --name remix --rm -v "$PROJECT_DIR/complete-application":/app -w /app node:26 sh -c "npm install && npm run dev -- --host" &
 REMIX_PID=$!
 until docker inspect remix > /dev/null 2>&1; do
   sleep 1
