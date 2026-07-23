@@ -4,33 +4,80 @@ description: Learn how JWT refresh tokens work and how to use them to authentica
 faIcon: fa-brackets-curly
 color: blue
 ---
+import { Icon } from "astro-iconset/components";
 import Textarea from "src/components/Textarea.astro";
 import Aside from 'src/components/Aside.astro';
-import JWTDebugger from 'src/components/dev-tools/Jwt-Debug.astro'
-import ModularCTA from 'src/components/cta/ModularCTA.astro'
-import BlogButton from 'src/components/BlogButton.astro'
+import ModularCTA from 'src/components/cta/ModularCTA.astro';
+import BlogButton from 'src/components/BlogButton.astro';
 
 This tool allows you to inspect the metadata of a JSON Web Token (JWT) and confirm that it contains the properties you expect it to have.
 
-<JWTDebugger />
-<div class="test-promo">
+<div id="notificationPanel" className="hidden px-4 py-3 rounded relative mb-4 mt-5 transition-colors duration-200">
+  <Icon name="fa7-solid:check" className="inline h-4 mr-2 icon-success hidden" />
+  <Icon name="fa7-solid:x" className="inline h-4 mr-2 icon-error hidden" />
+  <p className="notificationMessage inline font-medium"></p>
+</div>
 
+<form className="gap-y-6 grid md:grid-cols-2 gap-5 mt-4 mb-8">
+  <div className="row-span-3 flex flex-col h-full">
+    <Textarea 
+      id="encoded-textarea" 
+      name="encoded-textarea" 
+      label="JSON Web Token (JWT)" 
+      required={false} 
+      instructions="Paste your JWT or examine the default." 
+    />
+  </div>
+  
+  <div className="flex flex-col">
+    <Textarea 
+      id="header-textarea" 
+      name="header-textarea" 
+      label="Header" 
+      required={false} 
+      instructions="Header derived from the first string in the JWT (modifying changes the JWT)." 
+    />
+  </div>
+  
+  <div className="flex flex-col">
+    <Textarea 
+      id="payload-textarea" 
+      name="payload-textarea" 
+      label="Payload" 
+      required={false} 
+      instructions="Payload derived from the second string in the JWT (modifying changes the JWT)." 
+    />
+  </div>
+  
+  <div className="flex flex-col">
+    <Textarea 
+      id="secret-text" 
+      name="secret-text" 
+      label="Signature validation" 
+      required={false} 
+      instructions="Enter your Secret, PEM, or JWK depending on the signing algorithm." 
+    />
+  </div>
+</form>
+
+<Aside type="caution">
+FusionAuth respects and protects your data, which never leaves this page. But please don't paste real production tokens here. Treat production JWTs like passwords! Whenever possible, use local development tokens for debugging.
+</Aside>
+
+<div className="test-promo">
  <Aside classes="control" title="Take JWTs a step further" type="tip">
-
   One of the biggest uses of JWTs is in your Auth setup. Here are some resources to expand what's possible:
 
   * JWTs help [power passwordless auth in Next.js](/blog/nextjs-and-fusionauth-passwordless?utm_medium=cta&utm_source=dev-tools&utm_campaign=dev_promo)
   * JWTs can play a role in [securing your APIs](/blog/securing-your-api?utm_medium=cta&utm_source=dev-tools&utm_campaign=dev_promo)
   * And don't forget, you can [download and deploy FusionAuth for free](/download?utm_medium=cta&utm_source=dev-tools&utm_campaign=dev_promo) to own your own auth workflow
-  </Aside>
+ </Aside>
 
-  <ModularCTA className="experiment hidden" image="https://cdn.prod.website-files.com/664cfafd1b780dd90b9bc416/69939e3f8cf883514a146d0e_scale.avif">
-{/* eslint-disable-line */}<h3 class="text-3xl mb-6 font-bold">Take JWTs further</h3>
-{/* eslint-disable-line */}<p class="mb-10">JWTs are the backbone of modern authentication and authorization. See how FusionAuth lets you take ownership of your tokens and authentication, by installing for free with Docker.</p>
+ <ModularCTA className="experiment hidden" image="https://cdn.prod.website-files.com/664cfafd1b780dd90b9bc416/69939e3f8cf883514a146d0e_scale.avif">
+{/* eslint-disable-line */}<h3 className="text-3xl mb-6 font-bold">Take JWTs further</h3>
+{/* eslint-disable-line */}<p className="mb-10">JWTs are the backbone of modern authentication and authorization. See how FusionAuth lets you take ownership of your tokens and authentication, by installing for free with Docker.</p>
     <BlogButton size="medium" href="/docs/get-started/download-and-install/docker?utm_medium=cta&utm_source=dev-tools&utm_campaign=dev_promo_adview" label="Install for free" />
-
-  </ModularCTA>
- 
+ </ModularCTA>
 </div>
 
 ## What is a JWT?
@@ -59,7 +106,7 @@ When encoding a JWT, the algorithm is selected and specified in the header of th
 
 During the decoding process, the algorithm specified in the JWT's header is used to verify the signature. The recipient of the token uses the corresponding secret key or public key associated with the algorithm to validate the signature. By re-computing the signature using the same algorithm, the recipient can compare it with the received signature. If they match, it indicates that the JWT has not been tampered with and that the data it contains can be trusted.
 
-Our online JWT decoder lets you examine the contents of any JWT by pasting it into the Token form field. It’ll automatically decode the values and place the header and body into the respective fields.
+Our online JWT decoder lets you examine the contents of any JWT by pasting it into the Token form field. It'll automatically decode the values and place the header and body into the respective fields.
 
 The choice of algorithm depends on the specific security requirements and constraints of the system. HMAC algorithms are symmetric, meaning the same secret key is used for both encoding and decoding. RSA algorithms, on the other hand, are asymmetric, utilizing a public key for verification and a private key for signing. The algorithm used should be strong enough to resist attacks and ensure the integrity and confidentiality of the data within the JWT.
 
@@ -67,7 +114,271 @@ The choice of algorithm depends on the specific security requirements and constr
 
 When handling JWTs, it's crucial to consider JWT security implications, especially because these tokens often hold sensitive data. One of the standard best practices for signed JWTs is to never store sensitive or personally identifiable information (PII) in the payload of a JWT. Since a keyholder can decode JWT data and then read it, storing sensitive information in the payload can expose this data if the JWT is intercepted. Always assume that your JWT can be compromised and only put non-sensitive data into its payload.
 
-In terms of the signing key used with JWTs, it should be kept secret and secure. When using symmetric algorithms like HMAC, the same key is used for signing and verification. This secret key must be kept confidential, and its exposure can lead to severe security risks as an attacker could forge tokens. When using asymmetric algorithms like RSA, a private key signs the token and a public key verifies it. While the public key can be openly shared, the private key must be stored securely. If the private key is compromised, attackers could impersonate the server and issue their own tokens.
+In terms of the signing key used with JWTs, it should be kept secret and secure. When using symmetric algorithms like HMAC, the same key is used for signing and verification. This secret key must be kept confidential, and its exposure can lead to severe security risks as an attacker could forge tokens. When using asymmetric algorithms like RSA, a private key signs the token and a public key verifies it. While the public key can be openly shared, the private key must be stored securely. If the private key is compromised, attackers impersonate the server and issue their own tokens.
 
 Another important security measure is to set short expiration times for your tokens. Long-lived or non-expiring tokens can be a major security risk if they fall into the wrong hands. By setting short expiration times, you limit the time window in which an attacker can misuse a token. Therefore, it's recommended to implement token refresh strategies that issue new tokens as needed, providing continuous access without the need for re-authentication. It's also recommended to use HTTPS for all communications involving JWTs to prevent tokens from being intercepted during transmission. Implementing these practices can significantly improve the security of your application when using JWTs.
 
+<style>{`
+  #encoded-textarea,
+  #encoded-textarea textarea {
+    min-height: 250px;
+    height: 100%;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+  
+  #header-textarea textarea, 
+  #payload-textarea textarea, 
+  #secret-text textarea {
+    min-height: 120px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
+  /* Overlay transparent text layer styles */
+  .jwt-overlay-textarea {
+    color: transparent !important;
+    caret-color: #000;
+  }
+  .dark .jwt-overlay-textarea {
+    caret-color: #fff;
+  }
+
+  /* Syntax Highlighting Colors */
+  .jwt-part-0 { color: #16a34a; } /* green-600 */
+  .jwt-part-1 { color: #4f46e5; } /* indigo-600 */
+  .jwt-part-2 { color: #dc2626; } /* red-600 */
+  .jwt-dot { color: #1e293b; }    /* slate-800 */
+  
+  .dark .jwt-part-0 { color: #86efac; } /* green-300 */
+  .dark .jwt-part-1 { color: #a5b4fc; } /* indigo-300 */
+  .dark .jwt-part-2 { color: #fca5a5; } /* red-300 */
+  .dark .jwt-dot { color: #e2e8f0; }    /* slate-200 */
+`}</style>
+
+<script type="module">{`
+  // We use ESM CDNs for MDX files to ensure native browser compatibility 
+  // without relying on Astro/Vite to bundle the markdown's inline script.
+  import * as jose from "https://esm.sh/jose@5.2.2";
+  import { verify } from "https://esm.sh/jsonwebtoken-esm@1.0.3";
+
+  const defaultToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE0ODUxMzczODQsImlzcyI6ImFjbWUuY29tIiwic3ViIjoiMjlhYzBjMTgtMGI0YS00MmNmLTgyZmMtMDNkNTcwMzE4YTFkIiwiYXBwbGljYXRpb25JZCI6Ijc5MTAzNzM0LTk3YWItNGQxYS1hZjM3LWUwMDZkMDVkMjk1MiIsInJvbGVzIjpbXX0.uTekOEtlWN8C4wGNeL2C-HtI10OM8VKnDsW-WG4TSi0";
+  const defaultSecret = "dqTl/KjAFRqmdpz7ZlFspWgo8Fkbp1Lzd8sd8ea66XM=";
+
+  // DOM Elements
+  const getField = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    return el.tagName === 'TEXTAREA' || el.tagName === 'INPUT' ? el : el.querySelector('textarea, input');
+  };
+
+  const tokenInput = getField("encoded-textarea");
+  const headerInput = getField("header-textarea");
+  const payloadInput = getField("payload-textarea");
+  const secretInput = getField("secret-text");
+  
+  const notificationPanel = document.getElementById("notificationPanel");
+  const notificationMessage = notificationPanel?.querySelector(".notificationMessage");
+  const iconSuccess = notificationPanel?.querySelector(".icon-success");
+  const iconError = notificationPanel?.querySelector(".icon-error");
+
+  // --- OVERLAY SETUP FOR SYNTAX HIGHLIGHTING ---
+  let tokenOverlay;
+  if (tokenInput) {
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.height = '100%';
+    wrapper.style.width = '100%';
+    
+    tokenInput.parentNode.insertBefore(wrapper, tokenInput);
+    wrapper.appendChild(tokenInput);
+    
+    const overlayContainer = document.createElement('div');
+    overlayContainer.style.position = 'absolute';
+    overlayContainer.style.top = '0';
+    overlayContainer.style.left = '0';
+    overlayContainer.style.right = '0';
+    overlayContainer.style.bottom = '0';
+    overlayContainer.style.pointerEvents = 'none'; // Let clicks pass to textarea
+    overlayContainer.style.overflow = 'hidden';
+    overlayContainer.style.zIndex = '10';
+    
+    tokenOverlay = document.createElement('div');
+    overlayContainer.appendChild(tokenOverlay);
+    wrapper.appendChild(overlayContainer);
+    
+    // Make standard text invisible so we only see the colored overlay
+    tokenInput.classList.add('jwt-overlay-textarea');
+    
+    const syncStyles = () => {
+      const comp = window.getComputedStyle(tokenInput);
+      tokenOverlay.style.padding = comp.padding;
+      tokenOverlay.style.fontFamily = comp.fontFamily;
+      tokenOverlay.style.fontSize = comp.fontSize;
+      tokenOverlay.style.lineHeight = comp.lineHeight;
+      tokenOverlay.style.letterSpacing = comp.letterSpacing;
+      tokenOverlay.style.border = comp.border;
+      tokenOverlay.style.borderColor = 'transparent';
+      tokenOverlay.style.boxSizing = comp.boxSizing;
+      tokenOverlay.style.whiteSpace = comp.whiteSpace;
+      tokenOverlay.style.wordBreak = comp.wordBreak;
+      tokenOverlay.style.overflowWrap = comp.overflowWrap;
+      overlayContainer.style.margin = comp.margin;
+    };
+    
+    // Initial sync and handle resizing
+    setTimeout(syncStyles, 50);
+    window.addEventListener('resize', syncStyles);
+    
+    // Sync scrolling
+    tokenInput.addEventListener('scroll', () => {
+      tokenOverlay.style.transform = \`translate(-\${tokenInput.scrollLeft}px, -\${tokenInput.scrollTop}px)\`;
+    });
+  }
+
+  function renderTokenOverlay(token) {
+    if (!tokenOverlay) return;
+    const parts = token.split('.');
+    tokenOverlay.innerHTML = parts.map((part, i) => {
+      return \`<span class="jwt-part-\${i}">\${part}</span>\`;
+    }).join('<span class="jwt-dot">.</span>');
+  }
+  // --- END OVERLAY SETUP ---
+
+  function stringIsJSON(toCheck) {
+    try {
+      JSON.parse(toCheck);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function displayError(error) {
+    if (!notificationPanel) return;
+    notificationPanel.classList.remove("hidden", "bg-green-100", "border-green-400", "text-green-700", "dark:bg-green-900", "dark:text-green-300");
+    notificationPanel.classList.add("bg-red-100", "border", "border-red-400", "text-red-700", "dark:bg-red-900", "dark:text-red-300");
+    if (iconSuccess) iconSuccess.classList.add("hidden");
+    if (iconError) iconError.classList.remove("hidden");
+    if (notificationMessage) notificationMessage.innerText = error;
+  }
+
+  function clearError() {
+    if (!notificationPanel) return;
+    notificationPanel.classList.remove("hidden", "bg-red-100", "border-red-400", "text-red-700", "dark:bg-red-900", "dark:text-red-300");
+    notificationPanel.classList.add("bg-green-100", "border", "border-green-400", "text-green-700", "dark:bg-green-900", "dark:text-green-300");
+    if (iconError) iconError.classList.add("hidden");
+    if (iconSuccess) iconSuccess.classList.remove("hidden");
+    if (notificationMessage) notificationMessage.innerText = "JWT and Signature are valid";
+  }
+
+  function decodeBase64Url(str) {
+    let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = base64.length % 4;
+    if (pad) base64 += '='.repeat(4 - pad);
+    try {
+        return decodeURIComponent(window.atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    } catch (e) {
+        return window.atob(base64);
+    }
+  }
+
+  function encodeBase64Url(str) {
+    const base64 = window.btoa(unescape(encodeURIComponent(str)));
+    return base64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=/g, '');
+  }
+
+  async function verifyJwt(jwt, secret = defaultSecret) {
+    if (!jwt || jwt.split('.').length !== 3) return;
+    try {
+      clearError();
+      if (stringIsJSON(secret)) {
+        let JWKS;
+        const jsonSecret = JSON.parse(secret);
+        if (jsonSecret.keys) {
+          JWKS = jose.createLocalJWKSet(jsonSecret);
+        } else {
+          JWKS = jose.createLocalJWKSet({ keys: [jsonSecret] });
+        }
+        await jose.jwtVerify(jwt, JWKS);
+      } else {
+        verify(jwt, secret, {
+          algorithms: ["HS256", "HS512", "HS384", "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"],
+        });
+      }
+    } catch (e) {
+      if (e.name === "TypeError") {
+        displayError("The public key does not match the current token.");
+      } else {
+        displayError("Verification error: " + e.message);
+      }
+    }
+  }
+
+  function updateFromToken() {
+    const token = tokenInput.value;
+    renderTokenOverlay(token); // Update syntax highlighting
+
+    const parts = token.split(".");
+    let head = "", pay = "";
+
+    if (parts.length > 0 && parts[0]) {
+      try {
+        head = JSON.stringify(JSON.parse(decodeBase64Url(parts[0])), null, 2);
+      } catch(e) {
+        head = "Invalid Header";
+        displayError("Token header is invalid");
+      }
+    }
+    if (parts.length > 1 && parts[1]) {
+      try {
+        pay = JSON.stringify(JSON.parse(decodeBase64Url(parts[1])), null, 2);
+      } catch(e) {
+        pay = "Invalid Payload";
+        displayError("Token payload is invalid");
+      }
+    }
+
+    headerInput.value = head;
+    payloadInput.value = pay;
+
+    if (parts.length === 3) {
+      verifyJwt(token, secretInput.value);
+    } else {
+      displayError("JWT must have 3 parts (Header, Payload, Signature).");
+    }
+  }
+
+  function updateFromParts() {
+    let newHead, newPay;
+    try {
+      newHead = encodeBase64Url(JSON.stringify(JSON.parse(headerInput.value)));
+    } catch(e) { return; } 
+
+    try {
+      newPay = encodeBase64Url(JSON.stringify(JSON.parse(payloadInput.value)));
+    } catch(e) { return; } 
+
+    const parts = tokenInput.value.split(".");
+    const sig = parts.length === 3 ? parts[2] : "";
+
+    const newToken = \`\${newHead}.\${newPay}.\${sig}\`;
+    tokenInput.value = newToken;
+    renderTokenOverlay(newToken); // Update syntax highlighting
+    verifyJwt(newToken, secretInput.value);
+  }
+
+  // Bind Events on mount
+  if (tokenInput && headerInput && payloadInput && secretInput) {
+    // Set Defaults
+    tokenInput.value = defaultToken;
+    secretInput.value = defaultSecret;
+
+    // Listeners
+    tokenInput.addEventListener("input", updateFromToken);
+    secretInput.addEventListener("input", () => verifyJwt(tokenInput.value, secretInput.value));
+    headerInput.addEventListener("input", updateFromParts);
+    payloadInput.addEventListener("input", updateFromParts);
+
+    // Initial Trigger
+    updateFromToken();
+  }
+`}</script>
