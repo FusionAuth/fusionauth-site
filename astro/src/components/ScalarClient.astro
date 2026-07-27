@@ -1,7 +1,6 @@
 ---
 import { getEntry } from "astro:content";
 import Accordion from "src/components/Accordion.astro";
-import { ScalarComponent } from '@scalar/astro'
 
 export interface Props {
   path: string;
@@ -18,106 +17,56 @@ const id = `${method}-${noQueryPath.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase(
 const endpoint = await getEntry('api-endpoints', id);
 const baseSpec = await getEntry('api-endpoints', 'base-spec');
 let isolatedSpec = {};
+
+// Stripped out the wrapper prefixes (.scalar-app / #scalar-app) so they apply correctly
+// inside the CDN's generated DOM. Added !important tags to ensure overrides.
 const customCss = `
-      .darklight-reference { display: none !important; }
-      .api-reference-toolbar { display: none !important; }
-      .download-container { display: none !important; }
+      .darklight-reference,
+      .api-reference-toolbar,
+      .download-container,
+      .scalar-api-reference-header { display: none !important; }
 
-      .scalar-app h3 {
-        font-family: monospace !important;
-      }
+      h3 { font-family: monospace !important; }
+      .section-column { min-height: 0px !important; }
+      .section-columns { display: inline !important; }
+      .section-content .badge { display: none !important; }
+      
+      .introduction-description,
+      .introduction-description-heading,
+      .section-header-wrapper,
+      .scalar-reference-intro-clients,
+      .operation-title,
+      .scalar-sidebar-toggle { display: none !important; }
 
-      .scalar-app .section-column {
-        min-height: 0px;
-      }
+      header { display: none !important; max-height: 0px !important; }
+      .section { padding: 10px 0 10px 0 !important; }
+      .operation-layout { display: block !important; }
+      .section-container { border-top-width: 0px !important; border-bottom-width: 0px !important; }
+      .scalar-app-exit { background: rgba(0,0,0,0.8) !important; }
+      .badge { display: inline-flex !important; align-items: center !important; padding: 5px 6px 3px !important; line-height: 1 !important; }
+      
+      aside.t-doc__sidebar { top: 65px !important; height: calc(100vh - 65px) !important; }
+      [id] { scroll-margin-top: 65px !important; }
 
-      .scalar-app .section-columns {
-        display: inline;
-      }
-
-      .scalar-app .section-content .badge {
-        display: none !important;
-      }
-
-      .scalar-app .introduction-description {
-        display: none;
-      }
-
-      .scalar-app .introduction-description-heading {
-        display: none;
-      }
-
-      .scalar-app .section-header-wrapper {
-        display: none;
-      }
-
-      .scalar-app .scalar-reference-intro-clients {
-        display: none;
-      }
-
-      .scalar-app .operation-title {
-        display: none;
-      }
-
-      .scalar-app .section {
-        padding-top: 10px;
-        padding-bottom: 40px;
-      }
-
-      .scalar-app .operation-layout {
-        display: block;
-      }
-
-      .scalar-app .section-container {
-        border-top-width: 0px;
-        border-bottom-width: 0px;
-      }
-
-      .scalar-app .scalar-sidebar-toggle {
-        display: none;
-      }
-
-      .scalar-app .scalar-app-exit {
-        background: rgba(0,0,0,0.8) !important;
-      }
-
-      .badge {
-        display: inline-flex !important;
-        align-items: center !important;
-        padding: 5px 6px 3px !important;
-        line-height: 1 !important;
-      }
-
-      aside.t-doc__sidebar {
-        top: 65px !important;
-        height: calc(100vh - 65px) !important;
-      }
-
-      #scalar-app [id] {
-        scroll-margin-top: 65px !important;
-      }
-
-      #scalar-app input[type="text"],
-      #scalar-app input[type="password"],
-      #scalar-app input:not([type]) {
+      input[type="text"],
+      input[type="password"],
+      input:not([type]) {
         border: 1px solid var(--scalar-border-color) !important;
         background: var(--scalar-background-2) !important;
         border-radius: 4px !important;
         padding: 4px 8px !important;
       }
-      #scalar-app input[type="text"]:focus,
-      #scalar-app input[type="password"]:focus,
-      #scalar-app input:not([type]):focus {
+      input[type="text"]:focus,
+      input[type="password"]:focus,
+      input:not([type]):focus {
         outline: none !important;
         border-color: var(--scalar-color-accent) !important;
         box-shadow: 0 0 0 2px rgba(245, 131, 32, 0.25) !important;
       }
 
-      html:not(.dark) body, html.dark body {
+      body {
         --scalar-color-accent: #f58320;
         --scalar-background-accent: #fff1e0;
-      }
-      html:not(.dark) body {
         --scalar-color-1: #0f172a;
         --scalar-color-2: #334155;
         --scalar-color-3: #64748b;
@@ -132,7 +81,8 @@ const customCss = `
         --scalar-sidebar-color-active: #f58320;
         --scalar-sidebar-background-active: #fff1e0;
       }
-      html.dark body {
+
+      body.dark, .dark {
         --scalar-color-1: #f1f5f9;
         --scalar-color-2: #cbd5e1;
         --scalar-color-3: #94a3b8;
@@ -203,7 +153,6 @@ if (doesNotExist) {
     return isolatedComponents;
   }
 
-  // Build the final optimized payload
   isolatedSpec = {
     ...baseSpec.data,
     components: extractUsedComponents(endpoint.data.operation, baseSpec.data.components),
@@ -219,24 +168,75 @@ if (doesNotExist) {
       url: 'http://localhost:9011',
       description: '⚠️ Requests failing? [Configure CORS](/docs/apis/configure-cors) for your test instance.',
     }
-  ]
+  ];
 }
+
+// Pass customCss back into the config so Scalar injects it directly
+const scalarConfig = {
+  layout: 'modern',
+  hideDarkModeToggle: true,
+  documentDownloadType: 'none',
+  agent: { disabled: true },
+  showSidebar: false,
+  withDefaultFonts: false,
+  customCss: customCss
+};
+
+// Generate the fully isolated HTML document with a Dark Mode sync script
+const iframeHtml = !doesNotExist ? `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <script>
+      // Automatically sync dark mode class from the parent Astro window
+      const syncTheme = () => {
+        try {
+          const parentHtml = window.parent.document.documentElement;
+          // Check if parent uses .dark class or data-theme="dark"
+          const isDark = parentHtml.classList.contains('dark') || parentHtml.getAttribute('data-theme') === 'dark';
+          
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            document.body.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.body.classList.remove('dark');
+          }
+        } catch(e) {}
+      };
+      
+      // Run immediately on load
+      syncTheme();
+      
+      // Watch the parent window for class changes to toggle in real-time
+      try {
+        const observer = new MutationObserver(syncTheme);
+        observer.observe(window.parent.document.documentElement, { 
+          attributes: true, 
+          attributeFilter: ['class', 'data-theme'] 
+        });
+      } catch(e) {}
+    </script>
+    
+    <script id="api-reference" type="application/json" data-configuration='${JSON.stringify(scalarConfig).replace(/'/g, "&#39;")}'>
+      ${JSON.stringify(isolatedSpec).replace(/'/g, "&#39;")}
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  </body>
+</html>
+` : '';
 ---
+
 {!doesNotExist && <>
 <Accordion>
-<span slot="title">OpenAPI Spec</span>
-<ScalarComponent
-  renderMode="client"
-  configuration={{
-    layout: 'modern',
-    hideDarkModeToggle: true,
-    customCss, // Standard JS key-value shorthand
-    agent: { disabled: true },
-    showSidebar: false,
-    withDefaultFonts: false,
-    content: isolatedSpec
-  }}
-/>
+  <span slot="title">OpenAPI Spec</span>
+  <iframe 
+    srcdoc={iframeHtml} 
+    style="width: 100%; height: 600px; border: none; border-radius: 8px; overflow-y: auto; background: transparent;"
+    title={`API Spec for ${method.toUpperCase()} ${path}`}
+  ></iframe>
 </Accordion>
-
 </>}

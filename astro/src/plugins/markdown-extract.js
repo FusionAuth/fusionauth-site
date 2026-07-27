@@ -1,136 +1,215 @@
-// src/plugins/markdown-extract.ts
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import * as cheerio from 'cheerio';
+import TurndownService from 'turndown';
+import { gfm } from 'turndown-plugin-gfm';
 
-function extractFrontmatter(markdown) {
-  const frontmatterMatch = markdown.match(/^---([\s\S]*?)---/);
-  if (!frontmatterMatch) return { title: null, description: null, content: markdown };
+const turndownService = new TurndownService({
+  headingStyle: 'atx',
+  codeBlockStyle: 'fenced',
+  emDelimiter: '*',
+});
+turndownService.use(gfm);
 
-  const fmContent = frontmatterMatch[1];
-  const contentWithoutFM = markdown.slice(frontmatterMatch[0].length).trimStart();
-
-  // Simple frontmatter parse for title and description (YAML-ish)
-  const lines = fmContent.split(/\r?\n/);
-  let title = null;
-  let description = null;
-
-  for (const line of lines) {
-    const [key, ...rest] = line.split(':');
-    if (!key) continue;
-    const value = rest.join(':').trim();
-
-    if (key.trim() === 'title') title = value;
-    if (key.trim() === 'description') description = value;
+turndownService.addRule('cardsToLinks', {
+  filter: (node) => node.nodeName === 'A' && node.getAttribute('href'),
+  replacement: (content, node) => {
+    const href = node.getAttribute('href');
+    const text = node.textContent.trim().replace(/\s+/g, ' ');
+    return text ? `[${text}](${href})` : '';
   }
+});
 
-  return { title, description, content: contentWithoutFM };
+turndownService.addRule('tabLabels', {
+  filter: (node) => node.nodeName === 'LABEL' && (node.getAttribute('class') || '').includes('tab-label'),
+  replacement: (content) => `\n### ${content.trim()}\n\n`
+});
+
+function htmlToLLMMarkdown(htmlString) {
+  const $ = cheerio.load(htmlString);
+  
+  let containerNode = $('article').first();
+  if (!containerNode.length) containerNode = $('main').first();
+  if (!containerNode.length) containerNode = $('body').first();
+  
+  if (!containerNode.length) return '';
+
+  const title = $('meta[property="og:title"]').attr('content') || $('title').text();
+  const description = $('meta[name="description"]').attr('content') || '';
+
+  // remove the 'hidden' class from tab panels, we actually want this in markdown output
+  containerNode.find('.tab-panel').removeClass('hidden');
+
+  // Removes hidden tabs, SVGs, mobile menus, aria-hidden junk, AND the .sr-only LLM directive
+  containerNode.find(`
+    script, style, svg, button, nav, footer, aside, 
+    .not-prose.hidden, [aria-hidden="true"], .hidden, .sr-only, dialog, noscript
+  `).remove();
+
+  const rawHtml = containerNode.html();
+  const markdownContent = turndownService.turndown(rawHtml);
+
+  let output = `> For the complete documentation index, see [llms.txt](/docs/llms.txt)\n\n`;
+  if (title) output += `# ${title}\n\n`;
+  if (description) output += `${description}\n\n`;
+  
+  output += markdownContent;
+  return output;
 }
 
-function walk(dir, extFilter = ['.md', '.mdx']) {
+function walkHtmlFiles(dir) {
   const results = [];
-
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = path.join(dir, entry.name);
-    // console.log('processing: '+entry.name);
-
     if (entry.isDirectory()) {
-      results.push(...walk(fullPath, extFilter));
-    } else if (!entry.name.startsWith('_') && extFilter.includes(path.extname(entry.name))) {
+      results.push(...walkHtmlFiles(fullPath));
+    } else if (entry.name.endsWith('.html')) {
       results.push(fullPath);
     }
   }
-
   return results;
 }
 
-const importRegex = /^\s*import\s+.*?['"](.+?)['"]\s*;?\s*$/gm;
-
-
-function inlineMarkdownImports(filePath, seen = new Set()) {
-  if (seen.has(filePath)) {
-    console.warn(`Skipping already inlined file: ${filePath}`);
-    return '';
-  }
-
-  seen.add(filePath);
-
-  let content = fs.readFileSync(filePath, 'utf-8');
-
-  // Map of import name => file path (only for inlining)
-  const importMap = new Map();
-
-  // Strip ALL import statements, but collect paths we care about
-  content = content.replace(importRegex, (match, importPath) => {
-    const importNameMatch = match.match(/import\s+(\w+)\s+from/);
-    if (!importNameMatch) return ''; // remove malformed import
-
-    const importName = importNameMatch[1];
-    const resolvedPath = path.resolve('./', importPath);
-
-    if (!fs.existsSync(resolvedPath)) {
-      console.warn(`Import not found: ${resolvedPath}`);
-      return `<!-- Missing import: ${importPath} -->`;
-    }
-
-    // Only inline if it's in src/content
-    if (resolvedPath.includes(path.normalize('/src/content/'))) {
-      importMap.set(importName, resolvedPath);
-    }
-
-    // Regardless of whether we inline, we remove the import line
-    return '';
-  });
-
-  // Replace usages of inlined components with their content
-  for (const [name, resolvedPath] of importMap.entries()) {
-    const componentTagRegex = new RegExp(`<${name}(\\s*[^>]*)?\\s*/>`, 'g');
-    const inlinedContent = inlineMarkdownImports(resolvedPath, seen);
-    content = content.replace(
-      componentTagRegex,
-      inlinedContent
-    );
-  }
-
-  const { title, description, content: bodyContent } = extractFrontmatter(content);
-
-  let header = '';
-  if (title) header += `# ${title}\n\n`;
-  if (description) header += `${description}\n\n`;
-
-  return header + bodyContent;
-
+// Helper to format a folder like "get-started" into "Get Started"
+function formatCategoryName(folderName) {
+  if (!folderName || folderName.endsWith('.md')) return 'Overview';
+  
+  // Handle common acronyms
+  const lower = folderName.toLowerCase();
+  if (lower === 'sdks') return 'SDKs';
+  if (lower === 'api') return 'API';
+  if (lower === 'ciam') return 'CIAM';
+  if (lower === 'oauth') return 'OAuth';
+  
+  // Capitalize hyphenated words
+  return folderName
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
-
-function rewritePath(relPath) {
-  if (relPath.endsWith('/index.mdx')) {
-    return relPath.replace(/\/index\.mdx$/, '.mdx');
-  }
-  return relPath;
-}
-
 
 export default function markdownExtractIntegration() {
   return {
-    name: 'markdown-extract',
+    name: 'html-to-markdown-llm',
     hooks: {
+      'astro:server:setup': ({ server }) => {
+        server.middlewares.use(async (req, res, next) => {
+          if (req.url === '/docs/llms.txt' || req.url === '/docs/.well-known/llms.txt') {
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            res.end(`# FusionAuth Docs (Dev Mode)\n\nRun the production build to generate the full llms.txt index.`);
+            return;
+          }
+
+          if (req.url && req.url.includes('?format=md')) {
+            try {
+              const htmlRoute = req.url.split('?')[0];
+              const devServerUrl = `http://${req.headers.host}${htmlRoute}`;
+              const response = await fetch(devServerUrl);
+              
+              if (response.ok) {
+                const htmlString = await response.text();
+                const mdString = htmlToLLMMarkdown(htmlString);
+                
+                res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+                res.end(mdString);
+                return;
+              }
+            } catch (err) {
+              console.error(`Error generating MD for ${req.url}:`, err);
+            }
+          }
+          next();
+        });
+      },
+
       'astro:build:done': async ({ dir }) => {
-        console.log('Copying content collection entries...');
-        const contentDir = path.resolve('./src/content/docs');
-        const contentFiles = walk(contentDir);
+        console.log('Post-processing HTML into LLM-friendly Markdown...');
+        const distDir = typeof dir === 'string' 
+          ? dir 
+          : (dir instanceof URL ? fileURLToPath(dir) : fileURLToPath(new URL(dir)));
+        
+        const htmlFiles = walkHtmlFiles(distDir);
+        const docsCategories = new Map();
 
-        for (const file of contentFiles) {
-          // console.log(file);
-          const relPath = rewritePath(path.relative(contentDir, file));
-          const outPath = path.join(dir.pathname || dir,'docs', relPath);
-          const inlinedContent = inlineMarkdownImports(file);
+        // Process all HTML files into Markdown
+        for (const htmlFile of htmlFiles) {
+          let htmlContent = fs.readFileSync(htmlFile, 'utf-8');
+          const relPath = path.relative(distDir, htmlFile);
+          const mdPublicUrl = `/${relPath.replace(/\.html$/, '.md').replace(/\\/g, '/')}`;
 
-          fs.mkdirSync(path.dirname(outPath), { recursive: true });
-          fs.writeFileSync(outPath, inlinedContent, 'utf-8');
-          // fs.copyFileSync(file, outPath);
-          console.log(`Wrote content: ${relPath}`);
+          let htmlChanged = false;
+          if (htmlContent.includes('id="llm-md-link"')) {
+            htmlContent = htmlContent.replace(
+              /<link\s+id="llm-md-link"\s+([^>]+)?href="([^"]+)"([^>]*)>/,
+              () => `<link rel="alternate" type="text/markdown" title="Page Markdown Source" href="${mdPublicUrl}">`
+            );
+            htmlChanged = true;
+          }
+          if (htmlContent.includes('LLM_MD_PATH_PLACEHOLDER')) {
+            htmlContent = htmlContent.replaceAll('LLM_MD_PATH_PLACEHOLDER', mdPublicUrl);
+            htmlChanged = true;
+          }
+          if (htmlChanged) {
+            fs.writeFileSync(htmlFile, htmlContent, 'utf-8');
+          }
+
+          const mdContent = htmlToLLMMarkdown(htmlContent);
+          if (!mdContent) continue; 
+
+          const mdFilePath = htmlFile.replace(/\.html$/, '.md');
+          fs.writeFileSync(mdFilePath, mdContent, 'utf-8');
+
+          if (mdPublicUrl.startsWith('/docs/')) {
+            const $ = cheerio.load(htmlContent);
+            const title = $('meta[property="og:title"]').attr('content') || $('title').text().split('|')[0].trim();
+            const description = $('meta[name="description"]').attr('content') || '';
+            const descText = description ? `: ${description}` : '';
+            
+            const pathParts = mdPublicUrl.split('/');
+            const folderName = pathParts[2];
+            const categoryName = formatCategoryName(folderName);
+
+            if (!docsCategories.has(categoryName)) {
+              docsCategories.set(categoryName, []);
+            }
+            docsCategories.get(categoryName).push(`- [${title}](${mdPublicUrl})${descText}`);
+          }
         }
+        
+        const docsDir = path.join(distDir, 'docs');
+        fs.mkdirSync(docsDir, { recursive: true });
+        
+        let rootLlmsTxt = `# FusionAuth Documentation\n\n> Comprehensive documentation for FusionAuth CIAM, APIs, Quickstarts, and custom integrations.\n\n## Documentation Sections\n\n`;
+        
+        // Ensure "Overview" links are placed directly in the root file
+        if (docsCategories.has('Overview')) {
+          rootLlmsTxt += docsCategories.get('Overview').join('\n') + '\n\n';
+          docsCategories.delete('Overview');
+        }
+
+        // For all other categories, create a separate sub-index file
+        const sortedCategories = Array.from(docsCategories.keys()).sort();
+        for (const cat of sortedCategories) {
+          const safeFileName = `llms-${cat.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.txt`;
+          const catFilePath = path.join(docsDir, safeFileName);
+          
+          const catLlmsTxt = `# ${cat} Documentation\n\n${docsCategories.get(cat).join('\n')}\n`;
+          fs.writeFileSync(catFilePath, catLlmsTxt, 'utf-8');
+          
+          // Add a link from the root index to this sub-index
+          rootLlmsTxt += `- [${cat} Documentation](/docs/${safeFileName})\n`;
+        }
+
+        // Save the root index
+        fs.writeFileSync(path.join(docsDir, 'llms.txt'), rootLlmsTxt, 'utf-8');
+        
+        const wellKnownDir = path.join(docsDir, '.well-known');
+        fs.mkdirSync(wellKnownDir, { recursive: true });
+        fs.writeFileSync(path.join(wellKnownDir, 'llms.txt'), rootLlmsTxt, 'utf-8');
+
+        console.log(`Successfully synced HTML links and generated hub-and-spoke llms.txt!`);
       }
     }
-  }
+  };
 }
-
