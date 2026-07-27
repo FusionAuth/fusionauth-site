@@ -9,16 +9,12 @@ interface Props {
 
 const { frontmatter, collection, basePath } = Astro.props;
 
-// Strips everything environment-specific so we only compare the core slug.
 const normalizeForMatch = (p: string | null) => {
   if (!p) return "";
   let clean = decodeURI(p);
-  
-  // If the server retained the base path, strip it out for comparison
   if (clean.startsWith(basePath)) {
     clean = clean.substring(basePath.length);
   }
-  
   return clean
     .replace(/\.(md|mdx|html)$/i, '')
     .replace(/\/index$/i, '')
@@ -113,7 +109,6 @@ function markActiveAndOpen(node: any): boolean {
 
 markActiveAndOpen(treeRoot);
 
-// Sorting logic
 function getSortedArray(nodeChildren: Record<string, any>) {
   const childrenArray = Object.values(nodeChildren);
 
@@ -139,8 +134,8 @@ function getSortedArray(nodeChildren: Record<string, any>) {
 const treeArray = getSortedArray(treeRoot.children);
 ---
 
-<aside class="w-64 flex-shrink-0 h-[calc(100vh-4rem)] sticky top-16 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 pt-2 pr-2 pl-0">
-  <nav class="flex flex-col gap-1">
+<aside class="sb-aside">
+  <nav class="sb-nav">
     {treeArray.map(node => (
       <SidebarItem node={node} />
     ))}
@@ -149,11 +144,11 @@ const treeArray = getSortedArray(treeRoot.children);
 
 <script>
   document.addEventListener('click', (e) => {
-    const link = (e.target as HTMLElement).closest('.group\\/folder > summary > a.sidebar-link');
+    const link = (e.target as HTMLElement).closest('.sb-folder > .sb-sum > a.sb-lnk');
     
     if (link) {
       const details = link.closest('details');
-      // If the folder is closed, prevent navigation and open it
+      // If closed, expand section first. If open, allow standard <a> navigation.
       if (details && !details.open) {
         e.preventDefault();
         details.open = true;
@@ -161,3 +156,117 @@ const treeArray = getSortedArray(treeRoot.children);
     }
   });
 </script>
+
+<style is:global>
+  @reference "tailwindcss";
+
+  /* LIGHT THEME */
+  .sb-aside {
+    @apply w-64 flex-shrink-0 h-[calc(100vh-4rem)] sticky top-16 border-r border-gray-200 bg-white pt-2 pr-2 pl-0;
+  }
+  .sb-nav {
+    @apply flex flex-col gap-1;
+  }
+  .sb-sum {
+    @apply flex items-center justify-between cursor-pointer list-none select-none rounded gap-1;
+    text-decoration: none !important;
+  }
+  .sb-sum::-webkit-details-marker,
+  .sb-sum::marker {
+    display: none;
+  }
+
+  /* folder-style unvisitable index pages */
+  .sb-sum.sb-no-link:hover {
+    @apply bg-slate-100;
+  }
+
+  /* Link Base Styles */
+  .sb-lnk {
+    @apply flex-1 font-medium text-sm text-slate-700 py-1 px-2 rounded transition-colors no-underline;
+  }
+  .sb-child {
+    @apply block font-medium text-sm text-slate-600 py-1 pl-4 pr-2 rounded transition-colors no-underline;
+  }
+
+  /* index pages and leaf links */
+  a.sb-lnk:hover,
+  a.sb-child:hover {
+    @apply bg-slate-100 text-indigo-600;
+  }
+
+  /* Chevron Button Target */
+  .sb-chv {
+    @apply flex items-center justify-center w-7 h-7 rounded text-gray-400 transition-colors shrink-0;
+  }
+
+  /* Visitable Sections: SEPARATE Hover for Chevron Button */
+  .sb-sum:not(.sb-no-link) .sb-chv:hover {
+    @apply bg-slate-100 text-slate-700;
+  }
+
+  .sb-chv::after {
+    content: '';
+    display: inline-block;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg); /* Points Right > */
+    transition: transform 0.2s ease-in-out;
+    box-sizing: border-box;
+  }
+
+  details[open] > .sb-sum .sb-chv::after {
+    transform: rotate(45deg); /* Points Down v */
+  }
+
+  /* Active State (aria-current) */
+  .sb-lnk[aria-current="page"],
+  .sb-child[aria-current="page"] {
+    @apply font-semibold text-indigo-600 bg-indigo-50;
+  }
+
+  /* Ancestor Folder State */
+  .sb-lnk.s-anc,
+  .sb-child.s-anc {
+    @apply font-semibold text-slate-900;
+  }
+
+  .sb-kids {
+    @apply flex flex-col gap-0.5 pl-2;
+  }
+
+  .sb-sum:has(> [aria-current="page"]) .sb-chv {
+    @apply text-indigo-500;
+  }
+
+  /* DARK THEME OVERRIDES */
+  .dark .sb-aside {
+    @apply border-gray-800 bg-gray-900;
+  }
+  .dark .sb-sum.sb-no-link:hover {
+    @apply bg-slate-800;
+  }
+  .dark .sb-lnk {
+    @apply text-slate-200;
+  }
+  .dark .sb-child {
+    @apply text-slate-400;
+  }
+  .dark a.sb-lnk:hover,
+  .dark a.sb-child:hover {
+    @apply bg-slate-800 text-indigo-400;
+  }
+  .dark .sb-sum:not(.sb-no-link) .sb-chv:hover {
+    @apply bg-slate-800 text-slate-200;
+  }
+  .dark .sb-lnk[aria-current="page"],
+  .dark .sb-child[aria-current="page"] {
+    @apply text-indigo-400 bg-indigo-950/40;
+  }
+  .dark .sb-lnk.s-anc,
+  .dark .sb-child.s-anc {
+    @apply text-white;
+  }
+</style>
