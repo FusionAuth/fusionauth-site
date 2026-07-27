@@ -17,22 +17,27 @@ interface Props {
   buttons: Button[];
   colorThemeOverride: string;
   noSideNav?: boolean;
+  hideSidebarToggle?: boolean;      
+  hideMobileCategories?: boolean;   
 }
 
-const { sectionTitle, breadcrumbs, sectionTitleHref, categoryItems, moreItems, categoryLabel, buttons, colorThemeOverride, noSideNav }: Props = Astro.props;
+const { 
+  sectionTitle, breadcrumbs, sectionTitleHref, categoryItems, moreItems, 
+  categoryLabel, buttons, colorThemeOverride, noSideNav, 
+  hideSidebarToggle, hideMobileCategories 
+}: Props = Astro.props;
 
 const logoColorClass = colorThemeOverride === "light" ? "text-[#334155]" 
                      : colorThemeOverride === "dark"  ? "text-white" 
                      : "text-[#334155] dark:text-white";
 
-// Array structure to dry up the duplicate popout menus
+// Track which menu is the category menu for targeting later
 const menus = [
-  { items: categoryItems, label: categoryLabel },
-  { items: moreItems, label: 'Resources' }
+  { items: categoryItems, label: categoryLabel, isCategory: true },
+  { items: moreItems, label: 'Resources', isCategory: false }
 ];
 
-// Ensure search and theme buttons render on mobile, plus any explicitly marked for mobile
-const mobileButtons = buttons?.filter(b => b.mobile || ['search', 'theme'].includes(b.key)) || [];
+const mobileButtons = buttons?.filter(b => b.mobile || ['search', 'dark-mode'].includes(b.key)) || [];
 ---
 
 <div id="main-header" class="bg-slate-900 block border-b border-solid border-slate-600 lg:sticky sticky top-0 z-50 xl:shadow-lg text-left">
@@ -84,40 +89,24 @@ const mobileButtons = buttons?.filter(b => b.mobile || ['search', 'theme'].inclu
     <div id="nested-mobile-nav" class="flex lg:hidden sticky top-0 z-50 mx-auto px-4 py-2 w-full items-center">
       
       <!-- Mobile Sidebar Toggle -->
-      <div class="mr-2 flex items-center">
-        <!-- Retained visibility-button JS hook since it controls external sidebar -->
-        <button data-widget="visibility-button" data-element="side-nav" class="flex h-7 w-7 hover:bg-gray-700 [&>svg]:hover:stroke-indigo-500 items-center justify-center rounded" aria-label="Show Menu">
-          <MobileMenuIcon />
-        </button>
-      </div>
-        
-      <!-- Breadcrumbs -->
-      <div class="flex-1 min-w-0 mr-4 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        <nav>
-          <ul class="flex items-center m-0 p-0 whitespace-nowrap">
-            {breadcrumbs?.map((crumb, idx) => <>
-              <li class="inline-block list-none font-medium hover:text-indigo-600 text-slate-400 text-sm capitalize">
-                <a href={crumb.href}>{specialCaps(crumb.title)}</a>
-              </li>
-              {(idx < breadcrumbs.length - 1) && <span class="mx-2 text-slate-400">/</span>}
-            </>)}
-          </ul>
-        </nav>
-      </div>
+      {!hideSidebarToggle && (
+        <div class="mr-3 flex items-center shrink-0">
+          <button data-widget="visibility-button" data-element="side-nav" class="flex h-7 w-7 hover:bg-gray-700 [&>svg]:hover:stroke-indigo-500 items-center justify-center rounded transition-colors" aria-label="Show Menu">
+            <MobileMenuIcon />
+          </button>
+        </div>
+      )}
 
-      <!-- Mobile Dropdowns & Actions -->
-      <div class="ml-auto flex items-center gap-2 shrink-0">
-        
-        {/* Render Mobile Nav Buttons (Theme, Search, etc.) */}
-        {mobileButtons.map(button => <NavButton name={button.key}/>)}
-
-        {menus.map(menu => menu.items?.length > 0 && (
+      <!-- Mobile Dropdowns (Moved to the left side!) -->
+      <div class="flex items-center gap-2 shrink-0">
+        {menus.map(menu => (menu.items?.length > 0 && !(hideMobileCategories && menu.isCategory)) && (
           <details class="group relative">
             <summary class="list-none flex items-center px-2 py-1.5 text-[11px] uppercase tracking-wide font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded border border-slate-600 transition-colors cursor-pointer after:content-[''] after:inline-block after:w-1 after:h-1 after:border-r-2 after:border-b-2 after:border-current after:ml-1.5 after:mb-[2px] after:rotate-45 after:transition-transform group-open:after:-rotate-[135deg] group-open:after:translate-y-[2px] [&::-webkit-details-marker]:hidden">
               <span>{menu.label}</span>
             </summary>
             
-            <div class="absolute right-0 top-full mt-3 w-48 bg-white dark:bg-slate-900 border border-slate-500 dark:border-slate-800 rounded-md shadow-xl overflow-hidden z-[60]">
+            {/* NOTE: Changed right-0 to left-0 so the menu pops out to the right instead of off the screen! */}
+            <div class="absolute left-0 top-full mt-3 w-48 bg-white dark:bg-slate-900 border border-slate-500 dark:border-slate-800 rounded-md shadow-xl overflow-hidden z-[60]">
               <ul class="flex flex-col m-0 p-0">
                 {menu.items.map(item => (
                   <li class="m-0 p-0 text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -131,21 +120,44 @@ const mobileButtons = buttons?.filter(b => b.mobile || ['search', 'theme'].inclu
           </details>
         ))}
       </div>
+        
+      <!-- Breadcrumbs -->
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <div class="flex-1 min-w-0 mx-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <nav>
+            <ul class="flex items-center m-0 p-0 whitespace-nowrap">
+              {breadcrumbs.map((crumb, idx) => <>
+                <li class="inline-block list-none font-medium hover:text-indigo-600 text-slate-400 text-sm capitalize">
+                  <a href={crumb.href}>{specialCaps(crumb.title)}</a>
+                </li>
+                {(idx < breadcrumbs.length - 1) && <span class="mx-2 text-slate-400">/</span>}
+              </>)}
+            </ul>
+          </nav>
+        </div>
+      )}
+
+      <!-- Mobile Actions (Theme, Search - Pushed to the right by ml-auto) -->
+      <div class="ml-auto flex items-center gap-2 shrink-0">
+        {mobileButtons.map(button => button.key === 'search' ? (
+          <div class="flex h-7 w-7 items-center justify-center rounded hover:bg-gray-700 cursor-pointer transition-colors">
+            <NavButton name={button.key}/>
+          </div>
+        ) : (
+          <NavButton name={button.key}/>
+        ))}
+      </div>
+      
     </div>
   }
 </div>
 
 <script>
-  // Close details dialogs when clicking outside, and ensure mutual exclusivity
   document.addEventListener('click', (event) => {
     const header = document.getElementById('main-header');
     if (!header) return;
 
-    // Find if the click originated from inside a <details> block
     const clickedDetails = (event.target as HTMLElement).closest('details');
-    
-    // Find ALL open <details> tags inside the header. 
-    // If they aren't the exact one the user just clicked, force them closed.
     header.querySelectorAll('details[open]').forEach(details => {
       if (details !== clickedDetails) {
         details.removeAttribute('open');
