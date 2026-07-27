@@ -2,62 +2,38 @@
 import { Marked } from "marked";
 
 const { node } = Astro.props;
-
 const childNodes = node.sortedChildren || [];
-const hasChildren = childNodes.length > 0;
-
-const isCurrent = node.isCurrentPage;
-const isAncestor = node.isActive && !isCurrent;
-
-let stateClasses = "sidebar-state-default";
-if (isCurrent) {
-  stateClasses = "sidebar-state-current";
-} else if (isAncestor) {
-  stateClasses = "sidebar-state-ancestor";
-}
 
 const remark = new Marked();
-const markdownifiedTitle = remark.parseInline(node.title);
+const htmlTitle = remark.parseInline(node.title);
+const isAnc = node.isActive && !node.isCurrentPage;
 ---
 
-{hasChildren ? (
-  <details class="group/folder" open={node.isOpen}>
-    <summary class="sidebar-summary">
+{childNodes.length > 0 ? (
+  <details open={node.isOpen || undefined}>
+    <summary class="s" data-a={isAnc || undefined}>
       {node.href ? (
         <a 
           href={`${node.href}/`}
-          class={`sidebar-link ${stateClasses}`}
-          aria-current={isCurrent ? "page" : undefined}
-          set:html={markdownifiedTitle}
-        >
-        </a>
+          class="l"
+          aria-current={node.isCurrentPage ? "page" : undefined}
+          set:html={htmlTitle}
+        ></a>
       ) : (
-        <span class={`sidebar-link cursor-default ${stateClasses}`} set:html={markdownifiedTitle}></span>
+        <span class="l" set:html={htmlTitle}></span>
       )}
-      
-      <div 
-        aria-hidden="true" 
-        class={`sidebar-chevron-wrapper ${isCurrent ? 'text-indigo-500' : 'text-gray-400'}`}
-      >
-        <svg 
-          class="sidebar-chevron chevron-icon" 
-          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-      </div>
+      <i class="c"></i>
     </summary>
-    
-    <div class="sidebar-children-container">
+    <div>
       {childNodes.map((child: any) => <Astro.self node={child} />)}
     </div>
   </details>
 ) : (
   <a 
     href={node.href} 
-    aria-current={isCurrent ? "page" : undefined}
-    class={`sidebar-child-link ${stateClasses}`}
-    set:html={markdownifiedTitle}
-  >
-  </a>
+    class="l" 
+    aria-current={node.isCurrentPage ? "page" : undefined}
+    data-a={isAnc || undefined}
+    set:html={htmlTitle}
+  ></a>
 )}
