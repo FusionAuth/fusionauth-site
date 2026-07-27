@@ -2,46 +2,40 @@
 import { Marked } from "marked";
 
 const { node } = Astro.props;
-
 const childNodes = node.sortedChildren || [];
-const hasChildren = childNodes.length > 0;
-
-const isCurrent = node.isCurrentPage;
-const isAncestor = node.isActive && !isCurrent;
-
-const stateClass = isAncestor ? "s-anc" : "";
 
 const remark = new Marked();
-const markdownifiedTitle = remark.parseInline(node.title);
+const htmlTitle = remark.parseInline(node.title);
+const isAnc = node.isActive && !node.isCurrentPage;
 ---
 
-{hasChildren ? (
-  <details class="sb-folder" open={node.isOpen}>
-    <summary class={`sb-sum ${node.href ? '' : 'sb-no-link'}`}>
+{childNodes.length > 0 ? (
+  <details class="folder" open={node.isOpen}>
+    <summary class="row" data-anc={isAnc ? "" : undefined}>
       {node.href ? (
         <a 
           href={`${node.href}/`}
-          class={`sb-lnk ${stateClass}`}
-          aria-current={isCurrent ? "page" : undefined}
-          set:html={markdownifiedTitle}
-        >
-        </a>
+          class="link"
+          aria-current={node.isCurrentPage ? "page" : undefined}
+          set:html={htmlTitle}
+        ></a>
       ) : (
-        <span class={`sb-lnk cursor-default ${stateClass}`} set:html={markdownifiedTitle}></span>
+        <span class="link cursor-default" set:html={htmlTitle}></span>
       )}
-      <span class="sb-chv"></span>
+      <span class="chev"></span>
     </summary>
     
-    <div class="sb-kids">
+    <div class="kids">
       {childNodes.map((child: any) => <Astro.self node={child} />)}
     </div>
   </details>
 ) : (
   <a 
     href={node.href} 
-    aria-current={isCurrent ? "page" : undefined}
-    class={`sb-child ${stateClass}`}
-    set:html={markdownifiedTitle}
+    class="row" 
+    aria-current={node.isCurrentPage ? "page" : undefined}
+    data-anc={isAnc ? "" : undefined}
   >
+    <span class="link" set:html={htmlTitle}></span>
   </a>
 )}
