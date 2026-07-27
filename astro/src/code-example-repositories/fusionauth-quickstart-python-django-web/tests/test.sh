@@ -52,7 +52,7 @@ echo "Django app is ready."
 
 echo "Running Playwright tests..."
 cd "$SCRIPT_DIR"
-docker run --network host --name playwright-test --rm -e NODE_PATH=/usr/lib/node_modules -v "$SCRIPT_DIR/integration.spec.js":/tests/integration.spec.js mcr.microsoft.com/playwright:v1.61.1 bash -c "npm install -g @playwright/test && playwright test /tests/integration.spec.js"
+docker run --network host --name playwright-test --rm -e NODE_PATH=/usr/lib/node_modules -v "$SCRIPT_DIR/integration.spec.js":/tests/integration.spec.js mcr.microsoft.com/playwright:v1.62.0 bash -c "npm install -g @playwright/test@1.62.0 && playwright test /tests/integration.spec.js"
 TEST_EXIT_CODE=$?
 
 exit $TEST_EXIT_CODE
