@@ -12,7 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$REPO_ROOT"
 
-for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
+for LOCAL_REPOSITORY_PATH in astro/localcode/*/; do
   REPOSITORY_NAME=$(basename "$LOCAL_REPOSITORY_PATH")
   TEST_SCRIPT="${LOCAL_REPOSITORY_PATH}tests/test.sh"
 
