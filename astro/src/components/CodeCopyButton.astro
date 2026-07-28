@@ -1,85 +1,55 @@
----
-import { Icon } from "astro-iconset/components";
----
-
-<template id="copy-button-template">
-  <div class="relative group">
-    <button title="Copy contents" class="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 group-[.active]:opacity-100 transition-opacity duration-200 p-1.5 text-sm rounded hover:bg-indigo-700 text-white/50 leading-none">
-      <Icon name={`fa7-solid:copy`} class="block h-4 group-[.active]:hidden" size="16" />
-      <Icon name={`fa7-solid:check`} class="h-4 group-[.active]:block hidden" size="16" />
-    </button>
-  </div>
-</template>
+<svg aria-hidden="true" style="display:none">
+  <symbol id="ccb-copy" viewBox="0 0 640 640">
+    <path fill="currentColor" d="M288 64c-35.3 0-64 28.7-64 64v256c0 35.3 28.7 64 64 64h192c35.3 0 64-28.7 64-64V183.4c0-17.4-7.1-34.1-19.7-46.2l-57.7-55.4A64.1 64.1 0 0 0 422.3 64zM160 192c-35.3 0-64 28.7-64 64v256c0 35.3 28.7 64 64 64h192c35.3 0 64-28.7 64-64v-16h-64v16H160V256h16v-64z"/>
+  </symbol>
+  <symbol id="ccb-check" viewBox="0 0 640 640">
+    <path fill="currentColor" d="M530.8 134.1c14.3 10.4 17.5 30.4 7.1 44.7l-256 352c-5.5 7.6-14 12.3-23.4 13.1s-18.5-2.7-25.1-9.3l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l101.5 101.5l234-321.7c10.4-14.3 30.4-17.5 44.7-7.1z"/>
+  </symbol>
+</svg>
 
 <script>
-  const copyButtonTemplate = document.getElementById('copy-button-template') as HTMLTemplateElement;
+  const svgUse = (id: string) =>
+    `<svg width="16" height="16" fill="currentColor" aria-hidden="true"><use href="${id}"/></svg>`;
 
-  class CodeCopyButton {
-    static #codeBlockCounter = 1;
+  class CopyCodeButton extends HTMLElement {
+    #timeout: number | undefined;
 
-    #timeouts = new WeakMap<HTMLElement, number>();
-
-    constructor() {
-      const pres = document.querySelectorAll('pre.astro-code');
-
-      pres.forEach(pre => {
-        const code = pre.querySelector('code');
-        if (!code) return;
-
-        if (!code.id) {
-          code.id = `code-block-${CodeCopyButton.#codeBlockCounter++}`;
-        }
-
-        const parentNode = pre.parentNode;
-        if (!parentNode) return;
-
-        const wrapper = document.importNode(copyButtonTemplate.content, true);
-        const div = wrapper.querySelector('.group') as HTMLDivElement;
-        const button = wrapper.querySelector('button') as HTMLButtonElement;
-        
-        parentNode.insertBefore(wrapper, pre);
-        div.appendChild(pre);
-
-        button.dataset.copySource = code.id;
-        button.addEventListener('click', (e) => this.#handleCopy(e));
-      });
+    connectedCallback() {
+      this.innerHTML = `<button class="ccb-btn" title="Copy contents">${svgUse('#ccb-copy')}</button>`;
+      this.querySelector('button')!.addEventListener('click', () => this.#handleCopy());
     }
 
-    #handleCopy(event: Event) {
-      const copyButton = event.currentTarget as HTMLButtonElement;
-      const id = copyButton.dataset.copySource;
-      if (!id) return;
-      
-      const source = document.getElementById(id);
+    #handleCopy() {
+      const wrapper = this.closest('.relative.group') as HTMLElement | null;
+      const code = wrapper?.querySelector('code');
+      if (!code) return;
 
-      if (!source) {
-        console.error(`Invalid copy-source [${id}]`);
-        return;
-      }
-
-      navigator.clipboard
-        .writeText(source.textContent || '')
-        .then(() => {
-          const parent = copyButton.parentNode as HTMLElement;
-          parent.classList.add('active');
-
-          const existingTimeout = this.#timeouts.get(copyButton);
-          if (existingTimeout) {
-            clearTimeout(existingTimeout);
-          }
-
-          const timeoutId = window.setTimeout(() => {
-            parent.classList.remove('active');
-            this.#timeouts.delete(copyButton);
-          }, 1500);
-
-          this.#timeouts.set(copyButton, timeoutId);
-        })
-        .catch(err => {
-          console.error('Failed to copy text: ', err);
-        });
+      navigator.clipboard.writeText(code.innerText).then(() => {
+        const btn = this.querySelector('button')!;
+        btn.innerHTML = svgUse('#ccb-check');
+        wrapper!.classList.add('active');
+        clearTimeout(this.#timeout);
+        this.#timeout = window.setTimeout(() => {
+          btn.innerHTML = svgUse('#ccb-copy');
+          wrapper!.classList.remove('active');
+        }, 1500);
+      }).catch(err => console.error('Failed to copy:', err));
     }
   }
 
-  new CodeCopyButton();
+  if (!customElements.get('copy-code-button')) {
+    customElements.define('copy-code-button', CopyCodeButton);
+  }
+
+  // Wrap non-MDX code blocks not already processed by rehypeCopyButton at build time
+  document.querySelectorAll('pre[class*="language-"]').forEach(pre => {
+    if (pre.closest('.relative.group')) return;
+    const parent = pre.parentNode!;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'relative group';
+    const btn = document.createElement('copy-code-button');
+    parent.insertBefore(wrapper, pre);
+    wrapper.appendChild(pre);
+    wrapper.appendChild(btn);
+  });
 </script>

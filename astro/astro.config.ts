@@ -15,6 +15,34 @@ import icon from "astro-iconset";
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
+export const remarkShellSessionPrompts = () => {
+  return (tree) => {
+    visit(tree, 'code', (node) => {
+      if (node.lang !== 'shell-session') return;
+
+      const lines = node.value.split('\n');
+      let continuation = false;
+
+      node.value = lines.map(line => {
+        if (!line.trim()) {
+          continuation = false;
+          return line;
+        }
+        if (continuation) {
+          continuation = line.trimEnd().endsWith('\\');
+          return line;
+        }
+        if (line.startsWith('$ ') || line.startsWith('# ')) {
+          continuation = line.trimEnd().endsWith('\\');
+          return line;
+        }
+        continuation = line.trimEnd().endsWith('\\');
+        return '$ ' + line;
+      }).join('\n');
+    });
+  };
+};
+
 export const mermaidTitleFix = () => {
   return (tree) => {
     visit(tree, 'code', (node, index, parent) => {
@@ -126,13 +154,14 @@ const config = defineConfig({
     icon(),
     mdx({
       syntaxHighlight: {
-        type: "shiki",
+        type: "prism",
         excludeLangs: ["mermaid"]
       },
       processor: unified({
           remarkPlugins: [
           remarkMdx,
-          mermaidTitleFix
+          mermaidTitleFix,
+          remarkShellSessionPrompts,
         ],
         rehypePlugins: [
           rehypeSlug,
@@ -170,6 +199,7 @@ const config = defineConfig({
       failOnBrokenLinks: true,
       verbose: false,
       exclude: [ //destination URLs to exclude from checking -- NOT files!
+        '/login', '/logout', '/register', // Flask route examples in code blocks
         '/platform/', '/cdn/', '/dev-tools/', '/tech-papers/', '/feature/', '/features/', '/webinar/',
         '/community/', '/forum/', '/compare/', '/industry/', '/license/', '/partners/', '/video/', '/event/', '/ebooks/', '/glossary/', '/guides/',
         'buildvsbuy', 'auth0-migration', 'community', 'community/forum', 'aws-reinvent22', 'aws-reinvent23', 'pricing', 'download', 'contact',
