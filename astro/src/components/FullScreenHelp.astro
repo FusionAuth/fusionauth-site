@@ -1,0 +1,95 @@
+---
+---
+<div class="kapa-fullscreen-wrapper" id="kapa-docs-container">
+  <!-- The Kapa widget will be dynamically moved here -->
+</div>
+
+<style>
+  /* force the wrapper to take up the entire screen, sitting on top of the docs */
+  .kapa-fullscreen-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999999;
+    background-color: var(--sl-color-bg, #ffffff); 
+  }
+
+  :global(html.dark) .kapa-fullscreen-wrapper {
+    background-color: var(--sl-color-bg, #0f172a); 
+  }
+
+  /* fill the full-screen wrapper */
+  :global(#kapa-widget-container),
+  :global(iframe[src*='kapa.ai']) {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    const existing = document.querySelector('script[src="https://widget.kapa.ai/kapa-widget.bundle.js"]');
+    if (existing) return;
+
+    function getActiveTheme() {
+      return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    }
+
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://widget.kapa.ai/kapa-widget.bundle.js';
+    script.id = 'kapa-widget-script'; 
+
+    const attrs = {
+      'data-website-id': '7f016d35-50d6-4a5f-9f9d-32cb4374841f',
+      'data-project-name': 'FusionAuth',
+      'data-project-color': '#0F172A',
+      'data-project-color-dark': '#334155',
+      'data-project-logo': '/img/icons/help/fa-black-logo.png',
+      'data-color-scheme': getActiveTheme(),
+      'data-modal-full-screen': 'true', 
+      'data-button-hide': 'true',
+      'data-modal-open-by-default': 'true',
+      'data-launcher-button-hidden': 'true',
+      'data-modal-close-button-hidden': 'true'
+    };
+
+    Object.entries(attrs).forEach(([key, value]) => {
+      script.setAttribute(key, value);
+    });
+
+    document.head.appendChild(script);
+
+    const domObserver = new MutationObserver((mutations, obs) => {
+      const kapaContainer = document.getElementById('kapa-widget-container');
+      const ourWrapper = document.getElementById('kapa-docs-container');
+      
+      if (kapaContainer && ourWrapper && kapaContainer.parentElement !== ourWrapper) {
+        // Move the widget into the full-screen wrapper
+        ourWrapper.appendChild(kapaContainer);
+        document.body.style.overflow = '';
+        obs.disconnect(); 
+        
+        // re-open window if user closes with X, outside click, or escape -- can't block those events
+        setInterval(() => {
+          if (window.Kapa) {
+            window.Kapa("open");
+          }
+        }, 150);
+      }
+    });
+
+    domObserver.observe(document.body, { childList: true, subtree: true });
+  })();
+</script>
