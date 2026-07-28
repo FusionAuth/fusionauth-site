@@ -1,6 +1,6 @@
 ---
 publish_date: 2025-04-03
-title: The Top 6 Indications You’re Doing Mocking Wrong
+title: The Top 6 Indications You're Doing Mocking Wrong
 description: Overusing mocks in software testing can lead to hidden failures and technical debt. Here's how to use local-first development tools like FusionAuth Kickstart for robust, production-ready applications.
 authors: Andy Pai
 image: /img/blogs/why-mocking-sucks/mocking.png
@@ -11,25 +11,25 @@ excerpt_separator: "{/* more */}"
 import Aside from 'src/components/Aside.astro';
 import RemoteCode from 'src/components/RemoteCode.astro';
 
-Developers love mocking. It’s been a go-to solution for years: Simulate external services, run tests faster, and avoid the overhead of real APIs. But here’s the truth — **mocking is sometimes overused and can be dangerous**. It can deceive you into thinking your system is stable, hiding critical failures that only appear when your code hits the real world. APIs change. Rate limits throttle you. Authentication flows break. Your tests will still pass with green colors while your app silently crashes in production.
+Developers love mocking. It's been a go-to solution for years: Simulate external services, run tests faster, and avoid the overhead of real APIs. But here's the truth — **mocking is sometimes overused and can be dangerous**. It can deceive you into thinking your system is stable, hiding critical failures that only appear when your code hits the real world. APIs change. Rate limits throttle you. Authentication flows break. Your tests will still pass with green colors while your app silently crashes in production.
 
 Overusing mocks can turn your tests into a house of cards, giving you false confidence and creating hidden technical debt that slows teams down. In complex workflows — like payments or authentication — mocks fail to capture the true behavior of interconnected services.
 
-In this post, we pull back the curtain on the dangers of mocking, showing you when it works, when it fails miserably, and why relying on mock services can build technical debt faster. With real-world examples like Stripe and Auth0, you’ll see how mocking can backfire and why using real dev versions of services often leads to more robust software.
+In this post, we pull back the curtain on the dangers of mocking, showing you when it works, when it fails miserably, and why relying on mock services can build technical debt faster. With real-world examples like Stripe and Auth0, you'll see how mocking can backfire and why using real dev versions of services often leads to more robust software.
 
 ## Why Is Mocking Necessary?
 
-Mocking solves problems that often arise in modern software development, mainly when dealing with multi-tenant SaaS platforms or distributed systems. If you’re working with downloadable or offline software, mocks may not be as critical since your dependencies are within your control. However, mocking can become necessary when your application relies on third-party services — especially APIs you don’t own.
+Mocking solves problems that often arise in modern software development, mainly when dealing with multi-tenant SaaS platforms or distributed systems. If you're working with downloadable or offline software, mocks may not be as critical since your dependencies are within your control. However, mocking can become necessary when your application relies on third-party services — especially APIs you don't own.
 
-Here’s why you might need to mock in specific scenarios:
+Here's why you might need to mock in specific scenarios:
 
 - **Testing failure scenarios:** How can you simulate an API outage, rate limiting, or an error response like 500 Internal Server Error? With mocking, you can control  responses to have confidence in  how your application behaves under failure conditions.
-- **Resolving latency issues in tests:** External services introduce latency. For example, if you’re testing customer registration through an external API, even a 500 ms response time can add up across hundreds of tests. Mocking replaces real service calls with near-instant simulated responses, allowing tests to run quickly.
-- **Simulating external services that aren’t ready:** Backend APIs or third-party integrations may not be fully available during development in many projects. Mocking helps teams continue their work by simulating those services before they’re ready.
+- **Resolving latency issues in tests:** External services introduce latency. For example, if you're testing customer registration through an external API, even a 500 ms response time can add up across hundreds of tests. Mocking replaces real service calls with near-instant simulated responses, allowing tests to run quickly.
+- **Simulating external services that aren't ready:** Backend APIs or third-party integrations may not be fully available during development in many projects. Mocking helps teams continue their work by simulating those services before they're ready.
 
 ## When Mocking Works Well: Simple Service Simulations
 
-Mocking works best when simulating simple, isolated services with predictable behavior. For example, mocking is an excellent option if your app integrates with Stripe and you only need to test customer registration. You can simulate a successful customer registration call or even an API failure to verify your error-handling code — all without ever hitting Stripe’s servers.
+Mocking works best when simulating simple, isolated services with predictable behavior. For example, mocking is an excellent option if your app integrates with Stripe and you only need to test customer registration. You can simulate a successful customer registration call or even an API failure to verify your error-handling code — all without ever hitting Stripe's servers.
 
 ```python
 from unittest.mock import patch
@@ -61,27 +61,27 @@ def test_successful_registration(mock_post):
 
 Simple Stripe Mock
 
-However, this approach falls apart when your workflow spans multiple services. Imagine testing a full Stripe payment flow: registering a customer, adding items to a cart, and processing a payment. Mocking each step might seem feasible, but once you combine them, inter-service dependencies, timing issues, and API quirks won’t surface in your tests.
+However, this approach falls apart when your workflow spans multiple services. Imagine testing a full Stripe payment flow: registering a customer, adding items to a cart, and processing a payment. Mocking each step might seem feasible, but once you combine them, inter-service dependencies, timing issues, and API quirks won't surface in your tests.
 
 ![Complex Stripe Mock](/img/blogs/why-mocking-sucks/complex-stripe-mock.png)
 
 Complex Stripe Mock
 
-Accurately testing complex workflows is especially critical for applications that use third-party services for authentication. For example, let’s say you are using Auth0 to manage authentication. Mocking here is risky because authentication is mission-critical, and updates can make your mocks obsolete, breaking your app in production. Worse, authentication failures can shatter user trust, leading to frustration, account lockouts, or even security vulnerabilities.
+Accurately testing complex workflows is especially critical for applications that use third-party services for authentication. For example, let's say you are using Auth0 to manage authentication. Mocking here is risky because authentication is mission-critical, and updates can make your mocks obsolete, breaking your app in production. Worse, authentication failures can shatter user trust, leading to frustration, account lockouts, or even security vulnerabilities.
 
 ## 6 Ways to Do Mocking Wrong
 
 Revisiting the Stripe example, maintaining mocks for the full simulated flow requires constant updates to match API changes, introduces inconsistencies, and fails to mimic the nuances of real-world interactions.
 
-Here are the 6 things to look out for, which might indicate you’re doing mocking wrong:
+Here are the 6 things to look out for, which might indicate you're doing mocking wrong:
 
 ### 1. Allowing Mocking to Give you a Sense of Security around Your End-to-End App Functionality
 
-Mocks only behave the way you program them to. They’ll never catch unexpected changes or errors that might occur with the real service, giving you the illusion that your system is working perfectly.
+Mocks only behave the way you program them to. They'll never catch unexpected changes or errors that might occur with the real service, giving you the illusion that your system is working perfectly.
 
-Mocks can accidentally break your product by masking breaking changes. Imagine a situation where a third-party API modifies a key response format. If your mocks aren’t updated to reflect this change, your tests will continue to pass while your product experiences hidden failures in production. This false confidence leads to missed bugs, broken functionality, and a potentially massive impact on your users and business.
+Mocks can accidentally break your product by masking breaking changes. Imagine a situation where a third-party API modifies a key response format. If your mocks aren't updated to reflect this change, your tests will continue to pass while your product experiences hidden failures in production. This false confidence leads to missed bugs, broken functionality, and a potentially massive impact on your users and business.
 
-Instead use mocks for unit tests where you need to test known edge cases that would be hard to simulate with regular end to end testing and regular behavior. Like error handing - that’s a pretty good mock use-case.
+Instead use mocks for unit tests where you need to test known edge cases that would be hard to simulate with regular end to end testing and regular behavior. Like error handing - that's a pretty good mock use-case.
 
 ### 2. Mocking Is Increasing Your  Maintenance Overhead
 
@@ -91,13 +91,13 @@ Now, if you are doing local testing, you might have to start each test over from
 
 ### 3. Mocking Is Resulting in Bad Testing Practices
 
-If you see your developers becoming complacent with mocks, focusing more on matching expected inputs and outputs than handling real-world edge cases, you might be over-reliant on mocks and not doing enough local testing with the real software you’re integrating. This leads to over-reliance on happy-path tests that fail to account for errors, latency, or timeouts in real environments.
+If you see your developers becoming complacent with mocks, focusing more on matching expected inputs and outputs than handling real-world edge cases, you might be over-reliant on mocks and not doing enough local testing with the real software you're integrating. This leads to over-reliance on happy-path tests that fail to account for errors, latency, or timeouts in real environments.
 
-### 4. You’ve Never Tested Reality
+### 4. You've Never Tested Reality
 
-Mocks can’t reproduce the unpredictability of real services—rate limiting, version mismatches, or complex state changes in multi-tenant APIs. Tests that never hit real endpoints miss these critical factors, resulting in software unprepared for real-world conditions.
+Mocks can't reproduce the unpredictability of real services—rate limiting, version mismatches, or complex state changes in multi-tenant APIs. Tests that never hit real endpoints miss these critical factors, resulting in software unprepared for real-world conditions.
 
-### 5. You’re Unable to Test Broad Interconnections Across Complex Systems
+### 5. You're Unable to Test Broad Interconnections Across Complex Systems
 
 The more interconnected your services are, the harder it becomes to maintain accurate mocks. In a distributed system, service interactions are dynamic and often undocumented, meaning mocks will never fully reflect actual behavior. Over time, this leads to **tests that become brittle and unreliable**.
 
@@ -107,13 +107,13 @@ Developers often miss opportunities to work with real APIs early in development 
 
 ## Doing Mocking Right
 
-In some cases, mocking may be your only option. When you need mocks, use company-maintained mocks whenever possible, like Stripe’s [stripe-mock](https://github.com/stripe/stripe-mock), which stays in sync with their API and minimizes maintenance overhead. However, even the best mocks can’t replace the benefits of using sandbox or dev environments provided by real services.
+In some cases, mocking may be your only option. When you need mocks, use company-maintained mocks whenever possible, like Stripe's [stripe-mock](https://github.com/stripe/stripe-mock), which stays in sync with their API and minimizes maintenance overhead. However, even the best mocks can't replace the benefits of using sandbox or dev environments provided by real services.
 
 Use sandbox APIs to run realistic integration tests, but be prepared to face latency, rate limits, and downtime. These issues can disrupt your tests and waste time.
 
 ## An Alternative: Local-First vs. Mock-Driven Development
 
-This “local-first” development approach aligns with broader trends in modern software engineering. Developers are increasingly favoring real, self-contained environments over artificial mocks. Tools like Docker, Kubernetes, and local microservice setups have empowered teams to replicate production-like conditions at every stage of development. The idea is simple: the more your tests reflect reality, the fewer issues you’ll face when deploying to production.
+This “local-first” development approach aligns with broader trends in modern software engineering. Developers are increasingly favoring real, self-contained environments over artificial mocks. Tools like Docker, Kubernetes, and local microservice setups have empowered teams to replicate production-like conditions at every stage of development. The idea is simple: the more your tests reflect reality, the fewer issues you'll face when deploying to production.
 
 Here is a table summarizing the differences between mock-driven and local-first development:
 
@@ -124,13 +124,13 @@ Here is a table summarizing the differences between mock-driven and local-first 
 |                      |                                                               |                                                                             |
 | Developer Experience | Delays integration issue discovery until QA or production.    | Developers catch and fix integration issues early in development.           |
 
-## But Isn’t Prod Always Going To Be Different Than Dev?
+## But Isn't Prod Always Going To Be Different Than Dev?
 
-Your production services will always be different from dev in an operational sense; they’ll have more load and more data if nothing else. But by using local-first development rather than mocks, you can keep developers closer to the reality of production, discovering issues sooner and reducing test maintenance.
+Your production services will always be different from dev in an operational sense; they'll have more load and more data if nothing else. But by using local-first development rather than mocks, you can keep developers closer to the reality of production, discovering issues sooner and reducing test maintenance.
 
 ## Real-World Examples Of Local-First Development Tools
 
-The trend is clear: it’s time to embrace local-first development to provide developers with reliable, production-grade environments they can run locally. By offering real services for development and testing, this approach empowers teams to build with greater confidence and fewer surprises in production.
+The trend is clear: it's time to embrace local-first development to provide developers with reliable, production-grade environments they can run locally. By offering real services for development and testing, this approach empowers teams to build with greater confidence and fewer surprises in production.
 
 ### **Firebase Emulator Suite**
 
@@ -139,7 +139,7 @@ Firebase, widely used for authentication, real-time databases, and cloud functio
 - You can test real authentication flows, database queries, and cloud function triggers without depending on the live Firebase servers.
 - The emulator provides feature parity with production, allowing reliable integration tests free from rate limits and connectivity issues.
 
-Let’s see how mocking a Firebase service and using the Firebase Emulator Suite differ.
+Let's see how mocking a Firebase service and using the Firebase Emulator Suite differ.
 
 A common approach to testing Firebase authentication and Firestore interactions is to mock the Firebase Admin SDK. Below is an example of how developers typically do this in Python.
 
@@ -195,15 +195,15 @@ The tests can reflect production-like conditions, catching issues like authentic
 - Kickstart automates environment setup, account creation, and configuration of any resources. Then you have a FusionAuth instance with available data.
 - Unlike mocks, this approach handles real-world complexities like security updates and multi-step flows, reducing the risk of surprises in production.
 
-To see how effective a real dev server can be, let’s write a mock that simulates a login on the FusionAuth API.
+To see how effective a real dev server can be, let's write a mock that simulates a login on the FusionAuth API.
 
-Here’s how you might mock the login in Python:
+Here's how you might mock the login in Python:
 
 <RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-mock-testing-vs-dev-server/refs/heads/main/fusionauth_test_with_mocking.py" lang="python"  />
 
-The fusionauth\_login function simulates a login request to FusionAuth’s /api/login endpoint. It handles various responses — success, incorrect credentials, locked accounts, and unexpected errors. The unit tests use unittest.mock.patch to replace real API calls, ensuring tests pass without needing a live FusionAuth server.
+The fusionauth\_login function simulates a login request to FusionAuth's /api/login endpoint. It handles various responses — success, incorrect credentials, locked accounts, and unexpected errors. The unit tests use unittest.mock.patch to replace real API calls, ensuring tests pass without needing a live FusionAuth server.
 
-But this approach doesn’t scale. For every new scenario, another mock is needed. More tests mean more mocks, more maintenance, and more fragile tests. What starts as a simple test suite quickly turns into a tangled web of artificial responses, each one detached from reality.
+But this approach doesn't scale. For every new scenario, another mock is needed. More tests mean more mocks, more maintenance, and more fragile tests. What starts as a simple test suite quickly turns into a tangled web of artificial responses, each one detached from reality.
 
 And when FusionAuth updates? Your mocks stay frozen in time. New fields, changed response structures, evolving authentication flows — none of these are reflected in your tests. The mocks keep passing, but your application is broken in production.
 
@@ -274,4 +274,4 @@ Mocking can be great...but it can also be risky due to the fact it does not capt
 - Better production alignment: Your tests reflect real-world conditions, including API changes, security updates, and unexpected behavior.
 - Lower maintenance: Real services stay consistent with production, eliminating the need for constant mock updates and reducing technical debt.
 - Accurate testing: Complex workflows like authentication, payments, or multi-step integrations behave correctly, uncovering edge cases early.
-- Developer confidence: With realistic tests, you ship features knowing they’ll perform reliably in production.
+- Developer confidence: With realistic tests, you ship features knowing they'll perform reliably in production.

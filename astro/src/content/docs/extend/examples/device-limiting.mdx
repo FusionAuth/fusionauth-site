@@ -32,11 +32,11 @@ FusionAuth only captures limited information about each device as part of the se
 
 ## Approaches To Device Limiting
 
-This guide will cover two approaches to limiting concurrent logins. Both approaches rely on the [JWT Retrieve Refresh Tokens API](/docs/apis/jwt#retrieve-refresh-tokens) to retrieve the number of active refresh tokens for a user as a proxy for active logins.
+This guide will cover two approaches to limiting concurrent logins. Both approaches rely on the [JWT Retrieve Refresh Tokens API](/docs/apis/jwt/retrieve-refresh-tokens) to retrieve the number of active refresh tokens for a user as a proxy for active logins.
 
  * **Simpler implementation:** The user will simply be informed that they are logged in from too many devices and will be asked to log out of one of them manually, and then try logging in again. By logging out of one of the sessions, the refresh token for that session will be revoked by FusionAuth.
 
- * **More user-friendly implementation:** The list of current logins will be displayed and the user will be able to select which session to end. The application will then call the FusionAuth API to end the session by [revoking the refresh token](/docs/apis/jwt#revoke-refresh-tokens) for the chosen session.
+ * **More user-friendly implementation:** The list of current logins will be displayed and the user will be able to select which session to end. The application will then call the FusionAuth API to end the session by [revoking the refresh token](/docs/apis/jwt/revoke-refresh-tokens) for the chosen session.
 
 For the second option to work, the user JWTs issued by FusionAuth must be configured to relatively short lifespans to prevent the user from staying logged in on the additional devices long after the corresponding refresh token has been revoked. 
 
@@ -54,7 +54,7 @@ Full implementations of both device-limiting methods in the ChangeBank applicati
 
 ## Using The Refresh Token API
 
-Both device-limiting methods depend on calling the [FusionAuth JWT Retrieve Refresh Tokens API](/docs/apis/jwt#retrieve-refresh-tokens) to retrieve the active [refresh tokens](/docs/apis/jwt) for a user. You will use the API key with the GET and DELETE permissions for the `/api/jwt/refresh` API route in this guide.
+Both device-limiting methods depend on calling the [FusionAuth JWT Retrieve Refresh Tokens API](/docs/apis/jwt/retrieve-refresh-tokens) to retrieve the active [refresh tokens](/docs/apis/jwt) for a user. You will use the API key with the GET and DELETE permissions for the `/api/jwt/refresh` API route in this guide.
 
 To create a key for the Retrieve Refresh Tokens API, navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb> and click the <Breadcrumb>+</Breadcrumb> button to add a key. Give the key a name, and enable the GET and DELETE permissions for `/api/jwt/refresh`. Click <Breadcrumb>Save</Breadcrumb> to save the API Key.
 
@@ -87,7 +87,7 @@ For other libraries and languages, consult the documentation to see how to inclu
 
 ## Logout Requirements
 
-When logging out of FusionAuth with the `/oauth2/logout` endpoint, the refresh token is [not automatically revoked by FusionAuth](/community/forum/topic/270/logout-questions). This means that the refresh token will still be returned from the refresh token API, and will still be counted as an active session or device. To ensure that the refresh token is revoked when the user logs out, you will need to call the [JWT Revoke Refresh Tokens API](/docs/apis/jwt#revoke-refresh-tokens) on logout.
+When logging out of FusionAuth with the `/oauth2/logout` endpoint, the refresh token is [not automatically revoked by FusionAuth](/community/forum/topic/270/logout-questions). This means that the refresh token will still be returned from the refresh token API, and will still be counted as an active session or device. To ensure that the refresh token is revoked when the user logs out, you will need to call the [JWT Revoke Refresh Tokens API](/docs/apis/jwt/revoke-refresh-tokens) on logout.
 
 The best place to do this is in the logout callback configured under <Breadcrumb>Applications -> Edit -> OAuth</Breadcrumb> on the **Logout URL** field. This is the route that the user is redirected to after they have been logged out of FusionAuth. You should also remove any local cookies at the same time. The complete logout return route should look like the following.
 
@@ -144,7 +144,7 @@ The previous implementation has the advantage of code simplicity, but it does ha
 
 * **The failed login message is the same generic message used for all webhook errors:** Adding other webhooks to your application will result in the same error message being displayed, regardless of the type of webhook failing. 
 
-This second implementation is a more user-friendly way of handling device limits that saves the user the trouble of having to manually log out of one of their devices. Instead, the user will be presented with a list of their current logins, and will be able to select which sessions to end. The application will then call the FusionAuth API to end the session by [revoking the refresh token](/docs/apis/jwt#revoke-refresh-tokens) for the chosen sessions.
+This second implementation is a more user-friendly way of handling device limits that saves the user the trouble of having to manually log out of one of their devices. Instead, the user will be presented with a list of their current logins, and will be able to select which sessions to end. The application will then call the FusionAuth API to end the session by [revoking the refresh token](/docs/apis/jwt/revoke-refresh-tokens) for the chosen sessions.
 
 To achieve this, the application will always allow a login to proceed, and call the FusionAuth API once the user is logged in. The API will retrieve the other sessions to check if the device limit has been reached, and if the user's logins exceed the limit, a page will display the user's current logins and allow them to select which session to end before allowing access to the rest of the app.
 

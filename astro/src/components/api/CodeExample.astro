@@ -1,0 +1,160 @@
+---
+import { snippetz } from '@scalar/snippetz'
+import { getCachedHighlighter, ensureLanguageIsLoaded, resolveLanguage } from 'src/components/shiki'
+
+interface Props {
+  method: string;
+  path: string;
+  body?: string;
+  headers?: { name: string; value: string }[];
+}
+
+const { method, path, body, headers = [] } = Astro.props;
+
+const BASE_URL = 'https://your-instance.fusionauth.io';
+const url = `${BASE_URL}${path}`;
+
+const request: Parameters<ReturnType<typeof snippetz>['print']>[2] = {
+  url,
+  method: method.toUpperCase(),
+  headers: [
+    { name: 'Content-Type', value: 'application/json' },
+    ...headers,
+  ],
+  ...(body ? { postData: { mimeType: 'application/json', text: body } } : {}),
+};
+
+const targets = [
+  { label: 'curl',   target: 'shell'  as const, client: 'curl'     as const, lang: 'bash'       },
+  { label: 'JS',     target: 'js'     as const, client: 'fetch'    as const, lang: 'javascript'  },
+  { label: 'Python', target: 'python' as const, client: 'requests' as const, lang: 'python'      },
+  { label: 'PHP',    target: 'php'    as const, client: 'guzzle'   as const, lang: 'php'         },
+  { label: 'Java',   target: 'java'   as const, client: 'okhttp'   as const, lang: 'java'        },
+  { label: 'Go',     target: 'go'     as const, client: 'native'   as const, lang: 'go'          },
+  { label: 'Ruby',   target: 'ruby'   as const, client: 'native'   as const, lang: 'ruby'        },
+];
+
+const highlighter = await getCachedHighlighter();
+
+function fixSnippet(code: string): string {
+  // snippetz URL-encodes { and } in path templates for Java, Go, and Ruby
+  return code.replace(/%7B/g, '{').replace(/%7D/g, '}');
+}
+
+const snippets = await Promise.all(
+  targets.map(async ({ label, target, client, lang }) => {
+    const raw = snippetz().print(target, client, request) ?? '';
+    const code = fixSnippet(raw);
+    const resolvedLang = resolveLanguage(lang);
+    await ensureLanguageIsLoaded(highlighter, resolvedLang, { label });
+    const html = highlighter.codeToHtml(code, { lang: resolvedLang, theme: 'github-dark' });
+    return { label, html, code };
+  })
+);
+
+const componentId = `ce-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<div class="not-prose my-6 rounded-lg border border-slate-700 overflow-hidden code-example-component" id={componentId} data-component-id={componentId}>
+  <div class="flex overflow-x-auto border-b border-slate-700 bg-slate-800 tab-bar">
+    {snippets.map(({ label }, i) => (
+      <button
+        class:list={[
+          'tab-btn whitespace-nowrap px-4 py-2 text-sm font-medium focus:outline-none transition-colors',
+          i === 0
+            ? 'text-white border-b-2 border-indigo-400 bg-slate-900'
+            : 'text-slate-400 hover:text-slate-200'
+        ]}
+        data-index={i}
+        data-label={label}
+      >
+        {label}
+      </button>
+    ))}
+  </div>
+
+  <div class="relative">
+    <button
+      class="copy-btn absolute top-3 right-3 z-10 px-2 py-1 text-xs rounded bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white transition-colors"
+      aria-label="Copy code"
+    >
+      Copy
+    </button>
+
+    {snippets.map(({ html, code }, i) => (
+      <div
+        class:list={['tab-panel', i !== 0 && 'hidden']}
+        data-index={i}
+        data-code={code}
+      >
+        <div class="[&>pre]:!m-0 [&>pre]:!rounded-none [&>pre]:p-4 [&>pre]:overflow-x-auto [&>pre]:text-sm [&>pre]:leading-relaxed" set:html={html} />
+      </div>
+    ))}
+  </div>
+</div>
+
+<script>
+  // Shared tab preference across all CodeExample instances on the page
+  const STORAGE_KEY = 'codeExampleTab';
+
+  function getActiveLabel(): string | null {
+    try { return sessionStorage.getItem(STORAGE_KEY); } catch { return null; }
+  }
+
+  function setActiveLabel(label: string) {
+    try { sessionStorage.setItem(STORAGE_KEY, label); } catch {}
+  }
+
+  function applyLabel(container: Element, label: string): boolean {
+    const buttons = container.querySelectorAll<HTMLButtonElement>('.tab-btn');
+    const panels = container.querySelectorAll<HTMLElement>('.tab-panel');
+    let matched = false;
+    buttons.forEach((btn, i) => {
+      const active = btn.dataset.label === label;
+      if (active) matched = true;
+      btn.classList.toggle('text-white', active);
+      btn.classList.toggle('border-b-2', active);
+      btn.classList.toggle('border-indigo-400', active);
+      btn.classList.toggle('bg-slate-900', active);
+      btn.classList.toggle('text-slate-400', !active);
+      panels[i]?.classList.toggle('hidden', !active);
+    });
+    return matched;
+  }
+
+  function syncAllContainers(label: string, source?: Element) {
+    document.querySelectorAll('.code-example-component').forEach((container) => {
+      if (container === source) return;
+      applyLabel(container, label);
+    });
+  }
+
+  function initContainer(container: Element) {
+    const buttons = container.querySelectorAll<HTMLButtonElement>('.tab-btn');
+    const copyBtn = container.querySelector<HTMLButtonElement>('.copy-btn');
+
+    // Apply saved preference on load
+    const saved = getActiveLabel();
+    if (saved) applyLabel(container, saved);
+
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const label = btn.dataset.label!;
+        setActiveLabel(label);
+        applyLabel(container, label);
+        syncAllContainers(label, container);
+      });
+    });
+
+    copyBtn?.addEventListener('click', () => {
+      const activePanel = container.querySelector<HTMLElement>('.tab-panel:not(.hidden)');
+      const code = activePanel?.dataset.code ?? '';
+      navigator.clipboard.writeText(code).then(() => {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+      });
+    });
+  }
+
+  document.querySelectorAll('.code-example-component').forEach(initContainer);
+</script>

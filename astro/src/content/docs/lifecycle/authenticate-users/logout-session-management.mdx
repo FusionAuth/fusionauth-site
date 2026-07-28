@@ -64,7 +64,7 @@ With centralized session management, you can:
 
 The downside of centralized sessions is implementation complexity and more reliance on FusionAuth's APIs.
 
-The alternative to centralized sessions is application managed sessions. These sessions are ended with [Front-Channel Logout](/docs/apis/oauth#logout) rather than the API. With application managed sessions, FusionAuth doesn't keep track of session lifetime or other characteristics. Instead, FusionAuth relies on the applications to manage each session.
+The alternative to centralized sessions is application managed sessions. These sessions are ended with [Front-Channel Logout](/docs/apis/oauth/logout) rather than the API. With application managed sessions, FusionAuth doesn't keep track of session lifetime or other characteristics. Instead, FusionAuth relies on the applications to manage each session.
 
 With application managed sessions, you:
 
@@ -106,8 +106,8 @@ This section documents how to implement a centralized session store using Fusion
 * In the ChangeBank and ChangeBank Forum applications, create an application session following your web or mobile app framework documentation.
 * After the user is logged in, store the refresh token Id in the application session. The Id is available in the `sid` parameter in the Id token, or in the access token. Prefer the refresh token Id instead of the refresh token value, since the Id will not change even if the value of the token itself does. This can happen if you are using one-time refresh tokens.
   * You could also store the refresh token Id in a HttpOnly cookie instead of in a session.
-* Whenever the ChangeBank or ChangeBank Forum application receives a request, call the [Retrieve Refresh Tokens API](/docs/apis/jwt#retrieve-refresh-tokens), using the stored refresh token Id, to check the status of the refresh token. You can call the REST API directly or using one of [the FusionAuth client libraries](/docs/sdks). If the refresh token doesn't exist or is invalid, deny the user access and invalidate the application session.
-* When a user logs out from either the ChangeBank or ChangeBank Forum application, revoke the refresh token. Use the [Revoke Refresh Tokens API](/docs/apis/jwt#revoke-refresh-tokens). You can revoke all refresh tokens or just a few. The logic around revocation depends on your business needs. See [Flexible Revocation](#flexible-revocation) for more details.
+* Whenever the ChangeBank or ChangeBank Forum application receives a request, call the [Retrieve Refresh Tokens API](/docs/apis/jwt/retrieve-refresh-tokens), using the stored refresh token Id, to check the status of the refresh token. You can call the REST API directly or using one of [the FusionAuth client libraries](/docs/sdks). If the refresh token doesn't exist or is invalid, deny the user access and invalidate the application session.
+* When a user logs out from either the ChangeBank or ChangeBank Forum application, revoke the refresh token. Use the [Revoke Refresh Tokens API](/docs/apis/jwt/revoke-refresh-tokens). You can revoke all refresh tokens or just a few. The logic around revocation depends on your business needs. See [Flexible Revocation](#flexible-revocation) for more details.
 
 You are using the refresh token to tie the ChangeBank and ChangeBank Forum applications to FusionAuth. Your applications are confirming session validity with FusionAuth each time a request is received.
 
@@ -289,7 +289,7 @@ A centralized session can be created only by using the Login API, when configure
 A centralized session will end when:
 
 * It expires.
-* It is deleted using the [API or a corresponding SDK call](/docs/apis/jwt#revoke-refresh-tokens).
+* It is deleted using the [API or a corresponding SDK call](/docs/apis/jwt/revoke-refresh-tokens).
 * Optionally, as a result of a user changing their password or having their account locked.
 
 The timeout of refresh tokens are controlled at the Tenant level, under <Breadcrumb>Tenants -> Your Tenant -> JWT</Breadcrumb>. In the <Breadcrumb>Refresh token settings</Breadcrumb>, there is a **Duration** field. Durations have a unit of minutes. The minimum lifetime of a centralized session is one minute. Timeouts can be overridden at the Application level if different web or mobile applications need different session durations.
@@ -359,7 +359,7 @@ Let's discuss this in the context of the ChangeBank and ChangeBank Forum applica
 * Write code which can log a user out when it receives a `GET` request. This code should destroy the application session. It should be idempotent because it may receive more than one request.
 * Set the **Logout URL** for each application. This URL should point to the endpoint where the code you wrote is hosted. This value is configured under <Breadcrumb>Applications -> Your Application -> OAuth</Breadcrumb>.
 * Configure each application's **Logout behavior** to be either <Breadcrumb>All applications</Breadcrumb> or <Breadcrumb>Redirect only</Breadcrumb>. This option controls the behavior when the user logs out. The former option logs the user out of all applications in a tenant by making a request to each application's configured **Logout URL**. The latter logs the user out of the single application for which the logout request was made.
-* When a user logs out of either the ChangeBank or the ChangeBank Forum application, redirect the user's browser to the [Front-channel Logout endpoint](/docs/apis/oauth#logout).
+* When a user logs out of either the ChangeBank or the ChangeBank Forum application, redirect the user's browser to the [Front-channel Logout endpoint](/docs/apis/oauth/logout).
 
 That's it.
 
@@ -499,7 +499,7 @@ FusionAuth has no information about each application session duration, current s
 
 ### Redirecting Users On Logout
 
-Adding a `post_logout_redirect_uri` parameter to the [Front-Channel Logout endpoint](/docs/apis/oauth#logout) request allows you to send different users to different logout pages.
+Adding a `post_logout_redirect_uri` parameter to the [Front-Channel Logout endpoint](/docs/apis/oauth/logout) request allows you to send different users to different logout pages.
 
 Each URL that might be added as a value must be included in the Application's **Authorized redirect URLs** list. [Learn more about adding URLs to that list.](/docs/get-started/core-concepts/applications#oauth).
 
@@ -585,7 +585,7 @@ Options to implement this behavior include:
 
 ## Session Analytics
  
-For application managed sessions, there are minimal analytics available, as FusionAuth only captures information about the login. This is available via the [Search Login Records API](/docs/apis/login#search-login-records).
+For application managed sessions, there are minimal analytics available, as FusionAuth only captures information about the login. This is available via the [Search Login Records API](/docs/apis/login/search).
 
 FusionAuth has prebuilt session visibility when using centralized session management. View current sessions for a user by navigating to <Breadcrumb>Users -> A User</Breadcrumb> in the administrative user interface. Then look at the <Breadcrumb>Sessions</Breadcrumb> tab.
 
@@ -605,7 +605,7 @@ These events can be stored and correlated based on the user Id to generate stati
 
 Front-channel logout lets server-side code end a user's session using the user's browser.
 
-FusionAuth implements [OIDC Front-Channel Logout](/docs/apis/oauth#logout).
+FusionAuth implements [OIDC Front-Channel Logout](/docs/apis/oauth/logout).
 
 ### Back-channel Logout
 
@@ -617,8 +617,8 @@ If you are using [centralized sessions](/docs/lifecycle/authenticate-users/logou
 
 How you revoke the tokens depends on what you have access to.
 
-* If you have the refresh token value for a user, use the [`/api/logout` endpoint](/docs/apis/login#logout-a-user) with the **global** parameter set to `true`.
-* If you have the user Id, use the [`/api/jwt/refresh`](/docs/apis/jwt#revoke-refresh-tokens) endpoint.
+* If you have the refresh token value for a user, use the [`/api/logout` endpoint](/docs/apis/login/logout) with the **global** parameter set to `true`.
+* If you have the user Id, use the [`/api/jwt/refresh`](/docs/apis/jwt/revoke-refresh-tokens) endpoint.
 
 See the linked API documentation for authentication requirements and other details for these APIs.
 
@@ -648,7 +648,7 @@ This only works if you know the user logged in with that Identity Provider, whic
 
 ### The `/api/logout` Endpoint
 
-You can use the [`/api/logout` endpoint](/docs/apis/login#logout-a-user) in certain circumstances.
+You can use the [`/api/logout` endpoint](/docs/apis/login/logout) in certain circumstances.
 
 This is designed for situations where you store the refresh token in a cookie and want to revoke it from the client without an API key.
 
@@ -658,5 +658,5 @@ To invalidate all refresh tokens for a user, set the **global** parameter to `tr
 
 * The [Device Limiting guide](/docs/extend/examples/device-limiting) discusses sessions as well.
 * The [Applications Core Concepts](/docs/get-started/core-concepts/applications) covers many of these settings.
-* The [Front-Channel Logout Endpoint](/docs/apis/oauth#logout) documents this form of logout.
+* The [Front-Channel Logout Endpoint](/docs/apis/oauth/logout) documents this form of logout.
 * The [Single Sign-on guide](/docs/lifecycle/authenticate-users/single-sign-on) discusses FusionAuth SSO session usage in detail.

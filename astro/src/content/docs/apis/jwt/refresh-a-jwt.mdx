@@ -1,0 +1,104 @@
+---
+title: Refresh a JWT
+description: API documentation for the FusionAuth Refresh a JWT API.
+order: 400
+---
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import Aside from 'src/components/Aside.astro';
+import JSON from 'src/components/JSON.astro';
+
+This can be used to extend a centrally managed session when a refresh token represents a user session. [Learn more about using refresh tokens to model sessions](/docs/lifecycle/authenticate-users/logout-session-management).
+
+<Aside type="note" title="RFC 8707 Resource Indicator behavior (since 1.67.0)">
+  This endpoint does not accept a `resource` parameter. However, if the application's **oauthConfiguration.authorizedResourceUris** is non-empty and the refresh token carries resource URIs in its `metaData.resources` field (set during the original authorization code exchange), those resources are automatically applied to the newly issued access token. The `aud` claim of the new token will be an array `["client_id", "https://resource1.example.com", ...]` when resources are present, or a plain UUID string when they are not.
+</Aside>
+
+
+## Request
+
+<API method="POST" uri="/api/jwt/refresh" authentication={["none"]} title="Request a new Access Token by presenting a valid Refresh Token."/>
+
+The refresh token may be provided either in the HTTP request body or as a cookie. If both are provided, the cookie will take precedence.
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Request Cookies
+
+<APIBlock>
+  <APIField name="refresh_token" type="String" optional>
+    The refresh token to be used to obtain a new access token.
+
+    This value is required but optional as a cookie. It must be provided in either the request body or as a cookie.
+  </APIField>
+  <APIField name="access_token" type="String" optional>
+    The previously issued encoded access token.  When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the **original** field.
+  </APIField>
+</APIBlock>
+
+### Request Body
+
+<APIBlock>
+  <APIField name="refreshToken" type="String" optional>
+    The refresh token to be used to obtain a new access token.
+
+    This value is required but optional in the request body. It must be provided in either the request body or as a cookie.
+  </APIField>
+  <APIField name="token" type="String" optional>
+    The previously issued encoded access token.  When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the **original** field.
+  </APIField>
+  <APIField name="timeToLiveInSeconds" type="Integer" optional since="1.59.0">
+    The time to live for the new access token.
+
+    When provided on the request, this value will override the default TTL, provided it is less than the default value. The default TTL is taken from **application.jwtConfiguration.timeToLiveInSeconds** if it is set there, otherwise it is taken from  **tenant.jwtConfiguration.timeToLiveInSeconds**.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="jwt/refresh-post-request.json" />
+
+```shell title="Example POST HTTP Request containing Cookie Header"
+POST /api/jwt/refresh HTTP/1.1
+Cookie: refresh_token=xRxGGEpVawiUak6He367W3oeOfh+3irw+1G1h1jc; access_token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkFuYV91STRWbWxiMU5YVXZ0cV83SjZKZFNtTSJ9.eyJleHAiOjE1ODgzNTM0NjAsImlhdCI6MTU4ODM1MzQwMCwiaXNzIjoiZnVzaW9uYXV0aC5pbyIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMS0wMDAwLTAwMDAwMDAwMDAwMCIsImF1dGhlbnRpY2F0aW9uVHlwZSI6IlBBU1NXT1JEIiwiZW1haWwiOiJ0ZXN0MEBmdXNpb25hdXRoLmlvIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInByZWZlcnJlZF91c2VybmFtZSI6InVzZXJuYW1lMCJ9.ZoIHTo3Pv0DpcELeX_wu-ZB_rd988jefZc2Ozu9_p59kttwqMm5PV8IDbgxJw9xcq9TFoNG8e_B6renoc11JC54UbiyeXBjF7EH01n9LDz-zTGqu9U72470Z4E7IPAHcyvJIBx4Mp9sgsEYAUm9Tb8ChudqNHhn6ZnXYI7Sew7CtGlu62f10wdBYGX0soYARHBv9CwhJC3-gsD2HLmqHAP_XhrpaYPNr5EAvmCHlM-JlTiEQ9bXwSc4gv-XbPQWamwy8Kcdb-g0EEAml_dC_b2CduwwYg0EoPQB3tQxzTUQzADi7K6q0CtQXv2_1VrRi6aQ4lt7v7t-Na39wGry_pA
+```
+
+## Response
+
+<StandardGetResponseCodes no_authorization errors_message="Either the timeToLiveInSeconds request field is greater than the allowed TTL, or the provided Refresh Token is either expired, was not found, or has been revoked." />
+
+### Response Body
+
+<APIBlock>
+  <APIField name="refreshToken" type="String">
+    The refresh token.
+
+    When **jwtConfiguration.refreshTokenUsagePolicy** is equal to `Reusable` this will be equal to the refresh token provided in the request. When **jwtConfiguration.refreshTokenUsagePolicy** is equal to `OneTimeUse` a new value will be returned and the previous refresh token value will no longer be valid.
+
+    The **jwtConfiguration.refreshTokenUsagePolicy** is configured at the tenant, and optionally per application.
+  </APIField>
+  <APIField name="refreshTokenId" type="String" since="1.37.0">
+    This unique Id is the persistent identifier for this refresh token, and will not change even when using one-time use refresh tokens. This value may optionally be used to revoke the token using the [Refresh Token API](/docs/apis/jwt/revoke-refresh-tokens).
+  </APIField>
+  <APIField name="token" type="String">
+    The encoded access token.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="jwt/refresh-post-response.json" />
+
+### Response Cookies
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The encoded access token. This cookie is written in the response as an `HttpOnly` session cookie.
+  </APIField>
+  <APIField name="refresh_token" type="String">
+    The encoded refresh token.
+
+    This cookie is written in the response as an `HttpOnly` cookie. When **jwtConfiguration.refreshTokenUsagePolicy** is equal to `Reusable` this will be equal to the refresh token provided in the request. When **jwtConfiguration.refreshTokenUsagePolicy** is equal to `OneTimeUse` a new value will be returned and the previous refresh token value will no longer be valid.
+
+    The **jwtConfiguration.refreshTokenUsagePolicy** is configured at the tenant, and optionally per application.
+  </APIField>
+</APIBlock>

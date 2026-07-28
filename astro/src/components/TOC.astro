@@ -2,19 +2,41 @@
 const { maxDepth = 4 } = Astro.props;
 ---
 
-<nav id="toc-container" class="overflow-y-auto max-h-[calc(100vh-100px)]"></nav>
+<nav id="toc-container" class="overflow-y-auto max-h-[calc(100vh-135px)]"></nav>
 
 <script define:vars={{ maxDepth }}>
   document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById('toc-container');
     
-    const rawHeadings = Array.from(document.querySelectorAll('h2, h3, h4, h5, h6'))
-      .filter(h => h.id)
-      .map(h => ({
-        id: h.id,
-        text: h.textContent.replace(/#/g, '').trim(),
-        depth: parseInt(h.tagName.substring(1), 10)
-      }));
+    // keep track of the heading depth as we parse the DOM in order
+    let lastHeadingDepth = 2; 
+
+    const rawHeadings = Array.from(document.querySelectorAll('h2, h3, h4, h5, h6, [data-toc-type="api"]'))
+      .filter(h => {
+        if (!h.id) return false;
+        return h.offsetParent !== null || h.getBoundingClientRect().height > 0;
+      })
+      .map(h => {
+        const isApi = h.hasAttribute('data-toc-type');
+        let depth;
+
+        if (isApi) {
+          // CHANGE THIS LINE: 
+          // Use "lastHeadingDepth" to make it a sibling, or "lastHeadingDepth + 1" to nest it.
+          depth = lastHeadingDepth; 
+        } else {
+          depth = parseInt(h.tagName.substring(1), 10);
+          lastHeadingDepth = depth; 
+        }
+
+        return {
+          id: h.id,
+          text: isApi ? h.getAttribute('data-toc-text') : h.textContent.replace(/#/g, '').trim(),
+          depth: depth,
+          isApi: isApi,
+          method: isApi ? h.getAttribute('data-toc-method') : null
+        };
+      });
 
     if (rawHeadings.length === 0) return;
 
@@ -55,8 +77,23 @@ const { maxDepth = 4 } = Astro.props;
 
         const a = document.createElement('a');
         a.href = "#" + heading.id;
-        a.className = "block font-medium text-slate-600 text-sm dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900 transition-colors";
-        a.textContent = heading.text;
+
+        if (heading.isApi) {
+          a.className = "block font-mono text-xs text-slate-600 dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900 transition-colors break-all";
+          
+          const methodSpan = document.createElement('span');
+          methodSpan.className = "font-bold pr-1.5 uppercase text-[10px] text-yellow-600 dark:text-yellow-400";
+          methodSpan.textContent = heading.method;
+          
+          const pathSpan = document.createElement('span');
+          pathSpan.textContent = heading.text;
+          
+          a.appendChild(methodSpan);
+          a.appendChild(pathSpan);
+        } else {
+          a.className = "block font-medium text-slate-600 text-sm dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900 transition-colors";
+          a.textContent = heading.text;
+        }
 
         div.appendChild(a);
         li.appendChild(div);
@@ -79,43 +116,33 @@ const { maxDepth = 4 } = Astro.props;
       container.appendChild(tocTree);
     }
 
-    // Map the raw headings to their actual DOM elements
     const headingElements = rawHeadings.map(h => document.getElementById(h.id)).filter(Boolean);
     const tocGroups = Array.from(container.querySelectorAll('.group'));
 
     const updateScrollSpy = () => {
       let activeHeading = headingElements[0];
       
-      // Find the last heading that has crossed a specific top threshold (e.g., 150px)
       for (const el of headingElements) {
         if (el.getBoundingClientRect().top < 150) {
           activeHeading = el;
         } else {
-          break; // Stop iterating once we find a heading below the active viewport area
+          break; 
         }
       }
 
       if (activeHeading) {
-        // Clear active state from all items
         tocGroups.forEach(group => group.classList.remove('active'));
         
-        // Find the active link and apply the class
         const activeLink = container.querySelector(`a[href="#${activeHeading.id}"]`);
         if (activeLink) {
           const activeGroup = activeLink.closest('.group');
           activeGroup.classList.add('active');
-          
-          // Auto-scroll the TOC container to keep the active item in view
-          // block: "nearest" ensures the main page doesn't jump, only the TOC scrollbar
           activeGroup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       }
     };
 
-    // Attach passive listener for maximum scroll performance
     window.addEventListener('scroll', updateScrollSpy, { passive: true });
-    
-    // Fire once on load to set the initial active state
     updateScrollSpy();
   });
 </script>

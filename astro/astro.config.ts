@@ -4,9 +4,8 @@ import { unified } from '@astrojs/markdown-remark';
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from '@tailwindcss/vite';
 import indexPages from "astro-index-pages/index.js";
-import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
-import * as markdownExtract from './src/plugins/markdown-extract.js';
+import markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
@@ -55,6 +54,38 @@ export const mermaidTitleFix = () => {
   };
 };
 
+export const rehypeCopyButton = () => {
+  return (tree) => {
+    visit(tree, 'element', (node, index, parent) => {
+      // Find the code blocks
+      if (node.tagName === 'pre') {
+        
+        // insert new copy code button in a div next to the code block
+        const wrapper = {
+          type: 'element',
+          tagName: 'div',
+          properties: { 
+            className: ['relative', 'group'] 
+          },
+          children: [
+            node,
+            {
+              type: 'element',
+              tagName: 'copy-code-button',
+              properties: {},
+              children: []
+            }
+          ]
+        };
+
+        parent.children[index] = wrapper;
+        
+        return [visit.SKIP, index + 1];
+      }
+    });
+  };
+};
+
 const lightboxProvider = () => {
   return {
     name: 'mdx-lightbox-provider',
@@ -83,7 +114,10 @@ const config = defineConfig({
     weights: ['300 400 500 600 700 800 900'],
   }],
   vite: {
-    plugins: [tailwindcss(), lightboxProvider()],
+    plugins: [
+      tailwindcss(),
+      lightboxProvider(),
+    ],
     build: {
       chunkSizeWarningLimit: 1111,
     }
@@ -101,8 +135,8 @@ const config = defineConfig({
           mermaidTitleFix
         ],
         rehypePlugins: [
-          rehypeTasklistEnhancer(),
           rehypeSlug,
+          rehypeCopyButton,
           [
             rehypeAutolinkHeadings,
             {
@@ -128,7 +162,7 @@ const config = defineConfig({
       filter: siteMapFilter
     }),
     indexPages(),
-    markdownExtract.default(),
+    markdownExtract(),
     // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
     process.env.PROD !== 'true' && linkValidator({
       checkExternal: false,
