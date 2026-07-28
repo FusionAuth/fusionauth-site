@@ -22,16 +22,17 @@ if (!enableKapa) return '';
 </div>
 
 <script>
-  const btn = document.getElementById('kapa-button');
-  const spinner = document.getElementById('kapa-spinner');
-  const scriptSrc = "https://widget.kapa.ai/kapa-widget.bundle.js";
+  (function() {
+    const btn = document.getElementById('kapa-button');
+    const spinner = document.getElementById('kapa-spinner');
+    const scriptSrc = "https://widget.kapa.ai/kapa-widget.bundle.js";
 
-  // Helper to check Astro's current theme state based on the HTML class
-  function getActiveTheme() {
-    return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-  }
+    if (!btn) return;
 
-  if (btn && spinner) {
+    function getActiveTheme() {
+      return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    }
+
     async function loadKapa() {
       return new Promise((resolve) => {
         if (window.Kapa) {
@@ -42,13 +43,12 @@ if (!enableKapa) return '';
         const script = document.createElement("script");
         script.src = scriptSrc;
         script.async = true;
-        script.id = "kapa-widget-script"; // Tagged so the MutationObserver can find it
 
         const attrs = {
           "data-website-id": "26ad3b7e-7d94-491c-ab54-95712d1fafee",
           "data-project-name": "FusionAuth",
           "data-project-color": "#0F172A",
-          "data-project-color-dark": "#334155", // Adjusted for dark mode contrast
+          "data-project-color-dark": "#334155", 
           "data-project-logo": "https://uploads-ssl.webflow.com/617b1b1f42c1da41aeae3413/663bee0e6eec6b85377a3939_fa-square-icon-144.png",
           "data-render-on-load": "false",
           'data-user-analytics-cookie-enabled': "false",
@@ -57,7 +57,7 @@ if (!enableKapa) return '';
           'data-mcp-button-hidden': "false",
           'data-launcher-button-hidden': "true",
           
-          // Inject the current theme explicitly when building the script
+          // Grabs the initial theme on load
           'data-color-scheme': getActiveTheme(),
         };
 
@@ -75,24 +75,14 @@ if (!enableKapa) return '';
 
     btn.addEventListener('click', async () => {
       spinner.style.display = 'flex';
+
       await loadKapa();
-      if (window.Kapa) window.Kapa("open");
+
+      if (window.Kapa) {
+        window.Kapa("open");
+      }
+
       spinner.style.display = 'none';
     });
-
-    // Keep Kapa in sync if the user toggles dark mode while on the page
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'class') {
-          const kapaScript = document.getElementById('kapa-widget-script');
-          if (kapaScript) {
-            kapaScript.setAttribute('data-color-scheme', getActiveTheme());
-          }
-        }
-      });
-    });
-
-    // Start observing the <html> tag for class changes immediately
-    observer.observe(document.documentElement, { attributes: true });
   })();
 </script>
