@@ -4,7 +4,10 @@
  */
 // @ts-ignore
 import { Marked } from "marked";
-import {ensureLanguageIsLoaded, getCachedHighlighter, resolveLanguage} from "./shiki";
+import { createRequire } from 'module';
+import Prism from 'prismjs';
+
+const require = createRequire(import.meta.url);
 
 export interface Props {
   /**
@@ -85,21 +88,27 @@ function selectLines(
   }
 }
 
-const highlighter = await getCachedHighlighter();
+function loadLanguage(lang: string): void {
+  if (!lang || Prism.languages[lang]) return;
+  try {
+    require(`prismjs/components/prism-${lang}`);
+  } catch {
+    // Language not supported — will fall back to plaintext
+  }
+}
 
 const remark = new Marked();
 remark.use({
   extensions: [
     {
       name: "code",
-
       renderer: (token) => {
         try {
-          // @ts-ignore
-          return highlighter.codeToHtml(token.text, {
-            lang: resolveLanguage(token.lang),
-            theme: "github-dark",
-          });
+          const lang = token.lang || 'plaintext';
+          loadLanguage(lang);
+          const grammar = Prism.languages[lang] || Prism.languages.plaintext;
+          const highlighted = Prism.highlight(token.text, grammar, lang);
+          return `<pre class="language-${lang}"><code class="language-${lang}">${highlighted}</code></pre>`;
         } catch (e) {
           console.error(e);
           return "";
@@ -107,12 +116,6 @@ remark.use({
       },
     },
   ],
-  async: true,
-  walkTokens: async (token) => {
-    if (token.type === "code") {
-      await ensureLanguageIsLoaded(highlighter, token.lang, {url});
-    }
-  },
 });
 
 const html = remark.parse(remoteSelectedContent);
