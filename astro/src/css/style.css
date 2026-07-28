@@ -129,8 +129,8 @@
       prose-td:px-4 prose-td:text-sm prose-td:font-normal prose-td:leading-5
       even:prose-tr:bg-slate-100 dark:even:prose-tr:bg-slate-800/50;
 
-    /* Target spans natively */
-    span {
+    /* Target spans natively — exclude Prism token spans */
+    span:not([class*="token"]) {
       @apply text-slate-800 dark:text-slate-300;
     }
 
@@ -148,8 +148,8 @@
       display: none;
     }
 
-    /* Astro Code Blocks (Restores 9pt font and purple backgrounds!) */
-    .astro-code {
+    /* Code Blocks (Restores 9pt font and purple backgrounds!) */
+    pre[class*="language-"] {
       background-color: var(--color-code-background-light) !important;
       font-size: 9pt !important;
     }
@@ -158,10 +158,6 @@
       border-width: 0 !important;
       padding: 0 !important;
     }
-    pre code span {
-      @apply text-slate-100 dark:text-slate-300;
-    }
-
     /* Continuous lists fix */
     ul + ul { margin-top: -.75em !important; }
 
@@ -174,7 +170,7 @@
   }
 
   /* Dark mode code block override */
-  .dark .fusion-article .astro-code {
+  .dark .fusion-article pre[class*="language-"] {
     background-color: var(--color-code-background-dark) !important;
   }
 
@@ -255,7 +251,7 @@
 }
 
 #blog-content {
-  .astro-code {
+  pre[class*="language-"] {
     background-color: var(--color-code-background-light) !important;
     font-size: 9pt !important;
   }
@@ -270,6 +266,52 @@
     display: none;
   }
 }
+
+/* Blog dark mode code block override (light mode was already covered by #blog-content above) */
+.dark #blog-content pre[class*="language-"] {
+  background-color: var(--color-code-background-dark) !important;
+}
+
+/* --- Prism Syntax Highlighting (github-dark palette) --- */
+code[class*="language-"],
+pre[class*="language-"] {
+  color: #c9d1d9;
+}
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata { color: #8b949e; font-style: italic; }
+.token.punctuation { color: #c9d1d9; }
+.token.namespace { opacity: 0.7; }
+.token.boolean,
+.token.number,
+.token.constant,
+.token.property,
+.token.symbol,
+.token.deleted,
+.token.attr-name { color: #79c0ff; }
+.token.string,
+.token.char,
+.token.attr-value,
+.token.builtin,
+.token.inserted { color: #a5d6ff; }
+.token.operator { color: #ff7b72; }
+.token.entity { color: #c9d1d9; cursor: help; }
+.token.url { color: #79c0ff; }
+.token.atrule,
+.token.keyword { color: #ff7b72; }
+.token.function { color: #d2a8ff; }
+.token.class-name { color: #ffa657; }
+.token.tag { color: #7ee787; }
+.token.selector { color: #7ee787; }
+.token.regex,
+.token.important,
+.token.variable { color: #ffa657; }
+.token.important,
+.token.bold { font-weight: bold; }
+.token.italic { font-style: italic; }
+/* Shell-session prompt: more specific than .token.important to override its orange color */
+.token.shell-symbol.important { color: #8b949e; user-select: none; }
 
 /* --- Fix Typography (Tildes/Backticks) & CSS Overrides --- */
 @layer base {
@@ -288,43 +330,51 @@
     }
   }
 
-  /* Bash prompts */
-  pre[data-language="console"]::before {
-    content: "$ ";
-    color: var(--color-slate-500);
-    user-select: none;
-  }
-  pre[data-language="powershell"]::before {
+  /* PowerShell prompt indicator */
+  pre.language-powershell::before {
     content: "PS> ";
     color: var(--color-slate-500);
     user-select: none;
   }
 
   /* Code block titles */
-  [data-title]:has(+ div > .astro-code) {
+  [data-title]:has(+ div > pre[class*="language-"]) {
     @apply block w-full m-0 mt-6 px-2 pt-1 pb-0! mb-0! rounded-t-md border border-slate-700 bg-indigo-900 not-italic font-mono text-[0.7rem]! tracking-wide text-white!;
   }
-  [data-title]:has(+ div > .astro-code) > em {
+  [data-title]:has(+ div > pre[class*="language-"]) > em {
     @apply not-italic font-mono text-[0.7rem] tracking-wide text-white;
   }
-  [data-title] + div > .astro-code {
+  [data-title] + div > pre[class*="language-"] {
     @apply mt-0! m-0 rounded-t-none! border border-t-0 border-indigo-900;
   }
   
-  .dark [data-title] + div > .astro-code  {
+  .dark [data-title] + div > pre[class*="language-"]  {
     @apply bg-slate-800 border-slate-700 text-slate-100;
   } 
-  .dark [data-title]:has(+ div > .astro-code) {
+  .dark [data-title]:has(+ div > pre[class*="language-"]) {
     @apply border-slate-700;
   }
 
   /* Mermaid diagram titles */
+
   .mermaid:has(+ p[data-title-bottom]) {
     @apply mb-0! pb-0! border-slate-700;
   }
   .mermaid + [data-title-bottom] {
     @apply block w-full m-0! px-4 py-0! rounded-b-md text-[0.7rem] italic text-center tracking-wide;
   }
+}
+
+/* --- Copy-code button --- */
+.ccb-btn {
+  @apply absolute top-1.5 right-1.5 opacity-0 transition-opacity duration-200 p-1.5 text-sm leading-none rounded text-white/50;
+}
+.group:hover .ccb-btn,
+.group.active .ccb-btn {
+  opacity: 1;
+}
+.ccb-btn:hover {
+  @apply bg-indigo-700;
 }
 
 /* --- Handle Article Background Logic --- */
