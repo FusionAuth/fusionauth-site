@@ -87,7 +87,10 @@ export const rehypeCopyButton = () => {
     visit(tree, 'element', (node, index, parent) => {
       // Find the code blocks
       if (node.tagName === 'pre') {
-        
+        const codeChild = node.children?.find((c: any) => c.tagName === 'code');
+        const classes: string[] = codeChild?.properties?.className ?? [];
+        if (classes.includes('language-mermaid')) return;
+
         // insert new copy code button in a div next to the code block
         const wrapper = {
           type: 'element',
