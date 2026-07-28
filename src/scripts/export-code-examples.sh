@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Publishes code examples from local directories to external repositories.
-# Loops through every directory in astro/src/code-example-repositories/, strips Bluehawk annotations, and mirrors the content to the remote repository specified in repositoryUrl.txt.
+# Loops through every directory in astro/localcode/, strips Bluehawk annotations, and mirrors the content to the remote repository specified in repositoryUrl.txt.
 
 # Arguments:
 #   $1 — The GitHub access token for pushing to external repositories.
@@ -22,7 +22,7 @@ GITHUB_TOKEN="$1"
 DOCUMENTATION_COMMIT_HASH="$2"
 
 
-for LOCAL_REPOSITORY_PATH in astro/src/code-example-repositories/*/; do
+for LOCAL_REPOSITORY_PATH in astro/localcode/*/; do
 
 	REPOSITORY_NAME=$(basename "$LOCAL_REPOSITORY_PATH")
 	URL_FILE="${LOCAL_REPOSITORY_PATH}repositoryUrl.txt"

@@ -8,7 +8,7 @@ cd "$ASTRO_DIR"
 
 mkdir -p src/generated-code-snippets
 
-for repo in src/code-example-repositories/*/; do
+for repo in localcode/*/; do
 	output_dir="src/generated-code-snippets/$(basename "$repo")"
 	mkdir -p "$output_dir"
 	status=0
