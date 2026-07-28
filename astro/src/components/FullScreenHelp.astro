@@ -1,39 +1,85 @@
-<div class="kapa-fullscreen-root"></div>
+---
+// src/components/FullScreenHelp.astro
+---
+<div class="kapa-fullscreen-wrapper" id="kapa-docs-container">
+  <!-- The Kapa widget will be dynamically moved here -->
+</div>
 
 <style>
+  /* force the wrapper to take up the entire screen, sitting on top of the docs */
+  .kapa-fullscreen-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999999;
+    /* Uses standard Starlight/Astro background variables, falling back to basic colors */
+    background-color: var(--sl-color-bg, #ffffff); 
+  }
+
+  /* follow dark mode */
+  :global(html.dark) .kapa-fullscreen-wrapper {
+    background-color: var(--sl-color-bg, #0f172a); 
+  }
+
+  /* fill the full-screen wrapper */
   :global(#kapa-widget-container),
   :global(iframe[src*='kapa.ai']) {
-    position: fixed !important;
+    position: absolute !important;
     top: 0 !important;
     left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
     max-width: 100% !important;
     max-height: 100% !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    z-index: 999999 !important;
+  }
+
+  /* prevent the invisible backdrop from registering "click outside" events */
+  :global([class*='kapa-widget-backdrop']) {
+    pointer-events: none !important;
+    display: none !important;
   }
 </style>
 
 <script is:inline>
+  // intercept the Escape key to prevent the close action
+  window.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' || event.key === 'Esc') {
+      event.stopPropagation();
+    }
+  }, true);
+
   (function () {
     const existing = document.querySelector('script[src="https://widget.kapa.ai/kapa-widget.bundle.js"]');
     if (existing) return;
 
+    function getActiveTheme() {
+      return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    }
+
     const script = document.createElement('script');
     script.async = true;
     script.src = 'https://widget.kapa.ai/kapa-widget.bundle.js';
+    script.id = 'kapa-widget-script'; 
 
     const attrs = {
       'data-website-id': '7f016d35-50d6-4a5f-9f9d-32cb4374841f',
       'data-project-name': 'FusionAuth',
       'data-project-color': '#0F172A',
-      'data-modal-full-screen': 'true',
+      'data-project-color-dark': '#334155', 
+      'data-project-logo': '/img/icons/help/fa-black-logo.png',
+      'data-color-scheme': getActiveTheme(),
+      
+      // Changed back to true so Kapa internally formats for a large window
+      'data-modal-full-screen': 'true', 
       'data-button-hide': 'true',
       'data-modal-open-by-default': 'true',
       'data-launcher-button-hidden': 'true',
-      'data-project-logo': '/img/icons/help/fa-black-logo.png',
       'data-modal-close-button-hidden': 'true'
     };
 
@@ -42,5 +88,38 @@
     });
 
     document.head.appendChild(script);
+
+    const domObserver = new MutationObserver((mutations, obs) => {
+      const kapaContainer = document.getElementById('kapa-widget-container');
+      const ourWrapper = document.getElementById('kapa-docs-container');
+      
+      if (kapaContainer && ourWrapper && kapaContainer.parentElement !== ourWrapper) {
+        // Move the widget into the full-screen wrapper
+        ourWrapper.appendChild(kapaContainer);
+        document.body.style.overflow = '';
+        obs.disconnect(); 
+        
+        // Aggressive auto-reopen logic
+        setInterval(() => {
+          if (window.Kapa) {
+            window.Kapa("open");
+          }
+        }, 150);
+      }
+    });
+
+    domObserver.observe(document.body, { childList: true, subtree: true });
+
+    // Watch for Astro theme toggles to keep dark mode in sync
+    const themeObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const kapaScript = document.getElementById('kapa-widget-script');
+          if (kapaScript) kapaScript.setAttribute('data-color-scheme', getActiveTheme());
+        }
+      });
+    });
+
+    themeObserver.observe(document.documentElement, { attributes: true });
   })();
 </script>
