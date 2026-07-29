@@ -1,9 +1,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { Worker } from 'node:worker_threads';
 import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
 import { gfm } from 'turndown-plugin-gfm';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const WORKER_PATH = path.join(__dirname, 'worker-html-to-md.mjs');
+
+function runWorker(files, distDir) {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(WORKER_PATH, { workerData: { files, distDir } });
+    worker.on('message', resolve);
+    worker.on('error', reject);
+    worker.on('exit', (code) => {
+      if (code !== 0) reject(new Error(`Worker exited with code ${code}`));
+    });
+  });
+}
 
 const turndownService = new TurndownService({
   headingStyle: 'atx',
@@ -125,56 +141,27 @@ export default function markdownExtractIntegration() {
 
       'astro:build:done': async ({ dir }) => {
         console.log('Post-processing HTML into LLM-friendly Markdown...');
-        const distDir = typeof dir === 'string' 
-          ? dir 
+        const distDir = typeof dir === 'string'
+          ? dir
           : (dir instanceof URL ? fileURLToPath(dir) : fileURLToPath(new URL(dir)));
-        
+
         const htmlFiles = walkHtmlFiles(distDir);
         const docsCategories = new Map();
 
-        // Process all HTML files into Markdown
-        for (const htmlFile of htmlFiles) {
-          let htmlContent = fs.readFileSync(htmlFile, 'utf-8');
-          const relPath = path.relative(distDir, htmlFile);
-          const mdPublicUrl = `/${relPath.replace(/\.html$/, '.md').replace(/\\/g, '/')}`;
+        // Distribute files across worker threads for parallel processing
+        const numWorkers = Math.max(1, Math.min(os.cpus().length, htmlFiles.length));
+        const chunkSize = Math.ceil(htmlFiles.length / numWorkers);
+        const chunks = Array.from({ length: numWorkers }, (_, i) =>
+          htmlFiles.slice(i * chunkSize, (i + 1) * chunkSize)
+        ).filter(chunk => chunk.length > 0);
 
-          let htmlChanged = false;
-          if (htmlContent.includes('id="llm-md-link"')) {
-            htmlContent = htmlContent.replace(
-              /<link\s+id="llm-md-link"\s+([^>]+)?href="([^"]+)"([^>]*)>/,
-              () => `<link rel="alternate" type="text/markdown" title="Page Markdown Source" href="${mdPublicUrl}">`
-            );
-            htmlChanged = true;
-          }
-          if (htmlContent.includes('LLM_MD_PATH_PLACEHOLDER')) {
-            htmlContent = htmlContent.replaceAll('LLM_MD_PATH_PLACEHOLDER', mdPublicUrl);
-            htmlChanged = true;
-          }
-          if (htmlChanged) {
-            fs.writeFileSync(htmlFile, htmlContent, 'utf-8');
-          }
+        const allResults = (await Promise.all(chunks.map(chunk => runWorker(chunk, distDir)))).flat();
 
-          const mdContent = htmlToLLMMarkdown(htmlContent);
-          if (!mdContent) continue; 
-
-          const mdFilePath = htmlFile.replace(/\.html$/, '.md');
-          fs.writeFileSync(mdFilePath, mdContent, 'utf-8');
-
-          if (mdPublicUrl.startsWith('/docs/')) {
-            const $ = cheerio.load(htmlContent);
-            const title = $('meta[property="og:title"]').attr('content') || $('title').text().split('|')[0].trim();
-            const description = $('meta[name="description"]').attr('content') || '';
-            const descText = description ? `: ${description}` : '';
-            
-            const pathParts = mdPublicUrl.split('/');
-            const folderName = pathParts[2];
-            const categoryName = formatCategoryName(folderName);
-
-            if (!docsCategories.has(categoryName)) {
-              docsCategories.set(categoryName, []);
-            }
-            docsCategories.get(categoryName).push(`- [${title}](${mdPublicUrl})${descText}`);
-          }
+        for (const result of allResults) {
+          if (!result) continue;
+          const { categoryName, entry } = result;
+          if (!docsCategories.has(categoryName)) docsCategories.set(categoryName, []);
+          docsCategories.get(categoryName).push(entry);
         }
         
         const docsDir = path.join(distDir, 'docs');

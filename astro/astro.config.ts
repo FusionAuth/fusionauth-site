@@ -149,6 +149,7 @@ const config = defineConfig({
       tailwindcss(),
       lightboxProvider(),
     ],
+    cacheDir: '.vite-cache',
     build: {
       chunkSizeWarningLimit: 1111,
     }

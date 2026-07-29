@@ -1,6 +1,39 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 import yaml from 'js-yaml';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const CACHE_DIR = path.join(process.cwd(), '.content-cache');
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function readCache(cacheFile) {
+  try {
+    const age = Date.now() - fs.statSync(cacheFile).mtimeMs;
+    if (age < CACHE_TTL_MS) return fs.readFileSync(cacheFile, 'utf-8');
+  } catch {}
+  return null;
+}
+
+async function fetchWithCache(url, cacheFile) {
+  const cached = readCache(cacheFile);
+  if (cached) return cached;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    const text = await res.text();
+    fs.mkdirSync(CACHE_DIR, { recursive: true });
+    fs.writeFileSync(cacheFile, text, 'utf-8');
+    return text;
+  } catch (err) {
+    try {
+      const stale = fs.readFileSync(cacheFile, 'utf-8');
+      console.warn(`[content] Fetch failed for ${url}, using stale cache: ${err.message}`);
+      return stale;
+    } catch {}
+    throw err;
+  }
+}
 
 const releasesCollection = defineCollection({
   loader: glob({
@@ -108,9 +141,12 @@ const jsonCollection = defineCollection({
 
 const directDownloadVersions = defineCollection({
   loader: async () => {
-    const response = await fetch('https://account.fusionauth.io/api/version');
-    const data = await response.json();
-    
+    const text = await fetchWithCache(
+      'https://account.fusionauth.io/api/version',
+      path.join(CACHE_DIR, 'versions.json')
+    );
+    const data = JSON.parse(text);
+
     return data.versions.reverse().map((version) => ({
       id: version.replace(/\./g, '_'),
       version: version,
@@ -130,29 +166,24 @@ const apiEndpoints = defineCollection({
   loader: {
     name: 'openapi-endpoints',
     load: async ({ store }) => {
-      const response = await fetch('https://raw.githubusercontent.com/FusionAuth/fusionauth-openapi/main/openapi.yaml');
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch OpenAPI spec: ${response.statusText}`);
-      }
-      
-      const file = await response.text();
-      
+      const file = await fetchWithCache(
+        'https://raw.githubusercontent.com/FusionAuth/fusionauth-openapi/main/openapi.yaml',
+        path.join(CACHE_DIR, 'openapi.yaml')
+      );
+
       const spec = yaml.load(file);
-      
+
       store.set({
         id: 'base-spec',
         data: { openapi: spec.openapi, info: spec.info, servers: spec.servers, components: spec.components }
       });
 
-      for (const [path, methods] of Object.entries(spec.paths)) {
+      for (const [endpointPath, methods] of Object.entries(spec.paths)) {
         for (const [method, operation] of Object.entries(methods)) {
           if (['parameters', 'servers', '$ref', 'summary', 'description'].includes(method)) continue;
-          
-          // Ensure consistent ID generation
-          const id = `${method}-${path.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
-          
-          store.set({ id, data: { path, method, operation } });
+
+          const id = `${method}-${endpointPath.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
+          store.set({ id, data: { path: endpointPath, method, operation } });
         }
       }
     }
