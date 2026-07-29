@@ -1,9 +1,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { Worker } from 'node:worker_threads';
 import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
 import { gfm } from 'turndown-plugin-gfm';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const WORKER_PATH = path.join(__dirname, 'worker-html-to-md.mjs');
+
+function runWorker(files, distDir, siteUrl) {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(WORKER_PATH, { workerData: { files, distDir, siteUrl } });
+    worker.on('message', resolve);
+    worker.on('error', reject);
+    worker.on('exit', (code) => {
+      if (code !== 0) reject(new Error(`Worker exited with code ${code}`));
+    });
+  });
+}
 
 const turndownService = new TurndownService({
   headingStyle: 'atx',
@@ -26,13 +42,32 @@ turndownService.addRule('tabLabels', {
   replacement: (content) => `\n### ${content.trim()}\n\n`
 });
 
-function htmlToLLMMarkdown(htmlString) {
+function transformUrl(url, siteUrl) {
+  // Absolutize root-relative (but not protocol-relative like //cdn.example.com)
+  if (url.startsWith('/') && !url.startsWith('//')) url = siteUrl + url;
+  // Leave external links alone
+  if (!url.startsWith(`${siteUrl}/`)) return url;
+  // Split fragment from path
+  const hashIdx = url.indexOf('#');
+  const fragment = hashIdx >= 0 ? url.slice(hashIdx) : '';
+  const bare = (hashIdx >= 0 ? url.slice(0, hashIdx) : url).replace(/\/$/, '');
+  // Add .md if the last path segment has no file extension
+  const lastSegment = bare.split('/').pop() || '';
+  return lastSegment.includes('.') ? url : `${bare}.md${fragment}`;
+}
+
+function processLinks(markdown, siteUrl) {
+  if (!siteUrl) return markdown;
+  return markdown.replace(/\]\(([^)]+)\)/g, (_, url) => `](${transformUrl(url, siteUrl)})`);
+}
+
+function htmlToLLMMarkdown(htmlString, siteUrl = '') {
   const $ = cheerio.load(htmlString);
-  
+
   let containerNode = $('article').first();
   if (!containerNode.length) containerNode = $('main').first();
   if (!containerNode.length) containerNode = $('body').first();
-  
+
   if (!containerNode.length) return '';
 
   const title = $('meta[property="og:title"]').attr('content') || $('title').text();
@@ -43,19 +78,19 @@ function htmlToLLMMarkdown(htmlString) {
 
   // Removes hidden tabs, SVGs, mobile menus, aria-hidden junk, AND the .sr-only LLM directive
   containerNode.find(`
-    script, style, svg, button, nav, footer, aside, 
+    script, style, svg, button, nav, footer, aside,
     .not-prose.hidden, [aria-hidden="true"], .hidden, .sr-only, dialog, noscript
   `).remove();
 
   const rawHtml = containerNode.html();
   const markdownContent = turndownService.turndown(rawHtml);
 
-  let output = `> For the complete documentation index, see [llms.txt](/docs/llms.txt)\n\n`;
+  let output = `> For the complete documentation index, see [llms.txt](${siteUrl}/docs/llms.txt)\n\n`;
   if (title) output += `# ${title}\n\n`;
   if (description) output += `${description}\n\n`;
-  
+
   output += markdownContent;
-  return output;
+  return processLinks(output, siteUrl);
 }
 
 function walkHtmlFiles(dir) {
@@ -71,28 +106,17 @@ function walkHtmlFiles(dir) {
   return results;
 }
 
-// Helper to format a folder like "get-started" into "Get Started"
-function formatCategoryName(folderName) {
-  if (!folderName || folderName.endsWith('.md')) return 'Overview';
-  
-  // Handle common acronyms
-  const lower = folderName.toLowerCase();
-  if (lower === 'sdks') return 'SDKs';
-  if (lower === 'api') return 'API';
-  if (lower === 'ciam') return 'CIAM';
-  if (lower === 'oauth') return 'OAuth';
-  
-  // Capitalize hyphenated words
-  return folderName
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
 
 export default function markdownExtractIntegration() {
+  let siteUrl = '';
+
   return {
     name: 'html-to-markdown-llm',
     hooks: {
+      'astro:config:done': ({ config }) => {
+        siteUrl = (config.site || '').replace(/\/$/, '');
+      },
+
       'astro:server:setup': ({ server }) => {
         server.middlewares.use(async (req, res, next) => {
           if (req.url === '/docs/llms.txt' || req.url === '/docs/.well-known/llms.txt') {
@@ -106,11 +130,12 @@ export default function markdownExtractIntegration() {
               const htmlRoute = req.url.split('?')[0];
               const devServerUrl = `http://${req.headers.host}${htmlRoute}`;
               const response = await fetch(devServerUrl);
-              
+
               if (response.ok) {
                 const htmlString = await response.text();
-                const mdString = htmlToLLMMarkdown(htmlString);
-                
+                const devSiteUrl = `http://${req.headers.host}`;
+                const mdString = htmlToLLMMarkdown(htmlString, devSiteUrl);
+
                 res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
                 res.end(mdString);
                 return;
@@ -125,56 +150,27 @@ export default function markdownExtractIntegration() {
 
       'astro:build:done': async ({ dir }) => {
         console.log('Post-processing HTML into LLM-friendly Markdown...');
-        const distDir = typeof dir === 'string' 
-          ? dir 
+        const distDir = typeof dir === 'string'
+          ? dir
           : (dir instanceof URL ? fileURLToPath(dir) : fileURLToPath(new URL(dir)));
-        
+
         const htmlFiles = walkHtmlFiles(distDir);
         const docsCategories = new Map();
 
-        // Process all HTML files into Markdown
-        for (const htmlFile of htmlFiles) {
-          let htmlContent = fs.readFileSync(htmlFile, 'utf-8');
-          const relPath = path.relative(distDir, htmlFile);
-          const mdPublicUrl = `/${relPath.replace(/\.html$/, '.md').replace(/\\/g, '/')}`;
+        // Distribute files across worker threads for parallel processing
+        const numWorkers = Math.max(1, Math.min(os.cpus().length, htmlFiles.length));
+        const chunkSize = Math.ceil(htmlFiles.length / numWorkers);
+        const chunks = Array.from({ length: numWorkers }, (_, i) =>
+          htmlFiles.slice(i * chunkSize, (i + 1) * chunkSize)
+        ).filter(chunk => chunk.length > 0);
 
-          let htmlChanged = false;
-          if (htmlContent.includes('id="llm-md-link"')) {
-            htmlContent = htmlContent.replace(
-              /<link\s+id="llm-md-link"\s+([^>]+)?href="([^"]+)"([^>]*)>/,
-              () => `<link rel="alternate" type="text/markdown" title="Page Markdown Source" href="${mdPublicUrl}">`
-            );
-            htmlChanged = true;
-          }
-          if (htmlContent.includes('LLM_MD_PATH_PLACEHOLDER')) {
-            htmlContent = htmlContent.replaceAll('LLM_MD_PATH_PLACEHOLDER', mdPublicUrl);
-            htmlChanged = true;
-          }
-          if (htmlChanged) {
-            fs.writeFileSync(htmlFile, htmlContent, 'utf-8');
-          }
+        const allResults = (await Promise.all(chunks.map(chunk => runWorker(chunk, distDir, siteUrl)))).flat();
 
-          const mdContent = htmlToLLMMarkdown(htmlContent);
-          if (!mdContent) continue; 
-
-          const mdFilePath = htmlFile.replace(/\.html$/, '.md');
-          fs.writeFileSync(mdFilePath, mdContent, 'utf-8');
-
-          if (mdPublicUrl.startsWith('/docs/')) {
-            const $ = cheerio.load(htmlContent);
-            const title = $('meta[property="og:title"]').attr('content') || $('title').text().split('|')[0].trim();
-            const description = $('meta[name="description"]').attr('content') || '';
-            const descText = description ? `: ${description}` : '';
-            
-            const pathParts = mdPublicUrl.split('/');
-            const folderName = pathParts[2];
-            const categoryName = formatCategoryName(folderName);
-
-            if (!docsCategories.has(categoryName)) {
-              docsCategories.set(categoryName, []);
-            }
-            docsCategories.get(categoryName).push(`- [${title}](${mdPublicUrl})${descText}`);
-          }
+        for (const result of allResults) {
+          if (!result) continue;
+          const { categoryName, entry } = result;
+          if (!docsCategories.has(categoryName)) docsCategories.set(categoryName, []);
+          docsCategories.get(categoryName).push(entry);
         }
         
         const docsDir = path.join(distDir, 'docs');
@@ -189,7 +185,11 @@ export default function markdownExtractIntegration() {
         }
 
         // For all other categories, create a separate sub-index file
-        const sortedCategories = Array.from(docsCategories.keys()).sort();
+        const sortedCategories = Array.from(docsCategories.keys()).sort((a, b) => {
+          if (a === 'Get Started') return -1;
+          if (b === 'Get Started') return 1;
+          return a.localeCompare(b);
+        });
         for (const cat of sortedCategories) {
           const safeFileName = `llms-${cat.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.txt`;
           const catFilePath = path.join(docsDir, safeFileName);
@@ -198,7 +198,7 @@ export default function markdownExtractIntegration() {
           fs.writeFileSync(catFilePath, catLlmsTxt, 'utf-8');
           
           // Add a link from the root index to this sub-index
-          rootLlmsTxt += `- [${cat} Documentation](/docs/${safeFileName})\n`;
+          rootLlmsTxt += `- [${cat} Documentation](${siteUrl}/docs/${safeFileName})\n`;
         }
 
         // Save the root index
