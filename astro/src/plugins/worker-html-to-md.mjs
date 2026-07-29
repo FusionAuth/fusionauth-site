@@ -43,14 +43,15 @@ const { files, distDir, siteUrl } = workerData;
 
 // Precompute once — safe to reuse with String.prototype.replace (resets lastIndex each call)
 const siteEsc = siteUrl ? siteUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+// [^/).#?]+ excludes / so segments are matched individually; /? absorbs optional trailing slash
 const internalLinkRe = siteUrl
-  ? new RegExp(`\\]\\((${siteEsc}/[^).#?]+(?:/[^).#?]+)*)(#[^)]*)?\\)`, 'g')
+  ? new RegExp(`\\]\\((${siteEsc}/[^/).#?]+(?:/[^/).#?]+)*/?)(#[^)]*)?\\)`, 'g')
   : null;
 
 function processLinks(markdown) {
   if (!siteUrl) return markdown;
   let result = markdown.replace(/\]\(\/(?!\/)/g, `](${siteUrl}/`);
-  return result.replace(internalLinkRe, (_, p, frag) => `](${p}.md${frag || ''})`);
+  return result.replace(internalLinkRe, (_, p, frag) => `](${p.replace(/\/$/, '')}.md${frag || ''})`);
 }
 
 function processFile(htmlFile) {

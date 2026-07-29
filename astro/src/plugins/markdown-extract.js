@@ -50,9 +50,10 @@ function processLinks(markdown, siteUrl) {
   // Matches: ](https://site.com/docs/page) and ](https://site.com/docs/page#frag)
   // Skips: ](https://site.com/img/photo.png) — dot in last segment → no match
   const esc = siteUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // [^/).#?]+ excludes / so segments are matched individually; /? absorbs optional trailing slash
   return result.replace(
-    new RegExp(`\\]\\((${esc}/[^).#?]+(?:/[^).#?]+)*)(#[^)]*)?\\)`, 'g'),
-    (_, path, frag) => `](${path}.md${frag || ''})`,
+    new RegExp(`\\]\\((${esc}/[^/).#?]+(?:/[^/).#?]+)*/?)(#[^)]*)?\\)`, 'g'),
+    (_, p, frag) => `](${p.replace(/\/$/, '')}.md${frag || ''})`,
   );
 }
 
