@@ -42,19 +42,23 @@ turndownService.addRule('tabLabels', {
   replacement: (content) => `\n### ${content.trim()}\n\n`
 });
 
+function transformUrl(url, siteUrl) {
+  // Absolutize root-relative (but not protocol-relative like //cdn.example.com)
+  if (url.startsWith('/') && !url.startsWith('//')) url = siteUrl + url;
+  // Leave external links alone
+  if (!url.startsWith(`${siteUrl}/`)) return url;
+  // Split fragment from path
+  const hashIdx = url.indexOf('#');
+  const fragment = hashIdx >= 0 ? url.slice(hashIdx) : '';
+  const bare = (hashIdx >= 0 ? url.slice(0, hashIdx) : url).replace(/\/$/, '');
+  // Add .md if the last path segment has no file extension
+  const lastSegment = bare.split('/').pop() || '';
+  return lastSegment.includes('.') ? url : `${bare}.md${fragment}`;
+}
+
 function processLinks(markdown, siteUrl) {
   if (!siteUrl) return markdown;
-  // Step 1: absolutize root-relative links (skip protocol-relative //cdn.example.com)
-  let result = markdown.replace(/\]\(\/(?!\/)/g, `](${siteUrl}/`);
-  // Step 2: add .md to internal links whose last path segment has no file extension
-  // Matches: ](https://site.com/docs/page) and ](https://site.com/docs/page#frag)
-  // Skips: ](https://site.com/img/photo.png) — dot in last segment → no match
-  const esc = siteUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  // [^/).#?]+ excludes / so segments are matched individually; /? absorbs optional trailing slash
-  return result.replace(
-    new RegExp(`\\]\\((${esc}/[^/).#?]+(?:/[^/).#?]+)*/?)(#[^)]*)?\\)`, 'g'),
-    (_, p, frag) => `](${p.replace(/\/$/, '')}.md${frag || ''})`,
-  );
+  return markdown.replace(/\]\(([^)]+)\)/g, (_, url) => `](${transformUrl(url, siteUrl)})`);
 }
 
 function htmlToLLMMarkdown(htmlString, siteUrl = '') {

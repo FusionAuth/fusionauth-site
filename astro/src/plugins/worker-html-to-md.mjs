@@ -41,17 +41,19 @@ function formatCategoryName(folderName) {
 
 const { files, distDir, siteUrl } = workerData;
 
-// Precompute once — safe to reuse with String.prototype.replace (resets lastIndex each call)
-const siteEsc = siteUrl ? siteUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
-// [^/).#?]+ excludes / so segments are matched individually; /? absorbs optional trailing slash
-const internalLinkRe = siteUrl
-  ? new RegExp(`\\]\\((${siteEsc}/[^/).#?]+(?:/[^/).#?]+)*/?)(#[^)]*)?\\)`, 'g')
-  : null;
+function transformUrl(url) {
+  if (url.startsWith('/') && !url.startsWith('//')) url = siteUrl + url;
+  if (!url.startsWith(`${siteUrl}/`)) return url;
+  const hashIdx = url.indexOf('#');
+  const fragment = hashIdx >= 0 ? url.slice(hashIdx) : '';
+  const bare = (hashIdx >= 0 ? url.slice(0, hashIdx) : url).replace(/\/$/, '');
+  const lastSegment = bare.split('/').pop() || '';
+  return lastSegment.includes('.') ? url : `${bare}.md${fragment}`;
+}
 
 function processLinks(markdown) {
   if (!siteUrl) return markdown;
-  let result = markdown.replace(/\]\(\/(?!\/)/g, `](${siteUrl}/`);
-  return result.replace(internalLinkRe, (_, p, frag) => `](${p.replace(/\/$/, '')}.md${frag || ''})`);
+  return markdown.replace(/\]\(([^)]+)\)/g, (_, url) => `](${transformUrl(url)})`);
 }
 
 function processFile(htmlFile) {
