@@ -55,8 +55,12 @@ function processLinks(markdown) {
 
 function processFile(htmlFile) {
   let htmlContent = fs.readFileSync(htmlFile, 'utf-8');
-  const relPath = path.relative(distDir, htmlFile);
-  const mdPublicUrl = `/${relPath.replace(/\.html$/, '.md').replace(/\\/g, '/')}`;
+  const relPath = path.relative(distDir, htmlFile).replace(/\\/g, '/');
+  // foo/index.html represents the directory itself → write as foo.md, not foo/index.md
+  const mdRelPath = relPath.endsWith('/index.html')
+    ? relPath.slice(0, -'/index.html'.length) + '.md'
+    : relPath.replace(/\.html$/, '.md');
+  const mdPublicUrl = `/${mdRelPath}`;
 
   let htmlChanged = false;
   if (htmlContent.includes('id="llm-md-link"')) {
@@ -103,7 +107,7 @@ function processFile(htmlFile) {
 
   output = processLinks(output);
 
-  fs.writeFileSync(htmlFile.replace(/\.html$/, '.md'), output, 'utf-8');
+  fs.writeFileSync(path.join(distDir, mdRelPath), output, 'utf-8');
 
   if (mdPublicUrl.startsWith('/docs/')) {
     const descText = description ? `: ${description}` : '';

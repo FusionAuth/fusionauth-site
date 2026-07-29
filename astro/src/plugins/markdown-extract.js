@@ -180,7 +180,11 @@ export default function markdownExtractIntegration() {
         }
 
         // For all other categories, create a separate sub-index file
-        const sortedCategories = Array.from(docsCategories.keys()).sort();
+        const sortedCategories = Array.from(docsCategories.keys()).sort((a, b) => {
+          if (a === 'Get Started') return -1;
+          if (b === 'Get Started') return 1;
+          return a.localeCompare(b);
+        });
         for (const cat of sortedCategories) {
           const safeFileName = `llms-${cat.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.txt`;
           const catFilePath = path.join(docsDir, safeFileName);
