@@ -8,7 +8,8 @@ set -euo pipefail
 # Usage:
 #   check-for-closed-github-issues-in-docs.sh
 
-SEARCH_DIR="astro/src/content"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SEARCH_DIR="$SCRIPT_DIR/../../astro/src/content"
 
 # Files to search: all .md/.mdx excluding release notes and blog posts
 search_files() {
@@ -31,12 +32,16 @@ while IFS= read -r url; do
   REPO="${path%/issues/*}"           # FusionAuth/some-repo
   NUMBER="${path##*/}"               # 123
 
-  STATE=$(gh issue view "$NUMBER" --repo "$REPO" --json state --jq '.state' 2>/dev/null || echo "UNKNOWN")
+  STATE=$(curl -sf \
+    ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} \
+    -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/$REPO/issues/$NUMBER" \
+    | grep -o '"state": *"[^"]*"' | grep -o '[^"]*"$' | tr -d '"' || echo "unknown")
 
-  if [ "$STATE" = "CLOSED" ]; then
+  if [ "$STATE" = "closed" ]; then
     CLOSED_COUNT=$((CLOSED_COUNT + 1))
     echo "CLOSED: $url"
-    search_files | xargs grep -n "$url" | sed 's/^/  /'
+    search_files | xargs grep -HnE "${url}([^0-9]|$)" | sed 's/^/  /'
   fi
 done <<< "$ISSUE_URLS"
 
