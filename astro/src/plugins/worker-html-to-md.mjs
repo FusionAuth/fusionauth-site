@@ -27,7 +27,7 @@ turndownService.addRule('tabLabels', {
 });
 
 function formatCategoryName(folderName) {
-  if (!folderName || folderName.endsWith('.md')) return 'Overview';
+  if (!folderName) return 'Overview';
   const lower = folderName.toLowerCase();
   if (lower === 'sdks') return 'SDKs';
   if (lower === 'api') return 'API';
@@ -112,9 +112,11 @@ function processFile(htmlFile) {
 
   fs.writeFileSync(path.join(distDir, mdRelPath), output, 'utf-8');
 
-  if (mdPublicUrl.startsWith('/docs/')) {
+  if (mdPublicUrl.startsWith('/docs/') || mdPublicUrl === '/docs.md') {
     const descText = description ? `: ${description}` : '';
-    const categoryName = formatCategoryName(mdPublicUrl.split('/')[2]);
+    const rawSegment = mdPublicUrl === '/docs.md' ? '' : mdPublicUrl.split('/')[2];
+    const segment = rawSegment ? rawSegment.replace(/\.md$/, '') : '';
+    const categoryName = formatCategoryName(segment);
     return { categoryName, entry: `- [${title}](${siteUrl}${mdPublicUrl})${descText}` };
   }
   return null;
