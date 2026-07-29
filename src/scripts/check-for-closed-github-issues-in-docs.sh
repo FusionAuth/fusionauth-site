@@ -3,25 +3,18 @@ set -euo pipefail
 
 # Finds GitHub issue URLs referenced in the docs and reports any that are closed.
 # Exits with the number of closed issues found (0 = success).
-# Release notes are excluded since they are expected to reference closed issues.
+# Release notes and blog posts are excluded since they are expected to reference closed issues.
 #
 # Usage:
-#   check-for-closed-github-issues-in-docs.sh [-v]
-#
-# Options:
-#   -v  Print each closed issue URL and the files that reference it
-
-VERBOSE=false
-if [ "${1:-}" = "-v" ]; then
-  VERBOSE=true
-fi
+#   check-for-closed-github-issues-in-docs.sh
 
 SEARCH_DIR="astro/src/content"
 
-# Find all unique GitHub issue URLs, excluding release notes
+# Find all unique GitHub issue URLs, excluding release notes and blog posts
 ISSUE_URLS=$(grep -r 'github.com/FusionAuth' "$SEARCH_DIR" \
     --include="*.md" --include="*.mdx" \
     --exclude-dir=releases \
+    --exclude-dir=blog \
     -h \
   | grep -oE 'https://github\.com/FusionAuth/[^/]+/issues/[0-9]+' \
   | sort -u)
@@ -39,18 +32,15 @@ while IFS= read -r url; do
 
   if [ "$STATE" = "CLOSED" ]; then
     CLOSED_COUNT=$((CLOSED_COUNT + 1))
-    if $VERBOSE; then
-      echo "CLOSED: $url"
-      grep -rn --include="*.md" --include="*.mdx" --exclude-dir=releases \
-        "$url" "$SEARCH_DIR" \
-        | sed 's/^/  /'
-    fi
+    echo "CLOSED: $url"
+    grep -rn --include="*.md" --include="*.mdx" \
+      --exclude-dir=releases --exclude-dir=blog \
+      "$url" "$SEARCH_DIR" \
+      | sed 's/^/  /'
   fi
 done <<< "$ISSUE_URLS"
 
-if $VERBOSE; then
-  echo ""
-  echo "$CLOSED_COUNT closed issue(s) found in docs"
-fi
+echo ""
+echo "$CLOSED_COUNT closed issue(s) found in docs"
 
 exit $CLOSED_COUNT
