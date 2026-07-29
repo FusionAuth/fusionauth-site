@@ -1,0 +1,152 @@
+{
+  "variables": {
+    "applicationId": "E9FDB985-9173-4E01-9D73-AC2D60D1DC8E",
+    "apiKey": "this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works",
+    "asymmetricKeyId": "#{UUID()}",
+    "newThemeId": "#{UUID()}",
+    "defaultTenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
+    "adminEmail": "admin@example.com",
+    "adminPassword": "password",
+    "userEmail": "richard@example.com",
+    "userPassword": "password",
+    "userUserId": "00000000-0000-0000-0000-111111111111"
+  },
+  "apiKeys": [
+    {
+      "key": "#{apiKey}",
+      "description": "Unrestricted API key"
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "url": "/api/key/generate/#{asymmetricKeyId}",
+      "body": {
+        "key": {
+          "algorithm": "RS256",
+          "name": "For exampleapp",
+          "length": 2048
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "api/system-configuration",
+      "body": {
+        "systemConfiguration": {
+          "corsConfiguration": {
+            "allowCredentials": true,
+            "allowedMethods": [
+              "GET",
+              "POST",
+              "OPTIONS"
+            ],
+            "allowedOrigins": [
+              "http://localhost:9012"
+            ],
+            "debug": false,
+            "enabled": true,
+            "preflightMaxAgeInSeconds": 0
+          },
+          "usageDataConfiguration": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration",
+      "body": {
+        "user": {
+          "email": "#{adminEmail}",
+          "password": "#{adminPassword}"
+        },
+        "registration": {
+          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+          "roles": [
+            "admin"
+          ]
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/application/#{applicationId}",
+      "tenantId": "#{defaultTenantId}",
+      "body": {
+        "application": {
+          "name": "Example app",
+          "oauthConfiguration": {
+            "authorizedRedirectURLs": [
+              "http://localhost:9012/callback"
+            ],
+            "authorizedOriginURLs": [
+              "http://localhost:9012"
+            ],
+            "clientSecret": "super-secret-secret-that-should-be-regenerated-for-production",
+            "logoutURL": "http://localhost:9012/logout",
+            "enabledGrants": [
+              "authorization_code",
+              "refresh_token"
+            ],
+            "debug": true,
+            "generateRefreshTokens": true
+          },
+          "jwtConfiguration": {
+            "enabled": true,
+            "accessTokenKeyId": "#{asymmetricKeyId}",
+            "idTokenKeyId": "#{asymmetricKeyId}"
+          },
+          "registrationConfiguration": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{userUserId}",
+      "body": {
+        "user": {
+          "birthDate": "1985-11-23",
+          "email": "#{userEmail}",
+          "firstName": "Richard",
+          "lastName": "Hendricks",
+          "password": "#{userPassword}"
+        },
+        "registration": {
+          "applicationId": "#{applicationId}"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/theme/#{newThemeId}",
+      "body": {
+        "sourceThemeId": "75a068fd-e94b-451a-9aeb-3ddb9a3b5987",
+        "theme": {
+          "name": "ChangeBank theme"
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/theme/#{newThemeId}",
+      "body": {
+        "theme": {
+          "stylesheet": "@{css/styles.css}"
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/tenant/#{defaultTenantId}",
+      "body": {
+        "tenant": {
+          "themeId": "#{newThemeId}"
+        }
+      }
+    }
+  ]
+}
