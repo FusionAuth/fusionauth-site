@@ -214,7 +214,7 @@ const config = defineConfig({
       //base: 'https://fusionauth.io',
     })
   ],
-  site: 'https://fusionauth.io/',
+  site: process.env.SITE_URL || 'https://fusionauth.io/',
 });
 
 export default config;

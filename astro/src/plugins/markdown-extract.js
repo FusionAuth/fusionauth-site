@@ -10,9 +10,9 @@ import { gfm } from 'turndown-plugin-gfm';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WORKER_PATH = path.join(__dirname, 'worker-html-to-md.mjs');
 
-function runWorker(files, distDir) {
+function runWorker(files, distDir, siteUrl) {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(WORKER_PATH, { workerData: { files, distDir } });
+    const worker = new Worker(WORKER_PATH, { workerData: { files, distDir, siteUrl } });
     worker.on('message', resolve);
     worker.on('error', reject);
     worker.on('exit', (code) => {
@@ -42,13 +42,27 @@ turndownService.addRule('tabLabels', {
   replacement: (content) => `\n### ${content.trim()}\n\n`
 });
 
-function htmlToLLMMarkdown(htmlString) {
+function processLinks(markdown, siteUrl) {
+  if (!siteUrl) return markdown;
+  // Step 1: absolutize root-relative links (skip protocol-relative //cdn.example.com)
+  let result = markdown.replace(/\]\(\/(?!\/)/g, `](${siteUrl}/`);
+  // Step 2: add .md to internal links whose last path segment has no file extension
+  // Matches: ](https://site.com/docs/page) and ](https://site.com/docs/page#frag)
+  // Skips: ](https://site.com/img/photo.png) — dot in last segment → no match
+  const esc = siteUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return result.replace(
+    new RegExp(`\\]\\((${esc}/[^).#?]+(?:/[^).#?]+)*)(#[^)]*)?\\)`, 'g'),
+    (_, path, frag) => `](${path}.md${frag || ''})`,
+  );
+}
+
+function htmlToLLMMarkdown(htmlString, siteUrl = '') {
   const $ = cheerio.load(htmlString);
-  
+
   let containerNode = $('article').first();
   if (!containerNode.length) containerNode = $('main').first();
   if (!containerNode.length) containerNode = $('body').first();
-  
+
   if (!containerNode.length) return '';
 
   const title = $('meta[property="og:title"]').attr('content') || $('title').text();
@@ -59,19 +73,19 @@ function htmlToLLMMarkdown(htmlString) {
 
   // Removes hidden tabs, SVGs, mobile menus, aria-hidden junk, AND the .sr-only LLM directive
   containerNode.find(`
-    script, style, svg, button, nav, footer, aside, 
+    script, style, svg, button, nav, footer, aside,
     .not-prose.hidden, [aria-hidden="true"], .hidden, .sr-only, dialog, noscript
   `).remove();
 
   const rawHtml = containerNode.html();
   const markdownContent = turndownService.turndown(rawHtml);
 
-  let output = `> For the complete documentation index, see [llms.txt](/docs/llms.txt)\n\n`;
+  let output = `> For the complete documentation index, see [llms.txt](${siteUrl}/docs/llms.txt)\n\n`;
   if (title) output += `# ${title}\n\n`;
   if (description) output += `${description}\n\n`;
-  
+
   output += markdownContent;
-  return output;
+  return processLinks(output, siteUrl);
 }
 
 function walkHtmlFiles(dir) {
@@ -89,9 +103,15 @@ function walkHtmlFiles(dir) {
 
 
 export default function markdownExtractIntegration() {
+  let siteUrl = '';
+
   return {
     name: 'html-to-markdown-llm',
     hooks: {
+      'astro:config:done': ({ config }) => {
+        siteUrl = (config.site || '').replace(/\/$/, '');
+      },
+
       'astro:server:setup': ({ server }) => {
         server.middlewares.use(async (req, res, next) => {
           if (req.url === '/docs/llms.txt' || req.url === '/docs/.well-known/llms.txt') {
@@ -105,11 +125,12 @@ export default function markdownExtractIntegration() {
               const htmlRoute = req.url.split('?')[0];
               const devServerUrl = `http://${req.headers.host}${htmlRoute}`;
               const response = await fetch(devServerUrl);
-              
+
               if (response.ok) {
                 const htmlString = await response.text();
-                const mdString = htmlToLLMMarkdown(htmlString);
-                
+                const devSiteUrl = `http://${req.headers.host}`;
+                const mdString = htmlToLLMMarkdown(htmlString, devSiteUrl);
+
                 res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
                 res.end(mdString);
                 return;
@@ -138,7 +159,7 @@ export default function markdownExtractIntegration() {
           htmlFiles.slice(i * chunkSize, (i + 1) * chunkSize)
         ).filter(chunk => chunk.length > 0);
 
-        const allResults = (await Promise.all(chunks.map(chunk => runWorker(chunk, distDir)))).flat();
+        const allResults = (await Promise.all(chunks.map(chunk => runWorker(chunk, distDir, siteUrl)))).flat();
 
         for (const result of allResults) {
           if (!result) continue;
@@ -168,7 +189,7 @@ export default function markdownExtractIntegration() {
           fs.writeFileSync(catFilePath, catLlmsTxt, 'utf-8');
           
           // Add a link from the root index to this sub-index
-          rootLlmsTxt += `- [${cat} Documentation](/docs/${safeFileName})\n`;
+          rootLlmsTxt += `- [${cat} Documentation](${siteUrl}/docs/${safeFileName})\n`;
         }
 
         // Save the root index

@@ -39,7 +39,21 @@ function formatCategoryName(folderName) {
     .join(' ');
 }
 
-function processFile(htmlFile, distDir) {
+const { files, distDir, siteUrl } = workerData;
+
+// Precompute once — safe to reuse with String.prototype.replace (resets lastIndex each call)
+const siteEsc = siteUrl ? siteUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+const internalLinkRe = siteUrl
+  ? new RegExp(`\\]\\((${siteEsc}/[^).#?]+(?:/[^).#?]+)*)(#[^)]*)?\\)`, 'g')
+  : null;
+
+function processLinks(markdown) {
+  if (!siteUrl) return markdown;
+  let result = markdown.replace(/\]\(\/(?!\/)/g, `](${siteUrl}/`);
+  return result.replace(internalLinkRe, (_, p, frag) => `](${p}.md${frag || ''})`);
+}
+
+function processFile(htmlFile) {
   let htmlContent = fs.readFileSync(htmlFile, 'utf-8');
   const relPath = path.relative(distDir, htmlFile);
   const mdPublicUrl = `/${relPath.replace(/\.html$/, '.md').replace(/\\/g, '/')}`;
@@ -82,26 +96,27 @@ function processFile(htmlFile, distDir) {
 
   const markdownContent = turndownService.turndown(rawHtml);
 
-  let output = `> For the complete documentation index, see [llms.txt](/docs/llms.txt)\n\n`;
+  let output = `> For the complete documentation index, see [llms.txt](${siteUrl}/docs/llms.txt)\n\n`;
   if (title) output += `# ${title}\n\n`;
   if (description) output += `${description}\n\n`;
   output += markdownContent;
+
+  output = processLinks(output);
 
   fs.writeFileSync(htmlFile.replace(/\.html$/, '.md'), output, 'utf-8');
 
   if (mdPublicUrl.startsWith('/docs/')) {
     const descText = description ? `: ${description}` : '';
     const categoryName = formatCategoryName(mdPublicUrl.split('/')[2]);
-    return { categoryName, entry: `- [${title}](${mdPublicUrl})${descText}` };
+    return { categoryName, entry: `- [${title}](${siteUrl}${mdPublicUrl})${descText}` };
   }
   return null;
 }
 
-const { files, distDir } = workerData;
 const results = [];
 for (const htmlFile of files) {
   try {
-    const result = processFile(htmlFile, distDir);
+    const result = processFile(htmlFile);
     if (result) results.push(result);
   } catch {
     // skip files that fail processing
