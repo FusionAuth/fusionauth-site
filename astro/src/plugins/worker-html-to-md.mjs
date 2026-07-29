@@ -103,7 +103,7 @@ for (const htmlFile of files) {
   try {
     const result = processFile(htmlFile, distDir);
     if (result) results.push(result);
-  } catch (_) {
+  } catch {
     // skip files that fail processing
   }
 }

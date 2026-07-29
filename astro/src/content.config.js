@@ -3,6 +3,7 @@ import { glob } from 'astro/loaders';
 import yaml from 'js-yaml';
 import fs from 'node:fs';
 import path from 'node:path';
+import process from 'node:process';
 
 const CACHE_DIR = path.join(process.cwd(), '.content-cache');
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -11,7 +12,7 @@ function readCache(cacheFile) {
   try {
     const age = Date.now() - fs.statSync(cacheFile).mtimeMs;
     if (age < CACHE_TTL_MS) return fs.readFileSync(cacheFile, 'utf-8');
-  } catch {}
+  } catch { /* file missing or unreadable — treat as cache miss */ }
   return null;
 }
 
@@ -30,7 +31,7 @@ async function fetchWithCache(url, cacheFile) {
       const stale = fs.readFileSync(cacheFile, 'utf-8');
       console.warn(`[content] Fetch failed for ${url}, using stale cache: ${err.message}`);
       return stale;
-    } catch {}
+    } catch { /* no stale cache available */ }
     throw err;
   }
 }

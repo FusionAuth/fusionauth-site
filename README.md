@@ -10,12 +10,6 @@ This content is hosted in the following subdirectories of `fusionauth.io`:
 
 The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? File an issue or submit a pull request.
 
-## Tested code examples
-
-Many code blocks, especially those found in guides and tutorials, do not exist in the source markdown files. Instead, we use the `LocalCode` component to source them from snippets generated from tested complete projects with [Bluehawk](https://github.com/mongodb-university/Bluehawk). For projects that benefit from a cloneable repository, the `localcode` folder in this repository acts as the source of truth: changes to files in that directory automatically push to downstream artifact repository when you merge to the `main` branch of this repo. You can configure the artifact repo using the (optional) `repositoryUrl.txt` file.
-
-Astro builds automatically generate code snippets before rendering pages.
-
 ## Build
 
 To preview the site locally:
@@ -78,6 +72,14 @@ To skip linting when you inevitably include HTML somewhere in an MDX file, use t
 ## Deploy
 
 Deploying happens automatically via GitHub action (one for content, another for redirects) whenever content merges into `main`. Dev server deployments have separate corresponding actions that you can activate manually for a specific branch.
+
+## Tested code examples
+
+Many code blocks, especially those found in guides and tutorials, do not exist in the source markdown files. Instead, we use the `LocalCode` component to source them from snippets generated from tested complete projects with [Bluehawk](https://github.com/mongodb-university/Bluehawk).
+
+For projects that benefit from a cloneable repository, the `/astro/localcode` folder acts as the source of truth; changes to files automatically push to the downstream artifact repository when you merge to the `main` branch of this repo. To configure the artifact repo, use the (optional) `repositoryUrl.txt`.
+
+Astro builds automatically generate code snippets before rendering pages.
 
 ## Redirects
 

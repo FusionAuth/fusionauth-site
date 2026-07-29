@@ -87,23 +87,6 @@ function walkHtmlFiles(dir) {
   return results;
 }
 
-// Helper to format a folder like "get-started" into "Get Started"
-function formatCategoryName(folderName) {
-  if (!folderName || folderName.endsWith('.md')) return 'Overview';
-  
-  // Handle common acronyms
-  const lower = folderName.toLowerCase();
-  if (lower === 'sdks') return 'SDKs';
-  if (lower === 'api') return 'API';
-  if (lower === 'ciam') return 'CIAM';
-  if (lower === 'oauth') return 'OAuth';
-  
-  // Capitalize hyphenated words
-  return folderName
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
 
 export default function markdownExtractIntegration() {
   return {
