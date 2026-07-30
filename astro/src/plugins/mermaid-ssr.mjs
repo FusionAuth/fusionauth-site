@@ -1,20 +1,10 @@
 /**
- * Server-side Mermaid renderer for Astro (and any remark/unified pipeline).
+ * Remark plugin: renders ```mermaid blocks to inline SVG at build time.
+ * Uses svgdom as a headless browser shim so mermaid can run in Node.
+ * Diagrams that fail to render are left as fenced code blocks.
  *
- * Uses svgdom — a lightweight SVG DOM with real font metrics via opentype.js —
- * as a browser shim so mermaid can render to SVG at build time. Pages whose
- * diagrams all pre-render skip the ~2MB mermaid client bundle entirely.
- *
- * If a diagram fails to render (svgdom doesn't cover some API mermaid needs),
- * the original fenced code block is left untouched so a client-side mermaid
- * loader can handle it as a fallback.
- *
- * Usage in astro.config.ts:
- *   import { remarkMermaidSSR } from './src/plugins/mermaid-ssr.mjs';
- *   // add to remarkPlugins AFTER any plugin that annotates mermaid code blocks
- *   remarkPlugins: [..., remarkMermaidSSR()]
- *
- * Requirements: svgdom (devDependency)
+ * Registered in astro.config.ts after mermaidTitleFix.
+ * Requires the svgdom npm package.
  */
 
 import { visit } from 'unist-util-visit';
@@ -23,35 +13,29 @@ import { webcrypto } from 'node:crypto';
 
 const _require = createRequire(import.meta.url);
 
-// --- Eager initialization -------------------------------------------------------
-// mermaid's dynamic import must happen here, at module-evaluation time, while
-// Vite's module runner is still open. By the time remark plugins are called
-// (during MDX compilation), the runner has already closed and dynamic imports fail.
-
 function setupSvgdom() {
   let createSVGWindow;
   try {
     ({ createSVGWindow } = _require('svgdom'));
   } catch {
-    return null; // svgdom not installed — SSR disabled, client-side fallback used
+    return null;
   }
 
   const win = createSVGWindow();
   const doc = win.document;
 
-  // svgdom creates SVG documents (no <body>); mermaid's d3 does select("body").
+  // svgdom creates SVG documents with no <body>; mermaid's d3 needs select("body").
   const body = doc.createElement('body');
   doc.documentElement.appendChild(body);
   Object.defineProperty(doc, 'body', { get: () => body, configurable: true });
 
-  // CSSStyleSheet stub — mermaid injects font/class rules via this API.
   class CSSStyleSheet {
     constructor() { this.cssRules = []; }
     insertRule(rule) { this.cssRules.push({ cssText: rule }); }
   }
 
-  // getBoundingClientRect on HTML elements — svgdom only supports SVG elements.
-  // Mermaid calls this to measure node-label text for layout; return a plausible box.
+  // svgdom only implements SVG element geometry; mermaid calls this on HTML elements
+  // to measure label text. Return a plausible box based on character count.
   if (win.HTMLElement) {
     win.HTMLElement.prototype.getBoundingClientRect = function () {
       const w = Math.max(50, (this.textContent || '').length * 8);
@@ -69,7 +53,6 @@ function setupSvgdom() {
   win.MutationObserver = class { observe(){} disconnect(){} takeRecords(){ return []; } };
   win.ResizeObserver   = class { observe(){} disconnect(){} };
 
-  // Expose as globals before mermaid's module evaluation reads them.
   globalThis.window        = win;
   globalThis.document      = doc;
   globalThis.CSSStyleSheet = CSSStyleSheet;
@@ -82,35 +65,26 @@ function setupSvgdom() {
 
 const domReady = setupSvgdom();
 
-// Kick off the mermaid import immediately (while Vite's module runner is open).
-// The promise is awaited later inside the remark plugin when the first diagram appears.
+// Import mermaid at module-evaluation time: Vite's module runner closes before
+// remark callbacks fire, so dynamic imports inside the plugin body would fail.
 const mermaidReady = domReady
   ? (async () => {
       const { default: mermaid } = await import('mermaid');
-      // htmlLabels: false forces SVG <text> elements instead of <foreignObject>+HTML.
-      // svgdom's innerHTML serialization loses content inside foreignObjects, so plain
-      // SVG text is the only reliable option for SSR rendering.
       mermaid.initialize({
         startOnLoad: false,
         theme: 'default',
         securityLevel: 'loose',
-        htmlLabels: false,
+        htmlLabels: false, // svgdom loses innerHTML inside <foreignObject>; use SVG text
       });
       return mermaid;
     })().catch(err => {
-      console.warn(`[mermaid-ssr] Init failed — diagrams fall back to client-side rendering.\n  ${err.message}`);
+      console.warn(`[mermaid-ssr] Init failed — diagrams will not render.\n  ${err.message}`);
       return null;
     })
   : Promise.resolve(null);
 
-// -------------------------------------------------------------------------------
-
-/**
- * Remark plugin that replaces ```mermaid fenced blocks with pre-rendered inline SVGs.
- */
 export function remarkMermaidSSR() {
   return async (tree) => {
-    // Collect nodes first — visit() callback is synchronous
     const nodes = [];
     visit(tree, 'code', (node) => {
       if (node.lang === 'mermaid') nodes.push(node);
@@ -118,7 +92,7 @@ export function remarkMermaidSSR() {
     if (nodes.length === 0) return;
 
     const mermaid = await mermaidReady;
-    if (!mermaid) return; // init failed; leave code blocks for client-side fallback
+    if (!mermaid) return;
 
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
@@ -126,11 +100,10 @@ export function remarkMermaidSSR() {
         const id = `mermaid-ssr-${i}-${Math.random().toString(36).slice(2, 6)}`;
         let { svg } = await mermaid.render(id, node.value);
 
-        // Mermaid injects diagram `style` directive colors as inline `fill:X !important`
-        // on cluster rects. Strip the `!important` and record the color in a data attribute
-        // so external CSS can override per theme (light/dark) without fighting inline !important.
-        // Only target cluster background rects — they have no `class` attribute. Node rects
-        // always have class="basic label-container" and must keep their custom fill colors.
+        // `style X fill:#color` directives inject `fill:color !important` on cluster
+        // background rects, blocking CSS theme overrides. Strip the !important and stash
+        // the color in data-fill-color so CSS can vary it by light/dark theme.
+        // Skip rects with a class attribute — those are node rects with intentional colors.
         svg = svg.replace(
           /(<rect\b[^>]*)\bstyle="fill:(#[0-9a-fA-F]{3,6})\s*!important([^"]*)"/g,
           (match, prefix, color, rest) => {
@@ -139,11 +112,9 @@ export function remarkMermaidSSR() {
           }
         );
 
-        // Fix edge label text horizontal alignment for multi-word labels.
-        // Mermaid SSR emits .label groups with translate(dx, dy) where dx compensates
-        // for measured text width, but the outer tspan keeps x="0" which doesn't account
-        // for the group's offset. Shift the outer tspan's x by -dx so the text centers
-        // on the background rect (which is always centered at the edgeLabel origin).
+        // Multi-word edge labels: the .label group has translate(dx, dy) but the outer
+        // tspan keeps x="0", placing text dx pixels left of its background rect.
+        // Shift the tspan's x by -dx to re-center it on the rect.
         svg = svg.replace(
           /(<g class="label"[^>]* transform="translate\()(-?[\d.]+)(,\s*-?[\d.]+\)"><g><rect[^>]*><\/rect><text[^>]*><tspan[^>]* )x="0"/g,
           (_, pre, dxStr, mid) => {
@@ -153,18 +124,12 @@ export function remarkMermaidSSR() {
           }
         );
 
-        // Replace the remark code node with a raw HTML node.
-        // data-processed=true tells the client-side skeleton CSS to skip the shimmer
-        // and tells the client mermaid loader not to re-process this element.
         node.type  = 'html';
         node.value = `<div class="mermaid" data-processed="true">\n${svg}\n</div>`;
         delete node.lang;
         delete node.meta;
       } catch (err) {
-        console.warn(
-          `[mermaid-ssr] Diagram ${i} failed — client-side fallback active.\n  ${err.message.slice(0, 120)}`
-        );
-        // Leave node as-is; existing client-side loader handles it
+        console.warn(`[mermaid-ssr] Diagram ${i} failed to render.\n  ${err.message.slice(0, 120)}`);
       }
     }
   };
