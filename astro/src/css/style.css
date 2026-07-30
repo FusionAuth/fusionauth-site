@@ -381,12 +381,7 @@ pre[class*="language-"] {
 .bg-articles { background-image: var(--background-image-articles); }
 .dark .bg-articles { background-image: var(--background-image-articles-dark); }
 
-/* Prevent white flash of content before mermaid diagram renders clientside */
-.dark pre.mermaid:not([data-processed]) {
-  background: var(--color-code-background-dark) !important;
-}
-
-/* --- Mermaid Global Styles (Nested) --- */
+/* --- Mermaid diagram styles --- */
 foreignObject { overflow: visible; }
 
 [id^="mermaid-"] {
@@ -395,88 +390,111 @@ foreignObject { overflow: visible; }
   font-size: 16px !important;
   width: 100%;
 
-  /* Base overrides */
   p { color: #000 !important; }
+  /* stroke on > * is inherited by all descendants, setting the default line/border color */
   > * { stroke: #1e293b !important; }
-  
   line { stroke: #cbd5e1 !important; fill: #cbd5e1 !important; }
-  .cluster rect { fill: none !important; }
-  
+  .cluster > rect { fill: none !important; stroke: #94a3b8 !important; }
   .error-icon { fill: red !important; }
   .error-text { fill: red !important; stroke: red !important; }
-  
-  /* Markers & Lines */
+
+  /* Lines & arrow markers */
   .marker { fill: #1e293b !important; stroke: #1e293b !important; }
   .marker.cross { stroke: red !important; }
   .messageLine0, .messageLine1 { stroke: #64748b !important; }
   .flowchart-link { stroke: #64748b !important; }
-  #arrowhead path, #crosshead path { fill: #64748b !important; stroke: #64748b !important; }
-  #arrowhead { fill: #1e293b !important; }
-  
-  /* Text & Labels */
-  .messageText, .labelText, .labelText > tspan, .noteText, .noteText > tspan { 
-    fill: #1e293b !important; stroke: none !important; 
-  }
+  /* flowchart arrows (v2) use .arrowMarkerPath; sequence diagrams use marker IDs */
+  .arrowMarkerPath { fill: #64748b !important; stroke: none !important; }
+  [id$="-arrowhead"] path, [id$="-filled-head"] path,
+  [id$="-solidTopArrowHead"] path, [id$="-solidBottomArrowHead"] path { fill: #64748b !important; stroke: none !important; }
+  [id$="-crosshead"] path,
+  [id$="-stickTopArrowHead"] path, [id$="-stickBottomArrowHead"] path { fill: none !important; stroke: #64748b !important; }
+
+  /* Text */
+  .messageText, .labelText, .labelText > tspan, .noteText, .noteText > tspan { fill: #1e293b !important; stroke: none !important; }
   .loopText, .loopText > tspan { fill: #f8fafc !important; stroke: none !important; }
   .labelBox, .loopLine, .note { fill: #c7d2fe !important; stroke: #818cf8 !important; }
   .nodeLabel p { color: #1e293b !important; }
   .edgeLabel p { background-color: #e2e8f0 !important; color: #1e293b !important; }
+  /* stroke: none prevents the inherited stroke from outlining label text */
+  .node .label text, .node .label tspan,
+  .cluster-label text, .cluster-label tspan { fill: #1e293b !important; stroke: none !important; }
+  .edgeLabel text, .edgeLabel tspan { fill: #1e293b !important; stroke: none !important; }
 
-  /* Sequence Elements */
+  /* Sequence diagram actors & activations */
   .sequenceNumber { stroke: #eee !important; }
   #sequencenumber circle { r: 9px; }
-  
   .actor { stroke: #1e293b !important; fill: #e2e8f0 !important; }
   text.actor > tspan { fill: #1e293b !important; stroke: none !important; }
   .actor-line { stroke: #1e293b !important; }
   .actor-man line { fill: #e2e8f0 !important; stroke: #94a3b8 !important; }
   .actor-man circle { fill: #e2e8f0 !important; stroke: #94a3b8 !important; }
-  .actorPopupMenuPanel { fill: red !important; }
-  
   .activation0 { fill: #e2e8f0 !important; stroke: #94a3b8 !important; }
-  .activation1, .activation2 { fill: red !important; stroke: red !important; }
-  
-  /* Node Objects */
-  .node :is(rect, circle, ellipse, polygon, path) {
-    stroke: #1e293b !important;
-    fill: #e2e8f0 !important;
+
+  /* Flowchart nodes */
+  .node :is(rect, circle, ellipse, polygon, path) { stroke: #1e293b !important; fill: #e2e8f0 !important; }
+
+  /* Edge label pill: SSR positions the background rect for y=-10.1 but tspan dy="1.1em"
+     renders ~16px lower. translateY corrects the vertical offset; rx/ry round the corners. */
+  .edgeLabel rect {
+    transform: translateY(16px) !important;
+    fill: rgba(226, 232, 240, 0.8) !important;
+    stroke: none !important;
+    rx: 4px; ry: 4px;
   }
+
+  /* Cluster fills from `style X fill:#color` directives — SSR plugin strips !important
+     and adds data-fill-color so CSS can override per theme. */
+  .cluster > rect[data-fill-color="#999"] { fill: rgba(148, 163, 184, 0.15) !important; }
+  .cluster > rect[data-fill-color="#944"] { fill: rgba(239, 68, 68, 0.1) !important; }
 }
 
-/* --- Mermaid Dark Mode Styles (Nested) --- */
 .dark [id^="mermaid-"] {
   > * { stroke: #94a3b8 !important; }
-  
   line { stroke: #64748b !important; fill: #64748b !important; }
-  .cluster rect { fill: none !important; }
+  .cluster > rect { fill: none !important; stroke: #475569 !important; }
 
-  /* Markers & Lines */
+  /* Lines & arrow markers */
   .marker { fill: #e2e8f0 !important; stroke: #e2e8f0 !important; }
   .messageLine0, .messageLine1 { stroke: #e2e8f0 !important; }
   .flowchart-link { stroke: #e2e8f0 !important; }
-  #arrowhead path, #crosshead path { fill: #e2e8f0 !important; stroke: #e2e8f0 !important; }
-  #arrowhead { fill: #64748b !important; }
+  .arrowMarkerPath { fill: #e2e8f0 !important; stroke: none !important; }
+  [id$="-arrowhead"] path, [id$="-filled-head"] path,
+  [id$="-solidTopArrowHead"] path, [id$="-solidBottomArrowHead"] path { fill: #e2e8f0 !important; stroke: none !important; }
+  [id$="-crosshead"] path,
+  [id$="-stickTopArrowHead"] path, [id$="-stickBottomArrowHead"] path { fill: none !important; stroke: #e2e8f0 !important; }
 
-  /* Text & Labels */
+  /* Text */
   .messageText, .labelText, .labelText > tspan { fill: #f8fafc !important; stroke: none !important; }
   .noteText, .noteText > tspan { fill: #f1f5f9 !important; stroke: none !important; }
   .labelBox, .loopLine, .note { fill: #3730a3 !important; stroke: #818cf8 !important; }
   .nodeLabel p { color: #FFF !important; }
   .edgeLabel p { background-color: #1e293b !important; color: #FFF !important; }
+  .node .label text, .node .label tspan,
+  .cluster-label text, .cluster-label tspan { fill: #f8fafc !important; stroke: none !important; }
+  .edgeLabel text, .edgeLabel tspan { fill: #f8fafc !important; stroke: none !important; }
 
-  /* Sequence Elements */
+  /* Sequence diagram actors & activations */
   .sequenceNumber { fill: #334155 !important; }
-  
   .actor { stroke: #94a3b8 !important; fill: #1e293b !important; }
   text.actor > tspan { fill: #f8fafc !important; stroke: none !important; }
   .actor-line { stroke: #94a3b8 !important; }
   .actor-man circle { fill: #1e293b !important; stroke: #94a3b8 !important; }
-  
   .activation0 { fill: #1e293b !important; stroke: #94a3b8 !important; }
-  
-  /* Node Objects */
-  .node :is(rect, circle, ellipse, polygon, path) {
-    stroke: #94a3b8 !important;
-    fill: #1e293b !important;
+
+  /* Flowchart nodes */
+  .node :is(rect, circle, ellipse, polygon, path) { stroke: #94a3b8 !important; fill: #1e293b !important; }
+
+  /* Edge label pill */
+  .edgeLabel rect {
+    transform: translateY(16px) !important;
+    fill: rgba(30, 41, 59, 0.85) !important;
+    stroke: none !important;
+    opacity: 1 !important;
+    rx: 4px; ry: 4px;
   }
+
+  /* Cluster fills — purple tint for neutral groups, red for error/external groups */
+  .cluster > rect[data-fill-color="#999"] { fill: rgba(139, 92, 246, 0.18) !important; }
+  .cluster > rect[data-fill-color="#944"] { fill: rgba(239, 68, 68, 0.2) !important; }
 }

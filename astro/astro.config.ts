@@ -6,6 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 import indexPages from "astro-index-pages/index.js";
 import {codeTitleRemark} from './src/plugins/code-title-remark';
 import markdownExtract from './src/plugins/markdown-extract.js';
+import { remarkMermaidSSR } from './src/plugins/mermaid-ssr.mjs';
 import remarkMdx from 'remark-mdx';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
@@ -149,9 +150,15 @@ const config = defineConfig({
       tailwindcss(),
       lightboxProvider(),
     ],
+    cacheDir: '.vite-cache',
     build: {
       chunkSizeWarningLimit: 1111,
-    }
+    },
+    ssr: {
+      // svgdom and mermaid are Node-only SSR packages used in remark plugins;
+      // externalizing them prevents Vite from bundling them and breaking dynamic imports.
+      external: ['svgdom', 'mermaid'],
+    },
   },
   integrations: [
     icon(),
@@ -163,7 +170,8 @@ const config = defineConfig({
       processor: unified({
           remarkPlugins: [
           remarkMdx,
-          mermaidTitleFix,
+          mermaidTitleFix,      // inserts title nodes before we transform code blocks
+          remarkMermaidSSR,     // replaces mermaid blocks with pre-rendered SVGs
           remarkShellSessionPrompts,
         ],
         rehypePlugins: [
@@ -213,7 +221,7 @@ const config = defineConfig({
       //base: 'https://fusionauth.io',
     })
   ],
-  site: 'https://fusionauth.io/',
+  site: process.env.SITE_URL || 'https://fusionauth.io/',
 });
 
 export default config;
