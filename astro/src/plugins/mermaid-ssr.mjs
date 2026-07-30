@@ -94,8 +94,6 @@ export function remarkMermaidSSR() {
     const mermaid = await mermaidReady;
     if (!mermaid) return;
 
-    // Pass 1: render all diagrams and apply SVG post-processing fixes.
-    const rendered = [];
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       try {
@@ -126,42 +124,15 @@ export function remarkMermaidSSR() {
           }
         );
 
-        rendered.push({ node, svg, id, source: node.value });
+        const escapedSrc = node.value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+        node.type  = 'html';
+        node.value = `<div class="mermaid" data-processed="true" data-mermaid-src="${escapedSrc}">\n${svg}\n</div>`;
+        delete node.lang;
+        delete node.meta;
       } catch (err) {
         console.warn(`[mermaid-ssr] Diagram ${i} failed to render.\n  ${err.message.slice(0, 120)}`);
         rendered.push({ node, svg: null, id: null, source: null });
       }
-    }
-
-    // Pass 2: deduplicate inline <style> blocks across diagrams on this page.
-    // Every diagram gets the same ~5 KB of mermaid CSS, scoped to its own #id.
-    // Replace the first occurrence's ID with [id^="mermaid-"] (making it shared),
-    // and strip identical style blocks from all subsequent diagrams.
-    // Diagrams with unique classDef rules produce a different normalized style and
-    // keep their own block, so per-diagram class overrides are still respected.
-    const seenStyles = new Set();
-    for (const r of rendered) {
-      if (!r.svg) continue;
-      const styleMatch = r.svg.match(/<style[^>]*>([\s\S]*?)<\/style>/);
-      if (!styleMatch) continue;
-      const raw = styleMatch[1];
-      const normalized = raw.replace(new RegExp(r.id, 'g'), '[id^="mermaid-"]');
-      if (seenStyles.has(normalized)) {
-        r.svg = r.svg.replace(/<style[^>]*>[\s\S]*?<\/style>/, '');
-      } else {
-        seenStyles.add(normalized);
-        r.svg = r.svg.replace(raw, normalized);
-      }
-    }
-
-    // Pass 3: emit each successfully rendered diagram as an HTML node.
-    for (const { node, svg, source } of rendered) {
-      if (!svg) continue;
-      const escapedSrc = source.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-      node.type  = 'html';
-      node.value = `<div class="mermaid" data-processed="true" data-mermaid-src="${escapedSrc}">\n${svg}\n</div>`;
-      delete node.lang;
-      delete node.meta;
     }
   };
 }
