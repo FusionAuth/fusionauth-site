@@ -131,7 +131,6 @@ export function remarkMermaidSSR() {
         delete node.meta;
       } catch (err) {
         console.warn(`[mermaid-ssr] Diagram ${i} failed to render.\n  ${err.message.slice(0, 120)}`);
-        rendered.push({ node, svg: null, id: null, source: null });
       }
     }
   };
