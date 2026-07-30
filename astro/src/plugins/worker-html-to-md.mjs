@@ -93,6 +93,17 @@ function processFile(htmlFile) {
   const description = $('meta[name="description"]').attr('content') || '';
 
   containerNode.find('.tab-panel').removeClass('hidden');
+
+  // Replace SSR-rendered mermaid diagrams with their source as fenced code blocks
+  containerNode.find('.mermaid[data-processed][data-mermaid-src]').each((_, el) => {
+    const src = $(el).attr('data-mermaid-src');
+    if (src) {
+      const $pre = $('<pre><code></code></pre>');
+      $pre.find('code').addClass('language-mermaid').text(src);
+      $(el).replaceWith($pre);
+    }
+  });
+
   containerNode.find(`
     script, style, svg, button, nav, footer, aside,
     .not-prose.hidden, [aria-hidden="true"], .hidden, .sr-only, dialog, noscript

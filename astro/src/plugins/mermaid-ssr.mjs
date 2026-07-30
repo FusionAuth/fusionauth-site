@@ -124,8 +124,9 @@ export function remarkMermaidSSR() {
           }
         );
 
+        const escapedSrc = node.value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
         node.type  = 'html';
-        node.value = `<div class="mermaid" data-processed="true">\n${svg}\n</div>`;
+        node.value = `<div class="mermaid" data-processed="true" data-mermaid-src="${escapedSrc}">\n${svg}\n</div>`;
         delete node.lang;
         delete node.meta;
       } catch (err) {

@@ -76,6 +76,16 @@ function htmlToLLMMarkdown(htmlString, siteUrl = '') {
   // remove the 'hidden' class from tab panels, we actually want this in markdown output
   containerNode.find('.tab-panel').removeClass('hidden');
 
+  // Replace SSR-rendered mermaid diagrams with their source as fenced code blocks
+  containerNode.find('.mermaid[data-processed][data-mermaid-src]').each((_, el) => {
+    const src = $(el).attr('data-mermaid-src');
+    if (src) {
+      const $pre = $('<pre><code></code></pre>');
+      $pre.find('code').addClass('language-mermaid').text(src);
+      $(el).replaceWith($pre);
+    }
+  });
+
   // Removes hidden tabs, SVGs, mobile menus, aria-hidden junk, AND the .sr-only LLM directive
   containerNode.find(`
     script, style, svg, button, nav, footer, aside,
