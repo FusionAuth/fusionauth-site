@@ -4,13 +4,37 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
+# Initialised up front so cleanup stays safe under `set -u` when an early step
+# fails before the app has been started.
+LOGS_PID=""
+
+# Seconds to wait for a service to come up before giving up. Without this the
+# readiness loops below can hang until the CI job's own time limit.
+READINESS_TIMEOUT=300
+
 cleanup() {
   echo "Cleaning up..."
-  kill $LOGS_PID 2>/dev/null || true
+  [ -n "$LOGS_PID" ] && kill "$LOGS_PID" 2>/dev/null || true
   docker stop remix 2>/dev/null || true
   cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
 }
 trap cleanup EXIT
+
+# wait_for <description> <command...> - poll until the command succeeds or the
+# timeout expires, failing loudly rather than hanging.
+wait_for() {
+  local description="$1"; shift
+  local deadline=$(( SECONDS + READINESS_TIMEOUT ))
+  until "$@" > /dev/null 2>&1; do
+    if [ "$SECONDS" -ge "$deadline" ]; then
+      echo "Timed out after ${READINESS_TIMEOUT}s waiting for ${description}." >&2
+      return 1
+    fi
+    echo "  Waiting for ${description}..."
+    sleep 5
+  done
+  echo "${description} is ready."
+}
 
 echo "Validating docker compose config..."
 cd "$PROJECT_DIR"
@@ -34,19 +58,17 @@ done
 docker logs -f remix &
 LOGS_PID=$!
 
+# Checks for the rendered login page rather than just an open port, so the test
+# does not start before Kickstart has finished configuring FusionAuth.
+fusionauth_ready() {
+  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "Login | FusionAuth"
+}
+
 echo "Waiting for FusionAuth to be ready..."
-until curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "Login | FusionAuth"; do
-  echo "  Waiting for FusionAuth..."
-  sleep 5
-done
-echo "FusionAuth is ready."
+wait_for "FusionAuth" fusionauth_ready
 
 echo "Waiting for Remix app to be ready..."
-until curl -sf http://localhost:3000 > /dev/null 2>&1; do
-  echo "  Waiting for Remix app..."
-  sleep 5
-done
-echo "Remix app is ready."
+wait_for "Remix app" curl -sf http://localhost:3000
 
 echo "Running Playwright tests..."
 cd "$SCRIPT_DIR"
