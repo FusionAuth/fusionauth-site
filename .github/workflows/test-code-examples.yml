@@ -1,4 +1,4 @@
-name: Test code examples
+name: Test localcode
 
 on:
   pull_request:
@@ -7,9 +7,44 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    name: Test code examples
+  discover:
+    name: Discover test suites
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.scan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - id: scan
+        name: Scan for localcode test suites
+        run: |
+          set -euo pipefail
+          missing=()
+          dirs=()
+          for dir in astro/localcode/*/; do
+            name=$(basename "$dir")
+            if [ ! -f "${dir}tests/test.sh" ]; then
+              missing+=("$name")
+            else
+              dirs+=("$name")
+            fi
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            printf 'ERROR: localcode directory missing tests/test.sh: %s\n' "${missing[@]}" >&2
+            exit 1
+          fi
+          matrix=$(printf '%s\n' "${dirs[@]}" | jq -R . | jq -sc .)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "Found ${#dirs[@]} test suite(s): ${dirs[*]}"
+
+  test:
+    name: Test ${{ matrix.localcode }}
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        localcode: ${{ fromJson(needs.discover.outputs.matrix) }}
+      fail-fast: false
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -19,8 +54,9 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ hashFiles('astro/localcode/**/Cargo.toml') }}
+          key: ${{ runner.os }}-cargo-${{ matrix.localcode }}-${{ hashFiles(format('astro/localcode/{0}/**/Cargo.toml', matrix.localcode)) }}
           restore-keys: ${{ runner.os }}-cargo-
 
-      - name: Run all code example tests
-        run: bash src/scripts/test-code-examples.sh
+      - name: Run tests
+        run: bash tests/test.sh
+        working-directory: astro/localcode/${{ matrix.localcode }}
