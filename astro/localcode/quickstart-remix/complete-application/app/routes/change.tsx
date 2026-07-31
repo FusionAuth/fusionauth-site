@@ -21,13 +21,18 @@ export default function Change({ loaderData }: Route.ComponentProps) {
 
   function makeChange() {
     const newState = { error: false, hasChange: true, total: '', nickels: '', pennies: ''};
-    const total = Math.trunc(parseFloat(state.total)*100)/100;
-    newState.total = isNaN(total) ? '' : total.toFixed(2);
-    const nickels = Math.floor(total / 0.05);
-    newState.nickels = nickels.toLocaleString();
-    const pennies = ((total - (0.05 * nickels)) / 0.01);
-    newState.pennies = Math.ceil((Math.trunc(pennies*100)/100)).toLocaleString();
     newState.error = ! /^(\d+(\.\d*)?|\.\d+)$/.test(state.total);
+    // Work in whole cents. Doing this arithmetic in floating point loses a cent
+    // on values such as 0.29, because 0.29 * 100 is 28.999999999999996.
+    const totalCents = Math.round(parseFloat(state.total) * 100);
+    if (isNaN(totalCents)) {
+      setState(newState);
+      return;
+    }
+    newState.total = (totalCents / 100).toFixed(2);
+    const nickels = Math.floor(totalCents / 5);
+    newState.nickels = nickels.toLocaleString();
+    newState.pennies = (totalCents - nickels * 5).toLocaleString();
     setState(newState);
   }
 
