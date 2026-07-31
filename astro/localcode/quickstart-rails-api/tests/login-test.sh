@@ -54,6 +54,21 @@ assert_status "customer can call /make-change" 200 "$CODE" /tmp/rails-mc-custome
 CODE=$(curl -s -o /tmp/rails-mc-notoken.json -w "%{http_code}" "$APP_URL/make-change?total=1.02")
 assert_status "no token on /make-change is rejected" 401 "$CODE" /tmp/rails-mc-notoken.json
 
+# String#to_f returns 0.0 rather than raising, so without an explicit check
+# these requests are answered as successful requests for zero change.
+CODE=$(curl -s -o /tmp/rails-mc-nonsense.json -w "%{http_code}" "$APP_URL/make-change?total=nonsense" --cookie "app.at=$TELLER_TOKEN")
+assert_status "non-numeric total is rejected" 400 "$CODE" /tmp/rails-mc-nonsense.json
+
+CODE=$(curl -s -o /tmp/rails-mc-missing.json -w "%{http_code}" "$APP_URL/make-change" --cookie "app.at=$TELLER_TOKEN")
+assert_status "missing total is rejected" 400 "$CODE" /tmp/rails-mc-missing.json
+
+CODE=$(curl -s -o /tmp/rails-mc-negative.json -w "%{http_code}" "$APP_URL/make-change?total=-1.00" --cookie "app.at=$TELLER_TOKEN")
+assert_status "negative total is rejected" 400 "$CODE" /tmp/rails-mc-negative.json
+
+CODE=$(curl -s -o /tmp/rails-mc-029.json -w "%{http_code}" "$APP_URL/make-change?total=0.29" --cookie "app.at=$TELLER_TOKEN")
+assert_status "0.29 is accepted" 200 "$CODE" /tmp/rails-mc-029.json
+grep -q "1 quarters 0 dimes 0 nickels 4 pennies" /tmp/rails-mc-029.json && echo "  PASS: correct change breakdown for \$0.29" || { echo "  FAIL: unexpected breakdown for \$0.29"; cat /tmp/rails-mc-029.json; FAIL=1; }
+
 echo "Testing /panic..."
 CODE=$(curl -s -o /tmp/rails-panic-teller.json -w "%{http_code}" -X POST "$APP_URL/panic" --cookie "app.at=$TELLER_TOKEN")
 assert_status "teller can call /panic" 200 "$CODE" /tmp/rails-panic-teller.json

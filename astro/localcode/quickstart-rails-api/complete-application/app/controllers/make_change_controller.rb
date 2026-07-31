@@ -11,27 +11,45 @@ class MakeChangeController < ApplicationController
       end
     
       total = params[:total]
-      message = "We can make change using"
+
+      # String#to_f returns 0.0 for input it cannot parse rather than raising,
+      # so anything non-numeric has to be rejected explicitly. Otherwise
+      # "nonsense" is reported as a successful request for zero change.
       begin
-      remainingAmount = total.to_f
-      rescue message = "Problem converting the submitted value to a decimal.  Value submitted: "+total
+        amount = Float(total)
+      rescue ArgumentError, TypeError
+        render json: {
+          message: "Problem converting the submitted value to a decimal.  Value submitted: #{total}"
+        }.to_json, status: :bad_request
+        return
       end
 
+      if amount.negative?
+        render json: {
+          message: "The submitted value must not be negative.  Value submitted: #{total}"
+        }.to_json, status: :bad_request
+        return
+      end
+
+      # Work in whole cents. Repeatedly subtracting values such as 0.01 in
+      # floating point accumulates error and can yield an invalid breakdown.
+      remainingCents = (amount * 100).round
+
       coins = {
-        0.25 => "quarters",
-        0.10 => "dimes",
-        0.05 => "nickels",
-        0.01 => "pennies"
+        25 => "quarters",
+        10 => "dimes",
+        5 => "nickels",
+        1 => "pennies"
       }
 
       output = {
-        Message: message,
+        Message: "We can make change using",
         Change: []
       }
 
       coins.each do |value, coinName|
-        coinCount = (remainingAmount / value.to_f).to_i
-        remainingAmount = ((remainingAmount - coinCount * value) * 100).round.to_f / 100
+        coinCount = remainingCents / value
+        remainingCents -= coinCount * value
         output[:Message] += " " + coinCount.to_s + " " + coinName
         output[:Change].push({Denomination: coinName, Count: coinCount})
       end
