@@ -4,9 +4,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
+# Initialised up front so cleanup stays safe under `set -u` when compose
+# validation, type-checking, pulling or startup fails before the app is
+# launched. Otherwise cleanup aborts before docker compose down.
+REACT_PID=""
+
 cleanup() {
   echo "Cleaning up..."
-  kill $REACT_PID 2>/dev/null || true
+  [ -n "$REACT_PID" ] && kill "$REACT_PID" 2>/dev/null || true
   docker stop react-app-test 2>/dev/null || true
   cd "$PROJECT_DIR/fusionauth-backend" && docker compose down -v 2>/dev/null || true
 }

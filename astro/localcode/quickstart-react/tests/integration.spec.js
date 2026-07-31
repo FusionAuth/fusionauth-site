@@ -62,12 +62,11 @@ test('React app login, fetch user info, and logout via FusionAuth', async ({ pag
     await page.waitForURL(/localhost:3000\/account/, { timeout: 15000 });
     await expect(page.getByText('richard@example.com')).toBeVisible();
 
-    // fetch and display user data from the /me endpoint
+    // fetch and display user data from the /me endpoint. Assert on the text
+    // itself rather than sleeping for a fixed interval, so the wait is as long
+    // as the request actually takes and no longer.
     await page.getByRole('button', { name: 'Show your info' }).click();
-    await page.waitForTimeout(500);
-    const content = await page.content();
-    expect(content).toContain('Richard');
-    expect(content).toContain('Hendricks');
+    await expect(page.getByText('Richard Hendricks')).toBeVisible();
 
     await page.getByRole('button', { name: 'Logout' }).click();
     await page.waitForURL('http://localhost:3000/', { timeout: 15000 });
