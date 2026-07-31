@@ -369,9 +369,9 @@ Prior to requesting review on a PR, please complete the following checklist.
 7. If a word like "tab" or "section" is explanatory and not part of the literal label, keep it outside the component: `Open the <Breadcrumb>Images</Breadcrumb> section.`
 8. If a reference is to code/config/docs structure (not the admin UI), keep it in backticks rather than wrapping it in a UI component.
 
-## Quickstarts
+## QuickStarts
 
-For details about building a Quickstart, see [fusionauth-example-template/QUICKSTART-INSTRUCTIONS.md](https://github.com/FusionAuth/fusionauth-example-template/blob/main/QUICKSTART-INSTRUCTIONS.md).
+For details about building a QuickStart, see [fusionauth-example-template/QUICKSTART-INSTRUCTIONS.md](https://github.com/FusionAuth/fusionauth-example-template/blob/main/QUICKSTART-INSTRUCTIONS.md).
 
 ### What to do with eslint linting errors
 
