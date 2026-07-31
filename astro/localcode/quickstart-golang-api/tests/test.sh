@@ -69,8 +69,8 @@ APP_PID=$!
 
 echo "Waiting for app to be ready..."
 for i in $(seq 1 30); do
-  if curl -sf --max-time 3 "$API_URL/make-change?total=1.00" > /dev/null 2>&1 || \
-     [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 "$API_URL/make-change?total=1.00")" != "000" ]; then
+  status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 "$API_URL/make-change?total=1.00" 2>/dev/null)
+  if [ -n "$status" ] && [ "$status" != "000" ]; then
     echo ""
     pass "App ready on port 9001 (attempt $i/30)"
     break
