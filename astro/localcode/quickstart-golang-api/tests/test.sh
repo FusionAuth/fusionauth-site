@@ -55,6 +55,20 @@ for i in $(seq 1 60); do
   sleep 5
 done
 
+# ── Verify kickstart created the application ──────────────────────────
+echo ""
+echo "Verifying kickstart..."
+app_status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
+  -H "Authorization: $API_KEY" \
+  "$FA_URL/api/application/$APP_ID")
+if [ "$app_status" != "200" ]; then
+  echo "Application $APP_ID not found (HTTP $app_status) — kickstart may have failed"
+  echo "FA logs:"
+  docker compose -f "$REPO_DIR/docker-compose.yml" logs --tail=30 fusionauth
+  fail "Kickstart did not create the application"
+fi
+pass "Kickstart created application $APP_ID"
+
 # ── Build the Go app ───────────────────────────────────────────────────
 echo ""
 echo "Building complete-application..."
@@ -93,11 +107,23 @@ done
 get_token() {
   local email="$1"
   local password="$2"
-  curl -sf --max-time 10 \
+  local tmpfile http_code
+  tmpfile=$(mktemp)
+  http_code=$(curl -s --max-time 10 \
     -H "Authorization: $API_KEY" \
     -H "Content-Type: application/json" \
     -d "{\"loginId\":\"$email\",\"password\":\"$password\",\"applicationId\":\"$APP_ID\"}" \
-    "$FA_URL/api/login" | python3 -c "import json,sys; print(json.load(sys.stdin)['token'])"
+    -o "$tmpfile" -w '%{http_code}' \
+    "$FA_URL/api/login")
+  if [ "$http_code" != "200" ]; then
+    echo "FA /api/login returned HTTP $http_code for $email: $(cat "$tmpfile")" >&2
+    rm -f "$tmpfile"
+    return 1
+  fi
+  python3 -c "import json,sys; print(json.load(sys.stdin)['token'])" < "$tmpfile"
+  local rc=$?
+  rm -f "$tmpfile"
+  return $rc
 }
 
 # ── Tests ──────────────────────────────────────────────────────────────
