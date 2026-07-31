@@ -8,14 +8,14 @@ export interface Props {
 
 const { path: rawPath, method } = Astro.props;
 
-// Hosted-login page docs call <API> with no HTTP method — skip silently.
+// Hosted login page docs call <API> without an HTTP method; skip.
 const show = !!(method && rawPath);
 
 let specB64 = '';
 
 if (show) {
-  // Normalize: strip query string, trailing slash, and path-param names.
-  // Param normalization lets {logId} in MDX match {auditLogId} in the spec.
+  // Strip query string and trailing slash; replace path params with {p}
+  // so {logId} in MDX matches {auditLogId} in the spec.
   const normalizeId = (m: string, p: string): string => {
     const clean = p.split('?')[0].replace(/\/+$/, '').replace(/\{[^}]+\}/g, '{p}');
     return `${m}-${clean.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
@@ -74,8 +74,8 @@ if (show) {
       }],
     };
 
-    // Escape all non-ASCII chars to \uXXXX so base64/atob is safe across the browser boundary.
-    // JSON.stringify leaves Unicode as-is; atob decodes base64 as Latin-1 and would corrupt them.
+    // JSON.stringify preserves Unicode as UTF-8; atob decodes base64 as Latin-1 and corrupts it.
+    // Escape non-ASCII to \uXXXX first so the JSON is ASCII-safe.
     const safeJson = JSON.stringify(isolatedSpec).replace(
       /[^\x00-\x7F]/g,
       c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')
@@ -97,7 +97,6 @@ if (show) {
       </svg>
     </summary>
     <div class="px-5 py-3 border-t border-current/10">
-      {/* Spec stored as base64 — the lazy-loader reads it when the accordion opens */}
       <div hidden class="scalar-spec-data" data-spec={specB64}></div>
       <div class="scalar-mount" style="min-height: 4px;"></div>
     </div>
@@ -105,10 +104,6 @@ if (show) {
 )}
 
 <script>
-  // Lazy-load Scalar iframes: create an iframe only when the user opens the accordion.
-  // Astro deduplicates this module script — it runs once per page regardless of how many
-  // <ScalarClient> components appear.
-
   const SCALAR_CDN = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.64.0';
 
   const SCALAR_CONFIG = JSON.stringify({
@@ -198,7 +193,7 @@ if (show) {
     `,
   }).replace(/'/g, '&#39;');
 
-  // Injected into each iframe to sync the parent page's dark mode class.
+  // Runs in each iframe to sync dark mode from the parent page.
   const THEME_SYNC_FN = `(function(){
     function sync(){
       try{
@@ -217,9 +212,10 @@ if (show) {
     }catch(e){}
   })();`;
 
-  function buildSrcdoc(specJson: string): string {
+  function buildSrcdoc(specJson: string, isDark: boolean): string {
+    const bg = isDark ? '#0f172a' : '#ffffff';
     return [
-      '<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body>',
+      `<!DOCTYPE html><html style="background:${bg}"><head><meta charset="utf-8"/><style>html,body{background:${bg}}</style></head><body>`,
       '<script>', THEME_SYNC_FN, '<\/script>',
       '<script id="api-reference" type="application/json" data-configuration=\'', SCALAR_CONFIG, '\'>',
       specJson,
@@ -229,7 +225,7 @@ if (show) {
     ].join('');
   }
 
-  // Listen for <details data-scalar-widget> opens in capture phase (toggle doesn't bubble).
+  // Capture phase because toggle doesn't bubble.
   document.addEventListener('toggle', (e: Event) => {
     const details = e.target as HTMLDetailsElement;
     if (!details.hasAttribute?.('data-scalar-widget') || !details.open) return;
@@ -237,9 +233,11 @@ if (show) {
     const dataEl = details.querySelector('.scalar-spec-data') as HTMLElement | null;
     if (!mount || !dataEl || mount.querySelector('iframe')) return;
 
+    const isDark = document.documentElement.classList.contains('dark') ||
+                   document.documentElement.getAttribute('data-theme') === 'dark';
     const specJson = atob(dataEl.dataset.spec ?? '');
     const iframe = document.createElement('iframe');
-    iframe.srcdoc = buildSrcdoc(specJson);
+    iframe.srcdoc = buildSrcdoc(specJson, isDark);
     iframe.style.cssText = 'width:100%;height:600px;border:none;border-radius:8px;overflow-y:auto;background:transparent;display:block;';
     iframe.title = 'OpenAPI Spec';
     mount.style.minHeight = '';
