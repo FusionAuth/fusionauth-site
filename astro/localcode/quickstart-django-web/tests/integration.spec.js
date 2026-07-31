@@ -78,3 +78,42 @@ test('Django app OIDC login via FusionAuth', async ({ page }) => {
     throw error;
   }
 });
+
+test('Make Change calculates change correctly', async ({ page }) => {
+  const dumpDiagnostics = trackPageDiagnostics(page);
+
+  try {
+    await page.goto('http://localhost:8000');
+    await page.getByRole('link', { name: /Login/i }).click();
+
+    await page.waitForURL(/localhost:9011/);
+    await page.getByPlaceholder('Login').fill('richard@example.com');
+    await page.getByPlaceholder('Password').fill('password');
+    await page.getByRole('button', { name: 'Submit' }).click();
+
+    await page.waitForURL(/localhost:8000\/app\/account/);
+    await page.goto('http://localhost:8000/app/change/');
+
+    // These amounts are the ones that expose floating-point error: computing
+    // them as dollars rather than whole cents drops a cent, so 0.29 renders as
+    // "$0.28 with 5 nickels and 3 pennies".
+    const cases = [
+      { amount: '0.29', total: '0.29', nickels: '5', pennies: '4' },
+      { amount: '0.58', total: '0.58', nickels: '11', pennies: '3' },
+      { amount: '1.02', total: '1.02', nickels: '20', pennies: '2' },
+      { amount: '0.15', total: '0.15', nickels: '3', pennies: '0' },
+    ];
+
+    for (const { amount, total, nickels, pennies } of cases) {
+      await page.locator('input[name="amount"]').fill(amount);
+      await page.locator('input.change-submit').click();
+
+      await expect(page.locator('.change-message')).toHaveText(
+        `We can make change for $${total} with ${nickels} nickels and ${pennies} pennies!`
+      );
+    }
+  } catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
+});
