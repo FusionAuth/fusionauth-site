@@ -53,6 +53,22 @@ assert_status "customer can call /make-change" 200 "$CODE" /tmp/springboot-mc-cu
 CODE=$(curl -s -o /tmp/springboot-mc-notoken.json -w "%{http_code}" "$APP_URL/make-change?total=1.02")
 assert_status "no token on /make-change is rejected" 401 "$CODE" /tmp/springboot-mc-notoken.json
 
+grep -q '"nickels":20' /tmp/springboot-mc-teller.json && echo "  PASS: correct change breakdown for \$1.02" || { echo "  FAIL: unexpected breakdown for \$1.02"; cat /tmp/springboot-mc-teller.json; FAIL=1; }
+
+CODE=$(curl -s -o /tmp/springboot-mc-029.json -w "%{http_code}" "$APP_URL/make-change?total=0.29" --cookie "app.at=$TELLER_TOKEN")
+assert_status "0.29 is accepted" 200 "$CODE" /tmp/springboot-mc-029.json
+grep -q '"nickels":5,"pennies":4' /tmp/springboot-mc-029.json && echo "  PASS: correct change breakdown for \$0.29" || { echo "  FAIL: unexpected breakdown for \$0.29"; cat /tmp/springboot-mc-029.json; FAIL=1; }
+
+# The amount is required, so these must be rejected rather than dereferenced.
+CODE=$(curl -s -o /tmp/springboot-mc-missing.json -w "%{http_code}" "$APP_URL/make-change" --cookie "app.at=$TELLER_TOKEN")
+assert_status "missing total is rejected" 400 "$CODE" /tmp/springboot-mc-missing.json
+
+CODE=$(curl -s -o /tmp/springboot-mc-nonsense.json -w "%{http_code}" "$APP_URL/make-change?total=nonsense" --cookie "app.at=$TELLER_TOKEN")
+assert_status "non-numeric total is rejected" 400 "$CODE" /tmp/springboot-mc-nonsense.json
+
+CODE=$(curl -s -o /tmp/springboot-mc-negative.json -w "%{http_code}" "$APP_URL/make-change?total=-5.00" --cookie "app.at=$TELLER_TOKEN")
+assert_status "negative total is rejected" 400 "$CODE" /tmp/springboot-mc-negative.json
+
 echo "Testing /panic..."
 CODE=$(curl -s -o /tmp/springboot-panic-teller.json -w "%{http_code}" -X POST "$APP_URL/panic" --cookie "app.at=$TELLER_TOKEN")
 assert_status "teller can call /panic" 200 "$CODE" /tmp/springboot-panic-teller.json
