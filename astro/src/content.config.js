@@ -183,7 +183,10 @@ const apiEndpoints = defineCollection({
         for (const [method, operation] of Object.entries(methods)) {
           if (['parameters', 'servers', '$ref', 'summary', 'description'].includes(method)) continue;
 
-          const id = `${method}-${endpointPath.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
+          // Normalize path-param names to {p} so {userId} and {id} map to the same ID.
+          // This lets the MDX docs use different param names than the spec without missing.
+          const normalizedPath = endpointPath.replace(/\{[^}]+\}/g, '{p}');
+          const id = `${method}-${normalizedPath.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
           store.set({ id, data: { path: endpointPath, method, operation } });
         }
       }
