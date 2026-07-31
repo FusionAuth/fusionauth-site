@@ -5,7 +5,7 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from '@tailwindcss/vite';
 import indexPages from "astro-index-pages/index.js";
 import {codeTitleRemark} from './src/plugins/code-title-remark';
-import markdownExtract from './src/plugins/markdown-extract.js';
+import genMarkdownPages from 'astro-gen-markdown-pages';
 import { remarkMermaidSSR, mermaidTitleFix } from 'astro-mermaid-renderer-cli-smol';
 import remarkMdx from 'remark-mdx';
 import rehypeSlug from 'rehype-slug';
@@ -163,7 +163,32 @@ const config = defineConfig({
       filter: siteMapFilter
     }),
     indexPages(),
-    markdownExtract(),
+    genMarkdownPages({
+      indexFilter: (url) => url.startsWith('/docs/') || url === '/docs.md',
+      categorize: (url) => {
+        if (url === '/docs.md') return 'overview';
+        const seg = url.split('/')[2]?.replace(/\.md$/, '') ?? '';
+        return seg || 'overview';
+      },
+      formatCategoryName: (key) => {
+        const lower = key.toLowerCase();
+        if (lower === 'sdks') return 'SDKs';
+        if (lower === 'api') return 'API';
+        if (lower === 'ciam') return 'CIAM';
+        if (lower === 'oauth') return 'OAuth';
+        return key.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      },
+      sortCategories: (names) => names.sort((a, b) => {
+        if (a === 'Get Started') return -1;
+        if (b === 'Get Started') return 1;
+        return a.localeCompare(b);
+      }),
+      llmsTxtPath: 'docs/llms.txt',
+      llmsTxtTitle: 'FusionAuth Documentation',
+      llmsTxtDescription: 'Comprehensive documentation for FusionAuth CIAM, APIs, Quickstarts, and custom integrations.',
+      spokesDir: 'docs',
+      inlineCategories: ['Overview'],
+    }),
     // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
     process.env.PROD !== 'true' && linkChecker({
       failOnBrokenLinks: true,
