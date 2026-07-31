@@ -1,4 +1,4 @@
-# FusionAuth Quickstart: React SPA
+# FusionAuth QuickStart: React SPA
 
 > [!WARNING]  
 > This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/localcode/quickstart-react). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
@@ -6,9 +6,9 @@
 This repository contains:
 
 - a locally-hosted FusionAuth authorization server that runs in a container group
-- frontend React code for each step of the quickstart
+- frontend React code for each step of the QuickStart
 
-For full instructions, see the [FusionAuth React Quickstart](https://fusionauth.io/docs/quickstarts/quickstart-react).
+For full instructions, see the [FusionAuth React QuickStart](https://fusionauth.io/docs/quickstarts/quickstart-react).
 
 ## Dependencies
 
@@ -25,7 +25,7 @@ To install and run FusionAuth locally:
 
 1. Navigate to the `fusionauth-backend` directory.
 1. Run the following Docker compose command:
-   ```console
+   ```shell-session
    docker compose up -d
    ```
 1. Once the compose process completes, you should see the `fusionauth-backend` container group in your container management tool. This group contains containers called `fusionauth`, `db`, and `search`. To access FusionAuth, visit [http://localhost:9011/admin](http://localhost:9011/admin).
@@ -33,15 +33,15 @@ To install and run FusionAuth locally:
 
 ## Set Up the React App
 
-To run any step of the quickstart:
+To run any step of the QuickStart:
 
 1. Navigate into the `react-frontend-steps/<name-of-step>` folder.
 1. Run the following command to install dependencies:
-   ```console
+   ```shell-session
    npm install
    ```
 1. Run the following command to start the app:
-   ```console
+   ```shell-session
    npm run dev
    ```
 1. To use the React app, visit the URL displayed in your terminal.
