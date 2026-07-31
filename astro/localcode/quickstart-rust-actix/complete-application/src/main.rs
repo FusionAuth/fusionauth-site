@@ -29,7 +29,7 @@ async fn main() -> std::io::Result<()> {
             .service(fs::Files::new("/static", "static").show_files_listing())
             .app_data(handlebars_ref.clone())
     })
-    .bind(("127.0.0.1", 9012))?
+    .bind(("0.0.0.0", 9012))?
     .run()
     .await
 }
@@ -100,15 +100,18 @@ fn calculate_change(amount: &str, state: &mut HashMap::<&str, String>) -> () {
             return;
         }
     };
-    let rounded_total = (total * 100.0).floor() / 100.0;
-
     state.insert("isError", (!amount.chars().all(|c| c.is_digit(10) || c == '.')).to_string());
-    state.insert("total", format!("{:.2}", rounded_total));
 
-    let nickels = (rounded_total / 0.05).floor().abs();
+    // Work in whole cents. Doing this arithmetic in floating point loses a cent
+    // for roughly a tenth of all amounts, because 0.29 * 100.0 is
+    // 28.999999999999996 and flooring that gives 28.
+    let total_cents = (total * 100.0).round().abs() as i64;
+    state.insert("total", format!("{:.2}", total_cents as f64 / 100.0));
+
+    let nickels = total_cents / 5;
     state.insert("nickels", format!("{}", nickels));
 
-    let pennies = ((rounded_total - (0.05 * nickels)) / 0.01).round().abs();
+    let pennies = total_cents - nickels * 5;
     state.insert("pennies", format!("{}", pennies));
 }
 // :snippet-end:
