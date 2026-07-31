@@ -1,26 +1,124 @@
 ---
 import { getEntry } from "astro:content";
-import Accordion from "src/components/Accordion.astro";
 
 export interface Props {
   path: string;
   method: string;
 }
 
-const { path, method } = Astro.props;
+const { path: rawPath, method } = Astro.props;
 
-// remove query string
-const noQueryPath = path.split('?')[0];
+// Hosted-login page docs call <API> with no HTTP method — skip silently.
+const show = !!(method && rawPath);
 
-const id = `${method}-${noQueryPath.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
+let specB64 = '';
 
-const endpoint = await getEntry('api-endpoints', id);
-const baseSpec = await getEntry('api-endpoints', 'base-spec');
-let isolatedSpec = {};
+if (show) {
+  // Normalize: strip query string, trailing slash, and path-param names.
+  // Param normalization lets {logId} in MDX match {auditLogId} in the spec.
+  const normalizeId = (m: string, p: string): string => {
+    const clean = p.split('?')[0].replace(/\/+$/, '').replace(/\{[^}]+\}/g, '{p}');
+    return `${m}-${clean.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
+  };
 
-// Stripped out the wrapper prefixes (.scalar-app / #scalar-app) so they apply correctly
-// inside the CDN's generated DOM. Added !important tags to ensure overrides.
-const customCss = `
+  const id = normalizeId(method, rawPath);
+  const [endpoint, baseSpec] = await Promise.all([
+    getEntry('api-endpoints', id),
+    getEntry('api-endpoints', 'base-spec'),
+  ]);
+
+  if (!endpoint || !baseSpec) {
+    console.warn(`[scalar] Endpoint not in spec: ${method.toUpperCase()} ${rawPath}`);
+  } else {
+    function findRefs(obj: any, refs = new Set<string>()): Set<string> {
+      if (!obj || typeof obj !== 'object') return refs;
+      if (Array.isArray(obj)) {
+        for (const item of obj) findRefs(item, refs);
+      } else {
+        if (obj['$ref'] && typeof obj['$ref'] === 'string') refs.add(obj['$ref']);
+        for (const key in obj) findRefs(obj[key], refs);
+      }
+      return refs;
+    }
+
+    function extractUsedComponents(operation: any, fullComponents: any): any {
+      if (!fullComponents) return {};
+      const isolated: any = {};
+      if (fullComponents.securitySchemes) isolated.securitySchemes = fullComponents.securitySchemes;
+      const processed = new Set<string>();
+      const queue = Array.from(findRefs(operation)) as string[];
+      while (queue.length > 0) {
+        const ref = queue.shift()!;
+        if (!ref || processed.has(ref)) continue;
+        processed.add(ref);
+        const parts = ref.replace('#/components/', '').split('/');
+        if (parts.length === 2) {
+          const [type, name] = parts;
+          if (fullComponents[type]?.[name]) {
+            if (!isolated[type]) isolated[type] = {};
+            isolated[type][name] = fullComponents[type][name];
+            findRefs(fullComponents[type][name]).forEach((r: string) => queue.push(r));
+          }
+        }
+      }
+      return isolated;
+    }
+
+    const isolatedSpec = {
+      ...baseSpec.data,
+      components: extractUsedComponents(endpoint.data.operation, baseSpec.data.components),
+      paths: { [endpoint.data.path]: { [endpoint.data.method]: endpoint.data.operation } },
+      servers: [{
+        url: 'http://localhost:9011',
+        description: '⚠️ Requests failing? [Configure CORS](/docs/apis/configure-cors) for your test instance.',
+      }],
+    };
+
+    // Escape all non-ASCII chars to \uXXXX so base64/atob is safe across the browser boundary.
+    // JSON.stringify leaves Unicode as-is; atob decodes base64 as Latin-1 and would corrupt them.
+    const safeJson = JSON.stringify(isolatedSpec).replace(
+      /[^\x00-\x7F]/g,
+      c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')
+    );
+    specB64 = Buffer.from(safeJson).toString('base64');
+  }
+}
+---
+
+{specB64 && (
+  <details
+    class="group mb-4 rounded-lg border border-current/10 bg-inherit shadow-sm overflow-hidden transition-all duration-300 ease-in-out [interpolate-size:allow-keywords] h-[60px] open:h-auto"
+    data-scalar-widget
+  >
+    <summary class="flex w-full items-center justify-between px-5 py-4 text-left cursor-pointer list-none transition-colors hover:bg-current/5 focus:outline-none select-none [&::-webkit-details-marker]:hidden">
+      <div class="text-lg font-semibold">OpenAPI Spec</div>
+      <svg class="h-5 w-5 opacity-50 transition-transform duration-300 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+      </svg>
+    </summary>
+    <div class="px-5 py-3 border-t border-current/10">
+      {/* Spec stored as base64 — the lazy-loader reads it when the accordion opens */}
+      <div hidden class="scalar-spec-data" data-spec={specB64}></div>
+      <div class="scalar-mount" style="min-height: 4px;"></div>
+    </div>
+  </details>
+)}
+
+<script>
+  // Lazy-load Scalar iframes: create an iframe only when the user opens the accordion.
+  // Astro deduplicates this module script — it runs once per page regardless of how many
+  // <ScalarClient> components appear.
+
+  const SCALAR_CDN = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.64.0';
+
+  const SCALAR_CONFIG = JSON.stringify({
+    layout: 'modern',
+    hideDarkModeToggle: true,
+    documentDownloadType: 'none',
+    agent: { disabled: true },
+    showSidebar: false,
+    withDefaultFonts: false,
+    customCss: `
       .darklight-reference,
       .api-reference-toolbar,
       .download-container,
@@ -30,7 +128,7 @@ const customCss = `
       .section-column { min-height: 0px !important; }
       .section-columns { display: inline !important; }
       .section-content .badge { display: none !important; }
-      
+
       .introduction-description,
       .introduction-description-heading,
       .section-header-wrapper,
@@ -44,7 +142,7 @@ const customCss = `
       .section-container { border-top-width: 0px !important; border-bottom-width: 0px !important; }
       .scalar-app-exit { background: rgba(0,0,0,0.8) !important; }
       .badge { display: inline-flex !important; align-items: center !important; padding: 5px 6px 3px !important; line-height: 1 !important; }
-      
+
       aside.t-doc__sidebar { top: 65px !important; height: calc(100vh - 65px) !important; }
       [id] { scroll-margin-top: 65px !important; }
 
@@ -97,146 +195,54 @@ const customCss = `
         --scalar-sidebar-color-active: #f58320;
         --scalar-sidebar-background-active: rgba(245, 131, 32, 0.12);
       }
-    `;
-const doesNotExist = !endpoint || !baseSpec;
+    `,
+  }).replace(/'/g, '&#39;');
 
-if (doesNotExist) {
-  console.log(`Endpoint not found in Collection for ${method.toUpperCase()} ${path}. Expected ID: ${id}`);
-} else {
-  function findRefs(obj: any, refs = new Set<string>()) {
-    if (!obj || typeof obj !== 'object') return refs;
-    if (Array.isArray(obj)) {
-      for (const item of obj) findRefs(item, refs);
-    } else {
-      if (obj['$ref'] && typeof obj['$ref'] === 'string') {
-        refs.add(obj['$ref']);
-      }
-      for (const key in obj) findRefs(obj[key], refs);
+  // Injected into each iframe to sync the parent page's dark mode class.
+  const THEME_SYNC_FN = `(function(){
+    function sync(){
+      try{
+        var p=window.parent.document.documentElement;
+        var dark=p.classList.contains('dark')||p.getAttribute('data-theme')==='dark';
+        document.documentElement.classList.toggle('dark',dark);
+        document.body.classList.toggle('dark',dark);
+      }catch(e){}
     }
-    return refs;
+    sync();
+    try{
+      new MutationObserver(sync).observe(
+        window.parent.document.documentElement,
+        {attributes:true,attributeFilter:['class','data-theme']}
+      );
+    }catch(e){}
+  })();`;
+
+  function buildSrcdoc(specJson: string): string {
+    return [
+      '<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body>',
+      '<script>', THEME_SYNC_FN, '<\/script>',
+      '<script id="api-reference" type="application/json" data-configuration=\'', SCALAR_CONFIG, '\'>',
+      specJson,
+      '<\/script>',
+      '<script src="', SCALAR_CDN, '"><\/script>',
+      '</body></html>',
+    ].join('');
   }
 
-  function extractUsedComponents(operation: any, fullComponents: any) {
-    if (!fullComponents) return {};
+  // Listen for <details data-scalar-widget> opens in capture phase (toggle doesn't bubble).
+  document.addEventListener('toggle', (e: Event) => {
+    const details = e.target as HTMLDetailsElement;
+    if (!details.hasAttribute?.('data-scalar-widget') || !details.open) return;
+    const mount = details.querySelector('.scalar-mount') as HTMLElement | null;
+    const dataEl = details.querySelector('.scalar-spec-data') as HTMLElement | null;
+    if (!mount || !dataEl || mount.querySelector('iframe')) return;
 
-    const isolatedComponents: any = {};
-    
-    if (fullComponents.securitySchemes) {
-      isolatedComponents.securitySchemes = fullComponents.securitySchemes;
-    }
-
-    const processedRefs = new Set<string>();
-    const queue = Array.from(findRefs(operation));
-
-    while (queue.length > 0) {
-      const ref = queue.shift();
-      if (!ref || processedRefs.has(ref)) continue;
-      processedRefs.add(ref);
-
-      const parts = ref.replace('#/components/', '').split('/');
-      if (parts.length === 2) {
-        const type = parts[0]; 
-        const name = parts[1]; 
-
-        if (fullComponents[type] && fullComponents[type][name]) {
-          if (!isolatedComponents[type]) isolatedComponents[type] = {};
-          
-          const componentDef = fullComponents[type][name];
-          isolatedComponents[type][name] = componentDef;
-
-          const nestedRefs = findRefs(componentDef);
-          nestedRefs.forEach(nestedRef => queue.push(nestedRef));
-        }
-      }
-    }
-
-    return isolatedComponents;
-  }
-
-  isolatedSpec = {
-    ...baseSpec.data,
-    components: extractUsedComponents(endpoint.data.operation, baseSpec.data.components),
-    paths: {
-      [endpoint.data.path]: {
-        [endpoint.data.method]: endpoint.data.operation
-      }
-    }
-  };
-
-  isolatedSpec.servers = [
-    {
-      url: 'http://localhost:9011',
-      description: '⚠️ Requests failing? [Configure CORS](/docs/apis/configure-cors) for your test instance.',
-    }
-  ];
-}
-
-// Pass customCss back into the config so Scalar injects it directly
-const scalarConfig = {
-  layout: 'modern',
-  hideDarkModeToggle: true,
-  documentDownloadType: 'none',
-  agent: { disabled: true },
-  showSidebar: false,
-  withDefaultFonts: false,
-  customCss: customCss
-};
-
-// Generate the fully isolated HTML document with a Dark Mode sync script
-const iframeHtml = !doesNotExist ? `
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-  </head>
-  <body>
-    <script>
-      // Automatically sync dark mode class from the parent Astro window
-      const syncTheme = () => {
-        try {
-          const parentHtml = window.parent.document.documentElement;
-          // Check if parent uses .dark class or data-theme="dark"
-          const isDark = parentHtml.classList.contains('dark') || parentHtml.getAttribute('data-theme') === 'dark';
-          
-          if (isDark) {
-            document.documentElement.classList.add('dark');
-            document.body.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-            document.body.classList.remove('dark');
-          }
-        } catch(e) {}
-      };
-      
-      // Run immediately on load
-      syncTheme();
-      
-      // Watch the parent window for class changes to toggle in real-time
-      try {
-        const observer = new MutationObserver(syncTheme);
-        observer.observe(window.parent.document.documentElement, { 
-          attributes: true, 
-          attributeFilter: ['class', 'data-theme'] 
-        });
-      } catch(e) {}
-    </script>
-    
-    <script id="api-reference" type="application/json" data-configuration='${JSON.stringify(scalarConfig).replace(/'/g, "&#39;")}'>
-      ${JSON.stringify(isolatedSpec).replace(/'/g, "&#39;")}
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
-  </body>
-</html>
-` : '';
----
-
-{!doesNotExist && <>
-<Accordion>
-  <span slot="title">OpenAPI Spec</span>
-  <iframe 
-    srcdoc={iframeHtml} 
-    style="width: 100%; height: 600px; border: none; border-radius: 8px; overflow-y: auto; background: transparent;"
-    title={`API Spec for ${method.toUpperCase()} ${path}`}
-  ></iframe>
-</Accordion>
-</>}
+    const specJson = atob(dataEl.dataset.spec ?? '');
+    const iframe = document.createElement('iframe');
+    iframe.srcdoc = buildSrcdoc(specJson);
+    iframe.style.cssText = 'width:100%;height:600px;border:none;border-radius:8px;overflow-y:auto;background:transparent;display:block;';
+    iframe.title = 'OpenAPI Spec';
+    mount.style.minHeight = '';
+    mount.appendChild(iframe);
+  }, true);
+</script>
