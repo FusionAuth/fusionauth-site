@@ -64,8 +64,24 @@ publish_repo() {
 	return $status
 }
 
+# LOCALCODE_FILTER: space-separated list of directory names to publish.
+# When empty or unset, all directories are published.
+LOCALCODE_FILTER="${LOCALCODE_FILTER:-}"
+
 for LOCAL_REPOSITORY_PATH in astro/localcode/*/; do
 	REPOSITORY_NAME=$(basename "$LOCAL_REPOSITORY_PATH")
+
+	if [ -n "$LOCALCODE_FILTER" ]; then
+		match=0
+		for filter_name in $LOCALCODE_FILTER; do
+			[ "$REPOSITORY_NAME" = "$filter_name" ] && match=1 && break
+		done
+		if [ "$match" -eq 0 ]; then
+			echo "Skipping $REPOSITORY_NAME (not in filter)"
+			continue
+		fi
+	fi
+
 	URL_FILE="${LOCAL_REPOSITORY_PATH}repositoryUrl.txt"
 
 	if [ ! -f "$URL_FILE" ]; then

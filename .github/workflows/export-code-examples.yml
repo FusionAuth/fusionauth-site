@@ -12,13 +12,52 @@ on:
   workflow_dispatch:
 
 jobs:
+  discover:
+    name: Discover changed localcode directories
+    runs-on: ubuntu-latest
+    outputs:
+      filter: ${{ steps.scan.outputs.filter }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 2
+
+      - id: scan
+        name: Find changed localcode directories
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual trigger: publish all
+            echo "filter=" >> "$GITHUB_OUTPUT"
+            echo "Publishing all localcode directories"
+          else
+            # Push to main: only publish changed directories
+            dirs=()
+            for dir in astro/localcode/*/; do
+              name=$(basename "$dir")
+              if ! git diff --quiet HEAD~1..HEAD -- "astro/localcode/$name/"; then
+                dirs+=("$name")
+              fi
+            done
+            if [ "${#dirs[@]}" -eq 0 ]; then
+              echo "No localcode directories changed"
+              echo "filter=__none__" >> "$GITHUB_OUTPUT"
+            else
+              echo "filter=${dirs[*]}" >> "$GITHUB_OUTPUT"
+              echo "Publishing: ${dirs[*]}"
+            fi
+          fi
+
   publish:
+    name: Publish localcode to external repositories
+    needs: discover
+    if: ${{ needs.discover.outputs.filter != '__none__' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Set up Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7296529d2fc39830 # v6.4.0
         with:
           node-version: '24'
 
@@ -27,4 +66,6 @@ jobs:
         run: npm ci
 
       - name: Publish localcode to external repositories
+        env:
+          LOCALCODE_FILTER: ${{ needs.discover.outputs.filter }}
         run: bash src/scripts/export-localcode.sh ${{ secrets.SNIPPET_PUBLISH_TOKEN }} ${{ github.sha }}

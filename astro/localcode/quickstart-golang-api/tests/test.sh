@@ -56,18 +56,26 @@ for i in $(seq 1 60); do
 done
 
 # ── Verify kickstart created the application ──────────────────────────
+# FA reports status 200 as soon as the HTTP server starts; kickstart runs shortly after.
 echo ""
 echo "Verifying kickstart..."
-app_status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
-  -H "Authorization: $API_KEY" \
-  "$FA_URL/api/application/$APP_ID")
-if [ "$app_status" != "200" ]; then
-  echo "Application $APP_ID not found (HTTP $app_status) — kickstart may have failed"
-  echo "FA logs:"
-  docker compose -f "$REPO_DIR/docker-compose.yml" logs --tail=30 fusionauth
-  fail "Kickstart did not create the application"
-fi
-pass "Kickstart created application $APP_ID"
+for i in $(seq 1 15); do
+  app_status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
+    -H "Authorization: $API_KEY" \
+    "$FA_URL/api/application/$APP_ID")
+  if [ "$app_status" = "200" ]; then
+    pass "Kickstart created application $APP_ID (attempt $i/15)"
+    break
+  fi
+  if [ "$i" -eq 15 ]; then
+    echo "Application $APP_ID not found (HTTP $app_status) — kickstart may have failed"
+    echo "FA logs:"
+    docker compose -f "$REPO_DIR/docker-compose.yml" logs --tail=60 fusionauth
+    fail "Kickstart did not create the application"
+  fi
+  printf '.'
+  sleep 2
+done
 
 # ── Build the Go app ───────────────────────────────────────────────────
 echo ""
