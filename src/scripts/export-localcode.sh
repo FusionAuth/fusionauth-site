@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-# Publishes code examples from local directories to external repositories.
+# Publishes localcode directories to their external repositories.
 # Loops through every directory in astro/localcode/, strips Bluehawk annotations, and mirrors the content to the remote repository specified in repositoryUrl.txt.
-# Repos without a repositoryUrl.txt are skipped silently. If any repo fails to publish, the script continues with the rest and exits non-zero after printing a summary.
+# Directories without a repositoryUrl.txt are skipped silently. If any publish fails, the script continues with the rest and exits non-zero after printing a summary.
 
 # Arguments:
 #   $1 — The GitHub access token for pushing to external repositories.
-#   $2 — The source commit SHA of the documentation repository to include in the commit message of the code example repository.
+#   $2 — The source commit SHA of the documentation repository to include in the commit message of the localcode repository.
 
 set -uo pipefail
 
@@ -15,7 +15,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$REPO_ROOT"
 
 if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
-	echo "Usage: export-code-examples.sh <github-token> <commit-sha>" >&2
+	echo "Usage: export-localcode.sh <github-token> <commit-sha>" >&2
 	exit 1
 fi
 
@@ -31,7 +31,7 @@ publish_repo() {
 
 	local CLEANED_DIR CLONED_DIR
 	CLEANED_DIR=$(mktemp -d /tmp/bluehawk-processed.XXXXXX)
-	CLONED_DIR=$(mktemp -d /tmp/code-example-repository.XXXXXX)
+	CLONED_DIR=$(mktemp -d /tmp/localcode-repository.XXXXXX)
 
 	local status=0
 	(
@@ -64,8 +64,24 @@ publish_repo() {
 	return $status
 }
 
+# LOCALCODE_FILTER: space-separated list of directory names to publish.
+# When empty or unset, all directories are published.
+LOCALCODE_FILTER="${LOCALCODE_FILTER:-}"
+
 for LOCAL_REPOSITORY_PATH in astro/localcode/*/; do
 	REPOSITORY_NAME=$(basename "$LOCAL_REPOSITORY_PATH")
+
+	if [ -n "$LOCALCODE_FILTER" ]; then
+		match=0
+		for filter_name in $LOCALCODE_FILTER; do
+			[ "$REPOSITORY_NAME" = "$filter_name" ] && match=1 && break
+		done
+		if [ "$match" -eq 0 ]; then
+			echo "Skipping $REPOSITORY_NAME (not in filter)"
+			continue
+		fi
+	fi
+
 	URL_FILE="${LOCAL_REPOSITORY_PATH}repositoryUrl.txt"
 
 	if [ ! -f "$URL_FILE" ]; then

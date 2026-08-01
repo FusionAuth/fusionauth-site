@@ -1,4 +1,4 @@
-name: Test code examples
+name: Test localcode
 
 on:
   pull_request:
@@ -7,9 +7,66 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    name: Test code examples
+  discover:
+    name: Discover changed test suites
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.scan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+
+      - id: scan
+        name: Scan for changed localcode test suites
+        run: |
+          set -euo pipefail
+
+          # Validate every localcode dir has tests/test.sh
+          for dir in astro/localcode/*/; do
+            name=$(basename "$dir")
+            if [ ! -f "${dir}tests/test.sh" ]; then
+              echo "ERROR: localcode directory missing tests/test.sh: $name" >&2
+              exit 1
+            fi
+          done
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual trigger: test all suites
+            dirs=()
+            for dir in astro/localcode/*/; do
+              dirs+=("$(basename "$dir")")
+            done
+          else
+            # PR: only test suites whose files changed
+            git fetch origin "${{ github.base_ref }}" --depth=1
+            dirs=()
+            for dir in astro/localcode/*/; do
+              name=$(basename "$dir")
+              if ! git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- "astro/localcode/$name/"; then
+                dirs+=("$name")
+              fi
+            done
+          fi
+
+          if [ "${#dirs[@]}" -eq 0 ]; then
+            echo "No localcode directories changed"
+            echo "matrix=[]" >> "$GITHUB_OUTPUT"
+          else
+            matrix=$(printf '%s\n' "${dirs[@]}" | jq -R . | jq -sc .)
+            echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+            echo "Suites to test: ${dirs[*]}"
+          fi
+
+  test:
+    name: Test ${{ matrix.localcode }}
+    needs: discover
+    if: ${{ needs.discover.outputs.matrix != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        localcode: ${{ fromJson(needs.discover.outputs.matrix) }}
+      fail-fast: false
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -19,8 +76,9 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ hashFiles('astro/localcode/**/Cargo.toml') }}
+          key: ${{ runner.os }}-cargo-${{ matrix.localcode }}-${{ hashFiles(format('astro/localcode/{0}/**/Cargo.toml', matrix.localcode)) }}
           restore-keys: ${{ runner.os }}-cargo-
 
-      - name: Run all code example tests
-        run: bash src/scripts/test-code-examples.sh
+      - name: Run tests
+        run: bash tests/test.sh
+        working-directory: astro/localcode/${{ matrix.localcode }}
