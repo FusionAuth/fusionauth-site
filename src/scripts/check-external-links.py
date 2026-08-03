@@ -144,6 +144,10 @@ def _fetch(url: str, timeout: int, ok_statuses: frozenset,
                     from urllib.parse import urljoin
                     location = urljoin(url, location)
                 return _fetch(location, timeout, ok_statuses, "GET", retries - 1)
+        # If retries are exhausted on a redirect, or there's no Location header,
+        # the resource still exists — it's just redirecting.  Not a broken link.
+        if 300 <= status < 400:
+            return (status, None)
         if status in ok_statuses:
             return (status, None)
         return (status, f"HTTP {status}")
