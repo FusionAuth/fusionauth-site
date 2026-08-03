@@ -1,12 +1,11 @@
-# Quickstart: Rust Actix app with FusionAuth
+# FusionAuth Quickstart: Rust Actix
+
+> [!WARNING]  
+> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/localcode/quickstart-rust-actix). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
 
 This repo holds an example Rust application that uses FusionAuth as the identity provider.
 
 This repository is documented at https://fusionauth.io/docs/quickstarts/quickstart-rust-actix-web.
-
-Further reading:
-- [Rust OAuth provider](https://docs.rs/oauth2/latest/oauth2/)
-- [FusionAuth OAuth Docs](https://fusionauth.io/docs/v1/tech/oauth/endpoints)
 
 ## Project Contents
 
@@ -16,47 +15,46 @@ The `complete-application` directory contains a fully working version of the app
 
 ## Prerequisites
 
-- [Rust](https://rustup.rs/#)
-- [Docker](https://www.docker.com) version 20 or later.
+* [Rust](https://rustup.rs/#)
+* [Docker](https://www.docker.com) version 20 or later.
+* On macOS and Windows, one of the following container management tools:
+  * [Docker desktop](https://www.docker.com/products/docker-desktop/)
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use Orbstack for `docker compose` commands after install, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
 
 ## Running FusionAuth
 
-To run FusionAuth, just stand up the docker containers using docker-compose.
+To run FusionAuth, stand up the docker containers using `docker-compose`.
 
-First clone the example repo and change into the project directory:
+First, clone the example repo and change into the project directory:
 
 ```shell
 git clone https://github.com/FusionAuth/fusionauth-quickstart-rust-actix-web.git
 cd fusionauth-quickstart-rust-actix-web
 ```
 
-Start the containers with docker compose.
+Start the containers:
 
 ```shell
 docker compose up
 ```
 
-This will start three containers for PostgreSQL, Opensearch and FusionAuth.
+This will start containers for PostgreSQL, Opensearch, and FusionAuth with the following settings:
 
-FusionAuth will initially be configured with these settings:
+* client id is: `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
+* client secret is: `super-secret-secret-that-should-be-regenerated-for-production`
+* example username is: `richard@example.com` and your password is: `password`
+* admin username is: `admin@example.com` and your password is: `password`
+* fusionAuthBaseUrl is: `http://localhost:9011/`
 
-* Your client id is: `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
-* Your client secret is: `super-secret-secret-that-should-be-regenerated-for-production`
-* Your example username is `richard@example.com` and your password is `password`.
-* Your admin username is `admin@example.com` and your password is `password`.
-* Your fusionAuthBaseUrl is 'http://localhost:9011/'
-
-You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker and Kickstart everything will already be configured correctly.
+Log into the [FusionAuth admin UI](http://localhost:9011/admin) to experiment with more configuration.
 
 ## Running the Example Application
 
-Run the Rust application with:
+Use the following command to run the application:
 
 ```shell
-cd complete-application
 cargo run
 ```
 
-Browse to the app at http://localhost:9012 and login with `richard@example.com` and `password`.
-
-Follow the tutorial at https://fusionauth.io/docs/quickstarts/quickstart-rust-actix-web to learn how to configure Rust to work with FusionAuth.
+Browse to the app at [http://localhost:9012](http://localhost:9012) and login with `richard@example.com` and `password`.
