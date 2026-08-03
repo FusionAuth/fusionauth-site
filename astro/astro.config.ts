@@ -182,7 +182,7 @@ const config = defineConfig({
                 class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
               },
               headingProperties: {
-                class: 'group'
+                class: 'group articleHeading'
               }
             },
           ],
