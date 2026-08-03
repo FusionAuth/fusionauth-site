@@ -1,0 +1,32 @@
+# Checks all external HTTP(S) links in the Astro source tree.
+# Runs weekly and on manual trigger. Does not run on PRs because this is a chonky boi.
+
+name: Check external links
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'   # Every Monday at 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Check external links
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+
+      - name: Check external links
+        run: |
+          src/scripts/check-external-links.py \
+            --exclude-source '/generated-code-snippets/' \
+            --exclude-source '^src/content/dev-guide/' \
+            --workers 25 \
+            --concurrency 3 \
+            --rate-limit 500 \
+            --timeout 20
