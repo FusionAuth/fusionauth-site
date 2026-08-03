@@ -147,7 +147,9 @@ _DEFAULT_EXCLUDE_DEST = [
     r"hubspotusercontent\d*\.net",   # HubSpot CDN with TLS 1.0 (deprecated protocol)
     r"readymag\.com",               # site uses TLS 1.0 (deprecated protocol)
     r"docs\.alfresco\.com",         # TLS handshake incompatibility with Python urllib
-    r"logback\.qos\.ch",            # legitimate site that times out for non-browser clients
+    r"qos\.ch",                     # logback/slf4j project sites; time out for non-browser clients
+    r"llms-txt\.org",               # llms.txt standard site; times out for crawlers
+    r"gdpr\.eu",                    # GDPR reference site; times out for crawlers
     r"www\.nuget\.org",             # NuGet.org blocks crawlers; framework packages return 404
     r"developer\.apple\.com",       # Apple docs block crawlers; method-signature URLs break extractors
 ]
