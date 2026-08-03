@@ -46,7 +46,7 @@ _LINK_RE = re.compile(
     r"""
     \[(?:[^\]]*)\]\((https?://[^)\s]+)\)           # [label](url)
     |
-    (?:[\w-]+)=(?:"(https?://[^"]+)"|'(https?://[^']+)')   # attr="url" or attr='url'
+    (?:[\w-]+)=(?:"(https?://[^"\s]+)"|'(https?://[^'\s]+)')   # attr="url" or attr='url'
     """,
     re.VERBOSE,
 )
@@ -132,7 +132,7 @@ _DEFAULT_EXCLUDE_DEST = [
     r"cloud\.es\.io",               # Elastic Cloud cluster hostnames (customer placeholders)
     # ── Additional bot/crawler-hostile or placeholder domains ─────────────────
     r"googletagmanager\.com",       # GTM JS snippet URL; refuses non-browser connections
-    r"remote\.url\.",               # component example placeholder (RemoteValue)
+    r"remote\.url",                 # component example placeholder (RemoteValue)
     r"some\.address",               # component example placeholder (RemoteValue)
     r"application\.com",            # example domain used in SAML/SSO tutorials
     r"piedpiper\.",                  # fictional Silicon Valley company used in tutorials
@@ -150,6 +150,8 @@ _DEFAULT_EXCLUDE_DEST = [
     r"qos\.ch",                     # logback/slf4j project sites; time out for non-browser clients
     r"llms-txt\.org",               # llms.txt standard site; times out for crawlers
     r"gdpr\.eu",                    # GDPR reference site; times out for crawlers
+    r"csrc\.nist\.gov",             # NIST CSRC publication portal; blocks crawlers
+    r"website-files\.com",          # Webflow CDN; srcset attribute values trip the extractor
     r"www\.nuget\.org",             # NuGet.org blocks crawlers; framework packages return 404
     r"developer\.apple\.com",       # Apple docs block crawlers; method-signature URLs break extractors
 ]
