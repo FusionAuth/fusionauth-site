@@ -120,7 +120,7 @@ _DEFAULT_EXCLUDE_DEST = [
     r"0\.0\.0\.0",                  # catch-all address in local-dev examples
     r"^https?://192\.168\.",        # private IP range
     r"^https?://10\.",              # private IP range
-    r"^https?://[^./]+:\d+/",      # docker-compose / internal hostnames (no dots)
+    r"^https?://[^./]+:\d+",       # docker-compose / internal hostnames (no dots before port)
     r"schemas\.xmlsoap\.org",       # blocks bots; site is fine
     r"schemas\.microsoft\.com",     # blocks bots; site is fine
     r"twgtl\.com",                  # known-broken third-party, intentionally linked
@@ -130,6 +130,23 @@ _DEFAULT_EXCLUDE_DEST = [
     r"support\.google\.com",        # blocks GitHub Actions IPs; works in browsers
     r"spec\.modelcontextprotocol\.io",  # SSL handshake fails in CI; works in browsers
     r"cloud\.es\.io",               # Elastic Cloud cluster hostnames (customer placeholders)
+    # ── Additional bot/crawler-hostile or placeholder domains ─────────────────
+    r"googletagmanager\.com",       # GTM JS snippet URL; refuses non-browser connections
+    r"remote\.url\.",               # component example placeholder (RemoteValue)
+    r"some\.address",               # component example placeholder (RemoteValue)
+    r"application\.com",            # example domain used in SAML/SSO tutorials
+    r"piedpiper\.",                  # fictional Silicon Valley company used in tutorials
+    r"hooli\.",                      # fictional Silicon Valley company used in tutorials
+    r"\.local(:|/|$)",              # .local TLD (local-dev hostnames like fusionauth.local)
+    r"web\.archive\.org",           # Wayback Machine returns non-standard codes to crawlers
+    r"^https?://(www\.)?facebook\.com(/|$)",  # Facebook main site blocks crawlers (HTTP 400)
+    r"investopedia\.com",           # returns HTTP 402 to crawlers
+    r"list-manage\.com",            # Mailchimp form-action URLs require POST, not GET
+    r"accounts\.google\.com",       # Google auth/SAML endpoints require auth context
+    r"\$\{",                         # URL contains a template variable like ${verificationId}
+    r"hubspotusercontent\d*\.net",   # HubSpot CDN with TLS 1.0 (deprecated protocol)
+    r"readymag\.com",               # site uses TLS 1.0 (deprecated protocol)
+    r"docs\.alfresco\.com",         # TLS handshake incompatibility with Python urllib
 ]
 
 
