@@ -152,6 +152,8 @@ _DEFAULT_EXCLUDE_DEST = [
     r"gdpr\.eu",                    # GDPR reference site; times out for crawlers
     r"csrc\.nist\.gov",             # NIST CSRC publication portal; blocks crawlers
     r"website-files\.com",          # Webflow CDN; srcset attribute values trip the extractor
+    r"rbi\.org\.in",                # Reserve Bank of India; returns HTTP 418 to crawlers
+    r"globenewswire\.com",          # press release service; times out for non-browser clients
     r"www\.nuget\.org",             # NuGet.org blocks crawlers; framework packages return 404
     r"developer\.apple\.com",       # Apple docs block crawlers; method-signature URLs break extractors
 ]
