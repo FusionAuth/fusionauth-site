@@ -7,11 +7,17 @@ No external dependencies — uses only the Python standard library.
 Requests to the same domain are rate-limited and concurrency-capped; requests
 to different domains run fully in parallel via a thread pool.
 
-Usage (from repo root):
-    python3 src/scripts/check-external-links.py [options] [FILE ...]
+The script locates the astro/src root from its own path, so it works from any
+working directory — no need to cd anywhere before running.
+
+Usage:
+    ./src/scripts/check-external-links.py [options] [FILE ...]
 
 If FILE arguments are given, only those files are checked (--root scanning
 and --include-source are ignored). Useful for CI checks on changed files only.
+
+A set of sensible default exclusions is built in (see _DEFAULT_EXCLUDE_DEST).
+Any --exclude-dest patterns you pass are added on top of the defaults.
 
 Run with --help for the full option list.
 """
@@ -102,6 +108,29 @@ _ALWAYS_OK = frozenset({401, 403, 405, 429, 999})
 # can click through to a locally-running service.  Exempt by default; opt out
 # with --check-localhost.
 _LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "0.0.0.0", "::1"})
+
+# Default destination-URL exclusions applied on every run.
+# Any --exclude-dest args are appended to this list, not replacing it.
+_DEFAULT_EXCLUDE_DEST = [
+    r"example\.com",                # placeholder domain used in examples
+    r"(?i)your-[a-z]",              # placeholders like YOUR-CLUSTER, your-tenant-id
+    r"<%.*%>",                      # template syntax like <%=variable%>
+    r"fusionauth\.io",              # own site — checked by other means
+    r"STATUS_CODE",                 # literal string used as a placeholder in docs
+    r"0\.0\.0\.0",                  # catch-all address in local-dev examples
+    r"^https?://192\.168\.",        # private IP range
+    r"^https?://10\.",              # private IP range
+    r"^https?://[^./]+:\d+/",      # docker-compose / internal hostnames (no dots)
+    r"schemas\.xmlsoap\.org",       # blocks bots; site is fine
+    r"schemas\.microsoft\.com",     # blocks bots; site is fine
+    r"twgtl\.com",                  # known-broken third-party, intentionally linked
+    r"some-third-party-server\.com",  # docs placeholder
+    r"developers\.facebook\.com",   # blocks crawlers aggressively
+    r"nvlpubs\.nist\.gov",          # blocks GitHub Actions IPs; works in browsers
+    r"support\.google\.com",        # blocks GitHub Actions IPs; works in browsers
+    r"spec\.modelcontextprotocol\.io",  # SSL handshake fails in CI; works in browsers
+    r"cloud\.es\.io",               # Elastic Cloud cluster hostnames (customer placeholders)
+]
 
 
 def _is_local_url(url: str) -> bool:
@@ -371,24 +400,21 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 examples:
-  # full site scan from repo root
-  python3 src/scripts/check-external-links.py
+  # full site scan — works from any directory, root is found from script location
+  ./src/scripts/check-external-links.py
 
   # check specific files (e.g. from a PR diff) — skips --root scanning
-  python3 src/scripts/check-external-links.py \\
+  ./src/scripts/check-external-links.py \\
       astro/src/content/docs/foo.mdx astro/src/content/blog/bar.md
 
   # only scan files matching a regex pattern
-  python3 src/scripts/check-external-links.py --include-source '/blog/'
+  ./src/scripts/check-external-links.py --include-source '/blog/'
 
-  # skip placeholder domains and your own site
-  python3 src/scripts/check-external-links.py \\
-      --exclude-dest 'example\\.com' \\
-      --exclude-dest 'localhost' \\
-      --exclude-dest 'fusionauth\\.io'
+  # add an extra exclusion on top of the built-in defaults
+  ./src/scripts/check-external-links.py --exclude-dest 'my-placeholder\\.com'
 
   # faster: more workers, shorter rate-limit window
-  python3 src/scripts/check-external-links.py \\
+  ./src/scripts/check-external-links.py \\
       --workers 40 --concurrency 5 --rate-limit 200
 """,
     )
@@ -420,8 +446,11 @@ examples:
         help="Skip source files whose path matches this regex (repeatable).",
     )
     p.add_argument(
-        "--exclude-dest", metavar="REGEX", action="append", default=[],
-        help="Skip destination URLs matching this regex (repeatable).",
+        "--exclude-dest", metavar="REGEX", action="append", default=list(_DEFAULT_EXCLUDE_DEST),
+        help=(
+            "Skip destination URLs matching this regex (repeatable). "
+            "Added to the built-in default exclusion list, not replacing it."
+        ),
     )
     p.add_argument(
         "--workers", metavar="N", type=int, default=20,
