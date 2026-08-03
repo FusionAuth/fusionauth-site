@@ -79,7 +79,10 @@ test('Express app login, note edit, and logout via FusionAuth', async ({ page })
   }
 });
 
-test('Express app multi-user note isolation', async ({ browser }) => {
+// Log in as one user in a fresh browser context, write a note, and return the
+// note that user sees. Each context has its own cookie jar, so the two users
+// do not share a session.
+async function editNoteAs(browser, { email, password, displayName, note }) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const dumpDiagnostics = trackPageDiagnostics(page);
@@ -87,18 +90,58 @@ test('Express app multi-user note isolation', async ({ browser }) => {
   try {
     await page.goto('http://localhost:3000/');
     await page.waitForURL(/localhost:9011/, { timeout: 15000 });
-    await page.getByPlaceholder('Login').fill('richard@example.com');
-    await page.getByPlaceholder('Password').fill('password');
+    await page.getByPlaceholder('Login').fill(email);
+    await page.getByPlaceholder('Password').fill(password);
     await page.getByRole('button', { name: 'Submit' }).click();
 
     await page.waitForURL('http://localhost:3000/**', { timeout: 15000 });
-    const content = await page.content();
-    expect(content).toMatch(/Welcome, Richard Hendricks/);
+    await expect(page.getByText(`Welcome, ${displayName}`)).toBeVisible();
 
-    await context.close();
+    await page.locator('textarea[name="content"]').fill(note);
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+    await page.waitForURL('http://localhost:3000/**', { timeout: 15000 });
+
+    // Re-read after the redirect so this is the persisted value, not the
+    // text that was just typed into the box.
+    return await page.locator('textarea[name="content"]').inputValue();
   } catch (error) {
     await dumpDiagnostics();
-    await context.close();
     throw error;
+  } finally {
+    await context.close();
   }
+}
+
+test('Express app multi-user note isolation', async ({ browser }) => {
+  const richardNote = 'Richard note ' + Date.now();
+  const adminNote = 'Admin note ' + Date.now();
+
+  // Notes are stored per user, keyed on the subject claim of the token, so
+  // one user must never see another's note.
+  const richardSees = await editNoteAs(browser, {
+    email: 'richard@example.com',
+    password: 'password',
+    displayName: 'Richard Hendricks',
+    note: richardNote,
+  });
+  expect(richardSees).toBe(richardNote);
+
+  const adminSees = await editNoteAs(browser, {
+    email: 'admin@example.com',
+    password: 'password',
+    displayName: 'Admin User',
+    note: adminNote,
+  });
+  expect(adminSees).toBe(adminNote);
+  expect(adminSees).not.toContain(richardNote);
+
+  // Richard's note must survive the second user writing theirs.
+  const richardSeesAgain = await editNoteAs(browser, {
+    email: 'richard@example.com',
+    password: 'password',
+    displayName: 'Richard Hendricks',
+    note: richardNote,
+  });
+  expect(richardSeesAgain).toBe(richardNote);
+  expect(richardSeesAgain).not.toContain(adminNote);
 });
