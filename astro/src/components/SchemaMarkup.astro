@@ -1,0 +1,72 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title } = Astro.props;
+
+const origin = Astro.site?.origin ?? 'https://fusionauth.io';
+const pathname = Astro.url.pathname.replace(/\.html$/, '').replace(/\/$/, '') || '/';
+const isHomepage = pathname === '/';
+
+const specialCapsMap: Record<string, string> = {
+  oauth: 'OAuth', oidc: 'OIDC', saml: 'SAML', samlv2: 'SAMLv2',
+  api: 'API', apis: 'APIs', sdk: 'SDK', sdks: 'SDKs', scim: 'SCIM', spa: 'SPA',
+};
+
+const segmentToName = (seg: string) =>
+  seg.replace(/-/g, ' ')
+     .split(' ')
+     .map(w => specialCapsMap[w.toLowerCase()] ?? (w.charAt(0).toUpperCase() + w.slice(1)))
+     .join(' ');
+
+// Strip "| Suffix" from titles like "MFA | FusionAuth Docs"
+const cleanTitle = title ? title.replace(/ \|.*$/, '').trim() : '';
+
+const parts = pathname.split('/').filter(Boolean);
+
+const breadcrumbItems = parts.length > 0
+  ? [
+      { '@type': 'ListItem', position: 1, name: 'FusionAuth', item: origin + '/' },
+      ...parts.map((part, i) => ({
+        '@type': 'ListItem',
+        position: i + 2,
+        name: i === parts.length - 1 && cleanTitle ? cleanTitle : segmentToName(part),
+        item: origin + '/' + parts.slice(0, i + 1).join('/'),
+      })),
+    ]
+  : [];
+
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'FusionAuth',
+  url: origin + '/',
+};
+
+const breadcrumbSchema = breadcrumbItems.length > 1
+  ? { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbItems }
+  : null;
+
+const organizationSchema = isHomepage
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'FusionAuth',
+      url: origin + '/',
+      logo: {
+        '@type': 'ImageObject',
+        url: origin + '/img/logo/fa_logo_purple_orange.svg',
+      },
+      sameAs: [
+        'https://twitter.com/FusionAuth',
+        'https://www.linkedin.com/company/fusionauth',
+        'https://github.com/FusionAuth',
+      ],
+    }
+  : null;
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+{breadcrumbSchema && <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />}
+{organizationSchema && <script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} />}
