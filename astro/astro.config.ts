@@ -5,12 +5,12 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from '@tailwindcss/vite';
 import indexPages from "astro-index-pages/index.js";
 import {codeTitleRemark} from './src/plugins/code-title-remark';
-import markdownExtract from './src/plugins/markdown-extract.js';
-import { remarkMermaidSSR } from './src/plugins/mermaid-ssr.mjs';
+import genMarkdownPages from 'astro-gen-markdown-pages';
+import { remarkMermaidSSR, mermaidTitleFix } from 'astro-mermaid-renderer-cli-smol';
 import remarkMdx from 'remark-mdx';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import linkValidator, { type LinkValidatorOptions } from 'astro-link-validator';
+import linkChecker from 'astro-link-checker';
 import { visit } from 'unist-util-visit';
 import icon from "astro-iconset";
 
@@ -40,45 +40,6 @@ export const remarkShellSessionPrompts = () => {
         continuation = line.trimEnd().endsWith('\\');
         return '$ ' + line;
       }).join('\n');
-    });
-  };
-};
-
-export const mermaidTitleFix = () => {
-  return (tree) => {
-    visit(tree, 'code', (node, index, parent) => {
-      const meta = node.meta || '';
-      const titleMatch = meta.match(/title=["'](.*?)["']/);
-      
-      if (node.lang === 'mermaid' && titleMatch) {
-        const title = titleMatch[1];
-        const titleNode = {
-          type: 'paragraph',
-          data: {
-            hName: 'p',
-            hProperties: { 'data-title-bottom': title } // Use a unique attr for bottom titles
-          },
-          children: [{ type: 'text', value: title }]
-        };
-
-        // Insert AFTER the code block
-        parent.children.splice(index + 1, 0, titleNode);
-        return index + 2; 
-      } else if (titleMatch) {
-        const title = titleMatch[1];
-        const titleNode = {
-          type: 'paragraph',
-          data: {
-            hName: 'p',
-            hProperties: { 'data-title': title }
-          },
-          children: [{ type: 'text', value: title }]
-        };
-
-        // Inject the title BEFORE the mermaid/code block
-        parent.children.splice(index, 0, titleNode);
-        return index + 2; // Skip the new title and original code block
-      }
     });
   };
 };
@@ -202,23 +163,61 @@ const config = defineConfig({
       filter: siteMapFilter
     }),
     indexPages(),
-    markdownExtract(),
+    genMarkdownPages({
+      indexFilter: (url) => url.startsWith('/docs/') || url === '/docs.md',
+      categorize: (url) => {
+        if (url === '/docs.md') return 'overview';
+        const seg = url.split('/')[2]?.replace(/\.md$/, '') ?? '';
+        return seg || 'overview';
+      },
+      formatCategoryName: (key) => {
+        const lower = key.toLowerCase();
+        if (lower === 'sdks') return 'SDKs';
+        if (lower === 'api') return 'API';
+        if (lower === 'ciam') return 'CIAM';
+        if (lower === 'oauth') return 'OAuth';
+        return key.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      },
+      sortCategories: (names) => names.sort((a, b) => {
+        if (a === 'Get Started') return -1;
+        if (b === 'Get Started') return 1;
+        return a.localeCompare(b);
+      }),
+      llmsTxtPath: 'docs/llms.txt',
+      llmsTxtTitle: 'FusionAuth Documentation',
+      llmsTxtDescription: 'Comprehensive documentation for FusionAuth CIAM, APIs, Quickstarts, and custom integrations.',
+      spokesDir: 'docs',
+      inlineCategories: ['Overview'],
+    }),
     // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
-    process.env.PROD !== 'true' && linkValidator({
-      checkExternal: false,
-      externalTimeout: 10,
+    process.env.PROD !== 'true' && linkChecker({
       failOnBrokenLinks: true,
       verbose: false,
-      exclude: [ //destination URLs to exclude from checking -- NOT files!
-        '/login', '/logout', '/register', // Flask route examples in code blocks
-        '/platform/', '/cdn/', '/dev-tools/', '/tech-papers/', '/feature/', '/features/', '/webinar/',
-        '/community/', '/forum/', '/compare/', '/industry/', '/license/', '/partners/', '/video/', '/event/', '/ebooks/', '/glossary/', '/guides/',
-        'buildvsbuy', 'auth0-migration', 'community', 'community/forum', 'aws-reinvent22', 'aws-reinvent23', 'pricing', 'download', 'contact',
-        'get-started', 'passwordless', 'direct-download', 'jobs', 'careers', 'password-history', 'partners-form', 'partners',
-        'resource/all', 'sso', 'kubernetes', 'compare-fusionauth', 'security', 'customers-partners', 'license-faq',
-        'feature-list', 'product-privacy-policy', 'passkeys', '/permify-docs/', '/permify-docs', '/legal/data-processing-addendum.pdf'
+      // Pages whose content we don't want to crawl (URL path, substring or RegExp)
+      excludeSourcePages: [
+        '/landing/',
       ],
-      //base: 'https://fusionauth.io',
+      // Destinations to skip checking (normalized root-relative path, substring or RegExp)
+      excludeDestinations: [
+        // Routes that only exist at runtime (auth, Flask examples in code blocks)
+        '/login', '/logout', '/register',
+        // Pages that live outside the Astro build (marketing site, external tools)
+        // No trailing slash — substring match covers both /community and /community/foo
+        '/platform', '/cdn', '/dev-tools', '/tech-papers', '/feature', '/features',
+        '/webinar', '/community', '/forum', '/compare', '/industry', '/license',
+        '/partners', '/video', '/event', '/ebooks', '/glossary', '/guides',
+        '/permify-docs',
+        // Loose slug fragments that appear as relative links in quickstart code samples
+        'buildvsbuy', 'auth0-migration', 'aws-reinvent22', 'aws-reinvent23',
+        // Standalone marketing / legal pages not in the Astro build
+        '/pricing', '/download', '/contact', '/get-started', '/passwordless',
+        '/direct-download', '/jobs', '/careers', '/password-history',
+        '/partners-form', '/resource/all', '/sso', '/kubernetes',
+        '/compare-fusionauth', '/security', '/customers-partners',
+        '/license-faq', '/feature-list', '/product-privacy-policy', '/passkeys',
+        '/legal/data-processing-addendum.pdf',
+        '/auth0-migration',
+      ],
     })
   ],
   site: process.env.SITE_URL || 'https://fusionauth.io/',
