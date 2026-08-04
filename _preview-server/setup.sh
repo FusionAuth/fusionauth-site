@@ -130,7 +130,6 @@ for i in range(1, num + 1):
     port = base + i
     print(f"""server {{
     listen 443 ssl;
-    http2 on;
     server_name {port}.{sslip};
     ssl_certificate /etc/letsencrypt/live/preview/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/preview/privkey.pem;
