@@ -87,14 +87,14 @@ else
   log "Creating new worktree …"
   git -C "$REPO_DIR" worktree add --detach "$SLOT_DIR" "refs/preview/pr-${PR}" >&2
 fi
+log "Slot HEAD: $(git -C "$SLOT_DIR" log --oneline -1 2>&1)"
 
-# ── Shared caches (symlinks into the always-warm master copy) ─────────────────
-# node_modules: symlinked; npm install below adds any new deps under a lock so
-# concurrent builds don't race.
+# ── Shared caches ──────────────────────────────────────────────────────────────
+# node_modules: symlinked from master; concurrent installs serialized via flock.
 ln -sfn "$REPO_DIR/astro/node_modules" "$SLOT_DIR/astro/node_modules"
-# .content-cache: remote HTTP cache, safe to share read/write.
-mkdir -p "$REPO_DIR/astro/.content-cache"
-ln -sfn "$REPO_DIR/astro/.content-cache" "$SLOT_DIR/astro/.content-cache"
+# .content-cache: per-slot, NOT shared — different branches have different content
+# and a shared cache causes one PR's compiled content to bleed into another's.
+mkdir -p "$SLOT_DIR/astro/.content-cache"
 
 # generated-code-snippets: pre-seed with a hard-linked copy from master so the
 # hash check in generate-code-snippets.sh exits early when localcode/ is unchanged.
