@@ -76,18 +76,24 @@ log "Using slot $PADDED (port $PORT) for PR #$PR @ $SHA"
 # ── Fetch the PR ref ─────────────────────────────────────────────────────────
 # refs/pull/N/head is created by GitHub for every PR, including forks.
 log "Fetching refs/pull/$PR/head …"
-git -C "$REPO_DIR" fetch --quiet origin \
-  "refs/pull/${PR}/head:refs/preview/pr-${PR}" --force
+git -C "$REPO_DIR" fetch origin \
+  "refs/pull/${PR}/head:refs/preview/pr-${PR}" --force >&2
 
 # ── Set up (or refresh) the worktree ─────────────────────────────────────────
 if git -C "$REPO_DIR" worktree list --porcelain | grep -qF "worktree $SLOT_DIR"; then
-  log "Refreshing existing worktree …"
+  log "Updating worktree to PR #${PR} HEAD …"
   git -C "$SLOT_DIR" checkout --detach "refs/preview/pr-${PR}" >&2
+  git -C "$SLOT_DIR" reset --hard "refs/preview/pr-${PR}" >&2
 else
-  log "Creating new worktree …"
+  log "Creating worktree for PR #${PR} …"
   git -C "$REPO_DIR" worktree add --detach "$SLOT_DIR" "refs/preview/pr-${PR}" >&2
 fi
+SLOT_SHA=$(git -C "$SLOT_DIR" rev-parse HEAD 2>/dev/null || echo "unknown")
 log "Slot HEAD: $(git -C "$SLOT_DIR" log --oneline -1 2>&1)"
+log "Expected SHA: ${SHA} | Got: ${SLOT_SHA}"
+if [[ "$SLOT_SHA" != "$SHA" ]]; then
+  log "WARNING: SHA mismatch — slot may be on wrong commit"
+fi
 
 # ── Shared caches ──────────────────────────────────────────────────────────────
 # node_modules: symlinked from master; concurrent installs serialized via flock.
@@ -102,6 +108,9 @@ if [[ ! -d "$SLOT_DIR/astro/src/generated-code-snippets" ]]; then
   cp -al "$REPO_DIR/astro/src/generated-code-snippets" \
          "$SLOT_DIR/astro/src/generated-code-snippets" 2>/dev/null || true
 fi
+
+# Clear Astro's compiled-component cache so layout/component changes always take effect
+rm -rf "$SLOT_DIR/astro/.astro"
 
 # ── deps (only if package.json differs from main) ────────────────────────────
 MAIN_PKG_HASH=$(git -C "$REPO_DIR" show "origin/main:astro/package.json" \
