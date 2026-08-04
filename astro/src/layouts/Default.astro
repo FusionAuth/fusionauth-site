@@ -10,7 +10,7 @@ import { Marked } from 'marked';
 import Kapa from 'src/components/Kapa.astro';
 import CodeCopyButton from 'src/components/CodeCopyButton.astro';
 import { Icon } from "astro-iconset/components";
-
+import Footer from '../components/Footer.astro'
 interface Props {
   author?: string;
   date?: string;
@@ -71,8 +71,12 @@ disableTOC = frontmatter?.disableTOC ?? disableTOC;
 hideBgImage = frontmatter?.hideBgImage ?? frontmatter?.hidebgImage ?? hideBgImage;
 rssUrl = frontmatter?.rssUrl ?? frontmatter?.rssUrl ?? rssUrl;
 
-const mainStyles = "mx-auto max-w-8xl px-4 pt-8 grid grid-cols-1 lg:flex 2xl:container";
-const sideNavStyles = "col-start-1 row-start-1 lg:col-auto lg:row-auto order-2 lg:order-1 hidden dark:bg-slate-900 bg-white sticky top-11 h-[calc(100vh-44px)] w-64 -ml-4 -mt-8 z-40 shadow-2xl lg:shadow-none lg:block lg:bg-opacity-0 lg:w-full lg:max-w-[270px] lg:ml-0 lg:mt-0 lg:px-0 lg:pt-0 lg:mr-6 lg:py-0 lg:top-[calc(6rem+1px)] lg:self-start overflow-y-auto lg:max-h-[calc(100vh-100px)] lg:h-auto";
+const outerStyles = "mx-auto max-w-8xl px-4 2xl:container lg:flex lg:items-start";
+const mainStyles = "flex-1 pt-8 min-w-0 lg:flex";
+// Mobile: fixed overlay so it covers the footer regardless of scroll position.
+// Desktop: sticky within the outer div (which excludes the footer), so the containing block
+// bottom = footer top — the sidebar naturally stops there without any JS.
+const sideNavStyles = "hidden dark:bg-slate-900 bg-white fixed top-11 left-0 h-[calc(100vh-44px)] w-64 z-40 shadow-2xl overflow-y-auto lg:sticky lg:left-auto lg:ml-0 lg:z-0 lg:shadow-none lg:block lg:bg-opacity-0 lg:w-full lg:max-w-[270px] lg:mr-6 lg:top-[57px] lg:self-start lg:max-h-[calc(100vh-64px)] lg:h-auto lg:pt-2";
 const tocStyles = "order-3 lg:order-3 bottom-0 hidden overflow-hidden pb-10 pt-0 xl:block w-full max-w-[240px] ml-6 sticky top-24 self-start lg:max-h-[calc(100vh-100px)] z-10";
 
 const isProd = import.meta.env.PROD as boolean;
@@ -85,7 +89,7 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
 ---
 
 <!DOCTYPE html>
-<html class="antialiased min-h-full" lang="en">
+<html class="antialiased min-h-full lg:overscroll-y-none" lang="en">
 <Head title={`${cleanedHtmlTitle} | FusionAuth Docs`} description={description} canonicalUrl={frontmatter?.canonicalUrl} {isIndexPage} {openGraphImage} />
 <body class:list={[
   "font-sans antialiased bg-white min-h-full text-slate-700 dark:bg-slate-900 dark:text-slate-200",
@@ -140,9 +144,21 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
   </script>
   
   <slot name="nav"/>
-  
-  <main class={mainStyles}>
-    
+
+  <div class={outerStyles}>
+
+    <div id="side-nav" class={sideNavStyles}>
+      <div class="relative">
+        <div class="bg-white hidden pb-1 pr-2 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
+          <DocSearch />
+        </div>
+
+        {Astro.slots.has('sideNav') ? <slot name="sideNav"></slot> : <Navigation items={sideMenu}/>}
+      </div>
+    </div>
+
+    <main class={mainStyles}>
+
     <article class="fusion-article">
       <div class="sr-only">
         🤖 For AI agents: The complete documentation index is available at <a href="/docs/llms.txt">/docs/llms.txt</a>. 
@@ -235,16 +251,6 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
 
     </article>
 
-    <div id="side-nav" class={sideNavStyles}>
-      <div class="relative">
-        <div class="bg-white hidden pb-1 pr-2 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
-          <DocSearch />
-        </div>
-
-        {Astro.slots.has('sideNav') ? <slot name="sideNav"></slot> : <Navigation items={sideMenu}/>}
-      </div>
-    </div>
-
     {!disableTOC &&
       <aside class={tocStyles}>
         <h3 class="font-semibold text-sm">On this page</h3>
@@ -254,7 +260,12 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
       </aside>
     }
   </main>
-  
+
+  </div>
+
+<div id="main-footer">
+  <Footer />
+</div>
   <Kapa />
   <CodeCopyButton />
 </body>

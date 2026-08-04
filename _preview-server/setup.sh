@@ -137,6 +137,13 @@ for i in range(1, num + 1):
     ssl_prefer_server_ciphers off;
     root {root}/builds/{p};
     index index.html;
+    location ~* \\.md$ {{
+        types {{ }}
+        default_type text/plain;
+        add_header Cache-Control "no-store";
+        add_header X-Content-Type-Options nosniff;
+        try_files $uri =404;
+    }}
     location / {{
         try_files $uri $uri/ $uri.html =404;
         add_header Cache-Control "no-store";
