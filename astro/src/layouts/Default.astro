@@ -71,13 +71,12 @@ disableTOC = frontmatter?.disableTOC ?? disableTOC;
 hideBgImage = frontmatter?.hideBgImage ?? frontmatter?.hidebgImage ?? hideBgImage;
 rssUrl = frontmatter?.rssUrl ?? frontmatter?.rssUrl ?? rssUrl;
 
-// Outer wrapper: sticky containing-block for #side-nav. lg:flex+flex-wrap puts sidebar and
-// main in row 1 and footer in row 2. Footer inside ensures sidebar never escapes the block.
-const outerStyles = "mx-auto max-w-8xl px-4 2xl:container lg:flex lg:flex-wrap lg:items-start";
-// article + TOC only (sidebar is now a sibling, not a child)
+const outerStyles = "mx-auto max-w-8xl px-4 2xl:container lg:flex lg:items-start";
 const mainStyles = "flex-1 pt-8 min-w-0 lg:flex";
-// -mb-[calc(100vh-44px)] on mobile gives zero net flow-height so main overlays the sidebar.
-const sideNavStyles = "hidden dark:bg-slate-900 bg-white sticky top-11 h-[calc(100vh-44px)] -mb-[calc(100vh-44px)] -ml-4 w-64 z-40 shadow-2xl overflow-y-auto lg:mb-0 lg:ml-0 lg:z-0 lg:shadow-none lg:block lg:bg-opacity-0 lg:w-full lg:max-w-[270px] lg:mr-6 lg:top-[57px] lg:self-start lg:max-h-[calc(100vh-64px)] lg:h-auto lg:pt-2";
+// Mobile: fixed overlay so it covers the footer regardless of scroll position.
+// Desktop: sticky within the outer div (which excludes the footer), so the containing block
+// bottom = footer top — the sidebar naturally stops there without any JS.
+const sideNavStyles = "hidden dark:bg-slate-900 bg-white fixed top-11 left-0 h-[calc(100vh-44px)] w-64 z-40 shadow-2xl overflow-y-auto lg:sticky lg:left-auto lg:ml-0 lg:z-0 lg:shadow-none lg:block lg:bg-opacity-0 lg:w-full lg:max-w-[270px] lg:mr-6 lg:top-[57px] lg:self-start lg:max-h-[calc(100vh-64px)] lg:h-auto lg:pt-2";
 const tocStyles = "order-3 lg:order-3 bottom-0 hidden overflow-hidden pb-10 pt-0 xl:block w-full max-w-[240px] ml-6 sticky top-24 self-start lg:max-h-[calc(100vh-100px)] z-10";
 
 const isProd = import.meta.env.PROD as boolean;
@@ -131,26 +130,6 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
         }
       });
     });
-
-    // Desktop: keep sidebar bottom flush with footer top as footer scrolls into view
-    (function () {
-      var SIDEBAR_TOP = 57;
-      function syncSidebarHeight() {
-        var sidebar = document.getElementById('side-nav');
-        var footer = document.getElementById('main-footer');
-        if (!sidebar || !footer) return;
-        if (window.innerWidth < 1024) {
-          sidebar.style.maxHeight = '';
-          return;
-        }
-        var footerTop = footer.getBoundingClientRect().top;
-        var maxH = Math.min(window.innerHeight - 64, Math.max(0, footerTop - SIDEBAR_TOP));
-        sidebar.style.maxHeight = maxH + 'px';
-      }
-      window.addEventListener('scroll', syncSidebarHeight, { passive: true });
-      window.addEventListener('resize', syncSidebarHeight, { passive: true });
-      syncSidebarHeight();
-    }());
 
     // Close mobile actions menu when clicking outside
     document.addEventListener('click', (e) => {
@@ -282,11 +261,11 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
     }
   </main>
 
-  <div id="main-footer" class="-mx-4 lg:w-screen lg:shrink-0 lg:ml-[calc(50%-50vw)] lg:mr-0 lg:relative lg:z-10">
-    <Footer />
   </div>
 
-  </div>
+<div id="main-footer">
+  <Footer />
+</div>
   <Kapa />
   <CodeCopyButton />
 </body>
