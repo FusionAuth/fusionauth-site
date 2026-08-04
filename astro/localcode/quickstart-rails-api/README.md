@@ -1,5 +1,8 @@
 # Quickstart: Ruby on Rails Resource Server with FusionAuth
 
+> [!WARNING]
+> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/localcode/quickstart-rails-api). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
+
 This repository contains a Ruby on Rails application that works with a locally-running instance of [FusionAuth](https://fusionauth.io/), the authentication and authorization platform.
 
 ## Setup
