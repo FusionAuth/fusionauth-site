@@ -1,0 +1,216 @@
+name: Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+# One preview build at a time per PR; cancel any in-progress build when a new
+# push arrives so we don't queue up stale builds.
+concurrency:
+  group: preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Build / rebuild preview ─────────────────────────────────────────────────
+  build:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Post an initial "building" comment so reviewers see immediate feedback.
+      # On subsequent pushes we find the existing comment by its marker and
+      # replace it, so there's always exactly one preview comment per PR.
+      - name: Post / update "building" comment
+        id: comment
+        env:
+          REPO: ${{ github.repository }}
+          PR:   ${{ github.event.pull_request.number }}
+          SHA:  ${{ github.sha }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          SHORT_SHA="${SHA:0:7}"
+          BODY="<!-- fusionauth-preview -->
+          ## 🔨 Building preview…
+
+          Building \`${BRANCH}\` @ \`${SHORT_SHA}\`…"
+
+          EXISTING=$(gh api "repos/$REPO/issues/$PR/comments" \
+            --jq '[.[] | select(.body | contains("<!-- fusionauth-preview -->"))][0].id // empty')
+
+          if [ -n "$EXISTING" ]; then
+            # Keep the existing comment (last successful preview) visible while rebuilding
+            echo "id=$EXISTING" >> "$GITHUB_OUTPUT"
+          else
+            NEW_ID=$(gh api -X POST "repos/$REPO/issues/$PR/comments" \
+              --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')" --jq '.id')
+            echo "id=$NEW_ID" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Find which content / page source files changed in this PR and extract
+      # their frontmatter titles.  Output is one "url<TAB>title" per line.
+      - name: Collect changed pages
+        id: pages
+        run: |
+          git fetch origin main --quiet
+          {
+            echo 'list<<PAGES_EOF'
+            git diff --name-only origin/main...HEAD \
+              | grep -E '^astro/src/(content/docs|pages)/' \
+              | grep -E '\.(md|mdx|astro)$' \
+              | while IFS= read -r f; do
+                  # Pull title from YAML frontmatter (handles quoted / unquoted)
+                  title=$(awk 'BEGIN{in_fm=0}
+                    /^---/{in_fm++; next}
+                    in_fm==1 && /^title:/{
+                      sub(/^title:[[:space:]]*/,""); gsub(/^["'"'"']|["'"'"']$/,""); print; exit
+                    }' "$f" 2>/dev/null)
+                  [ -z "$title" ] && \
+                    title=$(basename "$f" | sed 's/\.[^.]*$//' | sed 's/-/ /g')
+
+                  if [[ "$f" == astro/src/content/docs/* ]]; then
+                    url=$(echo "$f" | sed 's|astro/src/content/docs/||; s|\.[^.]*$|.html|')
+                    url="/docs/$url"
+                  else
+                    url=$(echo "$f" | sed 's|astro/src/pages/||; s|\.[^.]*$|.html|')
+                    url="/$url"
+                  fi
+
+                  printf '%s\t%s\n' "$url" "$title"
+                done
+            echo 'PAGES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      # Keep server-side scripts in sync with the repo — scp before every build
+      # so script changes take effect without manual server access.
+      - name: Sync scripts to EC2
+        env:
+          SSH_KEY:      ${{ secrets.PREVIEW_SSH_KEY }}
+          PREVIEW_HOST: ${{ secrets.PREVIEW_HOST }}
+        run: |
+          install -m600 /dev/null /tmp/pk
+          printf '%s\n' "$SSH_KEY" | sed 's/\\n/\n/g' | tr -d '\r' > /tmp/pk
+          scp -o StrictHostKeyChecking=no -i /tmp/pk \
+            _preview-server/scripts/build-preview.sh \
+            _preview-server/scripts/release-slot.sh \
+            preview@"$PREVIEW_HOST":/opt/preview/scripts/
+          rm -f /tmp/pk
+
+      # SSH into the preview EC2 instance and run the slot build script.
+      # The script writes logs to stderr (visible in the Actions run log) and
+      # writes exactly two lines to stdout that we capture:
+      #   PORT:<number>
+      #   URL:<http://...>
+      - name: Build on EC2
+        id: build
+        env:
+          SSH_KEY:      ${{ secrets.PREVIEW_SSH_KEY }}
+          PREVIEW_HOST: ${{ secrets.PREVIEW_HOST }}
+          PR:           ${{ github.event.pull_request.number }}
+          SHA:          ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          install -m600 /dev/null /tmp/pk
+          printf '%s\n' "$SSH_KEY" | sed 's/\\n/\n/g' | tr -d '\r' > /tmp/pk
+
+          # stdout → file (PORT:/URL: lines); stderr → Actions log (build output)
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -i /tmp/pk \
+            preview@"$PREVIEW_HOST" \
+            "/opt/preview/scripts/build-preview.sh '$PR' '$SHA'" \
+            > /tmp/preview-out.txt
+
+          rm -f /tmp/pk
+          echo "url=$(grep '^URL:' /tmp/preview-out.txt | sed 's/^URL://')" >> "$GITHUB_OUTPUT"
+          rm -f /tmp/preview-out.txt
+
+      - name: Update comment — success
+        if: success()
+        env:
+          REPO:        ${{ github.repository }}
+          COMMENT_ID:  ${{ steps.comment.outputs.id }}
+          PREVIEW_URL: ${{ steps.build.outputs.url }}
+          PAGES:       ${{ steps.pages.outputs.list }}
+          BRANCH:      ${{ github.head_ref }}
+          SHA:         ${{ github.sha }}
+          RUN_URL:     ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          SHORT_SHA="${SHA:0:7}"
+          NL=$'\n'
+
+          # Build the changed-pages table using $'\n' — real newlines inside
+          # bash strings would sit at column 0 and terminate the YAML literal block.
+          TABLE_ROWS=""
+          while IFS=$'\t' read -r url title; do
+            [ -z "$url" ] && continue
+            TABLE_ROWS+="| ${title} | [${url}](${PREVIEW_URL}${url}) |${NL}"
+          done <<< "$PAGES"
+
+          if [ -n "$TABLE_ROWS" ]; then
+            PAGES_SECTION="### Changed pages${NL}| Title | Preview |${NL}|-------|---------|${NL}${TABLE_ROWS}"
+          else
+            PAGES_SECTION="_No content files changed — browse the [full preview](${PREVIEW_URL})._"
+          fi
+
+          BODY="<!-- fusionauth-preview -->${NL}## 🚀 Preview ready — \`${BRANCH}\`${NL}${NL}**Preview:** ${PREVIEW_URL}${NL}${NL}${PAGES_SECTION}${NL}*Commit \`${SHORT_SHA}\` · [build logs](${RUN_URL})*"
+
+          gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" \
+            --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')"
+
+      - name: Update comment — failure
+        if: failure()
+        env:
+          REPO:       ${{ github.repository }}
+          COMMENT_ID: ${{ steps.comment.outputs.id }}
+          BRANCH:     ${{ github.head_ref }}
+          SHA:        ${{ github.sha }}
+          RUN_URL:    ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          BODY=$(printf \
+            '<!-- fusionauth-preview -->\n## ❌ Preview build failed\n\nBuild failed for `%s` @ `%s`.\n[View logs](%s)' \
+            "$BRANCH" "${SHA:0:7}" "$RUN_URL")
+          gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" \
+            --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')"
+
+  # ── Release slot when PR closes ─────────────────────────────────────────────
+  cleanup:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Release slot on EC2
+        env:
+          SSH_KEY:      ${{ secrets.PREVIEW_SSH_KEY }}
+          PREVIEW_HOST: ${{ secrets.PREVIEW_HOST }}
+          PR:           ${{ github.event.pull_request.number }}
+        run: |
+          install -m600 /dev/null /tmp/pk
+          printf '%s' "$SSH_KEY" | sed 's/\\n/\n/g' | tr -d '\r' > /tmp/pk
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -i /tmp/pk \
+            preview@"$PREVIEW_HOST" \
+            "/opt/preview/scripts/release-slot.sh '$PR'" >&2
+          rm -f /tmp/pk
+
+      - name: Update comment — closed
+        env:
+          REPO: ${{ github.repository }}
+          PR:   ${{ github.event.pull_request.number }}
+        run: |
+          CID=$(gh api "repos/$REPO/issues/$PR/comments" \
+            --jq '[.[] | select(.body | contains("<!-- fusionauth-preview -->"))][0].id // empty')
+          [ -z "$CID" ] && exit 0
+          gh api -X PATCH "repos/$REPO/issues/comments/$CID" \
+            -f body='<!-- fusionauth-preview -->
+          ## 🧹 Preview removed
+
+          PR closed — preview slot released.'
