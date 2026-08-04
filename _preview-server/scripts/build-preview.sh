@@ -19,7 +19,17 @@ SLOTS_DIR="$PREVIEW_DIR/slots"
 BUILDS_DIR="$PREVIEW_DIR/builds"
 NUM_SLOTS=25
 BASE_PORT=4000
-PREVIEW_HOST="${PREVIEW_HOST:-$(hostname -I | awk '{print $1}')}"
+
+# Derive HTTPS URL via sslip.io (resolves IP-based subdomains, on Public Suffix List)
+# IMDSv2 requires a token; fall back to checkip if metadata service is unavailable.
+_imds_token=$(curl -sf --connect-timeout 2 -X PUT \
+  "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null || true)
+PUBLIC_IP=$(curl -sf --connect-timeout 2 \
+  -H "X-aws-ec2-metadata-token: ${_imds_token}" \
+  "http://169.254.169.254/latest/meta-data/public-ipv4" 2>/dev/null \
+  || curl -sf --connect-timeout 5 https://checkip.amazonaws.com | tr -d '[:space:]')
+SSLIP_DOMAIN=$(echo "$PUBLIC_IP" | tr '.' '-').sslip.io
 
 log() { echo "[preview] $*" >&2; }
 
@@ -108,10 +118,11 @@ else
 fi
 
 # ── Build ─────────────────────────────────────────────────────────────────────
-log "Building (SITE_URL=http://${PREVIEW_HOST}:${PORT}) …"
+PREVIEW_URL="https://${PORT}.${SSLIP_DOMAIN}"
+log "Building (SITE_URL=${PREVIEW_URL}) …"
 cd "$SLOT_DIR/astro"
 NODE_OPTIONS=--max_old_space_size=8192 \
-  SITE_URL="http://${PREVIEW_HOST}:${PORT}" \
+  SITE_URL="${PREVIEW_URL}" \
   PROD=true \
   npm run build >&2
 
@@ -123,8 +134,8 @@ mv "$SLOT_DIR/astro/dist" "$BUILD_DIR"
 # Write slot lock after a successful build (so a failed build doesn't hold a slot)
 echo "$PR" > "$SLOT_DIR/.slot-pr"
 
-log "Done. Serving at http://${PREVIEW_HOST}:${PORT}"
+log "Done. Serving at ${PREVIEW_URL}"
 
 # Structured output consumed by GitHub Actions (stdout only)
 echo "PORT:$PORT"
-echo "URL:http://${PREVIEW_HOST}:${PORT}"
+echo "URL:${PREVIEW_URL}"
