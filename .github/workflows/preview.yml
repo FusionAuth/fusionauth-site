@@ -106,8 +106,17 @@ jobs:
         run: |
           set -euo pipefail
           install -m600 /dev/null /tmp/pk
-          # Normalize key: convert literal \n and strip CRLF
-          printf '%s' "$SSH_KEY" | sed 's/\\n/\n/g' | tr -d '\r' > /tmp/pk
+          # Normalize key: convert literal \n, strip CRLF, ensure trailing newline
+          printf '%s\n' "$SSH_KEY" | sed 's/\\n/\n/g' | tr -d '\r' > /tmp/pk
+
+          # Validate key before attempting SSH — reveals format problems clearly
+          echo "Key file stats: $(wc -l < /tmp/pk) lines, $(wc -c < /tmp/pk) bytes" >&2
+          echo "First line: $(head -1 /tmp/pk)" >&2
+          echo "Last non-empty line: $(grep -v '^$' /tmp/pk | tail -1)" >&2
+          if ! ssh-keygen -l -f /tmp/pk >&2; then
+            echo "ERROR: PREVIEW_SSH_KEY secret is not a valid private key." >&2
+            rm -f /tmp/pk; exit 1
+          fi
 
           # stdout → file (PORT:/URL: lines); stderr → Actions log (build output)
           ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -i /tmp/pk \
