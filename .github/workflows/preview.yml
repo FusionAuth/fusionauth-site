@@ -130,33 +130,23 @@ jobs:
           RUN_URL:     ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           SHORT_SHA="${SHA:0:7}"
+          NL=$'\n'
 
-          # Build the changed-pages table with real newlines (not \n literals)
-          # so % characters in titles don't get misread as printf format specs.
+          # Build the changed-pages table using $'\n' — real newlines inside
+          # bash strings would sit at column 0 and terminate the YAML literal block.
           TABLE_ROWS=""
           while IFS=$'\t' read -r url title; do
             [ -z "$url" ] && continue
-            TABLE_ROWS+="| ${title} | [${url}](${PREVIEW_URL}${url}) |
-"
+            TABLE_ROWS+="| ${title} | [${url}](${PREVIEW_URL}${url}) |${NL}"
           done <<< "$PAGES"
 
           if [ -n "$TABLE_ROWS" ]; then
-            PAGES_SECTION="### Changed pages
-| Title | Preview |
-|-------|---------|
-${TABLE_ROWS}"
+            PAGES_SECTION="### Changed pages${NL}| Title | Preview |${NL}|-------|---------|${NL}${TABLE_ROWS}"
           else
             PAGES_SECTION="_No content files changed — browse the [full preview](${PREVIEW_URL})._"
           fi
 
-          BODY="<!-- fusionauth-preview -->
-## 🚀 Preview ready — \`${BRANCH}\`
-
-**Preview:** ${PREVIEW_URL}
-
-${PAGES_SECTION}
-
-*Commit \`${SHORT_SHA}\` · [build logs](${RUN_URL})*"
+          BODY="<!-- fusionauth-preview -->${NL}## 🚀 Preview ready — \`${BRANCH}\`${NL}${NL}**Preview:** ${PREVIEW_URL}${NL}${NL}${PAGES_SECTION}${NL}*Commit \`${SHORT_SHA}\` · [build logs](${RUN_URL})*"
 
           gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" \
             --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')"
