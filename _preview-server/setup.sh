@@ -43,6 +43,7 @@ chown -R "$PREVIEW_USER:$PREVIEW_USER" "$PREVIEW_DIR"
 # SSH known_hosts first so the clone doesn't prompt.
 sudo -u "$PREVIEW_USER" bash -c "
   ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+  git config --global --add safe.directory '$PREVIEW_DIR/repo'
   if [ ! -d '$PREVIEW_DIR/repo/.git' ]; then
     git clone '$REPO_URL' '$PREVIEW_DIR/repo'
   else

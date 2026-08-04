@@ -91,6 +91,21 @@ jobs:
             echo 'PAGES_EOF'
           } >> "$GITHUB_OUTPUT"
 
+      # Keep server-side scripts in sync with the repo — scp before every build
+      # so script changes take effect without manual server access.
+      - name: Sync scripts to EC2
+        env:
+          SSH_KEY:      ${{ secrets.PREVIEW_SSH_KEY }}
+          PREVIEW_HOST: ${{ secrets.PREVIEW_HOST }}
+        run: |
+          install -m600 /dev/null /tmp/pk
+          printf '%s\n' "$SSH_KEY" | sed 's/\\n/\n/g' | tr -d '\r' > /tmp/pk
+          scp -o StrictHostKeyChecking=no -i /tmp/pk \
+            _preview-server/scripts/build-preview.sh \
+            _preview-server/scripts/release-slot.sh \
+            preview@"$PREVIEW_HOST":/opt/preview/scripts/
+          rm -f /tmp/pk
+
       # SSH into the preview EC2 instance and run the slot build script.
       # The script writes logs to stderr (visible in the Actions run log) and
       # writes exactly two lines to stdout that we capture:
@@ -106,17 +121,7 @@ jobs:
         run: |
           set -euo pipefail
           install -m600 /dev/null /tmp/pk
-          # Normalize key: convert literal \n, strip CRLF, ensure trailing newline
           printf '%s\n' "$SSH_KEY" | sed 's/\\n/\n/g' | tr -d '\r' > /tmp/pk
-
-          # Validate key before attempting SSH — reveals format problems clearly
-          echo "Key file stats: $(wc -l < /tmp/pk) lines, $(wc -c < /tmp/pk) bytes" >&2
-          echo "First line: $(head -1 /tmp/pk)" >&2
-          echo "Last non-empty line: $(grep -v '^$' /tmp/pk | tail -1)" >&2
-          if ! ssh-keygen -l -f /tmp/pk >&2; then
-            echo "ERROR: PREVIEW_SSH_KEY secret is not a valid private key." >&2
-            rm -f /tmp/pk; exit 1
-          fi
 
           # stdout → file (PORT:/URL: lines); stderr → Actions log (build output)
           ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -i /tmp/pk \

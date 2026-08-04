@@ -83,6 +83,7 @@ fi
 # concurrent builds don't race.
 ln -sfn "$REPO_DIR/astro/node_modules" "$SLOT_DIR/astro/node_modules"
 # .content-cache: remote HTTP cache, safe to share read/write.
+mkdir -p "$REPO_DIR/astro/.content-cache"
 ln -sfn "$REPO_DIR/astro/.content-cache" "$SLOT_DIR/astro/.content-cache"
 
 # generated-code-snippets: pre-seed with a hard-linked copy from master so the
