@@ -92,8 +92,8 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       # SSH into the preview EC2 instance and run the slot build script.
-      # The script emits logs to stderr (visible in Actions) and writes exactly
-      # two lines to stdout:
+      # The script writes logs to stderr (visible in the Actions run log) and
+      # writes exactly two lines to stdout that we capture:
       #   PORT:<number>
       #   URL:<http://...>
       - name: Build on EC2
@@ -104,18 +104,19 @@ jobs:
           PR:           ${{ github.event.pull_request.number }}
           SHA:          ${{ github.sha }}
         run: |
+          set -euo pipefail
           install -m600 /dev/null /tmp/pk
           printf '%s' "$SSH_KEY" > /tmp/pk
 
-          OUTPUT=$(ssh -o StrictHostKeyChecking=no \
-                       -o ConnectTimeout=20 \
-                       -i /tmp/pk \
-                       preview@"$PREVIEW_HOST" \
-                       "/opt/preview/scripts/build-preview.sh '$PR' '$SHA'" \
-                   2>&1 1>/tmp/preview-out.txt; cat /tmp/preview-out.txt)
-          rm -f /tmp/pk /tmp/preview-out.txt
+          # stdout → file (PORT:/URL: lines); stderr → Actions log (build output)
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -i /tmp/pk \
+            preview@"$PREVIEW_HOST" \
+            "/opt/preview/scripts/build-preview.sh '$PR' '$SHA'" \
+            > /tmp/preview-out.txt
 
-          echo "url=$(echo "$OUTPUT" | grep '^URL:' | sed 's/^URL://')" >> "$GITHUB_OUTPUT"
+          rm -f /tmp/pk
+          echo "url=$(grep '^URL:' /tmp/preview-out.txt | sed 's/^URL://')" >> "$GITHUB_OUTPUT"
+          rm -f /tmp/preview-out.txt
 
       - name: Update comment — success
         if: success()
@@ -130,22 +131,32 @@ jobs:
         run: |
           SHORT_SHA="${SHA:0:7}"
 
-          # Build the changed-pages table
-          TABLE=""
+          # Build the changed-pages table with real newlines (not \n literals)
+          # so % characters in titles don't get misread as printf format specs.
+          TABLE_ROWS=""
           while IFS=$'\t' read -r url title; do
             [ -z "$url" ] && continue
-            TABLE="${TABLE}| ${title} | [${url}](${PREVIEW_URL}${url}) |\n"
+            TABLE_ROWS+="| ${title} | [${url}](${PREVIEW_URL}${url}) |
+"
           done <<< "$PAGES"
 
-          if [ -n "$TABLE" ]; then
-            PAGES_SECTION="### Changed pages\n| Title | Preview |\n|-------|------|\n${TABLE}"
+          if [ -n "$TABLE_ROWS" ]; then
+            PAGES_SECTION="### Changed pages
+| Title | Preview |
+|-------|---------|
+${TABLE_ROWS}"
           else
             PAGES_SECTION="_No content files changed — browse the [full preview](${PREVIEW_URL})._"
           fi
 
-          BODY=$(printf \
-            '<!-- fusionauth-preview -->\n## 🚀 Preview ready — `%s`\n\n**Preview:** %s\n\n%s\n\n*Commit `%s` · [build logs](%s)*' \
-            "$BRANCH" "$PREVIEW_URL" "$(printf "$PAGES_SECTION")" "$SHORT_SHA" "$RUN_URL")
+          BODY="<!-- fusionauth-preview -->
+## 🚀 Preview ready — \`${BRANCH}\`
+
+**Preview:** ${PREVIEW_URL}
+
+${PAGES_SECTION}
+
+*Commit \`${SHORT_SHA}\` · [build logs](${RUN_URL})*"
 
           gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" \
             --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')"
