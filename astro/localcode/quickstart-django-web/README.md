@@ -1,5 +1,8 @@
 # Example Django Application
 
+> [!WARNING]
+> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/localcode/quickstart-django-web). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
+
 This repo holds an example Python/Django application that uses FusionAuth as the identity provider.
 
 This application was built by following the [Python/Django Quickstart](https://fusionauth.io/docs/quickstarts/quickstart-python-django-web).
