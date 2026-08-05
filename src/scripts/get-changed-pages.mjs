@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Outputs "url\ttitle" lines for every deployed page affected by the current PR.
+ * Outputs "url/title" lines for every deployed page affected by the current PR.
  *
  * Fragment files (underscore-prefixed) are resolved transitively to the real
  * pages that import them, so a change to _shared/_foo.mdx surfaces every page
