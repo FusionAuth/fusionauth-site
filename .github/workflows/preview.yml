@@ -7,6 +7,7 @@ on:
 permissions:
   pull-requests: write
   contents: read
+  deployments: write
 
 # One preview build at a time per PR; cancel any in-progress build when a new
 # push arrives so we don't queue up stale builds.
@@ -23,52 +24,72 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
+      # Sparse checkout: we only need the server-side scripts for SCP.
+      # Changed-pages calculation now runs on EC2 (see build-preview.sh),
+      # so there's no need for fetch-depth: 0 or the full working tree.
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          sparse-checkout: |
+            _preview-server/scripts
+
+      # Create a GitHub Deployment for this PR environment so the PR header
+      # shows a yellow "in progress" indicator immediately, turning green/red
+      # when the build finishes.  Failures here are non-fatal (|| true).
+      - name: Create GitHub deployment
+        id: deployment
+        env:
+          REPO:    ${{ github.repository }}
+          SHA:     ${{ github.sha }}
+          PR:      ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          DEPLOY_ID=$(jq -n \
+            --arg ref  "$SHA" \
+            --arg env  "preview-pr-$PR" \
+            --arg desc "PR #$PR preview build" \
+            '{ref:$ref, environment:$env, auto_merge:false,
+              required_contexts:[], transient_environment:true,
+              description:$desc}' \
+            | gh api -X POST "repos/$REPO/deployments" --input - --jq '.id' \
+            || echo "")
+          echo "id=${DEPLOY_ID}" >> "$GITHUB_OUTPUT"
+          [ -z "$DEPLOY_ID" ] && exit 0
+          jq -n --arg log "$RUN_URL" \
+            '{state:"in_progress", log_url:$log, description:"Building preview…"}' \
+            | gh api -X POST "repos/$REPO/deployments/$DEPLOY_ID/statuses" \
+                --input - || true
 
       # Post an initial "building" comment so reviewers see immediate feedback.
       # On subsequent pushes we find the existing comment by its marker and
-      # replace it, so there's always exactly one preview comment per PR.
+      # update it, so there's always exactly one preview comment per PR.
       - name: Post / update "building" comment
         id: comment
         env:
-          REPO: ${{ github.repository }}
-          PR:   ${{ github.event.pull_request.number }}
-          SHA:  ${{ github.sha }}
-          BRANCH: ${{ github.head_ref }}
+          REPO:    ${{ github.repository }}
+          PR:      ${{ github.event.pull_request.number }}
+          SHA:     ${{ github.sha }}
+          BRANCH:  ${{ github.head_ref }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           SHORT_SHA="${SHA:0:7}"
           BODY="<!-- fusionauth-preview -->
-          ## 🔨 Building preview…
+          ## ⏳ Building preview…
 
-          Building \`${BRANCH}\` @ \`${SHORT_SHA}\`…"
+          Building \`${BRANCH}\` @ \`${SHORT_SHA}\` — [build logs](${RUN_URL})"
 
           EXISTING=$(gh api "repos/$REPO/issues/$PR/comments" \
             --jq '[.[] | select(.body | contains("<!-- fusionauth-preview -->"))][0].id // empty')
 
           if [ -n "$EXISTING" ]; then
-            # Keep the existing comment (last successful preview) visible while rebuilding
+            gh api -X PATCH "repos/$REPO/issues/comments/$EXISTING" \
+              --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')"
             echo "id=$EXISTING" >> "$GITHUB_OUTPUT"
           else
             NEW_ID=$(gh api -X POST "repos/$REPO/issues/$PR/comments" \
               --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')" --jq '.id')
             echo "id=$NEW_ID" >> "$GITHUB_OUTPUT"
           fi
-
-      # Find which deployed pages are affected by files changed in this PR.
-      # Fragments (underscore-prefixed) are resolved to the pages that import
-      # them (transitively), so a shared snippet change surfaces all affected
-      # pages.  Output is one "url<TAB>title" per line, no .html suffix.
-      - name: Collect changed pages
-        id: pages
-        run: |
-          git fetch origin main --quiet
-          {
-            echo 'list<<PAGES_EOF'
-            BASE_REF=origin/main HEAD_REF=HEAD node src/scripts/get-changed-pages.mjs
-            echo 'PAGES_EOF'
-          } >> "$GITHUB_OUTPUT"
 
       # Keep server-side scripts in sync with the repo — scp before every build
       # so script changes take effect without manual server access.
@@ -86,10 +107,8 @@ jobs:
           rm -f /tmp/pk
 
       # SSH into the preview EC2 instance and run the slot build script.
-      # The script writes logs to stderr (visible in the Actions run log) and
-      # writes exactly two lines to stdout that we capture:
-      #   PORT:<number>
-      #   URL:<http://...>
+      # Stdout carries structured lines (PORT:, URL:, PAGE:) that we capture;
+      # stderr carries build logs (visible in the Actions run log).
       - name: Build on EC2
         id: build
         env:
@@ -102,7 +121,6 @@ jobs:
           install -m600 /dev/null /tmp/pk
           printf '%s\n' "$SSH_KEY" | sed 's/\\n/\n/g' | tr -d '\r' > /tmp/pk
 
-          # stdout → file (PORT:/URL: lines); stderr → Actions log (build output)
           ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -i /tmp/pk \
             preview@"$PREVIEW_HOST" \
             "/opt/preview/scripts/build-preview.sh '$PR' '$SHA'" \
@@ -110,7 +128,28 @@ jobs:
 
           rm -f /tmp/pk
           echo "url=$(grep '^URL:' /tmp/preview-out.txt | sed 's/^URL://')" >> "$GITHUB_OUTPUT"
+          {
+            echo 'pages<<PAGES_EOF'
+            grep '^PAGE:' /tmp/preview-out.txt | sed 's/^PAGE://' || true
+            echo 'PAGES_EOF'
+          } >> "$GITHUB_OUTPUT"
           rm -f /tmp/preview-out.txt
+
+      - name: Update deployment — success
+        if: success() && steps.deployment.outputs.id != ''
+        env:
+          REPO:        ${{ github.repository }}
+          DEPLOY_ID:   ${{ steps.deployment.outputs.id }}
+          PREVIEW_URL: ${{ steps.build.outputs.url }}
+          RUN_URL:     ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          jq -n \
+            --arg log "$RUN_URL" \
+            --arg url "$PREVIEW_URL" \
+            '{state:"success", log_url:$log, environment_url:$url,
+              description:"Preview ready"}' \
+            | gh api -X POST "repos/$REPO/deployments/$DEPLOY_ID/statuses" \
+                --input - || true
 
       - name: Update comment — success
         if: success()
@@ -118,7 +157,7 @@ jobs:
           REPO:        ${{ github.repository }}
           COMMENT_ID:  ${{ steps.comment.outputs.id }}
           PREVIEW_URL: ${{ steps.build.outputs.url }}
-          PAGES:       ${{ steps.pages.outputs.list }}
+          PAGES:       ${{ steps.build.outputs.pages }}
           BRANCH:      ${{ github.head_ref }}
           SHA:         ${{ github.sha }}
           RUN_URL:     ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -126,8 +165,6 @@ jobs:
           SHORT_SHA="${SHA:0:7}"
           NL=$'\n'
 
-          # Build the changed-pages table using $'\n' — real newlines inside
-          # bash strings would sit at column 0 and terminate the YAML literal block.
           TABLE_ROWS=""
           while IFS=$'\t' read -r url title; do
             [ -z "$url" ] && continue
@@ -144,6 +181,18 @@ jobs:
 
           gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" \
             --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')"
+
+      - name: Update deployment — failure
+        if: failure() && steps.deployment.outputs.id != ''
+        env:
+          REPO:      ${{ github.repository }}
+          DEPLOY_ID: ${{ steps.deployment.outputs.id }}
+          RUN_URL:   ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          jq -n --arg log "$RUN_URL" \
+            '{state:"failure", log_url:$log, description:"Build failed"}' \
+            | gh api -X POST "repos/$REPO/deployments/$DEPLOY_ID/statuses" \
+                --input - || true
 
       - name: Update comment — failure
         if: failure()
@@ -180,6 +229,19 @@ jobs:
             preview@"$PREVIEW_HOST" \
             "/opt/preview/scripts/release-slot.sh '$PR'" >&2
           rm -f /tmp/pk
+
+      - name: Deactivate GitHub deployments
+        env:
+          REPO: ${{ github.repository }}
+          PR:   ${{ github.event.pull_request.number }}
+        run: |
+          gh api "repos/$REPO/deployments?environment=preview-pr-$PR&per_page=100" \
+            --jq '.[].id' 2>/dev/null \
+          | while read -r deploy_id; do
+              jq -n '{state:"inactive"}' \
+                | gh api -X POST "repos/$REPO/deployments/$deploy_id/statuses" \
+                    --input - 2>/dev/null || true
+            done
 
       - name: Update comment — closed
         env:

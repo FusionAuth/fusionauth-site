@@ -10,7 +10,7 @@ import DotNetPreReqs from 'src/components/quickstarts/dotnet-prereqs.mdx';
 import Intro from 'src/components/quickstarts/Intro.astro';
 import {Content as LoginArchitectureApi} from 'src/components/quickstarts/LoginArchitectureApi.mdx';
 import NextStepsApi from 'src/components/quickstarts/NextStepsApi.astro';
-import RemoteCode from 'src/components/RemoteCode.astro';
+import LocalCode from 'src/components/LocalCode.astro';
 import QuickstartTshirtCTA from 'src/components/quickstarts/QuickstartTshirtCTA.astro'
 
 <Intro technology=".NET"
@@ -32,10 +32,15 @@ In this section, you'll get FusionAuth up and running and create a resource serv
 
 ### Clone The Code
 
-First off, grab the code from the repository and change into that directory.
+First off, grab the code from the repository:
 
-```shell
+```shell-session
 git clone https://github.com/FusionAuth/fusionauth-quickstart-dotnet-api.git
+```
+
+Then change into that directory:
+
+```shell-session
 cd fusionauth-quickstart-dotnet-api
 ```
 
@@ -54,49 +59,62 @@ We are going to be building an API backend for a banking application called Chan
 Both endpoints will be protected such that a valid JSON web token (JWT) will be required in the `Authorization` header or in a cookie named `app.at` in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
 
 <Aside type="note">
-If you simply want to run the application, there is a completed version in the `complete-application` directory. You can use the following commands to get it up and running if you do not want to create your own.
+If you simply want to run the application, there is a completed version in the `complete-application` directory. You can use the following commands to get it up and running if you do not want to create your own:
 
-```shell
-cd complete-application
-dotnet run
+```shell-session
+cd complete-application && dotnet run
 ```
 
 You can then follow the instructions in the [Run The API](#run-the-api) section.
 </Aside>
 
-Now, create a base ASP.NET API project. 
+Now, create a base ASP.NET API project:
 
-```shell
+```shell-session
 dotnet new webapi -o your-api && cd your-api
+```
+
+The template scaffolds a sample `WeatherForecastController` and `WeatherForecast` model that you don't need for this application. Remove them so you don't end up with a stray, unauthenticated endpoint alongside the secured ones you're about to build:
+
+```shell-session
+rm Controllers/WeatherForecastController.cs WeatherForecast.cs
 ```
 
 ### Add Security
 
 This app uses the standard [.NET JwtBearer package](https://www.nuget.org/packages/Microsoft.AspNetCore.Authentication.JwtBearer), which simplifies extracting and validating JWT tokens from FusionAuth.
 
-Install the .NET JWTBearer package and other supporting libraries. 
+Install the .NET JWTBearer package and other supporting libraries:
 
-```shell
-dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer -v 7.0.14
-dotnet add package Microsoft.AspNetCore.OpenApi -v 7.0.10
-dotnet add package System.IdentityModel.Tokens.Jwt -v 7.0.3
-dotnet add package Microsoft.IdentityModel.Protocols.OpenIdConnect -v 7.0.3
+```shell-session
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer -v 10.0.10
+```
+
+```shell-session
+dotnet add package Microsoft.AspNetCore.OpenApi -v 10.0.10
+```
+
+```shell-session
+dotnet add package System.IdentityModel.Tokens.Jwt -v 8.22.0
+```
+
+```shell-session
+dotnet add package Microsoft.IdentityModel.Protocols.OpenIdConnect -v 8.22.0
 ```
 
 Next, replace your `appsettings.json` file with settings specific to the FusionAuth Issuer and Client Id (Audience).
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/appsettings.json"}/>
+<LocalCode src="quickstart-dotnet-api/complete-application/appsettings.json" lang="json" />
 
 Replace the code in the `appsettings.Development.json` file with the following.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/appsettings.Development.json"}/>
+<LocalCode src="quickstart-dotnet-api/complete-application/appsettings.Development.json" lang="json" />
 
 The `appsettings.Development.json` file will be used when you run the application in development mode. It will enable some useful development options, mainly that HTTPS will not be required for the Issuer (FusionAuth) server. In production, you must use HTTPS for the Issuer server.
 
 Update the `Program.cs` file to configure ASP.NET authentication to use JWT tokens. Replace the code in the `Program.cs` file with the following code.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Program.cs"}
-lang="csharp" />
+<LocalCode src="quickstart-dotnet-api/complete-application/Program.cs" lang="csharp" />
 
 The `Program.cs` file configures the authentication services to use JWT bearer tokens to authenticate users through the `.AddJwtBearer()` method. The Issuer and Audience settings used by the JWT verification code are set in the `appsettings.json` file under the `Authentication` section. The `options.Events` section configures the JWT bearer authentication to use the `OnMessageReceived` event to read the JWT from the `app.at` cookie if it is present. By default, the JWT bearer authentication will only read the JWT from the `Authorization` header. With this code, the JWT can be passed in either the `Authorization` header or the `app.at` cookie.
 
@@ -110,46 +128,43 @@ Now you are going to write some C# code. You are going to write two API controll
 
 We will need response objects for the API to return. One is the `PanicResponse`, which returns a message when a successful `POST` call is made to `/panic`. 
 
-Create a `Models` folder.
+Create a `Models` folder:
 
-```shell
+```shell-session
 mkdir Models
 ```
 
-In the `Models` folder, create a new class `PanicResponse.cs`.
+In the `Models` folder, create a new class `PanicResponse.cs`:
 
-```shell
+```shell-session
 touch Models/PanicResponse.cs
 ```
 
 Add the following code to it.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Models/PanicResponse.cs"}
-            lang="csharp"/>
+<LocalCode src="quickstart-dotnet-api/complete-application/Models/PanicResponse.cs" lang="csharp" />
 
-Next, you need an object to show the breakdown from making change. This object will hold a double `total` and Integers `nickels` and `pennies`. In the `Models` folder, create a new class `Change.cs`.
+Next, you need an object to show the breakdown from making change. This object will hold a double `total` and Integers `nickels` and `pennies`. In the `Models` folder, create a new class `Change.cs`:
 
-```shell
+```shell-session
 touch Models/Change.cs
 ```
 
 Add the following code to it.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Models/Change.cs"}
-            lang="csharp"/>
+<LocalCode src="quickstart-dotnet-api/complete-application/Models/Change.cs" lang="csharp" />
 
 ### Add Controllers
 
-Now you need to add controllers to handle API calls. In the `Controllers` folder, add a new class `MakeChangeController.cs`.
+Now you need to add controllers to handle API calls. In the `Controllers` folder, add a new class `MakeChangeController.cs`:
 
-```shell
+```shell-session
 touch Controllers/MakeChangeController.cs
 ```
 
 Add the following code to it.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Controllers/MakeChangeController.cs"}
-            lang="csharp" />
+<LocalCode src="quickstart-dotnet-api/complete-application/Controllers/MakeChangeController.cs" lang="csharp" />
 
 In this class, a `total` is an HTTP request query parameter that is converted to a `double`, and the `get` method divides the `total` into `nickels` and `pennies` and returns the response object.
 
@@ -178,24 +193,23 @@ Note the `[Authorize("teller,customer")]` attribute which adds the magic of ASP.
 
 ASP.NET reads the **roles** field, adds those roles to the user, and tests the user for the roles via the **Authorize** attribute.
 
-Now, add a controller for tellers to call in an emergency. In the `Controllers` folder add a class `PanicController.cs`.
+Now, add a controller for tellers to call in an emergency. In the `Controllers` folder add a class `PanicController.cs`:
 
-```shell
+```shell-session
 touch Controllers/PanicController.cs
 ```
 
 Add the following code to it.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Controllers/PanicController.cs"}
-            lang="csharp" />
+<LocalCode src="quickstart-dotnet-api/complete-application/Controllers/PanicController.cs" lang="csharp" />
 
 This class listens on `/panic` for a POST request and returns a response indicating that the police were called. The attributes are the same as the `MakeChangeController.cs` route, except that this is a `POST` request, so it is named `Post` and has the `[HttpPost]` attribute marking it as such. 
 
 ## Run The API
 
-Start the API resource server with the following command.
+Start the API resource server with the following command:
 
-```shell
+```shell-session
 dotnet run
 ```
 
@@ -209,7 +223,7 @@ First, try the requests as the `teller@example.com` user. Based on the kickstart
 
 Acquire an access token for `teller@example.com` by making the following request in a new terminal window.
 
-```shell
+```shell-session
 curl --location 'http://localhost:9011/api/login' \
 --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
 --header 'Content-Type: application/json' \
@@ -240,14 +254,14 @@ Now make a request to `/make-change` with a query parameter `total=5.12` using e
 
 This is a request using the `Authorization` header. 
 
-```shell
+```shell-session
 curl --location 'http://localhost:5001/makeChange?total=5.12' \
 --header 'Authorization: Bearer <your_token>'
 ```
 
 This is a request using a cookie. 
 
-```shell
+```shell-session
 curl --location 'http://localhost:5001/makeChange?total=5.12' \
 --cookie 'app.at=<your_token>'
 ```
@@ -268,14 +282,14 @@ Next, call the `/panic` endpoint because you are in trouble!
 
 Call the endpoint using the `Authorization` header as follows. 
 
-```shell
+```shell-session
 curl --location --request POST 'http://localhost:5001/panic' \
 --header 'Authorization: Bearer <your_token>'
 ```
 
 Call the endpoint using a cookie like this.
 
-```shell
+```shell-session
 curl --location --request POST 'http://localhost:5001/panic' \
 --cookie 'app.at=<your_token>'
 ```
@@ -284,7 +298,7 @@ This is a POST not a GET because you want all your emergency calls to be non-ide
 
 Your response should look like the following.
 
-```shell
+```json
 {
   "message": "We've called the police!"
 }
@@ -294,7 +308,7 @@ Nice, help is on the way!
 
 Now let's try as `customer@example.com`, who has the role `customer`. Acquire a token for `customer@example.com`.
 
-```shell
+```shell-session
 curl --location 'http://localhost:9011/api/login' \
 --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
 --header 'Content-Type: application/json' \
@@ -321,14 +335,14 @@ Now use the token to call `/make-change` with a query parameter `total=3.24`.
 
 Use the `Authorization` header as follows.
 
-```shell
+```shell-session
 curl --location 'http://localhost:5001/makeChange?total=3.24' \
 --header 'Authorization: Bearer <your_token>'
 ```
 
 Or use a cookie like this.
 
-```shell
+```shell-session
 curl --location 'http://localhost:5001/makeChange?total=3.24' \
 --cookie 'app.at=<your_token>'
 ```
@@ -347,21 +361,21 @@ So far so good. Now let's try to call the `/panic` endpoint. We'll add the `-i` 
 
 Make the call using the `Authorization` header like this.
 
-```shell
+```shell-session
 curl -i --request POST 'http://localhost:5001/panic' \
 --header 'Authorization: Bearer <your_token>'
 ```
 
 Or using a cookie like this.
 
-```shell
+```shell-session
 curl -i --request POST 'http://localhost:5001/panic' \
 --cookie 'app.at=<your_token>'
 ```
 
 Your response should look like the following.
 
-```shell
+```text
 HTTP/1.1 403 Forbidden
 Content-Length: 0
 Date: Wed, 11 Oct 2023 08:29:09 GMT
@@ -390,12 +404,16 @@ Make sure you are making a `POST` call and using a token with the `teller` role.
 
 * It still doesn't work
 
-You can always pull down a complete running application and compare what's different.
+You can always pull down a complete running application and compare what's different:
 
-```shell
-git clone https://github.com/FusionAuth/fusionauth-quickstart-dotnet-api.git
-cd fusionauth-quickstart-dotnet-api
+```shell-session
+git clone https://github.com/FusionAuth/fusionauth-quickstart-dotnet-api.git && cd fusionauth-quickstart-dotnet-api
+```
+
+```shell-session
 docker compose up -d
-cd complete-application
-dotnet run
+```
+
+```shell-session
+cd complete-application && dotnet run
 ```
