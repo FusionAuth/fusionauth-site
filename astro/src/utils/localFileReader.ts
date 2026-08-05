@@ -12,15 +12,8 @@ export function resolveLocalPath(src: string): string {
     : path.join(process.cwd(), 'localcode', src);
 }
 
-/**
- * Reads a local file and returns its content as a string.
- * Throws an error if the file cannot be read.
- */
 export function readLocalFile(src: string): string {
   const filePath = resolveLocalPath(src);
-  try {
-    return fs.readFileSync(filePath, 'utf-8').trim();
-  } catch (err) {
-    throw new Error(`Failed to read local file at [${filePath}]: ${(err as Error).message}`);
-  }
+  try { return fs.readFileSync(filePath, 'utf-8').trim(); }
+  catch (err) { throw new Error(`Failed to read local file at [${filePath}]: ${(err as Error).message}`);}
 }
