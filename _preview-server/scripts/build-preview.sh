@@ -112,18 +112,31 @@ fi
 # Clear Astro's compiled-component cache so layout/component changes always take effect
 rm -rf "$SLOT_DIR/astro/.astro"
 
-# ── deps (only if package.json differs from main) ────────────────────────────
+# ── deps ──────────────────────────────────────────────────────────────────────
 MAIN_PKG_HASH=$(git -C "$REPO_DIR" show "origin/main:astro/package.json" \
   | sha256sum | cut -d' ' -f1)
 SLOT_PKG_HASH=$(sha256sum "$SLOT_DIR/astro/package.json" | cut -d' ' -f1)
 
+# The slot's node_modules is a symlink to the main repo's node_modules, so that
+# shared directory must exist and match main's package.json before any build.
+MAIN_NM_HASH_FILE="$PREVIEW_DIR/.main-nm-hash"
+CACHED_NM_HASH=$(cat "$MAIN_NM_HASH_FILE" 2>/dev/null || echo "")
+if [[ "$MAIN_PKG_HASH" != "$CACHED_NM_HASH" ]] || \
+   [[ ! -x "$REPO_DIR/astro/node_modules/.bin/astro" ]]; then
+  log "Shared node_modules missing or stale — running npm ci in main repo …"
+  flock "$PREVIEW_DIR/.npm-lock" \
+    npm ci --silent --prefix "$REPO_DIR/astro" >&2
+  echo "$MAIN_PKG_HASH" > "$MAIN_NM_HASH_FILE"
+fi
+
 if [[ "$MAIN_PKG_HASH" != "$SLOT_PKG_HASH" ]]; then
-  log "package.json changed — running npm ci (serialized) …"
+  log "package.json changed — running npm ci for slot (serialized) …"
   # Serialize installs across concurrent slot builds so node_modules isn't corrupted.
+  # npm ci removes the symlink and creates a real node_modules for this slot.
   flock "$PREVIEW_DIR/.npm-lock" \
     npm ci --silent --prefix "$SLOT_DIR/astro" >&2
 else
-  log "package.json unchanged — skipping npm ci."
+  log "package.json unchanged — using shared node_modules."
 fi
 
 # ── Build ─────────────────────────────────────────────────────────────────────
