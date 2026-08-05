@@ -1,0 +1,59 @@
+---
+/**
+ * Local markdown loader. Reads markdown from local files and renders as HTML.
+ */
+import { Marked } from "marked";
+import { createRequire } from 'module';
+import Prism from 'prismjs';
+import { readLocalFile } from 'src/utils/localFileReader';
+
+const require = createRequire(import.meta.url);
+
+export interface Props {
+  /**
+   * File path relative to localcode (source) or src/generated-code-snippets (snippet).
+   * Snippet paths contain ".snippet." in the filename.
+   */
+  src: string;
+}
+
+const { src } = Astro.props as Props;
+
+const markdownContent = readLocalFile(src);
+
+function loadLanguage(lang: string): void {
+  if (!lang || Prism.languages[lang]) return;
+  try {
+    require(`prismjs/components/prism-${lang}`);
+  } catch {
+    // Language not supported — will fall back to plaintext
+  }
+}
+
+const marked = new Marked();
+marked.use({
+  extensions: [
+    {
+      name: "code",
+      renderer: (token) => {
+        try {
+          const lang = token.lang || 'plaintext';
+          loadLanguage(lang);
+          const grammar = Prism.languages[lang] || Prism.languages.plaintext;
+          const highlighted = Prism.highlight(token.text, grammar, lang);
+          return `<pre class="language-${lang}"><code class="language-${lang}">${highlighted}</code></pre>`;
+        } catch (e) {
+          console.error(e);
+          return "";
+        }
+      },
+    },
+  ],
+});
+
+const html = marked.parse(markdownContent);
+---
+
+<article>
+  <Fragment set:html={html} />
+</article>
