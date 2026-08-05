@@ -4,7 +4,7 @@
 this tag, and the corresponding end tag, are used to delineate what is pulled into the FusionAuth docs site. Don't remove unless you also change the docs site.
 -->
 
-<!-- tag::forDocSite[] -->
+<!-- :snippet-start: forDocSite -->
 
 FusionAuth provides password rules, configurable at the [tenant level](https://fusionauth.io/docs/get-started/core-concepts/tenants). These include checks on a password value such as:
 
@@ -18,7 +18,7 @@ These password rules are enforced in the hosted HTML login pages, but only after
 
 This example shows how to use the `passwordValidationRules` freemarker variables to offer user feedback client-side using JavaScript, in the hosted login pages. It will also disable submission of the form if the rules are not met.
 
-To use this script, make `FusionAuthPasswordChecker.js` available at a public URL or modify the FusionAuth template files to include this JavaScript on the registration page and change password pages. 
+To use this script, make `FusionAuthPasswordChecker.js` available at a public URL or modify the FusionAuth template files to include this JavaScript on the registration page and change password pages.
 
 ```html
 <script src="https://yourcdn.example.com/path/to/FusionAuthPasswordChecker.js"></script>
@@ -30,5 +30,5 @@ You'll also need to create CSS classes `validation` and `ok` to visually inform 
 
 Password rules are also available via an [unauthenticated API call](https://fusionauth.io/docs/apis/tenants#retrieve-the-password-validation-rules) if you'd prefer to build your own validation logic without using JavaScript. This might be useful for a mobile application, for example.
 
-<!-- end::forDocSite[] -->
+<!-- :snippet-end: -->
 
