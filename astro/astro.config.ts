@@ -186,6 +186,7 @@ const config = defineConfig({
       llmsTxtPath: 'docs/llms.txt',
       llmsTxtTitle: 'FusionAuth Documentation',
       llmsTxtDescription: 'Comprehensive documentation for FusionAuth CIAM, APIs, QuickStarts, and custom integrations.',
+      trimTitleSuffix: ' | FusionAuth Docs',
       spokesDir: 'docs',
       inlineCategories: ['Overview'],
     }),
