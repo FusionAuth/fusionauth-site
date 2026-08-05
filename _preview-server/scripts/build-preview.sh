@@ -20,16 +20,21 @@ BUILDS_DIR="$PREVIEW_DIR/builds"
 NUM_SLOTS=25
 BASE_PORT=4000
 
-# Derive HTTPS URL via sslip.io (resolves IP-based subdomains, on Public Suffix List)
-# IMDSv2 requires a token; fall back to checkip if metadata service is unavailable.
-_imds_token=$(curl -sf --connect-timeout 2 -X PUT \
-  "http://169.254.169.254/latest/api/token" \
-  -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null || true)
-PUBLIC_IP=$(curl -sf --connect-timeout 2 \
-  -H "X-aws-ec2-metadata-token: ${_imds_token}" \
-  "http://169.254.169.254/latest/meta-data/public-ipv4" 2>/dev/null \
-  || curl -sf --connect-timeout 5 https://checkip.amazonaws.com | tr -d '[:space:]')
-SSLIP_DOMAIN=$(echo "$PUBLIC_IP" | tr '.' '-').sslip.io
+# Derive HTTPS URL via sslip.io.  setup.sh caches the domain so we don't hit
+# IMDSv2 on every build; fall back to a live lookup if the cache is missing.
+_CACHED_DOMAIN="$PREVIEW_DIR/.sslip-domain"
+if [[ -f "$_CACHED_DOMAIN" ]]; then
+  SSLIP_DOMAIN=$(cat "$_CACHED_DOMAIN")
+else
+  _imds_token=$(curl -sf --connect-timeout 2 -X PUT \
+    "http://169.254.169.254/latest/api/token" \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null || true)
+  PUBLIC_IP=$(curl -sf --connect-timeout 2 \
+    -H "X-aws-ec2-metadata-token: ${_imds_token}" \
+    "http://169.254.169.254/latest/meta-data/public-ipv4" 2>/dev/null \
+    || curl -sf --connect-timeout 5 https://checkip.amazonaws.com | tr -d '[:space:]')
+  SSLIP_DOMAIN=$(echo "$PUBLIC_IP" | tr '.' '-').sslip.io
+fi
 
 log() { echo "[preview] $*" >&2; }
 
@@ -158,6 +163,15 @@ echo "$PR" > "$SLOT_DIR/.slot-pr"
 
 log "Done. Serving at ${PREVIEW_URL}"
 
-# Structured output consumed by GitHub Actions (stdout only)
+# Structured output consumed by GitHub Actions (stdout only).
+# PORT/URL first, then one PAGE:url\ttitle line per changed page so that
+# the Actions workflow can build the PR comment table without a separate
+# git checkout on the runner.
 echo "PORT:$PORT"
 echo "URL:${PREVIEW_URL}"
+
+log "Computing changed pages for PR #${PR}…"
+cd "$SLOT_DIR"
+BASE_REF=origin/main HEAD_REF=HEAD \
+  node src/scripts/get-changed-pages.mjs 2>/dev/null \
+  | sed 's/^/PAGE:/' || true
