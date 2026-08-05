@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# Checking openssl
+if [[ -z $(which openssl) ]]; then
+  echo "Please download openssl and make sure it is available in your PATH variable"
+  echo "Homepage: https://www.openssl.org/"
+  exit 1
+fi
+
+# Checking jq
+if [[ -z $(which jq) ]]; then
+  echo "Please download jq and make sure it is available in your PATH variable"
+  echo "jq is used to parse JSON elements"
+  echo "Homepage: https://stedolan.github.io/jq/"
+  exit 1
+fi
+
+# FusionAuth URL
+read -r -p "Your FusionAuth instance URL (with scheme): " FA_URL
+regex='^https?:\/\/[^\/]+(:[0-9]+\/)?$'
+if ! [[ $FA_URL =~ $regex ]]; then
+  echo "FusionAuth URL is not valid. Please make sure you have included the scheme (http:// or https://)."
+  exit 2
+fi
+
+# Extracting domain from URL
+FA_DOMAIN=$(echo "$FA_URL" | awk -F/ '{print $3}')
+if [[ -z "$FA_DOMAIN" ]]; then
+  echo "FusionAuth URL is not valid. Please make sure you have included the scheme (http:// or https://)."
+  exit 2
+fi
+
+# FusionAuth API Key
+read -r -p "API Key with /api/key/import endpoint:      " API_KEY
+if [[ -z "$API_KEY" ]]; then
+  echo "Please provide an API Key."
+  exit 2
+fi
+
+# Key name
+read -r -p "Name for the generated key:                 " NAME
+if [[ -z "$NAME" ]]; then
+  echo "Please provide a valid name for the key."
+  exit 2
+fi
+
+# Creating temporary files for public and private keys
+PRIVATE_KEY_FILE=$(mktemp)
+if [[ -z "$PRIVATE_KEY_FILE" ]]; then
+  echo "Cannot create private key. Please make sure your temporary directory is writable."
+  exit 3
+fi
+PUBLIC_KEY_FILE=$(mktemp)
+if [[ -z "$PUBLIC_KEY_FILE" ]]; then
+  echo "Cannot create public key. Please make sure your temporary directory is writable."
+  exit 3
+fi
+
+# Creating certificate
+RSA_LENGTH=2048
+echo "Generating certificate..."
+if ! openssl req -x509 -newkey "rsa:$RSA_LENGTH" -nodes -keyout "$PRIVATE_KEY_FILE" -out "$PUBLIC_KEY_FILE" -sha256 -days 3650 -subj "/CN=$FA_DOMAIN/"; then
+  echo "Error generating certificate. Check messages above for more details."
+  exit 4
+fi
+PUBLIC_KEY=$(cat "$PUBLIC_KEY_FILE")
+PRIVATE_KEY=$(cat "$PRIVATE_KEY_FILE")
+
+# shellcheck disable=SC2016
+JSON_TEMPLATE='{
+  "key": {
+    "algorithm": "RS256",
+    "name": $name,
+    "publicKey": $publicKey,
+    "privateKey": $privateKey,
+    "length": $rsaLength
+  }
+}'
+
+# Uploading keys to the key master
+echo "Uploading to the Key Master..."
+JSON=$(jq --null-input \
+  --arg name "$NAME" \
+  --arg publicKey "$PUBLIC_KEY" \
+  --arg privateKey "$PRIVATE_KEY" \
+  --arg rsaLength "$RSA_LENGTH" \
+  "$JSON_TEMPLATE")
+if ! curl --fail-with-body -s -o /dev/null \
+  -d "$JSON" \
+  -H "Authorization: $API_KEY" \
+  -H "Content-type: application/json" \
+  "$FA_URL/api/key/import"; then
+  echo "Error uploading certificate to the Key Master. Check messages above for more details."
+  exit 5
+fi
+
+echo "Successfully uploaded key to the Key Master."
+echo "Here is the generated public key:"
+echo "$PUBLIC_KEY"
