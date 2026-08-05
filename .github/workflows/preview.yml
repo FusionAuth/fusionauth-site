@@ -56,37 +56,17 @@ jobs:
             echo "id=$NEW_ID" >> "$GITHUB_OUTPUT"
           fi
 
-      # Find which content / page source files changed in this PR and extract
-      # their frontmatter titles.  Output is one "url<TAB>title" per line.
+      # Find which deployed pages are affected by files changed in this PR.
+      # Fragments (underscore-prefixed) are resolved to the pages that import
+      # them (transitively), so a shared snippet change surfaces all affected
+      # pages.  Output is one "url<TAB>title" per line, no .html suffix.
       - name: Collect changed pages
         id: pages
         run: |
           git fetch origin main --quiet
           {
             echo 'list<<PAGES_EOF'
-            git diff --name-only origin/main...HEAD \
-              | grep -E '^astro/src/(content/docs|pages)/' \
-              | grep -E '\.(md|mdx|astro)$' \
-              | while IFS= read -r f; do
-                  # Pull title from YAML frontmatter (handles quoted / unquoted)
-                  title=$(awk 'BEGIN{in_fm=0}
-                    /^---/{in_fm++; next}
-                    in_fm==1 && /^title:/{
-                      sub(/^title:[[:space:]]*/,""); gsub(/^["'"'"']|["'"'"']$/,""); print; exit
-                    }' "$f" 2>/dev/null)
-                  [ -z "$title" ] && \
-                    title=$(basename "$f" | sed 's/\.[^.]*$//' | sed 's/-/ /g')
-
-                  if [[ "$f" == astro/src/content/docs/* ]]; then
-                    url=$(echo "$f" | sed 's|astro/src/content/docs/||; s|\.[^.]*$|.html|')
-                    url="/docs/$url"
-                  else
-                    url=$(echo "$f" | sed 's|astro/src/pages/||; s|\.[^.]*$|.html|')
-                    url="/$url"
-                  fi
-
-                  printf '%s\t%s\n' "$url" "$title"
-                done
+            BASE_REF=origin/main HEAD_REF=HEAD node src/scripts/get-changed-pages.mjs
             echo 'PAGES_EOF'
           } >> "$GITHUB_OUTPUT"
 
