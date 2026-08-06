@@ -74,6 +74,10 @@ echo "Public IP: $PUBLIC_IP"
 echo "sslip.io domain: $SSLIP_DOMAIN"
 echo "Preview URL pattern: https://<port>.$SSLIP_DOMAIN"
 
+# Cache domain so build-preview.sh doesn't call IMDSv2 on every build
+echo "$SSLIP_DOMAIN" > "$PREVIEW_DIR/.sslip-domain"
+chmod 644 "$PREVIEW_DIR/.sslip-domain"
+
 # ── Initial nginx: port 80 only, for ACME webroot challenge ────────────────────
 cat > /etc/nginx/sites-available/preview <<'EOF'
 server {
