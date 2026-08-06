@@ -31,12 +31,13 @@ function calculateChange(): array {
       'nickels' => '',
       'pennies' => '',
   ];
-  $total = floor(floatval($amount) * 100) / 100;
+  $cents = intval(round(floatval($amount) * 100));
+  $total = $cents / 100;
   $state['total'] = is_nan($total) ? '' : number_format($total, 2);
-  $nickels = floor($total / 0.05);
+  $nickels = intval(floor($cents / 5));
   $state['nickels'] = number_format($nickels);
-  $pennies = ($total - (0.05 * $nickels)) / 0.01;
-  $state['pennies'] = ceil(floor($pennies * 100) / 100);
+  $pennies = $cents - ($nickels * 5);
+  $state['pennies'] = $pennies;
   $state['iserror'] = !preg_match('/^(\d+(\.\d*)?|\.\d+)$/', $amount);
   return $state;
 }
@@ -87,7 +88,7 @@ function calculateChange(): array {
             <div class="error-message">Please enter a dollar amount:</div>
             <?php else: ?>
             <div class="change-message">
-              We can make change for <?= $state['total'] ?> with <?= $state['nickels'] ?> nickels and <?= $state['pennies'] ?> pennies!
+              We can make change for $<?= $state['total'] ?> with <?= $state['nickels'] ?> nickels and <?= $state['pennies'] ?> pennies!
             </div>
             <?php endif; ?>
 

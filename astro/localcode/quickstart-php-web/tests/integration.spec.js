@@ -39,7 +39,8 @@ test('FusionAuth admin login', async ({ page }) => {
 
     await expect(page).toHaveURL(/\/admin\//);
     await expect(page.getByRole('button', { name: 'admin@example.com' })).toBeVisible();
-  } catch (error) {
+  }
+  catch (error) {
     await dumpDiagnostics();
     throw error;
   }
@@ -112,7 +113,8 @@ test('Make Change calculates change correctly', async ({ page }) => {
         `We can make change for $${total} with ${nickels} nickels and ${pennies} pennies!`
       );
     }
-  } catch (error) {
+  }
+  catch (error) {
     await dumpDiagnostics();
     throw error;
   }
