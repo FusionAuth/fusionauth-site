@@ -43,14 +43,16 @@ You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look
 
 The `complete-application` directory contains a minimal Ruby on Rails app configured to authenticate with locally running FusionAuth.
 
-Install the dependencies via the Gemfile
-```
+Install the dependencies via the Gemfile:
+
+```shell-session
 cd complete-application
 bundle install
 bundle e rails s -p 4001
 ```
 
-The app is now serving two api endpoints
+The app is now serving two api endpoints:
+
  - [http://localhost:4001/make-change](http://localhost:4001/make-change) - this endpoint calculates the change to make from a given total
  - [http://localhost:4001/panic](http://localhost:4001/panic) - this endpoint simulates notifying the police of an incident.
 
