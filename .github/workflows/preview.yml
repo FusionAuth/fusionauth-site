@@ -74,19 +74,24 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           SHORT_SHA="${SHA:0:7}"
-          BODY="<!-- fusionauth-preview -->
-          ## ⏳ Building preview…
-
-          Building \`${BRANCH}\` @ \`${SHORT_SHA}\` — [build logs](${RUN_URL})"
 
           EXISTING=$(gh api "repos/$REPO/issues/$PR/comments" \
             --jq '[.[] | select(.body | contains("<!-- fusionauth-preview -->"))][0].id // empty')
 
           if [ -n "$EXISTING" ]; then
+            # Preserve existing preview links — only replace the status heading so
+            # reviewers can still follow previous-build URLs during the rebuild.
+            EXISTING_BODY=$(gh api "repos/$REPO/issues/comments/$EXISTING" --jq '.body')
+            UPDATED=$(printf '%s\n' "$EXISTING_BODY" \
+              | awk '/^## /{if(!r){print "## ⏳ Building preview…"; r=1; next}} {print}')
             gh api -X PATCH "repos/$REPO/issues/comments/$EXISTING" \
-              --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')"
+              --input - <<< "$(jq -n --arg b "$UPDATED" '{body:$b}')"
             echo "id=$EXISTING" >> "$GITHUB_OUTPUT"
           else
+            BODY="<!-- fusionauth-preview -->
+          ## ⏳ Building preview…
+
+          Building \`${BRANCH}\` @ \`${SHORT_SHA}\` — [build logs](${RUN_URL})"
             NEW_ID=$(gh api -X POST "repos/$REPO/issues/$PR/comments" \
               --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')" --jq '.id')
             echo "id=$NEW_ID" >> "$GITHUB_OUTPUT"
