@@ -20,13 +20,12 @@ export function registerFTL(Prism) {
       pattern: /[$#]\{(?:[^{}]|\{[^{}]*\})*\}/,
       greedy: true,
       inside: {
-        punctuation: { pattern: /^[$#]\{|\}$/ },
+        punctuation: { pattern: /^[$#]\{|\}$|[()[\]{},.:!?]/ },
         builtin:     /\?[a-zA-Z_][a-zA-Z0-9_]*/,
         string:      { pattern: /"[^"]*"|'[^']*'/, greedy: true },
         number:      /\b\d+(?:\.\d+)?\b/,
         boolean:     /\b(?:true|false)\b/,
-        operator:    /[!=<>]=?|&&|\|\||[+\-*\/]/,
-        punctuation: /[()[\]{},.:!?]/,
+        operator:    /[!=<>]=?|&&|\|\||[+\-*/]/,
       },
     },
 
@@ -40,7 +39,7 @@ export function registerFTL(Prism) {
       inside: {
         'ftl-keyword': {
           // Opening delimiter + tag name: <#if, [@helpers.button, [/#if, etc.
-          pattern: /^[<\[]\/?[#@]\s*[a-zA-Z_][a-zA-Z0-9_.]*/,
+          pattern: /^[<[]\/?[#@]\s*[a-zA-Z_][a-zA-Z0-9_.]*/,
           alias: 'keyword',
         },
         interpolation: { pattern: /[$#]\{[^}]*\}/, alias: 'variable' },
@@ -48,7 +47,7 @@ export function registerFTL(Prism) {
         boolean:       /\b(?:true|false)\b/,
         number:        /\b\d+(?:\.\d+)?\b/,
         builtin:       /\?[a-zA-Z_][a-zA-Z0-9_]*/,
-        operator:      /[!=<>]=?|&&|\|\||[+\-*\/]/,
+        operator:      /[!=<>]=?|&&|\|\||[+\-*/]/,
         punctuation:   /[()[\]{},.:!?]/,
       },
     },

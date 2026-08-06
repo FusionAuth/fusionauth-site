@@ -47,10 +47,10 @@ for repo in localcode/*/; do
 		printf '%s\n' "$out" | grep -v 'parsed file' | grep -v 'found binary file' >&2 || true
 		exit 1
 	fi
-	written=$(printf '%s\n' "$out" | grep -c 'wrote text file' || echo 0)
+	written=$(printf '%s\n' "$out" | grep -c 'wrote text file') || true
 	total_written=$((total_written + written))
 done
 
-find src/generated-code-snippets -type d -empty -delete
+find src/generated-code-snippets -mindepth 1 -type d -empty -delete
 echo "$current_hash" > "$HASH_FILE"
 echo "Code snippets: $total_written written"

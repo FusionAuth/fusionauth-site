@@ -167,7 +167,7 @@ export function rehypeCodeMeta({ excludeLangs = DEFAULT_EXCLUDE } = {}) {
     });
 
     // Process all code blocks (runHighlighterWithAstro is async)
-    for (const { node: codeNode, parent: preNode, language, meta, code } of tasks) {
+    for (const { parent: preNode, language, meta, code } of tasks) {
       const { highlight, collapse, diff } = parseMeta(meta);
       const { html, classLanguage } = await runHighlighterWithAstro(language, code);
 
