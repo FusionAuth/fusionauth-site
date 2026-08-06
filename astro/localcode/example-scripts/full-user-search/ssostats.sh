@@ -27,7 +27,7 @@ for userid in $userids; do
       elif [ $id == "82339786-3dff-42a6-aac6-1f1ceecb6c46" ]; then
         let "g_count=g_count+1"
       else
-        let "others_count=others_count+1"
+        let "other_count=other_count+1"
       fi
     done
   fi
@@ -38,4 +38,4 @@ done
 echo "passwords: $pw_count"
 echo "fb: $fb_count"
 echo "google: $g_count"
-echo "others: $others_count"
+echo "others: $other_count"
