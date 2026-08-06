@@ -58,7 +58,7 @@ The app is now serving two api endpoints:
 
 You can login with a user preconfigured during Kickstart, `teller@example.com` with the password of `password` and `applicationId` by calling:
 
-```sh
+```shell-session
 curl --location 'https://local.fusionauth.io/api/login' \
 --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
 --header 'Content-Type: application/json' \
@@ -69,20 +69,16 @@ curl --location 'https://local.fusionauth.io/api/login' \
 }'
 ```
 
-You can take the token from the response and then call one of the endpoints listed above by calling:
+You can take the token from the response and then call one of the endpoints listed above with one of the following commands:
 
-```sh
+```shell-session
 curl --location 'http://localhost:4001/make-change?total=5.12' \
 --cookie 'app.at=<your_token>'
 ```
 
-or
-
-```sh
+```shell-session
 curl --location --request POST 'http://localhost:4001/panic' \
 --cookie 'app.at=<your_token>'
-```
-
 ### Further Information
 
 Visit https://fusionauth.io/docs/quickstarts/quickstart-ruby-on-rails-api for a step-by-step guide on how to build this Ruby on Rails API from scratch.
