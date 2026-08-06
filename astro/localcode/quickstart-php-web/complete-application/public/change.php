@@ -53,7 +53,7 @@ function calculateChange(): array {
   <div id="page-container">
     <div id="page-header">
       <div id="logo-header">
-        <img src="static/changebank.svg"  alt="logo"/>
+        <img src="https://fusionauth.io/cdn/samplethemes/changebank/changebank.svg" alt="logo"/>
         <div class="h-row">
           <p class="header-email"><?= $_SESSION['email'] ?></p>
           <a class="button-lg" href="logout.php" onclick="">Logout</a>
