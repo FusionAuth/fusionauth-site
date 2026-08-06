@@ -13,6 +13,7 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import linkChecker from 'astro-link-checker';
 import { visit } from 'unist-util-visit';
 import icon from "astro-iconset";
+import { rehypeCodeMeta } from './src/plugins/rehype-code-meta.mjs';
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
@@ -124,10 +125,7 @@ const config = defineConfig({
   integrations: [
     icon(),
     mdx({
-      syntaxHighlight: {
-        type: "prism",
-        excludeLangs: ["mermaid"]
-      },
+      syntaxHighlight: false,
       processor: unified({
           remarkPlugins: [
           remarkMdx,
@@ -136,6 +134,7 @@ const config = defineConfig({
           remarkShellSessionPrompts,
         ],
         rehypePlugins: [
+          [rehypeCodeMeta, { excludeLangs: ['mermaid'] }],
           rehypeSlug,
           rehypeCopyButton,
           [

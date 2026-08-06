@@ -87,7 +87,7 @@ Navigate to the home page of your Elastic Cloud web interface and do the followi
 - Return to the <Breadcrumb>Agents</Breadcrumb> tab of the Fleet page and click <Breadcrumb>Add Agent</Breadcrumb>.
 - Choose your newly created agent policy in the dropdown that appears for step 1.
 - Copy the text to install the "Linux Tar" version of the agent in step 3, which will be similar to the commands below, but with different parameters.
-  ```sh
+  ```shell-session
   curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.14.2-linux-x86_64.tar.gz
   tar xzvf elastic-agent-8.14.2-linux-x86_64.tar.gz
   cd elastic-agent-8.14.2-linux-x86_64
@@ -100,7 +100,7 @@ Now leave the Elastic site and complete the following steps in a terminal on you
 - Save the Dockerfile from the [FusionAuth containers repository](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer.
 - Rename the file to `elastic.dockerfile`.
 - Edit the file and insert the following lines above the comment "###### Start FusionAuth App".
-  ```sh
+  ```shell-session
   ###### New for Elastic #################################
   RUN mkdir -p /var/lib/apt/lists/partial \
     && chmod 755 /var/lib/apt/lists/partial \
@@ -116,7 +116,7 @@ Now leave the Elastic site and complete the following steps in a terminal on you
 - Change the URL and token in the last line to match your values from the Elastic website. Update the version number of the agent if yours is newer.
 - Replace the last line of the file, `CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]` with `CMD sudo /opt/Elastic/Agent/elastic-agent run & /usr/local/fusionauth/fusionauth-app/bin/start.sh`. Now both the Elastic Agent and FusionAuth will run when the container starts. The Agent has to run as root as it [reads data sources that only a superuser can access](https://www.elastic.co/guide/en/fleet/current/elastic-agent-installation.html). Even though the Dockerfile unzips the Agent to `/agent/`, the agent installs to `/opt/Elastic/Agent/`.
 - Build the image with the command below.
-  ```sh
+  ```shell-session
   docker build --platform linux/amd64 -t efaimage -f elastic.dockerfile .
   ```
 - Use the modified `docker-compose.yml` file from the FusionAuth [five-minute guide](/docs/get-started/start-here/step-1) to have the content below. It uses the `efaimage` image you just built for FusionAuth.
@@ -205,19 +205,19 @@ If you get errors when running FusionAuth, or the Agent does not appear in Fleet
 
 To stop FusionAuth and the Agent starting so you can test manually, change the last line of the Dockerfile to the line below.
 
-```sh
+```shell-session
 CMD tail -f /dev/null
 ```
 
 Rebuild the Dockerfile after changes.
 
-```sh
+```shell-session
 docker rm fa; docker rm efa; docker rmi efaimage; docker build --platform linux/amd64 -t efaimage -f elastic.dockerfile .
 ```
 
 Run the container and enter it as root.
 
-```sh
+```shell-session
 docker run -it --user root --name efa efaimage bash
 ```
 
@@ -446,13 +446,13 @@ CMD watch -t -n 10 /app.sh
 
 Build the container with the command below.
 
-```sh
+```shell-session
 docker build -f metricDockerfile --platform linux/amd64 -t metricimage .
 ```
 
 Edit your `docker-compose.yml` file and add the new service as follows.
 
-```
+```yaml
   fametric:
     image: metricimage
     container_name: fametric
@@ -464,7 +464,7 @@ Now run all the containers with `docker compose up`.
 
 The output should be as below. Since you logged in within the last hour, there will be one row in the exported file and one value will be sent to Elastic. If you don't see any rows displayed on the screen, log in to FusionAuth again.
 
-```sh
+```shell-session
 curl -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" -o record.zip "http://fa:9011/api/system/login-record/export?applicationId=3c219e58-ed0e-4b18-ad48-f4f92793ae32&dateTimeSecondsFormat=yyyy-MM-dd%27T%27HH%3Amm%3Ass.SSS&start=1721215014000&end=1721218614000"
 fametric  |   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
 fametric  |                                  Dload  Upload   Total   Spent    Left  Speed
@@ -483,7 +483,7 @@ If you have trouble calling the FusionAuth API, review the [troubleshooting tips
 
 If you alter `app.sh` in your host machine and want to rerun the containers, use the command below.
 
-```sh
+```shell-session
 clear; docker build -f metricDockerfile --platform linux/amd64 -t metricimage .; docker compose up
 ```
 
