@@ -130,7 +130,7 @@ function buildLineNodes(rawLines, highlight, collapse, diff) {
         type: 'element',
         tagName: 'span',
         properties: { className: ['line', 'line-collapse-toggle'], 'data-count': String(count) },
-        children: [{ type: 'text', value: `▶ ${count} hidden line${count === 1 ? '' : 's'}` }],
+        children: [{ type: 'text', value: `${count} hidden line${count === 1 ? '' : 's'}` }],
       });
     }
     if (!isCollapsed) collapseStart = null;
