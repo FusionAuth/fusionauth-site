@@ -6,9 +6,8 @@ FA_HOSTNAME=http://localhost:9011
 # default to 30 days out. any keys expiring before this will be printed
 DAYS_TILL_EXPIRATION=30
 
-# finds current unix timestamp
-lcdate=`LC_ALL=C date`
-curdate=`date -j -f "%a %b %d %T %Z %Y" "$lcdate" "+%s"`
+# finds current unix timestamp (the %s format works the same on GNU and BSD/macOS date)
+curdate=`date +%s`
 
 curdateinmillis=$(($curdate * 1000))
 expdatemillis=$(($DAYS_TILL_EXPIRATION * 24 * 60 * 60 * 1000))
