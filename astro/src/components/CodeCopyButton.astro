@@ -25,7 +25,11 @@
       const code = wrapper?.querySelector('code');
       if (!code) return;
 
-      let text = code.innerText;
+      // Build text from .line spans (excluding collapse toggles) or fall back to innerText
+      const lineSpans = code.querySelectorAll<HTMLElement>('.line:not(.line-collapse-toggle)');
+      let text = lineSpans.length
+        ? Array.from(lineSpans).map(s => s.innerText).join('\n')
+        : code.innerText;
       if (pre?.classList.contains('language-shell-session')) {
         text = text.split('\n').map(line =>
           (line.startsWith('$ ') || line.startsWith('# ')) ? line.slice(2) : line
@@ -48,6 +52,30 @@
   if (!customElements.get('copy-code-button')) {
     customElements.define('copy-code-button', CopyCodeButton);
   }
+
+  // Collapse toggle: clicking a .line-collapse-toggle shows/hides the following .line-collapsed spans
+  document.querySelectorAll('.line-collapse-toggle').forEach(toggle => {
+    // Populate data-preview with the first hidden line's text so CSS can show a faint hint
+    const firstHidden = toggle.nextElementSibling;
+    if (firstHidden?.classList.contains('line-collapsed')) {
+      const preview = firstHidden.textContent ?? '';
+      if (preview) (toggle as HTMLElement).dataset.preview = preview;
+    }
+
+    toggle.addEventListener('click', () => {
+      const expanded = toggle.classList.toggle('expanded');
+      const count = (toggle as HTMLElement).dataset.count ?? '?';
+      const unit = count === '1' ? 'line' : 'lines';
+      if (toggle.firstChild) toggle.firstChild.textContent = expanded
+        ? `hide ${count} ${unit}`
+        : `${count} hidden ${unit}`;
+      let sib = toggle.nextElementSibling as HTMLElement | null;
+      while (sib && sib.classList.contains('line-collapsed')) {
+        sib.classList.toggle('expanded', expanded);
+        sib = sib.nextElementSibling as HTMLElement | null;
+      }
+    });
+  });
 
   // Wrap non-MDX code blocks not already processed by rehypeCopyButton at build time
   document.querySelectorAll('pre[class*="language-"]').forEach(pre => {
