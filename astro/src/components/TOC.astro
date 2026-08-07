@@ -2,7 +2,7 @@
 import TocHeading from "./TocHeading.astro"
 type Heading = {depth: number, slug: string, text: string, cleanText: string, subheadings: Heading[]}
 
-const { headings, clientToc, maxDepth = 4 } = Astro.props;
+const { headings, clientToc, serverToc, maxDepth = 4 } = Astro.props;
 let nestedHeadings;
 function buildToc(headings: Heading[]) {
   if (headings.length == 0) return;
@@ -85,8 +85,43 @@ if (headings) {
 }
 
 
-{ // If this should be client-side TOC run here 
-clientToc && 
+{ // Server-built TOC: plugin fills the nav at build time; browser only runs scroll-spy
+serverToc && (
+<nav id="toc-container" data-server-toc data-max-depth={maxDepth} class="overflow-y-auto max-h-[calc(100vh-135px)]"></nav>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var container = document.getElementById('toc-container');
+    if (!container || !container.firstElementChild) return;
+    var links = Array.from(container.querySelectorAll('a[href^="#"]'));
+    var headingEls = links
+      .map(function(a) { return document.getElementById(a.getAttribute('href').slice(1)); })
+      .filter(Boolean);
+    var tocGroups = Array.from(container.querySelectorAll('.group'));
+    function updateScrollSpy() {
+      var active = headingEls[0];
+      for (var i = 0; i < headingEls.length; i++) {
+        if (headingEls[i].getBoundingClientRect().top < 150) active = headingEls[i];
+        else break;
+      }
+      if (active) {
+        tocGroups.forEach(function(g) { g.classList.remove('active'); });
+        var link = container.querySelector('a[href="#' + active.id + '"]');
+        if (link) {
+          var group = link.closest('.group');
+          group.classList.add('active');
+          group.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    }
+    window.addEventListener('scroll', updateScrollSpy, { passive: true });
+    updateScrollSpy();
+  });
+</script>
+) }
+
+
+{ // If this should be client-side TOC run here
+clientToc &&
 
 <nav id="toc-container" class="overflow-y-auto max-h-[calc(100vh-135px)]"></nav>
 <script define:vars={{ maxDepth }}>
