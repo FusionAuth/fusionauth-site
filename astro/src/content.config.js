@@ -92,6 +92,7 @@ const docsCollection = defineCollection({
     sidenavTitle: z.string().optional(),
     nestedHeadings: z.boolean().optional(),
     disableTOC: z.boolean().default(false),
+    clientToc: z.boolean().optional(),
     route: z.boolean().default(true),
     order: z.number().default(1000),
     idpDisplayName: z.string().optional(),
