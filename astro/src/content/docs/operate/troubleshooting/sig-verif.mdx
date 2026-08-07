@@ -2,6 +2,8 @@
 title: 1.69.0 Migration Guide
 description: Help with migration to FusionAuth 1.69.0.
 ---
+import Aside from 'src/components/Aside.astro';
+
 ## When should I use this guide?
 
 Read and plan BEFORE you upgrade to 1.69.0.
@@ -10,17 +12,22 @@ Read and plan BEFORE you upgrade to 1.69.0.
 
 1. Do you rotate JWT signing keys per the [key rotation documentation](/docs/operate/secure/key-rotation)?
 2. Do you use FusionAuth with external SAML IDPs?
-3. Do you use external JWT IDPs?
-4. Do your Application JWT Access Token/Id Token populate lambdas modify any of the following claims? `aud`, `iss`?
-5. (Uncommon) Do you mint JWTs outside of FusionAuth that you submit to FusionAuth endpoints for authentication or introspection?
+3. Do you use FusionAuth as a SAML IDP for your applications (which are SPs)?
+4. Do you use external JWT IDPs?
+5. Do your Application JWT Access Token/Id Token populate lambdas modify any of the following claims? `aud`, `iss`?
+6. (Uncommon) Do you mint JWTs outside of FusionAuth that you submit to FusionAuth endpoints for authentication or introspection?
 
-If you answered yes to any of these questions, please visit **each section**.
+If you answered yes to any of these questions, please visit **each section number that corresponds with this list**.
 
 ## Section 1 - JWT Signing Key Rotation
 
 ### Before the upgrade
 
 Before the 1.69.0 upgrade, use Key Master or APIs in your FusionAuth instance to find all old keys that are present AND still need to be trusted for JWT signing, IDPs, etc. Make note of those key Ids.
+
+<Aside type="note">
+    Consider your access token TTL. If your token TTL is 60 minutes (FusionAuth's default) and you rotated your keys 2 weeks ago, then there is nothing you need to do.
+</Aside>
 
 The keys you are trying to find are all old keys that were previously configured as the *Access token signing key* or *Id token signing key* on the tenant or application, but have since been rotated out in favor of a new key. Keep naming conventions, etc. you might have used in mind for this purpose.
 
@@ -32,9 +39,7 @@ A table like this one might be helpful to note/jot down the keys.
 
 ### After the upgrade
 
-Find each tenant or application and Key Id that you previously recorded and add them to the
-
-*Access token verification keys* or *Id token verification keys* setting on the JWT tab as appropriate.
+Find each tenant or application and Key Id that you previously recorded and add them to the *Access token verification keys* or *Id token verification keys* setting on the JWT tab as appropriate.
 
 See [core concepts](/docs/get-started/core-concepts/tenants#jwt) or [Tenant API](/docs/apis/tenants/create-a-tenant) for more information. The setting is the same at the application level if you use application JWT overrides.
 
@@ -42,9 +47,17 @@ The [key rotation](/docs/operate/secure/key-rotation) docs have also been update
 
 ## Section 2 - FusionAuth with external SAML IDPs
 
-Similar process to section 1, except no tenant vs. app, just IDP and key.
+TBD - Similar process to section 1, except no tenant vs. app, just IDP and key. And it's the IDP's usage of old keys that matters here.
 
-## Section 3 - External JWT IDPs
+## Section 3 - FusionAuth as a SAML IDP for your applications
+
+<Aside type="note">
+    Is your *Require signed authentication requests* or *Require signed logout requests* enabled for one or more applications? If the answer to both is no, this section does not apply to you.
+</Aside>
+
+TBD/Note: - Similar process to section 1, except no tenant vs. app, just IDP and keys from the SP/App. And it's the SP's usage of old keys that matters here.
+
+## Section 4 - External JWT IDPs
 
 ### Before the upgrade
 
@@ -52,21 +65,25 @@ FusionAuth 1.69.0 will **require** a *Default verification key* to be configured
 
 Set a value for this now.
 
-TBD - could link to core concepts, etc. as appropriate
+TBD/Note: - could link to core concepts, etc. as appropriate
 
 ### After the upgrade
 
-No immediate changes are required. Just keep in mind that going forward, if you rotate keys, you will need to change your processes per the [key rotation](/docs/operate/secure/key-rotation) document. This means you will need to ensure ALL keys that need to be trusted, at the same time, are present in the `identityProvider.verificationKeyIds` setting for the IDP.
+If you DO NOT use key rotation - no immediate changes are required.
 
-## Section 4 - Application JWT Access Token/Id Token populate lambdas modify one of more of these claims: `aud`, `iss`
+If you DO already use key rotation or you intend to start - you will need to change your processes per the [key rotation](/docs/operate/secure/key-rotation) document. This means you will need to ensure ALL keys that need to be trusted, at the same time, are present in the `identityProvider.verificationKeyIds` setting for the IDP. This field replaces the previous `identityProvider.defaultKeyId` field.
+
+TBD/Note: Could be a table???
+
+## Section 5 - Application JWT Access Token/Id Token populate lambdas modify one of more of these claims: `aud`, `iss`
 
 `aud` - Not using an application Id here will limit the ability of FusionAuth to ensure the right trusted JWT is used if application JWT overrides are enabled. Enumerate what these cases are (no client_id cases??). What happens??
 
 `iss` - Not using the issuer field from the tenant will limit the ability of FusionAuth to ensure the right trusted JWT is used for the tenant. Enumerate what these cases are (no client_id cases??). What happens??
 
-## Section 5 - Mint JWTs outside of FusionAuth that you submit to FusionAuth endpoints for authentication or introspection
+## Section 6 - Mint JWTs outside of FusionAuth that you submit to FusionAuth endpoints for authentication or introspection
 
-This should be fairly rare.
+This should be fairly rare that anyone does this. And probably don't need to make this public.
 
 `aud` - Same as section 4. Not using an application Id here will limit the ability of FusionAuth to ensure the right trusted JWT is used if application JWT overrides are enabled. Enumerate what these cases are (no client_id cases??)
 
