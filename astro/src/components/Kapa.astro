@@ -31,48 +31,53 @@ if (!enableKapa) return '';
       return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
     }
 
-    async function loadKapa() {
+    function waitForContainer() {
       return new Promise((resolve) => {
-        if (window.Kapa) {
+        if (document.getElementById('kapa-widget-container')) {
           resolve();
           return;
         }
-
-        const script = document.createElement("script");
-        script.src = scriptSrc;
-        script.async = true;
-
-        const attrs = {
-          "data-website-id": "26ad3b7e-7d94-491c-ab54-95712d1fafee",
-          "data-project-name": "FusionAuth",
-          "data-project-color": "#0F172A",
-          "data-project-color-dark": "#334155", 
-          "data-project-logo": "/img/icons/help/fa-black-logo.png",
-          "data-render-on-load": "false",
-          'data-user-analytics-cookie-enabled': "false",
-          'data-button-animation-enabled': "false",
-          'data-mcp-server-url': "https://ai.fusionauth.io/mcp/docs",
-          'data-mcp-button-hidden': "false",
-          'data-launcher-button-hidden': "true",
-          'data-color-scheme': getActiveTheme(),
-        };
-
-        Object.entries(attrs).forEach(([k, v]) => script.setAttribute(k, v));
-
-        script.onload = () => {
-          window.Kapa.render({
-            onRender: () => resolve()
-          });
-        };
-
-        document.head.appendChild(script);
+        const observer = new MutationObserver(() => {
+          if (document.getElementById('kapa-widget-container')) {
+            observer.disconnect();
+            resolve();
+          }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
       });
+    }
+
+    async function loadKapa() {
+      // Already loaded — container exists
+      if (document.getElementById('kapa-widget-container')) return;
+
+      const script = document.createElement("script");
+      script.src = scriptSrc;
+      script.async = true;
+
+      const attrs = {
+        "data-website-id": "26ad3b7e-7d94-491c-ab54-95712d1fafee",
+        "data-project-name": "FusionAuth",
+        "data-project-color": "#0F172A",
+        "data-project-color-dark": "#334155",
+        "data-project-logo": "/img/icons/help/fa-black-logo.png",
+        'data-user-analytics-cookie-enabled': "false",
+        'data-button-animation-enabled': "false",
+        'data-mcp-server-url': "https://ai.fusionauth.io/mcp/docs",
+        'data-mcp-button-hidden': "false",
+        'data-launcher-button-hidden': "true",
+        'data-color-scheme': getActiveTheme(),
+      };
+
+      Object.entries(attrs).forEach(([k, v]) => script.setAttribute(k, v));
+      document.head.appendChild(script);
     }
 
     btn.addEventListener('click', async () => {
       spinner.style.display = 'flex';
 
-      await loadKapa();
+      loadKapa();
+      await waitForContainer();
 
       if (window.Kapa) {
         window.Kapa("open");
