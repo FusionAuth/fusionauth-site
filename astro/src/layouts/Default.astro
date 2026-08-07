@@ -7,10 +7,9 @@ import DocSearch from 'src/components/search/DocSearch.astro';
 import TOC from 'src/components/TOC.astro';
 import { specialCaps } from 'src/tools/string';
 import { Marked } from 'marked';
-import Kapa from 'src/components/Kapa.astro';
 import CodeCopyButton from 'src/components/CodeCopyButton.astro';
 import { Icon } from "astro-iconset/components";
-
+import Footer from '../components/Footer.astro'
 interface Props {
   author?: string;
   date?: string;
@@ -71,8 +70,16 @@ disableTOC = frontmatter?.disableTOC ?? disableTOC;
 hideBgImage = frontmatter?.hideBgImage ?? frontmatter?.hidebgImage ?? hideBgImage;
 rssUrl = frontmatter?.rssUrl ?? frontmatter?.rssUrl ?? rssUrl;
 
-const mainStyles = "mx-auto max-w-8xl px-4 pt-8 grid grid-cols-1 lg:flex 2xl:container";
-const sideNavStyles = "col-start-1 row-start-1 lg:col-auto lg:row-auto order-2 lg:order-1 hidden dark:bg-slate-900 bg-white sticky top-11 h-[calc(100vh-44px)] w-64 -ml-4 -mt-8 z-40 shadow-2xl lg:shadow-none lg:block lg:bg-opacity-0 lg:w-full lg:max-w-[270px] lg:ml-0 lg:mt-0 lg:px-0 lg:pt-0 lg:mr-6 lg:py-0 lg:top-[calc(6rem+1px)] lg:self-start overflow-y-auto lg:max-h-[calc(100vh-100px)] lg:h-auto";
+const outerStyles = "mx-auto max-w-8xl px-4 2xl:container lg:flex lg:items-start";
+const mainStyles = "flex-1 pt-8 min-w-0 lg:flex";
+// Mobile: fixed overlay so it covers the footer regardless of scroll position.
+// Desktop: sticky within the outer div (which excludes the footer), so the containing block
+// bottom = footer top — the sidebar naturally stops there without any JS.
+// lg:order-first keeps the sidebar visually first (left column) in the flex row
+// even though it comes after <main> in DOM order. DOM-after-content means LLM
+// agents converting raw HTML see the actual docs text before the ~200 KB of
+// navigation links.
+const sideNavStyles = "hidden dark:bg-slate-900 bg-white fixed top-11 left-0 h-[calc(100vh-44px)] w-64 z-40 shadow-2xl overflow-y-auto lg:order-first lg:sticky lg:left-auto lg:ml-0 lg:z-0 lg:shadow-none lg:block lg:bg-opacity-0 lg:w-full lg:max-w-[270px] lg:mr-6 lg:top-[57px] lg:self-start lg:max-h-[calc(100vh-64px)] lg:h-auto lg:pt-2";
 const tocStyles = "order-3 lg:order-3 bottom-0 hidden overflow-hidden pb-10 pt-0 xl:block w-full max-w-[240px] ml-6 sticky top-24 self-start lg:max-h-[calc(100vh-100px)] z-10";
 
 const isProd = import.meta.env.PROD as boolean;
@@ -85,7 +92,7 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
 ---
 
 <!DOCTYPE html>
-<html class="antialiased min-h-full" lang="en">
+<html class="antialiased min-h-full lg:overscroll-y-none" lang="en">
 <Head title={`${cleanedHtmlTitle} | FusionAuth Docs`} description={description} canonicalUrl={frontmatter?.canonicalUrl} {isIndexPage} {openGraphImage} />
 <body class:list={[
   "font-sans antialiased bg-white min-h-full text-slate-700 dark:bg-slate-900 dark:text-slate-200",
@@ -140,9 +147,11 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
   </script>
   
   <slot name="nav"/>
-  
-  <main class={mainStyles}>
-    
+
+  <div class={outerStyles}>
+
+    <main class={mainStyles}>
+
     <article class="fusion-article">
       <div class="sr-only">
         🤖 For AI agents: The complete documentation index is available at <a href="/docs/llms.txt">/docs/llms.txt</a>. 
@@ -185,7 +194,7 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
         <div class="flex flex-col items-end shrink-0 ml-4 sm:ml-8 mr-0 sm:mr-4 gap-4 not-prose relative">
           
           <!-- Desktop Actions -->
-          <div class="hidden md:flex items-center gap-2">
+          <div class="hidden md:flex items-center gap-2" data-markdown-ignore>
             {contribute && <GitHubEdit {...Astro.props} />}
             
             <a href={mdPath} target="_blank" rel="noopener noreferrer" title="View Markdown" class="text-xs text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded px-2.5 py-1.5 transition-colors bg-white dark:bg-slate-900 shadow-sm hover:shadow">
@@ -200,7 +209,7 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
           </div>
 
           <!-- Mobile Actions Menu -->
-          <details class="article-actions-menu group relative md:hidden z-30">
+          <details class="article-actions-menu group relative md:hidden z-30" data-nomd>
             <summary class="list-none flex items-center justify-center h-8 w-8 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm hover:shadow hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer [&::-webkit-details-marker]:hidden transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
@@ -235,7 +244,20 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
 
     </article>
 
-    <div id="side-nav" class={sideNavStyles}>
+    
+    {((!disableTOC && Astro?.props?.headings?.length > 0) || frontmatter.clientToc) &&
+      <aside class={tocStyles} data-markdown-ignore>
+        <h3 class="font-semibold text-sm">On this page</h3>
+        <nav>
+          <slot name="toc">
+            <TOC maxDepth={maxTocDepth} clientToc={frontmatter.clientToc} />
+          </slot>
+        </nav>
+      </aside>
+    }
+  </main>
+
+    <div id="side-nav" class={sideNavStyles} data-markdown-ignore>
       <div class="relative">
         <div class="bg-white hidden pb-1 pr-2 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
           <DocSearch />
@@ -245,17 +267,11 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
       </div>
     </div>
 
-    {!disableTOC &&
-      <aside class={tocStyles}>
-        <h3 class="font-semibold text-sm">On this page</h3>
-        <nav>
-          <TOC maxDepth={maxTocDepth} />
-        </nav>
-      </aside>
-    }
-  </main>
-  
-  <Kapa />
+  </div>
+
+<div id="main-footer" data-markdown-ignore>
+  <Footer />
+</div>
   <CodeCopyButton />
 </body>
 </html>

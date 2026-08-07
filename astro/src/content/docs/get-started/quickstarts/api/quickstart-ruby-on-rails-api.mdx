@@ -9,7 +9,7 @@ import DockerSpinup from 'src/components/quickstarts/DockerSpinup.astro';
 import Intro from 'src/components/quickstarts/Intro.astro';
 import {Content as LoginArchitectureApi} from 'src/components/quickstarts/LoginArchitectureApi.mdx';
 import NextStepsApi from 'src/components/quickstarts/NextStepsApi.astro';
-import RemoteCode from 'src/components/RemoteCode.astro';
+import LocalCode from 'src/components/LocalCode.astro';
 import QuickstartTshirtCTA from 'src/components/quickstarts/QuickstartTshirtCTA.astro'
 
 <Intro technology="Ruby on Rails"
@@ -18,8 +18,8 @@ import QuickstartTshirtCTA from 'src/components/quickstarts/QuickstartTshirtCTA.
 
 ## Prerequisites
 
-- [Ruby 2.7.x](https://rubyonrails.org/): This QuickStart was built using Ruby 2.7. This example may work on different versions of Rails, but it has not been tested.
-- [Rails 7.0.x.x](https://rubyonrails.org/): This QuickStart was built using Rails 7.0.7.2. This example may work on different versions of Rails, but it has not been tested.
+- [Ruby 3.4.x](https://www.ruby-lang.org/): This QuickStart was built using Ruby 3.4.10. This example may work on different versions of Ruby, but it has not been tested.
+- [Rails 8.1.x](https://rubyonrails.org/): This QuickStart was built using Rails 8.1.3. This example may work on different versions of Rails, but it has not been tested.
 - [SQLite](https://www.sqlite.org/download.html): This QuickStart was built using sqlite3 (please note MacOS comes with sqlite3).
 - [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. Ensure you also have [docker compose](https://docs.docker.com/compose/) installed.
 - (Alternatively, you can [Install FusionAuth Manually](/docs/get-started/download-and-install/)).
@@ -34,10 +34,15 @@ In this section, you'll get FusionAuth up and running and create a resource serv
 
 ### Clone The Code
 
-First off, grab the code from the repository and change into that directory.
+First off, grab the code from the repository:
 
-```
+```shell-session
 git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api
+```
+
+Then change into that directory:
+
+```shell-session
 cd fusionauth-quickstart-ruby-on-rails-api
 ```
 
@@ -56,11 +61,13 @@ We are going to be building an API backend for a banking application called Chan
 Both endpoints will be protected such that a valid JSON web token (JWT) will be required in the `Authorization` header in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
 
 <Aside type="note">
-If you simply want to run the application , there is a completed version in the 'complete-application' directory. You can use the following commands to get it up and running if you do not want to create your own.
+If you simply want to run the application , there is a completed version in the 'complete-application' directory. You can use the following commands to get it up and running if you do not want to create your own:
 
-```shell
-cd complete-application
-bundle install
+```shell-session
+cd complete-application && bundle install
+```
+
+```shell-session
 bundle e rails s -p 4001
 ```
 
@@ -71,44 +78,39 @@ You can then follow the instructions in the [Run the API](#run-the-api) section 
 
 Initialize the Ruby on Rails application using the following:
 
-```
-rails new your-application --api
-cd your-application
+```shell-session
+rails new your-application --api && cd your-application
 ```
 
 Once this is complete, you will see a new directory called `your-application` with several sub directories.
 
 You need to add the following lines to the `Gemfile` in the application root directory to include two new dependencies:
 
-```shell
+```ruby
 gem 'rack-jwt', git: 'https://github.com/FusionAuth/rack-jwt'
 gem 'dotenv-rails'
 ```
 
 Your full `Gemfile` will now look like
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Gemfile"}
-  lang="text"/>
+<LocalCode src="quickstart-rails-api/complete-application/Gemfile" lang="text" />
 
-Then, install these new gems, by issuing the following command in your terminal window.
+Then, install these new gems, by issuing the following command in your terminal window:
 
-```shell
+```shell-session
 bundle install
 ```
 ### Update Routes Config
 
 Update `/config/routes.rb` to include the two new routes that will be created for `/make-change` and `/panic`. Your `routes.rb` file should now match the below code.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/config/routes.rb"}
-  lang="ruby"/>
+<LocalCode src="quickstart-rails-api/complete-application/config/routes.rb" lang="ruby" />
 
 ### Add Security
 
 Create a new file to hold your environment variables directly in the `your-application` directory called `.env.development`. You will need to add two variables that are used to call your FusionAuth instance `FUSIONAUTH_LOCATION` and `CLIENT_ID`, with the values that match below.
 
 ```
-# for rails
-
 FUSIONAUTH_LOCATION=http://localhost:9011
 
 CLIENT_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
@@ -116,8 +118,7 @@ CLIENT_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
 
 Utilizing the environment variables you just added, you can now setup JSON Web Token (JWT) based authentication. Create a new file  `config/initializers/jwt_rack.rb`. This initializer is used to hold configuration settings that are made after all of the frameworks and plugins are loaded. 
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/config/initializers/jwt_rack.rb"}
-  lang="ruby"/>
+<LocalCode src="quickstart-rails-api/complete-application/config/initializers/jwt_rack.rb" lang="ruby" />
 
 Having this code protects your endpoints from anonymous users and passes the JWT payload to the controller. The JWT payload includes `roles` encoded in the JWT you receive from FusionAuth. The decoded payload of a JWT for a `teller` might look like this:
 
@@ -145,21 +146,19 @@ Having this code protects your endpoints from anonymous users and passes the JWT
 
 Create a new file for the MakeChangeController `app/controllers/make_change_controller.rb`. This controller will verify that the authenticated user has either the `teller` or `customer` role. It then takes in the URL parameter `total` to calculate which coins will be returned in the JSON payload.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/controllers/make_change_controller.rb"}
-  lang="ruby"/>
+<LocalCode src="quickstart-rails-api/complete-application/app/controllers/make_change_controller.rb" lang="ruby" />
 
 Create a new file for the PanicController `app/controllers/panic_controller.rb`. This controller will verify that the authenticated user has only the `teller` role. It will respond with `Proper role not found for user.` if this role is not found. This route also verifies that this is a `POST` request and if this is not true it will respond with `Only POST method is supported.` If both of these tests are passed the controller will return a successful message of `We've called the police!`.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/controllers/panic_controller.rb"}
-  lang="ruby"/>
+<LocalCode src="quickstart-rails-api/complete-application/app/controllers/panic_controller.rb" lang="ruby" />
 
 ## Run the API
 
 Start the API resource server by running:
 
-In a command shell window, navigate to the root directory of your application and run the following command to start the server.
+In a command shell window, navigate to the root directory of your application and run the following command to start the server:
 
-```shell
+```shell-session
 bundle e rails s -p 4001
 ```
 
@@ -175,7 +174,7 @@ First let's try the requests as the `teller@example.com` user. Based on the conf
 
 Acquire an access token for `teller@example.com` by making the following request
 
-```shell
+```shell-session
 curl --location 'http://localhost:9011/api/login' \
 --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
 --header 'Content-Type: application/json' \
@@ -205,14 +204,14 @@ The code is set up to extract the token from either a cookie or the Authorizatio
 
 Make a request to `/make-change` with a query parameter `total=1.02`. Use the `token` as the `app.at` cookie.
 
-```shell
+```shell-session
 curl 'http://localhost:4001/make-change?total=1.02' \
 --cookie 'app.at=<your_token>'
 ```
 
 Alternatively you can make the same request by passing your token in the `Authorization` header.
 
-```shell
+```shell-session
 curl --location 'http://localhost:4001/make-change?total=1.02' \
 --header 'Authorization: Bearer <your_token>'
 ```
@@ -221,15 +220,15 @@ Your response should look like this:
 
 ```json
 {
-  "Message": "We can make change using 20 quarters 1 dimes 0 nickels 2 pennies",
+  "Message": "We can make change using 4 quarters 0 dimes 0 nickels 2 pennies",
   "Change": [
     {
       "Denomination": "quarters",
-      "Count": 20
+      "Count": 4
     },
     {
       "Denomination": "dimes",
-      "Count": 1
+      "Count": 0
     },
     {
       "Denomination": "nickels",
@@ -247,7 +246,7 @@ You were authorized, success! You can try making the request without the `--cook
 
 Next call the `/panic` endpoint because you are in trouble!
 
-```shell
+```shell-session
 curl --location --request POST 'http://localhost:4001/panic' \
 --cookie 'app.at=<your_token>'
 ```
@@ -264,7 +263,7 @@ Nice, help is on the way!
 
 Now let's try as `customer@example.com` who has the role `customer`. Acquire a token for `customer@example.com`.
 
-```shell
+```shell-session
 curl --location 'http://localhost:9011/api/login' \
 --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
 --header 'Content-Type: application/json' \
@@ -289,7 +288,7 @@ Your response should look like the below JSON. Grab the token field (which begin
 
 Now use that token to call `/make-change` with a query parameter `total=3.24`
 
-```shell
+```shell-session
 curl --location 'http://localhost:4001/make-change?total=3.24' \
 --cookie 'app.at=<your_token>'
 ```
@@ -322,7 +321,7 @@ Your response should look like this:
 
 So far so good. Now let's try to call the `/panic` endpoint. (We're adding the `-i` flag to see the headers of the response)
 
-```shell
+```shell-session
 curl -i --request POST 'http://localhost:4001/panic' \
 --cookie 'app.at=<your_token>'
 ```
@@ -330,7 +329,7 @@ curl -i --request POST 'http://localhost:4001/panic' \
 You will get a `401 Unauthorized` response with the following message.
 
 ```json
-{"message":"Proper role not found for user"}
+{"message":"Proper role not found for user."}
 ```
 
 Uh oh, I guess you are not allowed to do that.
@@ -355,13 +354,20 @@ Make sure you are making a `POST` call and using a token with the `teller` role.
 
 * It still doesn't work
 
-You can always pull down a complete running application and compare what's different.
+You can always pull down a complete running application and compare what's different:
 
+```shell-session
+git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api.git && cd fusionauth-quickstart-ruby-on-rails-api
 ```
-git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api.git
-cd fusionauth-quickstart-ruby-on-rails-api
+
+```shell-session
 docker compose up -d
-cd complete-application
-bundle install
+```
+
+```shell-session
+cd complete-application && bundle install
+```
+
+```shell-session
 bundle e rails s -p 4001
 ```

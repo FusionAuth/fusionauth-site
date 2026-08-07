@@ -19,9 +19,11 @@ current_hash=$(compute_hash | sha256sum 2>/dev/null | cut -d' ' -f1 \
 snippet_count=$(find src/generated-code-snippets -type f -not -name '.localcode-hash' 2>/dev/null | wc -l)
 
 if [ -f "$HASH_FILE" ] && [ "$(cat "$HASH_FILE")" = "$current_hash" ] && [ "$snippet_count" -gt 0 ]; then
-  echo "localcode/ unchanged and snippets present — skipping generation"
+  echo "Code snippets: up to date ($((snippet_count + 0)) files)"
   exit 0
 fi
+
+total_written=0
 
 for repo in localcode/*/; do
 	output_dir="src/generated-code-snippets/$(basename "$repo")"
@@ -40,12 +42,15 @@ for repo in localcode/*/; do
 		--ignore 'LICENSE' \
 		--ignore 'SECURITY.md' \
 		2>&1) || status=$?
-	printf '%s\n' "$out" | grep -v 'parsed file' | grep -v 'found binary file' || true
 	if [ $status -ne 0 ] || printf '%s\n' "$out" | grep -q 'bluehawk errors'; then
 		echo "Error: bluehawk snip failed for $repo" >&2
+		printf '%s\n' "$out" | grep -v 'parsed file' | grep -v 'found binary file' >&2 || true
 		exit 1
 	fi
+	written=$(printf '%s\n' "$out" | grep -c 'wrote text file') || true
+	total_written=$((total_written + written))
 done
 
-find src/generated-code-snippets -type d -empty -delete
+find src/generated-code-snippets -mindepth 1 -type d -empty -delete
 echo "$current_hash" > "$HASH_FILE"
+echo "Code snippets: $total_written written"

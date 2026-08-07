@@ -13,6 +13,7 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import linkChecker from 'astro-link-checker';
 import { visit } from 'unist-util-visit';
 import icon from "astro-iconset";
+import { rehypeCodeMeta } from './src/plugins/rehype-code-meta.mjs';
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
@@ -124,10 +125,7 @@ const config = defineConfig({
   integrations: [
     icon(),
     mdx({
-      syntaxHighlight: {
-        type: "prism",
-        excludeLangs: ["mermaid"]
-      },
+      syntaxHighlight: false,
       processor: unified({
           remarkPlugins: [
           remarkMdx,
@@ -136,6 +134,7 @@ const config = defineConfig({
           remarkShellSessionPrompts,
         ],
         rehypePlugins: [
+          [rehypeCodeMeta, { excludeLangs: ['mermaid'] }],
           rehypeSlug,
           rehypeCopyButton,
           [
@@ -151,7 +150,7 @@ const config = defineConfig({
                 class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
               },
               headingProperties: {
-                class: 'group'
+                class: 'group articleHeading'
               }
             },
           ],
@@ -186,6 +185,7 @@ const config = defineConfig({
       llmsTxtPath: 'docs/llms.txt',
       llmsTxtTitle: 'FusionAuth Documentation',
       llmsTxtDescription: 'Comprehensive documentation for FusionAuth CIAM, APIs, QuickStarts, and custom integrations.',
+      trimTitleSuffix: ' | FusionAuth Docs',
       spokesDir: 'docs',
       inlineCategories: ['Overview'],
     }),
