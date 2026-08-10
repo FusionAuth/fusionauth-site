@@ -14,6 +14,7 @@ import linkChecker from 'astro-link-checker';
 import { visit } from 'unist-util-visit';
 import icon from "astro-iconset";
 import { rehypeCodeMeta } from './src/plugins/rehype-code-meta.mjs';
+import astroToc from 'astro-toc-smol';
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
@@ -162,6 +163,7 @@ const config = defineConfig({
       filter: siteMapFilter
     }),
     indexPages(),
+    astroToc(),
     genMarkdownPages({
       indexFilter: (url) => url.startsWith('/docs/') || url === '/docs.md',
       categorize: (url) => {
