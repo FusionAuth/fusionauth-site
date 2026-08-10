@@ -8,12 +8,12 @@
 This repository is documented at https://fusionauth.io/docs/quickstarts/quickstart-php-laravel-web.
 
 Further reading:
-- [Laravel Socialite concepts](https://laravel.com/docs/10.x/socialite)
+- [Laravel Socialite concepts](https://laravel.com/docs/13.x/socialite)
 - [FusionAuth OAuth Docs](https://fusionauth.io/docs/v1/tech/oauth/endpoints)
 
 ## Prerequisites
 
-* [PHP](https://www.php.net/manual/en/install.php) 8.1
+* [PHP](https://www.php.net/manual/en/install.php) 8.3
 * [Composer](https://getcomposer.org/)
 * [Nodejs](https://nodejs.org/)
 * [Docker](https://www.docker.com) version 20 or later.
