@@ -11,7 +11,7 @@
     <div id="page-header">
         <div id="logo-header">
             <img
-                src="changebank.svg"
+                src="https://fusionauth.io/cdn/samplethemes/changebank/changebank.svg"
             />
             <a class="button-lg" href="/login">Login</a>
         </div>
