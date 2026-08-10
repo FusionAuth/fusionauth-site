@@ -13,7 +13,7 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array<class-string, array<int, class-string>>
      */
-    //tag::fusionauth[]
+    // :snippet-start: fusionauth
     protected $listen = [
         Registered::class => [
             SendEmailVerificationNotification::class,
@@ -22,7 +22,7 @@ class EventServiceProvider extends ServiceProvider
             \SocialiteProviders\FusionAuth\FusionAuthExtendSocialite::class . '@handle',
         ],
     ];
-    //end::fusionauth[]
+    // :snippet-end:
 
     /**
      * Register any events for your application.

@@ -31,7 +31,7 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    //tag::fusionauth[]
+    // :snippet-start: fusionauth
     'fusionauth' => [
         'client_id' => env('FUSIONAUTH_CLIENT_ID'),
         'client_secret' => env('FUSIONAUTH_CLIENT_SECRET'),
@@ -39,7 +39,7 @@ return [
         'redirect' => env('FUSIONAUTH_REDIRECT_URL'),
         'tenant_id' => env('FUSIONAUTH_TENANT_ID'),
     ],
-    //end::fusionauth[]
+    // :snippet-end:
 
 
 ];
