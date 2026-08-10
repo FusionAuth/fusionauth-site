@@ -19,7 +19,20 @@ const handleScroll = () => {
   if (!group) return;
 
   group.classList.add('active');
-  group.scrollIntoView({ block: 'nearest' });
+
+  // Keep the active item visible in the TOC sidebar,  only scroll the
+  // TOC container itself, never the page. scrollIntoView() bubbles up to the
+  // page body when the TOC fits without overflowing, causing a scroll loop.
+  const toc = document.getElementById('toc-container');
+  if (toc && toc.scrollHeight > toc.clientHeight) {
+    const tocRect = toc.getBoundingClientRect();
+    const groupRect = (group as HTMLElement).getBoundingClientRect();
+    if (groupRect.top < tocRect.top) {
+      toc.scrollTop += groupRect.top - tocRect.top;
+    } else if (groupRect.bottom > tocRect.bottom) {
+      toc.scrollTop += groupRect.bottom - tocRect.bottom;
+    }
+  }
 }
 
 const registerScrollSpy = () => {
