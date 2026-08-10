@@ -38,9 +38,9 @@ echo "Validating docker compose config..."
 cd "$PROJECT_DIR"
 docker compose -f docker-compose.yml config > /dev/null
 
-echo "Installing dependencies and running PHP checks..."
+echo "Installing dependencies and running Laravel checks..."
 docker run --rm -v "$PROJECT_DIR/complete-application:/app" -w /app composer:2.10 sh -c \
-  "composer install --no-interaction && php -l public/login.php && php -l public/logout.php && php -l public/account.php && php -l public/change.php && php -l public/index.php"
+  "composer install --no-interaction && php artisan config:clear && php artisan route:list > /dev/null"
 
 echo "Pulling latest FusionAuth image..."
 docker compose pull
@@ -50,7 +50,7 @@ docker compose up -d
 
 echo "Starting PHP app..."
 docker run --network host --name php --rm -v "$PROJECT_DIR/complete-application":/app -w /app composer:2.10 sh -c \
-  "php -S 0.0.0.0:9012 -t public" &
+  "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000" &
 PHP_PID=$!
 until docker inspect php > /dev/null 2>&1; do
   sleep 1
@@ -62,7 +62,7 @@ echo "Waiting for FusionAuth to be ready..."
 wait_for "FusionAuth" fusionauth_ready
 
 echo "Waiting for PHP app to be ready..."
-wait_for "PHP app" curl -sf http://localhost:9012
+wait_for "PHP app" curl -sf http://localhost:8000
 
 echo "Running Playwright tests..."
 cd "$SCRIPT_DIR"

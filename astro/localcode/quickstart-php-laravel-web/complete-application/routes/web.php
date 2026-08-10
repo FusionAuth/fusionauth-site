@@ -68,14 +68,14 @@ Route::post('/change', function (Request $request) {
         'pennies' => '',
     ];
 
-    $total = floor(floatval($amount) * 100) / 100;
-    $state['total'] = is_nan($total) ? '' : number_format($total, 2);
+    $total = round(floatval($amount) * 100);
+    $state['total'] = is_nan($total) ? '' : number_format($total / 100, 2);
 
-    $nickels = floor($total / 0.05);
+    $nickels = intdiv((int)$total, 5);
     $state['nickels'] = number_format($nickels);
 
-    $pennies = ($total - (0.05 * $nickels)) / 0.01;
-    $state['pennies'] = ceil(floor($pennies * 100) / 100);
+    $pennies = (int)$total % 5;
+    $state['pennies'] = $pennies;
 
     $state['error'] = !preg_match('/^(\d+(\.\d*)?|\.\d+)$/', $amount);
 

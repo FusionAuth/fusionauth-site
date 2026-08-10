@@ -50,7 +50,7 @@ test('PHP app OIDC login via FusionAuth', async ({ page }) => {
   const dumpDiagnostics = trackPageDiagnostics(page);
 
   try {
-    await page.goto('http://localhost:9012');
+    await page.goto('http://localhost:8000');
 
     await expect(page.getByRole('heading', { name: /Welcome to Changebank/i })).toBeVisible();
 
@@ -62,7 +62,7 @@ test('PHP app OIDC login via FusionAuth', async ({ page }) => {
     await page.getByPlaceholder('Password').fill('password');
     await page.getByRole('button', { name: 'Submit' }).click();
 
-    await page.waitForURL(/localhost:9012\/account\.php/);
+    await page.waitForURL(/localhost:8000\/account/);
 
     await expect(page.getByText('richard@example.com')).toBeVisible();
     await expect(page.getByRole('link', { name: /Logout/i })).toBeVisible();
@@ -72,7 +72,7 @@ test('PHP app OIDC login via FusionAuth', async ({ page }) => {
     // FusionAuth's front-channel logout notifies the app via a hidden iframe
     // rather than redirecting the browser tab back to it, so re-navigate
     // explicitly to confirm the app-level session was actually cleared.
-    await page.goto('http://localhost:9012');
+    await page.goto('http://localhost:8000');
     await expect(page.getByRole('link', { name: /Login/i })).toBeVisible();
   } catch (error) {
     await dumpDiagnostics();
@@ -84,7 +84,7 @@ test('Make Change calculates change correctly', async ({ page }) => {
   const dumpDiagnostics = trackPageDiagnostics(page);
 
   try {
-    await page.goto('http://localhost:9012');
+    await page.goto('http://localhost:8000');
     await page.getByRole('link', { name: /Login/i }).click();
 
     await page.waitForURL(/localhost:9011/);
@@ -92,8 +92,8 @@ test('Make Change calculates change correctly', async ({ page }) => {
     await page.getByPlaceholder('Password').fill('password');
     await page.getByRole('button', { name: 'Submit' }).click();
 
-    await page.waitForURL(/localhost:9012\/account\.php/);
-    await page.goto('http://localhost:9012/change.php');
+    await page.waitForURL(/localhost:8000\/account/);
+    await page.goto('http://localhost:8000/change');
 
     // These amounts are the ones that expose floating-point error: computing
     // them as dollars rather than whole cents drops a cent, so 0.29 renders as
@@ -110,7 +110,7 @@ test('Make Change calculates change correctly', async ({ page }) => {
       await page.locator('input.change-submit').click();
 
       await expect(page.locator('.change-message')).toHaveText(
-        `We can make change for $${total} with ${nickels} nickels and ${pennies} pennies!`
+        `We can make change for ${total} with ${nickels} nickels and ${pennies} pennies!`
       );
     }
   }
