@@ -1,97 +1,25 @@
 ---
-import TocHeading from "./TocHeading.astro"
-type Heading = {depth: number, slug: string, text: string, cleanText: string, subheadings: Heading[]}
-
-const { headings, serverToc, maxDepth = 4 } = Astro.props;
-let nestedHeadings;
-function buildToc(headings: Heading[]) {
-  if (headings.length == 0) return;
-
-  const toc: Heading[] = [];
-  const parentHeadings = new Map();
-  headings.forEach((h: Heading) => {
-    const heading = { ...h, cleanText: h.text.replace(/#/g, ''), subheadings: [] };
-    parentHeadings.set(heading.depth, heading);
-    if (heading.depth === 2) {
-      toc.push(heading);
-    } else {
-      if (parentHeadings.get(heading.depth - 1)) {
-        parentHeadings.get(heading.depth - 1).subheadings.push(heading);
-      }
-    }
-  });
-  return toc;
-}
-if (headings) {
-  nestedHeadings = buildToc(headings)
-}
-
+const { maxDepth = 4 } = Astro.props;
 ---
 
 <style>
   @reference "../css/style.css";
-  
+
   ul {
     @apply space-y-3;
   }
 
 </style>
 
-
-{ // If this should be built run here
-  (!serverToc && nestedHeadings) && (
-
-    <nav id="toc-container" class="overflow-y-auto max-h-[calc(100vh-135px)]">
-      <ul class="mt-4">
-      {nestedHeadings.map((heading) => <TocHeading heading={heading} />)}
-    </ul>
-    </nav>
-
-    <script>
-      
-    const updateScrollSpy = () => {
-      const headingElements = document.querySelectorAll(".articleHeading")
-      const tocGroups = document.querySelectorAll('nav .group')
-      const container = document.getElementById('toc-container');
-      let activeHeading = headingElements[0];
-      for (const el of headingElements) {
-        if (el.getBoundingClientRect().top < 150) {
-          activeHeading = el;
-        } else {
-          break; 
-        }
-      }
-
-      if (activeHeading) {
-        tocGroups.forEach(group => group.classList.remove('active'));
-        
-        const activeLink = container.querySelector(`a[href="#${activeHeading.id}"]`);
-        if (activeLink) {
-          const activeGroup = activeLink.closest('.group');
-          activeGroup.classList.add('active');
-          activeGroup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      }
-    };
-
-    window.addEventListener('scroll', updateScrollSpy, { passive: true });
-    updateScrollSpy();
-    </script>
-
-
-    )
-
-    
-}
-
-
-{ // Server-built TOC: plugin fills the nav at build time; browser only runs scroll-spy
-serverToc && (
 <nav id="toc-container" data-server-toc data-max-depth={maxDepth} class="overflow-y-auto max-h-[calc(100vh-135px)]"></nav>
 <script>
   document.addEventListener("DOMContentLoaded", function() {
     var container = document.getElementById('toc-container');
-    if (!container || !container.firstElementChild) return;
+    if (!container || !container.firstElementChild) {
+      var aside = container && container.closest('[data-toc-aside]');
+      if (aside) (aside as HTMLElement).hidden = true;
+      return;
+    }
     var links = Array.from(container.querySelectorAll('a[href^="#"]'));
     var headingEls = links
       .map(function(a) { return document.getElementById(a.getAttribute('href').slice(1)); })
@@ -117,7 +45,3 @@ serverToc && (
     updateScrollSpy();
   });
 </script>
-) }
-
-
-
