@@ -30,32 +30,34 @@ class User extends Authenticatable
         ];
     }
 
+    // :snippet-start: fusionauth
     /**
- * The attributes that are mass assignable.
- *
- * @var array<int, string>
- */
-protected $fillable = [
-    'name',
-    'email',
-    'password',
-    'fusionauth_id',
-    'fusionauth_access_token',
-    'fusionauth_refresh_token',
-];
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'fusionauth_id',
+        'fusionauth_access_token',
+        'fusionauth_refresh_token',
+    ];
 
-/**
- * The attributes that should be hidden for serialization.
- *
- * @var array<int, string>
- */
-protected $hidden = [
-    'password',
-    'remember_token',
-    'fusionauth_id',
-    'fusionauth_access_token',
-    'fusionauth_refresh_token',
-];
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+        'fusionauth_id',
+        'fusionauth_access_token',
+        'fusionauth_refresh_token',
+    ];
+    // :snippet-end:
 }
 
 
