@@ -17,12 +17,13 @@ const handleScroll = () => {
   const group = headerLink.closest('[data-widget="scroll-spy-item"]');
 
   if (!group) return;
-  
+
   group.classList.add('active');
+  group.scrollIntoView({ block: 'nearest' });
 }
 
 const registerScrollSpy = () => {
-  headers = [...document.querySelectorAll<HTMLElement>('h2[id], h3[id]')]
+  headers = [...document.querySelectorAll<HTMLElement>('h2[id], h3[id], h4[id], [data-toc-type="api"][id]')]
     .sort((a, b) => a.offsetTop - b.offsetTop);
 
   handleScroll();
