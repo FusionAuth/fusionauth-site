@@ -219,9 +219,6 @@ const config = defineConfig({
         '/license-faq', '/feature-list', '/product-privacy-policy', '/passkeys',
         '/legal/data-processing-addendum.pdf',
         '/auth0-migration',
-        // New root-level slug for the Intelligent MFA feature page (DES-2444).
-        // Anchored regex, not a bare string: string patterns are substring-matched,
-        // so '/intelligent-mfa' would also exclude the /blog/intelligent-mfa post.
         /^\/intelligent-mfa\/?$/,
       ],
     })
