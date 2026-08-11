@@ -219,7 +219,6 @@ const config = defineConfig({
         '/license-faq', '/feature-list', '/product-privacy-policy', '/passkeys',
         '/legal/data-processing-addendum.pdf',
         '/auth0-migration',
-        /^\/intelligent-mfa\/?$/,
       ],
     })
   ],
