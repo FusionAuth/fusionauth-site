@@ -104,6 +104,9 @@ fi
 
 # ── Shared caches ──────────────────────────────────────────────────────────────
 # node_modules: symlinked from master; concurrent installs serialized via flock.
+# Remove any real directory left by a previous slot-specific npm ci — ln -sfn
+# cannot replace a directory and would create the link inside it instead.
+rm -rf "$SLOT_DIR/astro/node_modules"
 ln -sfn "$REPO_DIR/astro/node_modules" "$SLOT_DIR/astro/node_modules"
 # .content-cache: per-slot, NOT shared — different branches have different content
 # and a shared cache causes one PR's compiled content to bleed into another's.
