@@ -17,12 +17,26 @@ const handleScroll = () => {
   const group = headerLink.closest('[data-widget="scroll-spy-item"]');
 
   if (!group) return;
-  
+
   group.classList.add('active');
+
+  // Keep the active item visible in the TOC sidebar,  only scroll the
+  // TOC container itself, never the page. scrollIntoView() bubbles up to the
+  // page body when the TOC fits without overflowing, causing a scroll loop.
+  const toc = document.getElementById('toc-container');
+  if (toc && toc.scrollHeight > toc.clientHeight) {
+    const tocRect = toc.getBoundingClientRect();
+    const groupRect = (group as HTMLElement).getBoundingClientRect();
+    if (groupRect.top < tocRect.top) {
+      toc.scrollTop += groupRect.top - tocRect.top;
+    } else if (groupRect.bottom > tocRect.bottom) {
+      toc.scrollTop += groupRect.bottom - tocRect.bottom;
+    }
+  }
 }
 
 const registerScrollSpy = () => {
-  headers = [...document.querySelectorAll<HTMLElement>('h2[id], h3[id]')]
+  headers = [...document.querySelectorAll<HTMLElement>('h2[id], h3[id], h4[id], [data-toc-type="api"][id]')]
     .sort((a, b) => a.offsetTop - b.offsetTop);
 
   handleScroll();
