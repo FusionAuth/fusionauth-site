@@ -78,11 +78,13 @@ BUILD_DIR="$BUILDS_DIR/$PADDED"
 
 log "Using slot $PADDED (port $PORT) for PR #$PR @ $SHA"
 
-# ── Fetch the PR ref ─────────────────────────────────────────────────────────
+# ── Fetch the PR ref and main ────────────────────────────────────────────────
 # refs/pull/N/head is created by GitHub for every PR, including forks.
-log "Fetching refs/pull/$PR/head …"
+# Fetch main alongside the PR ref so origin/main:astro/package.json is current
+# when the shared-node_modules staleness check runs below.
+log "Fetching refs/pull/$PR/head and main …"
 git -C "$REPO_DIR" fetch origin \
-  "refs/pull/${PR}/head:refs/preview/pr-${PR}" --force >&2
+  "refs/pull/${PR}/head:refs/preview/pr-${PR}" main --force >&2
 
 # ── Set up (or refresh) the worktree ─────────────────────────────────────────
 if git -C "$REPO_DIR" worktree list --porcelain | grep -qF "worktree $SLOT_DIR"; then
@@ -102,6 +104,9 @@ fi
 
 # ── Shared caches ──────────────────────────────────────────────────────────────
 # node_modules: symlinked from master; concurrent installs serialized via flock.
+# Remove any real directory left by a previous slot-specific npm ci — ln -sfn
+# cannot replace a directory and would create the link inside it instead.
+rm -rf "$SLOT_DIR/astro/node_modules"
 ln -sfn "$REPO_DIR/astro/node_modules" "$SLOT_DIR/astro/node_modules"
 # .content-cache: per-slot, NOT shared — different branches have different content
 # and a shared cache causes one PR's compiled content to bleed into another's.
