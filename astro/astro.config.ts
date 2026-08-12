@@ -15,6 +15,7 @@ import { visit } from 'unist-util-visit';
 import icon from "astro-iconset";
 import { rehypeCodeMeta } from './src/plugins/rehype-code-meta.mjs';
 import astroToc from 'astro-toc-smol';
+import { openapiSummary } from './src/plugins/openapi-summary.js';
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
@@ -191,26 +192,29 @@ const config = defineConfig({
       spokesDir: 'docs',
       inlineCategories: ['Overview'],
     }),
+    openapiSummary(),
     // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
     process.env.PROD !== 'true' && linkChecker({
       failOnBrokenLinks: true,
       verbose: false,
-      // Pages whose content we don't want to crawl (URL path, substring or RegExp)
+      // Pages whose content we don't want to crawl (URL path, prefix string or RegExp)
       excludeSourcePages: [
         '/landing/',
       ],
-      // Destinations to skip checking (normalized root-relative path, substring or RegExp)
+      // Destinations to skip checking (normalized root-relative path, prefix string or RegExp)
       excludeDestinations: [
         // Routes that only exist at runtime (auth, Flask examples in code blocks)
-        '/login', '/logout', '/register',
+        '/login', '/logout', '/register', '/user/login', '/user/logout',
         // Pages that live outside the Astro build (marketing site, external tools)
-        // No trailing slash — substring match covers both /community and /community/foo
+        // No trailing slash — prefix match covers /community and /community/foo
         '/platform', '/cdn', '/dev-tools', '/tech-papers', '/feature', '/features',
         '/webinar', '/community', '/forum', '/compare', '/industry', '/license',
         '/partners', '/video', '/event', '/ebooks', '/glossary', '/guides',
         '/permify-docs',
-        // Loose slug fragments that appear as relative links in quickstart code samples
-        'buildvsbuy', 'auth0-migration', 'aws-reinvent22', 'aws-reinvent23',
+        // Loose slug fragments that appear as relative links in quickstart code samples.
+        // These resolve to paths like /docs/quickstarts/buildvsbuy, so regex is needed
+        // since prefix strings only match paths that start with the given value.
+        /\/buildvsbuy/, /\/auth0-migration/, /\/aws-reinvent22/, /\/aws-reinvent23/,
         // Standalone marketing / legal pages not in the Astro build
         '/pricing', '/download', '/contact', '/get-started', '/passwordless',
         '/direct-download', '/jobs', '/careers', '/password-history',

@@ -1,5 +1,6 @@
 ---
-import { getEntry } from "astro:content";
+import { getCollection } from "astro:content";
+import { recordMissing } from '../plugins/openapi-summary.js';
 
 export interface Props {
   path: string;
@@ -22,13 +23,13 @@ if (show) {
   };
 
   const id = normalizeId(method, rawPath);
-  const [endpoint, baseSpec] = await Promise.all([
-    getEntry('api-endpoints', id),
-    getEntry('api-endpoints', 'base-spec'),
-  ]);
+  const allEndpoints = await getCollection('api-endpoints');
+  const endpointMap = new Map(allEndpoints.map(e => [e.id, e]));
+  const endpoint = endpointMap.get(id);
+  const baseSpec = endpointMap.get('base-spec');
 
   if (!endpoint || !baseSpec) {
-    console.warn(`[scalar] Endpoint not in spec: ${method.toUpperCase()} ${rawPath}`);
+    recordMissing(method, rawPath, Astro.url.pathname);
   } else {
     function findRefs(obj: any, refs = new Set<string>()): Set<string> {
       if (!obj || typeof obj !== 'object') return refs;
