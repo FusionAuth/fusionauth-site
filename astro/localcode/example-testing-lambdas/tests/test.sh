@@ -31,7 +31,7 @@ wait_for() {
 }
 
 fusionauth_ready() {
-  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "Login | FusionAuth"
+  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "<title>Login</title>"
 }
 
 create_lambda() {
