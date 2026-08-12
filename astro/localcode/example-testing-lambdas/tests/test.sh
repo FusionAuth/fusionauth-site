@@ -38,23 +38,32 @@ create_lambda() {
   local api_key="$1"
   local fa_url="$2"
 
-  curl -sfL -X POST "${fa_url}/api/lambda" \
+  local response http_code body lambda_id
+
+  response=$(curl -s -X POST "${fa_url}/api/lambda/f3b3b547-7754-452d-8729-21b50d111505" \
     -H "Authorization: ${api_key}" \
     -H "Content-Type: application/json" \
+    -w "\n%{http_code}" \
     -d '{
       "lambda": {
-        "id": "f3b3b547-7754-452d-8729-21b50d111505",
         "body": "function populate(jwt, user, registration) {\n  jwt.message = '\''Hello World!'\'';\n  console.info('\''Hello World!'\'');\n}",
         "debug": true,
-        "engineType": "graalJS",
+        "engineType": "GraalJS",
         "name": "[ATest]",
         "type": "JWTPopulate"
       }
-    }'
+    }')
+  http_code=$(echo "$response" | tail -1)
+  body=$(echo "$response" | sed '$d')
+  if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+    echo "Failed to create lambda (HTTP $http_code): $body" >&2
+    return 1
+  fi
 
-  curl -sfL -X PATCH "${fa_url}/api/application/E9FDB985-9173-4E01-9D73-AC2D60D1DC8E" \
+  response=$(curl -s -X PATCH "${fa_url}/api/application/E9FDB985-9173-4E01-9D73-AC2D60D1DC8E" \
     -H "Authorization: ${api_key}" \
     -H "Content-Type: application/json" \
+    -w "\n%{http_code}" \
     -d '{
       "application": {
         "jwtConfiguration": {
@@ -64,7 +73,13 @@ create_lambda() {
           "accessTokenPopulateId": "f3b3b547-7754-452d-8729-21b50d111505"
         }
       }
-    }'
+    }')
+  http_code=$(echo "$response" | tail -1)
+  body=$(echo "$response" | sed '$d')
+  if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+    echo "Failed to configure application (HTTP $http_code): $body" >&2
+    return 1
+  fi
 }
 
 echo "Validating docker compose config..."

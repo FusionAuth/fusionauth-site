@@ -50,7 +50,7 @@ test('Lambda exists with correct configuration', async ({ request }) => {
   const { lambda } = await response.json();
   expect(lambda.name).toBe('[ATest]');
   expect(lambda.type).toBe('JWTPopulate');
-  expect(lambda.engineType).toBe('graalJS');
+  expect(lambda.engineType).toBe('GraalJS');
   expect(lambda.debug).toBe(true);
   expect(lambda.body).toContain('Hello World!');
 });
@@ -74,7 +74,7 @@ test('App OIDC login via FusionAuth triggers lambda', async ({ page }) => {
     await page.getByPlaceholder('Password').fill('password');
     await page.getByRole('button', { name: 'Submit' }).click();
     await page.waitForURL(/localhost:3000/);
-    await expect(page.getByText('richard@example.com')).toBeVisible();
+    await expect(page.getByText('Hello Richard')).toBeVisible();
   }
   catch (error) {
     await dumpDiagnostics();

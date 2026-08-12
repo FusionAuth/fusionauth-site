@@ -39,7 +39,6 @@ router.get('/', function (req, res, next) {
 // tag::fullOAuthCodeExchange[]
 /* OAuth return from FusionAuth */
 router.get('/oauth-redirect', function (req, res, next) {
-  console.dir(res);
   const stateFromServer = req.query.state;
   if (stateFromServer !== req.session.stateValue) {
     console.log("State doesn't match. uh-oh.");
@@ -57,18 +56,21 @@ router.get('/oauth-redirect', function (req, res, next) {
                                                  req.session.verifier)
 // end::exchangeOAuthCode[]
       .then((response) => {
-        console.log(response.response.access_token);
-        return client.retrieveUserUsingJWT(response.response.access_token);
+        return client.retrieveUserInfoFromAccessToken(response.response.access_token);
       })
       .then((response) => {
 // tag::setUserInSession[]
-        req.session.user = response.response.user;
+        const claims = response.response;
+        req.session.user = {
+          firstName: claims.given_name || claims.email,
+          email: claims.email
+        };
         return response;
       })
 // end::setUserInSession[]
       .then((response) => {
         res.redirect(302, '/');
-      }).catch((err) => {console.log("in error"); console.error(JSON.stringify(err));});
+      }).catch((err) => {console.log("in error"); console.log(JSON.stringify(err));});
 
 });
 // end::fullOAuthCodeExchange[]
