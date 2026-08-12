@@ -1,87 +1,112 @@
 ---
-title: 1.69.0 Migration Guide
+title: 1.69.0 Key Configuration Migration Guide
 description: Help with migration to FusionAuth 1.69.0.
 ---
 import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 
-## When should I use this guide?
+FusionAuth `1.69.0` makes significant changes to key configuration.
 
-Read and plan BEFORE you upgrade to 1.69.0.
+You **must update your configuration before upgrading to `1.69.0`** if your instance meets _any_ of the following criteria:
 
-## How do I know if this affects me?
+* you rotate JWT signing keys according to the [key rotation documentation](/docs/operate/secure/key-rotation)
+* you use an external [SAML](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2) or [JWT](/docs/lifecycle/authenticate-users/identity-providers/external-jwt/) Identity Provider (IdP)
+* you use [FusionAuth as a SAML IdP](/docs/lifecycle/authenticate-users/saml) with required signing of authentication or logout requests
+* you have an Application JWT Access Token or [JWT Populate Lambda](/docs/extend/code/lambdas/jwt-populate) that modifies the `aud` or `iss` claims
+* you create JWTs outside of FusionAuth that you submit to FusionAuth endpoints for authentication or introspection
 
-1. Do you rotate JWT signing keys per the [key rotation documentation](/docs/operate/secure/key-rotation)?
-2. Do you use FusionAuth with external SAML IDPs?
-3. Do you use FusionAuth as a SAML IDP for your applications (which are SPs)?
-4. Do you use external JWT IDPs?
-5. Do your Application JWT Access Token/Id Token populate lambdas modify any of the following claims? `aud`, `iss`?
-6. (Uncommon) Do you mint JWTs outside of FusionAuth that you submit to FusionAuth endpoints for authentication or introspection?
+For each criteria that your FusionAuth instance meets, complete the corresponding fix in the sections below.
 
-If you answered yes to any of these questions, please visit **each section number that corresponds with this list**.
+## Required Key Configuration Updates
 
-## Section 1 - JWT Signing Key Rotation
-
-### Before the upgrade
-
-Before the 1.69.0 upgrade, use Key Master or APIs in your FusionAuth instance to find all old keys that are present AND still need to be trusted for JWT signing, IDPs, etc. Make note of those key Ids.
+### Rotated JWT Signing Keys
 
 <Aside type="note">
-    Consider your access token TTL. If your token TTL is 60 minutes (FusionAuth's default) and you rotated your keys 2 weeks ago, then there is nothing you need to do.
+    If you have not recently rotated your keys, you can safely upgrade to `1.69.0`. However, after upgrading, you must update your key rotation policy to trust both keys during changeover. Change your key rotation to use the following new fields for both Tenants and Applications:
+
+    * **`jwtConfiguration.accessTokenKeyId`** -> **`jwtConfiguration.accessTokenVerificationKeyIds`**
+    * **`jwtConfiguration.idTokenKeyId`** -> **`jwtConfiguration.idTokenVerificationKeyIds`
 </Aside>
 
-The keys you are trying to find are all old keys that were previously configured as the *Access token signing key* or *Id token signing key* on the tenant or application, but have since been rotated out in favor of a new key. Keep naming conventions, etc. you might have used in mind for this purpose.
+#### Before the Upgrade
 
-A table like this one might be helpful to note/jot down the keys.
+Before upgrading to `1.69.0`, find all old keys that are present and still must be trusted for JWT signing. You can find these keys in [Key Master](/docs/operate/secure/key-master) (<Breadcrumb>Settings -> Key Master</Breadcrumb>) or using the [API](/docs/apis/keys/search-for-keys). Look for keys that meet the following criteria:
 
-| Tenant or Application | Tenant/Application Id                | Key Id                               | Needed for access, Id tokens, or both |
-| --------------------- | ------------------------------------ | ------------------------------------ | ------------------------------------- |
-| Tenant                | 32306536-3036-6431-3865-646430303332 | f1b86ee2-32de-429a-88a4-979b8dcb81f1 | Both                                  |
+* previously configured as the *Access token signing key* or *Id token signing key* on the tenant or application
+* rotated out in favor of a new key
+* used with an access token TTL _larger than the time since the rotation_: that is, some JWTs signed by that key could still be valid (e.g. a key rotated 5 days ago used with an access token TTL of 7)
 
-### After the upgrade
+Create a mapping of keys to Tenants and Applications, noting whether each token is used for access or Id tokens:
 
-Find each tenant or application and Key Id that you previously recorded and add them to the *Access token verification keys* or *Id token verification keys* setting on the JWT tab as appropriate.
+| Key Id                               | Tenant or Application | Tenant/Application Id                | Needed for access? | Needed for Id tokens? |
+| ------------------------------------ | --------------------- | ------------------------------------ | ------------------ | --------------------- |
+| f1b86ee2-32de-429a-88a4-979b8dcb81f1 | Tenant                | 32306536-3036-6431-3865-646430303332 | Yes                | Yes                   |
 
-See [core concepts](/docs/get-started/core-concepts/tenants#jwt) or [Tenant API](/docs/apis/tenants/create-a-tenant) for more information. The setting is the same at the application level if you use application JWT overrides.
+Once you finish mapping your keys, you're ready to update to `1.69.0`.
 
-The [key rotation](/docs/operate/secure/key-rotation) docs have also been updated that explain how this process should work going forward.
+#### After the Upgrade
 
-## Section 2 - FusionAuth with external SAML IDPs
+For each key mapping you recorded in the previous step, add the key in the Tenant or Application settings:
 
-TBD - Similar process to section 1, except no tenant vs. app, just IDP and key. And it's the IDP's usage of old keys that matters here.
+1. In the Admin UI, visit <Breadcrumb>Tenants</Breadcrumb> or <Breadcrumb>Applications</Breadcrumb>.
+1. For the corresponding Tenant or Application, select <Breadcrumb>Edit</Breadcrumb> from the action menu.
+1. Select the <Breadcrumb>JWT</Breadcrumb> tab.
+1. Add the key to the *Access token signing keys* or *Id token signing keys* lists as appropriate. {/* TODO: MAKE SURE THIS NAME HAS NOT BEEN UPDATED TO "verification keys"*/}
 
-## Section 3 - FusionAuth as a SAML IDP for your applications
+Alternatively, use the API to [update a Tenant](/docs/apis/tenants/update-a-tenant) or [update an Application](/docs/apis/applications/update-an-application).
 
-<Aside type="note">
-    Is your *Require signed authentication requests* or *Require signed logout requests* enabled for one or more applications? If the answer to both is no, this section does not apply to you.
-</Aside>
+### External JWT IdPs
 
-TBD/Note: - Similar process to section 1, except no tenant vs. app, just IDP and keys from the SP/App. And it's the SP's usage of old keys that matters here.
+#### Before the Upgrade
 
-## Section 4 - External JWT IDPs
+Before upgrading to `1.69.0`, find all keys that must be trusted for signing requests from external JWT Identity Providers (IdPs). You can find these keys in [Key Master](/docs/operate/secure/key-master) (<Breadcrumb>Settings -> Key Master</Breadcrumb>) or using the [API](/docs/apis/keys/search-for-keys).
 
-### Before the upgrade
+{/* TODO: figure out SPECIFIC criteria for old key usage in idps */}
 
-FusionAuth 1.69.0 will **require** a *Default verification key* to be configured on the JWT tab to indicate which External IDP JWTs should be considered trusted.
+Create a mapping of keys to IdP:
 
-Set a value for this now.
+| Key Id                               | IdP Id                               |
+| ------------------------------------ | ------------------------------------ |
+| f1b86ee2-32de-429a-88a4-979b8dcb81f1 | 33306536-3036-6431-3865-646430303333 |
 
-TBD/Note: - could link to core concepts, etc. as appropriate
+#### After the upgrade
 
-### After the upgrade
+For each key mapping you recorded in the previous step, add the key in the IdP settings:
 
-If you DO NOT use key rotation - no immediate changes are required.
+1. In the Admin UI, visit <Breadcrumb>Settings -> Identity Providers</Breadcrumb>.
+1. For each IdP, select <Breadcrumb>Edit</Breadcrumb> from the action menu.
+1. Add the key to the *Verification key* list. {/* TODO: MAKE SURE THIS IS THE CORRECT NAME/PLACE */}
 
-If you DO already use key rotation or you intend to start - you will need to change your processes per the [key rotation](/docs/operate/secure/key-rotation) document. This means you will need to ensure ALL keys that need to be trusted, at the same time, are present in the `identityProvider.verificationKeyIds` setting for the IDP. This field replaces the previous `identityProvider.defaultKeyId` field.
+Alternatively, use the [IdP API](/docs/apis/identity-providers/).
 
-TBD/Note: Could be a table???
+### FusionAuth as a SAML IdP
 
-## Section 5 - Application JWT Access Token/Id Token populate lambdas modify one of more of these claims: `aud`, `iss`
+#### Before the Upgrade
+
+For each application that hosts a SAML IdP:
+
+1. In the Admin UI, visit <Breadcrumb>Applications</Breadcrumb>.
+1. Select <Breadcrumb>Edit</Breadcrumb> from the action menu for the Application.
+1. Select the <Breadcrumb>JWT</Breadcrumb> tab.
+1. Configure a **Default verification key**.
+
+Alternatively, use the API to [update an Application](/docs/apis/applications/update-an-application).
+
+#### After the upgrade
+
+Configurations that lack key rotation require no further changes.
+
+If you do rotate keys, ensure that during changeover, both keys are trusted. In `1.69.0`, use **`identityProvider.verificationKeyIds`** (in the Admin UI, **Verification key ids**) instead of **`identityProvider.defaultKeyId`**.
+
+For more information, see the [key rotation](/docs/operate/secure/key-rotation) documentation.
+
+### Application JWT Access Token/JWT Populate Lambdas that Modify `aud` or `iss`
 
 `aud` - Not using an application Id here will limit the ability of FusionAuth to ensure the right trusted JWT is used if application JWT overrides are enabled. Enumerate what these cases are (no client_id cases??). What happens??
 
 `iss` - Not using the issuer field from the tenant will limit the ability of FusionAuth to ensure the right trusted JWT is used for the tenant. Enumerate what these cases are (no client_id cases??). What happens??
 
-## Section 6 - Mint JWTs outside of FusionAuth that you submit to FusionAuth endpoints for authentication or introspection
+### JWTs created outside of FusionAuth
 
 This should be fairly rare that anyone does this. And probably don't need to make this public.
 
