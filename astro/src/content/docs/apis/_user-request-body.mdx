@@ -21,11 +21,29 @@ You must specify either the **email** or the **username** or both for the User. 
     If not provided, only the tenant configuration will be used when resolving templates.
   </APIField>
 
-  <APIField name="disableDomainBlock" type="Boolean" optional defaults="false" since="1.30.0">
+  { props.http_method === 'PUT' && <>
+        <APIField name="currentPassword" type="String" optional>
+            The User's current password. When this parameter is provided, the parameter will be checked against the User's actual current password. Useful for password updates.
+        </APIField>
+    </>
+  }
+    <APIField name="disableDomainBlock" type="Boolean" optional defaults="false" since="1.30.0">
     A tenant has the option to configure one or more email domains to be blocked in order to restrict email domains during user create or update.
 
     Setting this property equal to `true` will override the tenant configuration. See **tenant.registrationConfiguration.blockedDomains** in the [Tenant API](/docs/apis/tenants).
   </APIField>
+
+  { props.http_method === 'PUT' &&
+    <APIField name="passwordFieldType" type="String" since="1.69.0" optional defaults="PLAINTEXT">
+        Describes what **user.password** in the request is.
+
+        The possible values are:
+        <ul>
+            <li>`HASHED` - **user.password** is an already hashed value. When this value is supplied, **user.encryptionScheme**, **user.factor**, **user.password**, and **user.salt** are required.</li>
+            <li>`PLAINTEXT` - **user.password** is a plain text/unhashed value. FusionAuth will hash this value according to **user.encryptionScheme** and **user.factor**.</li>
+        </ul>
+    </APIField>
+  }
 
   { props.http_method === 'POST' &&
     <UserSendSetPasswordEmail />
@@ -47,13 +65,6 @@ You must specify either the **email** or the **username** or both for the User. 
   <APIField name="user.birthDate" type="String" optional>
     An `ISO-8601` formatted date of the User's birthdate such as `YYYY-MM-DD`.
   </APIField>
-
-  { props.http_method === 'PUT' && <>
-    <APIField name="user.currentPassword" type="String" optional>
-      The User's current password. When this parameter is provided the current password will be verified to be correct. Useful for password updates.
-    </APIField>
-    </>
-  }
 
   <APIField name="user.data" type="Object" optional>
     An object that can hold any information about a User that should be persisted. Please review the [limits on data field types](/docs/get-started/core-concepts/limitations#data-type-changes-in-data-fields) as you plan for and build your custom data schema.
@@ -168,7 +179,7 @@ You must specify either the **email** or the **username** or both for the User. 
 
     { props.http_method === 'PUT' &&
         <p>
-          If this parameter is provided it indicates you wish to change the User's password. If you do not want to change the User's password omit this field from the request.
+          In version <code>1.69.0</code> and above, the <code>passwordFieldType</code> field indicates whether this is a plain text password or a hashed password. Providing <code>user.password</code> indicates that you wish to change the User's password. If you do not want to change the User's password, omit this field from the request.
         </p>
       }
   </APIField>
