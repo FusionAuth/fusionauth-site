@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { execSync } = require('child_process');
 
 const FA_URL = 'http://localhost:9011';
 const API_KEY = 'lambda_testing_key';
@@ -125,4 +126,29 @@ test('App OIDC login still works after lambda update', async ({ page }) => {
     await dumpDiagnostics();
     throw error;
   }
+});
+
+test('test_1.js: login returns JWT with "Goodbye World"', async () => {
+  const output = execSync('node test_1.js', {
+    cwd: '/app',
+    encoding: 'utf-8',
+    timeout: 30000
+  });
+  console.log(output);
+
+  const expectedPattern = new RegExp([
+    '^TAP version 13',
+    '# test login returns JWT with "Goodbye World"',
+    'User [0-9a-f-]+ created successfully',
+    'ok 1 should be truthy',
+    'User [0-9a-f-]+ deleted successfully',
+    '',
+    '1..1',
+    '# tests 1',
+    '# pass  1',
+    '',
+    '# ok',
+    ''
+  ].join('\\n'));
+  expect(output).toMatch(expectedPattern);
 });

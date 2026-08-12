@@ -117,7 +117,7 @@ wait_for "Node.js app" curl -sf http://localhost:3000
 
 echo "Running Playwright tests..."
 cd "$SCRIPT_DIR"
-docker run --network host --name playwright-test --rm -e NODE_PATH=/usr/lib/node_modules -v "$SCRIPT_DIR/integration.spec.js":/tests/integration.spec.js mcr.microsoft.com/playwright:v1.62.0 bash -c "npm install -g @playwright/test@1.62.0 && playwright test /tests/integration.spec.js"
+docker run --network host --name playwright-test --rm -e NODE_PATH=/usr/lib/node_modules -v "$SCRIPT_DIR/integration.spec.js":/tests/integration.spec.js -v "$PROJECT_DIR/complete-application":/app -w /tests mcr.microsoft.com/playwright:v1.62.0 bash -c "npm install -g @playwright/test@1.62.0 && cd /app && npm install && cd /tests && npx playwright test"
 TEST_EXIT_CODE=$?
 
 exit $TEST_EXIT_CODE
