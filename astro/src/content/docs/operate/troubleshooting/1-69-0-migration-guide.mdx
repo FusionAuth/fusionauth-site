@@ -11,6 +11,7 @@ You **must update your configuration before upgrading to `1.69.0`** if your inst
 
 * you have recently rotated JWT signing keys according to the [key rotation documentation](/docs/operate/secure/key-rotation)
 * you use an external [SAML](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2) or [JWT](/docs/lifecycle/authenticate-users/identity-providers/external-jwt/) Identity Provider (IdP) that rotates signing keys
+* you use an external [JWT](/docs/lifecycle/authenticate-users/identity-providers/external-jwt/) Identity Provider (IdP)
 * you use [FusionAuth as a SAML IdP](/docs/lifecycle/authenticate-users/saml) with required signing of authentication or logout requests
 * you have an Application JWT Access Token or [JWT Populate Lambda](/docs/extend/code/lambdas/jwt-populate) that modifies the `aud` or `iss` claims
 * you create JWTs outside of FusionAuth that you submit to FusionAuth endpoints for authentication or introspection
@@ -55,18 +56,17 @@ For each key mapping you recorded in the previous step, add the key in the Tenan
 
 Alternatively, use the API to [update a Tenant](/docs/apis/tenants/update-a-tenant) or [update an Application](/docs/apis/applications/update-an-application).
 
-### External SAML or JWT IdPs
+### External SAML IdPs
 
 Changes are only necessary if the IDP has recently rotated keys. Consult the specific IDP in use or the key rotation processes your organization uses to determine if that is the case.
 
 If you have not recently rotated your keys, you can safely upgrade to `1.69.0`. However, after upgrading, you **must** update your key rotation policy to trust both keys during changeover. Change your key rotation to use the following new fields:
 
-    * External JWT IDPs - **`identityProvider.defaultKeyId`** -> **`identityProvider.verificationKeyIds`**
-    * SAML IDPs - **`identityProvider.keyId`** -> **`identityProvider.verificationKeyIds`**
+    * **`identityProvider.keyId`** -> **`identityProvider.verificationKeyIds`**
 
 #### Before the Upgrade
 
-Before upgrading to `1.69.0`, find all keys that must be trusted for signing requests from external JWT or SAML Identity Providers (IdPs). You can find these keys in [Key Master](/docs/operate/secure/key-master) (<Breadcrumb>Settings -> Key Master</Breadcrumb>) or using the [API](/docs/apis/keys/search-for-keys).
+Before upgrading to `1.69.0`, find all keys that must be trusted for signing requests from external SAML Identity Providers (IdPs). You can find these keys in [Key Master](/docs/operate/secure/key-master) (<Breadcrumb>Settings -> Key Master</Breadcrumb>) or using the [API](/docs/apis/keys/search-for-keys).
 
 Create a mapping of keys to IdP:
 
@@ -80,9 +80,27 @@ For each key mapping you recorded in the previous step, add the key in the IdP s
 
 1. In the Admin UI, visit <Breadcrumb>Settings -> Identity Providers</Breadcrumb>.
 1. For each IdP, select <Breadcrumb>Edit</Breadcrumb> from the action menu.
-1. Add the key to the *Verification keys* list (in External JWT IDPs, this is located in the JWT tab).
+1. Add the key to the *Verification keys* list.
 
 Alternatively, use the [IdP API](/docs/apis/identity-providers/).
+
+### External JWT IdPs
+
+#### Before the Upgrade
+
+FusionAuth 1.69.0 **requires** a *Default verification key* to be configured on the JWT tab to indicate which External IDP JWTs should be considered trusted.
+
+Set a value for this now by:
+1. In the Admin UI, visit <Breadcrumb>Settings -> Identity Providers</Breadcrumb>.
+1. For each IdP, select <Breadcrumb>Edit</Breadcrumb> from the action menu.
+1. Select the <Breadcrumb>JWT</Breadcrumb> tab.
+1. Configure a **Default verification key** that matches the key the IDP uses to sign JWTs.
+
+#### After the upgrade
+
+If your External JWT IDP rotates its keys, you **must** update your key rotation policy to trust both keys during changeover. Change your key rotation to use the following new fields:
+
+    * **`identityProvider.defaultKeyId`** -> **`identityProvider.verificationKeyIds`**
 
 ### FusionAuth as a SAML IdP
 
