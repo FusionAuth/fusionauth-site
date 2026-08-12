@@ -34,6 +34,39 @@ fusionauth_ready() {
   curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "Login | FusionAuth"
 }
 
+create_lambda() {
+  local api_key="$1"
+  local fa_url="$2"
+
+  curl -sfL -X POST "${fa_url}/api/lambda" \
+    -H "Authorization: ${api_key}" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "lambda": {
+        "id": "f3b3b547-7754-452d-8729-21b50d111505",
+        "body": "function populate(jwt, user, registration) {\n  jwt.message = '\''Hello World!'\'';\n  console.info('\''Hello World!'\'');\n}",
+        "debug": true,
+        "engineType": "graalJS",
+        "name": "[ATest]",
+        "type": "JWTPopulate"
+      }
+    }'
+
+  curl -sfL -X PATCH "${fa_url}/api/application/E9FDB985-9173-4E01-9D73-AC2D60D1DC8E" \
+    -H "Authorization: ${api_key}" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "application": {
+        "jwtConfiguration": {
+          "enabled": true
+        },
+        "lambdaConfiguration": {
+          "accessTokenPopulateId": "f3b3b547-7754-452d-8729-21b50d111505"
+        }
+      }
+    }'
+}
+
 echo "Validating docker compose config..."
 cd "$PROJECT_DIR"
 docker compose -f docker-compose.yml config > /dev/null
@@ -60,6 +93,9 @@ LOGS_PID=$!
 
 echo "Waiting for FusionAuth to be ready..."
 wait_for "FusionAuth" fusionauth_ready
+
+echo "Creating lambda..."
+create_lambda "lambda_testing_key" "http://localhost:9011"
 
 echo "Waiting for PHP app to be ready..."
 wait_for "PHP app" curl -sf http://localhost:8000
