@@ -9,8 +9,8 @@ FusionAuth `1.69.0` makes significant changes to key configuration.
 
 You **must update your configuration before upgrading to `1.69.0`** if your instance meets _any_ of the following criteria:
 
-* you rotate JWT signing keys according to the [key rotation documentation](/docs/operate/secure/key-rotation)
-* you use an external [SAML](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2) or [JWT](/docs/lifecycle/authenticate-users/identity-providers/external-jwt/) Identity Provider (IdP)
+* you have recently rotated JWT signing keys according to the [key rotation documentation](/docs/operate/secure/key-rotation)
+* you use an external [SAML](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2) or [JWT](/docs/lifecycle/authenticate-users/identity-providers/external-jwt/) Identity Provider (IdP) that rotates signing keys
 * you use [FusionAuth as a SAML IdP](/docs/lifecycle/authenticate-users/saml) with required signing of authentication or logout requests
 * you have an Application JWT Access Token or [JWT Populate Lambda](/docs/extend/code/lambdas/jwt-populate) that modifies the `aud` or `iss` claims
 * you create JWTs outside of FusionAuth that you submit to FusionAuth endpoints for authentication or introspection
@@ -22,7 +22,7 @@ For each criteria that your FusionAuth instance meets, complete the correspondin
 ### Rotated JWT Signing Keys
 
 <Aside type="note">
-    If you have not recently rotated your keys, you can safely upgrade to `1.69.0`. However, after upgrading, you must update your key rotation policy to trust both keys during changeover. Change your key rotation to use the following new fields for both Tenants and Applications:
+    If you have not recently rotated your keys, you can safely upgrade to `1.69.0`. However, after upgrading, you **must** update your key rotation policy to trust both keys during changeover. Change your key rotation to use the following new fields for both Tenants and Applications:
 
     * **`jwtConfiguration.accessTokenKeyId`** -> **`jwtConfiguration.accessTokenVerificationKeyIds`**
     * **`jwtConfiguration.idTokenKeyId`** -> **`jwtConfiguration.idTokenVerificationKeyIds`
@@ -55,13 +55,18 @@ For each key mapping you recorded in the previous step, add the key in the Tenan
 
 Alternatively, use the API to [update a Tenant](/docs/apis/tenants/update-a-tenant) or [update an Application](/docs/apis/applications/update-an-application).
 
-### External JWT IdPs
+### External SAML or JWT IdPs
+
+Changes are only necessary if the IDP has recently rotated keys. Consult the specific IDP in use or the key rotation processes your organization uses to determine if that is the case.
+
+If you have not recently rotated your keys, you can safely upgrade to `1.69.0`. However, after upgrading, you **must** update your key rotation policy to trust both keys during changeover. Change your key rotation to use the following new fields:
+
+    * External JWT IDPs - **`identityProvider.defaultKeyId`** -> **`identityProvider.verificationKeyIds`**
+    * SAML IDPs - **`identityProvider.keyId`** -> **`identityProvider.verificationKeyIds`**
 
 #### Before the Upgrade
 
-Before upgrading to `1.69.0`, find all keys that must be trusted for signing requests from external JWT Identity Providers (IdPs). You can find these keys in [Key Master](/docs/operate/secure/key-master) (<Breadcrumb>Settings -> Key Master</Breadcrumb>) or using the [API](/docs/apis/keys/search-for-keys).
-
-{/* TODO: figure out SPECIFIC criteria for old key usage in idps */}
+Before upgrading to `1.69.0`, find all keys that must be trusted for signing requests from external JWT or SAML Identity Providers (IdPs). You can find these keys in [Key Master](/docs/operate/secure/key-master) (<Breadcrumb>Settings -> Key Master</Breadcrumb>) or using the [API](/docs/apis/keys/search-for-keys).
 
 Create a mapping of keys to IdP:
 
@@ -75,7 +80,7 @@ For each key mapping you recorded in the previous step, add the key in the IdP s
 
 1. In the Admin UI, visit <Breadcrumb>Settings -> Identity Providers</Breadcrumb>.
 1. For each IdP, select <Breadcrumb>Edit</Breadcrumb> from the action menu.
-1. Add the key to the *Verification key* list. {/* TODO: MAKE SURE THIS IS THE CORRECT NAME/PLACE */}
+1. Add the key to the *Verification keys* list (in External JWT IDPs, this is located in the JWT tab).
 
 Alternatively, use the [IdP API](/docs/apis/identity-providers/).
 
