@@ -1,11 +1,11 @@
-# FusionAuth Site
+# FusionAuth Documentation
 
 [![Check external links](https://github.com/FusionAuth/fusionauth-site/actions/workflows/check-external-links.yml/badge.svg)](https://github.com/FusionAuth/fusionauth-site/actions/workflows/check-external-links.yml)
 [![check-closed-github-issues](https://github.com/FusionAuth/fusionauth-site/actions/workflows/check-closed-github-issues.yml/badge.svg)](https://github.com/FusionAuth/fusionauth-site/actions/workflows/check-closed-github-issues.yml)
 
-Despite the name, this repo only contains the FusionAuth documentation, articles, developer tools, and blog. The root `fusionauth.io` site is managed via Webflow.
+Despite the name, this repo only contains the FusionAuth documentation, articles, developer tools, and blog. We manage the root `fusionauth.io` site via Webflow CRM.
 
-This content is hosted in the following subdirectories of `fusionauth.io`:
+This content is hosted in the following sub-directories of `fusionauth.io`:
 
 - [https://fusionauth.io/docs](https://fusionauth.io/docs)
 - [https://fusionauth.io/blog](https://fusionauth.io/blog)
@@ -26,10 +26,10 @@ To preview the site locally:
 1. Install dependencies:
 
    ```console
-   npm install
+   npm ci
    ```
 
-1. Run a local development instance of the site:
+1. Run a local development instance of the site in just a few seconds:
 
    ```console
    npm run dev
@@ -45,7 +45,7 @@ To run a full site build:
 npm run start
 ```
 
-This may take a minute or two. Output can be noisy, but do pay attention to the output from `astro-link-validator`, which runs at the very end of the `build` step. This check ensures that all internal links on the site point to valid URLs. For development convenience, this check doesn't fail the build, but you should always keep the broken link count at zero before merging into `main`.
+This may take a minute or two. Output can be noisy, but do pay attention to the output from [`astro-link-checker`](https://github.com/nathan-contino/astro-link-checker), which runs at the very end of the `build`. This check ensures that all internal links on the site point to valid URLs. For development convenience, this check only fails development builds (so it can never break a deploy), but _please_ keep the broken link count at zero before merging into `main`.
 
 ## Write Content
 
@@ -55,13 +55,13 @@ Always follow the content style guide found in [CONTRIBUTING.md](/CONTRIBUTING.m
 
 To check syntax across the entire site:
 
-```sh
+```console
 npm run lint
 ```
 
 To check syntax in a specific file:
 
-```sh
+```console
 npm run lint -- src/components/BlogButton.astro
 ```
 
@@ -89,9 +89,9 @@ Astro builds automatically generate code snippets before rendering pages.
 [src/redirects.json](src/redirects.json) specifies our redirect rules. This file is published to s3 and read by a Lambda function that processes redirects for the site. When modifying the file:
 
 * Keep items in alphabetical order!
-* If you are moving a page around, update `redirects`.
-* If you are adding a page that is an index page, update `indexPages`.
-* If you are adding a new top level file or directory that's pulled from the S3 bucket, make sure you:
+* Move a page? Update `/src/redirects.json`.
+* Add a new index page? Update `indexPages` in `/src/redirects.json`.
+* Add a new top-level file or folder adjacent to `/docs/` (e.g. `fusionauth.io/mycoolpagethatisntinthedocsfolder`)?
+  * For a new file, update `s3Paths` in `/src/redirects.json`.
+  * For a new top-level folder, update `s3Prefixes` in `/src/redirects.json`.
   * Add a behavior in CloudFront. You'll need to submit a PR in [fusionauth-site-infra](https://github.com/FusionAuth/fusionauth-site-infra/).
-  * If you are adding a top level file, add an entry to the `s3Paths` array.
-  * If you are adding a top level directory, add an entry to the `s3Prefixes` array.
