@@ -90,7 +90,7 @@ Now activate the lambda for the example app.
 <Aside type="note">
   You could also create the lambda above using the FusionAuth API instead of the UI:
 
-  ```console
+  ```shell-session
   curl -X POST "http://localhost:9011/api/lambda/f3b3b547-7754-452d-8729-21b50d111505" \
     -H "Authorization: lambda_testing_key" \
     -H "Content-Type: application/json" \
@@ -124,26 +124,30 @@ You can now test that the new lambda writes to the event log and returns extra d
 
 Open the `routes/index.js` file in the `app` directory.
 
-Locate the redirect route handler (which is the function that starts with `router.get('/oauth-redirect'`) and add a line to write the JWT to the console at login.
+Locate the redirect route handler (which is the function that starts with `router.get('/oauth-redirect'`) and add a line to write the JWT to the console at login. The line should be added in the `then()` callback to FusionAuth, as shown below:
 
 ```js
-router.get('/oauth-redirect', function (req, res, next) {
-  console.dir(res); // You should insert this line
+.then((response) => {
+  console.log(response.response.access_token); // Insert this line
+  return client.retrieveUserInfoFromAccessToken(response.response.access_token);
+})
 ```
 
-Save the file and start the test app with the following command.
+Save the file and start the test app with the following command:
 
-```js
+```shell-session
 npm install
 npm start
 ```
 
 Log in to the app at `http://localhost:3000` with user `richard@example.com` and password `password`.
 
-In the FusionAuth admin UI, navigate to <Breadcrumb>System -> Event Log</Breadcrumb> and you will see a log entry of the invocation of your "Hello World" lambda. The entire HTTP response is logged in the test app terminal. The JWT is a long alphanumeric line at the end of the response. It should look something like below.
+In the FusionAuth admin UI, navigate to <Breadcrumb>System -> Event Log</Breadcrumb> and you will see a log entry of the invocation of your "Hello World" lambda.
+
+The entire HTTP response is logged in the test app console (not in the event log). The JWT is a long alphanumeric line at the end of the response. It should look something like below.
 
 ```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJhdXRob3JpemF0aW9uX2NvZGUiXSwia2lkIjoiMWU1NmM0OWU4In0.eyJhdWQiOiJkZGQwNTAyMS0wNjgyLTQ4NWUtYThlMi1kMDMyOTY0YjAyMTEiLCJleHAiOjE2ODkyNjQwNzEsImlhdCI6MTY4OTI2MDQ3MSwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIwYTkzOTYwNi0zNmVjLTQ1M2ItOTM0Mi04ZWZmOTE3ZjJhZWYiLCJqdGkiOiIyYmZlMjUwNy1hZWM0LTRjOTEtYWY5Yy1hOWVhYjQzNmQ4MGYiLCJhdXRoZW50aWNhdGlvblR5cGUiOiJQQVNTV09SRCIsImVtYWlsIjoiZXJsaWNoQGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImFwcGxpY2F0aW9uSWQiOiJkZGQwNTAyMS0wNjgyLTQ4NWUtYThlMi1kMDMyOTY0YjAyMTEiLCJzY29wZSI6Im9mZmxpbmVfYWNjZXNzIiwicm9sZXMiOltdLCJzaWQiOiIzNDk5MTAxMS1kNzUxLTRlOTctYWZiNi0zNzQ2N2RlYTc5YWIiLCJhdXRoX3RpbWUiOjE2ODkyNjA0NzEsInRpZCI6ImNiY2VkOWVhLWQ3NzgtZDBlYi03ZjU4LWE0MGYxY2VlNWFhYiIsIm1lc3NhZ2UiOiJIZWxsbyBXb3JsZCEifQ.3DOvP8LRAp6pIh0guUjJjYbNwZKzruVWre8Xq8x_S8k
+eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im8yNUlhRFRFTjkxR3NoVW9iWVhDSGdCMG1FUSJ9.eyJhdWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJleHAiOjE3ODY1NjIwOTYsImlhdCI6MTc4NjU1ODQ5NiwiaXNzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbSIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTExMTExMTExMTExMSIsImp0aSI6IjViOWEwMjgwLTE2YWUtNGEyYi05YTczLThiNDgxYThlMDZlNyIsImF1dGhlbnRpY2F0aW9uVHlwZSI6IlBBU1NXT1JEIiwidHR5IjoiYXQiLCJhcHBsaWNhdGlvbklkIjoiZTlmZGI5ODUtOTE3My00ZTAxLTlkNzMtYWMyZDYwZDFkYzhlIiwiYXV0aF90aW1lIjoxNzg2NTU4NDk2LCJzY29wZSI6Im9wZW5pZCBvZmZsaW5lX2FjY2VzcyBwcm9maWxlIGVtYWlsIiwicm9sZXMiOltdLCJzaWQiOiJhODhjMDUzMy1kYmRlLTQ1OGMtYjY1Yi1jNmJjMWJhMWQ2ZGIiLCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMiLCJndHkiOlsiYXV0aG9yaXphdGlvbl9jb2RlIl0sIm1lc3NhZ2UiOiJIZWxsbyBXb3JsZCEifQ.gaeqzVEzGsz8yuC0oF0TLnSUJVWbY8ZSVTdxC6SKery4lIm2icpDMqhpXyHACZMWha9PxDJepVrOiWGukLBFr-5TciNsBO_DrBNnbScyx3FoYKzAXbWov_BRDROnXGr63GlHgh_O0nWKZlgGD9TZemGuzicPSuRuQCKKgPQVbOgIk9SxA1lCa8Js_SAho8MQCIu69_YtjoHUwq1Y1o2lmoZTBz2m5VjhF-6IkNzoC_ls8dZW-XnLT65MWeLDKuQINmYG8VxrADkUvRPvAamJpJj5fBtOgiOwUoa8rMOqCTifGPu00Oh6-ppdhj5gShLApBLxwqeAiifzKAKDkGmjMQ
 ```
 
 Copy this token from your terminal and paste it into the **Token** text box on the [FusionAuth Online JWT Decoder](/dev-tools/jwt-decoder). You'll see `"message": "Hello World!"` in the <Breadcrumb>Payload</Breadcrumb> box, showing you that your new lambda ran correctly.
@@ -246,7 +250,7 @@ There are many JavaScript test libraries available, and everyone has their prefe
 Install the following packages in your test app terminal.
 
 ```shell-session
-npm install --save-dev tape faucet fetch-mock jsonwebtoken uuid
+npm install --save-dev     tape@^5.6.6     faucet@^0.0.4     fetch-mock@^9.11.0     jsonwebtoken@^9.0.1     uuid@^9.0.0
 ```
 
 <Aside type="note">
@@ -270,10 +274,10 @@ The code above has two functions:
 - The `createRandomUser` function, which creates a User request object with `const request` and then sends it to `fusion.register()`. Details on this can be found in the [TypeScript client library interface](https://github.com/FusionAuth/fusionauth-typescript-client/blob/main/src/FusionAuthClient.ts).
 - The `deleteUser` function, which you can use in the tests to delete the user just created.
 
-Run the code to test user creation with the following command.
+Run the code to test user creation with the following command:
 
 ```shell-session
-node userCreator.js
+node -e "const {createRandomUser} = require('./userCreator.js');    createRandomUser(require('uuid').v4());"
 ```
 
 In FusionAuth, navigate to <Breadcrumb>Users</Breadcrumb> to check that a new user called `lambdatestuser` has been created. You can delete the `createRandomUser(uuidv4());` line in `userCreator.js` as each test will use a new temporary user. This will allow you to add multiple lambda tests while avoiding potential conflicts between test users and permissions.
