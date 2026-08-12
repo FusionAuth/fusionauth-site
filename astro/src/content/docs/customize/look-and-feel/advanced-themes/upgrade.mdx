@@ -13,6 +13,82 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 For an explanation of how to upgrade a custom theme, see [Upgrade an Advanced Theme](/docs/customize/look-and-feel/advanced-themes/upgrade-advanced-theme).
 </Aside>
 
+## Version 1.69.0
+
+### Custom form field labels on account and OAuth2 pages
+
+**OPTIONAL - SEE BELOW**
+
+Version `1.69.0` updates the `Account edit`, `OAuth2 register`, and `OAuth2 complete registration` theme templates to make labels available for [custom form fields](/docs/lifecycle/register-users/advanced-registration-forms#custom-form-fields) rendered on those pages. Previously, these templates did not render labels for non-text custom form controls.
+
+
+You only need to apply the updates below if your FusionAuth instance meets all of the following criteria:
+
+* You use an advanced theme for FusionAuth-hosted pages.
+* You use a custom form with the `Account edit`, `OAuth2 register`, or `OAuth2 complete registration` template.
+* Your custom form uses one or more non-text controls, such as checkboxes, radio buttons, or select dropdowns.
+
+
+#### Helpers template
+
+##### Macro customField
+
+Update the custom field label styling:
+
+```ftl diff
+-            <label for="${id}" class="block text-sm/6 font-medium text-input-text mb-2[#if (fieldMessages[name]![])?size > 0] error[/#if]">
++            <label for="${id}" class="block text-xs font-medium text-input-text mb-1[#if (fieldMessages[name]![])?size > 0] error[/#if]">
+```
+
+##### Macro passwordField
+
+Update the confirm field call so it passes a label:
+
+```ftl diff
+-          [@customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
++          [@customField field=field key="confirm.${field.key}" autofocus=false placeholder="[confirm]${field.key}" label=theme.optionalMessage("confirm.${field.key}")/]
+```
+
+#### Account edit template
+
+Update custom field calls to pass labels for both the primary and confirm fields:
+
+```ftl diff
+-                      [@helpers.customField field key field?is_first field.key /]
++                      [@helpers.customField field=field key=key autofocus=field?is_first placeholder=field.key label=theme.optionalMessage(key)/]
+
+                       [#if field.confirm]
+-                        [@helpers.customField field "confirm.${key}" false "[confirm]${field.key}" /]
++                        [@helpers.customField field=field key="confirm.${key}" autofocus=false placeholder="[confirm]${field.key}" label=theme.optionalMessage("confirm.${key}")/]
+                       [/#if]
+```
+
+#### OAuth2 complete registration template
+
+Update custom field calls to pass labels for both the primary and confirm fields:
+
+```ftl diff
+-              [@helpers.customField field field.key field?is_first?then(true, false) field.key /]
++              [@helpers.customField field=field key=field.key autofocus=field?is_first?then(true, false) placeholder=field.key label=theme.optionalMessage(field.key)/]
+               [#if field.confirm]
+-                [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
++                [@helpers.customField field=field key="confirm.${field.key}" autofocus=false placeholder="[confirm]${field.key}" label=theme.optionalMessage("confirm.${field.key}")/]
+               [/#if]
+```
+
+#### OAuth2 register template
+
+Update custom field calls to pass labels for both the primary and confirm fields:
+
+```ftl diff
+-              [@helpers.customField field key field?is_first field.key /]
++              [@helpers.customField field=field key=key autofocus=field?is_first placeholder=field.key label=theme.optionalMessage(key)/]
+               [#if field.confirm]
+-                [@helpers.customField field "confirm.${key}" false "[confirm]${field.key}" /]
++                [@helpers.customField field=field key="confirm.${key}" autofocus=false placeholder="[confirm]${field.key}" label=theme.optionalMessage("confirm.${key}")/]
+               [/#if]
+```
+
 ## Version 1.68.0
 
 ### Account and OAuth2 updates for named two-factor methods
