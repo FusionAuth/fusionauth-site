@@ -152,3 +152,77 @@ test('test_1.js: login returns JWT with "Goodbye World"', async () => {
   ].join('\\n'));
   expect(output).toMatch(expectedPattern);
 });
+
+test('test_2.js: unit test mocks external service', async () => {
+  const output = execSync('node test_2.js', {
+    cwd: '/app',
+    encoding: 'utf-8',
+    timeout: 30000
+  });
+  console.log(output);
+
+  const expectedPattern = new RegExp([
+    '^TAP version 13',
+    '# test lambda rejects sanctioned emails and accepts others',
+    'ok 1 Check North Korea email banned',
+    'ok 2 Check Canada email allowed',
+    '',
+    '1..2',
+    '# tests 2',
+    '# pass  2',
+    '',
+    '# ok',
+    ''
+  ].join('\\n'));
+  expect(output).toMatch(expectedPattern);
+});
+
+test('test_3.js: unit test populates JWT from FusionAuth', async ({ request }) => {
+  const getResponse = await request.get(`${FA_URL}/api/lambda/${LAMBDA_ID}`, {
+    headers: { 'Authorization': API_KEY }
+  });
+  expect(getResponse.ok()).toBeTruthy();
+  const { lambda } = await getResponse.json();
+
+  const lambdaBody = `function populate(jwt, user, registration) {
+  jwt.message = 'Goodbye World!';
+  jwt.permissions = [];
+  if (user.registrations[0].roles.includes("admin")) {
+    jwt.permissions.push("all");
+  } else if (user.registrations[0].roles.includes("editor")) {
+    jwt.permissions.push("read");
+    jwt.permissions.push("write");
+  } else if (user.registrations[0].roles.includes("viewer")) {
+    jwt.permissions.push("read");
+  }
+}`;
+
+  const putResponse = await request.put(`${FA_URL}/api/lambda/${LAMBDA_ID}`, {
+    headers: { 'Authorization': API_KEY },
+    data: { lambda: { ...lambda, body: lambdaBody } }
+  });
+  expect(putResponse.ok()).toBeTruthy();
+
+  const output = execSync('node test_3.js', {
+    cwd: '/app',
+    encoding: 'utf-8',
+    timeout: 30000
+  });
+  console.log(output);
+
+  const expectedPattern = new RegExp([
+    '^TAP version 13',
+    '# test lambda rejects returns permissions based on role',
+    'ok 1 Check admin and viewer has all permissions',
+    'ok 2 Check editor has write permission',
+    'ok 3 Check editor has read permission',
+    '',
+    '1..3',
+    '# tests 3',
+    '# pass  3',
+    '',
+    '# ok',
+    ''
+  ].join('\\n'));
+  expect(output).toMatch(expectedPattern);
+});
