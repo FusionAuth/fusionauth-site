@@ -9,7 +9,7 @@ READINESS_TIMEOUT=300
 cleanup() {
   echo "Cleaning up..."
   [ -n "$LOGS_PID" ] && kill "$LOGS_PID" 2>/dev/null || true
-  docker stop php 2>/dev/null || true
+  docker stop testApp 2>/dev/null || true
   cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
 }
 trap cleanup EXIT
@@ -71,24 +71,27 @@ echo "Validating docker compose config..."
 cd "$PROJECT_DIR"
 docker compose -f docker-compose.yml config > /dev/null
 
-echo "Installing dependencies and running Laravel checks..."
-docker run --rm -v "$PROJECT_DIR/complete-application:/app" -w /app composer:2.10 sh -c \
-  "composer install --no-interaction && php artisan config:clear && php artisan route:list > /dev/null"
-
 echo "Pulling latest FusionAuth image..."
 docker compose pull
 
 echo "Starting FusionAuth..."
 docker compose up -d
 
-echo "Starting PHP app..."
-docker run --network host --name php --rm -v "$PROJECT_DIR/complete-application":/app -w /app composer:2.10 sh -c \
-  "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000" &
-PHP_PID=$!
-until docker inspect php > /dev/null 2>&1; do
+echo "Installing Node.js app dependencies..."
+docker run --rm -v "$PROJECT_DIR/complete-application:/app" -w /app node:26 sh -c \
+  "npm install"
+
+echo "Starting Node.js app..."
+docker run --network host --name testApp --rm -v "$PROJECT_DIR/complete-application":/app -w /app \
+  -e CLIENT_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e \
+  -e CLIENT_SECRET=super-secret-secret-that-should-be-regenerated-for-production \
+  -e BASE_URL=http://localhost:9011 \
+  node:26 sh -c "npm start" &
+NODE_PID=$!
+until docker inspect testApp > /dev/null 2>&1; do
   sleep 1
 done
-docker logs -f php &
+docker logs -f testApp &
 LOGS_PID=$!
 
 echo "Waiting for FusionAuth to be ready..."
@@ -97,8 +100,8 @@ wait_for "FusionAuth" fusionauth_ready
 echo "Creating lambda..."
 create_lambda "lambda_testing_key" "http://localhost:9011"
 
-echo "Waiting for PHP app to be ready..."
-wait_for "PHP app" curl -sf http://localhost:8000
+echo "Waiting for Node.js app to be ready..."
+wait_for "Node.js app" curl -sf http://localhost:3000
 
 echo "Running Playwright tests..."
 cd "$SCRIPT_DIR"
