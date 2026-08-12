@@ -156,6 +156,9 @@ _DEFAULT_EXCLUDE_DEST = [
     r"globenewswire\.com",          # press release service; times out for non-browser clients
     r"www\.nuget\.org",             # NuGet.org blocks crawlers; framework packages return 404
     r"developer\.apple\.com",       # Apple docs block crawlers; method-signature URLs break extractors
+    r"nvd\.nist\.gov",              # NIST blocks crawlers
+    r"hacktoberfest\.com",          # registration links break in off-season
+    r"Permit\.io",                  # times out regularly
 ]
 
 
