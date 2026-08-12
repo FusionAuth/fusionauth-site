@@ -1,5 +1,7 @@
 # FusionAuth Site
 
+[![Check external links](https://github.com/FusionAuth/fusionauth-site/actions/workflows/check-external-links.yml/badge.svg)](https://github.com/FusionAuth/fusionauth-site/actions/workflows/check-external-links.yml)
+
 Despite the name, this repo only contains the FusionAuth documentation, articles, developer tools, and blog. The root `fusionauth.io` site is managed via Webflow.
 
 This content is hosted in the following subdirectories of `fusionauth.io`:
