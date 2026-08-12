@@ -204,7 +204,7 @@ const config = defineConfig({
       // Destinations to skip checking (normalized root-relative path, prefix string or RegExp)
       excludeDestinations: [
         // Routes that only exist at runtime (auth, Flask examples in code blocks)
-        '/login', '/logout', '/register',
+        '/login', '/logout', '/register', '/user/login', '/user/logout',
         // Pages that live outside the Astro build (marketing site, external tools)
         // No trailing slash — prefix match covers /community and /community/foo
         '/platform', '/cdn', '/dev-tools', '/tech-papers', '/feature', '/features',

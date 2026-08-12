@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 const KEY = '__openapiMissing';
 
 export function recordMissing(method, path, page) {
