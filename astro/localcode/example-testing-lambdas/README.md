@@ -16,7 +16,9 @@ This project is paired with the [Lambda Guide](https://fusionauth.io/docs/v1/tec
 
 The `docker-compose.yml` file and the `kickstart` directory are used to start and configure a local FusionAuth server.
 
-The `/app` directory contains a fully working version of the application.
+The `/app` directory contains an Express.js application that uses FusionAuth for authentication.
+
+The `/complete-application` directory contains the same app plus a full lambda testing infrastructure.
 
 ## Project Dependencies
 
