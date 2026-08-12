@@ -81,3 +81,48 @@ test('App OIDC login via FusionAuth triggers lambda', async ({ page }) => {
     throw error;
   }
 });
+
+test('Update lambda via API and verify', async ({ request }) => {
+  const getResponse = await request.get(`${FA_URL}/api/lambda/${LAMBDA_ID}`, {
+    headers: { 'Authorization': API_KEY }
+  });
+  expect(getResponse.ok()).toBeTruthy();
+  const { lambda } = await getResponse.json();
+
+  const updatedLambda = {
+    ...lambda,
+    body: lambda.body.replaceAll('Hello World!', 'Goodbye World!')
+  };
+
+  const putResponse = await request.put(`${FA_URL}/api/lambda/${LAMBDA_ID}`, {
+    headers: { 'Authorization': API_KEY },
+    data: { lambda: updatedLambda }
+  });
+  expect(putResponse.ok()).toBeTruthy();
+
+  const verifyResponse = await request.get(`${FA_URL}/api/lambda/${LAMBDA_ID}`, {
+    headers: { 'Authorization': API_KEY }
+  });
+  expect(verifyResponse.ok()).toBeTruthy();
+  const { lambda: verifiedLambda } = await verifyResponse.json();
+  expect(verifiedLambda.body).toContain('Goodbye World!');
+  expect(verifiedLambda.body).not.toContain('Hello World!');
+});
+
+test('App OIDC login still works after lambda update', async ({ page }) => {
+  const dumpDiagnostics = trackPageDiagnostics(page);
+  try {
+    await page.goto('http://localhost:3000');
+    await page.getByRole('link', { name: /Login/i }).click();
+    await page.waitForURL(/localhost:9011/);
+    await page.getByPlaceholder('Login').fill('richard@example.com');
+    await page.getByPlaceholder('Password').fill('password');
+    await page.getByRole('button', { name: 'Submit' }).click();
+    await page.waitForURL(/localhost:3000/);
+    await expect(page.getByText('Hello Richard')).toBeVisible();
+  }
+  catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
+});

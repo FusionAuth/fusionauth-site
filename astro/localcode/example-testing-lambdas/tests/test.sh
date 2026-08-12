@@ -37,9 +37,7 @@ fusionauth_ready() {
 create_lambda() {
   local api_key="$1"
   local fa_url="$2"
-
   local response http_code body lambda_id
-
   response=$(curl -s -X POST "${fa_url}/api/lambda/f3b3b547-7754-452d-8729-21b50d111505" \
     -H "Authorization: ${api_key}" \
     -H "Content-Type: application/json" \
@@ -59,7 +57,6 @@ create_lambda() {
     echo "Failed to create lambda (HTTP $http_code): $body" >&2
     return 1
   fi
-
   response=$(curl -s -X PATCH "${fa_url}/api/application/E9FDB985-9173-4E01-9D73-AC2D60D1DC8E" \
     -H "Authorization: ${api_key}" \
     -H "Content-Type: application/json" \
@@ -87,7 +84,7 @@ cd "$PROJECT_DIR"
 docker compose -f docker-compose.yml config > /dev/null
 
 echo "Pulling latest FusionAuth image..."
-docker compose pull
+#docker compose pull
 
 echo "Starting FusionAuth..."
 docker compose up -d
