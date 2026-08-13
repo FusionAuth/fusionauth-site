@@ -70,11 +70,21 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
   <APIField name="application.jwtConfiguration.accessTokenKeyId" type="UUID" optional since="1.6.0">
     The Id of the signing key used to sign the access token.
   </APIField>
+  <APIField name="application.jwtConfiguration.accessTokenVerificationKeyIds" type="Array<UUID>" optional since="1.69.0">
+    The list of access token verification key Ids that are trusted by this application. **`application.jwtConfiguration.accessTokenKeyId`** is implicitly included in this list.
+
+    Facilitates key rotation by trusting multiple keys: if you change **`application.jwtConfiguration.accessTokenKeyId`** to a new key and supply the previous key in this field, FusionAuth will trust JWTs signed by both keys, while only signing JWTs with the new key.
+  </APIField>
   <APIField name="application.jwtConfiguration.enabled" type="Boolean" optional>
     Indicates if this application is using the JWT configuration defined here or the global JWT configuration defined by the Tenant. If this is `false` the signing algorithm configured in the Tenant will be used. If `true` the signing algorithm defined in this application will be used.
   </APIField>
   <APIField name="application.jwtConfiguration.idTokenKeyId" type="UUID" optional since="1.6.0">
     The Id of the signing key used to sign the Id token.
+  </APIField>
+  <APIField name="application.jwtConfiguration.idTokenVerificationKeyIds" type="Array<UUID>" optional since="1.69.0">
+    The list of Id token verification key Ids that are trusted for this application. This list always implicitly includes **`application.jwtConfiguration.idTokenKeyId`**.
+
+    Facilitates key rotation by trusting multiple keys: if you change **`application.jwtConfiguration.idTokenKeyId`** to a new key and supply the previous key in this field, FusionAuth will trust JWTs signed by both keys, while only signing JWTs with the new key.
   </APIField>
   <APIField name="application.jwtConfiguration.refreshTokenExpirationPolicy" type="String" optional defaults="Fixed" since="1.17.0">
     The Refresh Token expiration policy.
@@ -574,12 +584,16 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
   <APIField name="application.samlv2Configuration.debug" type="Boolean" optional since="1.6.0">
     Whether or not FusionAuth will log SAML debug messages to the event log. This is useful for debugging purposes.
   </APIField>
-  <APIField name="application.samlv2Configuration.defaultVerificationKeyId" type="UUID" optional since="1.20.0">
-    The verification key used to verify a signature when the SAML v2 Service Provider is using HTTP Redirect Bindings.
+  <APIField name="application.samlv2Configuration.defaultVerificationKeyId" type="UUID" optional deprecated since="1.20.0">
+    The verification key used to verify a signature when the SAML v2 Service Provider is using HTTP Redirect Bindings OR HTTP POST Bindings.
 
-    When HTTP POST Bindings are used, this is the default verification key used if a `[KeyInfo]` element is not found in the SAML AuthNRequest. If a `[KeyInfo]` element is found, Key Master will be used to resolve the key and this configuration will not be used to verify the request signature.
+    If a `[KeyInfo]` element is found, Key Master will be used to resolve the key but the key must still match this value.
 
-    This parameter is required when **application.samlv2Configuration.requireSignedRequests** is set to `true`.
+    This parameter or **`application.samlv2Configuration.verificationKeyIds`** is required when **`application.samlv2Configuration.requireSignedRequests`** is set to `true`.
+
+    <DeprecatedSince since="1.69.0">
+      In version `1.69.0` and above, use **`application.samlv2Configuration.verificationKeyIds`**. For backward compatibility, Fusionauth populates **`application.samlv2Configuration.defaultVerificationKeyId`** with the first entry in **`application.samlv2Configuration.verificationKeyIds`**.
+    </DeprecatedSince>
   </APIField>
   <APIField name="application.samlv2Configuration.enabled" type="Boolean" optional since="1.6.0">
     Determines if the SAML IdP is enabled for this Application.
@@ -610,10 +624,16 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
 
     This configuration is functionally equivalent to the Logout Behavior found in the OAuth2 configuration.
   </APIField>
-  <APIField name="application.samlv2Configuration.logout.defaultVerificationKeyId" type="UUID" optional since="1.25.0">
-    The unique Id of the Key used to verify the signature if the public key cannot be determined by the `KeyInfo` element when using POST bindings, or the key used to verify the signature when using HTTP Redirect bindings.
+  <APIField name="application.samlv2Configuration.logout.defaultVerificationKeyId" type="UUID" optional deprecated since="1.25.0">
+    The verification key used to verify a signature when the SAML v2 Service Provider is using HTTP Redirect Bindings OR HTTP POST Bindings.
 
-    This parameter is required when **application.samlv2Configuration.logout.requireSignedRequests** is set to `true`.
+    If a `[KeyInfo]` element is found, Key Master will be used to resolve the key but the key must still match this value.
+
+    This parameter or **`application.samlv2Configuration.logout.verificationKeyIds`** is required when **`application.samlv2Configuration.logout.requireSignedRequests`** is set to `true`.
+
+    <DeprecatedSince since="1.69.0">
+      In version `1.69.0` and above, use **`application.samlv2Configuration.logout.verificationKeyIds`**. For backwards compatibility, Fusionauth populates **`application.samlv2Configuration.logout.defaultVerificationKeyId`** with the first entry in **`application.samlv2Configuration.logout.verificationKeyIds`**.
+    </DeprecatedSince>
   </APIField>
   <APIField name="application.samlv2Configuration.logout.keyId" type="UUID" optional since="1.25.0">
     The unique Id of the Key used to sign the SAML Logout response.
@@ -623,7 +643,7 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
   <APIField name="application.samlv2Configuration.logout.requireSignedRequests" type="Boolean" required since="1.25.0">
     Set this parameter equal to `true` to require the SAML v2 Service Provider to sign the Logout request. When this value is `true` all Logout requests missing a signature will be rejected.
 
-    When set to `true`, the parameter **application.samlv2Configuration.logout.defaultVerificationKeyId** is required.
+    When set to `true`, one of these parameters is required: **`application.samlv2Configuration.logout.verificationKeyIds`** (`1.69.0` and above) or **`application.samlv2Configuration.logout.defaultVerificationKeyId`** (before `1.69.0`).
   </APIField>
   <APIField name="application.samlv2Configuration.logout.singleLogout.enabled" type="Boolean" optional since="1.25.0">
     Whether or not SAML Single Logout for this SAML IdP is enabled.
@@ -642,6 +662,13 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
     <Xmlsignaturec14nmethodDescription signed_entity="SAML Single Logout response" />
     <Xmlsignaturec14nmethodValues signed_entity="SAML Single Logout response" />
   </APIField>
+  <APIField name="application.samlv2Configuration.logout.verificationKeyIds" type="Array<UUID>" optional since="1.69.0">
+    The verification keys used to verify a signature when the SAML v2 Service Provider is using HTTP Redirect Bindings OR HTTP POST Bindings.
+
+    If a `[KeyInfo]` element is found, Key Master will be used to resolve the key but the key must still be included in this list.
+
+    This parameter is required when **`application.samlv2Configuration.logout.requireSignedRequests`** is set to `true`. Use this parameter in version `1.69.0` and above instead of **`application.samlv2Configuration.logout.defaultVerificationKeyId`**.
+  </APIField>
   <APIField name="application.samlv2Configuration.logout.xmlSignatureC14nMethod" type="String" optional since="1.25.0">
     <Xmlsignaturec14nmethodDescription signed_entity="SAML Single Logout response" />
     <Xmlsignaturec14nmethodValues signed_entity="SAML Single Logout response" />
@@ -654,7 +681,14 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
   <APIField name="application.samlv2Configuration.requireSignedRequests" type="Boolean" optional since="1.20.0">
     Set this parameter equal to `true` to require the SAML v2 Service Provider to sign the request. When this value is `true` all requests missing a signature will be rejected.
 
-    When set to `true`, the parameter **application.samlv2Configuration.defaultVerificationKeyId** is required.
+    When set to `true`, one of these parameters is required: **`application.samlv2Configuration.verificationKeyIds`** (`1.69.0` and above) or **`application.samlv2Configuration.defaultVerificationKeyId`** (before `1.69.0`).
+  </APIField>
+  <APIField name="application.samlv2Configuration.verificationKeyIds" type="Array<UUID>" optional since="1.69.0">
+    The verification keys used to verify a signature when the SAML v2 Service Provider is using HTTP Redirect Bindings OR HTTP POST Bindings.
+
+    If a `[KeyInfo]` element is found, Key Master will be used to resolve the key but the key must still be included in this list.
+
+    This parameter is required when **`application.samlv2Configuration.requireSignedRequests`** is set to `true`. Use this parameter in version 1.69.0 and above instead of **`application.samlv2Configuration.defaultVerificationKeyId`**.
   </APIField>
   <APIField name="application.samlv2Configuration.xmlSignatureC14nMethod" type="String" optional since="1.6.0">
     <Xmlsignaturec14nmethodDescription signed_entity="SAML response" />
