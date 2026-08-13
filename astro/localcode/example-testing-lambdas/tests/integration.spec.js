@@ -128,7 +128,23 @@ test('App OIDC login still works after lambda update', async ({ page }) => {
   }
 });
 
-test('test_1.js: login returns JWT with "Goodbye World"', async () => {
+test('test_1.js: login returns JWT with "Goodbye World"', async ({ request }) => {
+  // FusionAuth's lambda cache does not always invalidate synchronously after a PUT
+  // (confirmed: an immediate login can still run the pre-update lambda body for a few
+  // seconds). Poll a real login until it reflects the "Goodbye World" update from the
+  // previous test before running test_1.js, so this test isn't racing that cache.
+  await expect(async () => {
+    const loginResponse = await request.post(`${FA_URL}/api/login`, {
+      headers: { 'Authorization': API_KEY },
+      data: { applicationId: APP_ID, loginId: 'richard@example.com', password: 'password' }
+    });
+    expect(loginResponse.ok()).toBeTruthy();
+    const { token } = await loginResponse.json();
+    const [, payload] = token.split('.');
+    const { message } = JSON.parse(Buffer.from(payload, 'base64').toString());
+    expect(message).toBe('Goodbye World!');
+  }).toPass({ timeout: 15000, intervals: [500, 1000, 2000] });
+
   const output = execSync('node test_1.js', {
     cwd: '/app',
     encoding: 'utf-8',
