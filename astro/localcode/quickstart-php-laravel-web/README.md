@@ -1,7 +1,7 @@
 # FusionAuth Laravel Quickstart
 
 > [!WARNING]
-> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/localcode/quickstart-php-laravel-web). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-quickstart-php-laravel-web) instead.
+> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/localcode/quickstart-php-laravel-web). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
 
 ## Documentation
 
@@ -15,7 +15,6 @@ Further reading:
 
 * [PHP](https://www.php.net/manual/en/install.php) 8.3
 * [Composer](https://getcomposer.org/)
-* [Nodejs](https://nodejs.org/)
 * [Docker](https://www.docker.com) version 20 or later.
 
 ## How To Run
