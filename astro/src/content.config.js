@@ -69,6 +69,7 @@ const articlesCollection = defineCollection({
     order: z.number().default(1000),
     title: z.string(),
     featured: z.boolean().default(false),
+    enableKapa: z.boolean().optional(),
   }),
 });
 
@@ -98,6 +99,7 @@ const docsCollection = defineCollection({
     sideNavSimple: z.boolean().default(false),
     hideBgImage: z.boolean().optional(),
     rssUrl: z.string().optional(),
+    enableKapa: z.boolean().optional(),
   }),
 });
 
@@ -129,6 +131,7 @@ const blogCollection = defineCollection({
     excerpt_separator: z.string().optional(),
     canonicalUrl: z.string().optional(),
     blurb: z.string().optional(),
+    enableKapa: z.boolean().optional(),
   }),
 });
 
