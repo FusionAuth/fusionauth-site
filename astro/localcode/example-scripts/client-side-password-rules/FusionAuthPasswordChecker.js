@@ -52,7 +52,7 @@ class FusionAuthPasswordChecker {
       this.#check(password, (value) => value.length <= this.#maxLength, () => 'too long');
 
       if (this.#requireNumber) {
-        this.#check(password, (value) => /\d/.test(value), () => 'must container a number');
+        this.#check(password, (value) => /\d/.test(value), () => 'must contain a number');
       }
 
       if (this.#requireMixedCase) {
