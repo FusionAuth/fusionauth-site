@@ -31,8 +31,7 @@ First clone the example repo and change into the project directory:
 
 ```shell
 git clone https://github.com/FusionAuth/fusionauth-quickstart-php-web.git
-cd fusionauth-quickstart-php-web/complete-application
-composer install
+cd fusionauth-quickstart-php-web
 ```
 
 Start the containers with docker compose.
@@ -41,7 +40,7 @@ Start the containers with docker compose.
 docker compose up
 ```
 
-This will start a PostgreSQL, Opensearch and FusionAuth container.
+This will start a PostgreSQL and FusionAuth container.
 
 FusionAuth will initially be configured with these settings:
 

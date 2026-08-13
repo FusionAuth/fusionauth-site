@@ -1,7 +1,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>FusionAuth OpenID and PKCE example</title>
+  <title>FusionAuth OpenID example</title>
   <link rel="stylesheet" href="static/changebank.css">
 </head>
 <body>
