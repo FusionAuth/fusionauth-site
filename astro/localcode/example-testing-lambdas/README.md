@@ -1,10 +1,7 @@
 # Testing Lambdas Application
 
 > [!WARNING]
-> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/localcode/example-testing-lambdas). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-example-testing-lambdas) instead.
-
-- remove search from compose file
-- reset && docker compose down -v && docker compose up
+> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/localcode/example-testing-lambdas). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
 
 This repo holds a modified version of the FusionAuth 5 minute getting started guide. It uses the kickstart functionality to obviate manual configuration of FusionAuth.
 
@@ -32,7 +29,7 @@ To run FusionAuth, just stand up the docker containers using `docker-compose`.
 docker compose up
 ```
 
-This will start a PostgreSQL database, and Elastic service, and the FusionAuth server.
+This will start a PostgreSQL database and the FusionAuth server.
 
 ## Running the Example App
 
