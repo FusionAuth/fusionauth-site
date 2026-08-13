@@ -145,11 +145,29 @@ test('test_1.js: login returns JWT with "Goodbye World"', async ({ request }) =>
     expect(message).toBe('Goodbye World!');
   }).toPass({ timeout: 15000, intervals: [500, 1000, 2000] });
 
-  const output = execSync('node test_1.js', {
-    cwd: '/app',
-    encoding: 'utf-8',
-    timeout: 30000
-  });
+  // test_1.js creates a user, logs in, then immediately deletes the user in a
+  // try/finally with no delay. FusionAuth writes a raw_logins audit row for that
+  // login on a background thread (LoginQueue$LoginThread), so the delete can race
+  // that write: if the delete runs first, the audit insert then fails its foreign
+  // key against the now-gone user; if the insert wins, the delete fails instead.
+  // Confirmed via the FusionAuth container's own logs (a raw_logins_fk_2 violation
+  // on one side or the other), independent of the lambda cache issue above. It's a
+  // transient FusionAuth-side race, not a bug in test_1.js's own logic (which is
+  // shown verbatim to readers via <LocalCode>), so retry the whole script rather
+  // than editing it.
+  let output;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      output = execSync('node test_1.js', {
+        cwd: '/app',
+        encoding: 'utf-8',
+        timeout: 30000
+      });
+      break;
+    } catch (error) {
+      if (attempt >= 3) throw error;
+    }
+  }
   console.log(output);
 
   const expectedPattern = new RegExp([
