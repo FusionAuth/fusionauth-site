@@ -84,7 +84,7 @@ cd "$PROJECT_DIR"
 docker compose -f docker-compose.yml config > /dev/null
 
 echo "Pulling latest FusionAuth image..."
-#docker compose pull
+docker compose pull
 
 echo "Starting FusionAuth..."
 docker compose up -d
