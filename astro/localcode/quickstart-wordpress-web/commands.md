@@ -69,19 +69,20 @@ docker compose exec cli wp plugin install daggerhart-openid-connect-generic --ac
 ## Authentication - Configure OIDC
 
 > Settings -> Open ID Connect Client, enter settings:
-> - Client ID: `E9FDB985-9173-4E01-9D73-AC2D60D1DC8E`
+> - Client ID: `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
 > - Client Secret Key: `super-secret-secret-that-should-be-regenerated-for-production`
 > - OpenID Scope: `openid email profile`
 > - Login Endpoint URL: `http://localhost:9011/oauth2/authorize`
 > - Userinfo Endpoint URL: `http://fusionauth:9011/oauth2/userinfo`
 > - Token Validation Endpoint URL: `http://fusionauth:9011/oauth2/token`
 > - End Session Endpoint URL: `http://localhost:9011/oauth2/logout`
+> - JWKS Endpoint URL: `http://fusionauth:9011/.well-known/jwks.json`
 > - Nickname Key: `sub`
 > - Display Name Formatting: `{email}`
 > - Enable "Link Existing Users": yes
 
 ```console
-docker compose exec cli wp option update openid_connect_generic_settings '{"client_id":"E9FDB985-9173-4E01-9D73-AC2D60D1DC8E","client_secret":"super-secret-secret-that-should-be-regenerated-for-production","scope":"openid email profile","endpoint_login":"http://localhost:9011/oauth2/authorize","endpoint_userinfo":"http://fusionauth:9011/oauth2/userinfo","endpoint_token":"http://fusionauth:9011/oauth2/token","endpoint_end_session":"http://localhost:9011/oauth2/logout","identity_key":"sub","nickname_key":"sub","email_key":"email","displayname_format":"{email}","link_existing_users":"yes","redirect_url":"http://localhost:3000/wp-admin/admin-ajax.php?action=openid-connect-authorize","allow_internal_idp":true}' --format=json
+docker compose exec cli wp option update openid_connect_generic_settings '{"client_id":"e9fdb985-9173-4e01-9d73-ac2d60d1dc8e","client_secret":"super-secret-secret-that-should-be-regenerated-for-production","scope":"openid email profile","endpoint_login":"http://localhost:9011/oauth2/authorize","endpoint_userinfo":"http://fusionauth:9011/oauth2/userinfo","endpoint_token":"http://fusionauth:9011/oauth2/token","endpoint_end_session":"http://localhost:9011/oauth2/logout","endpoint_jwks":"http://fusionauth:9011/.well-known/jwks.json","identity_key":"sub","nickname_key":"sub","email_key":"email","displayname_format":"{email}","link_existing_users":"yes","allow_internal_idp":true}' --format=json
 ```
 
 ## Prevent Default Login (Optional)
@@ -178,9 +179,12 @@ docker compose exec cli wp media import /var/www/html/money.jpg --title="Money"
 > Create shortcodes using Shortcoder (stores as custom post type `shortcoder`).
 > The shortcode syntax is `[sc name="name"]`.
 > Combine HTML + CSS + JS into single shortcode content.
+> Note: The money.jpg URL in home.html may need updating based on your WordPress uploads directory.
 
 ```console
-docker compose exec cli wp post create --post_type=shortcoder --post_name="home" --post_title="home" --post_content="<style>$(cat complete-application/changebank.css)</style>$(cat complete-application/home.html)" --post_status=publish
+MONEY_URL=$(docker compose exec cli wp post list --post_type=attachment --name=money --field=guid)
+
+docker compose exec cli wp post create --post_type=shortcoder --post_name="home" --post_title="home" --post_content="<style>$(cat complete-application/changebank.css)</style>$(sed "s|http://localhost:3000/wp-content/uploads/2023/09/money-scaled.jpg|$MONEY_URL|" complete-application/home.html)" --post_status=publish
 
 docker compose exec cli wp post create --post_type=shortcoder --post_name="account" --post_title="account" --post_content="<style>$(cat complete-application/changebank.css)</style>$(cat complete-application/account.html)" --post_status=publish
 
@@ -205,3 +209,74 @@ docker compose exec cli wp rewrite flush
 - Test: http://localhost:3000/change (requires login)
 - Login: `richard@example.com` / `password` (non-admin user)
 - Admin: `admin@example.com` / `password`
+
+## All Commands (copy and paste as one block)
+
+```console
+
+
+
+
+# Install WordPress
+docker compose exec cli wp core install --url="http://localhost:3000" --title="Change Bank" --admin_user="admin" --admin_password="password" --admin_email="admin@example.com" --skip-email
+
+# Set permalinks
+docker compose exec cli wp rewrite structure '/%postname%/'
+
+# Delete default pages
+docker compose exec -T cli wp post list --post_type=page --field=ID --format=csv | tail -n +2 | xargs -I {} docker compose exec -T cli wp post delete {} --force
+
+# Create placeholder pages
+docker compose exec cli wp post create --post_type=page --post_title="Home"    --post_status=publish
+docker compose exec cli wp post create --post_type=page --post_title="Account" --post_status=publish
+docker compose exec cli wp post create --post_type=page --post_title="Change"  --post_status=publish
+
+# Set homepage
+HOME_ID=$(docker compose exec cli wp post list --post_type=page --name=home --field=ID)
+docker compose exec cli wp option update show_on_front page
+docker compose exec cli wp option update page_on_front $HOME_ID
+
+# Install and configure OIDC plugin
+docker compose exec cli wp plugin install daggerhart-openid-connect-generic --activate
+docker compose exec cli wp option update openid_connect_generic_settings '{"client_id":"e9fdb985-9173-4e01-9d73-ac2d60d1dc8e","client_secret":"super-secret-secret-that-should-be-regenerated-for-production","scope":"openid email profile","endpoint_login":"http://localhost:9011/oauth2/authorize","endpoint_userinfo":"http://fusionauth:9011/oauth2/userinfo","endpoint_token":"http://fusionauth:9011/oauth2/token","endpoint_end_session":"http://localhost:9011/oauth2/logout","endpoint_jwks":"http://fusionauth:9011/.well-known/jwks.json","identity_key":"sub","nickname_key":"sub","email_key":"email","displayname_format":"{email}","link_existing_users":"yes","allow_internal_idp":true}' --format=json
+
+# Prevent default login (optional)
+docker compose cp ./complete-application/wp-login.php wp:/var/www/html/wp-login.php
+
+# Install and configure page restriction plugin
+docker compose exec cli wp plugin install simple-page-access-restriction --activate
+docker compose exec cli wp option update spr_settings '{"login_redirect_type":"url","login_redirect_url":"http://localhost:3000/wp-login.php"}' --format=json
+
+# Restrict account and change pages
+ACCOUNT_ID=$(docker compose exec cli wp post list --post_type=page --name=account --field=ID)
+docker compose exec cli wp post meta update $ACCOUNT_ID _spr_restricted "yes"
+CHANGE_ID=$(docker compose exec cli wp post list --post_type=page --name=change --field=ID)
+docker compose exec cli wp post meta update $CHANGE_ID _spr_restricted "yes"
+
+# Install and configure dashboard redirect plugin
+docker compose exec cli wp plugin install remove-dashboard-access-for-non-admins --activate
+docker compose exec cli wp option update rda_settings '{"redirect_url":"http://localhost:3000/account"}' --format=json
+
+# Install shortcoder and shortcode-variables plugins
+docker compose exec cli wp plugin install shortcoder --activate
+docker compose exec cli wp plugin install shortcode-variables --activate
+
+# Upload money image
+docker compose cp ./complete-application/money.jpg wp:/var/www/html/money.jpg
+docker compose exec cli wp media import /var/www/html/money.jpg --title="Money"
+
+# Create shortcodes (replaces money.jpg URL with actual upload path)
+MONEY_URL=$(docker compose exec cli wp post list --post_type=attachment --name=money --field=guid)
+docker compose exec cli wp post create --post_type=shortcoder --post_name="home" --post_title="home" --post_content="<style>$(cat complete-application/changebank.css)</style>$(sed "s|http://localhost:3000/wp-content/uploads/2023/09/money-scaled.jpg|$MONEY_URL|" complete-application/home.html)" --post_status=publish
+docker compose exec cli wp post create --post_type=shortcoder --post_name="account" --post_title="account" --post_content="<style>$(cat complete-application/changebank.css)</style>$(cat complete-application/account.html)" --post_status=publish
+docker compose exec cli wp post create --post_type=shortcoder --post_name="change" --post_title="change" --post_content="<style>$(cat complete-application/changebank.css)</style>$(cat complete-application/change.html)<script>$(cat complete-application/change.js)</script>" --post_status=publish
+
+# Add shortcodes to pages and flush rewrites
+docker compose exec cli wp post update $HOME_ID --post_content='[sc name="home"]'
+docker compose exec cli wp post update $ACCOUNT_ID --post_content='[sc name="account"]'
+docker compose exec cli wp post update $CHANGE_ID --post_content='[sc name="change"]'
+docker compose exec cli wp rewrite flush
+
+
+
+```
