@@ -81,7 +81,7 @@ docker compose exec cli wp plugin install daggerhart-openid-connect-generic --ac
 > - Enable "Link Existing Users": yes
 
 ```console
-docker compose exec cli wp option update openid_connect_generic_settings '{"client_id":"E9FDB985-9173-4E01-9D73-AC2D60D1DC8E","client_secret":"super-secret-secret-that-should-be-regenerated-for-production","scope":"openid email profile","endpoint_login":"http://localhost:9011/oauth2/authorize","endpoint_userinfo":"http://fusionauth:9011/oauth2/userinfo","endpoint_token":"http://fusionauth:9011/oauth2/token","endpoint_end_session":"http://localhost:9011/oauth2/logout","identity_key":"sub","nickname_key":"sub","email_key":"email","displayname_format":"{email}","link_existing_users":"yes"}' --format=json
+docker compose exec cli wp option update openid_connect_generic_settings '{"client_id":"E9FDB985-9173-4E01-9D73-AC2D60D1DC8E","client_secret":"super-secret-secret-that-should-be-regenerated-for-production","scope":"openid email profile","endpoint_login":"http://localhost:9011/oauth2/authorize","endpoint_userinfo":"http://fusionauth:9011/oauth2/userinfo","endpoint_token":"http://fusionauth:9011/oauth2/token","endpoint_end_session":"http://localhost:9011/oauth2/logout","identity_key":"sub","nickname_key":"sub","email_key":"email","displayname_format":"{email}","link_existing_users":"yes","redirect_url":"http://localhost:3000/wp-admin/admin-ajax.php?action=openid-connect-authorize","allow_internal_idp":true}' --format=json
 ```
 
 ## Prevent Default Login (Optional)
