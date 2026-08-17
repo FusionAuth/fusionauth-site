@@ -147,12 +147,12 @@ docker compose exec cli wp plugin install remove-dashboard-access-for-non-admins
 docker compose exec cli wp option update rda_settings '{"redirect_url":"http://localhost:3000/account"}' --format=json
 ```
 
-## Customization - Install WP Coder
+## Customization - Install Shortcoder
 
-> Search for and add the plugin "WP Coder" by WPCoder
+> Search for and add the plugin "Shortcoder" by vaakash
 
 ```console
-docker compose exec cli wp plugin install wp-coder --activate
+docker compose exec cli wp plugin install shortcoder --activate
 ```
 
 ## Customization - Install Snippet Shortcodes
@@ -160,7 +160,7 @@ docker compose exec cli wp plugin install wp-coder --activate
 > Add the plugin "Snippet Shortcodes" by Ali Colville
 
 ```console
-docker compose exec cli wp plugin install snippet-shortcodes --activate
+docker compose exec cli wp plugin install shortcode-variables --activate
 ```
 
 ## Add An Image - Upload money.jpg
@@ -169,27 +169,32 @@ docker compose exec cli wp plugin install snippet-shortcodes --activate
 > Copy the "File URL" from output for use in home.html
 
 ```console
-docker compose cp ./complete-application/money.jpg wp:/tmp/money.jpg
-docker compose exec cli wp media import /tmp/money.jpg --title="Money" --allow-override
+docker compose cp ./complete-application/money.jpg wp:/var/www/html/money.jpg
+docker compose exec cli wp media import /var/www/html/money.jpg --title="Money"
 ```
 
 ## Add Custom Page Shortcodes - Create Shortcodes
 
-> **NOTE:** WP Coder plugin doesn't have WP-CLI support.
-> You must create these via GUI at http://localhost:3000/wp-admin/admin.php?page=wp-code
-> Copy contents from `complete-application/` directory:
-> - SHORTCODE 1 (home): home.html + changebank.css
-> - SHORTCODE 2 (account): account.html + changebank.css
-> - SHORTCODE 3 (change): change.html + changebank.css + change.js
+> Create shortcodes using Shortcoder (stores as custom post type `shortcoder`).
+> The shortcode syntax is `[sc name="name"]`.
+> Combine HTML + CSS + JS into single shortcode content.
+
+```console
+docker compose exec cli wp post create --post_type=shortcoder --post_name="home" --post_title="home" --post_content="<style>$(cat complete-application/changebank.css)</style>$(cat complete-application/home.html)" --post_status=publish
+
+docker compose exec cli wp post create --post_type=shortcoder --post_name="account" --post_title="account" --post_content="<style>$(cat complete-application/changebank.css)</style>$(cat complete-application/account.html)" --post_status=publish
+
+docker compose exec cli wp post create --post_type=shortcoder --post_name="change" --post_title="change" --post_content="<style>$(cat complete-application/changebank.css)</style>$(cat complete-application/change.html)<script>$(cat complete-application/change.js)</script>" --post_status=publish
+```
 
 ## Add Shortcodes To Pages
 
-> After creating shortcodes in WP Coder, update pages:
+> Update pages with Shortcoder shortcodes:
 
 ```console
-docker compose exec cli wp post update $HOME_ID --post_content="[wp_code id=\"$(docker compose exec -T cli wp post list --post_type=wp_code --name=home --field=ID)\"]"
-docker compose exec cli wp post update $ACCOUNT_ID --post_content="[wp_code id=\"$(docker compose exec -T cli wp post list --post_type=wp_code --name=account --field=ID)\"]"
-docker compose exec cli wp post update $CHANGE_ID --post_content="[wp_code id=\"$(docker compose exec -T cli wp post list --post_type=wp_code --name=change --field=ID)\"]"
+docker compose exec cli wp post update $HOME_ID --post_content='[sc name="home"]'
+docker compose exec cli wp post update $ACCOUNT_ID --post_content='[sc name="account"]'
+docker compose exec cli wp post update $CHANGE_ID --post_content='[sc name="change"]'
 docker compose exec cli wp rewrite flush
 ```
 
