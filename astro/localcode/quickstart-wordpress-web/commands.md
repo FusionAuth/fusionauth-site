@@ -126,7 +126,7 @@ docker compose exec cli wp plugin install simple-page-access-restriction --activ
 > Click "Save Changes"
 
 ```console
-docker compose exec cli wp option update spr_settings '{"redirect_type":"url","redirect_url":"http://localhost:3000/wp-login.php"}' --format=json
+docker compose exec cli wp option update ps_simple_par_settings '{"redirect_type":"url","redirect_url":"http://localhost:3000/wp-login.php","redirect_parameter":"redirect_to","login_page":"","remove_data":"","restrict_new_posts":"","post_types":["page"],"taxonomies":[]}' --format=json
 ```
 
 ## Restrict Pages - Restrict Account Page
@@ -276,7 +276,7 @@ docker compose cp ./complete-application/wp-login.php wp:/var/www/html/wp-login.
 
 # Install and configure page restriction plugin
 docker compose exec cli wp plugin install simple-page-access-restriction --activate
-docker compose exec cli wp option update spr_settings '{"redirect_type":"url","redirect_url":"http://localhost:3000/wp-login.php"}' --format=json
+docker compose exec cli wp option update ps_simple_par_settings '{"redirect_type":"url","redirect_url":"http://localhost:3000/wp-login.php","redirect_parameter":"redirect_to","login_page":"","remove_data":"","restrict_new_posts":"","post_types":["page"],"taxonomies":[]}' --format=json
 
 # Restrict account and change pages
 ACCOUNT_ID=$(docker compose exec cli wp post list --post_type=page --name=account --field=ID)
