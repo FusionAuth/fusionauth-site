@@ -4,8 +4,6 @@ description: Learn how to create a passwordless experience for your end users us
 ---
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import InlineField from 'src/components/InlineField.astro';
-import InlineUIElement from 'src/components/InlineUIElement.astro';
 import JSON from 'src/components/JSON.astro';
 import PasswordlessLoginTemplates from 'src/content/docs/_shared/_passwordless-login-templates.mdx';
 import PasswordlessLoginTemplate from 'src/content/docs/_shared/message/_passwordless-txt.mdx';
@@ -56,7 +54,7 @@ In either case, you should:
 * Configure your SMTP/Messenger server settings under <Breadcrumb>Tenants -> Phone</Breadcrumb>. If you are testing this flow out locally, you may want to use [mailcatcher](https://mailcatcher.me/) or a simple HTTP server as a mock messenger for SMS cases.
 * Ensure your templates are set up correctly. You can use the default templates, but you may want to customize them. More on that in the [Customizing Magic Link Authentication](#customizing-magic-link-authentication) section.
 * Create an application
-* Turn on <InlineField>Passwordless Login</InlineField> under the <Breadcrumb>Security</Breadcrumb> tab of the application configuration:
+* Turn on **Passwordless Login** under the <Breadcrumb>Security</Breadcrumb> tab of the application configuration:
 
 ![Turn on magic links passwordless login](/img/docs/lifecycle/authenticate-users/passwordless/turn-on-passwordless.png)
 
@@ -76,14 +74,14 @@ To use this option:
 
 1. Go to your application configuration page in the administration UI
 1. Configure the OAuth redirect URL as you would with any application where users authenticate password ([more on OAuth config here](/docs/lifecycle/authenticate-users/oauth/)). Make sure the Authorization Code grant is an enabled grant
-1. Turn on <InlineField>Passwordless Login</InlineField> under the <Breadcrumb>Security</Breadcrumb> tab of the application configuration:
+1. Turn on **Passwordless Login** under the <Breadcrumb>Security</Breadcrumb> tab of the application configuration:
    ![Turn on magic links passwordless login](/img/docs/lifecycle/authenticate-users/passwordless/turn-on-passwordless.png)
 
 Now you're done with configuration.
 
 To test out how your users would experience this:
 
-1. Go to your application login page and click the <InlineUIElement>Login with a magic link</InlineUIElement> button
+1. Go to your application login page and click the <Breadcrumb>Login with a magic link</Breadcrumb> button
    ![The magic links login magic link](/img/docs/lifecycle/authenticate-users/passwordless/login-page-with-magic-link.png)
 
 1. Enter the user's email or phone number
@@ -132,7 +130,7 @@ There are four parts to build your own magic link flow.
 
 #### Starting the login
 
-You start a magic link login by calling the [`/api/passwordless/start`](/docs/apis/passwordless#start-passwordless-login) endpoint.
+You start a magic link login by calling the [`/api/passwordless/start`](/docs/apis/passwordless/start-passwordless-login) endpoint.
 
 ```shell title="Start Magic Link Login API call"
 API_KEY=...
@@ -152,7 +150,7 @@ For example, if you have a shopping site, you may want to allow a user to add it
 { "cart_id" : 1234 }
 ```
 
-The call to [`/api/passwordless/start`](/docs/apis/passwordless#start-passwordless-login) begins the authentication process, and returns a response with a code:
+The call to [`/api/passwordless/start`](/docs/apis/passwordless/start-passwordless-login) begins the authentication process, and returns a response with a code:
 
 <JSON title="Start Magic Link Email Login Response JSON" src="passwordless/start-response.json" />
 
@@ -162,7 +160,7 @@ Possession of this one-time code authenticates the end user. Deliver this code t
 
 #### Sending the Code Using FusionAuth
 
-This is an optional API call. If you want to send the code via the email server or SMS messenger configured in FusionAuth, you may use the [`/api/passwordless/send`](/docs/apis/passwordless#send-passwordless-login) API endpoint.
+This is an optional API call. If you want to send the code via the email server or SMS messenger configured in FusionAuth, you may use the [`/api/passwordless/send`](/docs/apis/passwordless/send-passwordless-login) API endpoint.
 
 Using this API call allows you the benefits of FusionAuth locale-aware email or SMS templates and delivery capabilities without requiring you to use the FusionAuth login forms.
 
@@ -174,7 +172,7 @@ For phone number use cases, the typical pattern is for your application to prese
 
 #### Completing the Login
 
-When the user provides the code to you, call the [`/api/passwordless/login`](/docs/apis/passwordless#complete-a-passwordless-login) endpoint. You can pass other information such as IP address, but only the code is required.
+When the user provides the code to you, call the [`/api/passwordless/login`](/docs/apis/passwordless/complete-a-passwordless-login) endpoint. You can pass other information such as IP address, but only the code is required.
 
 <JSON title="Complete Magic Link Email Login Request JSON" src="passwordless/start-response.json" />
 
@@ -196,9 +194,9 @@ To do so, set the `noJWT` parameter to true when you call the complete API endpo
 
 Every time you start a magic link or OTP login for a given user, all other codes for that user are marked invalid. Codes are also invalidated after a configurable time limit.
 
-If a user provides a code that is invalid, if their account is locked, or if there is any other issue in the request, a status code in the 400 range will be returned. Please consult the [passwordless API reference docs](/docs/apis/passwordless#response-3) for more details about return status codes.
+If a user provides a code that is invalid, if their account is locked, or if there is any other issue in the request, a status code in the 400 range will be returned. Please consult the [passwordless API reference docs](/docs/apis/passwordless/complete-a-passwordless-login#response-3) for more details about return status codes.
 
-## Two Factor Authentication
+## Two-Factor Authentication
 
 You can use FusionAuth magic link and OTP authentication in combination with two-factor authentication (also called multi-factor authentication or MFA).
 
@@ -206,17 +204,17 @@ When two-factor authentication is enabled for a user, after the code has been pr
 
 Learn more about setting up [two-factor authentication](/docs/lifecycle/authenticate-users/multi-factor-authentication).
 
-### Two Factor Authentication With the API
+### Two-Factor Authentication With the API
 
-Two factor authentication also works when [Using the API Directly](#using-the-api-directly). In that case, when you complete the magic link authentication, instead of getting the user data, you'll get a `twoFactorId`:
+Two-factor authentication also works when [Using the API Directly](#using-the-api-directly). In that case, when you complete the magic link authentication, instead of getting the user data, you'll get a `twoFactorId`:
 
 ```json
 {"twoFactorId":"VnNILnXs_EDG-cjwokwITRApmAxCMkojeT3CUqqLhLc"}
 ```
 
-Your application must then prompt the user for their two-factor code, from SMS or an application like Google Authenticator. Note that this is an entirely different code than the one-time code returned when you started the magic link login. Pass the `twoFactorId` and the two-factor code to the [`/api/two-factor/login`](/docs/apis/login#complete-multi-factor-authentication) endpoint in order to complete the two-factor authentication.
+Your application must then prompt the user for their two-factor code, from SMS or an application like Google Authenticator. Note that this is an entirely different code than the one-time code returned when you started the magic link login. Pass the `twoFactorId` and the two-factor code to the [`/api/two-factor/login`](/docs/apis/login/complete-mfa) endpoint in order to complete the two-factor authentication.
 
-If a user has previously completed a two-factor authentication and has decided to trust the device, you may have a `twoFactorTrustId` value. This can be passed to the [`/api/passwordless/login`](/docs/apis/passwordless#complete-a-passwordless-login) endpoint. If valid, this will skip the two-factor challenge.
+If a user has previously completed a two-factor authentication and has decided to trust the device, you may have a `twoFactorTrustId` value. This can be passed to the [`/api/passwordless/login`](/docs/apis/passwordless/complete-a-passwordless-login) endpoint. If valid, this will skip the two-factor challenge.
 
 ## Customizing Magic Link Authentication
 
@@ -224,7 +222,7 @@ You can configure the FusionAuth passwordless implementation to meet your applic
 
 ### Templates
 
-If you are using the FusionAuth provided email or phone templates, whether you are using the standard FusionAuth user interface or the [`/api/passwordless/send`](/docs/apis/passwordless#send-passwordless-login) API call, you will need to customize them.
+If you are using the FusionAuth provided email or phone templates, whether you are using the standard FusionAuth user interface or the [`/api/passwordless/send`](/docs/apis/passwordless/send-passwordless-login) API call, you will need to customize them.
 
 #### Email Template Customization
 
@@ -254,7 +252,7 @@ Here is more information about [email and message templates](/docs/customize/ema
 
 Here's an example of how to customize the subject with FreeMarker. The subject below shows how to customize the subject with the time the link expires.
 
-```plaintext title=Customizing the subject
+```ftl title=Customizing the subject
 [#setting time_zone = (user.timezone)!"US/Denver"]
 [#setting time_format = "h:mm a"]
 Expires at: ${((.now?date?long + timeToLive * 1000)?number_to_time)?string}
@@ -262,7 +260,7 @@ Expires at: ${((.now?date?long + timeToLive * 1000)?number_to_time)?string}
 
 #### Message Template Customization
 
-The message template is used for SMS delivery. It is similar to the email template, but does not have an HTML version. You can customize it in the same way as the email template, but you will only have a text version. Additionally, you can use the `oneTimeCode` variable to include the one-time code in the message.
+The message template is used for SMS delivery. It is similar to the email template, but does not have an HTML version. You can customize it in the same way as the email template, but you will only have a text version. Additionally, you can use the **`oneTimeCode`** variable to include the one-time code in the message.
 
 ![Modifying the magic link login message template.](/img/docs/lifecycle/authenticate-users/passwordless/modifying-message-template.png)
 
@@ -311,8 +309,8 @@ You can choose to disable passwords to enforce passwordless login. See the [Pass
 
 ### Magic Link Button Not Appearing on Login Page
 
-If the <InlineUIElement>Login with a magic link</InlineUIElement> button does not appear on your login page, check the following:
-* Ensure that the application has <InlineField>Passwordless Login</InlineField> enabled under the <Breadcrumb>Security</Breadcrumb> tab.
+If the <Breadcrumb>Login with a magic link</Breadcrumb> button does not appear on your login page, check the following:
+* Ensure that the application has **Passwordless Login** enabled under the <Breadcrumb>Security</Breadcrumb> tab.
 * Ensure that the application and/or tenant has a valid email or phone template configured for Passwordless Login.
 * Ensure that SMS and/or email is configured in the tenant settings.
 

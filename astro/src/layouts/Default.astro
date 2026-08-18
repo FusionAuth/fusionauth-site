@@ -1,24 +1,22 @@
 ---
-import '../css/style.css';
-import Head from '../components/Head.astro';
-import Navigation from '../components/Navigation.astro';
-import GitHubEdit from '../components/GitHubEdit.astro';
-import Search from '../components/search/Search.astro';
-import TOC from '../components/TOC.astro';
-import { specialCaps } from '../tools/string';
-import IndexableBody from '../components/search/IndexableBody.astro';
-import { Marked } from "marked";
-import Kapa from "src/components/Kapa.astro";
+import 'src/css/style.css';
+import Head from 'src/components/Head.astro';
+import Navigation from 'src/components/Navigation.astro';
+import GitHubEdit from 'src/components/GitHubEdit.astro';
+import DocSearch from 'src/components/search/DocSearch.astro';
+import TOC from 'src/components/TOC.astro';
+import { specialCaps } from 'src/tools/string';
+import { Marked } from 'marked';
+import CodeCopyButton from 'src/components/CodeCopyButton.astro';
 import { Icon } from "astro-iconset/components";
-import CodeCopyButton from "src/components/CodeCopyButton.astro";
-
+import Footer from '../components/Footer.astro'
 interface Props {
   author?: string;
   date?: string;
   description?: string;
   disableTOC?: boolean;
-  excludeFromSearchIndex?: boolean,
-  frontmatter?: Record<string, any>,
+  enableKapa?: boolean;
+  frontmatter?: Record<string, any>;
   headings?: any[];
   htmlTitle?: string;
   icon?: string;
@@ -33,6 +31,8 @@ interface Props {
   maxTocDepth?: number;
   noBreadcrumb: boolean;
   isIndexPage?: boolean;
+  hideBgImage?: boolean;
+  rssUrl?: string;
 }
 
 let {
@@ -40,8 +40,8 @@ let {
   date,
   description = "Looks like the developers forgot to include a description for this page. Sorry about that.",
   disableTOC,
-  excludeFromSearchIndex = false,
   frontmatter,
+  enableKapa,
   headings = [],
   htmlTitle = "",
   icon,
@@ -54,211 +54,227 @@ let {
   title = "",
   contribute = true,
   breadcrumbs = [],
-  searchFilters = {},
   maxTocDepth,
   isIndexPage = false,
-}: Props = Astro.props;
+  hideBgImage = false,
+  rssUrl,
+} = Astro.props;
 
-author = frontmatter.author ? frontmatter.author : author;
-date = frontmatter.date ? frontmatter.date : date;
-description = frontmatter.description ? frontmatter.description : description;
-icon = frontmatter.icon ? frontmatter.icon : icon;
-darkIcon = frontmatter.darkIcon ? frontmatter.darkIcon : darkIcon;
-image = frontmatter.image ? frontmatter.image : image;
-section = frontmatter.section ? frontmatter.section : section;
-title = frontmatter.title ? frontmatter.title : title;
-htmlTitle = frontmatter.htmlTitle ? frontmatter.htmlTitle : title;
-disableTOC = frontmatter.disableTOC ? frontmatter.disableTOC : disableTOC;
+author = frontmatter?.author ?? author;
+date = frontmatter?.date ?? date;
+description = frontmatter?.description ?? description;
+enableKapa = frontmatter?.enableKapa ?? true;
+icon = frontmatter?.icon ?? icon;
+darkIcon = frontmatter?.darkIcon ?? darkIcon;
+image = frontmatter?.image ?? image;
+title = frontmatter?.title ?? title;
+htmlTitle = frontmatter?.htmlTitle ?? title;
+disableTOC = frontmatter?.disableTOC ?? disableTOC;
+hideBgImage = frontmatter?.hideBgImage ?? frontmatter?.hidebgImage ?? hideBgImage;
+rssUrl = frontmatter?.rssUrl ?? frontmatter?.rssUrl ?? rssUrl;
 
-if (author && !searchFilters['author']) {
-  searchFilters = {...searchFilters, author: [author]}
-}
-if (section && !searchFilters['section']) {
-  searchFilters = {...searchFilters, section: [section]}
-}
+const outerStyles = "mx-auto max-w-8xl px-4 2xl:container lg:flex lg:items-start";
+const mainStyles = "flex-1 pt-8 min-w-0 lg:flex";
+// Mobile: fixed overlay so it covers the footer regardless of scroll position.
+// Desktop: sticky within the outer div (which excludes the footer), so the containing block
+// bottom = footer top — the sidebar naturally stops there without any JS.
+// lg:order-first keeps the sidebar visually first (left column) in the flex row
+// even though it comes after <main> in DOM order. DOM-after-content means LLM
+// agents converting raw HTML see the actual docs text before the ~200 KB of
+// navigation links.
+const sideNavStyles = "hidden dark:bg-slate-900 bg-white fixed top-11 left-0 h-[calc(100vh-44px)] w-64 z-40 shadow-2xl overflow-y-auto lg:order-first lg:sticky lg:left-auto lg:ml-0 lg:z-0 lg:shadow-none lg:block lg:bg-opacity-0 lg:w-full lg:max-w-[270px] lg:mr-6 lg:top-[57px] lg:self-start lg:max-h-[calc(100vh-64px)] lg:h-auto lg:pt-2";
+const tocStyles = "order-3 lg:order-3 bottom-0 hidden overflow-hidden pb-10 pt-0 xl:block w-full max-w-[240px] ml-6 sticky top-24 self-start lg:max-h-[calc(100vh-100px)] z-10";
 
-const articleStyles = [
-  // base
-  "pb-24 prose prose-slate dark:prose-invert max-w-none overflow-x-auto w-full",
-  // a
-  "prose-a:no-underline prose-a:border-b-1 dark:prose-a:text-indigo-400 dark:prose-a:border-b-indigo-400 prose-a:border-b-indigo-700 prose-a:text-indigo-700 dark:prose-a:hover:text-orange-200 dark:prose-a:hover:border-b-orange-200 prose-a:hover:text-orange-800 prose-a:hover:border-b-orange-800",
-  // code
-  "prose-code:font-normal dark:prose-code:bg-slate-700/80 prose-code:bg-slate-200/80 prose-code:rounded-sm prose-code:break-words prose-code:px-0.5 prose-code:py-0.4",
-  // headings
-  "dark:prose-headings:text-slate-200 prose-headings:scroll-mt-24 prose-headings:text-slate-800 prose-headings:mb-4",
-  // h2
-  "prose-h2:mt-8",
-  // li
-  "prose-li:text-sm",
-  // p
-  "prose-p:text-sm prose-p:font-normal prose-p:leading-6 dark:prose-p:text-slate-300 prose-p:text-slate-800",
-  // span
-  "prose-span:text-slate-800 dark:prose-span:text-slate-300",
-  // table
-  "prose-table:block prose-table:rounded prose-table:overflow-x-scroll",
-  // td
-  "prose-td:border prose-td-border-collapse prose-td:border-opacity-75 prose-td:border-slate-400 dark:prose-td:border-slate-700 prose-td:px-4 prose-td:text-sm prose-td:font-normal prose-td:leading-5",
-  // th
-  "prose-th:border prose-th-border-collapse prose-th:border-opacity-75 prose-th:border-slate-400 dark:prose-th:border-slate-700 prose-th:px-4 prose-th:py-4 prose-th:text-base prose-th:font-semi-bold prose-th:leading-5",
-  // tr
-  "even:prose-tr:bg-slate-100 dark:even:prose-tr:bg-slate-800/50",
-];
-
-const mainStyles = [
-  "mx-auto max-w-8xl px-4 pt-8",
-  "flex 2xl:container"
-];
-
-const sideNavStyles = [
-  "lg:bg-opacity-0 hidden dark:bg-slate-900 bg-white absolute top-[110px] py-4 w-64 -left-0 z-10",
-  // spacing
-  "lg:block lg:max-w-[270px] lg:w-full lg:pr-4 lg:mr-6 lg:py-0 lg:sticky lg:top-[calc(--spacing(24)+1px)] lg:self-start overflow-y-auto lg:max-h-[calc(100vh-100px)]"
-];
-
-const tocStyles = [
-  "bottom-0 hidden overflow-y-auto pb-10 pt-0 xl:block w-full max-w-[240px] ml-6 sticky top-24 self-start overflow-y-auto lg:max-h-[calc(100vh-100px)] z-10"
-];
-
-// used for copying markdown only
-const path = Astro.url.pathname;
-const fullMarkdownPath = path.replace(/.html$/,'.mdx');
+const isProd = import.meta.env.PROD as boolean;
+const mdPath = isProd ? "LLM_MD_PATH_PLACEHOLDER" : Astro.url.pathname + "?format=md";
 
 const remark = new Marked();
 const markdownifiedTitle = remark.parseInline(htmlTitle);
-// remove simple markdown from string -- note that this is a hack that won't work for complex cases
-const cleanedHtmlTitle = htmlTitle
-  .replace(/[#*`_~]/g, '')
-  .replace(/\[(.*?)\]\(.*?\)/g, '$1')
-  .trim();
+const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.*?\)/g, '$1').trim();
+
 ---
 
-<!DOCTYPE html transition:animate={fade({ duration: "0.1s" })}>
-<html class="antialiased min-h-full" lang="en">
-<Head title=`${cleanedHtmlTitle} | FusionAuth Docs` description={description} canonicalUrl={frontmatter.canonicalUrl} {isIndexPage} {openGraphImage} {searchFilters} />
-<IndexableBody {excludeFromSearchIndex}>
+<!DOCTYPE html>
+<html class="antialiased min-h-full lg:overscroll-y-none" lang="en">
+<Head title={`${cleanedHtmlTitle} | FusionAuth Docs`} description={description} canonicalUrl={frontmatter?.canonicalUrl} {isIndexPage} {openGraphImage} />
+<body class:list={[
+  "font-sans antialiased bg-white min-h-full text-slate-700 dark:bg-slate-900 dark:text-slate-200",
+  !hideBgImage && "bg-articles bg-right-top bg-no-repeat dark:bg-articles-dark"
+]}>
+  
   <script>
-    document.addEventListener("astro:page-load", async () => {
-      // check for mermaid diagrams on page
-      const blocks = document.querySelectorAll("pre code.language-mermaid");
-      if (blocks.length === 0) return; // If no diagrams, stop here. Don't load Mermaid!
-  
-      // import Mermaid only when needed
-      const { default: mermaid } = await import("mermaid");
-      
-      mermaid.initialize({ startOnLoad: false, theme: 'default' });
-      
-      blocks.forEach((block) => {
-        const parent = block.parentElement;
-        const mermaidDiv = document.createElement("div");
-        mermaidDiv.className = "mermaid";
-        mermaidDiv.textContent = block.textContent;
-        parent.replaceWith(mermaidDiv);
+    // scroll to the current page in the left sidebar
+    const sidebar = document.getElementById('side-nav');
+    if (sidebar) {
+      const savedPos = sessionStorage.getItem('sidebarScrollPos');
+      if (savedPos !== null) sidebar.scrollTop = parseInt(savedPos, 10);
+      window.addEventListener('beforeunload', () => {
+        sessionStorage.setItem('sidebarScrollPos', sidebar.scrollTop.toString());
       });
-  
-      await mermaid.run({
-        querySelector: '.mermaid',
+    }
+
+    // Copy markdown button (Updated to handle multiple buttons via class)
+    const copyBtns = document.querySelectorAll(".copy-md-btn");
+    copyBtns.forEach(copyBtn => {
+      copyBtn.addEventListener("click", async () => {
+        try {
+          const url = copyBtn.getAttribute("data-url");
+          if (!url) return;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Failed to fetch markdown");
+          const text = await res.text();
+          await navigator.clipboard.writeText(text);
+          
+          const originalHtml = copyBtn.innerHTML;
+          copyBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+            <span class="text-emerald-600 dark:text-emerald-400 font-medium">Copied!</span>
+          `;
+          setTimeout(() => copyBtn.innerHTML = originalHtml, 2000);
+        } catch (err) {
+          console.error("Copy failed", err);
+        }
       });
     });
-  </script>
-  <slot name="nav"/>
-  <main class:list={mainStyles}>
-  <!-- Left sidebar -->
-  <div id="side-nav" class:list={sideNavStyles}>
-    <script is:inline>
-      document.addEventListener('astro:before-swap', () => {
-        const sidebar = document.getElementById('side-nav');
-        if (sidebar) {
-          // Store the current scroll position in a temporary global variable
-          window.sidebarScrollPos = sidebar.scrollTop;
-        }
-      });
-  
-      document.addEventListener('astro:after-swap', () => {
-        const sidebar = document.getElementById('side-nav');
-        if (sidebar && window.sidebarScrollPos !== undefined) {
-          // Re-apply the saved scroll position
-          sidebar.scrollTop = window.sidebarScrollPos;
-        }
-      });
-    </script>
-    <!-- Relative container for the sticky search -->
-    <div class="relative">
-      <!-- Mobile close button -->
-      <button type="button" class="absolute ml-6 right-1 top-0 lg:hidden" data-widget="visibility-button" data-element="side-nav" aria-
-label="Close Menu">
-        <Icon name="fa7-solid:x" class="h-6" />
-      </button>
 
-        <!-- Search button -->
-        <div class="bg-white hidden pb-1 pr-2 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
-          <button type="button" class="flex items-center pl-2 pr-3 py-1.5 border border-slate-900/10 rounded-md shadow-sm text-slate-400 text-sm w-full dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700 dark:hover:border-slate-500 hover:border-slate-300" data-widget="search-button" aria-label="Search">
-            <Icon name="fa7-solid:search" class="mr-3 h-lh" size={20} />
-            <span>Search...</span>
-            <span class="font-semibold ml-auto pl-3 text-xs" data-widget="search-key-hint"></span>
-          </button>
-        </div>
-
-      <!-- Allow Docs to insert their own here -->
-      { Astro.slots.has('sideNav') &&
-          <slot name="sideNav"></slot>
+    // Close mobile actions menu when clicking outside
+    document.addEventListener('click', (e) => {
+      const isInside = (e.target as HTMLElement).closest('.article-actions-menu');
+      if (!isInside) {
+        document.querySelectorAll('.article-actions-menu[open]').forEach(menu => {
+          menu.removeAttribute('open');
+        });
       }
+    });
 
-      <!-- Default Nav i.e. articles, may just break this out later-->
-      { !Astro.slots.has('sideNav') && <>
+  </script>
+  
+  <slot name="nav"/>
 
-        <!-- Sidebar nav -->
-        <Navigation items={sideMenu}/>
+  <div class={outerStyles}>
 
-        <!-- Contribute -->
-        { contribute && <GitHubEdit {...Astro.props} /> }
+    <main class={mainStyles}>
 
-      </>}
-
+    <article class="fusion-article">
+      <div class="sr-only">
+        🤖 For AI agents: The complete documentation index is available at <a href="/docs/llms.txt">/docs/llms.txt</a>. 
+        A markdown version of this page is available at <a href={mdPath}>{mdPath}</a>.
       </div>
-    </div>
-
-    <!-- Main content section -->
-    <article data-pagefind-body class:list={articleStyles}>
-      <div class="flex items-start">
+      
+      <div class="flex items-start justify-between w-full">
         <div class="flex-grow">
-          {breadcrumbs.length > 0 && <div class="flex flex-row not-prose hidden lg:block items-center pb-6">
-            { breadcrumbs.map((crumb, i) => <>
-              <a href={crumb.href} class="font-medium text-slate-500 mb-4 mt-0 text-sm hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:underline capitalize">{ specialCaps(crumb.title) }</a>
-              { i !== breadcrumbs.length - 1 && <span class="mx-2 text-slate-500">/</span> }
-            </>) }
-          </div> }
-
-          <h1 data-pagefind-meta="title" class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]} set:html={markdownifiedTitle}></h1>
-
-          {author &&
-            <p class="m-0 text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>
+          {breadcrumbs.length > 0 && 
+            <div class="flex flex-row not-prose hidden lg:block items-center pb-6">
+              {breadcrumbs.map((crumb, i) => (
+                <>
+                  <a href={crumb.href} class="font-medium text-slate-500 mb-4 mt-0 text-sm hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:underline capitalize">{specialCaps(crumb.title)}</a>
+                  {i !== breadcrumbs.length - 1 && <span class="mx-2 text-slate-500">/</span>}
+                </>
+              ))}
+            </div>
           }
+
+            <h1 data-markdown-ignore class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]}>
+              <span set:html={markdownifiedTitle} />
+              
+              {rssUrl && (
+                <a 
+                  href={rssUrl} 
+                  title={`${frontmatter.title} RSS Feed`}
+                  class="not-prose no-underline hover:no-underline border-b-0 inline-flex items-center align-middle ml-3 text-orange-500 hover:text-orange-600 transition-colors"
+                >
+                  <Icon 
+                    name="fa7-solid:rss" 
+                    class="h-6 w-6 shrink-0" 
+                  />
+                </a>
+              )}
+            </h1>
+
+          {author && <p class="m-0 text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>}
         </div>
-        {icon &&
-          <img src={icon} alt={title} class="ml-8 mr-4 my-0 w-20 dark:hidden"/>
-        }
-        {darkIcon &&
-          <img src={darkIcon} alt={title} class="ml-8 mr-4 my-0 w-20 hidden dark:block" />
-        }
+        
+        <div class="flex flex-col items-end shrink-0 ml-4 sm:ml-8 mr-0 sm:mr-4 gap-4 not-prose relative">
+          
+          <!-- Desktop Actions -->
+          <div class="hidden md:flex items-center gap-2" data-markdown-ignore>
+            {contribute && <GitHubEdit {...Astro.props} />}
+            
+            <a href={mdPath} target="_blank" rel="noopener noreferrer" title="View Markdown" class="text-xs text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded px-2.5 py-1.5 transition-colors bg-white dark:bg-slate-900 shadow-sm hover:shadow">
+              <svg viewBox="0 0 16 16" fill="none" class="w-3.5 h-3.5"><path d="M14.85 3H1.15C.52 3 0 3.52 0 4.15v7.7c0 .63.52 1.15 1.15 1.15h13.7c.63 0 1.15-.52 1.15-1.15v-7.7C16 3.52 15.48 3 14.85 3zM9 11H7V5.5L4.5 8 2 5.5V11H1V4h1l2.5 2.5L7 4h2v7zm4.5 0L11 8h1.5V4h1v4H15l-1.5 3z" fill="currentColor"/></svg>
+              <span class="font-medium hidden lg:inline">MD</span>
+            </a>
+            
+            <button data-url={mdPath} title="Copy Markdown" class="copy-md-btn text-xs text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded px-2.5 py-1.5 transition-colors bg-white dark:bg-slate-900 shadow-sm hover:shadow cursor-pointer">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+              <span class="font-medium hidden lg:inline">Copy</span>
+            </button>
+          </div>
+
+          <!-- Mobile Actions Menu -->
+          <details class="article-actions-menu group relative md:hidden z-30" data-nomd>
+            <summary class="list-none flex items-center justify-center h-8 w-8 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm hover:shadow hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer [&::-webkit-details-marker]:hidden transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
+              </svg>
+            </summary>
+            
+            <div class="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md shadow-xl overflow-hidden flex flex-col z-50">
+              {contribute && 
+                <div class="border-b border-slate-100 dark:border-slate-800 [&>a]:flex [&>a]:items-center [&>a]:gap-2 [&>a]:px-4 [&>a]:py-3 [&>a]:text-sm [&>a]:text-slate-600 dark:[&>a]:text-slate-300 [&>a]:hover:bg-slate-50 dark:[&>a]:hover:bg-slate-800 [&>a]:border-none [&>a]:shadow-none [&>a>svg]:w-4 [&>a>svg]:h-4">
+                  <GitHubEdit {...Astro.props} />
+                </div>
+              }
+              <a href={mdPath} target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-4 py-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 transition-colors">
+                <svg viewBox="0 0 16 16" fill="none" class="w-4 h-4"><path d="M14.85 3H1.15C.52 3 0 3.52 0 4.15v7.7c0 .63.52 1.15 1.15 1.15h13.7c.63 0 1.15-.52 1.15-1.15v-7.7C16 3.52 15.48 3 14.85 3zM9 11H7V5.5L4.5 8 2 5.5V11H1V4h1l2.5 2.5L7 4h2v7zm4.5 0L11 8h1.5V4h1v4H15l-1.5 3z" fill="currentColor"/></svg>
+                <span class="font-medium">View Markdown</span>
+              </a>
+              <button data-url={mdPath} class="copy-md-btn flex items-center gap-2 px-4 py-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors cursor-pointer w-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                <span class="font-medium">Copy Markdown</span>
+              </button>
+            </div>
+          </details>
+
+          {icon && <img src={icon} alt={title} class="w-20 my-0 dark:hidden"/>}
+          {darkIcon && <img src={darkIcon} alt={title} class="w-20 my-0 hidden dark:block" />}
+        </div>
       </div>
+
       <section>
         <slot/>
       </section>
 
     </article>
 
-    <!-- Table of contents -->
+    
     {!disableTOC &&
-      <aside class:list={tocStyles}>
+      <aside class={tocStyles} data-markdown-ignore data-toc-aside>
         <h3 class="font-semibold text-sm">On this page</h3>
         <nav>
-          <TOC toc={headings} depth={2} maxDepth={maxTocDepth}/>
+          <slot name="toc">
+            <TOC maxDepth={maxTocDepth} />
+          </slot>
         </nav>
       </aside>
     }
   </main>
-  <Kapa />
+
+    <div id="side-nav" class={sideNavStyles} data-markdown-ignore>
+      <div class="relative">
+        <div class="bg-white hidden pb-1 pr-2 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
+          <DocSearch />
+        </div>
+
+        {Astro.slots.has('sideNav') ? <slot name="sideNav"></slot> : <Navigation items={sideMenu}/>}
+      </div>
+    </div>
+
+  </div>
+
+<div id="main-footer" data-markdown-ignore>
+  <Footer enableKapa={enableKapa} />
+</div>
   <CodeCopyButton />
-  <Search/>
-</IndexableBody>
+</body>
 </html>

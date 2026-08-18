@@ -1,23 +1,12 @@
 ---
 import NavButton from './buttons/NavButton.astro';
-import Search from "../search/Search.astro";
 import { specialCaps } from '../../tools/string';
 
-import PurpleLogo from './fa_logo_purple_orange.svg';
-import WhiteLogo from './fa_logo_white_orange.svg';
+import FusionAuthLogo from 'src/components/FusionAuthLogo.astro';
 import MobileMenuIcon from 'src/components/icon/MobileMenuIcon.astro';
-import DownChevronIcon from 'src/components/icon/DownChevronIcon.astro';
 
-interface HeaderItem {
-  name: string;
-  href: string;
-}
-
-interface Button {
-  key: string;
-  mobile?: boolean;
-}
-
+interface HeaderItem { name: string; href: string; }
+interface Button { key: string; mobile?: boolean; }
 interface Props {
   breadcrumbs?: any[];
   sectionTitle: string;
@@ -28,151 +17,151 @@ interface Props {
   buttons: Button[];
   colorThemeOverride: string;
   noSideNav?: boolean;
+  hideSidebarToggle?: boolean;      
+  hideMobileCategories?: boolean;   
 }
 
-const {sectionTitle, breadcrumbs, sectionTitleHref, categoryItems, moreItems, categoryLabel, buttons, colorThemeOverride, noSideNav}: Props = Astro.props;
----
-<div class="bg-slate-900 block border-slate-600 border-b border-solid h-auto text-left lg:sticky top-0 z-50 xl:shadow-lg" transition:persist>
-  <div class="flex justify-between max-w-8xl mx-auto px-4 py-2 2xl:container">
+const { 
+  sectionTitle, breadcrumbs, sectionTitleHref, categoryItems, moreItems, 
+  categoryLabel, buttons, colorThemeOverride, noSideNav, 
+  hideSidebarToggle, hideMobileCategories 
+}: Props = Astro.props;
 
-    <div class="flex place-items-center">
+const logoColorClass = colorThemeOverride === "light" ? "text-[#334155]" 
+                     : colorThemeOverride === "dark"  ? "text-white" 
+                     : "text-[#334155] dark:text-white";
+
+// Track which menu is the category menu for targeting later
+const menus = [
+  { items: categoryItems, label: categoryLabel, isCategory: true },
+  { items: moreItems, label: 'Resources', isCategory: false }
+];
+
+const mobileButtons = buttons?.filter(b => b.mobile || ['search', 'dark-mode'].includes(b.key)) || [];
+---
+
+<div id="main-header" class="bg-slate-900 block border-b border-solid border-slate-600 lg:sticky sticky top-0 z-50 xl:shadow-lg text-left" data-markdown-ignore>
+  <div class="hidden lg:flex justify-between items-center max-w-[90rem] mx-auto px-4 py-2 2xl:container">
+
+    <!-- Brand -->
+    <div class="flex items-center">
       <a href="/" class="ease-in mr-1 opacity-100 hover:opacity-70 transition-opacity" aria-label="Link to Main FusionAuth Website">
-        <PurpleLogo viewBox="0 0 200 200" class={"size-12 " + (colorThemeOverride === "light" ? "inline" : colorThemeOverride === "dark" ? "hidden": "dark:hidden")} />
-        <WhiteLogo viewBox="0 0 200 200" class={"size-12 " + (colorThemeOverride === "light" ? "hidden" : colorThemeOverride === "dark" ? "inline" : "dark:inline hidden")} />
+        <FusionAuthLogo class={`size-10 ${logoColorClass}`} />
       </a>
       <span class="font-light text-2xl text-slate-500">/</span>
-      <a href={ sectionTitleHref }
-         class="ease-in font-bold hover:text-slate-400 ml-2 text-2xl text-white tracking-tight transition-colors">
-        <span>{ sectionTitle }</span>
+      <a href={sectionTitleHref} class="ease-in font-bold hover:text-slate-400 ml-2 text-2xl text-white tracking-tight transition-colors">
+        <span>{sectionTitle}</span>
       </a>
     </div>
 
-    <nav id="header-nav"
-         class="absolute hidden left-0 right-0 top-16 p-0 bg-slate-900 border-slate-700 border-b border-solid lg:border-none shadow-md lg:bg-transparent lg:flex lg:h-auto lg:items-center lg:ml-auto lg:p-0 lg:static lg:dark:bg-transparent z-50">
-
-      <div class="menu-group-container group lg:float-left lg:flex lg:flex-col lg:relative lg:mx-3 lg:h-full lg:justify-center">
-        {categoryItems && <div class="menu-button-container hidden lg:block">
-          <div class="mb-1 text-base lg:mb-0">
-            <button type="button" class="font-medium gap-x-1.5 group hover:text-indigo-500 inline-flex text-base text-white"
-                    aria-expanded="true" aria-haspopup="true" data-widget="popout-button" data-element="category-menu">
-              <label class="ease-in font-medium group-hover:text-indigo-500 text-sm">{categoryLabel}</label>
-              <DownChevronIcon />
-            </button>
+    <!-- Desktop Navigation -->
+    <nav id="header-nav" class="flex items-center ml-auto p-0 z-50">
+      {menus.map(menu => menu.items?.length > 0 && (
+        <details class="group relative mx-3 flex flex-col justify-center">
+          <summary class="list-none flex items-center gap-1 text-sm font-medium text-white hover:text-indigo-500 cursor-pointer after:content-[''] after:inline-block after:w-1.5 after:h-1.5 after:border-r-2 after:border-b-2 after:border-current after:ml-1 after:mb-0.5 after:rotate-45 after:transition-transform group-open:after:-rotate-[135deg] group-open:after:translate-y-0.5 [&::-webkit-details-marker]:hidden">
+            {menu.label}
+          </summary>
+          
+          <div class="absolute right-0 top-full mt-3 w-48 bg-white dark:bg-slate-900 border border-slate-500 dark:border-slate-800 rounded-md shadow-xl overflow-hidden z-50">
+            <ul class="flex flex-col m-0 p-0">
+              {menu.items.map(item => (
+                <li class="m-0 p-0 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  <a class="block w-full py-2 px-4 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400" href={item.href}>
+                    {item.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>}
-
-        <div class="lg:hidden">
-          <p class="block font-semibold py-2 px-3 text-lg text-white">{categoryLabel}</p>
-        </div>
-
-        <div
-          class="menu-content-container lg:origin-top-left lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:scale-100 lg:scale-0 lg:z-10 lg:mr-3 lg:absolute lg:duration-300 menu-content lg:transition lg:bg-white lg:-mt-1 lg:outline-none lg:right-0 lg:rounded-md lg:shadow-xl lg:text-base lg:top-12 lg:w-48 dark:bg-slate-900" tabindex="-1" id="category-menu">
-          <ul class="mb-5 ml-4 lg:mb-0 lg:ml-0 lg:space-y-0 lg:flex lg:flex-col">
-            {categoryItems && categoryItems.map((item ,idx) =>
-              <li class:list={[
-                "lg:border-l-0 lg:hover:border-l-0 lg:block lg:font-medium lg:hover:text-indigo-400 lg:px-0 dark:text-slate-100 lg:text-slate-700 lg:text-sm",
-                "block border-l-2 border-slate-700 border-solid font-semibold hover:border-indigo-500 hover:border-l-2 hover:border-solid hover:ease-linear hover:text-indigo-500 hover:transition-colors relative text-base text-white"
-              ]}>
-                <a class:list={[
-                  idx === 0 ? "lg:pt-4" : "lg:pt-2",
-                  idx === categoryItems.length - 1 ? "lg:pb-4" : "lg:pb-2",
-                  "block w-full px-3 lg:pl-4 py-2"]} href={item.href}
-                >
-                  {item.name}
-                </a>
-              </li>
-            )}
-          </ul>
-        </div>
-      </div>
-
-      <div class="menu-group-container group lg:float-right lg:flex lg:flex-col lg:relative lg:mx-3 lg:h-full lg:justify-center">
-
-        <div class="menu-button-container hidden lg:block">
-          <div class="mb-1 text-base lg:mb-0">
-            <button type="button" class="font-medium gap-x-1.5 group hover:text-indigo-500 inline-flex text-base text-white"
-                    aria-expanded="true" aria-haspopup="true" data-widget="popout-button" data-element="more-menu">
-              <label class="ease-in font-medium group-hover:text-indigo-500 text-sm">Resources</label>
-              <DownChevronIcon />
-            </button>
-          </div>
-        </div>
-
-        <div class="lg:hidden">
-          <p class="block font-semibold py-2 px-3 text-lg text-white">Resources</p>
-        </div>
-
-        <div
-          class="menu-content-container lg:origin-top-right lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:scale-100 lg:scale-0 lg:z-10 lg:mr-3 lg:absolute lg:duration-300 menu-content lg:transition lg:bg-white lg:-mt-1 lg:outline-none lg:right-0 lg:rounded-md lg:shadow-xl lg:text-base lg:top-12 lg:w-48 dark:bg-slate-900"
-          tabindex="-1" id="more-menu">
-          <ul class="mb-5 ml-4 lg:mb-0 lg:ml-0 lg:space-y-0 lg:flex lg:flex-col">
-            {moreItems && moreItems.map((item, idx) =>
-              <li class:list={[
-                "lg:border-l-0 lg:hover:border-l-0 lg:block lg:font-medium lg:hover:text-indigo-400 lg:px-0 dark:text-slate-100 lg:text-slate-700 lg:text-sm",
-                "block border-l-2 border-slate-700 border-solid font-semibold hover:border-indigo-500 hover:border-l-2 hover:border-solid hover:ease-linear hover:text-indigo-500 hover:transition-colors relative text-base text-white"
-              ]}>
-                <a class:list={[
-                  idx === 0 ? "lg:pt-4" : "lg:pt-2",
-                  idx === moreItems.length - 1 ? "lg:pb-4" : "lg:pb-2",
-                  "block w-full px-3 lg:pl-4 py-2"]} href={item.href}
-                >
-                  {item.name}
-                </a>
-              </li>
-            )}
-          </ul>
-        </div>
-
-      </div>
-
-      <hr class="border-slate-700 border-t-2 h-px lg:hidden"/>
-
-      <div class="lg:hidden">
-        <a href="/contact"
-           class="block font-semibold hover:ease-linear hover:text-indigo-500 hover:transition-colors px-5 py-4 rounded-md text-base text-white">
-          Talk To An Expert
-        </a>
-        <a href="https://account.fusionauth.io/account"
-           class="block font-semibold hover:ease-linear hover:text-indigo-500 hover:transition-colors px-5 mb-4 rounded-md text-base text-white">
-          Login
-        </a>
-      </div>
+        </details>
+      ))}
     </nav>
 
-    <div class="flex items-center">
-      {buttons && buttons.map(button =>
-        <div class={button.mobile ? "" : "hidden lg:inline"}><NavButton name={button.key}/></div>
-      )}
-      <button type="button" id="mobile-menu-btn" aria-label="Show Menu" data-widget="visibility-button" data-element="header-nav"
-              class="lg:hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white hover:bg-gray-700 hover:text-white inline-flex items-center justify-center p-2 rounded-md text-gray-400"
-              aria-controls="mobile-menu" aria-expanded="false">
-        <span class="sr-only">Open main menu</span>
-        <MobileMenuIcon />
-      </button>
+    <!-- Desktop Action Buttons -->
+    <div class="flex items-center ml-2 gap-2">
+      {buttons?.map(button => <NavButton name={button.key}/>)}
     </div>
 
   </div>
+
+  <!-- Mobile Sticky Nav Bar -->
   {!noSideNav &&
-      <div id="nested-mobile-nav" class="flex mx-auto px-4 py-2 w-auto lg:hidden items-center">
-        <div class="mr-2 flex flex-col justify-center">
-            <button data-widget="visibility-button" data-element="side-nav" class="flex h-7 hover:bg-gray-700 items-center justify-center mr-2 rounded w-7" aria-label="Show Menu">
-                <MobileMenuIcon />
-            </button>
+    <div id="nested-mobile-nav" class="flex lg:hidden sticky top-0 z-50 mx-auto px-4 py-2 w-full items-center">
+      
+      <!-- Mobile Sidebar Toggle -->
+      {!hideSidebarToggle && (
+        <div class="mr-3 flex items-center shrink-0">
+          <button data-widget="visibility-button" data-element="side-nav" class="flex h-7 w-7 hover:bg-gray-700 [&>svg]:hover:stroke-indigo-500 items-center justify-center rounded transition-colors" aria-label="Show Menu">
+            <MobileMenuIcon />
+          </button>
         </div>
-        <div>
-            <nav>
-              <ul>
-              {breadcrumbs && breadcrumbs.map((crumb, idx) => <>
-                  <li class="font-medium hover:text-indigo-600 inline-block list-none text-slate-400 text-sm capitalize">
-                    <a href={crumb.href}>{ specialCaps(crumb.title) }</a>
+      )}
+
+      <!-- Mobile Dropdowns (Moved to the left side!) -->
+      <div class="flex items-center gap-2 shrink-0">
+        {menus.map(menu => (menu.items?.length > 0 && !(hideMobileCategories && menu.isCategory)) && (
+          <details class="group relative">
+            <summary class="list-none flex items-center px-2 py-1.5 text-[11px] uppercase tracking-wide font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded border border-slate-600 transition-colors cursor-pointer after:content-[''] after:inline-block after:w-1 after:h-1 after:border-r-2 after:border-b-2 after:border-current after:ml-1.5 after:mb-[2px] after:rotate-45 after:transition-transform group-open:after:-rotate-[135deg] group-open:after:translate-y-[2px] [&::-webkit-details-marker]:hidden">
+              <span>{menu.label}</span>
+            </summary>
+            
+            {/* NOTE: Changed right-0 to left-0 so the menu pops out to the right instead of off the screen! */}
+            <div class="absolute left-0 top-full mt-3 w-48 bg-white dark:bg-slate-900 border border-slate-500 dark:border-slate-800 rounded-md shadow-xl overflow-hidden z-[60]">
+              <ul class="flex flex-col m-0 p-0">
+                {menu.items.map(item => (
+                  <li class="m-0 p-0 text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <a class="block w-full py-2 px-4 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400" href={item.href}>
+                      {item.name}
+                    </a>
                   </li>
-                  {(idx < breadcrumbs.length -1) && <span class="mx-2">/</span>}
-                </>
-              )}
+                ))}
               </ul>
-            </nav>
+            </div>
+          </details>
+        ))}
+      </div>
+        
+      <!-- Breadcrumbs -->
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <div class="flex-1 min-w-0 mx-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <nav>
+            <ul class="flex items-center m-0 p-0 whitespace-nowrap">
+              {breadcrumbs.map((crumb, idx) => <>
+                <li class="inline-block list-none font-medium hover:text-indigo-600 text-slate-400 text-sm capitalize">
+                  <a href={crumb.href}>{specialCaps(crumb.title)}</a>
+                </li>
+                {(idx < breadcrumbs.length - 1) && <span class="mx-2 text-slate-400">/</span>}
+              </>)}
+            </ul>
+          </nav>
         </div>
+      )}
+
+      <!-- Mobile Actions (Theme, Search - Pushed to the right by ml-auto) -->
+      <div class="ml-auto flex items-center gap-2 shrink-0">
+        {mobileButtons.map(button => button.key === 'search' ? (
+          <div class="flex h-7 w-7 items-center justify-center rounded hover:bg-gray-700 cursor-pointer transition-colors">
+            <NavButton name={button.key}/>
+          </div>
+        ) : (
+          <NavButton name={button.key}/>
+        ))}
+      </div>
+      
     </div>
   }
 </div>
-<Search/>
+
+<script>
+  document.addEventListener('click', (event) => {
+    const header = document.getElementById('main-header');
+    if (!header) return;
+
+    const clickedDetails = (event.target as HTMLElement).closest('details');
+    header.querySelectorAll('details[open]').forEach(details => {
+      if (details !== clickedDetails) {
+        details.removeAttribute('open');
+      }
+    });
+  });
+</script>

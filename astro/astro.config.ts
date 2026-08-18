@@ -1,55 +1,82 @@
 import {defineConfig, fontProviders} from 'astro/config';
-import compress from "astro-compress";
 import mdx from "@astrojs/mdx";
+import { unified } from '@astrojs/markdown-remark';
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from '@tailwindcss/vite';
 import indexPages from "astro-index-pages/index.js";
-import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
-import * as markdownExtract from './src/plugins/markdown-extract.js';
+import genMarkdownPages from 'astro-gen-markdown-pages';
+import { remarkMermaidSSR, mermaidTitleFix } from 'astro-mermaid-renderer-cli-smol';
 import remarkMdx from 'remark-mdx';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import linkValidator, { type LinkValidatorOptions } from 'astro-link-validator';
+import linkChecker from 'astro-link-checker';
 import { visit } from 'unist-util-visit';
 import icon from "astro-iconset";
+import { rehypeCodeMeta } from './src/plugins/rehype-code-meta.mjs';
+import astroToc from 'astro-toc-smol';
+import { openapiSummary } from './src/plugins/openapi-summary.js';
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
-export const mermaidTitleFix = () => {
+export const remarkShellSessionPrompts = () => {
   return (tree) => {
-    visit(tree, 'code', (node, index, parent) => {
-      const meta = node.meta || '';
-      const titleMatch = meta.match(/title=["'](.*?)["']/);
-      
-      if (node.lang === 'mermaid' && titleMatch) {
-        const title = titleMatch[1];
-        const titleNode = {
-          type: 'paragraph',
-          data: {
-            hName: 'p',
-            hProperties: { 'data-title-bottom': title } // Use a unique attr for bottom titles
+    visit(tree, 'code', (node) => {
+      if (node.lang !== 'shell-session') return;
+
+      const lines = node.value.split('\n');
+      let continuation = false;
+
+      node.value = lines.map(line => {
+        if (!line.trim()) {
+          continuation = false;
+          return line;
+        }
+        if (continuation) {
+          continuation = line.trimEnd().endsWith('\\');
+          return line;
+        }
+        if (line.startsWith('$ ') || line.startsWith('# ')) {
+          continuation = line.trimEnd().endsWith('\\');
+          return line;
+        }
+        continuation = line.trimEnd().endsWith('\\');
+        return '$ ' + line;
+      }).join('\n');
+    });
+  };
+};
+
+export const rehypeCopyButton = () => {
+  return (tree) => {
+    visit(tree, 'element', (node, index, parent) => {
+      // Find the code blocks
+      if (node.tagName === 'pre') {
+        const codeChild = node.children?.find((c: any) => c.tagName === 'code');
+        const classes: string[] = codeChild?.properties?.className ?? [];
+        if (classes.includes('language-mermaid')) return;
+
+        // insert new copy code button in a div next to the code block
+        const wrapper = {
+          type: 'element',
+          tagName: 'div',
+          properties: { 
+            className: ['relative', 'group'] 
           },
-          children: [{ type: 'text', value: title }]
+          children: [
+            node,
+            {
+              type: 'element',
+              tagName: 'copy-code-button',
+              properties: {},
+              children: []
+            }
+          ]
         };
 
-        // Insert AFTER the code block
-        parent.children.splice(index + 1, 0, titleNode);
-        return index + 2; 
-      } else if (titleMatch) {
-        const title = titleMatch[1];
-        const titleNode = {
-          type: 'paragraph',
-          data: {
-            hName: 'p',
-            hProperties: { 'data-title': title }
-          },
-          children: [{ type: 'text', value: title }]
-        };
-
-        // Inject the title BEFORE the mermaid/code block
-        parent.children.splice(index, 0, titleNode);
-        return index + 2; // Skip the new title and original code block
+        parent.children[index] = wrapper;
+        
+        return [visit.SKIP, index + 1];
       }
     });
   };
@@ -83,76 +110,123 @@ const config = defineConfig({
     weights: ['300 400 500 600 700 800 900'],
   }],
   vite: {
-    plugins: [tailwindcss(), lightboxProvider()],
+    plugins: [
+      tailwindcss(),
+      lightboxProvider(),
+    ],
+    cacheDir: '.vite-cache',
     build: {
-      chunkSizeWarningLimit: 1000,
-    }
+      chunkSizeWarningLimit: 1111,
+    },
+    ssr: {
+      // svgdom and mermaid are Node-only SSR packages used in remark plugins;
+      // externalizing them prevents Vite from bundling them and breaking dynamic imports.
+      external: ['svgdom', 'mermaid'],
+    },
   },
   integrations: [
     icon(),
-    mdx(),
+    mdx({
+      syntaxHighlight: false,
+      processor: unified({
+          remarkPlugins: [
+          remarkMdx,
+          mermaidTitleFix,      // inserts title nodes before we transform code blocks
+          remarkMermaidSSR,     // replaces mermaid blocks with pre-rendered SVGs
+          remarkShellSessionPrompts,
+        ],
+        rehypePlugins: [
+          [rehypeCodeMeta, { excludeLangs: ['mermaid'] }],
+          rehypeSlug,
+          rehypeCopyButton,
+          [
+            rehypeAutolinkHeadings,
+            {
+              behavior: 'append',
+              content: {
+                type: 'text',
+                value: '#',
+              },
+              properties: {
+                title: ['link to header'],
+                class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
+              },
+              headingProperties: {
+                class: 'group articleHeading'
+              }
+            },
+          ],
+        ],
+        smartypants: false,
+      })
+    }),
     sitemap({
       filter: siteMapFilter
     }),
     indexPages(),
-    markdownExtract.default(),
-    compress({
-      Image: false,
-      SVG: false,
-      HTML: false,
+    astroToc(),
+    genMarkdownPages({
+      indexFilter: (url) => url.startsWith('/docs/') || url === '/docs.md',
+      categorize: (url) => {
+        if (url === '/docs.md') return 'overview';
+        const seg = url.split('/')[2]?.replace(/\.md$/, '') ?? '';
+        return seg || 'overview';
+      },
+      formatCategoryName: (key) => {
+        const lower = key.toLowerCase();
+        if (lower === 'sdks') return 'SDKs';
+        if (lower === 'api') return 'API';
+        if (lower === 'ciam') return 'CIAM';
+        if (lower === 'oauth') return 'OAuth';
+        return key.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      },
+      sortCategories: (names) => names.sort((a, b) => {
+        if (a === 'Get Started') return -1;
+        if (b === 'Get Started') return 1;
+        return a.localeCompare(b);
+      }),
+      llmsTxtPath: 'docs/llms.txt',
+      llmsTxtTitle: 'FusionAuth Documentation',
+      llmsTxtDescription: 'Comprehensive documentation for FusionAuth CIAM, APIs, QuickStarts, and custom integrations.',
+      trimTitleSuffix: ' | FusionAuth Docs',
+      spokesDir: 'docs',
+      inlineCategories: ['Overview'],
     }),
-    // only run link validator in the dev environment
-    process.env.DEV && linkValidator({
-      checkExternal: false,
-      externalTimeout: 10,
-      failOnBrokenLinks: false,
+    openapiSummary(),
+    // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
+    process.env.PROD !== 'true' && linkChecker({
+      failOnBrokenLinks: true,
       verbose: false,
-      exclude: [ //destination URLs to exclude from checking -- NOT files!
-        '/platform/', '/cdn/', '/dev-tools/', '/tech-papers/', '/feature/', '/features/', '/webinar/',
-        '/community/', '/forum/', '/compare/', '/industry/', '/license/', '/partners/', '/video/', '/event/', '/ebooks/', '/glossary/', '/guides/',
-        'buildvsbuy', 'auth0-migration', 'community', 'community/forum', 'aws-reinvent22', 'aws-reinvent23', 'pricing', 'download', 'contact',
-        'get-started', 'passwordless', 'direct-download', 'jobs', 'careers', 'password-history', 'partners-form', 'partners',
-        'resource/all', 'sso', 'kubernetes', 'compare-fusionauth', 'security', 'customers-partners', 'license-faq',
-        'feature-list', 'product-privacy-policy', 'passkeys', '/permify-docs/', '/permify-docs', '/legal/data-processing-addendum.pdf'
+      // Pages whose content we don't want to crawl (URL path, prefix string or RegExp)
+      excludeSourcePages: [
+        '/landing/',
       ],
-      //base: 'https://fusionauth.io',
+      // Destinations to skip checking (normalized root-relative path, prefix string or RegExp)
+      excludeDestinations: [
+        // Routes that only exist at runtime (auth, Flask examples in code blocks)
+        '/login', '/logout', '/register', '/user/login', '/user/logout',
+        // Pages that live outside the Astro build (marketing site, external tools)
+        // No trailing slash — prefix match covers /community and /community/foo
+        '/platform', '/cdn', '/dev-tools', '/tech-papers', '/feature', '/features',
+        '/webinar', '/community', '/forum', '/compare', '/industry', '/license',
+        '/partners', '/video', '/event', '/ebooks', '/glossary', '/guides',
+        '/permify-docs',
+        // Loose slug fragments that appear as relative links in quickstart code samples.
+        // These resolve to paths like /docs/quickstarts/buildvsbuy, so regex is needed
+        // since prefix strings only match paths that start with the given value.
+        /\/buildvsbuy/, /\/auth0-migration/, /\/aws-reinvent22/, /\/aws-reinvent23/,
+        // Standalone marketing / legal pages not in the Astro build
+        '/pricing', '/download', '/contact', '/get-started', '/passwordless',
+        '/direct-download', '/jobs', '/careers', '/password-history',
+        '/partners-form', '/resource/all', '/sso', '/kubernetes',
+        '/compare-fusionauth', '/security', '/customers-partners',
+        '/license-faq', '/feature-list', '/product-privacy-policy', '/passkeys',
+        '/legal/data-processing-addendum.pdf',
+        '/auth0-migration',
+      ],
     })
   ],
-  markdown: {
-    smartypants: false,
-    remarkPlugins: [
-      remarkMdx,
-      mermaidTitleFix
-    ],
-    rehypePlugins: [
-      // Tweak GFM task list syntax
-      // @ts-ignore
-      rehypeTasklistEnhancer(),
-      rehypeSlug,
-      [
-        rehypeAutolinkHeadings,
-        {
-          behavior: 'append',
-          content: {
-            type: 'text',
-            value: '#',
-          },
-          properties: {
-            title: ['link to header'],
-            class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
-          },
-          headingProperties: {
-            class: 'group'
-          }
-        },
-      ],
-    ],
-    syntaxHighlight: {
-      type: "shiki",
-      excludeLangs: ["mermaid"]
-    }
-  },
-  site: 'https://fusionauth.io/',
+  site: process.env.SITE_URL || 'https://fusionauth.io/',
 });
 
 export default config;

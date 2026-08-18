@@ -1,82 +1,74 @@
 ---
-// Import your icon as a raw string or use a standard SVG to avoid component overhead
-const { enableKapa = true } = Astro.props;
+import { Icon } from "astro-iconset/components";
+import FusionAuthLogo from 'src/components/FusionAuthLogo.astro';
+
+const {
+  enableKapa = true,
+} = Astro.props;
+
 if (!enableKapa) return '';
 ---
 
-<div class="fixed right-5 bottom-5 z-[100]">
-  <button id="kapa-button" class="relative flex flex-col items-center justify-center h-20 w-18 cursor-pointer rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800 bg-white dark:hover:bg-slate-800 dark:hover:border-indigo-500 group hover:bg-slate-100 hover:border-indigo-500 overflow-hidden shadow-lg">
-    <img
-      class="size-8 group-hover:scale-110 transition-transform duration-500"
-      src="https://uploads-ssl.webflow.com/617b1b1f42c1da41aeae3413/663bee0e6eec6b85377a3939_fa-square-icon-144.png"
-      alt="FusionAuth Logo"
-      loading="eager"
-    />
-    <span class="text-lg">Ask AI</span>
-
-    <span id="kapa-spinner" class="absolute inset-0 bg-black/50 hidden items-center justify-center">
-      <svg class="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-    </span>
-  </button>
+<div class="fixed right-5 bottom-5 z-100">
+    <button id="kapa-button" class="relative flex flex-col items-center justify-center h-16 w-14 sm:h-20 sm:w-18 cursor-pointer rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800 bg-white dark:hover:bg-slate-800 dark:hover:border-indigo-500 group hover:bg-slate-100 hover:border-indigo-500 overflow-hidden shadow-lg">
+        <FusionAuthLogo class="size-7 sm:size-9 group-hover:scale-110 transition-transform duration-500 text-slate-700 dark:text-white" />
+        <span class="text-sm sm:text-lg">Ask AI</span>
+    </button>
 </div>
 
 <script is:inline>
   (function() {
-    const btn = document.getElementById('kapa-button');
-    const spinner = document.getElementById('kapa-spinner');
-    const scriptSrc = "https://widget.kapa.ai/kapa-widget.bundle.js";
-
-    if (!btn) return;
-
-    async function loadKapa() {
-      return new Promise((resolve) => {
-        if (window.Kapa) {
-          resolve();
-          return;
-        }
-
-        const script = document.createElement("script");
-        script.src = scriptSrc;
-        script.async = true;
-
-        const attrs = {
-          "data-website-id": "26ad3b7e-7d94-491c-ab54-95712d1fafee",
-          "data-project-name": "FusionAuth",
-          "data-project-color": "#0F172A",
-          "data-project-logo": "https://uploads-ssl.webflow.com/617b1b1f42c1da41aeae3413/663bee0e6eec6b85377a3939_fa-square-icon-144.png",
-          "data-render-on-load": "false",
-          'data-user-analytics-cookie-enabled': "false",
-          'data-button-animation-enabled': "false",
-          'data-mcp-server-url': "https://ai.fusionauth.io/mcp/docs",
-          'data-mcp-button-hidden': "false",
-          'data-launcher-button-hidden': "true",
-        };
-
-        Object.entries(attrs).forEach(([k, v]) => script.setAttribute(k, v));
-
-        script.onload = () => {
-          window.Kapa.render({
-            onRender: () => resolve()
-          });
-        };
-
-        document.head.appendChild(script);
+    // Register the astro:before-swap unmount handler once per page lifecycle.
+    // It resets Kapa's internal render handler so re-rendering works after a
+    // view-transition replaces <body> and destroys the React root.
+    if (!window._kapaListening) {
+      window._kapaListening = true;
+      document.addEventListener('astro:before-swap', function() {
+        if (window.Kapa) window.Kapa('unmount');
       });
     }
 
-    btn.addEventListener('click', async () => {
-      spinner.style.display = 'flex';
+    var btn = document.getElementById('kapa-button');
+    if (!btn) return;
 
-      await loadKapa();
-
+    btn.addEventListener('click', function() {
+      // Bundle already loaded — render+open if no root yet, or just open.
       if (window.Kapa) {
-        window.Kapa("open");
+        if (document.getElementById('kapa-widget-container')) {
+          window.Kapa('open');
+        } else {
+          window.Kapa('render', { onRender: function() { window.Kapa('open'); } });
+        }
+        return;
       }
 
-      spinner.style.display = 'none';
+      // First click: inject the bundle. It won't auto-render (data-render-on-load=false),
+      // so we trigger render+open explicitly in onload.
+      if (document.querySelector('script[data-kapa-main]')) return;
+      var s = document.createElement('script');
+      s.src = '/js/kapa-widget.bundle.js';
+      s.async = true;
+      s.setAttribute('data-kapa-main', '');
+      s.setAttribute('data-website-id', '26ad3b7e-7d94-491c-ab54-95712d1fafee');
+      s.setAttribute('data-project-name', 'FusionAuth');
+      s.setAttribute('data-project-color', '#0F172A');
+      s.setAttribute('data-project-color-dark', '#334155');
+      s.setAttribute('data-project-logo', '/img/icons/help/fa-black-logo.png');
+      s.setAttribute('data-user-analytics-cookie-enabled', 'false');
+      s.setAttribute('data-user-analytics-fingerprint-enabled', 'false');
+      s.setAttribute('data-user-satisfaction-feedback-enabled', 'false');
+      s.setAttribute('data-button-animation-enabled', 'false');
+      s.setAttribute('data-mcp-server-url', 'https://ai.fusionauth.io/mcp/docs');
+      s.setAttribute('data-mcp-button-hidden', 'false');
+      s.setAttribute('data-button-hide', 'true');
+      s.setAttribute('data-launcher-button-hidden', 'true');
+      s.setAttribute('data-render-on-load', 'false');
+      s.setAttribute('data-color-scheme',
+        document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+      s.onload = function() {
+        window.Kapa('render', { onRender: function() { window.Kapa('open'); } });
+      };
+      document.head.appendChild(s);
     });
   })();
 </script>

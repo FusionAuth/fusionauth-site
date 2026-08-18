@@ -6,7 +6,7 @@ Verification code: ${verificationOneTimeCode}
 [#else]
 To complete your phone number verification click on the following link.
 
-http://localhost:9011/phone/verify/${verificationId}?client_id=${(application.oauthConfiguration.clientId)!''}&tenantId=${tenant.id}
+${baseUrl}/phone/verify/${verificationId}?client_id=${(application.oauthConfiguration.clientId)!''}&tenantId=${tenant.id}
 [/#if]
 
 - FusionAuth Admin

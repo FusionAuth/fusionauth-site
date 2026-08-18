@@ -1,0 +1,76 @@
+---
+title: Update Login Instant
+description: API documentation for the FusionAuth Update Login Instant API.
+order: 400
+---
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import XFusionauthTenantIdHeaderScopedOperationRowOnly from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.mdx';
+import LoginApplicationidParameter from 'src/content/docs/apis/_login-applicationId-parameter.mdx';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+
+Sends a ping to FusionAuth indicating that the user has authenticated, and (optionally) automatically logged into an application.
+When using FusionAuth's SSO or your own, you should call this if the user is already logged in centrally, but accesses an application where they no longer have a session. This helps correctly track login counts, times and helps with reporting.
+
+
+## Request
+
+### Using a user ID and application ID
+
+<API method="PUT" uri="/api/login/{userId}/{applicationId}?ipAddress={ipAddress}" authentication={["api-key"]} title="Update the login instant for a given User and Application"/>
+
+#### Request Headers
+
+<APIBlock>
+  <APIField name="X-Forwarded-For" type="String" optional>
+    The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used if available, the request body value will take precedence.
+  </APIField>
+  <XFusionauthTenantIdHeaderScopedOperationRowOnly />
+</APIBlock>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The Id of the user logging in.
+  </APIField>
+  <APIField name="applicationId" type="UUID" optional>
+  <LoginApplicationidParameter />
+  </APIField>
+  <APIField name="ipAddress" type="String" optional>
+    The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will be stored in the User login history.
+  </APIField>
+</APIBlock>
+
+### Using a JWT
+
+<API method="PUT" uri="/api/login?ipAddress={ipAddress}" authentication={["jwt"]} title="Update the login instant for a given User and Application using a JWT"/>
+
+The `userId` is not required on the request. The `userId` and `applicationId` values will be retrieved from the identity claims in the JWT payload.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="ipAddress" type="String" optional>
+    The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will be stored in the User login history.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+## Response
+
+This API does not return a JSON response body.
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                         |
+|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The update was successful.                                                                                                                                                          |
+| 202  | The user exists but is not registered for the application specified by applicationId on the request.                                                                                |
+| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                            |
+| 401  | You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication). |
+| 404  | The user was not found.                                                                                                                                                             |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                      |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                            |

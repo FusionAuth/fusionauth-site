@@ -3,7 +3,8 @@
   * Remote code fetcher and syntax highlighter via the Astro Code component.
   */
 
-import { Code } from 'astro:components';
+import { Prism } from '@astrojs/prism';
+import { selectLines, selectTagged } from './remoteCodeUtils';
 
 export interface Props {
   /**
@@ -15,7 +16,7 @@ export interface Props {
 
   /**
    * The language of your code.
-   * Supports all languages listed here: https://github.com/shikijs/shiki/blob/main/docs/languages.md#all-languages
+   * Supports all languages listed here: https://prismjs.com/#supported-languages
    *
    * @default "plaintext"
    */
@@ -79,45 +80,8 @@ const extractCode = async (url: string, tags?: string): Promise<string> => {
 
 const remoteSelectedCode = await extractCode(url, tags);
 
-function selectTagged (content: string, tags: string): string {
-  let lines = content.split('\n');
-  const startLine = lines.findIndex((line) => line.includes(`tag::${tags}`));
-  const endLine = lines.findIndex((line) => line.includes(`end::${tags}`));
-
-  lines = lines.slice(startLine + 1, endLine);
-  const prefixLengths = lines.filter((line) => line.trim().length > 0).map((line) => prefixSpaces(line));
-  const shortestPrefix = Math.min(...prefixLengths);
-  if (shortestPrefix > 0) {
-    lines = lines.map((line) => line.substring(shortestPrefix));
-  }
-
-  return lines.join('\n').replace(/\s+$/g, '');
-}
-
-function selectLines (content: string, lineNum: number, lineEnd: number): string {
-  const lines = content.split('\n');
-  if ((lineNum > 0) && (lineEnd > 0)) {
-    return lines.slice(lineNum - 1, lineEnd - 1).join('\n');
-  }
-
-  if (lineNum > 0) {
-    return lines[lineNum - 1];
-  }
-
-  return content;
-}
-
-function prefixSpaces(str: string): number {
-  let count = 0;
-  for (let i = 0; i < str.length; i++) {
-    if (str.charAt(i) == ' ' || str.charAt(i) == '\t') {
-      count++;
-    }
-  }
-  return count;
-}
 ---
 {(title === '' || title === undefined)
   ? null
   : (<p data-title={title}><em>{title}</em></p>)}
-<Code code={remoteSelectedCode} lang={lang} {...rest}/>
+<Prism code={remoteSelectedCode} lang={lang} {...rest}/>

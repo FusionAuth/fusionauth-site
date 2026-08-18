@@ -1,12 +1,11 @@
 ---
 title: Multi-Factor Authentication (MFA)
 description: Learn about how to use multi-factor authentication (MFA) in FusionAuth as a developer.
-tags: mfa, multi-factor, 2FA, two-factor, multi-factor authentication, two-factor-authentication 2-factor, 2 factor, multi factor, two factor auth, multi factor auth
+tags: mfa, multi-factor, 2FA, two-factor, multi-factor authentication, two-factor-authentication 2-factor, 2 factor, multi-factor, two-factor auth, multi-factor auth
 ---
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.mdx';
 import JSON from 'src/components/JSON.astro';
-import InlineField from 'src/components/InlineField.astro';
 import RecoveryCodesBlurb from 'src/content/docs/lifecycle/authenticate-users/_recovery-codes-blurb.mdx';
 import Aside from 'src/components/Aside.astro';
 import MfaMigration from 'src/content/docs/lifecycle/authenticate-users/_mfa-migration.mdx';
@@ -165,7 +164,7 @@ curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'ht
 
 This API call will send a unique code to the user using the method specified.
 
-The lifetime and length of this code can be configured by navigating to <Breadcrumb>Tenants -> Your Tenant -> Advanced</Breadcrumb> and modifying the <InlineField>Two-Factor One Time Code</InlineField> settings.
+The lifetime and length of this code can be configured by navigating to <Breadcrumb>Tenants -> Your Tenant -> Advanced</Breadcrumb> and modifying the **Two-Factor One Time Code** settings.
 
 #### Collect the Code
 
@@ -174,6 +173,8 @@ Once the code has been sent or the secret shared, accept the code from the user.
 With message based MFA methods, the user enters the code they've been sent. In the case of TOTP, they configure the application with the shared secret, then enter the code displayed by their application.
 
 After your application has the code, enable MFA for this user with this API call. You must specify the method the code is associated with.
+
+You may optionally include a `name` field to give the method a user-friendly label (for example, `Work email` or `Work authenticator`).
 
 ```shell title="Enable MFA Sample Curl Script for the Email Method"
 API_KEY=...
@@ -210,6 +211,8 @@ curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'ht
 <JSON title="Enable MFA for TOTP Method Request JSON" src="two-factor/enable-authenticator-request.json" />
 
 Now that the user has two MFA methods associated with their account, the user is prompted to choose a method when logging in:
+
+If you provided a method name during enrollment, that name will be shown in this list.
 
 ![MFA prompt screen at login with multiple factors enabled.](/img/docs/lifecycle/authenticate-users/authentication-challenge-multiple-factors.png)
 
@@ -275,7 +278,7 @@ If they have MFA enabled or MFA is required, your code will receive a `242` resp
 
 <JSON title="Log the User In Response JSON When MFA Enabled" src="login/login-two-factor-response.json" />
 
-Save the <InlineField>twoFactorId</InlineField> value as you'll need that later in the flow. Save the `methods` array to present to the user when they need to choose their preferred MFA method. Implement a screen letting a user choose this.
+Save the **twoFactorId** value as you'll need that later in the flow. Save the `methods` array to present to the user when they need to choose their preferred MFA method. Implement a screen letting a user choose this.
 
 When they have chosen a method, send a code if they are using a message based MFA method.
 
@@ -299,7 +302,7 @@ The email address to which the code is sent may be different from the `loginId` 
 
 #### Collect the Code and Complete the Login
 
-Build a screen to collect the code. When you have it, complete the two factor login by calling the Login API:
+Build a screen to collect the code. When you have it, complete the two-factor login by calling the Login API:
 
 ```shell title="Complete the MFA Login Sample Curl Script"
 API_KEY=...
@@ -327,7 +330,7 @@ To use this:
 * Optionally send the code
 * Collect the code and verify it
 
-Here's a diagram showing this flow for a banking application which requires step-up auth before completing a transfer, but not when users view a balance. 
+Here's a diagram showing this flow for a banking application which requires step-up auth before completing a transfer, but not when users view a balance.
 
 ```mermaid title="Diagram of step-up auth when user selects a message based MFA method like email."
 sequenceDiagram
@@ -370,7 +373,7 @@ curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'ht
 ```
 
 <Aside>
-    The POST method of this endpoint was added in FusionAuth 1.62.0 and is preferred over the GET method because it allows specifying more details about the context of the request for MFA Lambdas to evaluate. See the [MFA Status API](/docs/apis/two-factor#retrieve-multi-factor-status) API documentation for more details.
+    The POST method of this endpoint was added in FusionAuth 1.62.0 and is preferred over the GET method because it allows specifying more details about the context of the request for MFA Lambdas to evaluate. See the [MFA Status API](/docs/apis/two-factor/retrieve-multi-factor-status) API documentation for more details.
 </Aside>
 
 <JSON title="Check MFA Requirement Request JSON" src="two-factor/status/request.json" />
@@ -445,7 +448,7 @@ If you have a valid user object, full speed ahead with the sensitive action your
 
 ### State For Step-Up
 
-As mentioned above, you can also store arbitrary data in the `state` field. This is provided by your application when you start the step-up process, and then returned after the end. This is useful in the following situations:
+As mentioned above, you can also store arbitrary data in the **state** field. This is provided by your application when you start the step-up process, and then returned after the end. This is useful in the following situations:
 
 * Tracing a step-up auth request to a given interaction, such as a transaction id.
 * Reconstituting the state of the application, such as displaying a modal, after a step-up display screen.
@@ -459,7 +462,7 @@ Users may need to disable an MFA method. They may switch email addresses, change
 
 To disable MFA for a user, use one of the following options:
 
-* If you have a paid plan, users may use the [self-service account management](/docs/lifecycle/manage-users/account-management/) feature to disable MFA for their accounts. 
+* If you have a paid plan, users may use the [self-service account management](/docs/lifecycle/manage-users/account-management/) feature to disable MFA for their accounts.
 * You may remove MFA using the administrative user interface.
 * You may disable MFA directly using the [User API](/docs/apis/users).
 * You can build your own MFA user interface, allowing end users to disable MFA.
@@ -469,6 +472,23 @@ To disable MFA for a user, use one of the following options:
 Navigate to <Breadcrumb>Users -> The User</Breadcrumb> and manage the user. Then go to the <Breadcrumb>Multi-Factor</Breadcrumb> tab. Remove any of the MFA methods by clicking the red trash can icon and confirming the deletion:
 
 ![Delete an MFA method from the admin screen.](/img/docs/lifecycle/authenticate-users/delete-factor-admin-view.png)
+
+When removing a method in the Admin UI, behavior depends on the acting user's role:
+
+* `admin` can remove a method from another user without entering a one-time code.
+* `mfa_deleter` can also remove a method from another user without entering a one-time code, but only when additional safeguards are met.
+* `user_manager`, `user_support_manager`, and `user_support_viewer` can only remove their own methods and must complete the standard verification-code flow.
+
+The `mfa_deleter` role has the following limitations:
+
+* The target user cannot be registered to the FusionAuth admin application.
+* The target user must be notifiable through at least one verified primary identity and the corresponding tenant template configuration:
+  * verified email + configured `tenant.emailConfiguration.adminTwoFactorMethodRemoveEmailTemplateId`, or
+  * verified phone number + configured `tenant.phoneConfiguration.adminTwoFactorMethodRemoveTemplateId`.
+
+If these safeguards are not met, method removal is blocked in the Admin UI.
+
+Successful administrative removals attempt to notify the target user using the configured tenant templates.
 
 A user may also remove an MFA method by using the self service account management (if you have a paid plan) by clicking the `-` link. [Learn more about that here.](/docs/lifecycle/manage-users/account-management/)
 
@@ -570,7 +590,7 @@ Calling the send endpoint sends a new code but also invalidates all other codes 
 
 ## Trust Tokens and Trust Challenges
 
-Changing a password when 2FA is enabled requires a trust token. To obtain this token of trust, you can complete a two factor workflow. This is to ensure that anyone who has MFA enabled and tries to change their password also has the additional factor of authentication, which provides a higher level of assurance.
+Changing a password when 2FA is enabled requires a trust token. To obtain this token of trust, you can complete a two-factor workflow. This is to ensure that anyone who has MFA enabled and tries to change their password also has the additional factor of authentication, which provides a higher level of assurance.
 
 When using the hosted login pages, you don't need to worry about this. If you are building your own MFA integration, however, read on.
 
@@ -596,7 +616,7 @@ This is an overview of the process. [See the API docs for all parameters for the
 
 Now you have the `trustToken` required to perform a trusted action, such as changing your password while MFA is enabled.
 
-In this situation, when using the `trustToken` on the [Change Password API](/docs/apis/users#change-a-users-password), because you provided a `trustChallenge` on the `/api/two-factor/start` step, the same value must be provided as well as the `trustToken` to successfully use the `trustToken` and complete the privileged operation.
+In this situation, when using the `trustToken` on the [Change Password API](/docs/apis/users/change-password), because you provided a `trustChallenge` on the `/api/two-factor/start` step, the same value must be provided as well as the `trustToken` to successfully use the `trustToken` and complete the privileged operation.
 
 ## Migration from Version 1.25 and Earlier
 
@@ -616,7 +636,7 @@ Google Authenticator and time based one-time password MFA continue to work in th
 
 ### Your Data
 
-If you used the Two Factor API previously, your data should be migrated transparently when you run the SQL migration.
+If you used the Two-Factor API previously, your data should be migrated transparently when you run the SQL migration.
 
 The migrated data includes:
 
@@ -633,11 +653,11 @@ Modifying your code depends on what MFA methods you were using. To enable MFA on
 
 * Ensure the MFA method is allowed on the tenant.
 * Ensure the Twilio messenger is set up correctly if you are using that.
-* Instead of using the <InlineField>delivery</InlineField> field, use the <InlineField>method</InlineField> field and the corresponding method specific field such as <InlineField>email</InlineField>.
+* Instead of using the **delivery** field, use the **method** field and the corresponding method specific field such as **email**.
 
 To disable MFA on a user:
 
-* In addition to passing the <InlineField>userId</InlineField> and <InlineField>code</InlineField> fields, you also need to determine the method to disable and pass the appropriate <InlineField>methodId</InlineField> field.
+* In addition to passing the **userId** and **code** fields, you also need to determine the method to disable and pass the appropriate **methodId** field.
 
 When sending a code, Twilio SMS was previously your only choice. The send API is now more complicated and requires different parameters for enabling or disabling MFA on a user than sending a code for step-up authentication or a login.
 
@@ -669,17 +689,13 @@ If you have other MFA methods that you'd like to use with FusionAuth, you have a
 There are times when you might want to force a user to provide an additional factor of authentication before they ever get access to your application.
 For example, you might require MFA when a user logs into an accounting application, but not when they log in to a customer support application.
 
-In FusionAuth, this is controlled by the Login Policy setting. This can be configured at the tenant level, or, if you have the Enterprise plan, at the application level. There are three values for any tenant login policy:
+In FusionAuth, this is controlled by the Login Policy setting. This can be configured at the tenant level, or, if you have the Enterprise plan, at the application level. Tenant login policies support the following values:
 
-* Enabled
-* Disabled
-* Required
-
-When the login policy is `Enabled`, a two-factor challenge will be required during login when a user has configured one or more two-factor methods.
-
-When the login policy is `Disabled`, even when a user has one or more two-factor methods configured, a two-factor challenge will not be required during login.
-
-When the login policy is `Required`, a two-factor challenge will be required during login. If a user does not have configured two-factor methods, they will not be able to log in.
+* `Enabled`: requires a two-factor challenge when a user has configured one or more two-factor methods.
+* `Disabled`: does not require a two-factor challenge, even when a user has one or more two-factor methods configured
+* `Required`: requires a two-factor challenge; if a user does not have configured two-factor methods, they will not be able to log in.
+* `ChallengeOnHighRisk`: requires a two-factor challenge when [Intelligent MFA](/docs/lifecycle/authenticate-users/contextual-multi-factor#intelligent-mfa)detects a high level of risk for a login attempt
+* `ChallengeOnMediumRisk`: requires a two-factor challenge when [Intelligent MFA](/docs/lifecycle/authenticate-users/contextual-multi-factor#intelligent-mfa) detects a medium level of risk for a login attempt
 
 You can learn more about the logic behind MFA challenges in the [Contextual Multi-Factor](/docs/lifecycle/authenticate-users/contextual-multi-factor) documentation.
 

@@ -1,0 +1,244 @@
+---
+import { getCollection } from "astro:content";
+import { recordMissing } from '../plugins/openapi-summary.js';
+
+export interface Props {
+  path: string;
+  method: string;
+}
+
+const { path: rawPath, method } = Astro.props;
+
+// Hosted login page docs call <API> without an HTTP method; skip.
+const show = !!(method && rawPath);
+
+let specB64 = '';
+
+if (show) {
+  // Strip query string and trailing slash; replace path params with {p}
+  // so {logId} in MDX matches {auditLogId} in the spec.
+  const normalizeId = (m: string, p: string): string => {
+    const clean = p.split('?')[0].replace(/\/+$/, '').replace(/\{[^}]+\}/g, '{p}');
+    return `${m}-${clean.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
+  };
+
+  const id = normalizeId(method, rawPath);
+  const allEndpoints = await getCollection('api-endpoints');
+  const endpointMap = new Map(allEndpoints.map(e => [e.id, e]));
+  const endpoint = endpointMap.get(id);
+  const baseSpec = endpointMap.get('base-spec');
+
+  if (!endpoint || !baseSpec) {
+    recordMissing(method, rawPath, Astro.url.pathname);
+  } else {
+    function findRefs(obj: any, refs = new Set<string>()): Set<string> {
+      if (!obj || typeof obj !== 'object') return refs;
+      if (Array.isArray(obj)) {
+        for (const item of obj) findRefs(item, refs);
+      } else {
+        if (obj['$ref'] && typeof obj['$ref'] === 'string') refs.add(obj['$ref']);
+        for (const key in obj) findRefs(obj[key], refs);
+      }
+      return refs;
+    }
+
+    function extractUsedComponents(operation: any, fullComponents: any): any {
+      if (!fullComponents) return {};
+      const isolated: any = {};
+      if (fullComponents.securitySchemes) isolated.securitySchemes = fullComponents.securitySchemes;
+      const processed = new Set<string>();
+      const queue = Array.from(findRefs(operation)) as string[];
+      while (queue.length > 0) {
+        const ref = queue.shift()!;
+        if (!ref || processed.has(ref)) continue;
+        processed.add(ref);
+        const parts = ref.replace('#/components/', '').split('/');
+        if (parts.length === 2) {
+          const [type, name] = parts;
+          if (fullComponents[type]?.[name]) {
+            if (!isolated[type]) isolated[type] = {};
+            isolated[type][name] = fullComponents[type][name];
+            findRefs(fullComponents[type][name]).forEach((r: string) => queue.push(r));
+          }
+        }
+      }
+      return isolated;
+    }
+
+    const isolatedSpec = {
+      ...baseSpec.data,
+      components: extractUsedComponents(endpoint.data.operation, baseSpec.data.components),
+      paths: { [endpoint.data.path]: { [endpoint.data.method]: endpoint.data.operation } },
+      servers: [{
+        url: 'http://localhost:9011',
+        description: '⚠️ Requests failing? [Configure CORS](/docs/apis/configure-cors) for your test instance.',
+      }],
+    };
+
+    // JSON.stringify preserves Unicode as UTF-8; atob decodes base64 as Latin-1 and corrupts it.
+    // Escape non-ASCII to \uXXXX first so the JSON is ASCII-safe.
+    const safeJson = JSON.stringify(isolatedSpec).replace(
+      /[^\x00-\x7F]/g,
+      c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')
+    );
+    specB64 = Buffer.from(safeJson).toString('base64');
+  }
+}
+---
+
+{specB64 && (
+  <details class="accordion group open:h-auto" data-scalar-widget data-markdown-ignore>
+    <summary class="accordion-summary">
+      <div class="accordion-title">OpenAPI Spec</div>
+      <svg class="accordion-chevron" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+      </svg>
+    </summary>
+    <div class="accordion-body py-3">
+      <div hidden class="scalar-spec-data" data-spec={specB64}></div>
+      <div class="scalar-mount" style="min-height: 4px;"></div>
+    </div>
+  </details>
+)}
+
+<script>
+  const SCALAR_CDN = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.64.0';
+
+  const SCALAR_CONFIG = JSON.stringify({
+    layout: 'modern',
+    hideDarkModeToggle: true,
+    documentDownloadType: 'none',
+    agent: { disabled: true },
+    showSidebar: false,
+    withDefaultFonts: false,
+    customCss: `
+      .darklight-reference,
+      .api-reference-toolbar,
+      .download-container,
+      .scalar-api-reference-header { display: none !important; }
+
+      h3 { font-family: monospace !important; }
+      .section-column { min-height: 0px !important; }
+      .section-columns { display: inline !important; }
+      .section-content .badge { display: none !important; }
+
+      .introduction-description,
+      .introduction-description-heading,
+      .section-header-wrapper,
+      .scalar-reference-intro-clients,
+      .operation-title,
+      .scalar-sidebar-toggle { display: none !important; }
+
+      header { display: none !important; max-height: 0px !important; }
+      .section { padding: 10px 0 10px 0 !important; }
+      .operation-layout { display: block !important; }
+      .section-container { border-top-width: 0px !important; border-bottom-width: 0px !important; }
+      .scalar-app-exit { background: rgba(0,0,0,0.8) !important; }
+      .badge { display: inline-flex !important; align-items: center !important; padding: 5px 6px 3px !important; line-height: 1 !important; }
+
+      aside.t-doc__sidebar { top: 65px !important; height: calc(100vh - 65px) !important; }
+      [id] { scroll-margin-top: 65px !important; }
+
+      input[type="text"],
+      input[type="password"],
+      input:not([type]) {
+        border: 1px solid var(--scalar-border-color) !important;
+        background: var(--scalar-background-2) !important;
+        border-radius: 4px !important;
+        padding: 4px 8px !important;
+      }
+      input[type="text"]:focus,
+      input[type="password"]:focus,
+      input:not([type]):focus {
+        outline: none !important;
+        border-color: var(--scalar-color-accent) !important;
+        box-shadow: 0 0 0 2px rgba(245, 131, 32, 0.25) !important;
+      }
+
+      body {
+        --scalar-color-accent: #f58320;
+        --scalar-background-accent: #fff1e0;
+        --scalar-color-1: #0f172a;
+        --scalar-color-2: #334155;
+        --scalar-color-3: #64748b;
+        --scalar-background-1: #ffffff;
+        --scalar-background-2: #f8fafc;
+        --scalar-background-3: #f1f5f9;
+        --scalar-border-color: #e2e8f0;
+        --scalar-sidebar-background-1: #f8fafc;
+        --scalar-sidebar-color-1: #0f172a;
+        --scalar-sidebar-color-2: #475569;
+        --scalar-sidebar-border-color: #e2e8f0;
+        --scalar-sidebar-color-active: #f58320;
+        --scalar-sidebar-background-active: #fff1e0;
+      }
+
+      body.dark, .dark {
+        --scalar-color-1: #f1f5f9;
+        --scalar-color-2: #cbd5e1;
+        --scalar-color-3: #94a3b8;
+        --scalar-background-1: #0f172a;
+        --scalar-background-2: #1e293b;
+        --scalar-background-3: #334155;
+        --scalar-border-color: #334155;
+        --scalar-sidebar-background-1: #0b1224;
+        --scalar-sidebar-color-1: #f1f5f9;
+        --scalar-sidebar-color-2: #94a3b8;
+        --scalar-sidebar-border-color: #1e293b;
+        --scalar-sidebar-color-active: #f58320;
+        --scalar-sidebar-background-active: rgba(245, 131, 32, 0.12);
+      }
+    `,
+  }).replace(/'/g, '&#39;');
+
+  // Runs in each iframe to sync dark mode from the parent page.
+  const THEME_SYNC_FN = `(function(){
+    function sync(){
+      try{
+        var p=window.parent.document.documentElement;
+        var dark=p.classList.contains('dark')||p.getAttribute('data-theme')==='dark';
+        document.documentElement.classList.toggle('dark',dark);
+        document.body.classList.toggle('dark',dark);
+      }catch(e){}
+    }
+    sync();
+    try{
+      new MutationObserver(sync).observe(
+        window.parent.document.documentElement,
+        {attributes:true,attributeFilter:['class','data-theme']}
+      );
+    }catch(e){}
+  })();`;
+
+  function buildSrcdoc(specJson: string, isDark: boolean): string {
+    const bg = isDark ? '#0f172a' : '#ffffff';
+    return [
+      `<!DOCTYPE html><html style="background:${bg}"><head><meta charset="utf-8"/><style>html,body{background:${bg}}</style></head><body>`,
+      '<script>', THEME_SYNC_FN, '<\/script>',
+      '<script id="api-reference" type="application/json" data-configuration=\'', SCALAR_CONFIG, '\'>',
+      specJson,
+      '<\/script>',
+      '<script src="', SCALAR_CDN, '"><\/script>',
+      '</body></html>',
+    ].join('');
+  }
+
+  // Capture phase because toggle doesn't bubble.
+  document.addEventListener('toggle', (e: Event) => {
+    const details = e.target as HTMLDetailsElement;
+    if (!details.hasAttribute?.('data-scalar-widget') || !details.open) return;
+    const mount = details.querySelector('.scalar-mount') as HTMLElement | null;
+    const dataEl = details.querySelector('.scalar-spec-data') as HTMLElement | null;
+    if (!mount || !dataEl || mount.querySelector('iframe')) return;
+
+    const isDark = document.documentElement.classList.contains('dark') ||
+                   document.documentElement.getAttribute('data-theme') === 'dark';
+    const specJson = atob(dataEl.dataset.spec ?? '');
+    const iframe = document.createElement('iframe');
+    iframe.srcdoc = buildSrcdoc(specJson, isDark);
+    iframe.style.cssText = 'width:100%;height:600px;border:none;border-radius:8px;overflow-y:auto;background:transparent;display:block;';
+    iframe.title = 'OpenAPI Spec';
+    mount.style.minHeight = '';
+    mount.appendChild(iframe);
+  }, true);
+</script>

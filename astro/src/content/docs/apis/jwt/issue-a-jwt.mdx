@@ -1,0 +1,69 @@
+---
+title: Issue a JWT
+description: API documentation for the FusionAuth Issue a JWT API.
+order: 100
+---
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import JSON from 'src/components/JSON.astro';
+
+This API is used to issue a new access token (JWT) using an existing access token (JWT).
+
+This API provides the single sign-on mechanism for access tokens. For example you have an access token for application A and you need an access token for application B. You may use this API to request an access token to application B with the authorized token to application A. The returned access token will have the same expiration of the one provided.
+
+This API will use a JWT as authentication. See [JWT Authentication](/docs/apis/authentication#jwt-authentication) for examples of how you can send the JWT to FusionAuth.
+
+
+## Request
+
+<API method="GET" uri="/api/jwt/issue?applicationId={applicationId}&refreshToken={refreshToken}" authentication={["jwt"]} title="Issue a JWT"/>
+
+### Request Parameters
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" required>
+    The Id of the application for which authorization is being requested.
+  </APIField>
+  <APIField name="refreshToken" type="String" optional>
+    An existing refresh token used to request a refresh token in addition to a JWT in the response. If the cookie `refresh_token` is also on the request it will take precedence over this value.
+
+    The target application represented by the **applicationId** request parameter must have refresh tokens enabled in order to receive a refresh token in the response.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Request Cookies
+
+<APIBlock>
+  <APIField name="refresh_token" type="String" optional>
+    The refresh token to be used to exchange for a refresh token in the application represented by the **applicationId** request parameter.
+  </APIField>
+</APIBlock>
+
+```shell title="Example HTTP Request using cookie"
+GET /api/jwt/issue HTTP/1.1
+Cookie: refresh_token=xRxGGEpVawiUak6He367W3oeOfh+3irw+1G1h1jc
+```
+
+## Response
+
+<StandardGetResponseCodes authorization_message="You did not supply a valid Authorization header, the header was omitted or your access token is expired. The response will be empty. See [Authentication](/docs/apis/authentication)." not_registered never_missing no_errors />
+
+### Response Body
+
+<APIBlock>
+  <APIField name="token" type="String">
+    The encoded access token.
+  </APIField>
+  <APIField name="refreshToken" type="String">
+    The refresh token. This value will only be returned if a valid non-expired refresh token was provided on the request and **application.loginConfiguration.generateRefreshTokens** is `true`. The returned refresh token will share the same creation time as the original refresh token in regards to how the token expiration is calculated.
+
+    The refresh token expiration policy as defined by **jwtConfiguration.refreshTokenExpirationPolicy** must be the same as the source application, if the policies are different a refresh token will not be returned.
+
+    <JSON title="Example Response JSON" src="jwt/issue-get-response.json" />
+  </APIField>
+</APIBlock>

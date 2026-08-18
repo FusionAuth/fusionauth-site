@@ -1,5 +1,40 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
+import yaml from 'js-yaml';
+import fs from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
+
+const CACHE_DIR = path.join(process.cwd(), '.content-cache');
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function readCache(cacheFile) {
+  try {
+    const age = Date.now() - fs.statSync(cacheFile).mtimeMs;
+    if (age < CACHE_TTL_MS) return fs.readFileSync(cacheFile, 'utf-8');
+  } catch { /* file missing or unreadable — treat as cache miss */ }
+  return null;
+}
+
+async function fetchWithCache(url, cacheFile) {
+  const cached = readCache(cacheFile);
+  if (cached) return cached;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    const text = await res.text();
+    fs.mkdirSync(CACHE_DIR, { recursive: true });
+    fs.writeFileSync(cacheFile, text, 'utf-8');
+    return text;
+  } catch (err) {
+    try {
+      const stale = fs.readFileSync(cacheFile, 'utf-8');
+      console.warn(`[content] Fetch failed for ${url}, using stale cache: ${err.message}`);
+      return stale;
+    } catch { /* no stale cache available */ }
+    throw err;
+  }
+}
 
 const releasesCollection = defineCollection({
   loader: glob({
@@ -34,6 +69,7 @@ const articlesCollection = defineCollection({
     order: z.number().default(1000),
     title: z.string(),
     featured: z.boolean().default(false),
+    enableKapa: z.boolean().optional(),
   }),
 });
 
@@ -57,9 +93,13 @@ const docsCollection = defineCollection({
     sidenavTitle: z.string().optional(),
     nestedHeadings: z.boolean().optional(),
     disableTOC: z.boolean().default(false),
+    route: z.boolean().default(true),
     order: z.number().default(1000),
     idpDisplayName: z.string().optional(),
     sideNavSimple: z.boolean().default(false),
+    hideBgImage: z.boolean().optional(),
+    rssUrl: z.string().optional(),
+    enableKapa: z.boolean().optional(),
   }),
 });
 
@@ -80,6 +120,7 @@ const blogCollection = defineCollection({
     ),
     htmlTitle: z.string().optional(),
     image: z.string().optional(),
+    ogImage: z.string().optional(),
     authors: z.string().optional(), // comma-separated string
     categories: z.string().optional(), // comma-separated string
     tags: z.string().optional(), // comma-separated string
@@ -90,6 +131,7 @@ const blogCollection = defineCollection({
     excerpt_separator: z.string().optional(),
     canonicalUrl: z.string().optional(),
     blurb: z.string().optional(),
+    enableKapa: z.boolean().optional(),
   }),
 });
 
@@ -101,10 +143,66 @@ const jsonCollection = defineCollection({
   })
 })
 
+const directDownloadVersions = defineCollection({
+  loader: async () => {
+    const text = await fetchWithCache(
+      'https://account.fusionauth.io/api/version',
+      path.join(CACHE_DIR, 'versions.json')
+    );
+    const data = JSON.parse(text);
+
+    return data.versions.reverse().map((version) => ({
+      id: version.replace(/\./g, '_'),
+      version: version,
+      mVersion: version.replace(/-/g, '.'),
+      releaseNotesLink: `/docs/release-notes#version-${version.replace(/\./g, '-')}`
+    }));
+  },
+  schema: z.object({
+    id: z.string(),
+    version: z.string(),
+    mVersion: z.string(),
+    releaseNotesLink: z.string()
+  })
+});
+
+const apiEndpoints = defineCollection({
+  loader: {
+    name: 'openapi-endpoints',
+    load: async ({ store }) => {
+      const file = await fetchWithCache(
+        'https://raw.githubusercontent.com/FusionAuth/fusionauth-openapi/main/openapi.yaml',
+        path.join(CACHE_DIR, 'openapi.yaml')
+      );
+
+      const spec = yaml.load(file);
+
+      store.set({
+        id: 'base-spec',
+        data: { openapi: spec.openapi, info: spec.info, servers: spec.servers, components: spec.components }
+      });
+
+      for (const [endpointPath, methods] of Object.entries(spec.paths)) {
+        for (const [method, operation] of Object.entries(methods)) {
+          if (['parameters', 'servers', '$ref', 'summary', 'description'].includes(method)) continue;
+
+          // Normalize path-param names to {p} so {userId} and {id} map to the same ID.
+          // This lets the MDX docs use different param names than the spec without missing.
+          const normalizedPath = endpointPath.replace(/\{[^}]+\}/g, '{p}');
+          const id = `${method}-${normalizedPath.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
+          store.set({ id, data: { path: endpointPath, method, operation } });
+        }
+      }
+    }
+  }
+});
+
 export const collections = {
   'docs': docsCollection,
   'articles': articlesCollection,
   'releases': releasesCollection,
   'json': jsonCollection,
   'blog': blogCollection,
+  'direct-download-versions': directDownloadVersions,
+  'api-endpoints': apiEndpoints,
 };

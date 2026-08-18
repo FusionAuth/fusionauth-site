@@ -7,36 +7,106 @@ const themes = [
     id: 'light',
     icon: 'sun',
     name: 'Light',
+    group: 'group-[.is-light]:opacity-75'
   },
   {
     id: 'dark',
     icon: 'moon',
-    name: 'Dark'
+    name: 'Dark',
+    group: 'group-[.is-dark]:opacity-75'
   },
   {
     id: 'system',
     pack: 'fa7-solid',
     icon: 'computer',
     name: 'System',
+    group: 'group-[.is-system]:opacity-75'
   }
 ]
 ---
-<div data-widget="theme-selector" class="relative z-10">
-  <button type="button" aria-label="Theme Selector" class="flex items-center border-slate-500 rounded-lg  hover:text-slate-700  dark:hover:text-slate-300 border-0 mt-0 p-0 text-slate-400 w-auto dark:hover:bg-transparent hover:bg-transparent">
-    <span class="text-lg mx-2"><MoonIcon /></span>
+<fa-theme-selector class="block relative z-10 group">
+  
+  <!-- MOBILE TOGGLE BUTTON -->
+  <button id="mobile-theme-toggle" type="button" aria-label="Toggle Theme"
+          class="flex lg:hidden items-center justify-center h-7 w-7 rounded hover:bg-gray-700 hover:text-indigo-500 text-white transition-colors">
+    <span class="hidden dark:block"><Icon name="fa7-solid:sun" width={20} height={20} /></span>
+    <span class="block dark:hidden"><Icon name="fa7-solid:moon" width={20} height={20} /></span>
   </button>
 
-  <!-- Theme dropdown menu -->
-  <ul class="absolute bg-white border border-slate-900/10 hidden rounded-md shadow-lg top-12 w-36 dark:bg-slate-900 dark:border-slate-100/10 dark:text-slate-200 left-auto right-0">
-    {themes.map((theme) => (
-      <li class="group">
-        <div class="dark:group-[.active]:bg-slate-800 group-[.active]:bg-slate-100">
-          <button type="button" class="flex font-medium group items-center gap-2 px-2 py-1 text-sm text-slate-900 w-full dark:text-indigo-200 dark:group-[.active]:text-indigo-400 group-[.active]:text-indigo-600" data-theme={theme.id}>
-            <Icon name={`${theme.pack ?? 'fa7-regular'}:${theme.icon}`} width={22} height={22} class="text-slate-500 dark:group-[.active]:text-indigo-400 group-[.active]:text-indigo-600" />
+  <!-- DESKTOP DROPDOWN -->
+  <details class="hidden lg:block relative group">
+    <summary aria-label="Theme Selector" class="flex items-center justify-center h-7 w-7 text-white transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden outline-none">
+      <MoonIcon class="h-5 w-5" />
+    </summary>
+
+    <ul class="absolute bg-white border border-slate-500 dark:border-slate-800 rounded-md shadow-xl top-10 w-36 dark:bg-slate-900 dark:text-slate-200 left-auto right-0 lg:overflow-hidden m-0 p-0 flex flex-col z-50">
+      {themes.map((theme) => (
+        <li class="m-0 p-0">
+          <button type="button" class="flex font-medium items-center gap-2 px-3 py-2 text-sm text-slate-900 w-full dark:text-slate-200 focus:outline-hidden hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" data-theme={theme.id}>
+            <Icon name={`${theme.pack ?? 'fa7-regular'}:${theme.icon}`} width={22} height={22} class:list={['opacity-35', theme.group] } />
             {theme.name}
           </button>
-        </div>
-      </li>
-    ))}
-  </ul>
-</div>
+        </li>
+      ))}
+    </ul>
+    
+  </details>
+</fa-theme-selector>
+
+<script>
+  class ThemeSelector extends HTMLElement {
+    connectedCallback() {
+      const mobileBtn = this.querySelector('#mobile-theme-toggle');
+      const desktopBtns = this.querySelectorAll('ul button');
+      const details = this.querySelector('details');
+
+      // initialize theme on load
+      const getTheme = () => localStorage.getItem('theme') || 'system';
+      this.setTheme(getTheme());
+
+      mobileBtn?.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.contains('dark');
+        this.setTheme(isDark ? 'light' : 'dark');
+      });
+
+      desktopBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLButtonElement;
+          this.setTheme(target.dataset.theme!);
+          details?.removeAttribute('open');
+        });
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!this.contains(e.target as Node)) {
+          details?.removeAttribute('open');
+        }
+      });
+
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (getTheme() === 'system') this.setTheme('system');
+      });
+
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'theme' && e.newValue) this.setTheme(e.newValue);
+      });
+    }
+
+    setTheme(theme: string) {
+      localStorage.setItem('theme', theme);
+      
+      const isDark = theme === 'system' 
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches 
+        : theme === 'dark';
+      document.documentElement.classList.toggle('dark', isDark);
+
+      const ul = this.querySelector('ul');
+      if (ul) {
+        ul.className = ul.className.replace(/is-\w+/, '');
+        ul.classList.add(`is-${theme}`);
+      }
+    }
+  }
+
+  customElements.define('fa-theme-selector', ThemeSelector);
+</script>

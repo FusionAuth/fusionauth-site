@@ -72,4 +72,4 @@ class DateTimeTools {
   }
 }
 
-document.addEventListener('astro:page-load', () => new DateTimeTools());
+document.addEventListener('DOMContentLoaded', () => new DateTimeTools());

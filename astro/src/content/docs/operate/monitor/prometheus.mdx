@@ -4,10 +4,8 @@ description: Learn how to monitor FusionAuth with Prometheus, Loki Grafana, and 
 ---
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import InlineField from 'src/components/InlineField.astro';
-import InlineUIElement from 'src/components/InlineUIElement.astro';
 
-This guide explains how to monitor FusionAuth logs and metrics with the open-source tools [Prometheus](https://prometheus.io/docs/introduction/overview), [Loki](https://grafana.com/docs/loki), and [Grafana](https://grafana.com/grafana), and receive alerts when problems occur.
+This guide explains how to monitor FusionAuth logs and metrics with the open-source tools [Prometheus](https://prometheus.io/docs/introduction/overview), [Loki](https://grafana.com/docs/loki), and [Grafana](https://grafana.com/products/cloud/grafana/), and receive alerts when problems occur.
 
 Please read the [FusionAuth monitoring overview](/docs/operate/monitor) for details on FusionAuth metrics, the activities in a complete monitoring workflow, and what Prometheus, Loki, and Grafana are. Review the [alternative monitoring services](/docs/operate/monitor#overview-of-popular-monitoring-tools) in the overview to ensure that Prometheus is the right tool for your needs.
 
@@ -76,7 +74,7 @@ FusionAuth Cloud deployments with more than one compute node round-robin request
 
 Clone the sample [FusionAuth kickstart repository](https://github.com/FusionAuth/fusionauth-example-docker-compose) with the command below.
 
-```sh
+```shell-session
 git clone https://github.com/FusionAuth/fusionauth-example-docker-compose.git
 cd fusionauth-example-docker-compose/light
 ```
@@ -130,7 +128,7 @@ Run all the containers with `docker compose up`. You should be able to log in to
 
 To check that Prometheus has accepted your configuration file as valid, enter the container and use `promtool` to validate the YAML file.
 
-```sh
+```shell-session
 docker exec -it faProm /bin/bash
 
 promtool check config /etc/prometheus/prometheus.yml
@@ -138,7 +136,7 @@ promtool check config /etc/prometheus/prometheus.yml
 exit
 ```
 
-The metrics FusionAuth exposes to Prometheus change over time. Some basic Java Virtual Machine (JVM) metrics are listed [here](/docs/apis/system#retrieve-system-metrics-using-prometheus). You can see exactly what metrics are available on your FusionAuth instance by running the command below.
+The metrics FusionAuth exposes to Prometheus change over time. Some basic Java Virtual Machine (JVM) metrics are listed [here](/docs/apis/system/retrieve-system-metrics-using-prometheus). You can see exactly what metrics are available on your FusionAuth instance by running the command below.
 
 ```sh
 curl -u "apikey:33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" 0.0.0.0:9011/api/prometheus/metrics
@@ -173,7 +171,7 @@ In the [Prometheus web interface](http://localhost:9090/targets), check that Fus
 
 ![Prometheus targets](/img/docs/operate/secure-and-monitor/prometheus/prometheusTargets.png)
 
-See charts of FusionAuth metrics in the [Prometheus web interface](http://localhost:9090/graph?g0.expr=HikariPool_1_pool_Usage&g0.tab=0&g0.display_mode=lines&g0.show_exemplars=0&g0.range_input=15m&g0.end_input=2024-09-10%2011%3A11%3A02&g0.moment_input=2024-09-10%2011%3A11%3A02) by browsing to <Breadcrumb>Menu -> Graph</Breadcrumb>. Push <kbd>Ctrl + Spacebar</kbd> in the text box to view all the metrics and functions available. Try entering `Database_primary_pool_Usage` and clicking <InlineUIElement>Execute</InlineUIElement>.
+See charts of FusionAuth metrics in the [Prometheus web interface](http://localhost:9090/graph?g0.expr=HikariPool_1_pool_Usage&g0.tab=0&g0.display_mode=lines&g0.show_exemplars=0&g0.range_input=15m&g0.end_input=2024-09-10%2011%3A11%3A02&g0.moment_input=2024-09-10%2011%3A11%3A02) by browsing to <Breadcrumb>Menu -> Graph</Breadcrumb>. Push <kbd>Ctrl + Spacebar</kbd> in the text box to view all the metrics and functions available. Try entering `Database_primary_pool_Usage` and clicking <Breadcrumb>Execute</Breadcrumb>.
 
 ![Prometheus targets](/img/docs/operate/secure-and-monitor/prometheus/prometheusChart.png)
 
@@ -193,7 +191,7 @@ The simplest and cheapest alert service is [ntfy.sh](https://ntfy.sh/). ntfy is 
 
 To see how ntfy works, run the command below in a terminal.
 
-```sh
+```shell-session
 curl -H "Title: Error" -d "A FusionAuth error occurred in the last minute" ntfy.sh/fusionauthprometheus
 ```
 
@@ -336,7 +334,7 @@ Push <kbd>Ctrl + C</kbd> in the terminal, and then run `docker compose up` again
 
 Confirm that Alertmanager can connect to ntfy manually by running the command below in a new terminal.
 
-```sh
+```shell-session
 curl -X POST -H "Content-Type: application/json" -d '[{"labels":{"alertname":"TestAlert"}}]' http://localhost:9093/api/v2/alerts
 ```
 
@@ -348,7 +346,7 @@ If you wait a minute and then browse to https://ntfy.sh/fusionauthprometheus, yo
 
 ![ntfy.sh alerts](/img/docs/operate/secure-and-monitor/prometheus/prometheusNtfy.png)
 
-Alertmanager sent ntfy raw JSON that includes the `annotations` fields from the `prometheusRules.yml` configuration. If you would like notifications to look neater, read about [templates](https://prometheus.io/docs/alerting/latest/notifications) in Prometheus.
+Alertmanager sent ntfy raw JSON that includes the **annotations** fields from the `prometheusRules.yml` configuration. If you would like notifications to look neater, read about [templates](https://prometheus.io/docs/alerting/latest/notifications) in Prometheus.
 
 ## Run Grafana To Create A Dashboard
 
@@ -433,14 +431,14 @@ Run `docker exec -it faGraf /bin/bash` to log in to the container and view sampl
 
 Add a dashboard in the Grafana web interface:
 
-- Click <InlineUIElement>Add your first data source</InlineUIElement> in the center of the home page.
-- Click <InlineUIElement>Prometheus</InlineUIElement> to add the default Prometheus connection.
-- In the Prometheus <InlineField>Connection</InlineField>, enter the URL of the Docker container, `http://prometheus:9090`.
-- Click <InlineUIElement>Save & test</InlineUIElement>. Grafana should now be able to connect to Prometheus. (Note that this connection retrieves the FusionAuth metrics, which is what we want, not metrics about Prometheus itself.)
-- Click <InlineUIElement>Dashboards</InlineUIElement> in the sidebar, and then <InlineUIElement>New dashboard</InlineUIElement> on the right.
-- Click <InlineUIElement>Add visualization</InlineUIElement>.
-- Select <InlineUIElement>prometheus</InlineUIElement> as the data source.
-- Enter the value `prime_mvc_____errors_total` in the <InlineField>Metric</InlineField> browser field at the bottom. Click <InlineUIElement>Run queries</InlineUIElement>, change the panel <InlineField>Title</InlineField>, and then click <InlineUIElement>Apply</InlineUIElement> to save the visualization.
+- Click <Breadcrumb>Add your first data source</Breadcrumb> in the center of the home page.
+- Click <Breadcrumb>Prometheus</Breadcrumb> to add the default Prometheus connection.
+- In the Prometheus **Connection**, enter the URL of the Docker container, `http://prometheus:9090`.
+- Click <Breadcrumb>Save & test</Breadcrumb>. Grafana should now be able to connect to Prometheus. (Note that this connection retrieves the FusionAuth metrics, which is what we want, not metrics about Prometheus itself.)
+- Click <Breadcrumb>Dashboards</Breadcrumb> in the sidebar, and then <Breadcrumb>New dashboard</Breadcrumb> on the right.
+- Click <Breadcrumb>Add visualization</Breadcrumb>.
+- Select <Breadcrumb>prometheus</Breadcrumb> as the data source.
+- Enter the value `prime_mvc_____errors_total` in the **Metric** browser field at the bottom. Click <Breadcrumb>Run queries</Breadcrumb>, change the panel **Title**, and then click <Breadcrumb>Apply</Breadcrumb> to save the visualization.
 - Add another visualization with the value `prime_mvc___admin_login__requests` and save.
 - Save the dashboard and give it the name `FusionAuth dashboard`. You can rearrange the charts if you would like to. The dashboard should look like the image below.
 
@@ -448,7 +446,7 @@ Add a dashboard in the Grafana web interface:
 
 You can add any other metrics as visualizations. In the browser, search for metrics related to user `login` or `oauth` to keep track of how your system is used.
 
-If you edit the dashboard as a whole, The JSON Model tab contains the full configuration text for your dashboard, which you can use in the provisioning files referred to earlier to automatically recreate the dashboard in a new instance of Grafana.
+If you edit the dashboard as a whole, the <Breadcrumb>JSON Model</Breadcrumb> tab contains the full configuration text for your dashboard, which you can use in the provisioning files referred to earlier to automatically recreate the dashboard in a new instance of Grafana.
 
 You can also create a new dashboard by importing a standard template from the Grafana repository. However, there is no FusionAuth template currently, and FusionAuth does not export all the Java metrics necessary to use the [JVM template](https://grafana.com/grafana/dashboards/8563-jvm-dashboard/).
 
@@ -467,12 +465,12 @@ You can query logs in Grafana, or in the terminal with the Loki API or [LogCLI](
 Loki is primarily a log store, and will not fetch logs itself. Tools to send logs to Loki include Promtail (the original sending tool), OpenTelemetry, and Alloy (a new OpenTelemetry-compliant tool from Grafana). For more options, see the [documentation](https://grafana.com/docs/loki/latest/send-data). In this guide, you use Promtail for simplicity and stability.
 
 <Aside type="note">
-When FusionAuth runs in Docker, it writes logs to the terminal and does not save them to a file or provide them via the [API](/docs/apis/system#export-system-logs). This means that the logs are not available in the [web interface](/docs/operate/troubleshooting#logs).
+When FusionAuth runs in Docker, it writes logs to the terminal and does not save them to a file or provide them via the [API](/docs/apis/system/export-system-logs). This means that the logs are not available in the [web interface](/docs/operate/troubleshooting#logs).
 </Aside>
 
 To use Loki, add the services below to your `docker-compose.yml` file. You are now using Grafana images because Ubuntu has no images for Promtail.
 
-```yml
+```yaml
   faLoki:
     image: grafana/loki:3.0.0
     container_name: faLoki
@@ -507,7 +505,7 @@ The `faPromtail` service waits for Loki to start by using `depends_on: faLoki`. 
 
 Use the code below to change the `fa` service to make FusionAuth wait for `Promtail` to run before FusionAuth starts.  If FusionAuth isn't configured to wait, Loki will not record potential FusionAuth starting errors.
 
-```yml
+```yaml
     depends_on:
       faPromtail:
         condition: service_started
@@ -517,7 +515,7 @@ Use the code below to change the `fa` service to make FusionAuth wait for `Promt
 
 You can comment out the `prometheusLokiConfig.yml` volume in the `faLoki` service configuration to use default values. The default values are fine. But if you want to use Loki with Alertmanager, you should create the file with the contents below (where only the last line differs from the default). Below, the Alertmanager URL now points to the Docker service for the `ruler` ([rules manager](https://grafana.com/docs/loki/latest/alert)).
 
-```yml
+```yaml
 auth_enabled: false
 
 server:
@@ -549,9 +547,9 @@ ruler:
   alertmanager_url: http://alertmanager:9093
 ```
 
-The `prometheusPromtailConfig.yml` file controls which containers Promtail will get logs from. It is documented [here](https://grafana.com/docs/loki/latest/send-data/promtail/configuration). Create the `prometheusPromtailConfig.yml` file and add the content below.
+The `prometheusPromtailConfig.yml` file controls which containers Promtail will get logs from. It is documented [here](https://grafana.com/docs/loki/latest/send-data/promtail/). Create the `prometheusPromtailConfig.yml` file and add the content below.
 
-```yml
+```yaml
 server:
   http_listen_port: 9080
   grpc_listen_port: 0
@@ -575,7 +573,7 @@ scrape_configs:
 
 The `clients` URL points to the Loki Docker service where Promtail will send logs. The `scrape_configs` section describes how Promtail will get logs.
 
-The [`docker_sd_configs`](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#docker_sd_configs) configuration option is one way for Promtail to get logs (along with local file logs and Kubernetes). It follows the Prometheus [configuration format](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#docker_sd_config), which uses the Docker [container reference format](https://docs.docker.com/reference/api/engine/version/v1.40/#operation/ContainerList).
+The [`docker_sd_configs`](https://grafana.com/docs/loki/latest/send-data/promtail/#docker_sd_configs) configuration option is one way for Promtail to get logs (along with local file logs and Kubernetes). It follows the Prometheus [configuration format](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#docker_sd_config), which uses the Docker [container reference format](https://docs.docker.com/reference/api/engine/version/v1.40/#operation/ContainerList).
 
 The `filters` section excludes all containers from having their logs stored other than FusionAuth, which has the regular expression container name `^fa$` (start, fa, end). There is no `/` in this name. If you instead used a filter of `fa`, the logs of `fa_db` would also be stored.
 
@@ -585,12 +583,12 @@ Log monitoring is ready. Run `docker compose up` to start all monitoring compone
 
 To view the logs in Grafana:
 - Browse to Grafana and choose <Breadcrumb>Connections -> Data sources</Breadcrumb> in the sidebar.
-- Choose <InlineUIElement>Add new data source</InlineUIElement> and select <InlineUIElement>Loki</InlineUIElement>.
-- Enter `http://faLoki:3100` in the <InlineField>URL</InlineField> field - this is the only setting to change.
-- Click <InlineUIElement>Save and test</InlineUIElement>. If Grafana cannot detect Loki, check that your URL matches the one in your Docker Compose file and that there are no errors in the Docker terminal.
-- Click <InlineUIElement>Explore</InlineUIElement> in the sidebar to start browsing your Loki logs.
+- Choose <Breadcrumb>Add new data source</Breadcrumb> and select <Breadcrumb>Loki</Breadcrumb>.
+- `http://faLoki:3100` in the **URL** field - this is the only setting to change.
+- Click <Breadcrumb>Save and test</Breadcrumb>. If Grafana cannot detect Loki, check that your URL matches the one in your Docker Compose file and that there are no errors in the Docker terminal.
+- Click <Breadcrumb>Explore</Breadcrumb> in the sidebar to start browsing your Loki logs.
 - Choose Loki as your data source and enter a query value of `{container="fa"}`.
-- Press <InlineUIElement>Run query</InlineUIElement> to view the logs.
+- Press <Breadcrumb>Run query</Breadcrumb> to view the logs.
 
 You can filter logs and make complex queries. For example, try `{container="fa"} |~ "(ERROR|WARN)"`.
 
@@ -661,14 +659,14 @@ graph LR
 
 - [FusionAuth monitoring overview](/docs/operate/monitor)
 - [FusionAuth metrics](/docs/operate/monitor#metrics)
-- [FusionAuth Prometheus API](/docs/apis/system#retrieve-system-metrics-using-prometheus)
+- [FusionAuth Prometheus API](/docs/apis/system/retrieve-system-metrics-using-prometheus)
 - [Prometheus](https://prometheus.io/docs/introduction/overview)
 - [Configure Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/configuration)
 - [Prometheus alerts](https://prometheus.io/docs/alerting/latest/overview)
 - [Prometheus alert templates](https://prometheus.io/docs/alerting/latest/notifications)
 - [Loki](https://grafana.com/docs/loki/latest/get-started/overview/?pg=oss-loki)
-- [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/configuration)
-- [Grafana](https://grafana.com/grafana)
+- [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/)
+- [Grafana](https://grafana.com/products/cloud/grafana/)
 - [Ubuntu Alertmanager image](https://hub.docker.com/r/ubuntu/alertmanager)
 - [Ubuntu Grafana image](https://hub.docker.com/r/ubuntu/grafana)
 - [Ubuntu Prometheus image](https://hub.docker.com/r/ubuntu/prometheus)

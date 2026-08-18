@@ -1,0 +1,158 @@
+---
+title: Customize Docker Images
+description: Learn how to configure a Docker image containing FusionAuth to meet the needs of your application.
+---
+import Aside from 'src/components/Aside.astro';
+import RemoteCode from 'src/components/RemoteCode.astro';
+
+If you want to build your own image starting with our base image, start with the `fusionauth/fusionauth-app` image. Just as the FusionAuth Docker image is based on an Ubuntu container image, you can build a Docker file which is based on the `fusionauth/fusionauth-app:latest` image. This can be useful if you want to permanently add a password hashing plugin, configuration file, or other customization to the image.
+
+Here's a Dockerfile which extends the latest FusionAuth image:
+
+<RemoteCode title="Example Dockerfile for building fusionauth-app including a plugin" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-docker-compose/main/build/fusionauth-app/Dockerfile" lang="docker" />
+
+Here's an example docker compose YAML file which uses this new image:
+
+<RemoteCode title="Example docker-compose.yml for building fusionauth-app including a plugin" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-docker-compose/main/build/docker-compose.yml" lang="yaml" />
+
+With this example, you can use `docker compose build` to only run the build steps in the referenced Dockerfile. This will create you a custom Docker image which is consequentially used in the creation of the container in Docker Compose when running `docker compose up -d`. Alternatively you can run only `docker compose up -d` which will automatically take care of the build as well if not present.
+
+By default the build process will cache a lot of the steps, to force a fresh build you can run `docker compose build --pull --no-cache` instead.
+
+Here's the FusionAuth application Dockerfile as a reference which builds the `fusionauth/fusionauth-app` base image.
+
+<RemoteCode title="The FusionAuth Docker file" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/fusionauth-app/Dockerfile" lang="docker" />
+
+For more FusionAuth Docker images, see [fusionauth on Docker Hub](https://hub.docker.com/u/fusionauth/). For an in-depth example, see the [FusionAuth Docker Compose example repository](https://github.com/FusionAuth/fusionauth-example-docker-compose). For OpenShift and other community-supported environments, see the [FusionAuth Contrib](https://github.com/FusionAuth/fusionauth-contrib) GitHub repo.
+
+## Kickstart
+
+Using Docker with Kickstart is a powerful combination. Using these technologies together lets you:
+
+* Configure and share development environments
+* Create replicable bug reports 
+* Spin up auth instances with a well known, versioned set of data for continuous integration and testing
+
+All the normal limitations of Kickstart apply (the Kickstart will not run if the database has already been set up with an API key, for example).
+
+To use Kickstart, you'll need to tweak your Docker Compose files. Before you begin, you'll need a valid `kickstart.json` file (the `kickstart.json` name is just a convention). Check out the [Kickstart documentation](/docs/get-started/download-and-install/development/kickstart) for more information on writing a `kickstart.json`.
+
+Once you have a valid `kickstart.json` file, create a subdirectory in the location of your `docker-compose.yml` file. It can be named anything; this documentation will use a directory called `kickstart`. Next, you'll mount this directory and set the **`FUSIONAUTH_APP_KICKSTART_FILE`** variable in the `docker-compose.yml` file.
+
+Here are the steps to do so:
+
+* In the `volumes:` section of the `fusionauth` service, add `- ./kickstart:/usr/local/fusionauth/kickstart`.
+* Modify `.env` and add the Kickstart configuration variable: `FUSIONAUTH_APP_KICKSTART_FILE=/usr/local/fusionauth/kickstart/kickstart.json`. This path should be what the Docker container expects, not the path on the host.
+* Configure `docker-compose.yml` to pass the environment variable set by `.env` to the container. Do this by adding `FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}` to the `environment` section of the `fusionauth` service. 
+* `docker compose up -d`
+
+The following is an example `docker-compose.yml` file configuring FusionAuth to run the commands in a `kickstart.json` at startup.
+
+<RemoteCode title="Example docker-compose.yml for running Kickstart" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-docker-compose/main/kickstart/docker-compose.yml" lang="yaml" />
+
+After running `docker compose up -d` you should see a line similar to the one below in the logs. These logs can be accessed using this command: `docker compose logs -f fusionauth`:
+
+```plaintext title="FusionAuth log messages indicating Kickstart has succeeded"
+io.fusionauth.api.service.system.kickstart.KickstartRunner - Summary
+```
+
+This indicates that Kickstart completed and provides a summary of the configuration changes made by it.
+
+You may also want to check out [the Isolated Docker Setups](https://github.com/FusionAuth/fusionauth-example-scripts/tree/main/isolated-docker-setup) if you want the ability to rapidly stand up different versions and configurations of FusionAuth.
+
+If you want to test changes to your Kickstart file, you'll need to delete your volumes each time. Kickstart won't run except on a brand new install. If there is any data in the database, it won't proceed.
+
+<Aside type="caution">
+This will delete all data in your docker instance.
+</Aside>
+
+```shell-session title="Delete the volumes"
+docker compose down -v
+```
+
+## Plugins
+
+Instead of building a custom docker image, you can directly mount a directory containing a plugin to your Docker container.
+
+Here are the steps to do so:
+
+* In the `volumes:` section of the `fusionauth` service, add `- ./plugins:/usr/local/fusionauth/plugins`.
+* Copy your plugin jar file, created [by following the instructions](/docs/extend/code/password-hashes/), to your `plugins` directory on the host.
+* `docker compose up -d`
+
+The following is an example `docker-compose.yml` file configuring FusionAuth to scan for plugins at startup.
+
+<RemoteCode title="Example docker-compose.yml for installing a plugin" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-docker-compose/main/plugin/docker-compose.yml" lang="yaml" />
+
+After running `docker compose up -d` you should see a line like this in the logs, which you can access using the command `docker compose logs -f fusionauth`:
+
+```plaintext title="FusionAuth log messages indicating a plugin has been successfully installed"
+INFO  io.fusionauth.api.plugin.guice.PluginModule - Installing plugin [com.mycompany.fusionauth.plugins.guice.MyExampleFusionAuthPluginModule]
+INFO  io.fusionauth.api.plugin.guice.PluginModule - Plugin successfully installed
+```
+
+Such output indicates that the plugin has been installed and can be used.
+
+## Access the Host Machine
+
+The default FusionAuth Docker configuration sets up the network using the `bridge` configuration. This means that all the hosts defined by `docker-compose.yml` can access each other. However, it means that any applications running on your host machine cannot be accessed by FusionAuth using `localhost`.
+
+This is typically only an issue when FusionAuth is accessing resources outside of the Docker network to, for example, send email or request a webhook. For example, if an application is running locally and you want FusionAuth, running in Docker, to send a webhook payload to it, configuring FusionAuth to send the webhook to `localhost` won't work. `localhost` in the Docker container refers to the Docker container itself, not the host machine.
+
+In this situation, do one of the following:
+
+* Run a container with your application in Docker, and use the appropriate network domain name.
+* Install FusionAuth on the host machine and use `localhost`.
+* Use an alias address, `host.docker.internal`, as the hostname instead of `localhost`.
+  * For macOS and Windows hosts, you can use `host.docker.internal` without any additional configuration.
+  * For Linux hosts, add the following lines to your `docker-compose.yml`:
+  
+  ```yaml title="docker-compose.yml"
+  extra_hosts: 
+    - "host.docker.internal:host-gateway"
+  ```
+
+Modifying the FusionAuth service in `docker-compose.yml` to use other Docker networking schemes such as `host` may work, but isn't fully tested or supported.
+
+## OpenSearch Production Deployment Configuration
+
+Production runtime requirements and configuration for OpenSearch will drastically differ from the Docker Compose examples as the examples are configured without any security or redundancy.
+
+Please review the [Installing OpenSearch documentation](https://opensearch.org/docs/latest/install-and-configure/install-opensearch/index/) for further details around production deployment.
+
+## Elasticsearch Production Deployment Configuration
+
+Elasticsearch has a few runtime requirements that may not be met by default on your host platform. Please review the [Elasticsearch Docker production mode guide for more information](https://www.elastic.co/guide/en/elasticsearch/reference/7.6/docker.html#docker-cli-run-prod-mode).
+
+For example if startup is failing and you see the following in the logs, you will need to increase `vm.max_map_count` on your host VM.
+
+```plaintext title="The log message when max_map_count is too low"
+2018-11-22T12:32:06.779828954Z Nov 22, 2018 12:32:06.779 PM ERROR c.inversoft.maintenance.search.ElasticsearchSilentConfigurationWorkflowTask
+  - Silent configuration was unable to complete search configuration. Entering maintenance mode. State [SERVER_DOWN]
+
+2018-11-22T13:00:05.346558595Z ERROR: [2] bootstrap checks failed
+2018-11-22T13:00:05.346600195Z [1]: memory locking requested for elasticsearch process but memory is not locked
+2018-11-22T13:00:05.346606495Z [2]: max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
+```
+
+## Mailcatcher
+
+In development environments, consider running [MailCatcher](https://mailcatcher.me/), which provides a local SMTP server. This allows FusionAuth to send transactional emails for account verification, password reset, and more.
+
+<RemoteCode title="Example docker-compose.yml with mailcatcher" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-docker-compose/main/mailcatcher/docker-compose.yml" lang="yaml" />
+
+Below is a functional configuration on the tenant email tab based on the above configuration file:
+
+![Tenant Setting With MailCatcher](/img/docs/get-started/download-and-install/tenant-mailcatcher-setting.png)
+
+This a view of the Mailcatcher client.
+
+![Mailcatcher Client View](/img/docs/get-started/download-and-install/mailcatcher-client.png)
+
+## Limitations
+
+Due to Oracle licensing restrictions, the docker images published on [Docker Hub](https://hub.docker.com/r/fusionauth/fusionauth-app) do not contain the necessary software to connect to a MySQL database.
+
+If you wish to use MySQL, you'll need to build a custom container that includes the MySQL Connector JAR file. Here is an example container definition that uses the FusionAuth image as a base layer and adds the MySQL connector.
+
+<RemoteCode title="Example Dockerfile which downloads the MySQL connector" lang="docker" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/fusionauth-app-mysql/Dockerfile" />

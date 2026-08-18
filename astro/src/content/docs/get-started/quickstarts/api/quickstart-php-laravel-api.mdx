@@ -1,14 +1,13 @@
 ---
 title: Laravel API
-description: Quickstart integration of a Laravel API application using FusionAuth.
+description: QuickStart integration of a Laravel API application using FusionAuth.
+htmlTitle: FusionAuth QuickStart for Laravel API
 codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-php-laravel-api/main
 ---
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import { Code } from 'astro:components';
+import { Prism } from '@astrojs/prism';
 import DockerSpinup from 'src/components/quickstarts/DockerSpinup.astro';
-import InlineField from 'src/components/InlineField.astro';
-import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Intro from 'src/components/quickstarts/Intro.astro';
 import {Content as LoginArchitectureApi} from 'src/components/quickstarts/LoginArchitectureApi.mdx';
 import NextStepsApi from 'src/components/quickstarts/NextStepsApi.astro';
@@ -31,14 +30,17 @@ import RemoteValue from 'src/components/RemoteValue/RemoteValue.astro';
 
 ## Getting Started
 
-In this section, you’ll get FusionAuth up and running and create a resource server which will serve the API.
+In this section, you'll get FusionAuth up and running and create a resource server which will serve the API.
 
 ### Clone the Code
 
 First off, grab the code from the repository and change into that directory.
 
-```shell
+```shell-session
 git clone https://github.com/FusionAuth/fusionauth-quickstart-php-laravel-api.git
+```
+
+```shell-session
 cd fusionauth-quickstart-php-laravel-api
 ```
 
@@ -61,20 +63,20 @@ We are going to be building an API backend for a banking application called Chan
 Both endpoints will be protected such that a valid JSON web token (JWT) will be required in an `app.at` cookie or the `Authorization` header in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
 
 <Aside type="note">
-  If you simply want to run the application, there is a completed version in the `complete-application` directory. You can install [PHP](https://www.php.net) and [Composer](https://getcomposer.org/) and use the following commands to get it up and running if you do not want to create your own.
+  To skip ahead to running the application, use the completed version in the `complete-application` directory. You can install [PHP](https://www.php.net) and [Composer](https://getcomposer.org/) and use the following commands to get it up and running if you do not want to create your own.
 
-  ```shell
+  ```shell-session
   cd complete-application
   composer install
   ./vendor/bin/sail up -d
   ```
 
-  You can then follow the instructions in the <InlineUIElement>Run the API</InlineUIElement> section.
+  You can then follow the instructions in the <Breadcrumb>Run the API</Breadcrumb> section.
 </Aside>
 
 To create the application from scratch, you'll use [Laravel Sail](https://laravel.com/docs/10.x/installation#laravel-and-docker) to set up and run your application using Docker.
 
-```shell
+```shell-session
 curl "https://laravel.build/your-application?with=mariadb" | bash
 cd your-application
 ```
@@ -87,14 +89,14 @@ cd your-application
 
 Initialize the Laravel application using the following command (it'll run things in background, just like `docker compose up -d` would).
 
-```shell
+```shell-session
 ./vendor/bin/sail up -d
 ```
 
 <Aside type="note">
-  Laravel Sail will use port 80, so make sure you don't have anything listening on that. Otherwise, you can pass an `APP_PORT` environment variable to specify another port, like shown below.
+  Laravel Sail will use port 80, so make sure you don't have anything listening on that. Otherwise, you can pass an **`APP_PORT`** environment variable to specify another port, like shown below.
 
-  ```shell
+  ```shell-session
   APP_PORT=3000 ./vendor/bin/sail up -d
   ```
 </Aside>
@@ -103,7 +105,7 @@ Initialize the Laravel application using the following command (it'll run things
 
 Include FusionAuth's library to add JWT support to the authentication system.
 
-```shell
+```shell-session
 ./vendor/bin/sail composer require fusionauth/jwt-auth-webtoken-provider web-token/jwt-signature-algorithm-rsa
 ```
 ### Create Fields in the User Entity
@@ -118,7 +120,7 @@ You'll also need to edit `app/Models/User.php` to make the database changes cons
 
 You may remove all other migrations, as you won't need them.
 
-```shell
+```shell-session
 rm database/migrations/2014_10_12_100000_create_password_reset_tokens_table.php
 rm database/migrations/2019_08_19_000000_create_failed_jobs_table.php
 rm database/migrations/2019_12_14_000001_create_personal_access_tokens_table.php
@@ -126,7 +128,7 @@ rm database/migrations/2019_12_14_000001_create_personal_access_tokens_table.php
 
 Run the remaining migrations to create the necessary tables in your database.
 
-```shell
+```shell-session
 ./vendor/bin/sail artisan migrate
 ```
 
@@ -136,7 +138,7 @@ By default, Laravel only allows JWTs that correspond to users in your database, 
 
 To do so, first create a folder named `FusionAuth` inside `app/`, and another one named `Providers` inside `FusionAuth`, so you can have `app/FusionAuth/Providers`.
 
-```shell
+```shell-session
 mkdir -p app/FusionAuth/Providers
 ````
 
@@ -176,7 +178,7 @@ Change the base controller at `app/Http/Controllers/Controller.php` to include a
 
 Create a folder named `ChangeBank` inside `app/Http/Controllers` to hold the two controllers you're going to create.
 
-```shell
+```shell-session
 mkdir app/Http/Controllers/ChangeBank
 ```
 
@@ -194,7 +196,7 @@ Besides verifying the signature, it is also recommended to validate the issuer (
 
 Create a folder named `Claims` inside `app/FusionAuth`.
 
-```shell
+```shell-session
 mkdir app/FusionAuth/Claims
 ```
 
@@ -224,7 +226,7 @@ In that same `config/app.php` file, add these lines at the end (just before the 
 
 To make the library available for use, publish its configuration by running the command below.
 
-```shell
+```shell-session
 ./vendor/bin/sail artisan vendor:publish --provider="FusionAuth\JWTAuth\WebTokenProvider\Providers\WebTokenServiceProvider"
 ```
 
@@ -241,7 +243,7 @@ First, try requests as the <code><RemoteValue url={frontmatter.codeRoot + "/kick
 <RemoteValue
   url={frontmatter.codeRoot + "/kickstart/kickstart.json"}
   selector="$.variables">
-  {(variables) => <Code lang="shell" code={`curl --location 'http://localhost:9011/api/login' \\
+  {(variables) => <Prism lang="shell-session" code={`curl --location 'http://localhost:9011/api/login' \\
 --header 'Authorization: ${variables.apiKey}' \\
 --header 'Content-Type: application/json' \\
 --data-raw '{
@@ -267,7 +269,7 @@ Copy the `token` from the response, which should look like this:
 
 Make a request to `/api/make-change` with a query parameter `total=5.12` and pass the `token` in an `app.at` cookie (or as a `Bearer` token in the `Authorization` header).
 
-```shell
+```shell-session
 curl --cookie 'app.at=YOUR_TOKEN' 'http://localhost/api/make-change?total=5.12'
 ```
 
@@ -305,7 +307,7 @@ You were authorized, success! You can try making the request without the cookie 
 
 Next call the `/api/panic` endpoint because you are in trouble!
 
-```shell
+```shell-session
 curl --cookie 'app.at=YOUR_TOKEN' --request POST 'http://localhost/api/panic'
 ```
 
@@ -324,7 +326,7 @@ Now let's try as `customer@example.com` who has the role `customer`. Acquire a t
 <RemoteValue
     url={frontmatter.codeRoot + "/kickstart/kickstart.json"}
     selector="$.variables">
-    {(variables) => <Code lang="shell" code={`curl --location 'http://localhost:9011/api/login' \\
+    {(variables) => <Prism lang="shell-session" code={`curl --location 'http://localhost:9011/api/login' \\
 --header 'Authorization: ${variables.apiKey}' \\
 --header 'Content-Type: application/json' \\
 --data-raw '{
@@ -348,7 +350,7 @@ Your response should look like this:
 
 Now use that token to call `/api/make-change` with a query parameter `total=3.24`.
 
-```shell
+```shell-session
 curl --cookie 'app.at=YOUR_TOKEN' --location 'http://localhost/api/make-change?total=3.24'
 ```
 
@@ -380,7 +382,7 @@ The response should look similar to below, however it has been formatted here fo
 
 So far so good. Now call the `/api/panic` endpoint with `-i` flag to see the headers of the response).
 
-```shell
+```shell-session
 curl --cookie 'app.at=YOUR_TOKEN' -i --request POST -H "Accept: application/json" 'http://localhost/api/panic'
 ```
 
@@ -404,7 +406,7 @@ Looks like this user does not have access to this function. Enjoy your secured r
 
 ## Troubleshooting
 
-* I get `This site can’t be reached localhost refused to connect.` when I call the Login API.
+* I get `This site can't be reached localhost refused to connect.` when I call the Login API.
 
 Ensure FusionAuth is running in the Docker container. You should be able to login as the admin user, `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
 
@@ -416,7 +418,7 @@ Make sure you are making a `POST` call and using a token with the `teller` role.
 
 You can always pull down a complete running application and compare what's different.
 
-```shell
+```shell-session
 git clone https://github.com/FusionAuth/fusionauth-quickstart-php-laravel-api.git
 cd fusionauth-quickstart-php-laravel-api
 docker compose up -d

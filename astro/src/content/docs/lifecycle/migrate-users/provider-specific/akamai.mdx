@@ -2,17 +2,14 @@
 title: Migrate From Akamai
 description: How to migrate your users from Akamai to FusionAuth.
 ---
-
 import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import InlineField from 'src/components/InlineField.astro';
-import InlineUIElement from 'src/components/InlineUIElement.astro';
 import BulkMigration from 'src/content/docs/lifecycle/migrate-users/_bulk-migration.mdx';
 import GradualMigration from 'src/content/docs/lifecycle/migrate-users/_gradual-migration.mdx';
 import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/provider-specific/_mapping-user-attributes.mdx';
 import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/provider-specific/_other-entities-intro.mdx';
-import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.mdx';
 import SlowMigrationTimeline from 'src/content/docs/lifecycle/migrate-users/provider-specific/_slow-migration-timeline.mdx';
 import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
 import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-note.mdx';
@@ -117,7 +114,7 @@ This repository has a directory called `akamai`. It contains JavaScript files to
 This repository has a Docker compose file to start a local instance of FusionAuth.
 
 - Log in to your Akamai account at https://console.janrain.com.
-- If you don't have existing users, or wish to create ones purely for testing, browse to <Breadcrumb>MANAGE PROFILES -> user</Breadcrumb> and click <InlineUIElement>CREATE PROFILE</InlineUIElement> to add some users.
+- If you don't have existing users, or wish to create ones purely for testing, browse to <Breadcrumb>MANAGE PROFILES -> user</Breadcrumb> and click <Breadcrumb>CREATE PROFILE</Breadcrumb> to add some users.
 
   ![Add an Akamai user](/img/docs/lifecycle/migrate-users/provider-specific/akamai/addUser.png)
 
@@ -127,7 +124,7 @@ Akamai stores users in [schemas](https://techdocs.akamai.com/identity-cloud/docs
 
 If you want to add a lot of users, you can create each user with the API call below instead of using the console. You need to replace the parameters in the request with your own URL, client Id, and flow version. You can find these in the console under <Breadcrumb>MANAGE PROPERTIES</Breadcrumb>.
 
-```sh
+```shell-session
 curl -X POST \
 https://test-env.us-dev.janraincapture.com/oauth/register_native_traditional \
 	-H 'Content-Type: application/x-www-form-urlencoded' \
@@ -156,7 +153,7 @@ While you can export users from the Akamai web interface, it [does not export al
 
 To access the API, you need an API key.
 
-- Browse to <Breadcrumb>MANAGE PROPERTIES</Breadcrumb> in the sidebar and click <InlineUIElement>CREATE PROPERTY</InlineUIElement>.
+- Browse to <Breadcrumb>MANAGE PROPERTIES</Breadcrumb> in the sidebar and click <Breadcrumb>CREATE PROPERTY</Breadcrumb>.
 - Give the property any name.
 - For permissions, disable `login_client` and enable `owner`, `direct_read_access`, and `direct_access`.
 - Save using the floppy disk icon at the bottom right.
@@ -173,7 +170,7 @@ You're now done working with the Akamai console and have sample user data to tes
 
 Open a terminal and run the code below to extract all your Akamai users to the `users.json` file. Replace the start of the URL with your own, which you can get on the <Breadcrumb>MANAGE APPLICATION</Breadcrumb> page, and use your client Id and secret from your property.
 
-```sh
+```shell-session
 cd fusionauth-import-scripts/akamai/src
 
 curl -X POST https://test-env.us-dev.janraincapture.com/entity.find \
@@ -225,7 +222,7 @@ Next, you're going to start FusionAuth and import the roles your users have, so 
 
 - Open a new terminal in the `fusionauth-example-docker-compose` directory and run the commands below to start FusionAuth.
 
-```sh
+```shell-session
 cd light
 docker compose up
 ```
@@ -236,7 +233,7 @@ This configuration uses a bootstrapping feature of FusionAuth called [Kickstart]
 
 - Back in the original terminal in the `fusionauth-import-scripts/akamai/src` directory, run the command below to import your user roles from `users.json`.
 
-```sh
+```shell-session
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" node:24.0.1-alpine3.21 sh -c  "npm install";
 
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" --network faNetwork node:24.0.1-alpine3.21 sh -c  "node 1_addRoles.mjs";
@@ -254,13 +251,13 @@ Note that both FusionAuth and the JavaScript files in this guide must use the sa
 
 ### Prepare Users For Import To FusionAuth
 
-The next script, `src/2_convertUserToFaUser.mjs`, is the most complex. It maps the fields of `users.json` to FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped. For more information on the FusionAuth fields, see the [import API documentation](/docs/apis/users#request-6). For more information on the Akamai fields, see the user schema file in the `exampleData/1_akamaiExport/userSchema.js`.
+The next script, `src/2_convertUserToFaUser.mjs`, is the most complex. It maps the fields of `users.json` to FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped. For more information on the FusionAuth fields, see the [import API documentation](/docs/apis/users/import#request). For more information on the Akamai fields, see the user schema file in the `exampleData/1_akamaiExport/userSchema.js`.
 
 The script will output users that are ready for import to FusionAuth to the `faUsers.json` file.
 
 To run the script, use the command below in the terminal you have open in the `src` directory.
 
-```sh
+```shell-session
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" node:24.0.1-alpine3.21 sh -c  "node 2_convertUserToFaUser.mjs";
 ```
 
@@ -272,7 +269,7 @@ The `getFaUserFromUser()` function does a few things:
 
 - Maps as many matching fields from Akamai to FusionAuth as possible.
 - Extracts the bcrypt password strength (10), the salt, and hash from the Akamai password field.
-- Stores all Akamai user details that don't map to FusionAuth in the JSON `data` field.
+- Stores all Akamai user details that don't map to FusionAuth in the JSON **data** field.
 - Adds FusionAuth User Registrations (the link between a FusionAuth User and an Application) to users.
 
 bcrypt stores all password components in one field, separated by `$`. However, FusionAuth requires these values to be provided as separate fields during import.
@@ -289,7 +286,7 @@ Now you'll run the Node.js import script to import the users into FusionAuth.
 
 In the terminal in the `fusionauth-import-scripts/akamai/src` directory, run the command below.
 
-```sh
+```shell-session
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" --network faNetwork node:24.0.1-alpine3.21 sh -c  "node 3_import.mjs";
 ```
 
@@ -303,7 +300,7 @@ Log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@exa
 
 ![Imported users](/img/docs/lifecycle/migrate-users/provider-specific/akamai/importedUsers.png)
 
-To manage a user, click <InlineUIElement>Select</InlineUIElement> to the right of their entry in the user list, and then select <InlineUIElement>Manage</InlineUIElement> from the dropdown. Review the details of the imported user's profile. In the <Breadcrumb>Source</Breadcrumb> tab, you can see all the user details as a JSON object.
+To manage a user, click <Breadcrumb>Select</Breadcrumb> to the right of their entry in the user list, and then select <Breadcrumb>Manage</Breadcrumb> from the dropdown. Review the details of the imported user's profile. In the <Breadcrumb>Source</Breadcrumb> tab, you can see all the user details as a JSON object.
 
 Finally, check that passwords were correctly imported by logging out of FusionAuth and attempting to log back in with a username and password from the imported users.
 
@@ -329,7 +326,7 @@ If you did complete the bulk import tutorial, you need to delete the test user J
 
 Once you have a user available in Akamai, test if you can verify the user's email address and password with the curl command below. More information on this command is available in the [Akamai documentation](https://techdocs.akamai.com/identity-cloud-auth/reference/post-oauth-auth-native-traditional).
 
-```sh
+```shell-session
 curl https://test-env.us-dev.janraincapture.com/oauth/auth_native_traditional \
      -H 'accept: application/json' \
      -H 'content-type: application/x-www-form-urlencoded' \
@@ -354,11 +351,11 @@ Change the parameters in the command above to match your application:
 - Verify that your form and field names match the defaults. If they differ, browse to <Breadcrumb>REGISTRATION BUILDER</Breadcrumb> and edit the `standard` form to find your login form name.
   ![Akamai forms](/img/docs/lifecycle/migrate-users/provider-specific/akamai/akamaiForms.png)
 
-Note that the JSON response returns the user's details in the `capture_user` field.
+Note that the JSON response returns the user's details in the **capture_user** field.
 
-Any HTTP response other than code 200 is an error. Even if the response is 200, you still need to check the `"stat": "ok"` field. Akamai API error messages are very descriptive and should help you find the problem with your command quickly, for example:
+Any HTTP response other than code 200 is an error. Even if the response is 200, you still need to check the **stat**: `ok` field. Akamai API error messages are very descriptive and should help you find the problem with your command quickly, for example:
 
-```
+```json
 {"stat":"error", "code":200, "error_description":"no such form 'sign'", "error":"invalid_argument", "request_id":"yc4qc2u8qsz27mkb"}
 ```
 
@@ -377,17 +374,17 @@ For a general overview of Connectors, please see this [video](https://www.youtub
 
 In your [FusionAuth admin UI](https://localhost:9011), browse to <Breadcrumb>Settings -> Connectors</Breadcrumb>.
 
-Click the dropdown button on the top right and select <InlineUIElement>Add Generic connector</InlineUIElement>.
+Click the dropdown button on the top right and select <Breadcrumb>Add Generic connector</Breadcrumb>.
 
 ![Create a Connector in FusionAuth](/img/docs/lifecycle/migrate-users/provider-specific/akamai/create-connector.png)
 
 
 Enter the field values below.
 
-- Set <InlineField>Name</InlineField> to `AkamaiConnector`
-- Set <InlineField>Authentication URL</InlineField> to `http://app`. (This URL matches the Docker container you'll create later.)
+- Set **Name** to `AkamaiConnector`
+- Set **Authentication URL** to `http://app`. (This URL matches the Docker container you'll create later.)
 - Increase timeout values (for example, to `5000`) to accommodate network latency when the API requests are being made.
-- Enable <InlineUIElement>Debug enabled</InlineUIElement>
+- Enable **Enable debug logging**
 
 ![Connector details in FusionAuth](/img/docs/lifecycle/migrate-users/provider-specific/akamai/connector.png)
 
@@ -397,18 +394,18 @@ Enter the field values below.
 
 Now browse to <Breadcrumb>Tenants</Breadcrumb> and do the following.
 
-- Select <InlineUIElement>Edit</InlineUIElement> on the default tenant.
+- Select <Breadcrumb>Edit</Breadcrumb> on the default tenant.
 - Navigate to the <Breadcrumb>Connectors</Breadcrumb> tab.
-- Click <InlineUIElement>Add policy</InlineUIElement>.
+- Click <Breadcrumb>Add policy</Breadcrumb>.
 - Select `AkamaiConnector`.
-- Leave <InlineField>Domains</InlineField> with the value `*` to apply this Connector to every user.
-- Enable <InlineUIElement>Migrate user</InlineUIElement> so that FusionAuth will no longer use Akamai for subsequent logins of the same user.
-- Click <InlineUIElement>Submit</InlineUIElement>.
+- Leave **Domains** with the value `*` to apply this Connector to every user.
+- Enable <Breadcrumb>Migrate to FusionAuth</Breadcrumb> so that FusionAuth will no longer use Akamai for subsequent logins of the same user.
+- Click <Breadcrumb>Submit</Breadcrumb>.
 
 ![Connector policy details in FusionAuth](/img/docs/lifecycle/migrate-users/provider-specific/akamai/connector-policy.png)
 
 
-Move the `AkamaiConnector` policy to the top of the list. Use the arrow buttons to move the policy if necessary. With this configuration, all users are checked against this Connector the first time they are seen. If they log in, they’ll be migrated to the FusionAuth user database.
+Move the `AkamaiConnector` policy to the top of the list. Use the arrow buttons to move the policy if necessary. With this configuration, all users are checked against this Connector the first time they are seen. If they log in, they'll be migrated to the FusionAuth user database.
 
 After configuration, the Connector entry form should look similar to this:
 
@@ -442,7 +439,7 @@ If the credentials are valid, the user's details returned from Akamai are conver
 
 - Run the service with the command below.
 
-```sh
+```shell-session
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" --network faNetwork node:24.0.1-alpine3.21 sh -c  "node 4_connectorService.mjs";
 ```
 
@@ -450,7 +447,7 @@ Note that the container is named `app`, which matches the URL entered for the co
 
 ### Log In With A Test User
 
-In the FusionAuth admin interface, browse to <Breadcrumb>Applications</Breadcrumb> and click the <InlineUIElement>Select</InlineUIElement> dropdown next to the "Example App" application, then select <InlineUIElement>View</InlineUIElement>. Copy the <InlineField>OAuth IdP login URL</InlineField> and open it in an incognito window in your browser. (If you don't use an incognito window, you need to log out of the FusionAuth admin session to prevent the active session from interfering with the test.) This URL is a login page for the "Example App" application, so that you can test the web service and Connector.
+In the FusionAuth admin interface, browse to <Breadcrumb>Applications</Breadcrumb> and click the <Breadcrumb>Select</Breadcrumb> dropdown next to the "Example App" application, then select <Breadcrumb>View</Breadcrumb>. Copy the **OAuth IdP login URL** and open it in an incognito window in your browser. (If you don't use an incognito window, you need to log out of the FusionAuth admin session to prevent the active session from interfering with the test.) This URL is a login page for the "Example App" application, so that you can test the web service and Connector.
 
 For this tutorial, the login URL should be http://localhost:9011/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback.
 
@@ -503,6 +500,6 @@ Check what roles and features are used in Akamai for your real application and c
 - [Akamai schemas](https://techdocs.akamai.com/identity-cloud/docs/manage-user-profile-schemas-in-console)
 - [Akamai user export API](https://techdocs.akamai.com/identity-cloud/docs/search-for-user-profiles#example-1-return-all-the-users-in-an-entity-type)
 - [Akamai individual user export API](https://techdocs.akamai.com/identity-cloud-entity/reference/post-entity)
-- [FusionAuth user import API](/docs/apis/users#request-6)
+- [FusionAuth user import API](/docs/apis/users/import#request)
 - [FusionAuth import scripts GitHub repository](https://github.com/fusionauth/fusionauth-import-scripts)
 - [JavaScript streaming library](https://github.com/uhop/stream-json)

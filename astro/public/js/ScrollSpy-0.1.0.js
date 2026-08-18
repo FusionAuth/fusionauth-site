@@ -23,6 +23,8 @@ class ScrollSpy {
   }
 
   #handleScroll() {
+    if (this.#headers.length === 0) return;
+
     const scroll = document.documentElement.scrollTop;
     let header = this.#headers[0];
     for (const h of this.#headers) {
@@ -37,8 +39,11 @@ class ScrollSpy {
     document.querySelectorAll('[data-widget="scroll-spy"] [data-widget="scroll-spy-item"]').forEach(li => li.classList.remove('active', 'section-active'));
 
     const group = headerLink.closest('[data-widget="scroll-spy-item"]');
+
+    if (!group) return;
+    
     group.classList.add('active');
   }
 }
 
-document.addEventListener('astro:page-load', () => new ScrollSpy());
+document.addEventListener('DOMContentLoaded', () => new ScrollSpy());
