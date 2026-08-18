@@ -1,0 +1,64 @@
+name: Update Doc Annotation JSON
+
+on:
+  schedule:
+    - cron: '11 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Download and extract fusionauth-app
+        run: |
+          version=$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')
+          echo "Downloading version $version"
+          curl -f -L "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o /tmp/fusionauth-app.zip
+          mkdir -p /tmp/fusionauth-app
+          unzip -q /tmp/fusionauth-app.zip -d /tmp/fusionauth-app
+
+      - name: Generate annotation JSON files
+        run: |
+          CP=$(find /tmp/fusionauth-app/lib -name '*.jar' | tr '\n' ':' | sed 's/:$//')
+          mkdir -p /tmp/java-classes
+          javac -cp "$CP" -d /tmp/java-classes src/scripts/java/GenerateJSONFromAnnotations.java
+          java -cp "$CP:/tmp/java-classes" GenerateJSONFromAnnotations \
+            "$GITHUB_WORKSPACE/astro/src/content/json/generated" \
+            io.fusionauth.api.service.search.client.domain.documents.IndexEntity \
+            io.fusionauth.api.service.search.client.domain.documents.IndexUser \
+            io.fusionauth.app.Cookies \
+            io.fusionauth.api.service.authentication.AuthenticationType
+
+      - name: Commit and open PR
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          git config user.name "Site Update Bot"
+          git config user.email "devrel@fusionauth.io"
+          generated=astro/src/content/json/generated
+          if [ -z "$(git status --porcelain $generated/indexentity.json $generated/indexuser.json $generated/cookies.json $generated/authenticationtype.json)" ]; then
+            echo "No changes — skipping PR"
+            exit 0
+          fi
+          branch="update-doc-annotations-$(date +%Y-%m-%d)"
+          git checkout -b "$branch"
+          git add \
+            "$generated/indexentity.json" \
+            "$generated/indexuser.json" \
+            "$generated/cookies.json" \
+            "$generated/authenticationtype.json"
+          git commit -m "Updated doc annotation JSON files"
+          git push "https://x-access-token:${{ secrets.GH_PAT }}@github.com/FusionAuth/fusionauth-site.git" "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "Updated doc annotation JSON files" \
+            --body "Automated update of annotation-derived JSON files from the latest FusionAuth release."

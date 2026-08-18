@@ -1,0 +1,55 @@
+name: Update API Endpoints JSON
+
+on:
+  schedule:
+    - cron: '21 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Download and extract fusionauth-app
+        run: |
+          version=$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')
+          echo "Downloading version $version"
+          curl -f -L "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o /tmp/fusionauth-app.zip
+          mkdir -p /tmp/fusionauth-app
+          unzip -q /tmp/fusionauth-app.zip -d /tmp/fusionauth-app
+
+      - name: Generate API endpoints JSON
+        run: |
+          CP=$(find /tmp/fusionauth-app/lib -name '*.jar' | tr '\n' ':' | sed 's/:$//')
+          mkdir -p /tmp/java-classes
+          javac -cp "$CP" -d /tmp/java-classes src/scripts/java/GenerateEndpointsJSON.java
+          java -cp "$CP:/tmp/java-classes" GenerateEndpointsJSON \
+            "$GITHUB_WORKSPACE/astro/src/content/json/generated/api-endpoints.json"
+
+      - name: Commit and open PR
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          git config user.name "Site Update Bot"
+          git config user.email "devrel@fusionauth.io"
+          if [ -z "$(git status --porcelain astro/src/content/json/generated/api-endpoints.json)" ]; then
+            echo "No changes — skipping PR"
+            exit 0
+          fi
+          branch="update-api-endpoints-$(date +%Y-%m-%d)"
+          git checkout -b "$branch"
+          git add astro/src/content/json/generated/api-endpoints.json
+          git commit -m "Updated API endpoints JSON"
+          git push "https://x-access-token:${{ secrets.GH_PAT }}@github.com/FusionAuth/fusionauth-site.git" "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "Updated API endpoints JSON" \
+            --body "Automated update of API endpoints from the latest FusionAuth release."

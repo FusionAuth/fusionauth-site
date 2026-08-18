@@ -1,0 +1,70 @@
+name: Update Email Templates
+
+on:
+  schedule:
+    - cron: '37 19 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Download and extract fusionauth-app
+        run: |
+          version=$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')
+          echo "Downloading version $version"
+          curl -f -L "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o /tmp/fusionauth-app.zip
+          mkdir -p /tmp/fusionauth-app
+          unzip -q /tmp/fusionauth-app.zip -d /tmp/fusionauth-app
+          cd /tmp/fusionauth-app/lib
+          unzip -qo fusionauth-app*.jar 'emails/*.ftl'
+
+      - name: Copy email templates
+        run: |
+          src=/tmp/fusionauth-app/lib/emails
+          dest=astro/src/content/docs/_shared/email
+          cp "$src"/*.ftl "$dest/"
+          list="$dest/template_url_list"
+          > "$list"
+          for f in "$dest"/*.ftl; do
+            filename=$(basename "$f")
+            echo "https://raw.githubusercontent.com/FusionAuth/fusionauth-site/main/astro/src/content/docs/_shared/email/$filename" >> "$list"
+          done
+
+      - name: Validate template counts
+        run: |
+          mdx_files=$(ls -1 astro/src/content/docs/_shared/email/*.mdx | wc -l)
+          ftl_files=$(ls -1 astro/src/content/docs/_shared/email/*.ftl | wc -l)
+          # passwordless-login and setup-password mdx wrappers live in _shared (not _shared/email), offset by 4
+          expected=$((ftl_files - 4))
+          if [ "$mdx_files" -ne "$expected" ]; then
+            echo "Error: mdx count ($mdx_files) != ftl count ($ftl_files) - 4" >&2
+            diff \
+              <(ls astro/src/content/docs/_shared/email/*.mdx | xargs -n1 basename | sed 's/^_//; s/-html\.mdx$//; s/-txt\.mdx$//' | sort) \
+              <(ls astro/src/content/docs/_shared/email/*.ftl | xargs -n1 basename | sed 's/\.html\.ftl$//; s/\.txt\.ftl$//' | sort)
+            exit 1
+          fi
+
+      - name: Commit and open PR
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          git config user.name "Site Update Bot"
+          git config user.email "devrel@fusionauth.io"
+          if [ -z "$(git status --porcelain astro/src/content/docs/_shared/email/)" ]; then
+            echo "No changes — skipping PR"
+            exit 0
+          fi
+          branch="update-email-templates-$(date +%Y-%m-%d)"
+          git checkout -b "$branch"
+          git add astro/src/content/docs/_shared/email/
+          git commit -m "Updated email templates"
+          git push "https://x-access-token:${{ secrets.GH_PAT }}@github.com/FusionAuth/fusionauth-site.git" "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "Updated email templates" \
+            --body "Automated update of FusionAuth email templates from the latest release."
