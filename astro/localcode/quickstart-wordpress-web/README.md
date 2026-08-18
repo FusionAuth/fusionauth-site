@@ -3,10 +3,7 @@
 > [!WARNING]
 > This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/localcode/quickstart-wordpress-web). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
 
-- remove search from compose file
-- reset && docker compose down -v && docker compose up
-
-This repo holds an example Wordpress application that uses FusionAuth as the identity provider.
+This repo holds an example WordPress application that uses FusionAuth as the identity provider.
 
 This repository is documented at https://fusionauth.io/docs/quickstarts/quickstart-wordpress-web.
 
@@ -21,7 +18,7 @@ The `complete-application` directory contains a fully working version of the app
 
 ## Prerequisites
 
-- Docker 20 or higher for running FusionAuth, Wordpress and MySQL database
+- Docker 29 or higher for running FusionAuth, Wordpress and MySQL database
 
 ## Running FusionAuth
 
@@ -45,16 +42,11 @@ You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look
 
 ## Running the Example Application
 
-To run the application, first go into the project directory
+To run the application, first go into the project directory and configure all WordPress settings and plugins:
 
 ```shell
 cd complete-application
-```
-
-Start up the application docker containers with the following
-
-```shell
-docker compose up
+./setup.sh
 ```
 
 Browse to [http://localhost:3000](http://localhost:3000) and login with `richard@example.com` and `password`.
