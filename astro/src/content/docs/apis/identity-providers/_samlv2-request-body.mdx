@@ -1,5 +1,6 @@
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
+import DeprecatedSince from 'src/components/api/DeprecatedSince.astro';
 import IdentityProviderAttributeMappingsRequestParameter from 'src/content/docs/apis/identity-providers/_identity-provider-attribute-mappings-request-parameter.mdx';
 import IdentityProviderDebugRequestParameter from 'src/content/docs/apis/identity-providers/_identity-provider-debug-request-parameter.mdx';
 import IdentityProviderLinkingStrategyRequestParameter from 'src/content/docs/apis/identity-providers/_identity-provider-linking-strategy-request-parameter.mdx';
@@ -87,11 +88,22 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
 
     Required when **identityProvider.idpInitiatedConfiguration.enabled** is `true`.
   </APIField>
+  <APIField name="identityProvider.issuer" type="String" optional renderif={!props.samlv2_idp_initiated}>
+    The EntityId (unique identifier) FusionAuth uses as the SAML service provider.
+
+    When not provided, FusionAuth uses the default service provider EntityId of `{'<base_url>/samlv2/sp/<identityProviderId>'}`.
+
+    When provided, this value must not be an empty string.
+  </APIField>
   <APIField name="identityProvider.issuer" type="String" required renderif={props.samlv2_idp_initiated}>
     The EntityId (unique identifier) of the SAML v2 identity provider. This value should be provided to you. Prior to 1.27.1 this value was required to be a URL.
   </APIField>
-  <APIField name="identityProvider.keyId" type="UUID" required>
+  <APIField name="identityProvider.keyId" type="UUID" required deprecated>
     The Id of the key stored in Key Master that is used to verify the SAML response sent back to FusionAuth from the identity provider. This key must be a verification only key or certificate (meaning that it only has a public key component).
+
+    <DeprecatedSince since="1.69.0">
+      In version `1.69.0` and above, use **`identityProvider.verificationKeyIds`**. For backward compatibility, Fusionauth populates **`identityProvider.defaultKeyId`** with the first entry in **identityProvider.verificationKeyIds**.
+    </DeprecatedSince>
   </APIField>
   <APIField name="identityProvider.lambdaConfiguration.reconcileId" type="UUID" optional>
     The Id of a SAML reconcile lambda that is applied when the identity provider sends back a successful SAML response.
@@ -156,6 +168,11 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
   <APIField name="identityProvider.usernameClaim" type="String" optional>
     The name of the claim in the SAML response that FusionAuth uses to identity the username. If this is not set, the **NameId** value will be used to link a user. This property is required when <b>identityProvider.linkingStrategy</b> is set to `LinkByUsername` or `LinkByUsernameForExistingUser`
   </APIField>
+  <APIField name="identityProvider.verificationKeyIds" type="Array<UUID>" required since="1.69.0">
+    The Ids of the keys stored in Key Master that are used to verify the SAML response sent back to FusionAuth from the identity provider. These keys must be verification-only keys or certificates (meaning that they only have a public key component).
+
+    In versions prior to `1.69.0`, this field is not present; see **`identityProvider.keyId`**.
+  </APIField>
   <APIField name="identityProvider.xmlSignatureC14nMethod" type="String" optional since="1.20.0" renderif={!props.samlv2_idp_initiated}>
     The XML signature canonicalization method used when digesting and signing the SAML request.
 
@@ -166,5 +183,7 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
 </APIBlock>
 
 { !props.samlv2_idp_initiated && <JSON title="Example SAML v2 Request JSON" src="identity-providers/samlv2-request.json" /> }
+
+{ !props.samlv2_idp_initiated && <JSON title="Example SAML v2 Request JSON (with issuer override)" src="identity-providers/samlv2-request-with-issuer.json" /> }
 
 { props.samlv2_idp_initiated && <JSON title="Example SAML v2 IdP Initiated Request JSON" src="identity-providers/samlv2-idp-initiated-request.json" /> }

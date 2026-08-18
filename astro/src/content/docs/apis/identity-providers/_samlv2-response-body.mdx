@@ -1,6 +1,7 @@
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
+import DeprecatedSince from 'src/components/api/DeprecatedSince.astro';
 import IdentityProviderAttributeMappingsResponseParameter from 'src/content/docs/apis/identity-providers/_identity-provider-attribute-mappings-response-parameter.mdx';
 import IdentityProviderLinkingStrategyResponseParameter from 'src/content/docs/apis/identity-providers/_identity-provider-linking-strategy-response-parameter.mdx';
 import IdentityProviderSourceResponseParameter from 'src/content/docs/apis/identity-providers/_identity-provider-source-response-parameter.mdx';
@@ -85,14 +86,23 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
   <APIField name="identityProvider.insertInstant" type="Long">
     The [instant](/docs/reference/data-types#instants) that the provider was added to the FusionAuth database.
   </APIField>
+  <APIField name="identityProvider.issuer" type="String" renderif={!props.samlv2_idp_initiated}>
+    The EntityId (unique identifier) FusionAuth uses as the SAML service provider.
+
+    When not configured, the default value is `{'<base_url>/samlv2/sp/<identityProviderId>'}`.
+  </APIField>
   <APIField name="identityProvider.issuer" type="String" renderif={props.samlv2_idp_initiated}>
     The EntityId (unique identifier) of the SAML v2 identity provider.
   </APIField>
   <APIField name="identityProvider.lastUpdateInstant" type="Long">
     The [instant](/docs/reference/data-types#instants) that the provider was updated in the FusionAuth database.
   </APIField>
-  <APIField name="identityProvider.keyId" type="UUID">
+  <APIField name="identityProvider.keyId" type="UUID" deprecated>
     The Id of the key stored in KeyMaster that is used to verify the SAML response sent back to FusionAuth from the identity provider. This key must be a verification only key or certificate (meaning that it only has a public key component).
+
+    <DeprecatedSince since="1.69.0">
+      In version `1.69.0` and above, use **`identityProvider.verificationKeyIds`**. For backward compatibility, Fusionauth populates **`identityProvider.defaultKeyId`** with the first entry in **identityProvider.verificationKeyIds**.
+    </DeprecatedSince>
   </APIField>
   <APIField name="identityProvider.lambdaConfiguration.reconcileId">
     The Id of a SAML reconcile lambda that is applied when the identity provider sends back a successful SAML response.
@@ -145,6 +155,11 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
   </APIField>
   <APIField name="identityProvider.usernameClaim" type="String">
     The name of the claim in the SAML response that FusionAuth uses to identity the username. If this is not set, the **NameId** value will be used to link a user. This property is required when **identityProvider.linkingStrategy** is set to `LinkByUsername` or `LinkByUsernameForExistingUser`
+  </APIField>
+  <APIField name="identityProvider.verificationKeyIds" type="Array<UUID>" since="1.69.0">
+    The Ids of the keys stored in Key Master that are used to verify the SAML response sent back to FusionAuth from the identity provider. These keys must be verification-only keys or certificates (meaning that they only have a public key component).
+
+    In versions prior to 1.69.0, this field is not present; see **`identityProvider.keyId`**.
   </APIField>
   <APIField name="identityProvider.xmlSignatureC14nMethod" type="String" since="1.20.0" renderif={!props.samlv2_idp_initiated}>
     The XML signature canonicalization method used when digesting and signing the SAML request.
