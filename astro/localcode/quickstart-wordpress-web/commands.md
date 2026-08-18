@@ -99,9 +99,10 @@ docker compose exec cli wp plugin install daggerhart-openid-connect-generic --ac
 > - Nickname Key: `sub`
 > - Display Name Formatting: `{email}`
 > - Enable "Link Existing Users": yes
+> - Enable "Redirect Back to Login Page": yes
 
 ```console
-docker compose exec cli wp option update openid_connect_generic_settings '{"client_id":"e9fdb985-9173-4e01-9d73-ac2d60d1dc8e","client_secret":"super-secret-secret-that-should-be-regenerated-for-production","scope":"openid email profile","endpoint_login":"http://localhost:9011/oauth2/authorize","endpoint_userinfo":"http://fusionauth:9011/oauth2/userinfo","endpoint_token":"http://fusionauth:9011/oauth2/token","endpoint_end_session":"http://localhost:9011/oauth2/logout","endpoint_jwks":"http://fusionauth:9011/.well-known/jwks.json","identity_key":"sub","nickname_key":"sub","email_key":"email","displayname_format":"{email}","link_existing_users":"yes","allow_internal_idp":true}' --format=json
+docker compose exec cli wp option update openid_connect_generic_settings '{"client_id":"e9fdb985-9173-4e01-9d73-ac2d60d1dc8e","client_secret":"super-secret-secret-that-should-be-regenerated-for-production","scope":"openid email profile","endpoint_login":"http://localhost:9011/oauth2/authorize","endpoint_userinfo":"http://fusionauth:9011/oauth2/userinfo","endpoint_token":"http://fusionauth:9011/oauth2/token","endpoint_end_session":"http://localhost:9011/oauth2/logout","endpoint_jwks":"http://fusionauth:9011/.well-known/jwks.json","identity_key":"sub","nickname_key":"sub","email_key":"email","displayname_format":"{email}","link_existing_users":"yes","allow_internal_idp":true,"redirect_to_back_to_login":"yes"}' --format=json
 ```
 
 ## Prevent Default Login (Optional)
@@ -109,6 +110,8 @@ docker compose exec cli wp option update openid_connect_generic_settings '{"clie
 ```console
 docker compose cp ./complete-application/wp-login.php wp:/var/www/html/wp-login.php
 ```
+
+This custom wp-login.php removes the default WordPress login form. Users must click "Login with OpenID Connect" to authenticate via FusionAuth.
 
 ## Restrict Pages - Install Plugin
 

@@ -56,6 +56,9 @@ test('WordPress OIDC login via FusionAuth', async ({ page }) => {
 
     await page.getByRole('link', { name: /Login/i }).first().click();
 
+    await page.waitForURL(/localhost:3000\/wp-login\.php/);
+    await page.getByRole('link', { name: /Login with OpenID Connect/i }).click();
+
     await page.waitForURL(/localhost:9011/);
 
     await page.getByPlaceholder('Login').fill('richard@example.com');
@@ -83,6 +86,9 @@ test('Make Change calculates change correctly', async ({ page }) => {
   try {
     await page.goto('http://localhost:3000');
     await page.getByRole('link', { name: /Login/i }).first().click();
+
+    await page.waitForURL(/localhost:3000\/wp-login\.php/);
+    await page.getByRole('link', { name: /Login with OpenID Connect/i }).click();
 
     await page.waitForURL(/localhost:9011/);
     await page.getByPlaceholder('Login').fill('richard@example.com');
@@ -160,6 +166,9 @@ test('Unauthenticated access to /account redirects to login', async ({ page }) =
     await page.goto('http://localhost:3000/account');
 
     await page.waitForURL(/localhost:3000\/wp-login\.php/);
+    await page.getByRole('link', { name: /Login with OpenID Connect/i }).click();
+
+    await page.waitForURL(/localhost:9011/);
 
     await expect(page.getByPlaceholder('Login')).toBeVisible();
     await expect(page.getByPlaceholder('Password')).toBeVisible();
@@ -176,6 +185,9 @@ test('Unauthenticated access to /change redirects to login', async ({ page }) =>
     await page.goto('http://localhost:3000/change');
 
     await page.waitForURL(/localhost:3000\/wp-login\.php/);
+    await page.getByRole('link', { name: /Login with OpenID Connect/i }).click();
+
+    await page.waitForURL(/localhost:9011/);
 
     await expect(page.getByPlaceholder('Login')).toBeVisible();
     await expect(page.getByPlaceholder('Password')).toBeVisible();
@@ -192,6 +204,9 @@ test('After login, user is redirected to /account', async ({ page }) => {
     await page.goto('http://localhost:3000/account');
 
     await page.waitForURL(/localhost:3000\/wp-login\.php/);
+    await page.getByRole('link', { name: /Login with OpenID Connect/i }).click();
+
+    await page.waitForURL(/localhost:9011/);
 
     await page.getByPlaceholder('Login').fill('richard@example.com');
     await page.getByPlaceholder('Password').fill('password');
