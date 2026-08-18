@@ -107,7 +107,7 @@ docker compose exec cli wp plugin install simple-page-access-restriction --activ
 > Click "Save Changes"
 
 ```console
-docker compose exec cli wp option update spr_settings '{"login_redirect_type":"url","login_redirect_url":"http://localhost:3000/wp-login.php"}' --format=json
+docker compose exec cli wp option update spr_settings '{"redirect_type":"url","redirect_url":"http://localhost:3000/wp-login.php"}' --format=json
 ```
 
 ## Restrict Pages - Restrict Account Page
@@ -118,7 +118,7 @@ docker compose exec cli wp option update spr_settings '{"login_redirect_type":"u
 
 ```console
 ACCOUNT_ID=$(docker compose exec cli wp post list --post_type=page --name=account --field=ID)
-docker compose exec cli wp post meta update $ACCOUNT_ID _spr_restricted "yes"
+docker compose exec cli wp post meta update $ACCOUNT_ID page_access_restricted 1
 ```
 
 ## Restrict Pages - Restrict Change Page
@@ -127,7 +127,7 @@ docker compose exec cli wp post meta update $ACCOUNT_ID _spr_restricted "yes"
 
 ```console
 CHANGE_ID=$(docker compose exec cli wp post list --post_type=page --name=change --field=ID)
-docker compose exec cli wp post meta update $CHANGE_ID _spr_restricted "yes"
+docker compose exec cli wp post meta update $CHANGE_ID page_access_restricted 1
 ```
 
 ## Send User To Account After Log In - Install Plugin
@@ -245,13 +245,13 @@ docker compose cp ./complete-application/wp-login.php wp:/var/www/html/wp-login.
 
 # Install and configure page restriction plugin
 docker compose exec cli wp plugin install simple-page-access-restriction --activate
-docker compose exec cli wp option update spr_settings '{"login_redirect_type":"url","login_redirect_url":"http://localhost:3000/wp-login.php"}' --format=json
+docker compose exec cli wp option update spr_settings '{"redirect_type":"url","redirect_url":"http://localhost:3000/wp-login.php"}' --format=json
 
 # Restrict account and change pages
 ACCOUNT_ID=$(docker compose exec cli wp post list --post_type=page --name=account --field=ID)
-docker compose exec cli wp post meta update $ACCOUNT_ID _spr_restricted "yes"
+docker compose exec cli wp post meta update $ACCOUNT_ID page_access_restricted 1
 CHANGE_ID=$(docker compose exec cli wp post list --post_type=page --name=change --field=ID)
-docker compose exec cli wp post meta update $CHANGE_ID _spr_restricted "yes"
+docker compose exec cli wp post meta update $CHANGE_ID page_access_restricted 1
 
 # Install and configure dashboard redirect plugin
 docker compose exec cli wp plugin install remove-dashboard-access-for-non-admins --activate
