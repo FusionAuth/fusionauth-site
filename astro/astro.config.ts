@@ -149,6 +149,7 @@ const config = defineConfig({
               },
               properties: {
                 title: ['link to header'],
+                ariaLabel: ['Anchor'],
                 class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
               },
               headingProperties: {
