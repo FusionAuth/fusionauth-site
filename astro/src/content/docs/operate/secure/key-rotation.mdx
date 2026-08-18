@@ -45,7 +45,7 @@ In contrast, suppose you are rotating a JWT signing key, `JS1`. To rotate such a
 * Determine how long it has been in use. If it has been in use long enough to rotate, proceed. Otherwise ignore it.
 * Create a new key, `JS2`. You typically want to ensure `JS2` uses the same algorithm and length as `JS1`.
 * Store off all needed metadata for key `JS2`, including when it was brought into service.
-* Update the FusionAuth configuration to ensure that `JS2` is used for all applications and tenants for which `JS1` was used.
+* Update the FusionAuth configuration to ensure that `JS2` is used for all applications and tenants for which `JS1` was used. At the same time, add `JS1` to the **Access token verification keys** list (and/or **Id token verification keys** list) at the application or tenant level (depending on whether application-level JWT override is enabled). This option was added in FusionAuth `1.69.0`.
 * Wait until all keys signed by `JS1` have expired. The exact length of time depends on your configured JWT lifetime. For instance, if your JWTs last for five minutes, wait for ten minutes to allow for clock skew.
 * Delete key `JS1`.
 
@@ -57,7 +57,7 @@ To handle the scenario where `JS2` needs to be imported to FusionAuth:
 
 * Determine it is time to rotate `JS1`.
 * Import a new key, `JS2`.
-* Update the FusionAuth configuration to ensure that `JS2` is used for all applications and tenants for which `JS1` was used.
+* Update the FusionAuth configuration to ensure that `JS2` is used for all applications and tenants for which `JS1` was used. At the same time, add `JS1` to the **Access token verification keys** list (and/or **Id token verification keys** list) at the application or tenant level.
 * Update any other pieces of software which use `JS1` to use `JS2`.
 * Wait until all keys signed by `JS1` have expired. The exact length of time depends on your configured JWT lifetime. For instance, if your JWTs last for five minutes, wait for ten minutes to allow for clock skew.
 * Delete key `JS1`.
@@ -88,7 +88,7 @@ First, you want to ensure that no valid client is using an old API key before yo
 
 For client secrets, this problem is magnified because while you can have multiple API keys, you cannot have multiple client secrets for any given application or entity. In this case, you may be able work around this by having your client support multiple different client secrets and trying them in sequence. There's also an [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/1361) to have FusionAuth support a grace period for client secrets.
 
-This problem doesn't arise in the same manner for JWT signing keys because they have a built in grace period: the expiration of the JWTs. You can definitely cause issues by removing a JWT signing key before all the keys it has signed have expired, but because JWT signing keys are only used by FusionAuth to sign JWTs and have a built-in expiration time, it is easy to use the grace period option above.
+As long as the above recommendations are followed, this problem doesn't arise in the same manner for JWT signing keys because they have a built in grace period: the expiration of the JWTs. You can definitely cause issues by removing a JWT signing key from a tenant, application, or identity provider before all the keys it has signed have expired, but because JWT signing keys are only used by FusionAuth to sign JWTs and have a built-in expiration time, it is easy to use the grace period option above.
 
 
 ### Determining Key Age
@@ -164,19 +164,31 @@ The easiest way to do this is to retrieve all appropriate objects and look for t
 
 * JWT configuration
   * `tenant.jwtConfiguration.accessTokenKeyId`
+  * `tenant.jwtConfiguration.accessTokenVerificationKeyIds`
   * `tenant.jwtConfiguration.idTokenKeyId`
+  * `tenant.jwtConfiguration.idTokenVerificationKeyIds`
   * `application.jwtConfiguration.accessTokenKeyId`
+  * `application.jwtConfiguration.accessTokenVerificationKeyIds`
   * `application.jwtConfiguration.idTokenKeyId`
+  * `application.jwtConfiguration.idTokenVerificationKeyIds`
 * Entity Type JWT configuration
   * `entityType.jwtConfiguration.accessTokenKeyId`
+* External JWT IdP
+  * `identityProvider.defaultKeyId`
+  * `identityProvider.verificationKeyIds`
 * Application SAML v2
+  * `application.samlv2Configuration.assertionEncryptionConfiguration.keyTransportEncryptionKeyId`
+  * `application.samlv2Configuration.defaultVerificationKeyId`
   * `application.samlv2Configuration.keyId`
+  * `application.samlv2Configuration.logout.defaultVerificationKeyId`
   * `application.samlv2Configuration.logout.singleLogout.keyId`
   * `application.samlv2Configuration.logout.keyId`
-  * `application.samlv2Configuration.assertionEncryptionConfiguration.keyTransportEncryptionKeyId`
+  * `application.samlv2Configuration.logout.verificationKeyIds`
+  * `application.samlv2Configuration.verificationKeyIds`
 * SAML v2 IdP
   * `identityProvider.keyId`
   * `identityProvider.requestSigningKeyId`
+  * `identityProvider.verificationKeyIds`
 * Webhook signature
   * `webhook.signatureConfiguration.signingKeyId`
 

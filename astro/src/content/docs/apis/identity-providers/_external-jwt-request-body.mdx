@@ -1,5 +1,6 @@
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
+import DeprecatedSince from 'src/components/api/DeprecatedSince.astro';
 import IdentityProviderAttributeMappingsRequestParameter from 'src/content/docs/apis/identity-providers/_identity-provider-attribute-mappings-request-parameter.mdx';
 import IdentityProviderSourceRequestParameter from 'src/content/docs/apis/identity-providers/_identity-provider-source-request-parameter.mdx';
 import ClaimMappings from 'src/content/docs/apis/identity-providers/_claim_mappings.mdx';
@@ -29,8 +30,14 @@ import JSON from 'src/components/JSON.astro';
 
   <IdentityProviderDebugRequestParameter idp_since={props.idp_since} />
 
-  <APIField name="identityProvider.defaultKeyId" optional>
-    When configured this key will be used to verify the signature of the JWT when the header key defined by the **headerKeyParameter** property is not found in the JWT header. In most cases, the JWT header will contain the key identifier and this value will be used to resolve the correct public key or X.509 certificate to verify the signature. This assumes the public key or X.509 certificate has already been imported using the Key API or Key Master in the FusionAuth admin UI.
+  <APIField name="identityProvider.defaultKeyId" required deprecated>
+    This key will be used to verify the signature of the JWT. In most cases, the JWT header contains the key identifier; FusionAuth uses this identifier to look up a key in **`identityProvider.verificationKeyIds`** or this value.
+
+    This field was optional prior to FusionAuth `1.69.0`. In `1.69.0` and above, this field or at least one value in **`identityProvider.verificationKeyIds`** is required.
+
+    <DeprecatedSince since="1.69.0">
+      In version `1.69.0` and above, use **`identityProvider.verificationKeyIds`**. For backward compatibility, Fusionauth populates **`identityProvider.defaultKeyId`** with the first entry in **identityProvider.verificationKeyIds**.
+    </DeprecatedSince>
   </APIField>
   <APIField name="identityProvider.domains" optional>
     An array of domains that are managed by this Identity Provider.
@@ -40,14 +47,6 @@ import JSON from 'src/components/JSON.astro';
   </APIField>
   <APIField name="identityProvider.headerKeyParameter" type="String" required>
     The name header claim that identifies the public key used to verify the signature. In most cases this be `kid` or `x5t`.
-  </APIField>
-  <APIField name="identityProvider.keys" type="Map<String, String>" optional>
-    A map of public keys used to verify JWT signatures issued from the configured Identity Provider. The key is the key identifier, this
-    may be referred to as the `kid` or for X.509 certificates the `x5t` claim may be used.
-
-    The map may contain one entry with an empty map key. When provided this key will be used when no header claim is provided to indicate
-    which public key should be used to verify the signature. Generally speaking this will only be used when the Identity Provider issues
-    JWTs without a key identifier in the header.
   </APIField>
   <APIField name="identityProvider.lambdaConfiguration.reconcileId" type="UUID" optional since="1.17.0">
     The unique Id of the lambda to used during the user reconcile process to map custom claims from the external identity provider to the FusionAuth user. This may be used in addition to, or in place of the claim mappings.
@@ -104,6 +103,11 @@ import JSON from 'src/components/JSON.astro';
     The name of the claim that represents the unique identity of the User. This will generally be `email` or the name of the claim that provides the email address.
 
     This parameter has been deprecated, prefer the use of **uniqueIdClaim**.
+  </APIField>
+  <APIField name="identityProvider.verificationKeyIds" required type="Array<UUID>" since="1.69.0">
+    Keys used to verify JWT signatures. In most cases, the JWT header contains the key identifier; FusionAuth uses this identifier to look up a key from this list or **`defaultKeyId`**.
+
+    Before version `1.69.0`, this field is not present; see **`identityProvider.defaultKeyId`**.
   </APIField>
 </APIBlock>
 
