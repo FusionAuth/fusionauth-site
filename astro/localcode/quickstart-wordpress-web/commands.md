@@ -164,7 +164,7 @@ docker compose exec cli wp plugin install remove-dashboard-access-for-non-admins
 > Click "Save Changes"
 
 ```console
-docker compose exec cli wp option update rda_settings '{"redirect_url":"http://localhost:3000/account"}' --format=json
+docker compose exec cli wp option update rda_redirect_url "http://localhost:3000/account"
 ```
 
 ## Customization - Install Shortcoder
@@ -286,7 +286,7 @@ docker compose exec cli wp post meta update $CHANGE_ID page_access_restricted 1
 
 # Install and configure dashboard redirect plugin
 docker compose exec cli wp plugin install remove-dashboard-access-for-non-admins --activate
-docker compose exec cli wp option update rda_settings '{"redirect_url":"http://localhost:3000/account"}' --format=json
+docker compose exec cli wp option update rda_redirect_url "http://localhost:3000/account"
 
 # Install shortcoder and shortcode-variables plugins
 docker compose exec cli wp plugin install shortcoder --activate
