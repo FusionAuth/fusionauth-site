@@ -46,6 +46,25 @@ docker compose exec cli wp post create --post_type=page --post_title="Account" -
 docker compose exec cli wp post create --post_type=page --post_title="Change"  --post_status=publish
 ```
 
+## Create Placeholder Pages - Create Blank Template
+
+> The Twenty Twenty-Five theme doesn't include a "Blank" template by default.
+> Create one that renders only the page content (no header/footer), then assign it to all three pages.
+
+```console
+docker compose exec wp bash -c 'cat > /var/www/html/wp-content/themes/twentytwentyfive/templates/page-blank.html << EOF
+<!-- wp:post-content {"layout":{"type":"constrained"}} /-->
+EOF'
+
+HOME_ID=$(docker compose exec cli wp post list --post_type=page --name=home --field=ID)
+ACCOUNT_ID=$(docker compose exec cli wp post list --post_type=page --name=account --field=ID)
+CHANGE_ID=$(docker compose exec cli wp post list --post_type=page --name=change --field=ID)
+
+docker compose exec cli wp post meta update $HOME_ID _wp_page_template "page-blank"
+docker compose exec cli wp post meta update $ACCOUNT_ID _wp_page_template "page-blank"
+docker compose exec cli wp post meta update $CHANGE_ID _wp_page_template "page-blank"
+```
+
 ## Set Homepage
 
 > Under Settings -> Reading, change "Your homepage displays" to "A static page"
@@ -230,6 +249,17 @@ docker compose exec -T cli wp post list --post_type=page --field=ID --format=csv
 docker compose exec cli wp post create --post_type=page --post_title="Home"    --post_status=publish
 docker compose exec cli wp post create --post_type=page --post_title="Account" --post_status=publish
 docker compose exec cli wp post create --post_type=page --post_title="Change"  --post_status=publish
+
+# Create blank template and assign to pages
+docker compose exec wp bash -c 'cat > /var/www/html/wp-content/themes/twentytwentyfive/templates/page-blank.html << EOF
+<!-- wp:post-content {"layout":{"type":"constrained"}} /-->
+EOF'
+HOME_ID=$(docker compose exec cli wp post list --post_type=page --name=home --field=ID)
+ACCOUNT_ID=$(docker compose exec cli wp post list --post_type=page --name=account --field=ID)
+CHANGE_ID=$(docker compose exec cli wp post list --post_type=page --name=change --field=ID)
+docker compose exec cli wp post meta update $HOME_ID _wp_page_template "page-blank"
+docker compose exec cli wp post meta update $ACCOUNT_ID _wp_page_template "page-blank"
+docker compose exec cli wp post meta update $CHANGE_ID _wp_page_template "page-blank"
 
 # Set homepage
 HOME_ID=$(docker compose exec cli wp post list --post_type=page --name=home --field=ID)
