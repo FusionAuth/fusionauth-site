@@ -235,6 +235,7 @@ docker compose exec cli wp rewrite flush
 
 
 
+reset
 
 # Install WordPress
 docker compose exec cli wp core install --url="http://localhost:3000" --title="Change Bank" --admin_user="admin" --admin_password="password" --admin_email="admin@example.com" --skip-email
