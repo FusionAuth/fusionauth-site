@@ -69,9 +69,9 @@ docker compose exec cli wp media import /var/www/html/money.jpg --title="Money"
 
 # Create shortcodes (replaces money.jpg URL with actual upload path)
 MONEY_URL=$(docker compose exec cli wp post list --post_type=attachment --name=money --field=guid)
-docker compose exec cli wp post create --post_type=shortcoder --post_name="home" --post_title="home" --post_content="<style>$(cat complete-application/changebank.css)</style>$(sed "s|http://localhost:3000/wp-content/uploads/2023/09/money-scaled.jpg|$MONEY_URL|" complete-application/home.html)" --post_status=publish
-docker compose exec cli wp post create --post_type=shortcoder --post_name="account" --post_title="account" --post_content="<style>$(cat complete-application/changebank.css)</style>$(cat complete-application/account.html)" --post_status=publish
-docker compose exec cli wp post create --post_type=shortcoder --post_name="change" --post_title="change" --post_content="<style>$(cat complete-application/changebank.css)</style>$(cat complete-application/change.html)<script>$(cat complete-application/change.js)</script>" --post_status=publish
+docker compose exec cli wp post create --post_type=shortcoder --post_name="home" --post_title="home" --post_content="$(sed "s|http://localhost:3000/wp-content/uploads/2023/09/money-scaled.jpg|$MONEY_URL|" complete-application/home.html)" --post_status=publish
+docker compose exec cli wp post create --post_type=shortcoder --post_name="account" --post_title="account" --post_content="$(cat complete-application/account.html)" --post_status=publish
+docker compose exec cli wp post create --post_type=shortcoder --post_name="change" --post_title="change" --post_content="$(cat complete-application/change.html)" --post_status=publish
 
 # Add shortcodes to pages and flush rewrites
 docker compose exec cli wp post update $HOME_ID --post_content='[sc name="home"]'
