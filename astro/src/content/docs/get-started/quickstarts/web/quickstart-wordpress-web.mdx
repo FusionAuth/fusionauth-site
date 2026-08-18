@@ -20,7 +20,15 @@ import QuickstartTshirtCTA from 'src/components/quickstarts/QuickstartTshirtCTA.
 
 For this QuickStart, you'll need:
 
-* [Docker](https://www.docker.com) 20 or later, which is the quickest way to start FusionAuth. (There are [other ways](/docs/get-started/download-and-install/).)
+* [Docker](https://www.docker.com), which is the quickest way to start FusionAuth. (There are [other ways](/docs/get-started/download-and-install).) The guide uses Docker version 29, but other close versions should work.
+
+All instructions are for WordPress version 7, which will always run in Docker successfully. If your real WordPress installation is a later version, the most likely complication is obsolete plugins, which you might need to exclude or find modern alternatives for. Below are the plugins used in this guide:
+- [OpenID Connect Generic Client](https://wordpress.org/plugins/daggerhart-openid-connect-generic)
+- [Shortcoder](https://wordpress.org/plugins/shortcoder)
+- [Snippet Shortcodes](https://wordpress.org/plugins/shortcode-variables)
+- [Simple Page Access Restriction](https://wordpress.org/plugins/simple-page-access-restriction)
+- [Hide Admin Bar from Non-Admins](https://wordpress.org/plugins/hide-admin-bar-from-non-admins)
+- [Remove Dashboard Access](https://wordpress.org/plugins/remove-dashboard-access-for-non-admins)
 
 ## General Architecture
 
@@ -41,8 +49,6 @@ cd fusionauth-quickstart-wordpress-web
 
 All shell commands in this guide can be entered in a terminal in this directory. On Windows, you need to replace forward slashes with backslashes in paths.
 
-If you prefer to copy the files you'll create in this guide, they already exist in the `complete-application` directory.
-
 ### Run FusionAuth Via Docker
 
 <DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
@@ -52,18 +58,17 @@ If you prefer to copy the files you'll create in this guide, they already exist 
 Next, you'll set up a basic WordPress site. While this guide builds a new WordPress project, you can use the same method to integrate your existing project with FusionAuth.
 
 <Aside type="note">
-  If you simply want to run the application, there is a completed version in the `complete-application` directory. You
-  can use the following commands to get it up and running if you do not want to create your own.
+  If you simply want to run the application, there is a completed version in the `complete-application` directory. Once the Docker services have all started, you can use the following commands to get the complete WordPress app up and running if you do not want to create your own.
 
   ```shell-session
   cd complete-application
-  docker compose up
+  ./setup.sh
   ```
 
   Then view the application at the following URL http://localhost:3000.
 </Aside>
 
-### Preliminary Setup
+### Install WordPress
 
 Browse to http://localhost:3000. It should automatically redirect you to http://localhost:3000/wp-admin/install.php, as this is a brand-new site.
 
@@ -79,7 +84,30 @@ On the next page:
 
 ![Wordpress configuration](/img/quickstarts/quickstart-wordpress-web/wp-welcome.png)
 
+<Aside type="tip">
+  Completing all these instructions using the WordPress UI is tedious for multiple installations. You can instead do all configuration using commands pasted into the terminal. All commands are given in `complete-application/setup.sh`.
+
+  For instance, to complete the site installation above, you could instead run this command:
+
+  ```shell-session
+  docker compose exec cli wp core install --url="http://localhost:3000" --title="Change Bank" --admin_user="admin" --admin_password="password" --admin_email="admin@example.com" --skip-email
+  ```
+</Aside>
+
 On the success page, click <Breadcrumb>Log In</Breadcrumb>. On the login page, enter the username `admin` and password `password` and click <Breadcrumb>Log In</Breadcrumb>. (You can return to this page later by browsing to http://localhost:3000/wp-login.php.)
+
+### Create a Blank Page Template
+
+WordPress doesn't include a blank page template by default. Create one, so your pages can display content at full browser width without any theme styling constraints:
+
+- Browse to <Breadcrumb>Appearance -> Editor</Breadcrumb>.
+- Click <Breadcrumb>Templates</Breadcrumb> in the sidebar.
+- Click the <Breadcrumb>Add Template</Breadcrumb> button.
+- Select <Breadcrumb>Custom template</Breadcrumb>.
+- Name it `Blank` and click <Breadcrumb>Create</Breadcrumb>.
+- The template starts with some default blocks. Select all of them and delete them.
+- Click the <Breadcrumb>+</Breadcrumb> button to add a new block, search for `Content`, and add the <Breadcrumb>Content</Breadcrumb> block.
+- Click <Breadcrumb>Save</Breadcrumb>.
 
 ### Create Placeholder Pages
 
@@ -102,7 +130,7 @@ Now create new blank pages:
 
 - Click <Breadcrumb>Add New</Breadcrumb>.
 - Under **Add Title** enter `Home`.
-- Under <Breadcrumb>Page</Breadcrumb> on the far right, view the **Template** field and modify it. Do so by clicking <Breadcrumb>Pages</Breadcrumb>, and select <Breadcrumb>Blank</Breadcrumb> on the dropdown.
+- Under <Breadcrumb>Page</Breadcrumb> on the far right, view the **Template** field and modify it. Do so by clicking <Breadcrumb>Pages - Change Template</Breadcrumb>, and select <Breadcrumb>Blank</Breadcrumb>.
 - Click <Breadcrumb>Publish</Breadcrumb>, confirm, and note the URL has been updated to one you can browse to.
 - Click the <Breadcrumb>WP</Breadcrumb> icon on the top left to return to the pages screen.
 - Repeat these steps to create and publish two more pages, one with the title `Account` and one with the title `Change`.
@@ -123,7 +151,7 @@ Finally, browse to <Breadcrumb>Appearance -> Editor -> Templates -> Blank</Bread
 
 You now have a basic WordPress site with three blank pages. Currently, a user authenticates against the Wordpress user database. Next, you will enable WordPress to use FusionAuth for authentication so that your users can use the same FusionAuth login credentials with this site as any future sites you make or other applications.
 
-On the WordPress dashboard, click <Breadcrumb>Plugins -> Add new</Breadcrumb>. In the search box on the right, paste "OpenID Connect Generic Client". On the first plugin in the results, by daggerhart, click <Breadcrumb>Install Now</Breadcrumb>, then <Breadcrumb>Activate</Breadcrumb>.
+On the WordPress dashboard, click <Breadcrumb>Plugins -> Add new</Breadcrumb>. In the search box on the right, paste `OpenID Connect Generic Client`. On the first plugin in the results, by daggerhart, click <Breadcrumb>Install Now</Breadcrumb>, then <Breadcrumb>Activate</Breadcrumb>.
 
 ![Add a plugin](/img/quickstarts/quickstart-wordpress-web/oidc-plugin.png)
 
@@ -140,11 +168,10 @@ Browse to <Breadcrumb>Settings -> Open ID Connect Client</Breadcrumb> and enter 
 - **Nickname Key** - `sub`
 - **Display Name Formatting** - ``{email}`` (this is what will be displayed to the user in the WordPress admin screen)
 - Enable <Breadcrumb>Link Existing Users</Breadcrumb> - this marks a user in your local WordPress database who has the same email in FusionAuth as the same user, instead of duplicating them.
+- Enable <Breadcrumb>Allow Internal IDP</Breadcrumb> so WordPress can talk to FusionAuth on the Docker network.
 
 <Aside>
-  Requests from the browser will use the endpoint `http://localhost:9011` to communicate with the FusionAuth container
-  whilst for container to container communication the internal network name for the FusionAuth container specified in
-  docker compose is `fusionauth` so the endpoint `http://fusionauth:9011` is used.
+  Requests from the **browser** to FusionAuth will use the endpoint `http://localhost:9011` to communicate with the FusionAuth container. For **server** to FusionAuth communication the endpoint `http://fusionauth:9011` is used, since the internal network name for the FusionAuth container specified in the Docker Compose file is `fusionauth`.
 </Aside>
 
 Click <Breadcrumb>Save Changes</Breadcrumb>.

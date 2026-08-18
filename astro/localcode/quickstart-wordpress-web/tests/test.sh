@@ -34,7 +34,7 @@ cd "$PROJECT_DIR"
 docker compose -f docker-compose.yml config > /dev/null
 
 echo "Pulling latest images..."
-#docker compose pull
+docker compose pull
 
 echo "Starting services..."
 docker compose up -d
