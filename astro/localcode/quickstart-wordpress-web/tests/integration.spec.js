@@ -197,6 +197,31 @@ test('Unauthenticated access to /change redirects to login', async ({ page }) =>
   }
 });
 
+test('Admin bar is hidden for non-admin users', async ({ page }) => {
+  const dumpDiagnostics = trackPageDiagnostics(page);
+
+  try {
+    await page.goto('http://localhost:3000');
+    await page.getByRole('link', { name: /Login/i }).first().click();
+
+    await page.waitForURL(/localhost:3000\/wp-login\.php/);
+    await page.getByRole('link', { name: /Login with OpenID Connect/i }).click();
+
+    await page.waitForURL(/localhost:9011/);
+    await page.getByPlaceholder('Login').fill('richard@example.com');
+    await page.getByPlaceholder('Password').fill('password');
+    await page.getByRole('button', { name: 'Submit' }).click();
+
+    await page.waitForURL(/localhost:3000\/account/);
+
+    const adminBar = page.locator('#wpadminbar');
+    await expect(adminBar).not.toBeVisible();
+  } catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
+});
+
 test('After login, user is redirected to /account', async ({ page }) => {
   const dumpDiagnostics = trackPageDiagnostics(page);
 

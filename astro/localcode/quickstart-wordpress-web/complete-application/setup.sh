@@ -56,6 +56,9 @@ docker compose exec cli wp post meta update $CHANGE_ID page_access_restricted 1
 docker compose exec cli wp plugin install remove-dashboard-access-for-non-admins --activate
 docker compose exec cli wp option update rda_redirect_url "http://localhost:3000/account"
 
+# Install hide admin bar plugin
+docker compose exec cli wp plugin install hide-admin-bar-from-non-admins --activate
+
 # Install shortcoder and shortcode-variables plugins
 docker compose exec cli wp plugin install shortcoder --activate
 docker compose exec cli wp plugin install shortcode-variables --activate
