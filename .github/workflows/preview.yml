@@ -1,11 +1,12 @@
 name: Preview
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, closed]
 
 permissions:
   pull-requests: write
+  issues: write
   contents: read
   deployments: write
 
@@ -40,20 +41,21 @@ jobs:
         id: deployment
         env:
           REPO:    ${{ github.repository }}
-          SHA:     ${{ github.sha }}
+          SHA:     ${{ github.event.pull_request.head.sha }}
           BRANCH:  ${{ github.head_ref }}
           PR:      ${{ github.event.pull_request.number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          DEPLOY_ID=$(jq -n \
+          DEPLOY_RESPONSE=$(jq -n \
             --arg ref  "$BRANCH" \
             --arg env  "preview-pr-$PR" \
             --arg desc "PR #$PR preview build" \
             '{ref:$ref, environment:$env, auto_merge:false,
               required_contexts:[], transient_environment:true,
               description:$desc}' \
-            | gh api -X POST "repos/$REPO/deployments" --input - --jq '.id' \
-            || echo "")
+            | gh api -X POST "repos/$REPO/deployments" --input - 2>/dev/null \
+            || echo "{}")
+          DEPLOY_ID=$(echo "$DEPLOY_RESPONSE" | jq -r '.id // empty')
           echo "id=${DEPLOY_ID}" >> "$GITHUB_OUTPUT"
           [ -z "$DEPLOY_ID" ] && exit 0
           jq -n --arg log "$RUN_URL" \
@@ -69,14 +71,15 @@ jobs:
         env:
           REPO:    ${{ github.repository }}
           PR:      ${{ github.event.pull_request.number }}
-          SHA:     ${{ github.sha }}
+          SHA:     ${{ github.event.pull_request.head.sha }}
           BRANCH:  ${{ github.head_ref }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           SHORT_SHA="${SHA:0:7}"
 
           EXISTING=$(gh api "repos/$REPO/issues/$PR/comments" \
-            --jq '[.[] | select(.body | contains("<!-- fusionauth-preview -->"))][0].id // empty')
+            --jq '[.[] | select(.body | contains("<!-- fusionauth-preview -->"))][0].id // empty' \
+            2>/dev/null || echo "")
 
           if [ -n "$EXISTING" ]; then
             # Preserve existing preview links — only replace the status heading so
@@ -93,7 +96,8 @@ jobs:
 
           Building \`${BRANCH}\` @ \`${SHORT_SHA}\` — [build logs](${RUN_URL})"
             NEW_ID=$(gh api -X POST "repos/$REPO/issues/$PR/comments" \
-              --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')" --jq '.id')
+              --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')" 2>/dev/null \
+              | jq -r '.id // empty' 2>/dev/null || echo "")
             echo "id=$NEW_ID" >> "$GITHUB_OUTPUT"
           fi
 
@@ -121,7 +125,7 @@ jobs:
           SSH_KEY:      ${{ secrets.PREVIEW_SSH_KEY }}
           PREVIEW_HOST: ${{ secrets.PREVIEW_HOST }}
           PR:           ${{ github.event.pull_request.number }}
-          SHA:          ${{ github.sha }}
+          SHA:          ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           install -m600 /dev/null /tmp/pk
@@ -165,7 +169,7 @@ jobs:
           PREVIEW_URL: ${{ steps.build.outputs.url }}
           PAGES:       ${{ steps.build.outputs.pages }}
           BRANCH:      ${{ github.head_ref }}
-          SHA:         ${{ github.sha }}
+          SHA:         ${{ github.event.pull_request.head.sha }}
           RUN_URL:     ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           SHORT_SHA="${SHA:0:7}"
@@ -206,9 +210,10 @@ jobs:
           REPO:       ${{ github.repository }}
           COMMENT_ID: ${{ steps.comment.outputs.id }}
           BRANCH:     ${{ github.head_ref }}
-          SHA:        ${{ github.sha }}
+          SHA:        ${{ github.event.pull_request.head.sha }}
           RUN_URL:    ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          [ -z "$COMMENT_ID" ] && exit 0
           BODY=$(printf \
             '<!-- fusionauth-preview -->\n## ❌ Preview build failed\n\nBuild failed for `%s` @ `%s`.\n[View logs](%s)' \
             "$BRANCH" "${SHA:0:7}" "$RUN_URL")
