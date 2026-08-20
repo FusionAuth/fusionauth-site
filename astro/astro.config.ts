@@ -201,6 +201,8 @@ const config = defineConfig({
       // Pages whose content we don't want to crawl (URL path, prefix string or RegExp)
       excludeSourcePages: [
         '/landing/',
+        // Generated from external API; some old versions have no release notes entry
+        '/direct-download',
       ],
       // Destinations to skip checking (normalized root-relative path, prefix string or RegExp)
       excludeDestinations: [
