@@ -72,6 +72,11 @@ test('WordPress OIDC login via FusionAuth', async ({ page }) => {
 
     await page.getByRole('link', { name: /Logout/i }).click();
 
+    // Logout must complete in a single click, not land on WordPress's
+    // "Do you really want to log out?" confirmation page.
+    await page.waitForURL(/localhost:3000\/wp-login\.php/);
+    await expect(page.getByText(/you are now logged out/i)).toBeVisible();
+
     await page.goto('http://localhost:3000');
     await expect(page.getByRole('link', { name: /Login/i })).toBeVisible();
   } catch (error) {
