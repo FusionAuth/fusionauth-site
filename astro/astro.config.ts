@@ -201,6 +201,8 @@ const config = defineConfig({
       // Pages whose content we don't want to crawl (URL path, prefix string or RegExp)
       excludeSourcePages: [
         '/landing/',
+        // Generated from external API; some old versions have no release notes entry
+        '/direct-download',
       ],
       // Destinations to skip checking (normalized root-relative path, prefix string or RegExp)
       excludeDestinations: [
@@ -212,10 +214,7 @@ const config = defineConfig({
         '/webinar', '/community', '/forum', '/compare', '/industry', '/license',
         '/partners', '/video', '/event', '/ebooks', '/glossary', '/guides',
         '/permify-docs',
-        // Loose slug fragments that appear as relative links in quickstart code samples.
-        // These resolve to paths like /docs/quickstarts/buildvsbuy, so regex is needed
-        // since prefix strings only match paths that start with the given value.
-        /\/buildvsbuy/, /\/auth0-migration/, /\/aws-reinvent22/, /\/aws-reinvent23/,
+        '/buildvsbuy', '/auth0-migration', '/aws-reinvent22', '/aws-reinvent23',
         // Standalone marketing / legal pages not in the Astro build
         '/pricing', '/download', '/contact', '/get-started', '/passwordless',
         '/direct-download', '/jobs', '/careers', '/password-history',
