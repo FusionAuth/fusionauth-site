@@ -212,10 +212,7 @@ const config = defineConfig({
         '/webinar', '/community', '/forum', '/compare', '/industry', '/license',
         '/partners', '/video', '/event', '/ebooks', '/glossary', '/guides',
         '/permify-docs',
-        // Loose slug fragments that appear as relative links in quickstart code samples.
-        // These resolve to paths like /docs/quickstarts/buildvsbuy, so regex is needed
-        // since prefix strings only match paths that start with the given value.
-        /\/buildvsbuy/, /\/auth0-migration/, /\/aws-reinvent22/, /\/aws-reinvent23/,
+        '/buildvsbuy', '/auth0-migration', '/aws-reinvent22', '/aws-reinvent23',
         // Standalone marketing / legal pages not in the Astro build
         '/pricing', '/download', '/contact', '/get-started', '/passwordless',
         '/direct-download', '/jobs', '/careers', '/password-history',
@@ -224,8 +221,6 @@ const config = defineConfig({
         '/license-faq', '/feature-list', '/product-privacy-policy', '/passkeys',
         '/legal/data-processing-addendum.pdf',
         '/auth0-migration',
-        // Old release note anchors generated for versions pre-dating the truncated release notes page
-        /\/docs\/release-notes#version-/,
       ],
     })
   ],
