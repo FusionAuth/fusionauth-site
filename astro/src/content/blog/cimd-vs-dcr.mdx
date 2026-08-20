@@ -1,0 +1,120 @@
+---
+publish_date: 2026-08-20
+title: "MCP authentication: CIMD, DCR, and how clients get registered"
+description: Learn about the Zero Trust framework and how Identity Providers factor into it to protect your network and help keep your resources secure.
+authors: Dan Moore
+image: /img/blogs/zero-trust-idps/zero-trust-and-how-idps-factor-into-it-header-image.png
+categories: Education
+tags: zero trust, identity provider
+excerpt_separator: "{/* more */}"
+---
+
+I've been digging into the authentication side of the Model Context Protocol (MCP), and there's some interesting things here.
+
+Specifically: an MCP client needs to get an access token, but how does the authorization server know to trust the client in the first place?
+
+{/* more */}
+
+## MCP Servers Are OAuth Resource Servers
+
+An MCP server doesn't authenticate users; it inspects access tokens and decides what the token permits, then takes action from there. The MCP client (which is also an OAuth client) such as Claude.ai, Claude Code, or whatever you're using, holds that token and presents it.
+
+There are two scenarios that determine how the token gets obtained.
+
+First, an MCP client can act under its own authority, with no user involved. Consider an agent workflow that wakes up weekly, pulls files from Google Drive, and drops a summary in slack. This is the Client Credentials grant. The client authenticates as itself and acts on its own authority.
+
+In the second case, which is more common, the MCP client is acting on a user's behalf. Suppose you're letting Claude.ai read your Google Drive and email you a summary. The client is asking for delegated access to *your* resources. The correct flow is the Authorization Code grant, with user consent captured.
+
+## How The Authorization Server Knows Who The Client Is
+
+Traditional OAuth assumed a client was registered before any flow started. As a developer, you register your app, receive a client ID and possibly a client secret. The authorization server recognizes you when you show up because you present those credentials that were obtained before you ever appeared there. In identity circles, the client id and secret are obtained "out of band", because they took place in some undefined exchange, possibly including human interaction.
+
+MCP busts that assumption. Users point tools at MCP servers they've never interacted with. Agents determine what they need on the fly and find the MCP server that can supply what they want. 
+
+In this world, you are unlikely to pre-register every possible MCP client against every authorization server it might encounter.
+
+There are 1.5 paths to solving this problem.
+
+The half path is same old pre-registration process: someone sets the client up in the authorization server before anything happens. A developer, an admin, or an out-of-band process. The client arrives with prior arrangements, like a dinner party guest with an invitation. This works well for situations where MCP access is gated and the MCP server owners have existing relationships with users who want to access it. You could display MCP server information and client identifying info in a developer portal. However, this approach is clunky to configure and might lead to lower user adoption. 
+
+The alternative is just-in-time registration. In this case, the client introduces itself at the door, like a someone walking into a pub will present a valid government id. The authorization server evaluates the MCP client on the spot, creates a OAuth client ID if the checks pass, and the Authorization Code grant or Client Credentials grant proceeds. This approach is smoother because the human user driving the MCP client doesn't need to do anything.
+
+The just-in-time path is becoming more and more common. It's what MCP servers with a wide, heterogenous set of consumers should use. There are two just-in-time implementations.
+
+## Client ID Metadata Documents
+
+Client ID Metadata Documents (CIMD) is [the newer spec](https://datatracker.ietf.org/doc/draft-ietf-oauth-client-id-metadata-document/). It is still navigating through the IETF working group as of this writing, but it's the future.
+
+The mechanism: an MCP client presents a URL to the authorization server. That URL *is* the client ID. The document hosted at that URL contains the configuration data the authorization server needs to register the client.
+
+Trust is bootstrapped off TLS. The client is asserting its identity through its domain and certificate, not through prior enrollment or human interaction. There's no secret; these are for the most part public clients and therefore [PKCE](https://datatracker.ietf.org/doc/html/rfc7636) is required.
+
+This raises an obvious concern: aren't you just letting any client that can set up a JSON document at a URL demand registration at your authorization server? Not quite.
+
+The spec doesn't require authorization servers to accept every URL. From section 8.9 of the -02 version:
+
+> The authorization server may choose to have its own heuristics and policies around the trust of domain names used as client IDs.
+
+What does this mean in practice? An authorization server can do things like:
+
+* enforce domain allowlists
+* reject URLs that don't match approved patterns
+* add additional consent screens
+* deny domains that had been recently registered
+
+The spec defines the mechanism; the authorization server supplies the means; the authorization server admins write the policy. It's a division of responsibility.
+
+If you're building something new today and need just-in-time registration, use CIMD. If you are supporting MCP, review the clients you want to support. If CIMD is supported, use that.
+
+If CIMD isn't supported, then you have another choice before you fall back to pre-registration. Let's talk about the other just-in-time option.
+
+## Dynamic Client Registration
+
+Dynamic Client Registration (DCR) is the older option. [RFC 7591](https://datatracker.ietf.org/doc/html/rfc7591) was published in 2015 and solved the same problem, which was how to allow access to authorization servers without pre-registration. At that time, mobile applications were the client of choice. In my experience, this standard didn't see wide adoption at the time. 
+
+DCR was used in earlier MCP specification versions. As of the [July 2026 MCP specification release](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration#dynamic-client-registration), DCR is formally deprecated and:
+
+> remains available for backwards compatibility with authorization servers that do not support Client ID Metadata Documents
+
+MCP allows for a full year before anything deprecated is removed, so you have time to move to CIMD. But the spec is explicit: don't use DCR unless you have existing MCP clients that require it. I wouldn't start anything new on DCR. The ecosystem has made its choice.
+
+## Public Clients And PKCE
+
+As mentioned above, many MCP clients are public OAuth clients. Desktop apps, browser tools, and mobile apps can't hold a client secret safely. Even webapplications may choose to interact with authorization servers like public clients. PKCE is what makes the auth code exchange safe when there's no client secret. For public MCP clients, it's not optional.
+
+If a client can store keys safely and perform asymmetric cryptography, the private key JWT authentication method gives you a stronger guarantee in the client-to-authorization-server handshake. Support for `private_key_jwt` is relatively uncommon in the MCP world right now, but I expect it to improve over time.
+
+## Where Is The Security?
+
+When I first heard about just-in-time registration, I confess I was a bit worried. After all, the out-of-band OAuth client registration I was used to provides another level of security.
+
+But there are multiple layers that help secure MCP servers, even with OAuth clients being dynamically added.
+
+The first is that MCP servers declare the authorization servers from which they will accept access tokens. From the [July 2026 specification](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/authorization-server-discovery): 
+
+> MCP servers MUST implement the OAuth 2.0 Protected Resource Metadata (RFC9728) specification to indicate the locations of authorization servers. 
+
+In addition to the authorization servers, MCP servers pick the scopes they want the authorization server to prompt the users to consent to. So the MCP server has a lot of control over the authorization process to begin with.
+
+Then, as mentioned above, the authorization server can have various checks and rules for what it accepts from a client registering using CIMD.
+
+Finally, there are the per-user security layers, assuming the common use case where an MCP client is acting on behalf of a human:
+
+* the user authentication and consent process; even though [OAuth doesn't define how authentication happens](/articles/oauth/why-no-authentication-in-oauth), it still happens
+* if and when a refresh grant occurs, the authorization server can refuse it if the user account has been abused or the account is no longer valid
+
+These all layer together to offer security even if it is possible to register clients without any human effort or review.
+
+## Choosing The Right Registration Approach
+
+The right approach is determined by who's using your MCP server.
+
+Consumer or SMB audience: people who'll type in an MCP server URL and expect things to work. Just-in-time is the only sensible path. They're not pre-registering anything. Review the clients you want to support. If you just want to support the main players, Anthropic/Claude and OpenAI/ChatGPT, CIMD is the right choice, because it is supported by both. I was unable to find an authoritative source for CIMD/DCR support, so the best thing to do is ask users what clients they are targetting and then review the relevant MCP client documentation.
+
+Developer audience: technically sophisticated users comfortable with OAuth tooling. Pre-registration is workable. You put client configuration in your developer portal; they register it in their MCP client. More friction, but friction developers can accept. But use just-in-time if you can.
+
+Employees in the enterprise: employees and corporate hierarchies have requirements that change the calculus entirely. There's an [enterprise-managed access extension to MCP](https://modelcontextprotocol.io/extensions/auth/enterprise-managed-authorization) designed for this, and if you are a large enterprise rolling MCP out to your internal employees, use that to minimize friction.
+
+## Where To Go From Here
+
+If you're starting down your MCP path and thinking about client registration, CIMD is the standard to build toward. DCR is legacy. Pre-registration fits developer tools or other high-touch users that want to use MCP. 
