@@ -224,6 +224,8 @@ const config = defineConfig({
         '/license-faq', '/feature-list', '/product-privacy-policy', '/passkeys',
         '/legal/data-processing-addendum.pdf',
         '/auth0-migration',
+        // Old release note anchors generated for versions pre-dating the truncated release notes page
+        /\/docs\/release-notes#version-/,
       ],
     })
   ],
