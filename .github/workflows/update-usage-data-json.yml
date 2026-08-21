@@ -1,0 +1,81 @@
+name: Update Usage Data Example JSON
+
+on:
+  schedule:
+    - cron: '41 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Download and extract fusionauth-app
+        run: |
+          version=$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')
+          echo "Downloading version $version"
+          curl -f -L "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o /tmp/fusionauth-app.zip
+          mkdir -p /tmp/fusionauth-app
+          unzip -q /tmp/fusionauth-app.zip -d /tmp/fusionauth-app
+
+      - name: Extract usage data example JSON
+        run: |
+          # jars are zip files; extract the single resource directly without exploding the whole jar
+          cd /tmp/fusionauth-app/lib
+          unzip -p fusionauth-usage-stats-common*.jar \
+            io/fusionauth/usagestats/shared/resources/IngestAction-fullData-request.json \
+            > "$GITHUB_WORKSPACE/astro/src/content/json/generated/sample-usage-data.json"
+
+      - name: Check for meaningful changes
+        run: |
+          target=astro/src/content/json/generated/sample-usage-data.json
+
+          if git diff --exit-code -- "$target" > /dev/null; then
+            echo "No changes detected."
+            exit 0
+          fi
+
+          if git diff -w --exit-code -- "$target" > /dev/null; then
+            echo "Whitespace-only changes — skipping."
+            exit 0
+          fi
+
+          REGEN=$(cat <<'REGEN'
+          version=$(curl -s https://account.fusionauth.io/api/version | jq -r '.versions[-1]') && \
+          curl -fL "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o /tmp/fusionauth-app.zip && \
+          mkdir -p /tmp/fusionauth-app && \
+          unzip -q /tmp/fusionauth-app.zip -d /tmp/fusionauth-app && \
+          (cd /tmp/fusionauth-app/lib && unzip -p fusionauth-usage-stats-common*.jar \
+            io/fusionauth/usagestats/shared/resources/IngestAction-fullData-request.json) \
+            > astro/src/content/json/generated/sample-usage-data.json
+          REGEN
+          )
+
+          echo "Meaningful changes detected in sample-usage-data.json."
+          echo ""
+          echo "Run this from the repo root to regenerate, then commit and open a PR:"
+          echo ""
+          echo "$REGEN"
+          echo ""
+          git diff -- "$target"
+
+          {
+            echo "## sample-usage-data.json has new content"
+            echo ""
+            echo "Run this from the repo root to regenerate, then commit and open a PR:"
+            echo '```bash'
+            echo "$REGEN"
+            echo '```'
+            echo ""
+            echo "<details><summary>Diff</summary>"
+            echo ""
+            echo '```diff'
+            git diff -- "$target"
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit 1

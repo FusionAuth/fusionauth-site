@@ -1,0 +1,105 @@
+name: Update Email Templates
+
+on:
+  schedule:
+    - cron: '37 19 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Download and extract fusionauth-app
+        run: |
+          version=$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')
+          echo "Downloading version $version"
+          curl -f -L "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o /tmp/fusionauth-app.zip
+          mkdir -p /tmp/fusionauth-app
+          unzip -q /tmp/fusionauth-app.zip -d /tmp/fusionauth-app
+          cd /tmp/fusionauth-app/lib
+          unzip -qo fusionauth-app*.jar 'emails/*.ftl'
+
+      - name: Copy email templates
+        run: |
+          src=/tmp/fusionauth-app/lib/emails
+          dest=astro/src/content/docs/_shared/email
+          cp "$src"/*.ftl "$dest/"
+          list="$dest/template_url_list"
+          > "$list"
+          for f in "$dest"/*.ftl; do
+            filename=$(basename "$f")
+            echo "https://raw.githubusercontent.com/FusionAuth/fusionauth-site/main/astro/src/content/docs/_shared/email/$filename" >> "$list"
+          done
+
+      - name: Validate template counts
+        run: |
+          mdx_files=$(ls -1 astro/src/content/docs/_shared/email/*.mdx | wc -l)
+          ftl_files=$(ls -1 astro/src/content/docs/_shared/email/*.ftl | wc -l)
+          # passwordless-login and setup-password mdx wrappers live in _shared (not _shared/email), offset by 4
+          expected=$((ftl_files - 4))
+          if [ "$mdx_files" -ne "$expected" ]; then
+            echo "Error: mdx count ($mdx_files) != ftl count ($ftl_files) - 4" >&2
+            diff \
+              <(ls astro/src/content/docs/_shared/email/*.mdx | xargs -n1 basename | sed 's/^_//; s/-html\.mdx$//; s/-txt\.mdx$//' | sort) \
+              <(ls astro/src/content/docs/_shared/email/*.ftl | xargs -n1 basename | sed 's/\.html\.ftl$//; s/\.txt\.ftl$//' | sort)
+            exit 1
+          fi
+
+      - name: Check for meaningful changes
+        run: |
+          dest=astro/src/content/docs/_shared/email
+
+          if git diff --exit-code -- "$dest/" > /dev/null; then
+            echo "No changes detected."
+            exit 0
+          fi
+
+          if git diff -w --exit-code -- "$dest/" > /dev/null; then
+            echo "Whitespace-only changes — skipping."
+            exit 0
+          fi
+
+          REGEN=$(cat <<'REGEN'
+          version=$(curl -s https://account.fusionauth.io/api/version | jq -r '.versions[-1]') && \
+          curl -fL "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o /tmp/fusionauth-app.zip && \
+          mkdir -p /tmp/fusionauth-app && \
+          unzip -q /tmp/fusionauth-app.zip -d /tmp/fusionauth-app && \
+          (cd /tmp/fusionauth-app/lib && unzip -qo fusionauth-app*.jar 'emails/*.ftl') && \
+          cp /tmp/fusionauth-app/lib/emails/*.ftl astro/src/content/docs/_shared/email/ && \
+          list=astro/src/content/docs/_shared/email/template_url_list && \
+          > "$list" && \
+          for f in astro/src/content/docs/_shared/email/*.ftl; do \
+            echo "https://raw.githubusercontent.com/FusionAuth/fusionauth-site/main/astro/src/content/docs/_shared/email/$(basename "$f")" >> "$list"; \
+          done
+          REGEN
+          )
+
+          echo "Meaningful changes detected in email templates."
+          echo ""
+          echo "Run this from the repo root to regenerate, then commit and open a PR:"
+          echo ""
+          echo "$REGEN"
+          echo ""
+          git diff -- "$dest/"
+
+          {
+            echo "## Email templates have new content"
+            echo ""
+            echo "Run this from the repo root to regenerate, then commit and open a PR:"
+            echo '```bash'
+            echo "$REGEN"
+            echo '```'
+            echo ""
+            echo "<details><summary>Diff</summary>"
+            echo ""
+            echo '```diff'
+            git diff -- "$dest/"
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit 1
