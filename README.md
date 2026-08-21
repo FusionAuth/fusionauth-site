@@ -84,6 +84,10 @@ For projects that benefit from a cloneable repository, the `/astro/localcode` fo
 
 Astro builds automatically generate code snippets before rendering pages.
 
+## Sitemap
+
+We automatically generate a single `sitemap.xml` file that we use for the entire `fusionauth.io` domain. All of the docs, blog, dev-tools, articles, and isolated pages involved in the Astro build get automatically included during the build itself. For `fusionauth.io` content managed externally, we manually add entries to [`astro/public/sitemap.xml`](astro/public/sitemap.xml).
+
 ## Redirects
 
 [src/redirects.json](src/redirects.json) specifies our redirect rules. This file is published to s3 and read by a Lambda function that processes redirects for the site. When modifying the file:
