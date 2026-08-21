@@ -33,23 +33,56 @@ jobs:
           java -cp "$CP:/tmp/java-classes" GenerateEndpointsJSON \
             "$GITHUB_WORKSPACE/astro/src/content/json/generated/api-endpoints.json"
 
-      - name: Commit and open PR
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+      - name: Check for meaningful changes
         run: |
-          git config user.name "Site Update Bot"
-          git config user.email "devrel@fusionauth.io"
-          if [ -z "$(git status --porcelain astro/src/content/json/generated/api-endpoints.json)" ]; then
-            echo "No changes — skipping PR"
+          target=astro/src/content/json/generated/api-endpoints.json
+
+          if git diff --exit-code -- "$target" > /dev/null; then
+            echo "No changes detected."
             exit 0
           fi
-          branch="update-api-endpoints-$(date +%Y-%m-%d)"
-          git checkout -b "$branch"
-          git add astro/src/content/json/generated/api-endpoints.json
-          git commit -m "Updated API endpoints JSON"
-          git push "https://x-access-token:${{ secrets.GH_PAT }}@github.com/FusionAuth/fusionauth-site.git" "$branch"
-          gh pr create \
-            --base main \
-            --head "$branch" \
-            --title "Updated API endpoints JSON" \
-            --body "Automated update of API endpoints from the latest FusionAuth release."
+
+          if git diff -w --exit-code -- "$target" > /dev/null; then
+            echo "Whitespace-only changes — skipping."
+            exit 0
+          fi
+
+          REGEN=$(cat <<'REGEN'
+          version=$(curl -s https://account.fusionauth.io/api/version | jq -r '.versions[-1]') && \
+          curl -fL "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o /tmp/fusionauth-app.zip && \
+          mkdir -p /tmp/fusionauth-app && \
+          unzip -q /tmp/fusionauth-app.zip -d /tmp/fusionauth-app && \
+          CP=$(find /tmp/fusionauth-app/lib -name '*.jar' | tr '\n' ':' | sed 's/:$//') && \
+          mkdir -p /tmp/java-classes && \
+          javac -cp "$CP" -d /tmp/java-classes src/scripts/java/GenerateEndpointsJSON.java && \
+          java -cp "$CP:/tmp/java-classes" GenerateEndpointsJSON \
+            "$(pwd)/astro/src/content/json/generated/api-endpoints.json"
+          REGEN
+          )
+
+          echo "Meaningful changes detected in api-endpoints.json."
+          echo ""
+          echo "Run this from the repo root to regenerate, then commit and open a PR:"
+          echo ""
+          echo "$REGEN"
+          echo ""
+          git diff -- "$target"
+
+          {
+            echo "## api-endpoints.json has new content"
+            echo ""
+            echo "Run this from the repo root to regenerate, then commit and open a PR:"
+            echo '```bash'
+            echo "$REGEN"
+            echo '```'
+            echo ""
+            echo "<details><summary>Diff</summary>"
+            echo ""
+            echo '```diff'
+            git diff -- "$target"
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit 1

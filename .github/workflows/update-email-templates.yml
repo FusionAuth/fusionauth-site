@@ -48,23 +48,58 @@ jobs:
             exit 1
           fi
 
-      - name: Commit and open PR
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+      - name: Check for meaningful changes
         run: |
-          git config user.name "Site Update Bot"
-          git config user.email "devrel@fusionauth.io"
-          if [ -z "$(git status --porcelain astro/src/content/docs/_shared/email/)" ]; then
-            echo "No changes — skipping PR"
+          dest=astro/src/content/docs/_shared/email
+
+          if git diff --exit-code -- "$dest/" > /dev/null; then
+            echo "No changes detected."
             exit 0
           fi
-          branch="update-email-templates-$(date +%Y-%m-%d)"
-          git checkout -b "$branch"
-          git add astro/src/content/docs/_shared/email/
-          git commit -m "Updated email templates"
-          git push "https://x-access-token:${{ secrets.GH_PAT }}@github.com/FusionAuth/fusionauth-site.git" "$branch"
-          gh pr create \
-            --base main \
-            --head "$branch" \
-            --title "Updated email templates" \
-            --body "Automated update of FusionAuth email templates from the latest release."
+
+          if git diff -w --exit-code -- "$dest/" > /dev/null; then
+            echo "Whitespace-only changes — skipping."
+            exit 0
+          fi
+
+          REGEN=$(cat <<'REGEN'
+          version=$(curl -s https://account.fusionauth.io/api/version | jq -r '.versions[-1]') && \
+          curl -fL "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o /tmp/fusionauth-app.zip && \
+          mkdir -p /tmp/fusionauth-app && \
+          unzip -q /tmp/fusionauth-app.zip -d /tmp/fusionauth-app && \
+          (cd /tmp/fusionauth-app/lib && unzip -qo fusionauth-app*.jar 'emails/*.ftl') && \
+          cp /tmp/fusionauth-app/lib/emails/*.ftl astro/src/content/docs/_shared/email/ && \
+          list=astro/src/content/docs/_shared/email/template_url_list && \
+          > "$list" && \
+          for f in astro/src/content/docs/_shared/email/*.ftl; do \
+            echo "https://raw.githubusercontent.com/FusionAuth/fusionauth-site/main/astro/src/content/docs/_shared/email/$(basename "$f")" >> "$list"; \
+          done
+          REGEN
+          )
+
+          echo "Meaningful changes detected in email templates."
+          echo ""
+          echo "Run this from the repo root to regenerate, then commit and open a PR:"
+          echo ""
+          echo "$REGEN"
+          echo ""
+          git diff -- "$dest/"
+
+          {
+            echo "## Email templates have new content"
+            echo ""
+            echo "Run this from the repo root to regenerate, then commit and open a PR:"
+            echo '```bash'
+            echo "$REGEN"
+            echo '```'
+            echo ""
+            echo "<details><summary>Diff</summary>"
+            echo ""
+            echo '```diff'
+            git diff -- "$dest/"
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit 1

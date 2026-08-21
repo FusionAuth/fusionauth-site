@@ -37,28 +37,61 @@ jobs:
             io.fusionauth.app.Cookies \
             io.fusionauth.api.service.authentication.AuthenticationType
 
-      - name: Commit and open PR
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+      - name: Check for meaningful changes
         run: |
-          git config user.name "Site Update Bot"
-          git config user.email "devrel@fusionauth.io"
           generated=astro/src/content/json/generated
-          if [ -z "$(git status --porcelain $generated/indexentity.json $generated/indexuser.json $generated/cookies.json $generated/authenticationtype.json)" ]; then
-            echo "No changes — skipping PR"
+          targets="$generated/indexentity.json $generated/indexuser.json $generated/cookies.json $generated/authenticationtype.json"
+
+          if git diff --exit-code -- $targets > /dev/null; then
+            echo "No changes detected."
             exit 0
           fi
-          branch="update-doc-annotations-$(date +%Y-%m-%d)"
-          git checkout -b "$branch"
-          git add \
-            "$generated/indexentity.json" \
-            "$generated/indexuser.json" \
-            "$generated/cookies.json" \
-            "$generated/authenticationtype.json"
-          git commit -m "Updated doc annotation JSON files"
-          git push "https://x-access-token:${{ secrets.GH_PAT }}@github.com/FusionAuth/fusionauth-site.git" "$branch"
-          gh pr create \
-            --base main \
-            --head "$branch" \
-            --title "Updated doc annotation JSON files" \
-            --body "Automated update of annotation-derived JSON files from the latest FusionAuth release."
+
+          if git diff -w --exit-code -- $targets > /dev/null; then
+            echo "Whitespace-only changes — skipping."
+            exit 0
+          fi
+
+          REGEN=$(cat <<'REGEN'
+          version=$(curl -s https://account.fusionauth.io/api/version | jq -r '.versions[-1]') && \
+          curl -fL "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o /tmp/fusionauth-app.zip && \
+          mkdir -p /tmp/fusionauth-app && \
+          unzip -q /tmp/fusionauth-app.zip -d /tmp/fusionauth-app && \
+          CP=$(find /tmp/fusionauth-app/lib -name '*.jar' | tr '\n' ':' | sed 's/:$//') && \
+          mkdir -p /tmp/java-classes && \
+          javac -cp "$CP" -d /tmp/java-classes src/scripts/java/GenerateJSONFromAnnotations.java && \
+          java -cp "$CP:/tmp/java-classes" GenerateJSONFromAnnotations \
+            "$(pwd)/astro/src/content/json/generated" \
+            io.fusionauth.api.service.search.client.domain.documents.IndexEntity \
+            io.fusionauth.api.service.search.client.domain.documents.IndexUser \
+            io.fusionauth.app.Cookies \
+            io.fusionauth.api.service.authentication.AuthenticationType
+          REGEN
+          )
+
+          echo "Meaningful changes detected in annotation JSON files."
+          echo ""
+          echo "Run this from the repo root to regenerate, then commit and open a PR:"
+          echo ""
+          echo "$REGEN"
+          echo ""
+          git diff -- $targets
+
+          {
+            echo "## Annotation JSON files have new content"
+            echo ""
+            echo "Run this from the repo root to regenerate, then commit and open a PR:"
+            echo '```bash'
+            echo "$REGEN"
+            echo '```'
+            echo ""
+            echo "<details><summary>Diff</summary>"
+            echo ""
+            echo '```diff'
+            git diff -- $targets
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit 1
