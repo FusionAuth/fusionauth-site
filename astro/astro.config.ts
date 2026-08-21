@@ -1,4 +1,6 @@
 import {defineConfig, fontProviders} from 'astro/config';
+import { existsSync } from 'node:fs';
+import { readFile, writeFile, readdir } from 'node:fs/promises';
 import mdx from "@astrojs/mdx";
 import { unified } from '@astrojs/markdown-remark';
 import sitemap from "@astrojs/sitemap";
@@ -24,8 +26,6 @@ function sitemapTrailingSlash() {
     name: 'sitemap-trailing-slash',
     hooks: {
       'astro:build:done': async ({ dir }: { dir: URL }) => {
-        const { existsSync } = await import('node:fs');
-        const { readFile, writeFile, readdir } = await import('node:fs/promises');
         const sitemaps = (await readdir(dir)).filter((f: string) => /^sitemap-\d+\.xml$/.test(f));
         for (const sm of sitemaps) {
           const fp = new URL(sm, dir);
