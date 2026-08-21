@@ -171,8 +171,25 @@ def _is_local_url(url: str) -> bool:
     return host in _LOCAL_HOSTS
 
 
+# Connection-level failure messages that are inherently noisy in CI environments
+# (bot protection, transient DNS, slow servers).  They become warnings, not errors,
+# unless --timeout-is-error is passed.
+_TRANSIENT_MARKERS = (
+    "timeout",
+    "connection closed by server",
+    "Temporary failure in name resolution",
+    "Network is unreachable",
+    "Connection reset by peer",
+)
+
+
+def _is_transient_error(error: str) -> bool:
+    """True for connection-level failures that are CI-noise candidates."""
+    return any(m in error for m in _TRANSIENT_MARKERS)
+
+
 def _fetch(url: str, timeout: int, ok_statuses: frozenset,
-           method: str = "HEAD", retries: int = 2):
+           method: str = "HEAD", retries: int = 2, timeout_retries: int = 1):
     """Make one HTTP request; return (status_int, error_str_or_None)."""
     req = urllib.request.Request(
         url, method=method,
@@ -213,6 +230,9 @@ def _fetch(url: str, timeout: int, ok_statuses: frozenset,
     except urllib.error.URLError as exc:
         reason = str(getattr(exc, "reason", exc))
         if "timed out" in reason.lower() or isinstance(getattr(exc, "reason", None), TimeoutError):
+            if timeout_retries > 0:
+                time.sleep(3)
+                return _fetch(url, timeout, ok_statuses, method, retries, timeout_retries - 1)
             return (0, "timeout")
         return (0, f"connection error: {reason[:60]}")
 
@@ -226,6 +246,9 @@ def _fetch(url: str, timeout: int, ok_statuses: frozenset,
 
     except (TimeoutError, OSError) as exc:
         if isinstance(exc, TimeoutError):
+            if timeout_retries > 0:
+                time.sleep(3)
+                return _fetch(url, timeout, ok_statuses, method, retries, timeout_retries - 1)
             return (0, "timeout")
         return (0, f"error: {str(exc)[:60]}")
 
@@ -386,37 +409,63 @@ def run(args) -> int:
     n = len(unique_urls)
     print(f"  {n}/{n} (100%) — done in {elapsed:.1f}s{' ' * 20}")
 
-    # ── Collate broken links by file ──────────────────────────────────────────
-    broken_by_file: dict = defaultdict(list)
+    # ── Collate broken links by file, split errors vs warnings ───────────────
+    errors_by_file: dict = defaultdict(list)
+    warnings_by_file: dict = defaultdict(list)
     for path, url, lineno in occurrences:
         _status, error = url_status.get(url, (0, "not checked"))
-        if error is not None:
-            broken_by_file[path].append((lineno, url, error))
+        if error is None:
+            continue
+        if _is_transient_error(error) and not args.timeout_is_error:
+            warnings_by_file[path].append((lineno, url, error))
+        else:
+            errors_by_file[path].append((lineno, url, error))
 
-    for path in broken_by_file:
-        broken_by_file[path].sort()
+    for d in (errors_by_file, warnings_by_file):
+        for path in d:
+            d[path].sort()
 
     # ── Report ────────────────────────────────────────────────────────────────
-    if not broken_by_file:
+    if not errors_by_file and not warnings_by_file:
         print("\n✓  No broken external links found.")
         return 0
 
-    total_broken = sum(len(v) for v in broken_by_file.values())
-    print(f"\n✗  {total_broken} broken link(s) in {len(broken_by_file)} file(s):\n")
-
-    for path in sorted(broken_by_file):
+    def _display(path):
         try:
-            display = path.relative_to(display_root)
+            return path.relative_to(display_root)
         except ValueError:
-            display = path
-        print(f"{display}")
-        for lineno, url, error in broken_by_file[path]:
-            print(f"  line {lineno:<5}  {error:<35}  {url}")
-        print()
+            return path
+
+    if errors_by_file:
+        total_errors = sum(len(v) for v in errors_by_file.values())
+        print(f"\n✗  {total_errors} broken link(s) in {len(errors_by_file)} file(s):\n")
+        for path in sorted(errors_by_file):
+            print(f"{_display(path)}")
+            for lineno, url, error in errors_by_file[path]:
+                print(f"  line {lineno:<5}  {error:<35}  {url}")
+            print()
+
+    if warnings_by_file:
+        total_warnings = sum(len(v) for v in warnings_by_file.values())
+        print(f"\n⚠  {total_warnings} unverified link(s) in {len(warnings_by_file)} file(s)"
+              f" (timeout/connection — may be bot protection or a flaky network):\n")
+        for path in sorted(warnings_by_file):
+            print(f"{_display(path)}")
+            for lineno, url, error in warnings_by_file[path]:
+                print(f"  line {lineno:<5}  {error:<35}  {url}")
+            print()
 
     print("─" * 76)
-    print(f"{total_broken} broken URL(s) across {len(broken_by_file)} file(s)")
-    return 1
+    parts = []
+    if errors_by_file:
+        parts.append(f"{sum(len(v) for v in errors_by_file.values())} error(s)")
+    if warnings_by_file:
+        parts.append(f"{sum(len(v) for v in warnings_by_file.values())} warning(s)")
+    print("  ".join(parts))
+    if warnings_by_file and not errors_by_file:
+        print("Pass --timeout-is-error to treat warnings as failures.")
+
+    return 1 if errors_by_file else 0
 
 
 def main():
@@ -512,6 +561,14 @@ examples:
     p.add_argument(
         "-v", "--verbose", action="store_true",
         help="Print every checked URL and its result.",
+    )
+    p.add_argument(
+        "--timeout-is-error",
+        action="store_true",
+        help=(
+            "Treat timeouts and connection errors as failures (exit 1). "
+            "By default they are reported as warnings only."
+        ),
     )
 
     args = p.parse_args()
