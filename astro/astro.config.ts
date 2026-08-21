@@ -19,6 +19,32 @@ import { openapiSummary } from './src/plugins/openapi-summary.js';
 
 const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
 
+function sitemapTrailingSlash() {
+  return {
+    name: 'sitemap-trailing-slash',
+    hooks: {
+      'astro:build:done': async ({ dir }: { dir: URL }) => {
+        const { existsSync } = await import('node:fs');
+        const { readFile, writeFile, readdir } = await import('node:fs/promises');
+        const sitemaps = (await readdir(dir)).filter((f: string) => /^sitemap-\d+\.xml$/.test(f));
+        for (const sm of sitemaps) {
+          const fp = new URL(sm, dir);
+          let xml = await readFile(fp, 'utf-8');
+          xml = xml.replace(/<loc>([^<]+)<\/loc>/g, (_m: string, url: string) => {
+            if (url.endsWith('/')) return _m;
+            const p = new URL(url).pathname;
+            if (existsSync(new URL(p.slice(1) + '/index.html', dir))) {
+              return `<loc>${url}/</loc>`;
+            }
+            return _m;
+          });
+          await writeFile(fp, xml, 'utf-8');
+        }
+      }
+    }
+  };
+}
+
 export const remarkShellSessionPrompts = () => {
   return (tree) => {
     visit(tree, 'code', (node) => {
@@ -164,6 +190,7 @@ const config = defineConfig({
     sitemap({
       filter: siteMapFilter
     }),
+    sitemapTrailingSlash(),
     indexPages(),
     astroToc(),
     genMarkdownPages({
