@@ -7,7 +7,7 @@ This repo holds a modified version of the FusionAuth 5 minute getting started gu
 
 This project is used to show examples of creating and testing lambdas.
 
-This project is paired with the [Lambda Guide](https://fusionauth.io/docs/v1/tech/guides/lambda). In order for the tests to pass, you need to work through that guide.
+This project is paired with the [Lambda Guide](https://fusionauth.io/docs/extend/code/lambdas/testing). In order for the tests to pass, you need to work through that guide.
 
 ## Project Contents
 
