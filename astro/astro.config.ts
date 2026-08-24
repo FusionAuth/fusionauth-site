@@ -11,7 +11,7 @@ import { remarkMermaidSSR, mermaidTitleFix } from 'astro-mermaid-renderer-cli-sm
 import remarkMdx from 'remark-mdx';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import linkChecker from 'astro-link-checker';
+import linkChecker, { markdownLinkSyntaxChecker } from 'astro-link-checker';
 import { visit } from 'unist-util-visit';
 import icon from "astro-iconset";
 import { rehypeCodeMeta } from './src/plugins/rehype-code-meta.mjs';
@@ -199,6 +199,7 @@ const config = defineConfig({
     indexPages(),
     astroToc(),
     genMarkdownPages({
+      pageFilter: (url) => !url.startsWith('/articles/') && url !== '/articles.md' && !url.startsWith('/blog/'),
       indexFilter: (url) => url.startsWith('/docs/') || url === '/docs.md',
       categorize: (url) => {
         if (url === '/docs.md') return 'overview';
@@ -225,7 +226,51 @@ const config = defineConfig({
       spokesDir: 'docs',
       inlineCategories: ['Overview'],
     }),
+    genMarkdownPages({
+      pageFilter: (url) => url.startsWith('/articles/') || url === '/articles.md',
+      indexFilter: (url) => url.startsWith('/articles/') || url === '/articles.md',
+      categorize: (url) => {
+        if (url === '/articles.md') return 'overview';
+        return url.split('/')[2]?.replace(/\.md$/, '') || 'overview';
+      },
+      formatCategoryName: (key) => {
+        const lower = key.toLowerCase();
+        if (lower === 'ai') return 'AI';
+        if (lower === 'ciam') return 'CIAM';
+        if (lower === 'oauth') return 'OAuth';
+        if (lower === 'gaming-entertainment') return 'Gaming & Entertainment';
+        if (lower === 'login-authentication-workflows') return 'Login & Authentication';
+        return key.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      },
+      sortCategories: (names) => names.sort((a, b) => {
+        if (a === 'Overview') return -1;
+        if (b === 'Overview') return 1;
+        return a.localeCompare(b);
+      }),
+      docsIndexUrl: 'https://fusionauth.io/docs/llms.txt',
+      llmsTxtPath: 'articles/llms.txt',
+      llmsTxtTitle: 'FusionAuth Articles',
+      llmsTxtDescription: 'In-depth articles on CIAM, authentication, OAuth, and identity management from the FusionAuth team. For technical API and integration documentation, see the [FusionAuth Docs index](https://fusionauth.io/docs/llms.txt).',
+      trimTitleSuffix: ' | FusionAuth Docs',
+      spokesDir: 'articles',
+      inlineCategories: ['Overview'],
+    }),
+    genMarkdownPages({
+      pageFilter: (url) => url.startsWith('/blog/'),
+      // Exclude pagination (/blog/2), author, tag, category, and latest pages -- only real posts.
+      indexFilter: (url) =>
+        url.startsWith('/blog/') &&
+        !/^\/blog\/(author|category|tag|latest)(\/|\.md$|$)/.test(url) &&
+        !/^\/blog\/\d+\.md$/.test(url),
+      categorize: () => 'posts',
+      formatCategoryName: () => 'Posts',
+      docsIndexUrl: 'https://fusionauth.io/docs/llms.txt',
+      llmsTxtPath: 'blog/llms.txt',
+      llmsTxtTitle: 'FusionAuth Blog',
+      llmsTxtDescription: 'News, tutorials, comparisons, and technical content from the FusionAuth team. For technical API and integration documentation, see the [FusionAuth Docs index](https://fusionauth.io/docs/llms.txt).',
+    }),
     openapiSummary(),
+    markdownLinkSyntaxChecker(),
     // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
     process.env.PROD !== 'true' && linkChecker({
       failOnBrokenLinks: true,
