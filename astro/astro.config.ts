@@ -199,6 +199,7 @@ const config = defineConfig({
     indexPages(),
     astroToc(),
     genMarkdownPages({
+      pageFilter: (url) => !url.startsWith('/articles/') && url !== '/articles.md' && !url.startsWith('/blog/'),
       indexFilter: (url) => url.startsWith('/docs/') || url === '/docs.md',
       categorize: (url) => {
         if (url === '/docs.md') return 'overview';
@@ -226,6 +227,7 @@ const config = defineConfig({
       inlineCategories: ['Overview'],
     }),
     genMarkdownPages({
+      pageFilter: (url) => url.startsWith('/articles/') || url === '/articles.md',
       indexFilter: (url) => url.startsWith('/articles/') || url === '/articles.md',
       categorize: (url) => {
         if (url === '/articles.md') return 'overview';
@@ -254,6 +256,7 @@ const config = defineConfig({
       inlineCategories: ['Overview'],
     }),
     genMarkdownPages({
+      pageFilter: (url) => url.startsWith('/blog/'),
       // Exclude pagination (/blog/2), author, tag, category, and latest pages -- only real posts.
       indexFilter: (url) =>
         url.startsWith('/blog/') &&
