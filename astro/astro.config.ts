@@ -245,9 +245,10 @@ const config = defineConfig({
         if (b === 'Overview') return 1;
         return a.localeCompare(b);
       }),
+      docsIndexUrl: 'https://fusionauth.io/docs/llms.txt',
       llmsTxtPath: 'articles/llms.txt',
       llmsTxtTitle: 'FusionAuth Articles',
-      llmsTxtDescription: 'In-depth articles on CIAM, authentication, OAuth, and identity management from the FusionAuth team.',
+      llmsTxtDescription: 'In-depth articles on CIAM, authentication, OAuth, and identity management from the FusionAuth team. For technical API and integration documentation, see the [FusionAuth Docs index](https://fusionauth.io/docs/llms.txt).',
       trimTitleSuffix: ' | FusionAuth Docs',
       spokesDir: 'articles',
       inlineCategories: ['Overview'],
@@ -260,9 +261,10 @@ const config = defineConfig({
         !/^\/blog\/\d+\.md$/.test(url),
       categorize: () => 'posts',
       formatCategoryName: () => 'Posts',
+      docsIndexUrl: 'https://fusionauth.io/docs/llms.txt',
       llmsTxtPath: 'blog/llms.txt',
       llmsTxtTitle: 'FusionAuth Blog',
-      llmsTxtDescription: 'News, tutorials, comparisons, and technical content from the FusionAuth team.',
+      llmsTxtDescription: 'News, tutorials, comparisons, and technical content from the FusionAuth team. For technical API and integration documentation, see the [FusionAuth Docs index](https://fusionauth.io/docs/llms.txt).',
     }),
     openapiSummary(),
     markdownLinkSyntaxChecker(),
