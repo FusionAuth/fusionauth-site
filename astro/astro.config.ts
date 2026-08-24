@@ -11,7 +11,7 @@ import { remarkMermaidSSR, mermaidTitleFix } from 'astro-mermaid-renderer-cli-sm
 import remarkMdx from 'remark-mdx';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import linkChecker from 'astro-link-checker';
+import linkChecker, { markdownLinkSyntaxChecker } from 'astro-link-checker';
 import { visit } from 'unist-util-visit';
 import icon from "astro-iconset";
 import { rehypeCodeMeta } from './src/plugins/rehype-code-meta.mjs';
@@ -226,6 +226,7 @@ const config = defineConfig({
       inlineCategories: ['Overview'],
     }),
     openapiSummary(),
+    markdownLinkSyntaxChecker(),
     // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
     process.env.PROD !== 'true' && linkChecker({
       failOnBrokenLinks: true,
