@@ -292,6 +292,7 @@ const config = defineConfig({
         '/partners', '/video', '/event', '/ebooks', '/glossary', '/guides',
         '/permify-docs',
         '/buildvsbuy', '/auth0-migration', '/aws-reinvent22', '/aws-reinvent23',
+        '/lp/state-of-ai-and-identity',
         // Standalone marketing / legal pages not in the Astro build
         '/pricing', '/download', '/contact', '/get-started', '/passwordless',
         '/direct-download', '/jobs', '/careers', '/password-history',
