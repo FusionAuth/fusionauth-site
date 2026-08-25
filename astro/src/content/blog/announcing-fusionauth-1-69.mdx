@@ -1,0 +1,144 @@
+---
+publish_date: 2026-08-25
+title: AI didn't create the identity problem. It removed the speed limit.
+description: "FusionAuth 1.69.0 tightens issuer identification, key trust, and non-human identity visibility. Because AI didn't create these security questions, it just made them happen faster."
+authors: Andrew Hatfield
+image: /img/blogs/release-1-68/fusionauth-1-69.png
+categories: Release Updates, Product
+tags: release notes, bugfixes, mfa, intelligent mfa
+excerpt_separator: "{/* more */}"
+---
+
+After 30 years working in tech across infrastructure, security, dev teams, and product development, one thing has always remained true.
+
+**Never believe a new technology means you can throw out the old rules.**
+
+{/* more */}
+
+The fundamentals remain because new technology builds on them, changes where they apply, and often raises the consequences when you get them wrong.
+
+AI is no exception.
+
+AI is probabilistic, and agents can reason, make decisions, interact with other systems, and increasingly take action without a human approving every step. But the security questions underneath all of that are familiar.
+
+Who is this?
+
+Who or what are they acting for?
+
+Who are they talking to?
+
+What are they allowed to do?
+
+What can they trust?
+
+What did they actually do?
+
+AI didn't create most of these problems. **It removed the speed limit.**
+
+## Humans operate at human speed. Agents don't.
+
+For most of the history of identity, we designed systems around people.
+
+A person shows up, proves who they are, gets access, and does something. They click, type, stop to think, go to lunch, and eventually go to sleep.
+
+Those limitations matter because they put a natural ceiling on how quickly a person can exercise their access, while an AI agent can operate continuously, call APIs, access services, interact with other agents and authorization servers, and exercise delegated authority thousands of times faster than the person whose authority it's using.
+
+A permission that's slightly too broad might be exercised a handful of times during someone's working day, but an autonomous system can hit that same weakness again and again at machine speed.
+
+In our [2026 State of AI & Identity Report](/lp/state-of-ai-and-identity), 88% of technology leaders told us AI deployment is outpacing their identity and security infrastructure.
+
+There is always a competitor moving faster, a customer asking when something will ship, or an executive asking why you're not doing what everyone else seems to be doing, so companies are going to keep shipping AI.
+
+Policy alone won't protect the systems those agents can reach. The controls have to exist in the architecture.
+
+## Probabilistic intelligence needs deterministic boundaries
+
+**AI is probabilistic. Authorization can't be.**
+
+A model can be 87% confident about what you meant, but your identity infrastructure can't be 87% confident that an agent is allowed to access your customer database.
+
+The agent can decide the next action it wants to take, while identity determines whether it has the authority to take it.
+
+That authority originates with a person or organization, so if I give an agent permission to act on my behalf, its autonomy shouldn't expand the authority I've delegated to it.
+
+As agents become more capable, identity needs to provide certainty.
+
+Who or what is requesting access?
+
+Whose authority are they exercising?
+
+What are they allowed to access?
+
+Under which conditions?
+
+Where did the authorization come from?
+
+Can I see when any of this changes?
+
+FusionAuth 1.69 strengthens several of the controls behind those questions.
+
+## Strengthening the identity control plane in FusionAuth 1.69
+
+FusionAuth 1.69 adds issuer identification, tighter control over trusted cryptographic keys, better visibility into non-human identities, and easier use of sender-constrained access tokens in browser applications.
+
+These controls already protect applications and APIs, but AI increases how often they're exercised and how quickly a weak assumption can turn into a security problem.
+
+### Do I know who I'm talking to?
+
+Modern identity architectures can involve multiple authorization servers, while agentic architectures will add more connections between applications, APIs, agents, and the systems authorizing them.
+
+When a client receives an authorization response, it needs to confirm that the response came from the authorization server it intended to use because otherwise it can begin an authorization flow with one server and accept a response originating from another. This is an authorization server mix-up attack.
+
+FusionAuth 1.69 adds support for **RFC 9207, OAuth 2.0 Authorization Server Issuer Identification**. We enabled it by default, making us the only commercially supported CIAM provider to do so.
+
+With RFC 9207, the authorization response includes the identity of the server that issued it. While FusionAuth includes issuer identification in authorization responses by default, the client still needs to validate that identifier against the authorization server it intended to use.
+
+The client can then verify where the authorization response came from instead of assuming.
+
+### Am I trusting more than I need to?
+
+JWT verification confirms that a token was signed by a trusted key, which makes the size of that trusted key pool important.
+
+If an application only needs to trust two verification keys but will accept any of twenty, you've created eighteen trust relationships you don't need.
+
+FusionAuth 1.69 adds **Signature Verification Key Selection**, so an application can explicitly control which keys it accepts when verifying JWT signatures.
+
+Verify which authorization server you're dealing with, then limit the signing keys the application will accept from it.
+
+> _Because verification is now strictly scoped to configured keys, deployments using external JWT or SAML identity providers or active key rotations should review the [1.69 Migration Guide](/docs/operate/troubleshooting/1-69-0-migration-guide) before upgrading._
+
+### Can I see my non-human identities changing?
+
+FusionAuth 1.69 adds an `AI Agent` Entity Type, so you can explicitly distinguish AI agents from other non-human entities, and it adds **Entity lifecycle webhooks** for create, update, and delete events.
+
+Your security and audit systems can now track when an AI agent appears, when its configuration changes, and when it's removed, while those events can flow from FusionAuth into the systems responsible for monitoring, auditing, and automation.
+
+### What happens if someone steals the token?
+
+Standard bearer access tokens work like cash: whoever holds the token can use it. If a bearer token is stolen out of a browser, any attacker can replay it.
+
+DPoP, or Demonstrating Proof of Possession, turns bearer tokens into sender-constrained tokens. Access tokens are cryptographically bound to the client that requested them, and the client proves possession of its private key on every request. Therefore, stealing the access token alone isn't enough to replay it from another client.
+
+FusionAuth has supported DPoP server-side since version 1.63 while React, Angular, and Vue SDK support shipped on August 5, making DPoP native and easy to use from browser applications without writing custom JOSE cryptography.
+
+Your API still needs to validate the DPoP proof when the protected resource is accessed.
+
+For a deep dive and guided tour of how to implement DPoP in your JavaScript framework of choice, check out [Implementing DPoP with FusionAuth](/blog/dpop-technical-blog).
+
+## Some security work is boring. It still matters.
+
+There's more in 1.69.
+
+We've added SAML configuration flexibility, updated password hashing import support, improved group auditing, updated runtime support and dependencies, and fixed security issues across the platform.
+
+Security products need this work because dependencies need patching, runtime support needs updating, cryptographic practices change, and audit requirements grow.
+
+When identity controls access to your users, applications, APIs, machines, services, data, and AI agents, keeping dependencies and runtimes current is part of the job.
+
+## AI raises the stakes on the fundamentals
+
+AI agents will get more capable and more autonomous, and the amount of authority we delegate to them will grow with that capability.
+
+That puts a lot of pressure on identity infrastructure designed when access happened at human speed, so FusionAuth 1.69 strengthens that infrastructure today while we continue building for the agent authorization problems coming next.
+
+**AI is probabilistic. The identity controlling what it can do can't be.**
