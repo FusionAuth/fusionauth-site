@@ -9,7 +9,9 @@ tags: zero trust, identity provider
 excerpt_separator: "{/* more */}"
 ---
 
-I've been digging into the authentication side of the Model Context Protocol (MCP), and there's some interesting things here.
+Would you rather be invited by name to a dinner party or head to a club where the only thing between you and the thumping beat is the bouncer checking your id?
+
+When you are considering the authentication side of the Model Context Protocol (MCP), the answer to this question is relevant and affects 
 
 Specifically: an MCP client needs to get an access token, but how does the authorization server know to trust the client in the first place?
 
@@ -17,11 +19,11 @@ Specifically: an MCP client needs to get an access token, but how does the autho
 
 ## MCP Servers Are OAuth Resource Servers
 
-An MCP server doesn't authenticate users; it inspects access tokens and decides what the token permits, then takes action from there. The MCP client (which is also an OAuth client) such as Claude.ai, Claude Code, or whatever you're using, holds that token and presents it.
+An MCP server doesn't authenticate users; it inspects access tokens and decides what the token permits, then takes action from there. The MCP client such as Claude.ai, Claude Code, or whatever you're using, holds that token and presents it. Every MCP client that connects to an MCP server using the HTTP based transport is an OAuth client, whereas not every OAuth client is an MCP client.
 
 There are two scenarios that determine how the token gets obtained.
 
-First, an MCP client can act under its own authority, with no user involved. Consider an agent workflow that wakes up weekly, pulls files from Google Drive, and drops a summary in slack. This is the Client Credentials grant. The client authenticates as itself and acts on its own authority.
+First, an MCP client can act under its own authority, with no user involved. Consider an agent workflow that wakes up weekly, pulls files from Google Drive, and drops a summary in slack. This is the Client Credentials grant, and is covered by an [MCP extension](https://modelcontextprotocol.io/extensions/auth/oauth-client-credentials). The client authenticates as itself and acts on its own authority.
 
 In the second case, which is more common, the MCP client is acting on a user's behalf. Suppose you're letting Claude.ai read your Google Drive and email you a summary. The client is asking for delegated access to *your* resources. The correct flow is the Authorization Code grant, with user consent captured.
 
@@ -33,13 +35,19 @@ MCP busts that assumption. Users point tools at MCP servers they've never intera
 
 In this world, you are unlikely to pre-register every possible MCP client against every authorization server it might encounter.
 
-There are 1.5 paths to solving this problem.
+TODO rework
+
+There is one good option and one half-decent option for MCP client registration. The full path is just-in-time registration via CIMD. This works for any client, requires no prior relationship, and is where the ecosystem is headed. The half-decent option is pre-registration: it works fine when you have an existing relationship with your users and they're comfortable with the setup overhead, but it doesn't scale to unknown clients and requires human coordination out of band.
+
+DCR is a legacy footnote — use it only if you have existing clients that require it and a plan to migrate within the year.
 
 The half path is same old pre-registration process: someone sets the client up in the authorization server before anything happens. A developer, an admin, or an out-of-band process. The client arrives with prior arrangements, like a dinner party guest with an invitation. This works well for situations where MCP access is gated and the MCP server owners have existing relationships with users who want to access it. You could display MCP server information and client identifying info in a developer portal. However, this approach is clunky to configure and might lead to lower user adoption. 
 
 The alternative is just-in-time registration. In this case, the client introduces itself at the door, like a someone walking into a pub will present a valid government id. The authorization server evaluates the MCP client on the spot, creates a OAuth client ID if the checks pass, and the Authorization Code grant or Client Credentials grant proceeds. This approach is smoother because the human user driving the MCP client doesn't need to do anything.
 
 The just-in-time path is becoming more and more common. It's what MCP servers with a wide, heterogenous set of consumers should use. There are two just-in-time implementations.
+
+TODO rework
 
 ## Client ID Metadata Documents
 
