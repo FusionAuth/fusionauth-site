@@ -1,7 +1,8 @@
 import {defineConfig, fontProviders} from 'astro/config';
+import { existsSync } from 'node:fs';
+import { readFile, writeFile } from 'node:fs/promises';
 import mdx from "@astrojs/mdx";
 import { unified } from '@astrojs/markdown-remark';
-import sitemap from "@astrojs/sitemap";
 import tailwindcss from '@tailwindcss/vite';
 import indexPages from "astro-index-pages/index.js";
 import {codeTitleRemark} from './src/plugins/code-title-remark';
@@ -10,14 +11,47 @@ import { remarkMermaidSSR, mermaidTitleFix } from 'astro-mermaid-renderer-cli-sm
 import remarkMdx from 'remark-mdx';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import linkChecker from 'astro-link-checker';
+import linkChecker, { markdownLinkSyntaxChecker } from 'astro-link-checker';
 import { visit } from 'unist-util-visit';
 import icon from "astro-iconset";
 import { rehypeCodeMeta } from './src/plugins/rehype-code-meta.mjs';
 import astroToc from 'astro-toc-smol';
 import { openapiSummary } from './src/plugins/openapi-summary.js';
 
-const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
+function buildSitemap() {
+  let siteUrl: string;
+  return {
+    name: 'build-sitemap',
+    hooks: {
+      'astro:config:done': ({ config }: { config: { site?: string } }) => {
+        siteUrl = (config.site ?? 'https://fusionauth.io').replace(/\/$/, '');
+      },
+      'astro:build:done': async ({ dir, pages }: { dir: URL; pages: { pathname: string }[] }) => {
+        const ioXml = await readFile(new URL('sitemap-io.xml', dir), 'utf-8');
+        const ioUrls = [...ioXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+
+        const docUrls: string[] = [];
+        for (const { pathname } of pages) {
+          if (pathname.startsWith('/landing/') || pathname.endsWith('.md') || pathname === '/404') continue;
+          const p = pathname === '' ? '/' : (pathname.startsWith('/') ? pathname : '/' + pathname);
+          const rel = p === '/' ? 'index.html' : p.slice(1) + '/index.html';
+          const isIndex = existsSync(new URL(rel, dir));
+          docUrls.push(siteUrl + (isIndex ? (p === '/' ? '/' : p + '/') : p));
+        }
+
+        const allUrls = [...new Set([...ioUrls, ...docUrls])].sort();
+        const xml = [
+          '<?xml version="1.0" encoding="UTF-8"?>',
+          '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+          ...allUrls.map(u => `  <url><loc>${u}</loc></url>`),
+          '</urlset>',
+          '',
+        ].join('\n');
+        await writeFile(new URL('sitemap.xml', dir), xml, 'utf-8');
+      },
+    },
+  };
+}
 
 export const remarkShellSessionPrompts = () => {
   return (tree) => {
@@ -161,12 +195,11 @@ const config = defineConfig({
         smartypants: false,
       })
     }),
-    sitemap({
-      filter: siteMapFilter
-    }),
+    buildSitemap(),
     indexPages(),
     astroToc(),
     genMarkdownPages({
+      pageFilter: (url) => !url.startsWith('/articles/') && url !== '/articles.md' && !url.startsWith('/blog/'),
       indexFilter: (url) => url.startsWith('/docs/') || url === '/docs.md',
       categorize: (url) => {
         if (url === '/docs.md') return 'overview';
@@ -193,7 +226,51 @@ const config = defineConfig({
       spokesDir: 'docs',
       inlineCategories: ['Overview'],
     }),
+    genMarkdownPages({
+      pageFilter: (url) => url.startsWith('/articles/') || url === '/articles.md',
+      indexFilter: (url) => url.startsWith('/articles/') || url === '/articles.md',
+      categorize: (url) => {
+        if (url === '/articles.md') return 'overview';
+        return url.split('/')[2]?.replace(/\.md$/, '') || 'overview';
+      },
+      formatCategoryName: (key) => {
+        const lower = key.toLowerCase();
+        if (lower === 'ai') return 'AI';
+        if (lower === 'ciam') return 'CIAM';
+        if (lower === 'oauth') return 'OAuth';
+        if (lower === 'gaming-entertainment') return 'Gaming & Entertainment';
+        if (lower === 'login-authentication-workflows') return 'Login & Authentication';
+        return key.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      },
+      sortCategories: (names) => names.sort((a, b) => {
+        if (a === 'Overview') return -1;
+        if (b === 'Overview') return 1;
+        return a.localeCompare(b);
+      }),
+      docsIndexUrl: 'https://fusionauth.io/docs/llms.txt',
+      llmsTxtPath: 'articles/llms.txt',
+      llmsTxtTitle: 'FusionAuth Articles',
+      llmsTxtDescription: 'In-depth articles on CIAM, authentication, OAuth, and identity management from the FusionAuth team. For technical API and integration documentation, see the [FusionAuth Docs index](https://fusionauth.io/docs/llms.txt).',
+      trimTitleSuffix: ' | FusionAuth Docs',
+      spokesDir: 'articles',
+      inlineCategories: ['Overview'],
+    }),
+    genMarkdownPages({
+      pageFilter: (url) => url.startsWith('/blog/'),
+      // Exclude pagination (/blog/2), author, tag, category, and latest pages -- only real posts.
+      indexFilter: (url) =>
+        url.startsWith('/blog/') &&
+        !/^\/blog\/(author|category|tag|latest)(\/|\.md$|$)/.test(url) &&
+        !/^\/blog\/\d+\.md$/.test(url),
+      categorize: () => 'posts',
+      formatCategoryName: () => 'Posts',
+      docsIndexUrl: 'https://fusionauth.io/docs/llms.txt',
+      llmsTxtPath: 'blog/llms.txt',
+      llmsTxtTitle: 'FusionAuth Blog',
+      llmsTxtDescription: 'News, tutorials, comparisons, and technical content from the FusionAuth team. For technical API and integration documentation, see the [FusionAuth Docs index](https://fusionauth.io/docs/llms.txt).',
+    }),
     openapiSummary(),
+    markdownLinkSyntaxChecker(),
     // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
     process.env.PROD !== 'true' && linkChecker({
       failOnBrokenLinks: true,
@@ -201,6 +278,8 @@ const config = defineConfig({
       // Pages whose content we don't want to crawl (URL path, prefix string or RegExp)
       excludeSourcePages: [
         '/landing/',
+        // Generated from external API; some old versions have no release notes entry
+        '/direct-download',
       ],
       // Destinations to skip checking (normalized root-relative path, prefix string or RegExp)
       excludeDestinations: [
@@ -212,10 +291,8 @@ const config = defineConfig({
         '/webinar', '/community', '/forum', '/compare', '/industry', '/license',
         '/partners', '/video', '/event', '/ebooks', '/glossary', '/guides',
         '/permify-docs',
-        // Loose slug fragments that appear as relative links in quickstart code samples.
-        // These resolve to paths like /docs/quickstarts/buildvsbuy, so regex is needed
-        // since prefix strings only match paths that start with the given value.
-        /\/buildvsbuy/, /\/auth0-migration/, /\/aws-reinvent22/, /\/aws-reinvent23/,
+        '/buildvsbuy', '/auth0-migration', '/aws-reinvent22', '/aws-reinvent23',
+        '/lp/state-of-ai-and-identity',
         // Standalone marketing / legal pages not in the Astro build
         '/pricing', '/download', '/contact', '/get-started', '/passwordless',
         '/direct-download', '/jobs', '/careers', '/password-history',

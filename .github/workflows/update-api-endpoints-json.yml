@@ -1,0 +1,88 @@
+name: Update API Endpoints JSON
+
+on:
+  schedule:
+    - cron: '21 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Download and extract fusionauth-app
+        run: |
+          version=$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')
+          echo "Downloading version $version"
+          curl -f -L "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o /tmp/fusionauth-app.zip
+          mkdir -p /tmp/fusionauth-app
+          unzip -q /tmp/fusionauth-app.zip -d /tmp/fusionauth-app
+
+      - name: Generate API endpoints JSON
+        run: |
+          CP=$(find /tmp/fusionauth-app/fusionauth-app/lib -name '*.jar' | tr '\n' ':' | sed 's/:$//')
+          mkdir -p /tmp/java-classes
+          javac -cp "$CP" -d /tmp/java-classes src/scripts/java/GenerateEndpointsJSON.java
+          java -cp "$CP:/tmp/java-classes" GenerateEndpointsJSON \
+            "$GITHUB_WORKSPACE/astro/src/content/json/generated/api-endpoints.json"
+
+      - name: Check for meaningful changes
+        run: |
+          target=astro/src/content/json/generated/api-endpoints.json
+
+          if git diff --exit-code -- "$target" > /dev/null; then
+            echo "No changes detected."
+            exit 0
+          fi
+
+          if git diff -w --exit-code -- "$target" > /dev/null; then
+            echo "Whitespace-only changes — skipping."
+            exit 0
+          fi
+
+          REGEN=$(cat <<'REGEN'
+          version=$(curl -s https://account.fusionauth.io/api/version | jq -r '.versions[-1]') && \
+          curl -fL "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o /tmp/fusionauth-app.zip && \
+          mkdir -p /tmp/fusionauth-app && \
+          unzip -q /tmp/fusionauth-app.zip -d /tmp/fusionauth-app && \
+          CP=$(find /tmp/fusionauth-app/fusionauth-app/lib -name '*.jar' | tr '\n' ':' | sed 's/:$//') && \
+          mkdir -p /tmp/java-classes && \
+          javac -cp "$CP" -d /tmp/java-classes src/scripts/java/GenerateEndpointsJSON.java && \
+          java -cp "$CP:/tmp/java-classes" GenerateEndpointsJSON \
+            "$(pwd)/astro/src/content/json/generated/api-endpoints.json"
+          REGEN
+          )
+
+          echo "Meaningful changes detected in api-endpoints.json."
+          echo ""
+          echo "Run this from the repo root to regenerate, then commit and open a PR:"
+          echo ""
+          echo "$REGEN"
+          echo ""
+          git diff -- "$target"
+
+          {
+            echo "## api-endpoints.json has new content"
+            echo ""
+            echo "Run this from the repo root to regenerate, then commit and open a PR:"
+            echo '```bash'
+            echo "$REGEN"
+            echo '```'
+            echo ""
+            echo "<details><summary>Diff</summary>"
+            echo ""
+            echo '```diff'
+            git diff -- "$target"
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit 1
