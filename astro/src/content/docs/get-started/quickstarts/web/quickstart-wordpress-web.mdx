@@ -9,19 +9,26 @@ import Breadcrumb from 'src/components/Breadcrumb.astro';
 import DockerSpinup from 'src/components/quickstarts/DockerSpinup.astro';
 import Field from 'src/components/Field.astro';
 import Intro from 'src/components/quickstarts/Intro.astro';
+import LocalCode from 'src/components/LocalCode.astro';
 import {Content as LoginArchitectureWeb} from 'src/components/quickstarts/LoginArchitectureWeb.mdx';
 import NextSteps from 'src/components/quickstarts/NextSteps.astro';
 import QuickstartTshirtCTA from 'src/components/quickstarts/QuickstartTshirtCTA.astro'
-import RemoteCode from 'src/components/RemoteCode.astro';
 
-<Intro technology="WordPress"
-       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-wordpress-web"/>
+<Intro technology="WordPress" repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-wordpress-web"/>
 
 ## Prerequisites
 
 For this QuickStart, you'll need:
 
-* [Docker](https://www.docker.com) 20 or later, which is the quickest way to start FusionAuth. (There are [other ways](/docs/get-started/download-and-install/).)
+* [Docker](https://www.docker.com), which is the quickest way to start FusionAuth. (There are [other ways](/docs/get-started/download-and-install).) The guide uses Docker version 29, but other close versions should work.
+
+All instructions are for WordPress version 7, which will always run in Docker successfully. If your real WordPress installation is a later version, the most likely complication is obsolete plugins, which you might need to exclude or find modern alternatives for. Below are the WordPress plugins used in this guide:
+- [OpenID Connect Generic Client](https://wordpress.org/plugins/daggerhart-openid-connect-generic)
+- [Shortcoder](https://wordpress.org/plugins/shortcoder)
+- [Snippet Shortcodes](https://wordpress.org/plugins/shortcode-variables)
+- [Simple Page Access Restriction](https://wordpress.org/plugins/simple-page-access-restriction)
+- [Hide Admin Bar from Non-Admins](https://wordpress.org/plugins/hide-admin-bar-from-non-admins)
+- [Remove Dashboard Access](https://wordpress.org/plugins/remove-dashboard-access-for-non-admins)
 
 ## General Architecture
 
@@ -31,7 +38,7 @@ For this QuickStart, you'll need:
 
 In this section, you'll get FusionAuth up and running and create a new WordPress application.
 
-### Clone The Code
+### Clone the Code
 
 First, clone the code from the repository and change into that directory.
 
@@ -45,32 +52,29 @@ cd fusionauth-quickstart-wordpress-web
 
 All shell commands in this guide can be entered in a terminal in this directory. On Windows, you need to replace forward slashes with backslashes in paths.
 
-If you prefer to copy the files you'll create in this guide, they already exist in the `complete-application` directory.
-
-### Run FusionAuth Via Docker
+### Run FusionAuth via Docker
 
 <DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
 
-### Create A Basic WordPress Application
+### Create a Basic WordPress Application
 
 Next, you'll set up a basic WordPress site. While this guide builds a new WordPress project, you can use the same method to integrate your existing project with FusionAuth.
 
 <Aside type="note">
-  If you simply want to run the application, there is a completed version in the `complete-application` directory. You
-  can use the following commands to get it up and running if you do not want to create your own.
+  If you simply want to run the application, there is a completed version in the `complete-application` directory. Once the Docker services have all started, you can use the following commands to get the complete WordPress app up and running if you do not want to create your own.
 
   ```shell-session
   cd complete-application
   ```
 
   ```shell-session
-  docker compose up
+  ./setup.sh
   ```
 
-  Then view the application at the following URL http://localhost:3000.
+  Then view the application at the following URL: http://localhost:3000.
 </Aside>
 
-### Preliminary Setup
+### Install WordPress
 
 Browse to http://localhost:3000. It should automatically redirect you to http://localhost:3000/wp-admin/install.php, as this is a brand-new site.
 
@@ -84,9 +88,32 @@ On the next page:
 - Set **Your Email** to `admin@example.com`.
 - Click <Breadcrumb>Install WordPress</Breadcrumb>.
 
-![Wordpress configuration](/img/quickstarts/quickstart-wordpress-web/wp-welcome.png)
+![WordPress configuration](/img/quickstarts/quickstart-wordpress-web/wp-welcome.png)
+
+<Aside type="tip">
+  Completing all these instructions using the WordPress UI is tedious for multiple installations. You can instead do all configuration using commands pasted into the terminal. All commands are given in `complete-application/setup.sh`.
+
+  For instance, to complete the site installation above, you could instead run this command:
+
+  ```shell-session
+  docker compose exec cli wp core install --url="http://localhost:3000" --title="Change Bank" --admin_user="admin" --admin_password="password" --admin_email="admin@example.com" --skip-email
+  ```
+</Aside>
 
 On the success page, click <Breadcrumb>Log In</Breadcrumb>. On the login page, enter the username `admin` and password `password` and click <Breadcrumb>Log In</Breadcrumb>. (You can return to this page later by browsing to http://localhost:3000/wp-login.php.)
+
+### Create a Blank Page Template
+
+WordPress doesn't include a blank page template by default. Create one, so your pages can display content at full browser width without any theme styling constraints:
+
+- Browse to <Breadcrumb>Appearance -> Editor</Breadcrumb>.
+- Click <Breadcrumb>Templates</Breadcrumb> in the sidebar.
+- Click the <Breadcrumb>Add Template</Breadcrumb> button.
+- Select <Breadcrumb>Custom template</Breadcrumb>.
+- Name it `Blank` and click <Breadcrumb>Create</Breadcrumb>.
+- The template starts with some default blocks. Select all of them and delete them.
+- Click the <Breadcrumb>+</Breadcrumb> button to add a new block, search for `Content`, and add the <Breadcrumb>Content</Breadcrumb> block.
+- Click <Breadcrumb>Save</Breadcrumb>.
 
 ### Create Placeholder Pages
 
@@ -109,7 +136,7 @@ Now create new blank pages:
 
 - Click <Breadcrumb>Add New</Breadcrumb>.
 - Under **Add Title** enter `Home`.
-- Under <Breadcrumb>Page</Breadcrumb> on the far right, view the **Template** field and modify it. Do so by clicking <Breadcrumb>Pages</Breadcrumb>, and select <Breadcrumb>Blank</Breadcrumb> on the dropdown.
+- Under <Breadcrumb>Page</Breadcrumb> on the far right, view the **Template** field and modify it. Do so by clicking <Breadcrumb>Pages - Change Template</Breadcrumb>, and select <Breadcrumb>Blank</Breadcrumb>.
 - Click <Breadcrumb>Publish</Breadcrumb>, confirm, and note the URL has been updated to one you can browse to.
 - Click the <Breadcrumb>WP</Breadcrumb> icon on the top left to return to the pages screen.
 - Repeat these steps to create and publish two more pages, one with the title `Account` and one with the title `Change`.
@@ -122,35 +149,31 @@ Browse to <Breadcrumb>Settings -> Reading</Breadcrumb>. Change **Your homepage d
 
 ![Homepage](/img/quickstarts/quickstart-wordpress-web/reading.png)
 
-Finally, browse to <Breadcrumb>Appearance -> Editor -> Templates -> Blank</Breadcrumb>. Here you are editing the page style template for all three of your new pages. Click on the paragraph (`This is the Post Content block ...`) twice to select it. Open the settings menu by clicking the <Breadcrumb>Settings</Breadcrumb> icon to the right of the blue <Breadcrumb>Save</Breadcrumb> button on the top right. On the <Breadcrumb>Block</Breadcrumb> tab and under the <Breadcrumb>Layout</Breadcrumb> section, disable <Breadcrumb>Inner blocks use content width</Breadcrumb>. Click <Breadcrumb>Save</Breadcrumb> and confirm. This changes each page to use the full browser width.
-
-![Full width setting](/img/quickstarts/quickstart-wordpress-web/blank-template.png)
-
 ## Authentication
 
-You now have a basic WordPress site with three blank pages. Currently, a user authenticates against the Wordpress user database. Next, you will enable WordPress to use FusionAuth for authentication so that your users can use the same FusionAuth login credentials with this site as any future sites you make or other applications.
+You now have a basic WordPress site with three blank pages. Currently, a user authenticates against the WordPress user database. Next, you will enable WordPress to use FusionAuth for authentication so that your users can use the same FusionAuth login credentials with this site as any future sites you make or other applications.
 
-On the WordPress dashboard, click <Breadcrumb>Plugins -> Add new</Breadcrumb>. In the search box on the right, paste "OpenID Connect Generic Client". On the first plugin in the results, by daggerhart, click <Breadcrumb>Install Now</Breadcrumb>, then <Breadcrumb>Activate</Breadcrumb>.
+On the WordPress dashboard, click <Breadcrumb>Plugins -> Add new</Breadcrumb>. In the search box on the right, paste `OpenID Connect Generic Client`. On the first plugin in the results, by daggerhart, click <Breadcrumb>Install Now</Breadcrumb>, then <Breadcrumb>Activate</Breadcrumb>.
 
 ![Add a plugin](/img/quickstarts/quickstart-wordpress-web/oidc-plugin.png)
 
 Browse to <Breadcrumb>Settings -> Open ID Connect Client</Breadcrumb> and enter the following settings:
 
-- **Client ID** - `E9FDB985-9173-4E01-9D73-AC2D60D1DC8E`
+- **Client ID** - `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
 - **Client Secret Key** - `super-secret-secret-that-should-be-regenerated-for-production`
 - **OpenID Scope** - `openid email profile`
 - **Login Endpoint URL** - `http://localhost:9011/oauth2/authorize`
 - **Userinfo Endpoint URL** - `http://fusionauth:9011/oauth2/userinfo`
 - **Token Validation Endpoint URL** - `http://fusionauth:9011/oauth2/token`
 - **End Session Endpoint URL** - `http://localhost:9011/oauth2/logout`
+- **JWKS Endpoint URL** - `http://fusionauth:9011/.well-known/jwks.json`
 - **Nickname Key** - `sub`
 - **Display Name Formatting** - ``{email}`` (this is what will be displayed to the user in the WordPress admin screen)
 - Enable <Breadcrumb>Link Existing Users</Breadcrumb> - this marks a user in your local WordPress database who has the same email in FusionAuth as the same user, instead of duplicating them.
+- Enable <Breadcrumb>Allow Internal IDP</Breadcrumb> so WordPress can talk to FusionAuth on the Docker network.
 
 <Aside>
-  Requests from the browser will use the endpoint `http://localhost:9011` to communicate with the FusionAuth container
-  whilst for container to container communication the internal network name for the FusionAuth container specified in
-  docker compose is `fusionauth` so the endpoint `http://fusionauth:9011` is used.
+  Requests from the **browser** to FusionAuth will use the endpoint `http://localhost:9011` to communicate with the FusionAuth container. For **server** to FusionAuth communication the endpoint `http://fusionauth:9011` is used, since the internal network name for the FusionAuth container specified in the Docker Compose file is `fusionauth`.
 </Aside>
 
 Click <Breadcrumb>Save Changes</Breadcrumb>.
@@ -167,18 +190,18 @@ For a simpler user experience, you can remove the option to log in with WordPres
 Open a terminal and run the following command to overwrite the default `wp-login.php` file.
 
 ```shell-session
-docker cp ./complete-application/wp-login.php fusionauth-quickstart-wordpress-web-wordpress-1:/var/www/html/wp-login.php
+docker cp ./complete-application/wp-login.php wp:/var/www/html/wp-login.php
 ```
 
 The new file starts commenting out the login form on line 1424 with `<!--`, and ends the comment on line 1504 with `-->`.
 
 Now http://localhost:3000/wp-login.php looks much neater.
 
-### Restrict Pages To Logged In Users
+### Restrict Pages to Logged-In Users
 
 Currently, if you log out, you can still browse to the pages that should be restricted, like `http://localhost:3000/account`. Let's prevent that.
 
-At <Breadcrumb>Plugins -> Add New</Breadcrumb>, search for "simple page access restriction" and install and activate the one by Plugins & Snippets. Browse to the plugin settings in the sidebar. Set the following values:
+At <Breadcrumb>Plugins -> Add New</Breadcrumb>, search for `simple page access restriction` and install and activate the one by Plugins & Snippets. Browse to the plugin settings in the sidebar. Set the following values:
 
 - **Login Redirect Type** - `URL`.
 - **Login Redirect URL** - `http://localhost:3000/wp-login.php`.
@@ -190,9 +213,9 @@ Back in <Breadcrumb>Pages</Breadcrumb>, for both the account and change pages, c
 
 ![Page settings](/img/quickstarts/quickstart-wordpress-web/for-logged-in.png)
 
-### Send User To Account After Log In
+### Send User to Account After Login
 
-The final improvement you can make to the login process is to send the user directly to their account page instead of the dashboard after login.
+Another improvement you can make to the login process is to send the user directly to their account page instead of the dashboard after login.
 
 Search for and install the plugin "Remove Dashboard Access" by TrustedLogin.
 
@@ -201,6 +224,14 @@ Browse to <Breadcrumb>Settings -> Dashboard Access</Breadcrumb>. Change the valu
 ![Page settings](/img/quickstarts/quickstart-wordpress-web/dash-access.png)
 
 Now if you log out and log in as `richard@example.com`, who is not an administrator, you'll be redirected to the account page. Log in again as `admin@example.com` to continue editing the site.
+
+### Hide the Admin Bar for Non-Admin Users
+
+By default, WordPress shows an admin bar at the top of every page for logged-in users. For a cleaner experience, you can hide this bar for non-admin users.
+
+At <Breadcrumb>Plugins -> Add New</Breadcrumb>, search for "hide admin bar from non admins" and install and activate the plugin by that name.
+
+Now when you log in as `richard@example.com`, the admin bar will not be visible. Admin users like `admin@example.com` will still see it.
 
 ## Customization
 
@@ -215,9 +246,9 @@ You now have everything you need to configure FusionAuth authentication on your 
 
 The easiest way to demonstrate the ChangeBank sample pages is to paste custom content into a plugin, but note that is not the most maintainable solution for a real site. If your site is large or complex, take the time to study custom themes and create your own.
 
-For now, search for and add the plugin "WP Coder" by WPCoder.
+For now, search for and add the plugins "Shortcoder" by vaakash and "Snippet Shortcodes" by YeKen.
 
-### Add An Image
+### Add an Image
 
 Browse to <Breadcrumb>Media</Breadcrumb> in the sidebar. Click <Breadcrumb>Add New</Breadcrumb> and select `money.jpg` from the `complete-application` directory.
 
@@ -229,66 +260,43 @@ Click on the image once it has been uploaded. Copy the "File URL" to use later. 
 
 You'll now create three shortcodes with the HTML, CSS, and JavaScript for each page.
 
-Browse to <Breadcrumb>WP Coder</Breadcrumb>. Click <Breadcrumb>Add New</Breadcrumb>. In the title box at the top, enter `home`. In the **HTML Code** box, copy and paste the following code.
+Browse to <Breadcrumb>Shortcoder</Breadcrumb>. Click <Breadcrumb>Create shortcode</Breadcrumb>. In the title box at the top, enter `home`. In the text box below, copy and paste the following code.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/home.html"}
-            lang="html"/>
+<LocalCode src="quickstart-wordpress-web/complete-application/home.html" lang="html"/>
 
 In the `<img src` at the bottom of this code, enter the file URL for the money image you uploaded.
 
-Click the <Breadcrumb>CSS</Breadcrumb> tab, and paste the following code.
+Click <Breadcrumb>Publish</Breadcrumb>.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/changebank.css"}
-            lang="css"/>
+Click <Breadcrumb>Create shortcode</Breadcrumb> again. In the title box at the top, enter `account`. In the text box below, copy and paste the following code.
 
-Click <Breadcrumb>Save Changes</Breadcrumb>.
+<LocalCode src="quickstart-wordpress-web/complete-application/account.html" lang="html"/>
 
-Browse to <Breadcrumb>WP Coder</Breadcrumb>. Click <Breadcrumb>Add New</Breadcrumb>. In the title box at the top, enter `account`. In the **HTML Code** box, copy and paste the following code.
+Click <Breadcrumb>Publish</Breadcrumb>.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/account.html"}
-            lang="html"/>
+Click <Breadcrumb>Create shortcode</Breadcrumb> again. In the title box at the top, enter `change`. In the text box below, copy and paste the following code.
 
-Click the <Breadcrumb>CSS</Breadcrumb> tab, and paste the following code.
+<LocalCode src="quickstart-wordpress-web/complete-application/change.html" lang="html"/>
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/changebank.css"}
-            lang="css"/>
+Click <Breadcrumb>Publish</Breadcrumb>.
 
-Click <Breadcrumb>Save Changes</Breadcrumb>.
-
-Browse to <Breadcrumb>WP Coder</Breadcrumb>. Click <Breadcrumb>Add New</Breadcrumb>. In the title box at the top, enter `change`. In the **HTML Code** box, copy and paste the following code.
-
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/change.html"}
-            lang="html"/>
-
-Click the <Breadcrumb>CSS</Breadcrumb> tab, and paste the following code.
-
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/changebank.css"}
-            lang="css"/>
-
-Click on the <Breadcrumb>JS</Breadcrumb> tab, and paste the following code.
-
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/change.js"}
-            lang="js"/>
-
-Click <Breadcrumb>Save Changes</Breadcrumb>.
-
-In the list tab of the WP Coder plugin, you can see the shortcodes of each page, like `[wp_code id="1"]`. You'll use these codes to link the custom code to the actual page.
+In the <Breadcrumb>All shortcodes</Breadcrumb> tab of the Shortcoder plugin, you can see the shortcodes of each page, like `[sc name="home"][/sc]`. You'll use these codes to link the custom code to the actual page.
 
 ### Add Email Shortcode Plugin
 
-Add the plugin "Snippet Shortcodes" by Ali Colville. This plugin enables the shortcode `[sv slug="sc-user-email"]`, which you might have noticed in the HTML of the account and change pages. The shortcode displays the user's email on the page.
+Add the plugin "Snippet Shortcodes" by Yeken. This plugin enables the shortcode `[sv slug="sc-user-email"]`, which you might have noticed in the HTML of the account and change pages. The shortcode displays the user's email on the page.
 
-### Add The Shortcodes To The Pages
+### Add the Shortcodes to the Pages
 
-Now you can use these shortcodes on the three pages. Browse to <Breadcrumb>Pages</Breadcrumb> and edit the account page. Click the hamburger menu at the top right and select <Breadcrumb>Code editor</Breadcrumb>. In the text box under the page title box, copy and paste the shortcode associated with account page which should look like `[wp_code id="2"]` and click <Breadcrumb>Update</Breadcrumb>.
+Now you can use these shortcodes on the three pages. Browse to <Breadcrumb>Pages</Breadcrumb> and edit the account page. Click the hamburger menu at the top right and select <Breadcrumb>Code editor</Breadcrumb>. In the text box under the page title box, copy and paste the shortcode associated with account page which should look like `[sc name="account"][/sc]` and click <Breadcrumb>Update</Breadcrumb>.
 
-Go back to the page list and edit the home page. Paste `[wp_code id="1"]` and click <Breadcrumb>Update</Breadcrumb>.
+Go back to the page list and edit the home page. Paste `[sc name="home"][/sc]` and click <Breadcrumb>Update</Breadcrumb>.
 
-Edit the change page, paste `[wp_code id="3"]`, and click <Breadcrumb>Update</Breadcrumb>.
+Edit the change page, paste `[sc name="change"][/sc]`, and click <Breadcrumb>Update</Breadcrumb>.
 
-Each of your previously blank pages now displays the custom HTML and CSS you added to the WP Coder custom shortcodes.
+Each of your previously blank pages now displays the custom HTML and CSS you added to the Shortcoder custom shortcodes.
 
-## Run The Application
+## Run the Application
 
 The demonstration application is now complete. Log out. Verify that you can't browse to the [account page](http://localhost:3000/account). Log in using `richard@example.com` and `password`. The make change page will allow you to enter a dollar amount to see how many nickels and pennies you will get.
 
@@ -321,7 +329,7 @@ cd complete-application
 ```
 
 ```shell-session
-docker compose up
+./setup.sh
 ```
 
 Browse to [http://localhost:3000](http://localhost:3000) and log in with `admin@example.com` and `password`.
