@@ -162,6 +162,7 @@ _DEFAULT_EXCLUDE_DEST = [
     r"developers\.docusign\.com",   # spurious 500
     r"geldata\.com",                # spurious 404
     r"gluecon\.com",                # DNE, not evergreen content so will ignore
+    r"app\.xkit\.co",               # spurious 500
 ]
 
 
