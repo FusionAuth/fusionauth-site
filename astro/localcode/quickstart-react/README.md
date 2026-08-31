@@ -8,7 +8,7 @@ This repository contains:
 - a locally-hosted FusionAuth authorization server that runs in a container group
 - frontend React code for each step of the QuickStart
 
-For full instructions, see the [FusionAuth React QuickStart](https://fusionauth.io/docs/quickstarts/quickstart-react).
+For full instructions, see the [FusionAuth React QuickStart](https://fusionauth.io/docs/get-started/quickstarts/spa/react).
 
 ## Dependencies
 
