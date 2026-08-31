@@ -159,6 +159,9 @@ _DEFAULT_EXCLUDE_DEST = [
     r"nvd\.nist\.gov",              # NIST blocks crawlers
     r"hacktoberfest\.com",          # registration links break in off-season
     r"Permit\.io",                  # times out regularly
+    r"developers\.docusign\.com",   # spurious 500
+    r"geldata\.com",                # spurious 404
+    r"gluecon\.com",                # DNE, not evergreen content so will ignore
 ]
 
 
