@@ -28,18 +28,58 @@ function trackPageDiagnostics(page) {
 
 test('FusionAuth admin login', async ({ page }) => {
   const dumpDiagnostics = trackPageDiagnostics(page);
-
   try {
     await page.goto('http://localhost:9011/admin/');
     await page.waitForLoadState('networkidle');
-
     await page.getByPlaceholder('Login').fill('admin@example.com');
     await page.getByPlaceholder('Password').fill('password');
     await page.getByRole('button', { name: 'Submit' }).click();
-
     await expect(page).toHaveURL(/\/admin\//);
     await expect(page.getByRole('button', { name: 'admin@example.com' })).toBeVisible();
-  } catch (error) {
+  }
+  catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
+});
+
+test('Unauthenticated access to /account redirects to /', async ({ page }) => {
+  const dumpDiagnostics = trackPageDiagnostics(page);
+  try {
+    await page.goto('http://localhost:9012/account');
+    await page.waitForURL('http://localhost:9012/');
+    await expect(page.getByRole('heading', { name: /Welcome to Changebank/i })).toBeVisible();
+  }
+  catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
+});
+
+test('Unauthenticated access to /change redirects to /', async ({ page }) => {
+  const dumpDiagnostics = trackPageDiagnostics(page);
+  try {
+    await page.goto('http://localhost:9012/change');
+    await page.waitForURL('http://localhost:9012/');
+    await expect(page.getByRole('heading', { name: /Welcome to Changebank/i })).toBeVisible();
+  }
+  catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
+});
+
+test('Login redirect includes PKCE code_challenge', async ({ page }) => {
+  const dumpDiagnostics = trackPageDiagnostics(page);
+  try {
+    await page.goto('http://localhost:9012');
+    await page.getByRole('link', { name: /Login/i }).click();
+    await page.waitForURL(/localhost:9011/);
+    const url = page.url();
+    expect(url).toContain('oauth2/authorize');
+    expect(url).toContain('code_challenge');
+  }
+  catch (error) {
     await dumpDiagnostics();
     throw error;
   }
@@ -47,30 +87,22 @@ test('FusionAuth admin login', async ({ page }) => {
 
 test('Rust Actix app OAuth login via FusionAuth', async ({ page }) => {
   const dumpDiagnostics = trackPageDiagnostics(page);
-
   try {
     await page.goto('http://localhost:9012');
-
     await expect(page.getByRole('heading', { name: /Welcome to Changebank/i })).toBeVisible();
-
     await page.getByRole('link', { name: /Login/i }).click();
-
     await page.waitForURL(/localhost:9011/);
-
     await page.getByPlaceholder('Login').fill('richard@example.com');
     await page.getByPlaceholder('Password').fill('password');
     await page.getByRole('button', { name: 'Submit' }).click();
-
     await page.waitForURL(/localhost:9012\/account/);
-
     await expect(page.getByText('richard@example.com')).toBeVisible();
     await expect(page.getByRole('link', { name: /Logout/i })).toBeVisible();
-
     await page.getByRole('link', { name: /Logout/i }).click();
-
     await page.waitForURL('http://localhost:9012/');
     await expect(page.getByRole('link', { name: /Login/i })).toBeVisible();
-  } catch (error) {
+  }
+  catch (error) {
     await dumpDiagnostics();
     throw error;
   }
