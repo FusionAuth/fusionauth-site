@@ -1,15 +1,24 @@
 #!/bin/sh
 
-# we ignore 'open your browser and navigate to https://fusionauth.io/docs' because it is part of command output
-# we ignore 'homepage "https://fusionauth.io"' because it is part of the homebrew formula
-# we ignore "<a href='https://fusionauth.io/docs/'>Learn how this app works.</a>" because it is part of a react tutorial
-# we ignore "<a href=\"https://fusionauth.io/blog/announcing-fusionauth-" because we use those links in the descriptions of release blog posts
-find astro/src/content/ -type f -name "*.md*" | xargs grep 'https://fusionauth.io' | grep -v 'homepage "https://fusion' | grep -v 'open your browser and navigate to https://fusionauth.io/docs' |grep -v "<a href='https://fusionauth.io/docs/'>Learn how this app works.</a>" |grep -v "https://fusionauth.io/blog/announcing-fusionauth-" |grep -v '\[https:' > absolute.out
+# Content should use root-relative paths (/docs/...) so links work across preview deploys.
+# Fenced code blocks are skipped: CLI invocations and their output legitimately print absolute URLs.
+#
+# we ignore "https://fusionauth.io/blog/announcing-fusionauth-" because we use those links in the descriptions of release blog posts
+HITS=$(find astro/src/content/ -type f -name "*.md*" -print0 \
+  | xargs -0 awk '
+      FNR == 1 { fence = 0 }
+      /^[[:space:]]*(```|~~~)/ { fence = !fence; next }
+      !fence { print FILENAME ":" FNR ": " $0 }
+    ' \
+  | grep 'https://fusionauth.io' \
+  | grep -v "https://fusionauth.io/blog/announcing-fusionauth-" \
+  | grep -v '\[https:')
 
-cat absolute.out
+if [ -z "$HITS" ]; then
+  exit 0
+fi
 
-RES=`cat absolute.out | wc -l | sed 's/[ ]*//g'`
-
-#echo $RES
-exit $RES
-
+echo "Found absolute fusionauth.io URLs in content. Use root-relative paths (/docs/...) instead:"
+echo ""
+echo "$HITS"
+exit 1
