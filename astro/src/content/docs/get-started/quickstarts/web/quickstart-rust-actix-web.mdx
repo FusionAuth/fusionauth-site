@@ -5,6 +5,10 @@ htmlTitle: FusionAuth QuickStart for Rust with Actix
 ---
 import Aside from 'src/components/Aside.astro';
 import LocalCode from 'src/components/LocalCode.astro';
+import LocalValue from 'src/components/LocalValue/LocalValue.astro';
+import Intro from 'src/components/quickstarts/Intro.astro';
+import {Content as LoginArchitectureWeb} from 'src/components/quickstarts/LoginArchitectureWeb.mdx';
+import DockerSpinup from 'src/components/quickstarts/DockerSpinup.astro';
 import NextSteps from 'src/components/quickstarts/NextSteps.astro';
 
 This QuickStart integrates a Rust application with FusionAuth. This app includes pages for both authenticated users and unauthenticated members of the public.
@@ -16,12 +20,16 @@ While this article uses Actix, the Rust OAuth2 library can also be used in your 
 For this QuickStart, you will need:
 
 * [Docker](https://www.docker.com) version 20 or later, which is the quickest way to start FusionAuth. (There are [other ways](/docs/get-started/download-and-install/).)
-* [Rust](https://rustup.rs/#) and Cargo version 1.7 or later.
-* `pkg-config` and `libssl-dev`, if they are not already installed on your system.
-* On macOS and Windows, one of the following container management tools:
-  * [Docker desktop](https://www.docker.com/products/docker-desktop/)
-  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use Orbstack for `docker compose` commands after install, run `docker context use orbstack`)
-  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
+* [{frontmatter.language}](https://rustup.rs/#) and Cargo, with rustc version 1.88 or later.
+* You may also need to install `pkg-config` and `libssl-dev` if they are not already installed on your system.
+
+## General Architecture
+
+<LoginArchitectureWeb />
+
+## Getting Started
+
+Start with getting FusionAuth up and running and creating a new {frontmatter.framework} application.
 
 ### Clone The Code
 
@@ -82,7 +90,7 @@ cargo add actix-session@0.8.0 -F cookie-session && cargo add handlebars@4.5 -F d
 
 Add the following code to your `src/main.rs` file.
 
-<LocalCode src="quickstart-rust-actix/main.snippet.complete.rs" lang="rust"/>
+<LocalCode src="quickstart-rust-actix-web/complete-application/src/main.rs" lang="rust" />
 
 The `main` function configures the web server, adds routes to it, and starts it. The function also:
 
@@ -107,7 +115,7 @@ This tells Actix where to find and connect to FusionAuth.
 
 Authentication is handled by `src/auth.rs`. Create that file now and insert the following code.
 
-<LocalCode src="quickstart-rust-actix/auth.snippet.complete.rs" lang="rust"/>
+<LocalCode src="quickstart-rust-actix-web/complete-application/src/auth.rs" lang="rust" />
 
 This code has three routes: `login`, `logout`, and `callback`.
 
@@ -137,22 +145,22 @@ mkdir static
 Copy images from the example app.
 
 ```shell-session
-cp ../complete-application/static/money.jpg ../complete-application/static/changebank.svg static/
+cp ../complete-application/static/money.jpg static/money.jpg
 ```
 
 Create a stylesheet file `static/changebank.css` and add the following code to it.
 
-<LocalCode src="quickstart-rust-actix/complete-application/static/changebank.css" lang="css"/>
+<LocalCode src="quickstart-rust-actix-web/complete-application/static/changebank.css" lang="css" />
 
 Next, create a `templates` directory within `your-application`. Create three pages inside the `templates` directory. First create the home page, `index.html`, and paste the following code into it.
 
-<LocalCode src="quickstart-rust-actix/complete-application/templates/index.html" lang="html"/>
+<LocalCode src="quickstart-rust-actix-web/complete-application/templates/index.html" lang="html" />
 
 The index page contains nothing to note except a link to the login page `<a href="/login">`.
 
 Next, create an `account.html` page and paste the following code into it.
 
-<LocalCode src="quickstart-rust-actix/complete-application/templates/account.html" lang="html"/>
+<LocalCode src="quickstart-rust-actix-web/complete-application/templates/account.html" lang="html" />
 
 The account page displays the user's email from FusionAuth with `<p class="header-email">{{email}}</p>`.
 
@@ -160,7 +168,7 @@ The account page is only visible to logged in users. If a session email is not f
 
 Finally, create a `change.html` page and paste the following code into it.
 
-<LocalCode src="quickstart-rust-actix/complete-application/templates/change.html" lang="html"/>
+<LocalCode src="quickstart-rust-actix-web/complete-application/templates/change.html" lang="html" />
 
 The HTML at the bottom of the file displays a blank form when the page first loads (GET) or the result of the calculation when returning (POST).
 
@@ -172,8 +180,33 @@ Run your application.
 cargo run
 ```
 
-Browse to the app at [http://localhost:9012](http://localhost:9012). Log in using `richard@example.com` and `password`. The change page allows you to enter a number. If you don't log in, you won't be able to access the change or account pages.
+Browse to the app at [http://localhost:9012](http://localhost:9012). Log in using <code><LocalValue path="quickstart-rust-actix-web/kickstart/kickstart.json" selector="$.variables.userEmail" /></code> and <code><LocalValue path="quickstart-rust-actix-web/kickstart/kickstart.json" selector="$.variables.userPassword" /></code>. The change page allows you to enter a number. If you don't log in, you won't be able to access the change or account pages.
 
 ## Next Steps
 
 <NextSteps />
+
+### {frontmatter.language} Authentication
+
+- [Rust OAuth provider](https://docs.rs/oauth2/latest/oauth2/)
+- [Actix](https://actix.rs/)
+
+## Troubleshooting
+
+- I get "This site can't be reached localhost refused to connect" when I click the login button.
+
+Ensure FusionAuth is running in the Docker container. You should be able to log in as the admin user <code><LocalValue path="quickstart-rust-actix-web/kickstart/kickstart.json" selector="$.variables.adminEmail" /></code> with the password <code><LocalValue path="quickstart-rust-actix-web/kickstart/kickstart.json" selector="$.variables.adminPassword" /></code> at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+- It still doesn't work.
+
+You can always pull down a complete running application and compare what's different.
+
+```shell-session
+git clone https://github.com/FusionAuth/fusionauth-quickstart-rust-actix-web.git
+cd fusionauth-quickstart-rust-actix-web
+docker compose up
+cd complete-application
+cargo run
+```
+
+Browse to the app at http://localhost:9012.

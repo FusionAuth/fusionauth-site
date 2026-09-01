@@ -1,4 +1,3 @@
-// :snippet-start: complete
 use actix_web::{get, post, web, App, HttpResponse, HttpServer}; // web server
 use actix_files as fs; // static image files
 use actix_session::{Session, SessionMiddleware, storage::CookieSessionStore, config::CookieContentSecurity}; // store auth info in browser cookies
@@ -114,4 +113,3 @@ fn calculate_change(amount: &str, state: &mut HashMap::<&str, String>) -> () {
     let pennies = total_cents - nickels * 5;
     state.insert("pennies", format!("{}", pennies));
 }
-// :snippet-end:

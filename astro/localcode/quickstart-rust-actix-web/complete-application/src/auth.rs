@@ -1,4 +1,3 @@
-// :snippet-start: complete
 use actix_web::{get, web, Error, HttpResponse, Responder};
 use actix_session::{Session};
 use std::env;
@@ -118,4 +117,3 @@ struct AuthCallbackParams {
 struct UserInfo {
     email: String,
 }
-// :snippet-end:
