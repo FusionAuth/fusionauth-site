@@ -107,3 +107,58 @@ test('Rust Actix app OAuth login via FusionAuth', async ({ page }) => {
     throw error;
   }
 });
+
+test('Make Change calculates change correctly', async ({ page }) => {
+  const dumpDiagnostics = trackPageDiagnostics(page);
+
+  try {
+    await page.goto('http://localhost:9012');
+    await page.getByRole('link', { name: /Login/i }).click();
+
+    await page.waitForURL(/localhost:9011/);
+    await page.getByPlaceholder('Login').fill('richard@example.com');
+    await page.getByPlaceholder('Password').fill('password');
+    await page.getByRole('button', { name: 'Submit' }).click();
+
+    await page.waitForURL(/localhost:9012\/account/);
+    await page.goto('http://localhost:9012/change');
+
+    const cases = [
+      { amount: '0.29', total: '0.29', nickels: '5', pennies: '4' },
+      { amount: '0.58', total: '0.58', nickels: '11', pennies: '3' },
+      { amount: '1.02', total: '1.02', nickels: '20', pennies: '2' },
+      { amount: '0.15', total: '0.15', nickels: '3', pennies: '0' },
+    ];
+
+    for (const { amount, total, nickels, pennies } of cases) {
+      await page.locator('input[name="amount"]').fill(amount);
+      await page.locator('input.change-submit').click();
+
+      await expect(page.locator('.change-message')).toHaveText(
+        `We can make change for ${total} with ${nickels} nickels and ${pennies} pennies!`
+      );
+    }
+  }
+  catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
+});
+
+test('SVG logo image loads correctly', async ({ page }) => {
+  const dumpDiagnostics = trackPageDiagnostics(page);
+
+  try {
+    await page.goto('http://localhost:9012');
+
+    const logo = page.locator('img[src*="changebank.svg"]');
+    await expect(logo).toBeVisible();
+
+    const response = await page.request.get('https://fusionauth.io/cdn/samplethemes/changebank/changebank.svg');
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toContain('image/svg+xml');
+  } catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
+});
