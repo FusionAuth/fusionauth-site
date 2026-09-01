@@ -89,6 +89,110 @@ Update custom field calls to pass labels for both the primary and confirm fields
                [/#if]
 ```
 
+### Return to application link on account self-service pages
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+Version `1.69.0` adds a `redirectURI` template variable to the account self-service templates and updates the default theme to render a **Return to application** link at the bottom of the `Account index` page. Before this release, a user who finished managing their profile had no way back to your application unless your theme hard-coded a link.
+
+`redirectURI` is available on every account template: `Account index`, `Account edit`, the `Account two-factor` templates, and the `Account WebAuthn` templates. FusionAuth resolves it from the `redirect_uri` request parameter, falling back to the `Referer` header when a user navigates into the account pages directly from your application. When neither is present, or the user arrived from another FusionAuth page, the variable is undefined, so always reference it with a null safe strategy such as `redirectURI??`.
+
+For the link to survive as the user moves around the account section, `redirect_uri` has to be carried on every internal account link and through each form post. The `accountFooter` macro does this for you once you apply the change below. The `Account index` and `Account edit` templates build their own links and form, so they need the additional updates below.
+
+#### Helpers template
+
+##### Macro accountFooter
+
+Append `redirect_uri` to the generated action URLs:
+
+```ftl diff
+ [#if !actionURL?contains("tenantId")]
+     [#if actionURL?contains("?")]
+         [#local actionURL = actionURL + "&tenantId=${tenantId}"/]
+     [#else]
+         [#local actionURL = actionURL + "?tenantId=${tenantId}"/]
+     [/#if]
+ [/#if]
++[#if redirectURI?? && !actionURL?contains("redirect_uri")]
++    [#if actionURL?contains("?")]
++        [#local actionURL = actionURL + "&redirect_uri=${redirectURI?url('UTF-8')}"/]
++    [#else]
++        [#local actionURL = actionURL + "?redirect_uri=${redirectURI?url('UTF-8')}"/]
++    [/#if]
++[/#if]
+```
+
+#### Account index template
+
+Declare the new template variable:
+
+```ftl diff
+ [#-- @ftlvariable name="multiFactorAvailable" type="boolean" --]
++[#-- @ftlvariable name="redirectURI" type="java.lang.String" --]
+ [#-- @ftlvariable name="tenant" type="io.fusionauth.domain.Tenant" --]
+```
+
+Carry `redirect_uri` on the links to the edit profile, two-factor, and WebAuthn pages:
+
+```ftl diff
+- <a id="edit-profile" class="block w-full rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-text shadow-sm hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" href="${request.contextPath}/account/edit?client_id=${client_id}&tenantId=${tenantId!''}">
++ <a id="edit-profile" class="block w-full rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-text shadow-sm hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" href="${request.contextPath}/account/edit?client_id=${client_id}&tenantId=${tenantId!''}[#if redirectURI??]&redirect_uri=${redirectURI?url('UTF-8')}[/#if]">
+```
+
+```ftl diff
+- <a href="${request.contextPath}/account/two-factor/?client_id=${client_id}&tenantId=${tenantId!''}" class="text-link hover:text-link-hover text-sm">
++ <a href="${request.contextPath}/account/two-factor/?client_id=${client_id}&tenantId=${tenantId!''}[#if redirectURI??]&redirect_uri=${redirectURI?url('UTF-8')}[/#if]" class="text-link hover:text-link-hover text-sm">
+```
+
+```ftl diff
+- <a href="${request.contextPath}/account/webauthn/?client_id=${client_id}&tenantId=${tenantId!''}" class="text-link hover:text-link-hover text-sm">
++ <a href="${request.contextPath}/account/webauthn/?client_id=${client_id}&tenantId=${tenantId!''}[#if redirectURI??]&redirect_uri=${redirectURI?url('UTF-8')}[/#if]" class="text-link hover:text-link-hover text-sm">
+```
+
+Render the link back to the application next to the locale selector:
+
+```ftl diff
+- [#-- Locale selector at bottom with mt-3 spacing --]
+- <div class="w-full flex justify-center max-w-[352px] mt-3">
+-   <div class="w-min-content">[@helpers.localeSelector/]</div>
++ [#-- redirectURI is the resolved URL back to the application. --]
++ <div class="w-full max-w-[352px] mt-3 flex items-center justify-between gap-4">
++   <div class="flex-shrink-0">[@helpers.localeSelector/]</div>
++   [#if redirectURI??]
++     <div class="flex-shrink-0 text-right">
++       <a href="${redirectURI}" class="text-sm text-link hover:text-link-hover hover:underline inline-flex items-center gap-2"><i class="fa fa-arrow-left"></i> ${theme.message("return-to-application")}</a>
++     </div>
++   [/#if]
+  </div>
+```
+
+#### Account edit template
+
+Declare the new template variable:
+
+```ftl diff
+ [#-- @ftlvariable name="fields" type="java.util.Map<java.lang.Integer, java.util.List<io.fusionauth.domain.form.FormField>>" --]
++[#-- @ftlvariable name="redirectURI" type="java.lang.String" --]
+ [#-- @ftlvariable name="user" type="io.fusionauth.domain.User" --]
+```
+
+Add a hidden field so the link back to the application survives the form post, which has no query string:
+
+```ftl diff
+  [@helpers.hidden name="client_id" /]
+  [@helpers.hidden name="tenantId" /]
++ [#-- Carries the link back to the application across the POST, which has no query string. --]
++ [@helpers.hidden name="redirect_uri" value=redirectURI!'' /]
+```
+
+#### Messages
+
+To support these template changes, add the following message, replacing the value with your own:
+
+```plaintext
+return-to-application=Return to application
+```
+
 ## Version 1.68.0
 
 ### Account and OAuth2 updates for named two-factor methods

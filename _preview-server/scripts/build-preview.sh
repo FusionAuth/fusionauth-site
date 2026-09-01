@@ -123,9 +123,16 @@ fi
 rm -rf "$SLOT_DIR/astro/.astro"
 
 # ── deps ──────────────────────────────────────────────────────────────────────
-MAIN_PKG_HASH=$(git -C "$REPO_DIR" show "origin/main:astro/package.json" \
-  | sha256sum | cut -d' ' -f1)
-SLOT_PKG_HASH=$(sha256sum "$SLOT_DIR/astro/package.json" | cut -d' ' -f1)
+MAIN_PKG_HASH=$(
+  { git -C "$REPO_DIR" show "origin/main:astro/package.json"
+    git -C "$REPO_DIR" show "origin/main:astro/package-lock.json"
+  } | sha256sum | cut -d' ' -f1
+)
+SLOT_PKG_HASH=$(
+  { cat "$SLOT_DIR/astro/package.json"
+    cat "$SLOT_DIR/astro/package-lock.json"
+  } | sha256sum | cut -d' ' -f1
+)
 
 # The slot's node_modules is a symlink to the main repo's node_modules, so that
 # shared directory must exist and match main's package.json before any build.
