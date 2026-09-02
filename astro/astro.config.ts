@@ -270,8 +270,8 @@ const config = defineConfig({
       llmsTxtDescription: 'News, tutorials, comparisons, and technical content from the FusionAuth team. For technical API and integration documentation, see the [FusionAuth Docs index](https://fusionauth.io/docs/llms.txt).',
     }),
     openapiSummary(),
-    markdownLinkSyntaxChecker(),
-    // only run link validator when not in the 'PROD' environment (just an env var passed to deploy)
+    // only run link validators when not in a preview/deploy build
+    process.env.PROD !== 'true' && markdownLinkSyntaxChecker(),
     process.env.PROD !== 'true' && linkChecker({
       failOnBrokenLinks: true,
       verbose: false,
