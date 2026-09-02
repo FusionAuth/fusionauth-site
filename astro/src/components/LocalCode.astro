@@ -3,8 +3,7 @@
 // Auto-detects: paths containing ".snippet." read from generated snippets; all others read from localcode.
 
 import { Prism } from '@astrojs/prism';
-import fs from 'fs';
-import path from 'path';
+import { readLocalFile } from 'src/utils/localFileReader';
 
 export interface Props {
   /**
@@ -30,17 +29,7 @@ export interface Props {
 
 const { src, lang = 'plaintext', title, ...rest } = Astro.props;
 
-const snippetPath = src.includes('.snippet.')
-  ? path.join(process.cwd(), 'src', 'generated-code-snippets', src)
-  : path.join(process.cwd(), 'localcode', src);
-let snippetCode = '';
-
-try {
-  snippetCode = fs.readFileSync(snippetPath, 'utf-8').trim();
-}
-catch (err) {
-  throw new Error(`Failed to read local code file at [${snippetPath}]: ${(err as Error).message}`);
-}
+const snippetCode = readLocalFile(src);
 
 ---
 {(title === '' || title === undefined) ? null : (<p data-title={title}><em>{title}</em></p>)}
