@@ -1,0 +1,36 @@
+---
+import { getCollection } from 'astro:content';
+import Docs from 'src/layouts/Docs.astro';
+import ReleaseNotes from 'src/components/docs/release-notes/ReleaseNotes.astro';
+import ReleaseNotesSelector from 'src/components/docs/release-notes/ReleaseNotesSelector.astro';
+import ReleasePagination from 'src/components/docs/release-notes/ReleasePagination.astro';
+
+export async function getStaticPaths() {
+  const PAGE_SIZE = 25;
+  const allReleases = await getCollection('releases');
+  const totalPages = Math.ceil(allReleases.length / PAGE_SIZE);
+  return Array.from({ length: totalPages - 1 }, (_, i) => ({
+    params: { page: String(i + 2) },
+    props: { page: i + 2, pageSize: PAGE_SIZE },
+  }));
+}
+
+const { page, pageSize } = Astro.props;
+
+const frontmatter = {
+  title: `Release Notes - Page ${page}`,
+  description: 'Browse our release notes for detailed information on the latest features, bug fixes, and improvements in FusionAuth.',
+  disableTOC: true,
+  hideBgImage: true,
+  rssUrl: '/docs/releases.xml',
+};
+---
+<Docs {frontmatter} disableTOC={true}>
+  <p>For the best experience, always upgrade to the latest version of FusionAuth. For more information about upgrading, see our <a href="/docs/operate/deploy/upgrade">Upgrade FusionAuth Guide</a>.</p>
+  <p>For a high-level overview of changes in each release, see the <a href="/blog/category/release-updates/">Release Updates topic on our Blog</a>.</p>
+  <ReleasePagination {page} {pageSize} />
+  <ReleaseNotesSelector {page} {pageSize} />
+  <p>To filter release notes by category, select a category or multiple categories below:</p>
+  <ReleaseNotes {page} {pageSize} />
+  <ReleasePagination {page} {pageSize} />
+</Docs>
