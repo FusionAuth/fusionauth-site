@@ -197,7 +197,7 @@ const config = defineConfig({
     }),
     buildSitemap(),
     indexPages(),
-    astroToc(),
+    astroToc({ articleSelector: ['article.fusion-article section', 'article.fusion-article', 'article', 'main'] }),
     genMarkdownPages({
       pageFilter: (url) => !url.startsWith('/articles/') && url !== '/articles.md' && !url.startsWith('/blog/'),
       indexFilter: (url) => url.startsWith('/docs/') || url === '/docs.md',
