@@ -54,36 +54,39 @@ function parseMeta(meta) {
 }
 
 /**
- * Split the children of a Prism-tokenized <code> element into per-line groups.
- * Newlines inside text nodes are the split points.
- * Returns an array of child-arrays, one per line.
+ * Split hast nodes on newlines, returning one array of children per line.
+ * Recurses into element children so that Prism tokens spanning multiple lines
+ * (common in HTML where a single `token tag` span can contain newlines inside
+ * multi-line attribute lists) are cloned per line rather than placed wholesale
+ * on the first line with the rest lost.
  */
-function splitIntoLines(children) {
-  const lines = [];
-  let current = [];
-
-  function walk(nodes) {
-    for (const node of nodes) {
-      if (node.type === 'text') {
-        const parts = node.value.split('\n');
-        for (let i = 0; i < parts.length; i++) {
-          if (i > 0) {
-            lines.push(current);
-            current = [];
-          }
-          if (parts[i].length) current.push({ type: 'text', value: parts[i] });
-        }
-      } else {
-        current.push(node);
+function splitNodes(nodes) {
+  const segs = [[]];
+  for (const node of nodes) {
+    if (node.type === 'text') {
+      const parts = node.value.split('\n');
+      for (let i = 0; i < parts.length; i++) {
+        if (i > 0) segs.push([]);
+        if (parts[i]) segs[segs.length - 1].push({ type: 'text', value: parts[i] });
       }
+    } else if (node.type === 'element' && node.children?.length) {
+      const inner = splitNodes(node.children);
+      for (let i = 0; i < inner.length; i++) {
+        if (i > 0) segs.push([]);
+        if (inner[i].length) segs[segs.length - 1].push({ ...node, children: inner[i] });
+      }
+    } else {
+      segs[segs.length - 1].push(node);
     }
   }
+  return segs;
+}
 
-  walk(children);
-  // Trailing line (no trailing \n) — only add if non-empty
-  if (current.length) lines.push(current);
-
-  return lines;
+function splitIntoLines(children) {
+  const segs = splitNodes(children);
+  // drop trailing empty segment (code blocks typically end with \n)
+  if (segs.length && segs[segs.length - 1].length === 0) segs.pop();
+  return segs;
 }
 
 /** Extract plain text from a hast node list (for diff prefix detection) */
