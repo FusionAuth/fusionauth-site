@@ -9,6 +9,7 @@ import SendSetPasswordIdentityType from 'src/content/docs/apis/_shared/_user-sen
 import UserDataEmailFieldRequest from 'src/content/docs/apis/_shared/_user-data-email-field-request.mdx';
 import ModerationStatusRequest from 'src/content/docs/apis/_shared/_moderation_status_request.mdx';
 import VerificationIds from 'src/content/docs/apis/_shared/_verificationIds.mdx';
+import If from 'src/components/If.astro';
 
 You must specify either the **email** or the **username** or both for the User. Either of these values may be used to uniquely identify the User and may be used to authenticate the User. These fields are marked as optional below, but you must specify at least one of them.
 
@@ -19,36 +20,37 @@ You must specify either the **email** or the **username** or both for the User. 
     If not provided, only the tenant configuration will be used when resolving templates.
   </APIField>
 
-  { props.http_method === 'PUT' && <>
-        <APIField name="currentPassword" type="String" optional>
-            The User's current password. When this parameter is provided, the parameter will be checked against the User's actual current password. Useful for password updates.
-        </APIField>
-    </>
-  }
-    <APIField name="disableDomainBlock" type="Boolean" optional defaults="false" since="1.30.0">
+  <If condition={props.http_method === 'PUT'}>
+    <APIField name="currentPassword" type="String" optional>
+      The User's current password. When this parameter is provided, the parameter will be checked against the User's actual current password. Useful for password updates.
+    </APIField>
+  </If>
+
+  <APIField name="disableDomainBlock" type="Boolean" optional defaults="false" since="1.30.0">
     A tenant has the option to configure one or more email domains to be blocked in order to restrict email domains during user create or update.
 
     Setting this property equal to `true` will override the tenant configuration. See **tenant.registrationConfiguration.blockedDomains** in the [Tenant API](/docs/apis/tenants).
   </APIField>
 
-  { props.http_method === 'PUT' &&
+  <If condition={props.http_method === 'PUT'}>
     <APIField name="passwordFieldType" type="String" since="1.69.0" optional defaults="PLAINTEXT">
-        Describes what **user.password** in the request is.
+      Describes what **user.password** in the request is.
 
-        The possible values are:
-        <ul>
-            <li>`HASHED` - **user.password** is an already hashed value. When this value is supplied, **user.encryptionScheme**, **user.factor**, **user.password**, and **user.salt** are required.</li>
-            <li>`PLAINTEXT` - **user.password** is a plain text/unhashed value. FusionAuth will hash this value according to **user.encryptionScheme** and **user.factor**.</li>
-        </ul>
+      The possible values are:
+      <ul>
+        <li>`HASHED` - **user.password** is an already hashed value. When this value is supplied, **user.encryptionScheme**, **user.factor**, **user.password**, and **user.salt** are required.</li>
+        <li>`PLAINTEXT` - **user.password** is a plain text/unhashed value. FusionAuth will hash this value according to **user.encryptionScheme** and **user.factor**.</li>
+      </ul>
     </APIField>
-  }
+  </If>
 
-  { props.http_method === 'POST' &&
+  <If condition={props.http_method === 'POST'}>
     <UserSendSetPasswordEmail />
-  }
-  { props.http_method === 'POST' &&
+  </If>
+
+  <If condition={props.http_method === 'POST'}>
     <SendSetPasswordIdentityType />
-  }
+  </If>
 
   <APIField name="skipVerification" type="Boolean" optional defaults="false">
     Indicates to FusionAuth that it should skip email and phone verification even if it is enabled. This is useful for creating admin or internal User accounts.
@@ -90,11 +92,9 @@ You must specify either the **email** or the **username** or both for the User. 
         * [phpass-md5](/docs/reference/password-hashes#phpass-md5) <AvailableSince since="1.45.0" />
         * [phpass-sha512](/docs/reference/password-hashes#phpass-sha-512)<AvailableSince since="1.45.0" />
 
-    { props.http_method === 'PUT' &&
-        <p>
-          This field is ignored unless the <code>password</code> field is also provided. If omitted and the <code>password</code> is specified, the default encryption scheme will be used.
-        </p>
-      }
+    <If condition={props.http_method === 'PUT'}>
+      This field is ignored unless the `password` field is also provided. If omitted and the `password` is specified, the default encryption scheme will be used.
+    </If>
 
     You can also create your own password encryptor. See the [Custom Password Hashing](/docs/extend/code/password-hashes/custom-password-hashing) section for more information.
   </APIField>
@@ -106,11 +106,9 @@ You must specify either the **email** or the **username** or both for the User. 
   <APIField name="user.factor" type="String" optional>
     The factor used by the password encryption scheme. If not provided, the `PasswordEncryptor` provides a default value. Generally this will be used as an iteration count to generate the hash. The actual use of this value is up to the `PasswordEncryptor` implementation.
 
-    { props.http_method === 'PUT' &&
-        <p>
-          This field is ignored unless the <code>password</code> field is also provided. If omitted and the <code>password</code> is specified, the default factor for the encryption scheme will be used.
-        </p>
-      }
+    <If condition={props.http_method === 'PUT'}>
+      This field is ignored unless the `password` field is also provided. If omitted and the `password` is specified, the default factor for the encryption scheme will be used.
+    </If>
   </APIField>
 
   <APIField name="user.firstName" type="String" optional>
@@ -139,7 +137,7 @@ You must specify either the **email** or the **username** or both for the User. 
     The User's middle name.
   </APIField>
 
-  { props.http_method === 'POST' && <>
+  <If condition={props.http_method === 'POST'}>
     <APIField name="user.memberships" type="Array" optional>
       The list of memberships for the User.
     </APIField>
@@ -155,8 +153,7 @@ You must specify either the **email** or the **username** or both for the User. 
     <APIField name="user.memberships[x].id" type="UUID" optional defaults="secure random UUID">
       The unique Id of this membership. If not specified a secure random UUID will be generated.
     </APIField>
-    </>
-  }
+  </If>
 
   <APIField name="user.mobilePhone" type="String" optional>
     The User's mobile phone number. This is useful to send the User push notifications or SMS messages.
@@ -175,11 +172,9 @@ You must specify either the **email** or the **username** or both for the User. 
   <APIField name="user.password" type="String" optional>
     The User's plain text password. This password will be hashed and the provided value will never be stored and cannot be retrieved.
 
-    { props.http_method === 'PUT' &&
-        <p>
-          In version <code>1.69.0</code> and above, the <code>passwordFieldType</code> field indicates whether this is a plain text password or a hashed password. Providing <code>user.password</code> indicates that you wish to change the User's password. If you do not want to change the User's password, omit this field from the request.
-        </p>
-      }
+    <If condition={props.http_method === 'PUT'}>
+      In version `1.69.0` and above, the `passwordFieldType` field indicates whether this is a plain text password or a hashed password. Providing `user.password` indicates that you wish to change the User's password. If you do not want to change the User's password, omit this field from the request.
+    </If>
   </APIField>
 
   <APIField name="user.passwordChangeRequired" type="Boolean" optional defaults="false">
@@ -252,12 +247,9 @@ You must specify either the **email** or the **username** or both for the User. 
 
     When using `TextMessage` the User will also need a valid `mobilePhone`.
 
-    { props.http_method === 'PUT' &&
-        <p>
-          If Two-Factor authentication is already enabled for this user, the delivery may not be modified. In order to change the delivery type you
-          must first disable Two-Factor authentication and re-enable with a new delivery type.
-        </p>
-      }
+    <If condition={props.http_method === 'PUT'}>
+      If Two-Factor authentication is already enabled for this user, the delivery may not be modified. In order to change the delivery type you must first disable Two-Factor authentication and re-enable with a new delivery type.
+    </If>
 
     <RemovedSince since="1.26.0" />
   </APIField>
@@ -265,9 +257,9 @@ You must specify either the **email** or the **username** or both for the User. 
   <APIField name="user.twoFactorEnabled" type="Boolean" optional defaults="false" deprecated>
     Determines if the User has two-factor authentication enabled for their account or not.
 
-    { props.http_method === 'PUT' &&
-        <p>If Two-Factor authentication is already enabled for this user disabling Two-Factor authentication will reset the delivery type and secret.</p>
-      }
+    <If condition={props.http_method === 'PUT'}>
+      If Two-Factor authentication is already enabled for this user disabling Two-Factor authentication will reset the delivery type and secret.
+    </If>
 
     See the [Enable Two-Factor](/docs/apis/two-factor/enable-multi-factor) and [Disable Two-Factor](/docs/apis/two-factor/disable-multi-factor) APIs
     as an alternative to performing this action using the User API.
@@ -287,12 +279,9 @@ You must specify either the **email** or the **username** or both for the User. 
 
     When using `None` as the **twoFactorDelivery** this value will be required.
 
-    { props.http_method === 'PUT' &&
-        <p>
-          If Two-Factor authentication is already enabled for this user, the secret may not be modified. In order to change the secret you
-          must first disable Two-Factor authentication and re-enable with a new secret.
-        </p>
-      }
+    <If condition={props.http_method === 'PUT'}>
+      If Two-Factor authentication is already enabled for this user, the secret may not be modified. In order to change the secret you must first disable Two-Factor authentication and re-enable with a new secret.
+    </If>
 
     <RemovedSince since="1.26.0" />
   </APIField>
@@ -307,15 +296,15 @@ You must specify either the **email** or the **username** or both for the User. 
     <ModerationStatusRequest />
   </APIField>
 
-  { props.http_method === 'POST' &&
+  <If condition={props.http_method === 'POST'}>
     <VerificationIds />
-  }
+  </If>
 
-  { props.http_method === 'POST' &&
+  <If condition={props.http_method === 'POST'}>
     <JSON title="Example Request JSON" src="users/create-request.json" />
-  }
+  </If>
 
-  { props.http_method === 'PUT' &&
+  <If condition={props.http_method === 'PUT'}>
     <JSON title="Example Request JSON" src="users/update-request.json" />
-  }
+  </If>
 </APIBlock>
