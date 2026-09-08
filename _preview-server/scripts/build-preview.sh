@@ -102,12 +102,6 @@ if [[ "$SLOT_SHA" != "$SHA" ]]; then
   log "WARNING: SHA mismatch — slot may be on wrong commit"
 fi
 
-# ── Shared caches ──────────────────────────────────────────────────────────────
-# node_modules: symlinked from master; concurrent installs serialized via flock.
-# Remove any real directory left by a previous slot-specific npm ci — ln -sfn
-# cannot replace a directory and would create the link inside it instead.
-rm -rf "$SLOT_DIR/astro/node_modules"
-ln -sfn "$REPO_DIR/astro/node_modules" "$SLOT_DIR/astro/node_modules"
 # .content-cache: per-slot, NOT shared — different branches have different content
 # and a shared cache causes one PR's compiled content to bleed into another's.
 mkdir -p "$SLOT_DIR/astro/.content-cache"
@@ -134,26 +128,34 @@ SLOT_PKG_HASH=$(
   } | sha256sum | cut -d' ' -f1
 )
 
-# The slot's node_modules is a symlink to the main repo's node_modules, so that
-# shared directory must exist and match main's package.json before any build.
+# Refresh the shared node_modules when main's packages changed, the Astro binary is
+# missing, or a prior slot-specific install corrupted the shared directory (e.g. npm ci
+# followed a symlink and deleted files).  The throw-and-exit.js check catches the most
+# common partial-install symptom; add others here if new corruption patterns emerge.
 MAIN_NM_HASH_FILE="$PREVIEW_DIR/.main-nm-hash"
 CACHED_NM_HASH=$(cat "$MAIN_NM_HASH_FILE" 2>/dev/null || echo "")
 if [[ "$MAIN_PKG_HASH" != "$CACHED_NM_HASH" ]] || \
-   [[ ! -x "$REPO_DIR/astro/node_modules/.bin/astro" ]]; then
-  log "Shared node_modules missing or stale — running npm ci in main repo …"
+   [[ ! -x "$REPO_DIR/astro/node_modules/.bin/astro" ]] || \
+   [[ ! -f "$REPO_DIR/astro/node_modules/astro/dist/cli/throw-and-exit.js" ]]; then
+  log "Shared node_modules missing, stale, or corrupt — running npm ci in main repo …"
   flock "$PREVIEW_DIR/.npm-lock" \
     npm ci --silent --prefix "$REPO_DIR/astro" >&2
   echo "$MAIN_PKG_HASH" > "$MAIN_NM_HASH_FILE"
 fi
 
-if [[ "$MAIN_PKG_HASH" != "$SLOT_PKG_HASH" ]]; then
-  log "package.json changed — running npm ci for slot (serialized) …"
-  # Serialize installs across concurrent slot builds so node_modules isn't corrupted.
-  # npm ci removes the symlink and creates a real node_modules for this slot.
+if [[ "$MAIN_PKG_HASH" == "$SLOT_PKG_HASH" ]]; then
+  # Packages match main — safe to symlink to the shared node_modules.
+  rm -rf "$SLOT_DIR/astro/node_modules"
+  ln -sfn "$REPO_DIR/astro/node_modules" "$SLOT_DIR/astro/node_modules"
+  log "Using shared node_modules (packages match main)."
+else
+  # Packages differ — install fresh in the slot directory.  Do NOT create the
+  # symlink first: npm ci would follow it, delete the shared node_modules
+  # contents, and leave every concurrent build with a broken install.
+  rm -rf "$SLOT_DIR/astro/node_modules"
+  log "package.json changed — running npm ci for slot …"
   flock "$PREVIEW_DIR/.npm-lock" \
     npm ci --silent --prefix "$SLOT_DIR/astro" >&2
-else
-  log "package.json unchanged — using shared node_modules."
 fi
 
 # ── Build ─────────────────────────────────────────────────────────────────────
