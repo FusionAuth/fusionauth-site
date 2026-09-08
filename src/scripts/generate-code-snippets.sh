@@ -33,6 +33,7 @@ for repo in localcode/*/; do
 		--output "$output_dir" \
 		--plugin bluehawk-languages.js \
 		--ignore 'node_modules' \
+		--ignore 'vendor' \
 		--ignore '.gitignore' \
 		--ignore '.DS_Store' \
 		--ignore 'package*.json' \

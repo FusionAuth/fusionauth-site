@@ -123,10 +123,11 @@
       prose-li:text-sm prose-p:text-sm prose-p:font-normal prose-p:leading-6 
       dark:prose-p:text-slate-300 prose-p:text-slate-800
       /* Tables */
-      prose-table:block prose-table:rounded prose-table:overflow-x-scroll
-      prose-th:border prose-th:border-slate-400/75 dark:prose-th:border-slate-700 
+      prose-table:w-full prose-table:table-fixed prose-table:rounded
+      prose-th:border prose-th:border-slate-400/75 dark:prose-th:border-slate-700
+      prose-th:bg-slate-200/70 dark:prose-th:bg-slate-700/50
       prose-th:px-4 prose-th:py-4 prose-th:text-base prose-th:font-semibold prose-th:leading-5
-      prose-td:border prose-td:border-slate-400/75 dark:prose-td:border-slate-700 
+      prose-td:border prose-td:border-slate-400/75 dark:prose-td:border-slate-700
       prose-td:px-4 prose-td:text-sm prose-td:font-normal prose-td:leading-5
       even:prose-tr:bg-slate-100 dark:even:prose-tr:bg-slate-800/50;
 
@@ -135,16 +136,21 @@
       @apply text-slate-800 dark:text-slate-300;
     }
 
+    @media (max-width: 767px) {
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+
     td code,
     th code {
       /* allows wrapping at spaces when the cell hits its maximum width */
-      white-space: pre-wrap; 
-      
-      /* Keeps words intact and prevents arbitrary breaking in the middle of text */
-      word-break: normal; 
-      
-      /* Forces a break inside a string (e.g. URL or class name) ONLY if it exceeds the cell's width */
-      overflow-wrap: break-word; 
+      white-space: pre-wrap;
+      /* keeps words intact, prevents arbitrary mid-text breaks */
+      word-break: normal;
+      /* breaks inside a long string (e.g. URL or identifier) only if it exceeds the cell's width */
+      overflow-wrap: break-word;
     }
 
     /* Enforce text wrapping & bold styling */
@@ -347,14 +353,20 @@ pre[data-has-line-meta] code { display: inline-block; min-width: 100%; }
 /* Every wrapped line is display:block so backgrounds/borders span the full width */
 pre[data-has-line-meta] code .line { display: block; }
 
-/* Highlighted lines: subtle yellow-tinted background + left accent bar */
+/* Highlighted lines: yellow-tinted background + left accent bar.
+   padding-left: 1rem (not calc(1rem - 3px)) keeps text aligned with non-highlighted lines;
+   the 3px box-shadow bar renders inside the padding area so it never overlaps text. */
 pre[data-has-line-meta] code .line-highlighted {
-  background-color: rgba(255, 230, 0, 0.08);
-  box-shadow: inset 3px 0 0 0 rgba(255, 210, 0, 0.6);
+  background-color: rgba(255, 215, 0, 0.18);
+  box-shadow: inset 3px 0 0 0 rgba(255, 195, 0, 0.9);
   margin-left: -1rem;
-  padding-left: calc(1rem - 3px);
+  padding-left: 1rem;
   margin-right: -1rem;
   padding-right: 1rem;
+}
+.dark pre[data-has-line-meta] code .line-highlighted {
+  background-color: rgba(255, 230, 0, 0.08);
+  box-shadow: inset 3px 0 0 0 rgba(255, 210, 0, 0.6);
 }
 
 /* Collapsed lines are hidden until expanded */
@@ -600,8 +612,12 @@ foreignObject { overflow: visible; }
   .api-required    { @apply px-[6px] py-1 text-xs font-bold uppercase border-2 rounded-md text-orange-500 border-orange-500 dark:font-semibold dark:text-[10px]; }
   .api-optional    { @apply px-[6px] py-1 text-xs font-bold uppercase border-2 rounded-md text-purple-500 border-purple-500 dark:font-semibold dark:text-[10px]; }
   .api-immutable   { @apply px-3 text-sm font-semibold text-orange-500 uppercase; }
-  .api-deprecated  { @apply text-red-700; }
-  .api-since       { @apply text-green-500 text-sm italic; }
+  .api-deprecated       { @apply inline-flex items-center gap-1 px-[6px] py-0.5 text-xs font-semibold border rounded-md text-red-600 border-red-400 dark:text-red-400 dark:border-red-500; }
+  .api-deprecated-block  { @apply border-l-4 border-red-400 dark:border-red-500 bg-red-50 dark:bg-red-900/30 p-4 mb-5 rounded-sm text-sm; }
+  .api-deprecated-header { @apply font-semibold text-red-700 dark:text-red-300 mb-2; }
+  .api-since       { @apply inline-flex items-center gap-1 px-[6px] py-0.5 text-xs font-semibold border rounded-md text-blue-600 border-blue-400 dark:text-blue-400 dark:border-blue-500; }
+  .api-since-block  { @apply border-l-4 border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/30 p-4 mb-5 rounded-sm text-sm; }
+  .api-since-header { @apply font-semibold text-blue-700 dark:text-blue-300 mb-2; }
   .api-readonly    { @apply px-3 text-blue-300 text-sm font-semibold uppercase; }
 
   /* --- Asides --- */
@@ -623,6 +639,17 @@ foreignObject { overflow: visible; }
   .accordion-chevron { @apply h-5 w-5 opacity-50 transition-transform duration-300 group-open:rotate-180; }
   .accordion-title   { @apply text-lg font-semibold; }
   .accordion-body    { @apply px-5 border-t border-current/10; }
+
+  /* --- Checklist --- */
+  .checklist      { @apply list-none p-0 m-0; }
+  .checklist-item { @apply flex items-start gap-2 py-0.5; }
+  .checklist-item input[type="checkbox"] {
+    @apply shrink-0 w-4 h-4 mt-[3px] cursor-pointer rounded-sm;
+    accent-color: theme('colors.indigo.600');
+  }
+  .dark .checklist-item input[type="checkbox"] { accent-color: theme('colors.indigo.400'); }
+  .checklist-text { @apply flex-1 min-w-0; }
+  .checklist-text > p:only-child { @apply m-0; }
 
   /* --- Monospace text inside links --- */
   /* Remove bottom padding so the parent link's border-b underline is not obscured */

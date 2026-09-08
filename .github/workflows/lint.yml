@@ -62,6 +62,9 @@ jobs:
       - name: Check APIs for completeness against client libs
         run: |
           tagver=`curl --silent https://account.fusionauth.io/api/version -o - | jq 'last(.versions[-1])'|sed 's/"//g'`
+          if ! git ls-remote --exit-code --heads https://github.com/fusionauth/fusionauth-client-builder "$tagver" > /dev/null 2>&1; then
+            tagver=$(echo "$tagver" | sed 's/\.[0-9]*$/.0/')
+          fi
           git clone --depth 1 --branch $tagver https://github.com/fusionauth/fusionauth-client-builder
           src/check-apis-against-client-json.rb -f $PWD/src/.checkapis.yaml -c $PWD/fusionauth-client-builder -v --pr
         shell: bash

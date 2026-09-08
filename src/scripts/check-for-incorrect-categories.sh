@@ -25,15 +25,15 @@ ACTUAL=$(find astro/src/content/blog/ -type f -name "*.md*" | grep -v swp | xarg
 # -F: treat pattern as fixed strings (not regex)
 INVALID=$(echo "$ACTUAL" | grep -vxF "$ALLOWED")
 
-# 4. Count and exit
-# We check if INVALID is empty to avoid wc returning 1 for an empty string
+# 4. Report and exit
 if [ -z "$INVALID" ]; then
-    RES=0
-else
-    RES=$(echo "$INVALID" | wc -l)
-    # Optional: print the offenders to help debug
-    # echo "Found invalid categories:"
-    # echo "$INVALID"
+    exit 0
 fi
 
-exit "$RES"
+echo "Found blog categories that are not in the allowed list:"
+echo ""
+echo "$INVALID"
+echo ""
+echo "Allowed categories:"
+echo "$ALLOWED"
+exit 1
