@@ -1,0 +1,91 @@
+name: Update screenshots
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # every Monday at 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./astro
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            astro/package-lock.json
+            astro/screenshots/package-lock.json
+
+      - name: Install site modules
+        run: npm ci
+
+      - name: Install screenshots CLI
+        run: npm ci
+        working-directory: ./astro/screenshots
+
+      - name: Install Playwright webkit
+        run: npx playwright install webkit --with-deps
+        working-directory: ./astro/screenshots
+
+      - name: Delete cached screenshots
+        run: rm -f public/img/docs/screenshots/*.png
+
+      - name: Generate screenshots
+        run: npm run screenshots
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git add public/img/docs/screenshots/
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --name-only > /tmp/changed-files.txt
+            echo "files=$(cat /tmp/changed-files.txt | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open PR with updated screenshots
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGED: ${{ steps.diff.outputs.files }}
+        run: |
+          BRANCH="screenshots/auto-update-$(date +%Y-%m-%d)"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git commit -m "chore: update screenshots $(date +%Y-%m-%d)"
+          git push origin "$BRANCH"
+
+          FILE_LIST=$(echo "$CHANGED" | tr ' ' '\n' | grep -v '^$' | sed 's|.*/||' | sed 's/^/- /' | head -20)
+
+          gh pr create \
+            --title "chore: update screenshots $(date +%Y-%m-%d)" \
+            --body "$(cat <<'EOF'
+          Weekly automated screenshot refresh.
+
+          ### Changed files
+
+          ${FILE_LIST}
+
+          Review the diff to verify the UI changes are expected before merging.
+          EOF
+          )" \
+            --label "screenshots" \
+            --base main
+
+      - name: No changes
+        if: steps.diff.outputs.changed == 'false'
+        run: echo "All screenshots match -- no PR needed."

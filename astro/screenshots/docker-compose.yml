@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: fusionauth
+      POSTGRES_PASSWORD: hacking_is_not_cool
+      POSTGRES_DB: fusionauth
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fusionauth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  images:
+    image: nginx:alpine
+    volumes:
+      - ./images:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+
+  fusionauth:
+    # pin to a specific version so screenshots are reproducible across machines
+    image: fusionauth/fusionauth-app:1.69.1
+    depends_on:
+      db:
+        condition: service_healthy
+      images:
+        condition: service_started
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
+      DATABASE_ROOT_USERNAME: fusionauth
+      DATABASE_ROOT_PASSWORD: hacking_is_not_cool
+      DATABASE_USERNAME: fusionauth
+      DATABASE_PASSWORD: hacking_is_not_cool
+      FUSIONAUTH_APP_MEMORY: 512M
+      FUSIONAUTH_APP_RUNTIME_MODE: production
+      FUSIONAUTH_APP_URL: http://localhost:9011
+      FUSIONAUTH_APP_KICKSTART_FILE: /usr/local/fusionauth/kickstart/kickstart.json
+      # disable telemetry in the screenshot instance
+      FUSIONAUTH_APP_SILENT: "true"
+      SEARCH_TYPE: database
+    volumes:
+      - ./kickstart:/usr/local/fusionauth/kickstart:ro
+      - fusionauth_config:/usr/local/fusionauth/config
+    ports:
+      - "9011:9011"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9011/api/status | grep -q '\"status\":\"OK\"' || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+volumes:
+  db_data:
+  fusionauth_config:
