@@ -100,6 +100,11 @@ const docsCollection = defineCollection({
     hideBgImage: z.boolean().optional(),
     rssUrl: z.string().optional(),
     enableKapa: z.boolean().optional(),
+    icon: z.string().optional(),
+    darkIcon: z.string().optional(),
+    cardImage: z.string().optional(),
+    excludeFromNav: z.boolean().default(false),
+    sectionIndex: z.boolean().default(false),
   }),
 });
 
