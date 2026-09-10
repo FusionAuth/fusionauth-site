@@ -259,6 +259,73 @@ Use `fa-screenshot.sh`, located under `fusionauth-site/src/`. With this script y
 ./fa-screenshot.sh -h # for usage info
 ```
 
+### Declarative screenshots
+
+Screenshots in the docs are generated automatically from a headless browser pointed at a local FusionAuth instance. Docker, the FusionAuth container, and a PostgreSQL database all start automatically when you run the screenshot command.
+
+#### Setup
+
+Install the screenshot dependencies once (separate from the main `astro/` dependencies):
+
+```bash
+cd astro/screenshots
+npm install
+```
+
+#### Running screenshots
+
+From the `astro/` directory:
+
+```bash
+npm run screenshots
+```
+
+This starts Docker (if not already running), waits for FusionAuth to become healthy, logs in with the kickstart credentials, captures every `<Screenshot>` component found in the source, and writes PNGs to `public/img/docs/screenshots/`. Existing files are overwritten.
+
+To regenerate a single screenshot, pass a filter matching the filename or URL:
+
+```bash
+npm run screenshots -- --filter groups
+```
+
+#### Adding a screenshot to a page
+
+Import both components at the top of the MDX file:
+
+```jsx
+import Screenshot from 'astro-better-declarative-screenshots/Screenshot.astro';
+import Highlight from 'astro-better-declarative-screenshots/Highlight.astro';
+```
+
+Then place the component where you want the screenshot to appear:
+
+```jsx
+<Screenshot url="/admin/group/" alt="The FusionAuth groups list." />
+```
+
+The `url` is the path on the local FusionAuth instance (`http://localhost:9011`). The filename is derived automatically from the URL and any highlights; pass `id="my-name"` to override it.
+
+To highlight a specific element, nest a `<Highlight>` inside the `<Screenshot>`:
+
+```jsx
+<Screenshot url="/admin/user/manage/00000000-0000-0000-0000-100000000003" alt="The user registration form." fullPage={true}>
+  <Highlight selector="[name*='preferredLanguages']" label="Languages" />
+</Screenshot>
+```
+
+`selector` is a CSS selector for the element to outline. `label` adds a small badge above the highlight. The default highlight color is `#f60`; pass `color="#f26522"` to override.
+
+Available `<Screenshot>` props:
+
+| Prop | Default | Description |
+|---|---|---|
+| `url` | required | Path on the FusionAuth instance |
+| `id` | auto-derived | Override the output filename (without `.png`) |
+| `alt` | filename | Alt text for the image |
+| `width` | 1100 | Viewport width in px |
+| `height` | 800 | Viewport height in px |
+| `fullPage` | false | Capture full scrollable height |
+
 ### Moving pictures
 
 GIFs take up quite a lot of space. Use WEBMs instead:
