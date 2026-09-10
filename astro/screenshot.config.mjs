@@ -48,10 +48,6 @@ export default {
   beforeScreenshot: async (page) => {
     const url = page.url();
 
-    if (url.includes('/registration/add/')) {
-      await page.waitForTimeout(2000);
-    }
-
     // add registration screenshot: click Add registration on Erlich's manage page,
     // then select the first available application so the full form loads
     if (url.includes('00000000-0000-0000-0000-100000000003')) {
@@ -60,8 +56,8 @@ export default {
         await page.waitForTimeout(1500);
         await page.locator('select').first().selectOption({ index: 1 });
         await page.waitForTimeout(2500);
-        // the registration form uses Angular bindings, not name attributes, for the
-        // Languages input -- manually highlight the row so it's visible in the screenshot
+        // registration form uses Angular bindings, not name attrs, for Languages --
+        // manually outline the row so it's visible in the screenshot
         await page.evaluate(() => {
           const label = [...document.querySelectorAll('label')]
             .find(l => /^Languages\b/.test(l.textContent.trim()));
@@ -70,7 +66,9 @@ export default {
             if (row) row.style.cssText += '; outline: 2px solid #f26522; outline-offset: 4px; border-radius: 2px;';
           }
         });
-      } catch (e) {}
+      } catch (e) {
+        console.error('[screenshot] registration setup failed:', e.message);
+      }
     }
 
     if (url.includes('/theme/edit/')) {
@@ -79,9 +77,9 @@ export default {
       // then scroll back to top -- position:fixed dialog stays centred in the viewport.
       await page.waitForTimeout(500);
       try {
-        // click Messages tab (button nth(18)) to load the messages template and
-        // reveal the Localization section below the code editor
-        await page.locator('button').nth(18).click({ timeout: 3000 });
+        // click the Messages tab; scoped to el-tab-list so we don't match other buttons.
+        // plain substring match handles surrounding whitespace/tooltip text in the button.
+        await page.locator('el-tab-list button').filter({ hasText: 'Messages' }).first().click({ timeout: 3000 });
         await page.waitForTimeout(1500);
         // scroll down far enough to bring Add Localization into the viewport
         const docH = await page.evaluate(() => document.documentElement.scrollHeight);
@@ -89,7 +87,7 @@ export default {
         await page.waitForTimeout(300);
         await page.getByText(/Add Localization/i).first().click({ timeout: 5000 });
         await page.waitForTimeout(800);
-        // scroll back to top -- the fixed dialog stays centred in the 800px viewport
+        // scroll back to top -- the fixed dialog stays centred in the viewport
         await page.evaluate(() => window.scrollTo(0, 0));
         await page.waitForTimeout(200);
         // a 2px empty div (class "border") sits at y=0, pushing the sticky header to y=2.
@@ -102,7 +100,9 @@ export default {
             el.style.cssText += '; height:0 !important; min-height:0 !important; border:none !important; padding:0 !important; margin:0 !important;';
           });
         });
-      } catch (e) {}
+      } catch (e) {
+        console.error('[screenshot] theme/edit setup failed:', e.message);
+      }
     } else {
       // expand the viewport to fit the full inner-scroll content height;
       // this makes fullPage equivalent to a single viewport capture so fixed

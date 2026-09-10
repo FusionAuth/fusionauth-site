@@ -38,6 +38,16 @@ jobs:
         run: npx playwright install webkit --with-deps
         working-directory: ./astro/screenshots
 
+      - name: Check for newer FusionAuth version
+        run: |
+          PINNED=$(grep 'fusionauth/fusionauth-app:' screenshots/docker-compose.yml | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          LATEST=$(curl -sf "https://hub.docker.com/v2/repositories/fusionauth/fusionauth-app/tags?page_size=100&ordering=last_updated" \
+            | jq -r '[.results[].name | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))] | first // empty')
+          echo "Pinned: $PINNED  Latest: $LATEST"
+          if [ -n "$LATEST" ] && [ "$LATEST" != "$PINNED" ]; then
+            echo "::warning::FusionAuth $LATEST is available; docker-compose.yml is pinned to $PINNED -- consider updating and regenerating screenshots"
+          fi
+
       - name: Delete cached screenshots
         run: rm -f public/img/docs/screenshots/*.png
 
