@@ -156,6 +156,9 @@ const config = defineConfig({
       // svgdom and mermaid are Node-only SSR packages used in remark plugins;
       // externalizing them prevents Vite from bundling them and breaking dynamic imports.
       external: ['svgdom', 'mermaid'],
+      // Rolldown (used in preview builds) doesn't auto-resolve .astro files from
+      // npm packages; noExternal forces it through Vite's pipeline instead.
+      noExternal: ['astro-better-declarative-screenshots'],
     },
   },
   integrations: [
