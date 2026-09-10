@@ -305,30 +305,6 @@ const config = defineConfig({
     })
   ],
   site: process.env.SITE_URL || 'https://fusionauth.io/',
-  redirects: {
-    '/docs/customize':                                          '/docs/customize/look-and-feel/',
-    '/docs/operate':                                            '/docs/operate/deploy/',
-    '/docs/extend':                                             '/docs/extend/events-and-webhooks/',
-    '/docs/reference':                                          '/docs/reference/configuration/',
-    '/docs/get-started/core-concepts':                          '/docs/get-started/core-concepts/users/',
-    '/docs/get-started/download-and-install/development':       '/docs/get-started/download-and-install/development/kickstart/',
-    '/docs/extend/events-and-webhooks/events/jwt':              '/docs/extend/events-and-webhooks/events/',
-    '/docs/cloud/operate':                                      '/docs/cloud/operate/alter-a-deployment/',
-    '/docs/cloud/reference':                                    '/docs/cloud/reference/regions/',
-    '/docs/apis/custom-forms':                                  '/docs/apis/custom-forms/forms/',
-    '/docs/apis/themes':                                        '/docs/apis/themes/simple-themes/',
-    '/docs/get-started/download-and-install/reference':         '/docs/get-started/download-and-install/reference/system-requirements/',
-    '/docs/get-started/start-here':                             '/docs/get-started/start-here/step-1/',
-    '/docs/get-started/download-and-install':                   '/docs/get-started/download-and-install/docker/',
-    '/docs/get-started/core-concepts/types-and-relationships':  '/docs/get-started/core-concepts/types/',
-    '/docs/get-started/core-concepts/tenants':                  '/docs/get-started/core-concepts/types/tenants/',
-    '/docs/get-started/core-concepts/applications':             '/docs/get-started/core-concepts/types/applications/',
-    '/docs/get-started/core-concepts/users':                    '/docs/get-started/core-concepts/types/users/',
-    '/docs/get-started/core-concepts/registrations':            '/docs/get-started/core-concepts/types/registrations/',
-    '/docs/get-started/core-concepts/roles':                    '/docs/get-started/core-concepts/types/roles/',
-    '/docs/get-started/core-concepts/groups':                   '/docs/get-started/core-concepts/types/groups/',
-    '/docs/get-started/core-concepts/entity-management':        '/docs/get-started/core-concepts/types/entity-management/',
-  },
 });
 
 export default config;
