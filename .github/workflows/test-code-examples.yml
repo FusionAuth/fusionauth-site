@@ -1,9 +1,9 @@
-name: Test localcode
+name: Test extractedcode
 
 on:
   pull_request:
     paths:
-      - 'astro/localcode/**'
+      - 'astro/extractedcode/**'
   workflow_dispatch:
 
 jobs:
@@ -18,15 +18,15 @@ jobs:
           fetch-depth: 0
 
       - id: scan
-        name: Scan for changed localcode test suites
+        name: Scan for changed extractedcode test suites
         run: |
           set -euo pipefail
 
-          # Validate every localcode dir has tests/test.sh
-          for dir in astro/localcode/*/; do
+          # Validate every extractedcode dir has tests/test.sh
+          for dir in astro/extractedcode/*/; do
             name=$(basename "$dir")
             if [ ! -f "${dir}tests/test.sh" ]; then
-              echo "ERROR: localcode directory missing tests/test.sh: $name" >&2
+              echo "ERROR: extractedcode directory missing tests/test.sh: $name" >&2
               exit 1
             fi
           done
@@ -34,23 +34,23 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # Manual trigger: test all suites
             dirs=()
-            for dir in astro/localcode/*/; do
+            for dir in astro/extractedcode/*/; do
               dirs+=("$(basename "$dir")")
             done
           else
             # PR: only test suites whose files changed
             git fetch origin "${{ github.base_ref }}" --depth=1
             dirs=()
-            for dir in astro/localcode/*/; do
+            for dir in astro/extractedcode/*/; do
               name=$(basename "$dir")
-              if ! git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- "astro/localcode/$name/"; then
+              if ! git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- "astro/extractedcode/$name/"; then
                 dirs+=("$name")
               fi
             done
           fi
 
           if [ "${#dirs[@]}" -eq 0 ]; then
-            echo "No localcode directories changed"
+            echo "No extractedcode directories changed"
             echo "matrix=[]" >> "$GITHUB_OUTPUT"
           else
             matrix=$(printf '%s\n' "${dirs[@]}" | jq -R . | jq -sc .)
@@ -59,13 +59,13 @@ jobs:
           fi
 
   test:
-    name: Test ${{ matrix.localcode }}
+    name: Test ${{ matrix.extractedcode }}
     needs: discover
     if: ${{ needs.discover.outputs.matrix != '[]' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        localcode: ${{ fromJson(needs.discover.outputs.matrix) }}
+        extractedcode: ${{ fromJson(needs.discover.outputs.matrix) }}
       fail-fast: false
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -76,9 +76,9 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ matrix.localcode }}-${{ hashFiles(format('astro/localcode/{0}/**/Cargo.toml', matrix.localcode)) }}
+          key: ${{ runner.os }}-cargo-${{ matrix.extractedcode }}-${{ hashFiles(format('astro/extractedcode/{0}/**/Cargo.toml', matrix.extractedcode)) }}
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: Run tests
         run: bash tests/test.sh
-        working-directory: astro/localcode/${{ matrix.localcode }}
+        working-directory: astro/extractedcode/${{ matrix.extractedcode }}

@@ -8,15 +8,15 @@ cd "$ASTRO_DIR"
 
 mkdir -p src/generated-code-snippets
 
-# Compute a hash of all localcode file contents to detect changes
+# Compute a hash of all extractedcode file contents to detect changes
 compute_hash() {
-  find localcode -type f | sort | xargs sha256sum 2>/dev/null \
-    || find localcode -type f | sort | xargs shasum -a 256 2>/dev/null
+  find extractedcode -type f | sort | xargs sha256sum 2>/dev/null \
+    || find extractedcode -type f | sort | xargs shasum -a 256 2>/dev/null
 }
-HASH_FILE="src/generated-code-snippets/.localcode-hash"
+HASH_FILE="src/generated-code-snippets/.extractedcode-hash"
 current_hash=$(compute_hash | sha256sum 2>/dev/null | cut -d' ' -f1 \
   || compute_hash | shasum -a 256 | cut -d' ' -f1)
-snippet_count=$(find src/generated-code-snippets -type f -not -name '.localcode-hash' 2>/dev/null | wc -l)
+snippet_count=$(find src/generated-code-snippets -type f -not -name '.extractedcode-hash' 2>/dev/null | wc -l)
 
 if [ -f "$HASH_FILE" ] && [ "$(cat "$HASH_FILE")" = "$current_hash" ] && [ "$snippet_count" -gt 0 ]; then
   echo "Code snippets: up to date ($((snippet_count + 0)) files)"
@@ -25,7 +25,7 @@ fi
 
 total_written=0
 
-for repo in localcode/*/; do
+for repo in extractedcode/*/; do
 	output_dir="src/generated-code-snippets/$(basename "$repo")"
 	mkdir -p "$output_dir"
 	status=0

@@ -28,7 +28,7 @@ const changedSrcFiles = diffOutput
   .split('\n')
   .filter(filename => filename.startsWith('astro/src/'))
   .filter(filename => validExtensions.some(ext => filename.endsWith(ext)))
-  .filter(filename => !filename.startsWith('astro/localcode/'))
+  .filter(filename => !filename.startsWith('astro/extractedcode/'))
   .map(filename => filename.replace('astro/', ''));
 
 if (changedSrcFiles.length > 0) {

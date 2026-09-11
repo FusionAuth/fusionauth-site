@@ -5,16 +5,15 @@ import mdx from "@astrojs/mdx";
 import { unified } from '@astrojs/markdown-remark';
 import tailwindcss from '@tailwindcss/vite';
 import indexPages from "astro-index-pages/index.js";
-import {codeTitleRemark} from './src/plugins/code-title-remark';
 import genMarkdownPages from 'astro-gen-markdown-pages';
 import { remarkMermaidSSR, mermaidTitleFix } from 'astro-mermaid-renderer-cli-smol';
 import remarkMdx from 'remark-mdx';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import linkChecker, { markdownLinkSyntaxChecker } from 'astro-link-checker';
-import { visit } from 'unist-util-visit';
 import icon from "astro-iconset";
-import { rehypeCodeMeta } from './src/plugins/rehype-code-meta.mjs';
+import { rehypeCodeBlocks, remarkShellSession } from 'astro-better-code-blocks';
+import { extractedCodeSnippets } from 'astro-better-code-snippet-extractor';
 import astroToc from 'astro-toc-smol';
 import { openapiSummary } from './src/plugins/openapi-summary.js';
 
@@ -53,68 +52,6 @@ function buildSitemap() {
   };
 }
 
-export const remarkShellSessionPrompts = () => {
-  return (tree) => {
-    visit(tree, 'code', (node) => {
-      if (node.lang !== 'shell-session') return;
-
-      const lines = node.value.split('\n');
-      let continuation = false;
-
-      node.value = lines.map(line => {
-        if (!line.trim()) {
-          continuation = false;
-          return line;
-        }
-        if (continuation) {
-          continuation = line.trimEnd().endsWith('\\');
-          return line;
-        }
-        if (line.startsWith('$ ') || line.startsWith('# ')) {
-          continuation = line.trimEnd().endsWith('\\');
-          return line;
-        }
-        continuation = line.trimEnd().endsWith('\\');
-        return '$ ' + line;
-      }).join('\n');
-    });
-  };
-};
-
-export const rehypeCopyButton = () => {
-  return (tree) => {
-    visit(tree, 'element', (node, index, parent) => {
-      // Find the code blocks
-      if (node.tagName === 'pre') {
-        const codeChild = node.children?.find((c: any) => c.tagName === 'code');
-        const classes: string[] = codeChild?.properties?.className ?? [];
-        if (classes.includes('language-mermaid')) return;
-
-        // insert new copy code button in a div next to the code block
-        const wrapper = {
-          type: 'element',
-          tagName: 'div',
-          properties: { 
-            className: ['relative', 'group'] 
-          },
-          children: [
-            node,
-            {
-              type: 'element',
-              tagName: 'copy-code-button',
-              properties: {},
-              children: []
-            }
-          ]
-        };
-
-        parent.children[index] = wrapper;
-        
-        return [visit.SKIP, index + 1];
-      }
-    });
-  };
-};
 
 const lightboxProvider = () => {
   return {
@@ -159,6 +96,7 @@ const config = defineConfig({
     },
   },
   integrations: [
+    extractedCodeSnippets({ plugin: 'bluehawk-languages.js' }),
     icon(),
     mdx({
       syntaxHighlight: false,
@@ -167,12 +105,11 @@ const config = defineConfig({
           remarkMdx,
           mermaidTitleFix,      // inserts title nodes before we transform code blocks
           remarkMermaidSSR,     // replaces mermaid blocks with pre-rendered SVGs
-          remarkShellSessionPrompts,
+          remarkShellSession,
         ],
         rehypePlugins: [
-          [rehypeCodeMeta, { excludeLangs: ['mermaid'] }],
+          [rehypeCodeBlocks, { excludeLangs: ['mermaid'] }],
           rehypeSlug,
-          rehypeCopyButton,
           [
             rehypeAutolinkHeadings,
             {
