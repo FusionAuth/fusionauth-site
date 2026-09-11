@@ -13,7 +13,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.RequireHttpsMetadata = false;
-        options.TokenValidationParameters.RoleClaimType = "roles";
         options.Events = new()
         {
             OnMessageReceived = context =>
@@ -24,6 +23,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
+
+// PostConfigure runs after all IConfigureOptions (including appsettings binding),
+// so this is the only reliable place to set RoleClaimType without it being overwritten.
+builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.TokenValidationParameters.RoleClaimType = "roles";
+});
 
 var app = builder.Build();
 
