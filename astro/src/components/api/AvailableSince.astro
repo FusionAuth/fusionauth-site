@@ -1,37 +1,39 @@
 ---
+import { Admonition } from 'astro-better-admonitions';
+import type { AdmonitionTypeConfig } from 'astro-better-admonitions';
+
 interface Props {
   since: string;
   // only show when since > showSince; omit to always show
-  // (used when a field exists in an event added later than the field itself)
   showSince?: string;
 }
 
 const { since, showSince }: Props = Astro.props;
 
-if (!since) {
-  throw new Error("No since field");
-}
+if (!since) throw new Error('No since field');
 
 const semverToPaddedNumber = (semver: string) => {
   const [major, minor, patch] = semver.split('.').map(Number);
-  if (isNaN(major) || isNaN(minor) || isNaN(patch)) {
-    throw new Error("Invalid semver format");
-  }
+  if (isNaN(major) || isNaN(minor) || isNaN(patch)) throw new Error('Invalid semver format');
   return `${major}${String(minor).padStart(3, '0')}${String(patch).padStart(2, '0')}`;
 };
 
 const show = showSince === undefined || semverToPaddedNumber(since) > semverToPaddedNumber(showSince);
 const hasDetail = Astro.slots.has('default');
+
+const AVAILABLE_SINCE_TYPE: Record<string, AdmonitionTypeConfig> = {
+  'available-since': { label: 'Available since', color: '#2563eb' },
+};
 ---
+
 {show && (
-  hasDetail ? (
-    <div class="api-since-block">
-      <div class="api-since-header">Available since <code>{since}</code></div>
-      <div class="aside-content">
-        <slot />
-      </div>
-    </div>
-  ) : (
-    <span class="api-since">Available since <code>{since}</code></span>
-  )
+  <Admonition
+    type="available-since"
+    types={AVAILABLE_SINCE_TYPE}
+    display={hasDetail ? 'block' : 'inline'}
+    titleBold={hasDetail}
+  >
+    <Fragment slot="title">Available since <code>{since}</code></Fragment>
+    {hasDetail && <slot />}
+  </Admonition>
 )}
