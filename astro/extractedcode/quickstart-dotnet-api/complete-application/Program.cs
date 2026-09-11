@@ -13,10 +13,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.RequireHttpsMetadata = false;
-        options.TokenValidationParameters = new()
-        {
-            RoleClaimType = "roles",
-        };
+        options.TokenValidationParameters.RoleClaimType = "roles";
         options.Events = new()
         {
             OnMessageReceived = context =>
