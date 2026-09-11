@@ -39,7 +39,7 @@ wait_for() {
 # Checks for the rendered login page rather than just an open port, so the test
 # does not start before Kickstart has finished configuring FusionAuth.
 fusionauth_ready() {
-  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "Login | FusionAuth"
+  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "<title>Login"
 }
 
 echo "Validating docker compose config..."

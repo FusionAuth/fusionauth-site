@@ -53,7 +53,10 @@ docker compose up -d
 
 echo "Starting Rails API app..."
 rm -f "$PROJECT_DIR/complete-application/tmp/pids/server.pid"
-docker run --network host --name rails-api --rm -v "$PROJECT_DIR/complete-application":/app -w /app ruby:3.4.10 sh -c \
+docker run --network host --name rails-api --rm \
+  -e FUSIONAUTH_LOCATION=http://localhost:9011 \
+  -e CLIENT_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e \
+  -v "$PROJECT_DIR/complete-application":/app -w /app ruby:3.4.10 sh -c \
   "bundle install --quiet && bundle exec rails s -p 4001 -b 0.0.0.0" &
 until docker inspect rails-api > /dev/null 2>&1; do
   sleep 1

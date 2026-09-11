@@ -7,9 +7,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthentication()
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new()
+        {
+            RoleClaimType = "roles",
+        };
         options.Events = new()
         {
             OnMessageReceived = context =>
