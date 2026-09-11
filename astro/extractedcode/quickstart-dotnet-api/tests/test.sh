@@ -57,6 +57,10 @@ LOGS_PID=$!
 
 # FusionAuth answers on its root URL before Kickstart has finished creating the
 # application, so both conditions have to be waited on separately.
+fusionauth_ready() {
+  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "<title>Login"
+}
+
 kickstart_done() {
   curl -sf http://localhost:9011/api/application/e9fdb985-9173-4e01-9d73-ac2d60d1dc8e \
     -H "Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works"
@@ -69,10 +73,18 @@ dotnet_ready() {
 }
 
 echo "Waiting for FusionAuth to be ready..."
-wait_for "FusionAuth" curl -sf http://localhost:9011
+wait_for "FusionAuth" fusionauth_ready
 
 echo "Waiting for Kickstart to finish (application to exist)..."
 wait_for "Kickstart" kickstart_done
+
+# Wait until FusionAuth is serving signing keys in the JWKS. The kickstart creates
+# an application-specific signing key; the OIDC discovery endpoint needs a moment
+# after kickstart to serve it before the first JWT validation attempt.
+jwks_ready() {
+  curl -sf http://localhost:9011/.well-known/jwks.json 2>/dev/null | grep -q '"kty"'
+}
+wait_for "JWKS signing keys" jwks_ready
 
 echo "Waiting for .NET API app to be ready..."
 wait_for ".NET API app" dotnet_ready
