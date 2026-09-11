@@ -2,34 +2,29 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Authority = "http://localhost:9011";
         options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new()
+        {
+            ValidAudience = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+            RoleClaimType = "roles",
+        };
         options.Events = new()
         {
             OnMessageReceived = context =>
             {
-                // Extract the token from a cookie if available.
                 context.Token = context.Request.Cookies["app.at"];
                 return Task.CompletedTask;
             }
         };
     });
-
-// PostConfigure runs after all IConfigureOptions (including appsettings binding),
-// so this is the only reliable place to set RoleClaimType without it being overwritten.
-builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
-{
-    options.TokenValidationParameters.RoleClaimType = "roles";
-});
 
 var app = builder.Build();
 
