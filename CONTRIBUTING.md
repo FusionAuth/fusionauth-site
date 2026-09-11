@@ -188,6 +188,54 @@ To make a smoothie:
 - JSON files are their own content collection in astro. You can reference these using the [JSON component](astro/src/components/JSON.astro)
 - We have an alias mapped in [tsconfig](astro/tsconfig.json) that allows you to use absolute references from 'src'. Otherwise, imports must use relative paths.
 
+### Front matter fields
+
+Every docs page uses YAML front matter. The schema is defined in `astro/src/content.config.js`.
+
+Required fields:
+
+| Field | Type | Notes |
+|---|---|---|
+| `title` | string | Shown as the page heading and in the sidebar. Cannot end with punctuation. |
+| `description` | string | One sentence summary shown in search and card overviews. Must end with a period. |
+
+Common optional fields:
+
+| Field | Type | Notes |
+|---|---|---|
+| `htmlTitle` | string | Overrides the `<title>` tag only. Use when the full title would be awkward in browser tabs (e.g. "User API" instead of "User"). |
+| `sidenavTitle` | string | Overrides how the page appears in the sidebar when the full title is too long. |
+| `order` | number | Controls sort position within the parent section. Lower numbers sort first. Default is 1000 (alphabetical fallback). |
+| `route` | boolean | Set to `false` to prevent the page from being built as a URL while keeping it in the content collection for nav ordering. Use this for folder index pages that are pure navigation (no real content) -- pair with a redirect in `astro.config.ts`. |
+| `icon` | string | Path to an icon image shown in card grids (e.g. `/img/icons/my-icon.svg`). Used by `ChildCards` and `DocCard`. |
+| `darkIcon` | string | Alternate icon shown in dark mode. If omitted, `icon` is used for both modes. |
+| `cardImage` | string | Path to a header image shown at the top of a card in the `full` variant. Useful for visually distinguishing sections in card grids. |
+| `excludeFromNav` | boolean | Set to `true` to hide this page from `ChildCards` auto-discovery. The page still builds and is accessible by URL. |
+| `sectionIndex` | boolean | Set to `true` on an index page to automatically render a `ChildCards` grid after the page content. Replaces manually written `<ChildCards>` in MDX. |
+| `disableTOC` | boolean | Hides the table of contents for this page. |
+| `canonicalUrl` | string | Full canonical URL override, used when a page is a redirect target or duplicate of another page. |
+
+### Cards
+
+Docs cards are rendered using `DocCard.astro` (`astro/src/components/DocCard.astro`). Three visual variants are available:
+
+- `full` -- icon, title, and description. Used for section overview grids. This is the default variant and what `ChildCards` uses.
+- `compact` -- title only with an optional label badge. Used for dense navigation lists.
+- `quickstart` -- small icon and title, with optional `comingSoon` greyed-out treatment. Used in quickstart grids.
+
+The legacy components `ClickableCard`, `PageNavCard`, and `QuickstartCard` are thin wrappers around `DocCard` and remain importable for backward compatibility.
+
+To auto-generate a card grid from child pages, use `ChildCards`:
+
+```mdx
+import ChildCards from "src/components/ChildCards.astro";
+<ChildCards collection="docs" />
+```
+
+Or add `sectionIndex: true` to front matter and the layout will render `ChildCards` automatically after the page content.
+
+Child pages appear as cards showing their `title`, `description`, `icon`, and `cardImage` front matter fields.
+
 ### API docs
 
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
