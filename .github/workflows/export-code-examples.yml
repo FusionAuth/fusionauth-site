@@ -1,19 +1,19 @@
-# Runs on merge to main when any localcode directories change.
+# Runs on merge to main when any extractedcode directories change.
 # Requires a GitHub PAT with write access to the external repositories, stored as the secret SNIPPET_PUBLISH_TOKEN in this repository's settings.
 
-name: Publish localcode to external repositories
+name: Publish extractedcode to external repositories
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'astro/localcode/**'
+      - 'astro/extractedcode/**'
   workflow_dispatch:
 
 jobs:
   discover:
-    name: Discover changed localcode directories
+    name: Discover changed extractedcode directories
     runs-on: ubuntu-latest
     outputs:
       filter: ${{ steps.scan.outputs.filter }}
@@ -23,24 +23,24 @@ jobs:
           fetch-depth: 2
 
       - id: scan
-        name: Find changed localcode directories
+        name: Find changed extractedcode directories
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # Manual trigger: publish all
             echo "filter=" >> "$GITHUB_OUTPUT"
-            echo "Publishing all localcode directories"
+            echo "Publishing all extractedcode directories"
           else
             # Push to main: only publish changed directories
             dirs=()
-            for dir in astro/localcode/*/; do
+            for dir in astro/extractedcode/*/; do
               name=$(basename "$dir")
-              if ! git diff --quiet HEAD~1..HEAD -- "astro/localcode/$name/"; then
+              if ! git diff --quiet HEAD~1..HEAD -- "astro/extractedcode/$name/"; then
                 dirs+=("$name")
               fi
             done
             if [ "${#dirs[@]}" -eq 0 ]; then
-              echo "No localcode directories changed"
+              echo "No extractedcode directories changed"
               echo "filter=__none__" >> "$GITHUB_OUTPUT"
             else
               echo "filter=${dirs[*]}" >> "$GITHUB_OUTPUT"
@@ -49,7 +49,7 @@ jobs:
           fi
 
   publish:
-    name: Publish localcode to external repositories
+    name: Publish extractedcode to external repositories
     needs: discover
     if: ${{ needs.discover.outputs.filter != '__none__' }}
     runs-on: ubuntu-latest
@@ -65,7 +65,7 @@ jobs:
         working-directory: astro
         run: npm ci
 
-      - name: Publish localcode to external repositories
+      - name: Publish extractedcode to external repositories
         env:
-          LOCALCODE_FILTER: ${{ needs.discover.outputs.filter }}
-        run: bash src/scripts/export-localcode.sh ${{ secrets.SNIPPET_PUBLISH_TOKEN }} ${{ github.sha }}
+          EXTRACTEDCODE_FILTER: ${{ needs.discover.outputs.filter }}
+        run: bash src/scripts/export-extractedcode.sh ${{ secrets.SNIPPET_PUBLISH_TOKEN }} ${{ github.sha }}

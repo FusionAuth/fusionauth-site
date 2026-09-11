@@ -78,9 +78,9 @@ Deploying happens automatically via GitHub action (one for content, another for 
 
 ## Tested code examples
 
-Many code blocks, especially those found in guides and tutorials, do not exist in the source markdown files. Instead, we use the `LocalCode` component to source them from snippets generated from tested complete projects with [Bluehawk](https://github.com/mongodb-university/Bluehawk).
+Many code blocks, especially those found in guides and tutorials, do not exist in the source markdown files. Instead, we use the `ExtractedCode` component (from `astro-better-code-snippet-extractor`) to source them from snippets generated from tested complete projects with [Bluehawk](https://github.com/mongodb-university/Bluehawk). Existing files import it under the alias `LocalCode`; new files should use `ExtractedCode` directly.
 
-For projects that benefit from a cloneable repository, the `/astro/localcode` folder acts as the source of truth; changes to files automatically push to the downstream artifact repository when you merge to the `main` branch of this repo. To configure the artifact repo, use the (optional) `repositoryUrl.txt`.
+For projects that benefit from a cloneable repository, the `/astro/extractedcode` folder acts as the source of truth; changes to files automatically push to the downstream artifact repository when you merge to the `main` branch of this repo. To configure the artifact repo, use the (optional) `repositoryUrl.txt`.
 
 Astro builds automatically generate code snippets before rendering pages.
 
