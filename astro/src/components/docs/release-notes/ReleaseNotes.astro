@@ -1,79 +1,45 @@
 ---
 import { getCollection, render } from 'astro:content';
+import {
+  ReleaseNotes as BaseReleaseNotes,
+  getCategoryColor,
+  getCategoryLabel,
+} from 'astro-better-release-notes';
 import ReleaseNotesItem from './ReleaseNotesItem.astro';
 
 export const categories = [
-  { id: 'theme-upgrade', label: 'Theme Upgrade', color: '#e11d48' },
-  { id: 'new-feature', label: 'New Feature', color: '#16a34a' },
-  { id: 'enhancement', label: 'Enhancement', color: '#2563eb' },
-  { id: 'known-issue', label: 'Known Issue', color: '#bb4448' },
-  { id: 'deprecated', label: 'Deprecated', color: '#ffcc48' },
-  { id: 'fix', label: 'Fix', color: '#d97706' },
-  { id: 'security', label: 'Security', color: '#566f98' },
-  { id: 'internal', label: 'Internal', color: '#71717a' },
-  { id: 'sdk', label: 'SDK', color: '#d98fd9'},
-  { id: 'breaking-change', label: 'Breaking Change', color: '#aaaa33'},
-  { id: 'database-migration', label: 'Database Migration', color: '#aa1d48' },
+  { id: 'theme-upgrade',       label: 'Theme Upgrade',       color: '#e11d48' },
+  { id: 'new-feature',         label: 'New Feature',         color: '#16a34a' },
+  { id: 'enhancement',         label: 'Enhancement',         color: '#2563eb' },
+  { id: 'known-issue',         label: 'Known Issue',         color: '#bb4448' },
+  { id: 'deprecated',          label: 'Deprecated',          color: '#ffcc48' },
+  { id: 'fix',                 label: 'Fix',                 color: '#d97706' },
+  { id: 'security',            label: 'Security',            color: '#566f98' },
+  { id: 'internal',            label: 'Internal',            color: '#71717a' },
+  { id: 'sdk',                 label: 'SDK',                 color: '#d98fd9' },
+  { id: 'breaking-change',     label: 'Breaking Change',     color: '#aaaa33' },
+  { id: 'database-migration',  label: 'Database Migration',  color: '#aa1d48' },
 ];
 
-export const getCategoryColor = (id: string) => 
-  categories.find((cat) => cat.id === id)?.color ?? '#71717a';
-
-export const getCategoryLabel = (id: string) => {
-  const category = categories.find((cat) => cat.id === id);
-  if (category) return category.label;
-  return id
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
+export { getCategoryColor, getCategoryLabel };
 
 const allUpdates = await getCollection('releases');
-const updates = allUpdates.sort((a, b) => {
+const sorted = allUpdates.sort((a, b) => {
   const dateDiff = b.data.date.valueOf() - a.data.date.valueOf();
   if (dateDiff !== 0) return dateDiff;
   return b.data.version.localeCompare(a.data.version, undefined, { numeric: true });
 });
+
+const updates = await Promise.all(
+  sorted.map(async item => {
+    const { Content } = await render(item);
+    return { data: item.data, Content };
+  })
+);
 ---
 
-<div class="release-container">
-  <nav class="filter-controls lg:sticky lg:top-30 z-11 py-1 bg-white dark:bg-slate-900">
-    {categories.map(cat => (
-      <label class="filter-chip" style={`--cat-color: ${cat.color}`}>
-        <input type="checkbox" id={`toggle-${cat.id}`} class="filter-input" />
-        <span>{cat.label}</span>
-      </label>
-    ))}
-  </nav>
-
-  <div class="version-list">
-    {updates.map(async (item) => {
-      const { Content } = await render(item);
-      const versionId = `version-${item.data.version.replaceAll('.', '-')}`;
-      return (
-        <article id={versionId} class="version relative">
-          <header class="flex flex-wrap items-baseline justify-between py-3 mb-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-            <h2 class="release-note group m-0">
-              Version {item.data.version} {item.data.name && `(${item.data.name})`}
-              <a class="anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100 transition-opacity" title="copy header link" href={`#${versionId}`}>#</a>
-            </h2>
-            <time class="version-date text-slate-500 text-sm" datetime={item.data.date.toISOString()}>
-              {item.data.date.toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" })}
-            </time>
-          </header>
-          
-          <div class="content">
-            <Content components={{ ReleaseNotesItem }} />
-          </div>
-        </article>
-      );
-    })}
-  </div>
-</div>
-
-<style>
-  .version {
-    content-visibility: auto;
-    contain-intrinsic-size: 0 800px;
-  }
-</style>
+<BaseReleaseNotes
+  {updates}
+  {categories}
+  components={{ ReleaseNotesItem }}
+/>

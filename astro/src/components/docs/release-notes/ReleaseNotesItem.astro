@@ -1,8 +1,6 @@
 ---
-import {
-  getCategoryColor,
-  getCategoryLabel,
-} from "src/components/docs/release-notes/ReleaseNotes.astro";
+import { ReleaseNotesItem as BaseItem } from 'astro-better-release-notes';
+import { categories } from 'src/components/docs/release-notes/ReleaseNotes.astro';
 
 export interface Props {
   issue?: string;
@@ -15,126 +13,16 @@ export interface Props {
   viaIssue?: string;
 }
 
-const {
-  issue,
-  bonusIssue,
-  thanks,
-  since,
-  bonusThanks,
-  resolvedIn,
-  viaIssue,
-  category = "fix",
-} = Astro.props as Props;
-
-const label = getCategoryLabel(category);
-const color = getCategoryColor(category);
-
-const versionPart = resolvedIn
-  ? `v-${resolvedIn.replaceAll('.', '-')}`
-  : (since ? `since-${since.replaceAll('.', '-')}` : '');
-
-const issuePart = issue
-  ? `issue-${issue}`
-  : (viaIssue ? `via-${viaIssue}` : '');
-
-const thanksPart = thanks
-  ? `thanks-${thanks.toLowerCase().replace(/[^a-z0-9]/g, '-')}`
-  : '';
-
-const baseId = [versionPart, category, issuePart, thanksPart]
-  .filter(Boolean)
-  .join('--');
-
-/*
-  Renders slot to raw string and runs a lightweight string hash at build time
-  to guarantee 100% unique, immutable IDs across builds even without metadata.
-*/
-const slotContent = await Astro.slots.render('default');
-let hash = 0;
-for (let i = 0; i < slotContent.length; i++) {
-  hash = (hash << 5) - hash + slotContent.charCodeAt(i);
-  hash |= 0;
-}
-const contentSlug = Math.abs(hash).toString(36).substring(0, 4);
-
-const rowId = baseId ? `${baseId}--${contentSlug}` : contentSlug;
+const { category, ...rest } = Astro.props as Props;
+const cat = categories.find(c => c.id === category);
 ---
 
-<div
-  id={rowId}
-  class="issue-row"
-  data-category={category}
-  style={`--cat-color: ${color}`}
+<BaseItem
+  {...rest}
+  {category}
+  categoryColor={cat?.color}
+  categoryLabel={cat?.label}
+  issueBaseUrl="https://github.com/FusionAuth/fusionauth-issues/issues/"
 >
-  <a
-    href={`#${rowId}`}
-    class="issue-badge"
-    aria-label="Permalink to this release note"
-  >
-    {label}
-  </a>
-
-  <div class="issue-content">
-    <div class="markdown-wrapper max-w-full overflow-x-auto">
-      <slot />
-      {
-        resolvedIn && viaIssue && (
-          <p class="markdown-wrapper">
-            Resolved in version <a href={`#version-${resolvedIn.replaceAll('.', '-')}`}><code>{resolvedIn}</code></a> via
-            {" "}
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href={`https://github.com/FusionAuth/fusionauth-issues/issues/${viaIssue}`}
-            >
-              #{viaIssue}
-            </a>
-            .
-          </p>
-        )
-      }
-      { since && <p class="thanks-text markdown-wrapper">Since: <a href={`#version-${since.replaceAll('.', '-')}`}><code>{since}</code></a></p> }
-      {
-        thanks && (
-          <p class="thanks-text markdown-wrapper">
-            Thanks to <a href={`https://github.com/${thanks}`}>@{thanks}</a>
-            {bonusThanks && (
-              <span>
-                {" "}
-                and{" "}
-                <a href={`https://github.com/${bonusThanks}`}>@{bonusThanks}</a>
-              </span>
-            )}
-            !
-          </p>
-        )
-      }
-    </div>
-  </div>
-
-  {
-    issue && (
-      <a
-        class="github-link"
-        target="_blank"
-        rel="noopener noreferrer"
-        href={`https://github.com/FusionAuth/fusionauth-issues/issues/${issue}`}
-      >
-        #{issue}
-      </a>
-    )
-  }
-
-  {
-    bonusIssue && (
-      <a
-        class="github-link"
-        target="_blank"
-        rel="noopener noreferrer"
-        href={`https://github.com/FusionAuth/fusionauth-issues/issues/${bonusIssue}`}
-      >
-        #{bonusIssue}
-      </a>
-    )
-  }
-</div>
+  <slot />
+</BaseItem>
