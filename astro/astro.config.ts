@@ -166,7 +166,7 @@ const config = defineConfig({
       lightboxProvider(),
     ],
     build: {
-      chunkSizeWarningLimit: 600,
+      chunkSizeWarningLimit: 700,
     },
     cacheDir: '.vite-cache',
     ssr: {
