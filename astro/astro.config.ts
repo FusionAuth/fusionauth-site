@@ -85,6 +85,35 @@ const mdxComponentImporter = () => ({
   enforce: 'pre' as const,
   transform(code: string, id: string) {
     if (!id.endsWith('.mdx')) return;
+
+    // collect identifiers already imported so we don't produce duplicate declarations
+    const declared = new Set<string>();
+    const importRe = /^import\s+(?:\{([^}]+)\}|(\w+))\s+from/gm;
+    let m: RegExpExecArray | null;
+    while ((m = importRe.exec(code)) !== null) {
+      if (m[2]) {
+        declared.add(m[2]);
+      } else {
+        m[1].split(',').forEach(s => {
+          const name = s.trim().split(/\s+as\s+/).pop()?.trim();
+          if (name) declared.add(name);
+        });
+      }
+    }
+
+    for (const line of mdxComponentImports.split('\n')) {
+      if (!line.startsWith('import')) continue;
+      const nm = line.match(/^import\s+(?:\{([^}]+)\}|(\w+))\s+from/);
+      if (!nm) continue;
+      const name = nm[2] ?? nm[1]?.trim().split(/\s+as\s+/).pop()?.trim();
+      if (name && declared.has(name)) {
+        throw new Error(
+          `[mdx-component-importer] Redundant import in ${id}\n` +
+          `  \`${name}\` is auto-imported — remove the explicit import.`
+        );
+      }
+    }
+
     const frontmatter = code.match(/^---[\s\S]*?---[ \t]*\n/);
     if (frontmatter) {
       return code.slice(0, frontmatter[0].length) + mdxComponentImports + code.slice(frontmatter[0].length);
