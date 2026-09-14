@@ -86,39 +86,50 @@ const mdxComponentImporter = () => ({
   transform(code: string, id: string) {
     if (!id.endsWith('.mdx')) return;
 
-    // collect identifiers already imported so we don't produce duplicate declarations
-    const declared = new Set<string>();
-    const importRe = /^import\s+(?:\{([^}]+)\}|(\w+))\s+from/gm;
+    // build identifier -> source map for existing imports
+    const declaredMap = new Map<string, string>();
+    const importRe = /^import\s+(?:\{([^}]+)\}|(\w+))\s+from\s+['"]([^'"]+)['"]/gm;
     let m: RegExpExecArray | null;
     while ((m = importRe.exec(code)) !== null) {
+      const src = m[3];
       if (m[2]) {
-        declared.add(m[2]);
+        declaredMap.set(m[2], src);
       } else {
         m[1].split(',').forEach(s => {
           const name = s.trim().split(/\s+as\s+/).pop()?.trim();
-          if (name) declared.add(name);
+          if (name) declaredMap.set(name, src);
         });
       }
     }
 
-    for (const line of mdxComponentImports.split('\n')) {
-      if (!line.startsWith('import')) continue;
-      const nm = line.match(/^import\s+(?:\{([^}]+)\}|(\w+))\s+from/);
-      if (!nm) continue;
+    // skip or error per-line depending on whether the conflict is the same source
+    const linesToInject = mdxComponentImports.split('\n').filter(line => {
+      if (!line.startsWith('import')) return true;
+      const nm = line.match(/^import\s+(?:\{([^}]+)\}|(\w+))\s+from\s+['"]([^'"]+)['"]/);
+      if (!nm) return true;
       const name = nm[2] ?? nm[1]?.trim().split(/\s+as\s+/).pop()?.trim();
-      if (name && declared.has(name)) {
+      const autoSrc = nm[3];
+      if (!name || !declaredMap.has(name)) return true;
+
+      const fileSrc = declaredMap.get(name)!;
+      // same source if exact match or relative path ending in the same file
+      const isSameSrc = fileSrc === autoSrc || fileSrc.endsWith('/' + autoSrc.split('/').pop()!);
+      if (isSameSrc) {
         throw new Error(
           `[mdx-component-importer] Redundant import in ${id}\n` +
           `  \`${name}\` is auto-imported — remove the explicit import.`
         );
       }
-    }
+      // different component happens to share the name: skip injection, file's import wins
+      return false;
+    });
 
+    const injected = linesToInject.join('\n');
     const frontmatter = code.match(/^---[\s\S]*?---[ \t]*\n/);
     if (frontmatter) {
-      return code.slice(0, frontmatter[0].length) + mdxComponentImports + code.slice(frontmatter[0].length);
+      return code.slice(0, frontmatter[0].length) + injected + code.slice(frontmatter[0].length);
     }
-    return mdxComponentImports + code;
+    return injected + code;
   }
 });
 
