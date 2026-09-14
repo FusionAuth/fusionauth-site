@@ -307,6 +307,8 @@ const config = defineConfig({
         '/webinar', '/community', '/forum', '/compare', '/industry', '/license',
         '/partners', '/video', '/event', '/ebooks', '/glossary', '/guides',
         '/permify-docs',
+        // Azure returns 503 from CI environments even when the page loads fine in a browser
+        'https://azure.microsoft.com',
         '/buildvsbuy', '/auth0-migration', '/aws-reinvent22', '/aws-reinvent23',
         '/lp/state-of-ai-and-identity',
         // Standalone marketing / legal pages not in the Astro build
