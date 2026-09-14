@@ -41,7 +41,7 @@ Follow these guidelines when writing documentation (everything under [docs](astr
 - Page titles should be title-case, not sentences
 - Page descriptions should be full sentences
 - Use `order` (ascending) to change the default (alphabetical) sort of pages in a section
-- Most common components are auto-imported into every MDX file and do not need an explicit import statement. This includes `APIField`, `APIBlock`, `API`, `AvailableSince`, `DeprecatedSince`, `RemovedSince`, `JSON`, `Breadcrumb`, `Aside`, `RemoteCode`, `PlanBlurb`, `PlanBlurbApi`, `If`, `Icon`, `IconButton`, `ChildCards`, `Card`, `ExtractedCode`, `Tabs`, `TabItem`, `Details`, `Steps`, and `Table`. The full list and their source paths are declared in `mdxComponentImports` near the top of `astro/astro.config.ts`.
+- Most common components are auto-imported into every MDX file and do not need an explicit import statement. This includes `APIField`, `APIBlock`, `API`, `AvailableSince`, `DeprecatedSince`, `RemovedSince`, `JSON`, `Breadcrumb`, `Aside`, `RemoteCode`, `PlanBlurb`, `PlanBlurbApi`, `If`, `Icon`, `IconButton`, `ChildCards`, `Card`, `ExtractedCode`, `Tabs`, `TabItem`, `Details`, `Steps`, `Table`, and `MarkdownOnly`. The full list and their source paths are declared in `mdxComponentImports` near the top of `astro/astro.config.ts`.
 
 - If you add an explicit import for one of the auto-imported components, the build will fail with an error like:
 
