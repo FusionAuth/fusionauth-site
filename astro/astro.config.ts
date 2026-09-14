@@ -53,21 +53,59 @@ function buildSitemap() {
 }
 
 
-const lightboxProvider = () => {
-  return {
-    name: 'mdx-lightbox-provider',
-    enforce: 'post',
-    transform(code, id) {
-      if(!id.endsWith('.mdx')) return;
-      code = `import _LightboxImage from "src/components/LightboxImage.astro";\n${code}`;
-      code = code.replace(
-        "components: { Fragment: _Fragment, ...props.components, },",
-        "components: { Fragment: _Fragment, img: _LightboxImage, ...props.components, },"
-      );
-      return code;
+const mdxComponentImports =
+  "import APIField from 'src/components/api/APIField.astro';\n" +
+  "import APIBlock from 'src/components/api/APIBlock.astro';\n" +
+  "import API from 'src/components/api/API.astro';\n" +
+  "import AvailableSince from 'src/components/api/AvailableSince.astro';\n" +
+  "import DeprecatedSince from 'src/components/api/DeprecatedSince.astro';\n" +
+  "import RemovedSince from 'src/components/api/RemovedSince.astro';\n" +
+  "import JSON from 'src/components/JSON.astro';\n" +
+  "import Breadcrumb from 'src/components/Breadcrumb.astro';\n" +
+  "import Aside from 'src/components/Aside.astro';\n" +
+  "import RemoteCode from 'src/components/RemoteCode.astro';\n" +
+  "import PlanBlurb from 'src/components/plan/PlanBlurb.astro';\n" +
+  "import PlanBlurbApi from 'src/components/plan/PlanBlurbApi.astro';\n" +
+  "import If from 'src/components/If.astro';\n" +
+  "import Icon from 'src/components/icon/Icon.astro';\n" +
+  "import IconButton from 'src/components/IconButton.astro';\n" +
+  "import ChildCards from 'astro-better-cards/ChildCards.astro';\n" +
+  "import Card from 'astro-better-cards/Card.astro';\n" +
+  "import ExtractedCode from 'astro-better-code-snippet-extractor/ExtractedCode.astro';\n" +
+  "import Tabs from 'astro-better-tabs/Tabs.astro';\n" +
+  "import TabItem from 'astro-better-tabs/TabItem.astro';\n" +
+  "import Details from 'astro-better-details/Details.astro';\n" +
+  "import { Steps } from 'astro-better-steps';\n" +
+  "import Table from 'astro-better-tables/Table.astro';\n\n";
+
+// inject imports into MDX source before the MDX compiler runs, so that component
+// references compile to direct variable lookups rather than _components map lookups
+const mdxComponentImporter = () => ({
+  name: 'mdx-component-importer',
+  enforce: 'pre' as const,
+  transform(code: string, id: string) {
+    if (!id.endsWith('.mdx')) return;
+    const frontmatter = code.match(/^---[\s\S]*?---[ \t]*\n/);
+    if (frontmatter) {
+      return code.slice(0, frontmatter[0].length) + mdxComponentImports + code.slice(frontmatter[0].length);
     }
+    return mdxComponentImports + code;
   }
-}
+});
+
+const lightboxProvider = () => ({
+  name: 'mdx-lightbox-provider',
+  enforce: 'post' as const,
+  transform(code: string, id: string) {
+    if (!id.endsWith('.mdx')) return;
+    code = `import _LightboxImage from "src/components/LightboxImage.astro";\n${code}`;
+    code = code.replace(
+      "components: { Fragment: _Fragment, ...props.components, },",
+      "components: { Fragment: _Fragment, img: _LightboxImage, ...props.components, },"
+    );
+    return code;
+  }
+});
 
 const config = defineConfig({
   build: {
@@ -83,6 +121,7 @@ const config = defineConfig({
   vite: {
     plugins: [
       tailwindcss(),
+      mdxComponentImporter(),
       lightboxProvider(),
     ],
     cacheDir: '.vite-cache',
