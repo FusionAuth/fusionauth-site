@@ -165,10 +165,10 @@ const config = defineConfig({
       mdxComponentImporter(),
       lightboxProvider(),
     ],
-    cacheDir: '.vite-cache',
     build: {
-      chunkSizeWarningLimit: 1111,
+      chunkSizeWarningLimit: 700,
     },
+    cacheDir: '.vite-cache',
     ssr: {
       // svgdom and mermaid are Node-only SSR packages used in remark plugins;
       // externalizing them prevents Vite from bundling them and breaking dynamic imports.

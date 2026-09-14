@@ -1,7 +1,21 @@
 ---
 import '@docsearch/css';
 ---
-<div id="docsearch"></div>
+<div id="docsearch">
+  <button class="DocSearch DocSearch-Button" type="button" aria-label="Search">
+    <span class="DocSearch-Button-Container">
+      <svg width="20" height="20" class="DocSearch-Search-Icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="8" stroke="currentColor" fill="none" stroke-width="1.4"/>
+        <path d="m21 21-4.3-4.3" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="DocSearch-Button-Placeholder">Search</span>
+    </span>
+    <span class="DocSearch-Button-Keys">
+      <kbd class="DocSearch-Button-Key">⌘</kbd>
+      <kbd class="DocSearch-Button-Key">K</kbd>
+    </span>
+  </button>
+</div>
 
 <style is:global>
   @reference "tailwindcss";
@@ -24,6 +38,7 @@ import '@docsearch/css';
     --docsearch-footer-background: var(--color-slate-50);
     --docsearch-hit-color: var(--color-slate-700);
     --docsearch-hit-background: var(--color-slate-100);
+    --docsearch-hit-focus-background: var(--color-slate-200);
     --docsearch-hit-highlight-color: rgba(79, 70, 229, 0.1);
     --docsearch-key-background: var(--color-slate-100);
     --docsearch-key-color: var(--color-slate-500);
@@ -47,6 +62,7 @@ import '@docsearch/css';
     --docsearch-footer-background: var(--color-slate-800);
     --docsearch-hit-color: var(--color-slate-300);
     --docsearch-hit-background: var(--color-slate-800);
+    --docsearch-hit-focus-background: var(--color-slate-600);
     --docsearch-hit-highlight-color: rgba(129, 140, 248, 0.15);
     --docsearch-key-background: var(--color-slate-700);
     --docsearch-key-color: var(--color-slate-400);
@@ -107,7 +123,6 @@ import '@docsearch/css';
 </style>
 
 <script>
-  import docsearch from '@docsearch/js';
   import { algoliaConfig } from 'src/config';
 
   const HITS_DOCS = 5;
@@ -115,11 +130,15 @@ import '@docsearch/css';
 
   const DOCS_FILTER = 'hierarchy.lvl0:Documentation';
 
+  // start fetching the docsearch module immediately so it's loading in parallel with the DOM
+  const docsearchImport = import('@docsearch/js/docsearch');
+
   const options = {
     container: '#docsearch',
-    ...algoliaConfig,
+    appId: algoliaConfig.appId,
+    apiKey: algoliaConfig.apiKey,
+    indices: [algoliaConfig.indexName],
     placeholder: 'Search docs...',
-    detachedMediaQuery: 'all',
     // Two Algolia queries per keystroke (batched in one HTTP call):
     //   Q1: filtered to Documentation (top HITS_DOCS)
     //   Q2: filtered to NOT Documentation (top HITS_OTHER) — articles+blog
@@ -129,7 +148,7 @@ import '@docsearch/css';
     //   /articles/*: articles from Q2 first, then docs, then blog
     //   /blog/*: blog from Q2 first, then docs, then articles
     //
-    // @docsearch/js v4 uses the algoliasearch v5 flat-request shape:
+    // algoliasearch v5 flat-request shape:
     //   searchClient.search({ requests: SearchQuery[] }, requestOptions?)
     // where each SearchQuery is `{ indexName, query, filters, hitsPerPage, ... }`.
     transformSearchClient(searchClient: any) {
@@ -185,18 +204,15 @@ import '@docsearch/css';
     },
   };
 
-  const openDocSearch = () => {
-    document.querySelector<HTMLButtonElement>('.DocSearch-Button')?.click();
-  };
-
-  const init = () => {
+  const init = async () => {
     const container = document.getElementById('docsearch');
     if (!container) return;
 
-    docsearch(options);
+    const { default: docsearch } = await docsearchImport;
+    const instance = docsearch(options);
     document
       .querySelectorAll<HTMLElement>('[data-widget="search-button"]')
-      .forEach((button) => button.addEventListener('click', openDocSearch));
+      .forEach((button) => button.addEventListener('click', () => instance.open()));
   };
 
   if (document.readyState === 'loading') {
