@@ -26,16 +26,11 @@ export function categoryLabel(id: string): string {
   return CATEGORY_LABELS[id] ?? id;
 }
 
-// strip MDX component tags, leaving inner text (e.g. <Breadcrumb>foo</Breadcrumb> → foo)
-export function stripMdxComponents(text: string): string {
-  let prev = '';
-  while (prev !== text) {
-    prev = text;
-    text = text.replace(/<([A-Z][A-Za-z0-9.]*)(?:\s[^>]*)?>([^<]*?)<\/\1>/g, '$2');
-    text = text.replace(/<[A-Z][A-Za-z0-9.]*(?:\s[^>]*)?\/>/g, '');
-  }
-  return text.trim();
-}
+export const FALLBACK_DESCRIPTION = (version: string) =>
+  `Release ${version} includes bug fixes and performance updates.`;
+
+export const releaseUrl = (version: string) =>
+  `https://fusionauth.io/docs/release-notes#version-${version.replace(/\./g, '-')}`;
 
 export function parseReleaseItems(body: string): ReleaseItem[] {
   const items: ReleaseItem[] = [];
