@@ -1,3 +1,5 @@
+import { releaseCategories } from './releaseCategories';
+
 export interface ReleaseItem {
   category: string;
   issue?: string;
@@ -8,29 +10,17 @@ export interface ReleaseItem {
   body: string;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  'theme-upgrade':      'Theme Upgrade',
-  'new-feature':        'New Feature',
-  'enhancement':        'Enhancement',
-  'known-issue':        'Known Issue',
-  'deprecated':         'Deprecated',
-  'fix':                'Fix',
-  'security':           'Security',
-  'internal':           'Internal',
-  'sdk':                'SDK',
-  'breaking-change':    'Breaking Change',
-  'database-migration': 'Database Migration',
-};
-
 export function categoryLabel(id: string): string {
-  return CATEGORY_LABELS[id] ?? id;
+  return releaseCategories.find(c => c.id === id)?.label ?? id;
 }
 
 export const FALLBACK_DESCRIPTION = (version: string) =>
   `Release ${version} includes bug fixes and performance updates.`;
 
+const SITE_URL = ((import.meta.env.SITE_URL as string | undefined) ?? 'https://fusionauth.io').replace(/\/$/, '');
+
 export const releaseUrl = (version: string) =>
-  `https://fusionauth.io/docs/release-notes#version-${version.replace(/\./g, '-')}`;
+  `${SITE_URL}/docs/release-notes#version-${version.replace(/\./g, '-')}`;
 
 export function parseReleaseItems(body: string): ReleaseItem[] {
   const items: ReleaseItem[] = [];
