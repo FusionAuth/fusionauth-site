@@ -67,7 +67,7 @@ export const getStaticIndexPaths = async (
       return postEntries.includes(slug);
     });
 
-    filteredPosts.sort(sortByDate);
+    filteredPosts.sort(sortByDate);    
 
     const params: Record<string, string> = {};
     params[paramName] = slug; // Use the deduplicated slug
