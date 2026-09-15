@@ -53,21 +53,100 @@ function buildSitemap() {
 }
 
 
-const lightboxProvider = () => {
-  return {
-    name: 'mdx-lightbox-provider',
-    enforce: 'post',
-    transform(code, id) {
-      if(!id.endsWith('.mdx')) return;
-      code = `import _LightboxImage from "src/components/LightboxImage.astro";\n${code}`;
-      code = code.replace(
-        "components: { Fragment: _Fragment, ...props.components, },",
-        "components: { Fragment: _Fragment, img: _LightboxImage, ...props.components, },"
-      );
-      return code;
+const mdxComponentImports =
+  "import APIField from 'src/components/api/APIField.astro';\n" +
+  "import APIBlock from 'src/components/api/APIBlock.astro';\n" +
+  "import API from 'src/components/api/API.astro';\n" +
+  "import AvailableSince from 'src/components/api/AvailableSince.astro';\n" +
+  "import DeprecatedSince from 'src/components/api/DeprecatedSince.astro';\n" +
+  "import RemovedSince from 'src/components/api/RemovedSince.astro';\n" +
+  "import JSON from 'src/components/JSON.astro';\n" +
+  "import Breadcrumb from 'src/components/Breadcrumb.astro';\n" +
+  "import Aside from 'src/components/Aside.astro';\n" +
+  "import RemoteCode from 'src/components/RemoteCode.astro';\n" +
+  "import PlanBlurb from 'src/components/plan/PlanBlurb.astro';\n" +
+  "import PlanBlurbApi from 'src/components/plan/PlanBlurbApi.astro';\n" +
+  "import If from 'src/components/If.astro';\n" +
+  "import Icon from 'src/components/icon/Icon.astro';\n" +
+  "import IconButton from 'src/components/IconButton.astro';\n" +
+  "import ChildCards from 'astro-better-cards/ChildCards.astro';\n" +
+  "import Card from 'astro-better-cards/Card.astro';\n" +
+  "import ExtractedCode from 'astro-better-code-snippet-extractor/ExtractedCode.astro';\n" +
+  "import Tabs from 'astro-better-tabs/Tabs.astro';\n" +
+  "import TabItem from 'astro-better-tabs/TabItem.astro';\n" +
+  "import Details from 'astro-better-details/Details.astro';\n" +
+  "import { Steps } from 'astro-better-steps';\n" +
+  "import Table from 'astro-better-tables/Table.astro';\n" +
+  "import MarkdownOnly from 'astro-gen-markdown-pages/MarkdownOnly.astro';\n\n";
+
+// inject imports into MDX source before the MDX compiler runs, so that component
+// references compile to direct variable lookups rather than _components map lookups
+const mdxComponentImporter = () => ({
+  name: 'mdx-component-importer',
+  enforce: 'pre' as const,
+  transform(code: string, id: string) {
+    if (!id.endsWith('.mdx')) return;
+
+    // build identifier -> source map for existing imports
+    const declaredMap = new Map<string, string>();
+    const importRe = /^import\s+(?:\{([^}]+)\}|(\w+))\s+from\s+['"]([^'"]+)['"]/gm;
+    let m: RegExpExecArray | null;
+    while ((m = importRe.exec(code)) !== null) {
+      const src = m[3];
+      if (m[2]) {
+        declaredMap.set(m[2], src);
+      } else {
+        m[1].split(',').forEach(s => {
+          const name = s.trim().split(/\s+as\s+/).pop()?.trim();
+          if (name) declaredMap.set(name, src);
+        });
+      }
     }
+
+    // skip or error per-line depending on whether the conflict is the same source
+    const linesToInject = mdxComponentImports.split('\n').filter(line => {
+      if (!line.startsWith('import')) return true;
+      const nm = line.match(/^import\s+(?:\{([^}]+)\}|(\w+))\s+from\s+['"]([^'"]+)['"]/);
+      if (!nm) return true;
+      const name = nm[2] ?? nm[1]?.trim().split(/\s+as\s+/).pop()?.trim();
+      const autoSrc = nm[3];
+      if (!name || !declaredMap.has(name)) return true;
+
+      const fileSrc = declaredMap.get(name)!;
+      // same source if exact match or relative path ending in the same file
+      const isSameSrc = fileSrc === autoSrc || fileSrc.endsWith('/' + autoSrc.split('/').pop()!);
+      if (isSameSrc) {
+        throw new Error(
+          `[mdx-component-importer] Redundant import in ${id}\n` +
+          `  \`${name}\` is auto-imported — remove the explicit import.`
+        );
+      }
+      // different component happens to share the name: skip injection, file's import wins
+      return false;
+    });
+
+    const injected = linesToInject.join('\n');
+    const frontmatter = code.match(/^---[\s\S]*?---[ \t]*\n/);
+    if (frontmatter) {
+      return code.slice(0, frontmatter[0].length) + injected + code.slice(frontmatter[0].length);
+    }
+    return injected + code;
   }
-}
+});
+
+const lightboxProvider = () => ({
+  name: 'mdx-lightbox-provider',
+  enforce: 'post' as const,
+  transform(code: string, id: string) {
+    if (!id.endsWith('.mdx')) return;
+    code = `import _LightboxImage from "src/components/LightboxImage.astro";\n${code}`;
+    code = code.replace(
+      "components: { Fragment: _Fragment, ...props.components, },",
+      "components: { Fragment: _Fragment, img: _LightboxImage, ...props.components, },"
+    );
+    return code;
+  }
+});
 
 const config = defineConfig({
   build: {
@@ -83,12 +162,13 @@ const config = defineConfig({
   vite: {
     plugins: [
       tailwindcss(),
+      mdxComponentImporter(),
       lightboxProvider(),
     ],
-    cacheDir: '.vite-cache',
     build: {
-      chunkSizeWarningLimit: 1111,
+      chunkSizeWarningLimit: 700,
     },
+    cacheDir: '.vite-cache',
     ssr: {
       // svgdom and mermaid are Node-only SSR packages used in remark plugins;
       // externalizing them prevents Vite from bundling them and breaking dynamic imports.

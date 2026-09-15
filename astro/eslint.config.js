@@ -4,7 +4,7 @@ import tseslint from "typescript-eslint";
 import * as mdx from 'eslint-plugin-mdx';
 import eslintPluginAstro from 'eslint-plugin-astro';
 import tsParser from "@typescript-eslint/parser";
-import astroParser from 'astro-eslint-parser';
+import * as astroParser from 'astro-eslint-parser';
 
 export default [
   {files: ["**/*.{js,mjs,cjs,ts,md,mdx}"]},

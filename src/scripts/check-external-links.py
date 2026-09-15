@@ -163,6 +163,7 @@ _DEFAULT_EXCLUDE_DEST = [
     r"geldata\.com",                # spurious 404
     r"gluecon\.com",                # DNE, not evergreen content so will ignore
     r"app\.xkit\.co",               # spurious 500
+    r"azure\.microsoft\.com",       # returns 503 from CI environments; works in browsers
 ]
 
 
