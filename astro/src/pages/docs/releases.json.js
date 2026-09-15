@@ -5,11 +5,7 @@ function versionCmp(a, b) {
   return a.localeCompare(b, undefined, { numeric: true });
 }
 
-export async function GET(context) {
-  const params = context.url ? new URL(context.url).searchParams : new URLSearchParams();
-  const first = params.get('first') ?? null;
-  const last  = params.get('last')  ?? null;
-
+export async function GET() {
   const raw = await getCollection('releases');
 
   const releases = raw
@@ -34,10 +30,6 @@ export async function GET(context) {
         items,
       };
     })
-    .filter(r =>
-      (first == null || versionCmp(r.version, first) >= 0) &&
-      (last  == null || versionCmp(r.version, last)  <= 0)
-    )
     .sort((a, b) => versionCmp(b.version, a.version));
 
   return new Response(JSON.stringify({ releases }, null, 2), {
