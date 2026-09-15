@@ -8,7 +8,7 @@ Follow these guidelines when writing documentation (everything under [docs](astr
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing
 - Do not use smart quotes or smart apostrophes; stick to ASCII when possible
 - Use `Id` instead of `ID` or `id` when describing a unique identifier
-- Use `Admin UI` instead of `admin UI` when writing about the admin user interface
+- Use `Admin UI` (note the capital A) when writing about the admin user interface
 - Use `logged in` instead of `logged-in`
 - `log in` is the verb, `login` is the noun
 - Use `UserInfo` instead of `Userinfo`
@@ -76,19 +76,38 @@ Follow these guidelines when writing documentation (everything under [docs](astr
 
 ### List examples
 
+
+```plaintext
 Smoothie-compatible fruits include the following:
 
-- apples
-- bananas
-- blueberries
+* apples
+* bananas
+* blueberries
+```
+
+Smoothie-compatible fruits include the following:
+
+* apples
+* bananas
+* blueberries
+
+```plaintext
+To make a smoothie:
+
+1. Put milk in a blender.
+1. Put a banana in a blender.
+1. Put an apple in a blender.
+1. Put blueberries in a blender.
+1. Run the blender for 30 seconds.
+```
 
 To make a smoothie:
 
 1. Put milk in a blender.
-2. Put a banana in a blender.
-3. Put an apple in a blender.
-4. Put blueberries in a blender.
-5. Run the blender for 30 seconds.
+1. Put a banana in a blender.
+1. Put an apple in a blender.
+1. Put blueberries in a blender.
+1. Run the blender for 30 seconds.
 
 ## Proper names and other verbiage
 
@@ -131,25 +150,38 @@ To make a smoothie:
 
 ## Version signposting
 
-- If something is new in a version, mark it with something like this (this is great toward the top of a page documenting a version introduced in a particular version):
+- When adding a feature, mark the top of the page or top of the section (if added to an existing page) with the [`AvailableSince` component](astro/src/components/api/AvailableSince.astro):
 
   ```jsx
-  <Aside type="version">
-    Available since 1.5.0
-  </Aside>
+  <AvailableSince since="1.43.0" />
   ```
 
-- If there is a description of the feature that is part of a set of paragraphs, use the title element and put the description in the slot.
+  This will render as a badge showing the text "Available since `<version>`".
+
+  You can also include render this as an admonition by including text between the open and closing tags:
+
+  ```jsx
+  <AvailableSince since="1.43.0">
+
+  The foo cannot be used with the baz.
+  </AvailableSince>
+   ```
+
+- When deprecating a feature, use [DeprecatedSince](astro/src/components/api/DeprecatedSince.astro):
+
+  ```jsx
+  <DeprecatedSince since="1.5.0">
+  ```
+
+  You can also render this as an admonition by including text between the open and closing tags.
   
+- When removing a feature, use [RemovedSince](astro/src/components/api/RemovedSince.astro):
+
   ```jsx
-  <Aside title="Available since 1.5.0" type="version">
-    You can use the advanced version of the feature with ...
-  </Aside>
+  <RemovedSince since="1.5.0">
   ```
 
-- If it is inline (for a field), use <AvailableSince since="1.5.0"> - [AvailableSince](astro/src/components/api/AvailableSince.astro)
-- If you are deprecating a field, use <DeprecatedSince since="1.5.0"> - [DeprecatedSince](astro/src/components/api/DeprecatedSince.astro)
-- If you are removing a field, use <RemovedSince since="1.5.0"> - [RemovedSince](astro/src/components/api/RemovedSince.astro)
+  You can also render this as an admonition by including text between the open and closing tags.
 
 - We currently use [FontAwesome](https://fontawesome.com/) to render icons, so you can use them to refer to UI buttons, like this:
   
@@ -214,7 +246,8 @@ Common optional fields:
 
 | Field | Type | Notes |
 |---|---|---|
-| `htmlTitle` | string | Overrides the `<title>` tag only. Use when the full title would be awkward in browser tabs (e.g. "User API" instead of "User"). |
+| `htmlTitle` | string | Overrides the `<title>` tag on the rendered page. The navigation sidebar continues to use the `title`, but `llms.txt` will prefer this title. |
+| `markdownTitle` | string | Overrides the `h1` in the markdown version of the page. Use to serve an LLM-optimized title only to agents when humans would prefer a different title. `llms.txt` will prefer this title over `htmlTitle` or `title`. |
 | `sidenavTitle` | string | Overrides how the page appears in the sidebar when the full title is too long. |
 | `order` | number | Controls sort position within the parent section. Lower numbers sort first. Default is 1000 (alphabetical fallback). |
 | `route` | boolean | Set to `false` to prevent the page from being built as a URL while keeping it in the content collection for nav ordering. Use this for folder index pages that are pure navigation (no real content) -- pair with a redirect in `astro.config.ts`. |
@@ -228,24 +261,7 @@ Common optional fields:
 
 ### Cards
 
-Docs cards are rendered using `DocCard.astro` (`astro/src/components/DocCard.astro`). Three visual variants are available:
-
-- `full` -- icon, title, and description. Used for section overview grids. This is the default variant and what `ChildCards` uses.
-- `compact` -- title only with an optional label badge. Used for dense navigation lists.
-- `quickstart` -- small icon and title, with optional `comingSoon` greyed-out treatment. Used in quickstart grids.
-
-The legacy components `ClickableCard`, `PageNavCard`, and `QuickstartCard` are thin wrappers around `DocCard` and remain importable for backward compatibility.
-
-To auto-generate a card grid from child pages, use `ChildCards`:
-
-```mdx
-import ChildCards from "src/components/ChildCards.astro";
-<ChildCards collection="docs" />
-```
-
-Or add `sectionIndex: true` to front matter and the layout will render `ChildCards` automatically after the page content.
-
-Child pages appear as cards showing their `title`, `description`, `icon`, and `cardImage` front matter fields.
+Docs cards are rendered using [astro-better-cards](https://better-static-sites.github.io/docs/ui/cards/). You can use [`ChildCards`](https://better-static-sites.github.io/docs/ui/cards/#childcards) to automatically render a collection of links to sub-pages within a folder (with configurable depth). Or you can use [`PageNav`](https://better-static-sites.github.io/docs/ui/cards/#pagenav) to display next and last links using `nextPage` and `lastPage` in page front matter.
 
 ### API docs
 
@@ -253,80 +269,53 @@ Child pages appear as cards showing their `title`, `description`, `icon`, and `c
 - `Defaults` is always capitalized.
 - If a field is required, but only when another feature is enabled, mark it optional rather than required in the API. Then, add a note in the description saying when it is required, like so:
   ```
-  This field is required when **theOtherField.enabled** is set to true.
+  This field is required when **`theOtherField.enabled`** is set to true.
   ```
-- If a feature is only available when using a paid plan, use the [PremiumEditionBlurbApi](astro/src/content/docs/_shared/_premium-edition-blurb-api.astro) component `<PremiumEditionBlurbApi feature="custom forms" />` fragment for API fields, and [PremiumEditionBlurb](astro/src/content/docs/_shared/_premium-edition-blurb.astro) component for any other location where the feature is mentioned in docs. Only mark the request API fields.
-- If a feature is only available when using essentials, use the [AdvancedEditionBlurbApi](astro/src/content/docs/_shared/_advanced-edition-blurb-api.astro) component for API fields, and [AdvancedEditionBlurb](astro/src/content/docs/_shared/_advanced-edition-blurb.astro) for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
-- If a feature is only available when using enterprise, use the [EnterpriseEditionBlurbApi](astro/src/content/docs/_shared/_enterprise-edition-blurb-api.astro) component for API fields, and [EnterpriseEditionBlurb](astro/src/content/docs/_shared/_enterprise-edition-blurb.astro) for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
-- If you are working in the `/api/identity-providers` folder there is a `README` there to help you understand the structure and layout of the documentation for the Identity Providers API.
-- If a field was deprecated in a version 30 versions ago (deprecated in 1.15, you are now at 1.45), you can remove it from the docs.
+- If a feature is only available when using a Licensed Community plan (or above), use `PlanBlurb`:
+  ```jsx
+  <PlanBlurb plan="licensed" version="1.52.0" />
+  ```
+  In the API reference, use `PlanBlurbApi`:
+  ```jsx
+  <PlanBlurbApi plan="licensed" feature="this feature" />
+  ```
+- If a feature is only available when using a Starter plan (or above), use `PlanBlurb`:
+  ```jsx
+  <PlanBlurb plan="starter" version="1.52.0" />
+  ```
+  In the API reference, use `PlanBlurbApi`:
+  ```jsx
+  <PlanBlurbApi plan="starter" feature="this feature" />
+  ```
+- If a feature is only available when using an Essentials plan (or above), use `PlanBlurb`:
+  ```jsx
+  <PlanBlurb plan="essentials" version="1.52.0" />
+  ```
+  In the API reference, use `PlanBlurbApi`:
+  ```jsx
+  <PlanBlurbApi essentials="essentials" feature="this feature" />
+  ```
+- If a feature is only available when using an Enterprise plan, use `PlanBlurb`:
+  ```jsx
+  <PlanBlurb plan="enterprise" version="1.52.0" />
+  ```
+  In the API reference, use `PlanBlurbApi`:
+  ```jsx
+  <PlanBlurbApi plan="enterprise" feature="this feature" />
+  ```
 
+### Screenshots
 
-#### Request section layout
+> [!NOTE]
+> Migration still in progress.
 
-For APIs that have `GET` and `POST` options:
-
-```
-## Request section header
-GET URLs (could have 1-3 of these, show the most common)
-### GET request parameters (path segment)
-### GET request parameters (query string)
-### GET request headers
-
-POST URLs (only will be one, typically)
-### POST request headers
-### POST request parameters (path segment)
-### POST request body
-Example POST request(s)
-
-### Response section header
-Response codes
-#### Response body
-Example response(s)
-```
-
-## Screenshots
-
-- Use light mode when capturing screenshots
-- In macOS **System Settings > Appearance** make sure _Allow wallpaper tinting in windows_ is turned _off_.
-- Make sure you set your `fusionauth-app.runtime-mode` to `production` unless documenting a feature only available in `development` mode.
-- Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
-- After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
-   - If you only want a portion of the screen, crop it. See Application Core Concepts for an example.
-- Crop top/bottom if necessary (don't crop sides).
-   - If you crop the bottom or top, use the `bottom-cropped` or `top-cropped` class on the image. In some cases the
-     class may not be necessary if there is adequate spacing below. When text continues below or right above you will need
-     the class.
-- If you crop the image, don't use the `shadowed` role. And vice versa.
-- Highlight sections using image preview editor
-  - Highlights should be red rectangle with line weight 5
-- To size and compress images without losing too much quality, follow these steps:
-  1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
-  2. Crop the image vertically to only display the necessary content.
-- Use https://local.fusionauth.io and use the correct kickstart to add the Silicon Valley characters ( https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/development/kickstart.json )
-- Make sure that the same character is used for every screenshot on a page (unless you are demonstrating a view from the admin and also user perspective)
-- The shrink-images GitHub Action will call https://tinypng.com/ to compress the images that you commit.
-
-Use `fa-screenshot.sh`, located under `fusionauth-site/src/`. With this script you can automate following tasks:
-
-- Sizing and moving the Safari window
-- Capturing the screenshot
-- Resizing the screenshot image
-- Moving the image to an appropriate folder
-
-```bash
-./fa-screenshot.sh -h # for usage info
-```
-
-### Declarative screenshots
-
-Screenshots in the docs are generated automatically from a headless browser pointed at a local FusionAuth instance. Docker, the FusionAuth container, and a PostgreSQL database all start automatically when you run the screenshot command.
+Screenshots in the docs are generated automatically from a headless browser pointed at a local FusionAuth instance using [astro-better-declarative-screenshots](https://better-static-sites.github.io/docs/ui/declarative-screenshots/). Docker, the FusionAuth container, and a PostgreSQL database all start automatically when you run the screenshot command.
 
 #### Setup
 
 Install the screenshot dependencies once (separate from the main `astro/` dependencies):
 
-```bash
+```shell-session
 cd astro/screenshots
 npm install
 ```
@@ -335,7 +324,7 @@ npm install
 
 From the `astro/` directory:
 
-```bash
+```shell-session
 npm run screenshots
 ```
 
@@ -343,20 +332,13 @@ This starts Docker (if not already running), waits for FusionAuth to become heal
 
 To regenerate a single screenshot, pass a filter matching the filename or URL:
 
-```bash
+```shell-session
 npm run screenshots -- --filter groups
 ```
 
 #### Adding a screenshot to a page
 
-Import both components at the top of the MDX file:
-
-```jsx
-import Screenshot from 'astro-better-declarative-screenshots/Screenshot.astro';
-import Highlight from 'astro-better-declarative-screenshots/Highlight.astro';
-```
-
-Then place the component where you want the screenshot to appear:
+Place the component where you want the screenshot to appear:
 
 ```jsx
 <Screenshot url="/admin/group/" alt="The FusionAuth groups list." />
@@ -372,7 +354,7 @@ To highlight a specific element, nest a `<Highlight>` inside the `<Screenshot>`:
 </Screenshot>
 ```
 
-`selector` is a CSS selector for the element to outline. `label` adds a small badge above the highlight. The default highlight color is `#f60`; pass `color="#f26522"` to override.
+`selector` is a CSS selector for the element to outline. `label` adds a small badge above the highlight. The default highlight color is `#f60`; pass `color="#f26522"` to override (but override sparingly, only when truly necessary, to keep things consistent).
 
 Available `<Screenshot>` props:
 
@@ -389,7 +371,7 @@ Available `<Screenshot>` props:
 
 GIFs take up quite a lot of space. Use WEBMs instead:
 
-```console
+```shell-session
 ffmpeg -i terminalizer.gif terminalizer.webm
 ```
 
