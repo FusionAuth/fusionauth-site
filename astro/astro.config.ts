@@ -77,6 +77,8 @@ const mdxComponentImports =
   "import Details from 'astro-better-details/Details.astro';\n" +
   "import { Steps } from 'astro-better-steps';\n" +
   "import Table from 'astro-better-tables/Table.astro';\n" +
+  "import Screenshot from 'astro-better-declarative-screenshots/Screenshot.astro';\n" +
+  "import Highlight from 'astro-better-declarative-screenshots/Highlight.astro';\n" +
   "import MarkdownOnly from 'astro-gen-markdown-pages/MarkdownOnly.astro';\n\n";
 
 // inject imports into MDX source before the MDX compiler runs, so that component

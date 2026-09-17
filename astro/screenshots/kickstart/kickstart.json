@@ -21,7 +21,8 @@
     "piedPiperTeamGroupId":"00000000-0000-0000-0000-200000000001",
     "investorsGroupId":    "00000000-0000-0000-0000-200000000002",
 
-    "screenshotsThemeId":  "00000000-0000-0000-0000-300000000001"
+    "passwordlessEmailTemplateId":  "00000000-0000-0000-0000-400000000001",
+    "passwordlessMessageTemplateId":"00000000-0000-0000-0000-400000000002"
   },
   "apiKeys": [
     {
@@ -49,17 +50,20 @@
       "body": {
         "application": {
           "name": "Pied Piper",
+          "passwordlessConfiguration": {
+            "enabled": true
+          },
           "roles": [
             { "name": "admin",  "isDefault": false, "isSuperRole": true  },
             { "name": "user",   "isDefault": true,  "isSuperRole": false }
           ],
           "oauthConfiguration": {
-            "clientId": "pied-piper-client",
             "clientSecret": "this-is-not-a-secret-its-for-screenshots",
-            "authorizedRedirectURLs": ["http://localhost:3000/oauth-callback"],
+            "authorizedRedirectURLs": ["http://localhost:3000/oauth-callback", "https://example.com"],
             "logoutURL": "http://localhost:3000/logout",
             "enabledGrants": ["authorization_code", "refresh_token"]
-          }
+          },
+          "selfServiceEnabled": true
         }
       }
     },
@@ -88,6 +92,17 @@
 
     {
       "method": "POST",
+      "url": "/api/user/registration/#{richardId}",
+      "body": {
+        "registration": {
+          "applicationId": "#{piedPiperAppId}",
+          "roles": ["admin"]
+        }
+      }
+    },
+
+    {
+      "method": "POST",
       "url": "/api/user/registration/#{bigHeadId}",
       "body": {
         "registration": {
@@ -100,6 +115,7 @@
           "firstName": "Nelson",
           "lastName":  "Bighetti",
           "birthDate": "1985-01-15",
+          "mobilePhone": "+15555551234",
           "imageUrl":  "http://localhost:8080/bighead.webp",
           "data": {
             "nickname": "Big Head",
@@ -300,14 +316,28 @@
 
     {
       "method": "POST",
-      "url": "/api/theme/#{screenshotsThemeId}",
+      "url": "/api/email/template/#{passwordlessEmailTemplateId}",
       "body": {
-        "sourceThemeId": "75a068fd-e94b-451a-9aeb-3ddb9a3b5987",
-        "theme": {
-          "name": "Screenshots Theme"
+        "emailTemplate": {
+          "name": "Pied Piper Passwordless Login",
+          "defaultSubject": "Complete your Pied Piper login",
+          "defaultHtmlTemplate": "[#setting url_escaping_charset=\"UTF-8\"]\nYou have requested to log into Pied Piper using this email address. If you do not recognize this request please ignore this email.\n\n[#if oneTimeCode??]\n<p>\n  Login code: ${oneTimeCode}\n</p>\n[#else]\n<p>\n  [#assign url = \"${baseUrl}/oauth2/passwordless/${code}?tenantId=${user.tenantId}\" /]\n  [#list state!{} as key, value][#if key != \"tenantId\" && value??][#assign url = url + \"&\" + key?url + \"=\" + value?url/][/#if][/#list]\n  <a href=\"${url?html}\">${url?html}</a>\n</p>\n[/#if]\n- Pied Piper",
+          "defaultTextTemplate": "[#setting url_escaping_charset=\"UTF-8\"]\nYou have requested to log into Pied Piper using this email address. If you do not recognize this request please ignore this email.\n\n[#if oneTimeCode??]\nLogin code: ${oneTimeCode}\n[#else]\n[#assign url = \"${baseUrl}/oauth2/passwordless/${code}?tenantId=${user.tenantId}\" /]\n[#list state!{} as key, value][#if key != \"tenantId\" && value??][#assign url = url + \"&\" + key?url + \"=\" + value?url/][/#if][/#list]\n\n${url}\n\n[/#if]\n- Pied Piper"
         }
       }
-    }
+    },
+
+    {
+      "method": "POST",
+      "url": "/api/message/template/#{passwordlessMessageTemplateId}",
+      "body": {
+        "messageTemplate": {
+          "name": "Pied Piper Passwordless SMS",
+          "type": "SMS",
+          "defaultTemplate": "[#setting url_escaping_charset=\"UTF-8\"]\nYou have requested to log into Pied Piper using this phone number. If you do not recognize this request please ignore this message.\n\n[#if oneTimeCode??]\n  Login code: ${oneTimeCode}\n[#else]\n  [#assign url = \"${baseUrl}/oauth2/passwordless/${code}?tenantId=${user.tenantId}\" /]\n  [#list state!{} as key, value][#if key != \"tenantId\" && value??][#assign url = url + \"&\" + key?url + \"=\" + value?url/][/#if][/#list]\n\n  ${url}\n[/#if]\n\n- Pied Piper"
+        }
+      }
+    },
 
   ]
 }
