@@ -1,0 +1,118 @@
+
+{/*  is_create renders the create-only fields, is_update renders the update variant. */}
+
+<APIBlock>
+  <APIField name="domain.authorizedResourceUris" type="Array<String>" optional>
+    The resource URIs that clients registered on this CIMD domain may request using the [RFC 8707](https://datatracker.ietf.org/doc/html/rfc8707) `resource` parameter.
+
+    When this list is empty, the `resource` parameter is silently ignored for this domain's clients.
+  </APIField>
+  <APIField name="domain.consentMode" type="String" optional defaults="AlwaysPrompt">
+    Controls whether a user is prompted to consent to the OAuth scopes requested by this domain's clients.
+
+    The possible values are:
+
+    * `AlwaysPrompt` - Always prompt the user for consent.
+    * `RememberDecision` - Remember previous consents; only prompt if the choice expires or if the requested or required scopes have changed. The duration of this persisted choice is controlled by the Tenant's **externalIdentifierConfiguration.rememberOAuthScopeConsentChoiceTimeToLiveInSeconds** value.
+
+    A value of `NeverPrompt` will be rejected. A CIMD client is always treated as a third-party client, and once a consent decision is skipped entirely there is no way to re-prompt the client's user.
+  </APIField>
+  <APIField name="domain.data" type="Object" optional>
+    An object that can hold any information about the CIMD domain that should be persisted.
+  </APIField>
+  <APIField name="domain.debug" type="Boolean" optional defaults="false">
+    Whether FusionAuth will write a debug Event Log during the CIMD client registration process. Enable this to diagnose why a client's metadata document was rejected, then review the entries under <Breadcrumb>System -> Event Log</Breadcrumb>.
+  </APIField>
+  <APIField name="domain.domain" type="String" required immutable>
+    The origin that CIMD clients register from, given as `scheme://host[:port]`. FusionAuth normalizes this value before storing it and uses it to validate the `client_id` URL presented on an OAuth request.
+
+    Use the literal value `*` to accept registrations from any origin. A Tenant may contain either a single `*` domain or any number of exact-match domains, but never both.
+
+    A path, query string, or fragment is not permitted, and neither are bare IP addresses, `localhost`, or loopback addresses. Subdomain wildcards such as `https://*.example.com` are not supported.
+
+    This value cannot be changed after creation. Any value supplied here on an update is ignored.
+  </APIField>
+  <APIField name="domain.gracePeriodInSeconds" type="Integer" optional defaults="0">
+    How long, in seconds, FusionAuth will continue to honor an expired cached metadata document when a re-fetch of that document fails. Must be greater than or equal to `0`.
+  </APIField>
+  <APIField name="domain.jwtPopulateLambdaId" type="UUID" optional>
+    The unique Id of the lambda used to populate the claims of the access token and Id token issued to this domain's clients. A single lambda is applied to both tokens.
+  </APIField>
+  <APIField name="domain.maxCacheTtlInSeconds" type="Integer" optional defaults="86400">
+    The ceiling, in seconds, applied to the `Cache-Control: max-age` value returned when fetching a client's metadata document. When the document specifies a smaller value, that smaller value is used instead. The `Expires` header is not honored.
+
+    Must be greater than `0`. A non-configurable 15 minute floor is always applied, so a value lower than `900` has no additional effect.
+  </APIField>
+  <APIField name="domain.name" type="String" optional defaults="the value of domain.domain">
+    The name of the CIMD domain, used to identify it in the FusionAuth admin UI. Leave this blank to default to the value of **domain.domain**.
+  </APIField>
+  <APIField name="domain.providedScopePolicy.address.enabled" type="Boolean" optional defaults="true">
+    Whether the `address` OAuth scope provided by FusionAuth is enabled for this CIMD domain. A disabled scope is treated as an unknown scope when a client requests it.
+  </APIField>
+  <APIField name="domain.providedScopePolicy.address.required" type="Boolean" optional defaults="false">
+    Whether consent to the `address` OAuth scope provided by FusionAuth is required for this CIMD domain when present on the OAuth request.
+  </APIField>
+  <APIField name="domain.providedScopePolicy.email.enabled" type="Boolean" optional defaults="true">
+    Whether the `email` OAuth scope provided by FusionAuth is enabled for this CIMD domain. A disabled scope is treated as an unknown scope when a client requests it.
+  </APIField>
+  <APIField name="domain.providedScopePolicy.email.required" type="Boolean" optional defaults="false">
+    Whether consent to the `email` OAuth scope provided by FusionAuth is required for this CIMD domain when present on the OAuth request.
+  </APIField>
+  <APIField name="domain.providedScopePolicy.phone.enabled" type="Boolean" optional defaults="true">
+    Whether the `phone` OAuth scope provided by FusionAuth is enabled for this CIMD domain. A disabled scope is treated as an unknown scope when a client requests it.
+  </APIField>
+  <APIField name="domain.providedScopePolicy.phone.required" type="Boolean" optional defaults="false">
+    Whether consent to the `phone` OAuth scope provided by FusionAuth is required for this CIMD domain when present on the OAuth request.
+  </APIField>
+  <APIField name="domain.providedScopePolicy.profile.enabled" type="Boolean" optional defaults="true">
+    Whether the `profile` OAuth scope provided by FusionAuth is enabled for this CIMD domain. A disabled scope is treated as an unknown scope when a client requests it.
+  </APIField>
+  <APIField name="domain.providedScopePolicy.profile.required" type="Boolean" optional defaults="false">
+    Whether consent to the `profile` OAuth scope provided by FusionAuth is required for this CIMD domain when present on the OAuth request.
+  </APIField>
+  <APIField name="domain.registrationLambdaId" type="UUID" optional>
+    The unique Id of the [CIMD Client Registration lambda](/docs/extend/code/lambdas) used to accept, reject, or modify a client registration for this domain. When this is not set, no registration lambda runs and every client from this origin is allowed to register.
+
+    When **domain.domain** is `*`, a registration lambda is the only way to filter which clients may register.
+  </APIField>
+  <APIField name="domain.scopes" type="Array" optional renderif={!props.is_update}>
+    The initial set of custom OAuth scopes to create on this CIMD domain. Scope names and Ids must be unique.
+
+    This field is only honored when creating a CIMD domain. Once the domain exists, manage its custom scopes using the [CIMD Domain OAuth Scope APIs](/docs/apis/cimd-domain-scopes); any value supplied here on an update is ignored.
+  </APIField>
+  <APIField name="domain.scopes[x].data" type="Object" optional renderif={!props.is_update}>
+    An object that can hold any information about the OAuth scope that should be persisted.
+  </APIField>
+  <APIField name="domain.scopes[x].defaultConsentDetail" type="String" optional renderif={!props.is_update}>
+    The default detail to display on the OAuth consent screen if one cannot be found in the theme.
+    [Learn more about setting this value using themes.](/docs/customize/look-and-feel/localization#oauth-scope-consent-prompt)
+  </APIField>
+  <APIField name="domain.scopes[x].defaultConsentMessage" type="String" optional renderif={!props.is_update}>
+    The default message to display on the OAuth consent screen if one cannot be found in the theme.
+    [Learn more about setting this value using themes.](/docs/customize/look-and-feel/localization#oauth-scope-consent-prompt)
+  </APIField>
+  <APIField name="domain.scopes[x].description" type="String" optional renderif={!props.is_update}>
+    A description of the OAuth scope for internal use.
+  </APIField>
+  <APIField name="domain.scopes[x].id" type="UUID" optional renderif={!props.is_update} defaults="a generated UUID">
+    The Id to use for this OAuth scope. If not specified a secure random UUID will be generated.
+  </APIField>
+  <APIField name="domain.scopes[x].name" type="String" required renderif={!props.is_update}>
+    The name of the OAuth scope. This is the value that will be used to request the scope in OAuth workflows.
+  </APIField>
+  <APIField name="domain.scopes[x].required" type="Boolean" optional defaults="false" renderif={!props.is_update}>
+    Determines if the OAuth scope is required when requested in an OAuth workflow.
+  </APIField>
+</APIBlock>
+
+<Aside type="note">
+The Tenant of a CIMD domain is taken from the request context, not the request body. Use the `X-FusionAuth-TenantId` header or a Tenant-scoped API key to select the Tenant. A CIMD domain always belongs to exactly one Tenant; there is no universal CIMD domain.
+</Aside>
+
+<If condition={!props.is_update}>
+  <JSON title="Example Request JSON" src="cimd-domains/post-request.json" />
+</If>
+
+<If condition={props.is_update}>
+  <JSON title="Example Request JSON" src="cimd-domains/put-request.json" />
+</If>
