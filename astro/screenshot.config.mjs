@@ -38,7 +38,7 @@ export default {
 
     // FusionAuth's API healthcheck passes before the kickstart finishes and the
     // login UI becomes available. Retry navigation until the login form appears.
-    const deadline = Date.now() + 90_000;
+    const deadline = Date.now() + 150_000;
     while (Date.now() < deadline) {
       await page.goto('http://localhost:9011/admin/login', {
         waitUntil: 'load',
@@ -131,37 +131,47 @@ export default {
       console.error('[screenshot] beforeAll: selfServiceFormId patch failed:', e.message);
     }
 
-    // verify email template exists (kickstart creates it; guard against re-runs on corrupted containers)
+    // ensure Screenshots Theme exists (used by theme-localization-messages screenshot)
     try {
-      const etResp = await fetch(`${baseUrl}/api/email/template/00000000-0000-0000-0000-400000000001`, { headers: { 'Authorization': apiKey } });
-      if (!etResp.ok) {
-        const htmlTpl = '[#setting url_escaping_charset="UTF-8"]\n[#if oneTimeCode??]\n<p>Login code: ${oneTimeCode}</p>\n[#else]\n[#assign url = "${baseUrl}/oauth2/passwordless/${code}?tenantId=${user.tenantId}" /]\n[#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]\n<p><a href="${url?html}">${url?html}</a></p>\n[/#if]\n- Pied Piper';
-        const txtTpl = '[#setting url_escaping_charset="UTF-8"]\n[#if oneTimeCode??]\nLogin code: ${oneTimeCode}\n[#else]\n[#assign url = "${baseUrl}/oauth2/passwordless/${code}?tenantId=${user.tenantId}" /]\n[#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]\n${url}\n[/#if]\n- Pied Piper';
-        await fetch(`${baseUrl}/api/email/template/00000000-0000-0000-0000-400000000001`, {
+      const themeId = '00000000-0000-0000-0000-300000000001';
+      const tResp = await fetch(`${baseUrl}/api/theme/${themeId}`, { headers: { 'Authorization': apiKey } });
+      if (!tResp.ok) {
+        await fetch(`${baseUrl}/api/theme/${themeId}`, {
           method: 'POST',
           headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ emailTemplate: { name: 'Pied Piper Passwordless Login', defaultSubject: 'Complete your Pied Piper login', defaultHtmlTemplate: htmlTpl, defaultTextTemplate: txtTpl } }),
+          body: JSON.stringify({ sourceThemeId: '75a068fd-e94b-451a-9aeb-3ddb9a3b5987', theme: { id: themeId, name: 'Screenshots Theme' } }),
         });
-        console.log('[screenshot] beforeAll: recreated missing email template');
+        console.log('[screenshot] beforeAll: created Screenshots Theme');
       }
     } catch (e) {
-      console.error('[screenshot] beforeAll: email template check failed:', e.message);
+      console.error('[screenshot] beforeAll: Screenshots Theme creation failed:', e.message);
     }
 
-    // verify message template exists
+    // always PUT the canonical email template content (matches the .ftl files referenced in the docs)
     try {
-      const mtResp = await fetch(`${baseUrl}/api/message/template/00000000-0000-0000-0000-400000000002`, { headers: { 'Authorization': apiKey } });
-      if (!mtResp.ok) {
-        const smsTpl = '[#setting url_escaping_charset="UTF-8"]\n[#if oneTimeCode??]\nLogin code: ${oneTimeCode}\n[#else]\n[#assign url = "${baseUrl}/oauth2/passwordless/${code}?tenantId=${user.tenantId}" /]\n[#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]\n${url}\n[/#if]\n- Pied Piper';
-        await fetch(`${baseUrl}/api/message/template/00000000-0000-0000-0000-400000000002`, {
-          method: 'POST',
-          headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messageTemplate: { name: 'Pied Piper Passwordless SMS', type: 'SMS', defaultTemplate: smsTpl } }),
-        });
-        console.log('[screenshot] beforeAll: recreated missing message template');
-      }
+      const htmlTpl = '[#setting url_escaping_charset="UTF-8"]\nYou have requested to log into Pied Piper using this email address. If you do not recognize this request please ignore this email.\n\n[#if oneTimeCode??]\n<p>\n  Login code: ${oneTimeCode}\n</p>\n[#else]\n<p>\n  [#assign url = "${baseUrl}/oauth2/passwordless/${code}?tenantId=${user.tenantId}" /]\n  [#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]\n  <a href="${url?html}">${url?html}</a>\n</p>\n[/#if]\n- Pied Piper';
+      const txtTpl = '[#setting url_escaping_charset="UTF-8"]\nYou have requested to log into Pied Piper using this email address. If you do not recognize this request please ignore this email.\n\n[#if oneTimeCode??]\nLogin code: ${oneTimeCode}\n[#else]\n[#assign url = "${baseUrl}/oauth2/passwordless/${code}?tenantId=${user.tenantId}" /]\n[#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]\n\n${url}\n\n[/#if]\n- Pied Piper';
+      const etMethod = (await fetch(`${baseUrl}/api/email/template/00000000-0000-0000-0000-400000000001`, { headers: { 'Authorization': apiKey } })).ok ? 'PUT' : 'POST';
+      await fetch(`${baseUrl}/api/email/template/00000000-0000-0000-0000-400000000001`, {
+        method: etMethod,
+        headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailTemplate: { name: 'Pied Piper Passwordless Login', defaultSubject: 'Complete your Pied Piper login', defaultHtmlTemplate: htmlTpl, defaultTextTemplate: txtTpl } }),
+      });
     } catch (e) {
-      console.error('[screenshot] beforeAll: message template check failed:', e.message);
+      console.error('[screenshot] beforeAll: email template update failed:', e.message);
+    }
+
+    // always PUT the canonical message template content
+    try {
+      const smsTpl = '[#setting url_escaping_charset="UTF-8"]\nYou have requested to log into Pied Piper using this phone number. If you do not recognize this request please ignore this message.\n\n[#if oneTimeCode??]\n  Login code: ${oneTimeCode}\n[#else]\n  [#assign url = "${baseUrl}/oauth2/passwordless/${code}?tenantId=${user.tenantId}" /]\n  [#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]\n\n  ${url}\n[/#if]\n\n- Pied Piper';
+      const mtMethod = (await fetch(`${baseUrl}/api/message/template/00000000-0000-0000-0000-400000000002`, { headers: { 'Authorization': apiKey } })).ok ? 'PUT' : 'POST';
+      await fetch(`${baseUrl}/api/message/template/00000000-0000-0000-0000-400000000002`, {
+        method: mtMethod,
+        headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageTemplate: { name: 'Pied Piper Passwordless SMS', type: 'SMS', defaultTemplate: smsTpl } }),
+      });
+    } catch (e) {
+      console.error('[screenshot] beforeAll: message template update failed:', e.message);
     }
 
     // create Generic HTTP messenger for phone OTP flow (points to sms-mock service in docker-compose)
@@ -179,23 +189,28 @@ export default {
       console.error('[screenshot] beforeAll: messenger setup failed:', e.message);
     }
 
-    // configure tenant: passwordless email/phone template IDs, phone messenger
+    // configure tenant email: set passwordless email template (needed for the login button to render)
     try {
-      await fetch(`${baseUrl}/api/tenant/${tenantId}`, {
+      const r = await fetch(`${baseUrl}/api/tenant/${tenantId}`, {
         method: 'PATCH',
         headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenant: {
-          emailConfiguration: {
-            passwordlessEmailTemplateId: '00000000-0000-0000-0000-400000000001',
-          },
-          phoneConfiguration: {
-            defaultMessengerId: messengerId,
-            passwordlessTemplateId: '00000000-0000-0000-0000-400000000002',
-          },
-        } }),
+        body: JSON.stringify({ tenant: { emailConfiguration: { passwordlessEmailTemplateId: '00000000-0000-0000-0000-400000000001' } } }),
       });
+      if (!r.ok) console.error('[screenshot] beforeAll: email template PATCH failed:', r.status, await r.text());
     } catch (e) {
-      console.error('[screenshot] beforeAll: tenant config failed:', e.message);
+      console.error('[screenshot] beforeAll: email template PATCH failed:', e.message);
+    }
+
+    // configure tenant phone: messenger + SMS template (separate PATCH so email config isn't blocked by phone errors)
+    try {
+      const r = await fetch(`${baseUrl}/api/tenant/${tenantId}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenant: { phoneConfiguration: { messengerId: messengerId, passwordlessTemplateId: '00000000-0000-0000-0000-400000000002' } } }),
+      });
+      if (!r.ok) console.error('[screenshot] beforeAll: phone PATCH failed:', r.status, await r.text());
+    } catch (e) {
+      console.error('[screenshot] beforeAll: phone PATCH failed:', e.message);
     }
 
   },
@@ -261,7 +276,8 @@ export default {
             navigator.credentials.get = () => new Promise(() => {});
           }
         });
-        await page.goto(oauthLoginUrl);
+        // prompt=login forces the login form even when Richard has an active session
+        await page.goto(oauthLoginUrl + '&prompt=login');
         await page.waitForLoadState('networkidle');
         await page.fill('#loginId', 'richard@piedpiper.com');
         await page.fill('#password', 'password');
@@ -279,11 +295,31 @@ export default {
       }
     }
 
+    // user manage pages for Big Head and Erlich: the Angular SPA may land on the Users
+    // list before routing to the specific user -- wait for the Manage User heading.
+    if (url.includes('00000000-0000-0000-0000-10000000000')) {
+      try {
+        await page.waitForFunction(
+          () => document.querySelector('h1')?.textContent?.trim() === 'Manage User',
+          { timeout: 20000 }
+        ).catch(async () => {
+          // retry the navigation once if Angular didn't route to the manage page
+          await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 }).catch(() => {});
+          await page.waitForFunction(
+            () => document.querySelector('h1')?.textContent?.trim() === 'Manage User',
+            { timeout: 15000 }
+          );
+        });
+      } catch (e) {
+        console.error('[screenshot] manage page wait failed:', e.message);
+      }
+    }
+
     // add registration screenshot: click Add registration on Erlich's manage page,
     // then select the first available application so the full form loads
     if (url.includes('00000000-0000-0000-0000-100000000003')) {
       try {
-        await page.locator('a, button').filter({ hasText: /Add registration/i }).first().click({ timeout: 5000 });
+        await page.locator('a, button').filter({ hasText: /Add registration/i }).first().click({ timeout: 10000 });
         await page.waitForTimeout(1500);
         await page.locator('select').first().selectOption({ index: 1 });
         await page.waitForTimeout(2500);
@@ -442,7 +478,8 @@ export default {
         await page.waitForLoadState('networkidle');
         // Big Head has mobilePhone in kickstart -- enter it to trigger the phone OTP flow
         await page.fill('#loginId', '+15555551234');
-        await page.locator('#submit-button, [type="submit"]').first().click();
+        // the passwordless form submit is a plain <button> with text "Send" -- no type or id attr
+        await page.locator('form[action="/oauth2/passwordless"] button').first().click();
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(500);
       } catch (e) {
@@ -454,11 +491,23 @@ export default {
       // viewport is already set to spec.height by capture.mjs before this hook runs.
       // scroll down to reach the Add Localization button (below the fold), click it,
       // then scroll back to top -- position:fixed dialog stays centred in the viewport.
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(2000); // code editor initialization takes time
       try {
-        // click the Messages tab; scoped to el-tab-list so we don't match other buttons.
-        // plain substring match handles surrounding whitespace/tooltip text in the button.
-        await page.locator('el-tab-list button').filter({ hasText: 'Messages' }).first().click({ timeout: 3000 });
+        // wait for Angular to render the theme editor tab list before clicking Messages.
+        // tabs are <a> elements; text includes trailing icon chars so use startsWith.
+        // "Message Templates" in the nav starts with "Message" (no s) -- won't match.
+        await page.waitForFunction(
+          () => [...document.querySelectorAll('button, [role="tab"], a')].some(el => /^Messages\b/.test(el.textContent.trim())),
+          null,
+          { timeout: 20000 }
+        );
+        await page.evaluate(() => {
+          const candidates = [...document.querySelectorAll('button, [role="tab"], a')]
+            .filter(el => /^Messages\b/.test(el.textContent.trim()));
+          // prefer the shortest match to avoid "Message Templates" nav link if regex somehow matches
+          const btn = candidates.sort((a, b) => a.textContent.trim().length - b.textContent.trim().length)[0];
+          if (btn) btn.click();
+        });
         await page.waitForTimeout(1500);
         // scroll down far enough to bring Add Localization into the viewport
         const docH = await page.evaluate(() => document.documentElement.scrollHeight);
