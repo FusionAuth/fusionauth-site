@@ -45,7 +45,7 @@ public class ScimExample {
 	private static final String DEFAULT_USER_PASSWORD = "password";
 	// :snippet-end:
 
-	public static void main(String args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		String secret = "";
 		String operation = "get";
 
@@ -193,4 +193,3 @@ public class ScimExample {
 		return new ScimRequestBuilder(SCIM_APPLICATION_BASE_URL, scimClientConfig);
 	}
 }
-
