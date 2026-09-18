@@ -1,0 +1,88 @@
+---
+publish_date: 2026-09-18
+title: "Notes from LDX3 NYC: Nobody Has a Good Answer for Agentic Identity Yet"
+description: "A recap of LDX3 NYC, where the hallway conversations resounded with discussions about AI."
+authors: Dan Moore
+image: /img/blogs/zero-trust-idps/zero-trust-and-how-idps-factor-into-it-header-image.png
+categories: Community, Education
+tags: zero trust, identity provider
+excerpt_separator: "{/* more */}"
+---
+
+
+I spent a couple of days at LDX3 NYC last week. LeadDev runs a handful of these conferences, and this one's aimed squarely at senior+ engineers, engineering managers and directors. I try to get to a few of these a year, not because every conversation turns into a sales discussion (most don't), but because talking to people who run engineering teams and build software tells me what's actually keeping them up at night. It's also a chance to catch up with folks I only know from Slack or other online interactions.
+
+{/* more */}
+
+This year, no surprise: AI dominated the conversation. But "AI is a big topic at a conference" isn't exactly an unusual hot take, so let me be specific.
+
+## What engineering managers are actually worried about
+
+The AI discussion split into a few threads:
+
+Team effects: what does it mean to manage a team where some fraction of the code is AI-written? What does "senior engineer" even mean if the bar for producing working code has dropped?
+
+Tooling fatigue: a lot of people are trying to figure out what's real versus what's a fad. Reasonable position to be in right now; it's hard to know what deserves attention.
+
+The pipeline problem isn't new, but every new AI capability sharpens it. If junior engineers used to learn by doing the unglamorous work, and AI now does the unglamorous work, how do you grow the senior engineers we need five or ten years from now? Nobody I talked to had a clean answer. I don't either.
+
+## The booth conversations I had were mostly about agentic identity
+
+There were only a few identity-focused vendors present, but plenty of tools to help developers manage their agents, enable their agents, or use agents in their systems. The booth next to us was an AI SRE.
+
+Which tells you something about who shows up to these things now.
+
+I talked to people about their customer identity needs, how we compared to competitors, and the problem we solve. But most folks who stopped by wanted to talk about agentic systems for employees, more than customer identity.
+
+### Controlling third party tool access
+I had one great conversation about what happens to access when an agent acts on someone's behalf in a third party tool like Notion.
+
+Say I'm Dan. I have access to a set of Notion docs. I want an agent to act on my behalf: update docs, look things up, whatever. That agent should reach some of the documents I have access to, but not all of them. For example, it should see general docs (under `/docs`), but not the documents where we keep production details or customer info (under `/secrets`).
+
+How do you actually build that? I've written before about [this AI authorization problem](/blog/ai-authorization), and it's a doozie.
+
+There are two valid answers, and which one you get depends on the third-party provider.
+
+1. The provider supports granular scoping. If Notion (or whatever the third party tool is) lets you scope access down to specific documents or folders, use that. It's the clean answer. It's also, in my experience, the option that's rarely available.
+
+2. Build a gateway to control access to Notion for the agent. This is the messier, more common reality, and I think most teams will end up here, so let me walk through it.
+
+First, have Dan get a refresh token for Notion with scopes an agent might want to use.
+
+Then mint an agentic identity associated with Dan: not Dan's identity, but a distinct one that represents "the agent acting for Dan."
+
+Dan authenticates with the system, not Notion, and then the agentic harness does an on-behalf-of token exchange. The harness exchanges Dan's local token (via an identity provider) for a token that represents the agent acting on Dan's behalf. That token carries Dan's subject claim plus something that flags it as agentic. That token means nothing to Notion; Notion has no idea what to do with it.
+
+But you can put a proxy in front of Notion that does.
+
+Two things happen at the gateway: exchange for the right identity, then inject the right credential if the rules pass.
+
+I've explored this idea against the open-source agentgateway project. There are other efforts in this space too, and I'd expect more to show up. Here are the relevant docs for the [token exchange](https://agentgateway.dev/docs/standalone/latest/configuration/security/backend-authn/), [HTTP](https://agentgateway.dev/docs/standalone/latest/documentation/configuration/security/http-authz/) and [MCP rules](https://agentgateway.dev/docs/standalone/latest/documentation/configuration/security/mcp-authz/).
+
+First, put an MCP/HTTP gateway in front of Notion. All requests to Notion must go through that proxy instead of hitting the Notion API directly. The harness hands the gateway Dan's local token as-is. The gateway does the exchange first, presenting Dan's token to the identity provider and getting back the token that carries Dan's subject claim plus the agentic information.
+
+Once it has that, the gateway applies the access rules and, if they pass, pulls and injects the real Notion credential.
+
+The token the gateway holds still isn't a Notion-native token even after the request is approved. It's the internally minted one that the agent holds, with Dan's sub claim on it. Somewhere, you need a store that holds the real Notion credential associated with Dan (FusionAuth stores these on identity links).
+
+A service needs to pull that credential and inject it into the request. That service can't just trust whatever token shows up; it needs to verify the token's signature against the identity provider that issued it, check that the token was issued for this purpose (the audience), and confirm which user it's tied to (the subject) before releasing anything. Skip these checks and you've built a vending machine that hands out real Notion credentials to whoever asks nicely. Get it right and this is a small, auditable piece of infrastructure.
+
+That's the basic shape. It's not elegant, but it works, and it's the pattern I'd point people toward if their provider doesn't do native scoping, which, again, is most providers right now.
+
+This also breaks down if the Notion API doesn't use paths. MCP rules have their own limits and split things up by tool rather than path.
+
+## The part that should worry you
+
+We also ran a survey with LDX3 on the [state of AI in software development](https://leaddev.com/the-ai-impact-report-2026), and I participated in a short overview of it at the conference.
+
+Two numbers from the survey stuck with me.
+
+First, 69% of teams don't have a plan to measure whether their AI tooling in the SDLC actually works, but they're moving forward anyway. Not "considering AI." Already shipping with it, with no way to tell if it's helping or how much.
+
+Second, 24% of teams have developers using their personal credentials to access AI tools, instead of provisioning separate ones. This is the same identity problem as the agentic gateway thing above, just less exotic. If a developer's personal login authenticates to your AI coding assistant, you've lost the ability to audit what the assistant did versus what the human did. You can't lock it down separately, and you can't revoke one without revoking the other.
+
+This is slightly less scary for the developer use case. If you're inside something like GitHub, where there are already guardrails such as protected branches, easy rollbacks, and required reviews, the blast radius is smaller. That's a legitimate mitigation.
+
+It doesn't apply once you're outside a tool with those gates built in.
+
+Give agents their own identity and their own access token, always, because the moment something goes wrong, you want to know whether it was the human or the agent. Shared credentials mean you never will.
