@@ -1,0 +1,112 @@
+---
+title: Customize
+htmlTitle: Customize One-Time Passwords
+description: Customize the one-time password experience in your application.
+---
+import EmailTemplates from 'src/content/docs/_shared/_passwordless-login-templates.mdx';
+import MessageTemplate from 'src/content/docs/_shared/message/_passwordless-txt.mdx';
+
+This page provides information about how you can customize your magic link and code experience to best meet the needs of your application.
+
+## One Time Code Customization
+
+You can modify the lifetime of the code and one-time code delivered to users. By default it is 180 seconds; change this in the tenant settings:
+
+<Screenshot url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#passwordless" alt="The tenant settings to customize the passwordless code lifetime." id="passwordless-tenant-duration">
+  <Highlight selector="#tenant_externalIdentifierConfiguration_passwordlessLoginTimeToLiveInSeconds-form-row" />
+  <Highlight selector="#tenant_externalIdentifierConfiguration_oneTimePasswordTimeToLiveInSeconds-form-row" />
+</Screenshot>
+
+You can also change the types of the generated code and one-time code. For example, you may want your code to be only alphanumeric characters and one-time code to be numeric digits.
+
+You may change your code length or generation strategy for security or user experience reasons. You may have requirements that specify a certain code length. For instance, for a code delivered by text message, having a user enter a six digit alphanumeric code is lot easier than a 64 byte string.
+
+You have the following options for the code generation strategy:
+
+* alphabetic characters
+* alphanumeric characters
+* bytes
+* digits
+
+Consult the [Tenant API documentation](/docs/apis/tenants) for length limits, which vary based on the strategy.
+
+<Screenshot url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#passwordless" alt="The tenant settings to customize the passwordless code generation strategy." id="passwordless-tenant-generation">
+  <Highlight selector="div.flex.items-end.w-full:has([name='tenant.externalIdentifierConfiguration.passwordlessLoginGenerator.length'])" />
+  <Highlight selector="div.flex.items-end.w-full:has([name='tenant.externalIdentifierConfiguration.passwordlessLoginOneTimeCodeGenerator.length'])" />
+</Screenshot>
+
+## Templates
+
+If you use FusionAuth to send one-time passwords using email or a [Messenger](/docs/customize/email-and-messages/messengers), you must specify a template. For more information about these templates, see the [email and Messenger template reference](/docs/customize/email-and-messages/).
+
+### Email Template Customization
+
+<Aside type="tip">
+You must configure SMTP for your Tenant before you can send one-time passwords via email. To configure SMTP, navigate to <Breadcrumb>Tenants -> Edit -> Email</Breadcrumb>.
+</Aside>
+
+<Steps>
+1. Navigate to <Breadcrumb>Customizations -> Email Templates</Breadcrumb>.
+
+   <Screenshot url="/admin/email/template/" alt="The email templates page." id="passwordless-email-templates-list" />
+
+1. Click **Add** to create a new email template.
+   
+   <Screenshot url="/admin/email/template/edit/00000000-0000-0000-0000-400000000001" alt="Modifying the one-time password login email template." id="passwordless-email-template-edit" />
+
+   Specify both HTML and plaintext templates to ensure compatibility with all email clients. When customizing, you can use any [Apache FreeMarker built-ins](https://freemarker.apache.org/docs/ref_builtins.html) within the template and in the subject. The following example templates provide a good starting point that you can build upon with your own branding:
+
+   <EmailTemplates/>
+
+   <Details title="Localize the email template">
+     You can optionally localize your email templates to customize the template language for a given locale.
+
+     <Screenshot url="/admin/email/template/edit/00000000-0000-0000-0000-400000000001#localization" alt="The localization settings for the email template." id="passwordless-email-template-localization">
+       <Highlight selector="[data-hl='add-localization']" />
+     </Screenshot>
+   </Details>
+
+   <Details title="Customize email subject">
+     The following example shows how to customize the email subject with FreeMarker with the time that the link expires:
+
+     ```ftl
+     [#setting time_zone = (user.timezone)!"US/Denver"]
+     [#setting time_format = "h:mm a"]
+     Expires at: ${((.now?date?long + timeToLive * 1000)?number_to_time)?string}
+     ```
+   </Details>
+
+1. Navigate to <Breadcrumb>Tenants -> Edit -> Identities -> Template Settings</Breadcrumb>. In the **Email** column, choose your template from the **Passwordless login** dropdown.
+
+   <Screenshot url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#identities" alt="Updating the tenant to use the new one-time password email template." id="passwordless-tenant-email-config">
+     <Highlight selector="[data-hl='pw-email-template']" />
+   </Screenshot>
+</Steps>
+
+### Message Template Customization
+
+<Aside type="tip">
+You must configure a [Messenger](/docs/customize/email-and-messages/messengers) before you can send one-time passwords to a phone. To configure a Messenger, navigate to <Breadcrumb>Settings -> Messengers</Breadcrumb>.
+</Aside>
+
+<Steps>
+1. Navigate to <Breadcrumb>Customizations -> Message Templates</Breadcrumb>.
+
+   <Screenshot url="/admin/message/template/" alt="The message template page." id="passwordless-message-templates-list" />
+
+1. Click **Add** to create a new message template.
+   
+   <Screenshot url="/admin/message/template/edit/00000000-0000-0000-0000-400000000002" alt="Modifying the one-time password login message template." id="passwordless-message-template-edit" />
+
+   When customizing, you can use any [Apache FreeMarker built-ins](https://freemarker.apache.org/docs/ref_builtins.html) within the template and in the subject. The following example template provides a good starting point that you can build upon with your own branding:
+
+   <MessageTemplate />
+
+   Like the Email templates, you can optionally localize your message templates to customize the template language for a given locale.
+
+1. Navigate to <Breadcrumb>Tenants -> Edit -> Identities -> Template Settings</Breadcrumb>. In the **Phone** column, choose your template from the **Passwordless login** dropdown.
+
+   <Screenshot url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#identities" alt="Updating the tenant to use the new one-time password message template." id="passwordless-tenant-message-config">
+    <Highlight selector="[data-hl='pw-message-template']" />
+   </Screenshot>
+</Steps>

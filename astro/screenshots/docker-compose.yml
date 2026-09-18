@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: hacking_is_not_cool
       POSTGRES_DB: fusionauth
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - /var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U fusionauth"]
       interval: 5s
@@ -20,6 +20,11 @@ services:
     ports:
       - "8080:80"
 
+  sms-mock:
+    image: mendhak/http-https-echo:35
+    environment:
+      HTTP_PORT: 8081
+
   fusionauth:
     # pin to a specific version so screenshots are reproducible across machines
     image: fusionauth/fusionauth-app:1.69.1
@@ -27,6 +32,8 @@ services:
       db:
         condition: service_healthy
       images:
+        condition: service_started
+      sms-mock:
         condition: service_started
     environment:
       DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
@@ -43,7 +50,7 @@ services:
       SEARCH_TYPE: database
     volumes:
       - ./kickstart:/usr/local/fusionauth/kickstart:ro
-      - fusionauth_config:/usr/local/fusionauth/config
+      - /usr/local/fusionauth/config
     ports:
       - "9011:9011"
     healthcheck:
@@ -53,6 +60,3 @@ services:
       retries: 30
       start_period: 60s
 
-volumes:
-  db_data:
-  fusionauth_config:
