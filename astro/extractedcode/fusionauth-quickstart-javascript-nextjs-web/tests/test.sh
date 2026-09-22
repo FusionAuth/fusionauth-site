@@ -4,12 +4,12 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-LOGS_PID=0
-FA_LOGS_PID=0
+LOGS_PID=""
+FA_LOGS_PID=""
 cleanup() {
   echo "Cleaning up..."
-  kill $LOGS_PID 2>/dev/null || true
-  kill $FA_LOGS_PID 2>/dev/null || true
+  [ -n "$LOGS_PID" ] && kill "$LOGS_PID" 2>/dev/null || true
+  [ -n "$FA_LOGS_PID" ] && kill "$FA_LOGS_PID" 2>/dev/null || true
   docker stop app 2>/dev/null || true
   cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
 }
