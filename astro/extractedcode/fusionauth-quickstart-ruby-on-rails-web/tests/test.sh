@@ -4,10 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-LOGS_PID=0
+LOGS_PID=""
 cleanup() {
   echo "Cleaning up..."
-  kill $LOGS_PID 2>/dev/null || true
+  [ -n "$LOGS_PID" ] && kill "$LOGS_PID" 2>/dev/null || true
   docker stop ruby 2>/dev/null || true
   cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
 }
@@ -20,6 +20,9 @@ docker compose pull
 echo "Starting FusionAuth..."
 cd "$PROJECT_DIR"
 docker compose up -d
+
+echo "Running Rails tests..."
+docker run --rm -v gems:/usr/local/bundle -v "$PROJECT_DIR/complete-app":/app -w /app ruby:4.0.5 bash -c "bundle install && OP_SECRET_KEY=super-secret-secret-that-should-be-regenerated-for-production bundle exec rails test"
 
 echo "Starting app..."
 docker run --network host --name ruby --rm -v gems:/usr/local/bundle -v "$PROJECT_DIR/complete-app":/app -w /app ruby:4.0.5 bash -c "bundle install && OP_SECRET_KEY=super-secret-secret-that-should-be-regenerated-for-production bundle exec rails s -b 0.0.0.0" &

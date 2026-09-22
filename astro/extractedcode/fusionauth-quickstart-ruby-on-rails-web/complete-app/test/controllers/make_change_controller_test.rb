@@ -1,8 +1,8 @@
 require "test_helper"
 
 class MakeChangeControllerTest < ActionDispatch::IntegrationTest
-  test "should get index" do
-    get make_change_index_url
-    assert_response :success
+  test "redirects signed-out users home" do
+    get make_change_url
+    assert_redirected_to root_url
   end
 end

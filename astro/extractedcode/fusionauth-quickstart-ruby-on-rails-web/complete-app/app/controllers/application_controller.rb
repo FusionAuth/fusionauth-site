@@ -4,7 +4,7 @@ class ApplicationController < ActionController::Base
    before_action :redirect_non_localhost!
 
    def authenticate_user!
-     redirect_to '/login' unless session[:user]
+     redirect_to '/' unless session[:user]
    end
 
    def redirect_non_localhost!
