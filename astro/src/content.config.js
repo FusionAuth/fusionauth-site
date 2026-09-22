@@ -105,8 +105,8 @@ const docsCollection = defineCollection({
     cardImage: z.string().optional(),
     excludeFromNav: z.boolean().default(false),
     sectionIndex: z.boolean().default(false),
-    nextPage: z.string().optional(),
-    lastPage: z.string().optional(),
+    next: z.string().optional(),
+    prev: z.string().optional(),
   }),
 });
 
