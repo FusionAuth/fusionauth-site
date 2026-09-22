@@ -16,6 +16,7 @@ import { rehypeCodeBlocks, remarkShellSession } from 'astro-better-code-blocks';
 import { extractedCodeSnippets } from 'astro-better-code-snippet-extractor';
 import astroToc from 'astro-toc-smol';
 import { openapiSummary } from './src/plugins/openapi-summary.js';
+import { cssPreload } from './src/plugins/css-preload.mjs';
 
 function buildSitemap() {
   let siteUrl: string;
@@ -167,6 +168,7 @@ const config = defineConfig({
       tailwindcss(),
       mdxComponentImporter(),
       lightboxProvider(),
+      cssPreload(),
     ],
     build: {
       chunkSizeWarningLimit: 700,
