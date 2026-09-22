@@ -34,11 +34,21 @@ const isIndexPage = entry.id === 'index' || entry.id.endsWith('/index');
 
 // collection-relative folder path this page represents (for sectionIndex)
 const sectionFolder = entry.id.replace(/\.(md|mdx)$/i, '').replace(/\/index$/, '');
+
+// PageNav path-matching uses Astro.url.pathname which includes /docs/, but
+// collection IDs don't — so relative refs never match. Pass absolute paths so
+// PageNav's absolute-path branch strips /docs/ and finds the right entry.
+const entryFolder = entry.id.replace(/\.(md|mdx)$/i, '').split('/').slice(0, -1).join('/');
+function toAbsoluteNav(ref) {
+  if (!ref) return undefined;
+  if (ref.startsWith('/')) return ref;
+  return `/docs/${entryFolder ? entryFolder + '/' : ''}${ref}`;
+}
+const prevNav = toAbsoluteNav(entry.data.prev);
+const nextNav = toAbsoluteNav(entry.data.next);
 ---
 <Layout frontmatter={entry.data} {headings} {isIndexPage} disableTOC={entry.data.disableTOC}>
   <Content />
   {entry.data.sectionIndex && <ChildCards collection="docs" folder={sectionFolder} />}
-  {(entry.data.nextPage || entry.data.lastPage) && (
-    <PageNav collection="docs" currentId={entry.id} nextPage={entry.data.nextPage} lastPage={entry.data.lastPage} />
-  )}
+  <PageNav prev={prevNav} next={nextNav} />
 </Layout>
