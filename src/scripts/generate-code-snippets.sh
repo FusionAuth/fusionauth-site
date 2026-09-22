@@ -42,6 +42,9 @@ for repo in extractedcode/*/; do
 		--ignore 'tests' \
 		--ignore 'LICENSE' \
 		--ignore 'SECURITY.md' \
+		--ignore '*.log' \
+		--ignore 'tmp' \
+		--ignore '*.cache' \
 		2>&1) || status=$?
 	if [ $status -ne 0 ] || printf '%s\n' "$out" | grep -q 'bluehawk errors'; then
 		echo "Error: bluehawk snip failed for $repo" >&2
