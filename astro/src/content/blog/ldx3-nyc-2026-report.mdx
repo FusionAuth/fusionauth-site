@@ -10,21 +10,21 @@ excerpt_separator: "{/* more */}"
 ---
 
 
-I spent a couple of days at LDX3 NYC last week. LeadDev runs a handful of these conferences, and this one's aimed squarely at senior+ engineers, engineering managers and directors. I try to get to a few of these a year, not because every conversation turns into a sales discussion (most don't), but because talking to people who run engineering teams and build software tells me what's actually keeping them up at night. It's also a chance to catch up with folks I only know from Slack or other online interactions.
+I spent a couple of days at LDX3 NYC last week. LeadDev runs a handful of these conferences, and this one's aimed squarely at senior+ engineers, engineering managers, and directors. I try to get to a few of these a year, not because every conversation turns into a sales discussion (most don't), but because talking to software developers tells me what's keeping them up at night. It's also a chance to catch up with folks I only know from Slack or other online interactions.
 
 {/* more */}
 
-This year, no surprise: AI dominated the conversation. But "AI is a big topic at a conference" isn't exactly an unusual hot take, so let me be specific.
+This year, no surprise: AI dominated the conversation. Since "AI is a big topic at a conference" isn't exactly an unusual hot take, let me be specific.
 
 ## What engineering managers are actually worried about
 
 The AI discussion split into a few threads:
 
-Team effects: what does it mean to manage a team where some fraction of the code is AI-written? What does "senior engineer" even mean if the bar for producing working code has dropped?
+* Team effects: what does it mean to manage a team where some fraction of the code is AI-written? What does "senior engineer" mean if the bar for writing working code has dropped?
 
-Tooling fatigue: a lot of people are trying to figure out what's real versus what's a fad. Reasonable position to be in right now; it's hard to know what deserves attention.
+* Tooling fatigue: a lot of people are trying to distinguish reality from fad. It's hard to know what deserves attention.
 
-The pipeline problem isn't new, but every new AI capability sharpens it. If junior engineers used to learn by doing the unglamorous work, and AI now does the unglamorous work, how do you grow the senior engineers we need five or ten years from now? Nobody I talked to had a clean answer. I don't either.
+If junior engineers used to learn from unglamorous work that AI now does, how do you grow senior engineers for the future? Nobody I talked to had a clean answer. I don't either.
 
 ## The booth conversations I had were mostly about agentic identity
 
@@ -43,7 +43,7 @@ How do you actually build that? I've written before about [this AI authorization
 
 There are two valid answers, and which one you get depends on the third-party provider.
 
-1. The provider supports granular scoping. If Notion (or whatever the third party tool is) lets you scope access down to specific documents or folders, use that. It's the clean answer. It's also, in my experience, the option that's rarely available.
+1. The provider supports granular scoping. If Notion (or whatever the third party tool is) lets you scope access down to specific documents or folders, use that. Unfortunately, this option is also, in my experience, rarely available.
 
 2. Build a gateway to control access to Notion for the agent. This is the messier, more common reality, and I think most teams will end up here, so let me walk through it.
 
@@ -65,7 +65,13 @@ Once it has that, the gateway applies the access rules and, if they pass, pulls 
 
 The token the gateway holds still isn't a Notion-native token even after the request is approved. It's the internally minted one that the agent holds, with Dan's sub claim on it. Somewhere, you need a store that holds the real Notion credential associated with Dan (FusionAuth stores these on identity links).
 
-A service needs to pull that credential and inject it into the request. That service can't just trust whatever token shows up; it needs to verify the token's signature against the identity provider that issued it, check that the token was issued for this purpose (the audience), and confirm which user it's tied to (the subject) before releasing anything. Skip these checks and you've built a vending machine that hands out real Notion credentials to whoever asks nicely. Get it right and this is a small, auditable piece of infrastructure.
+A service needs to pull that credential and inject it into the request. That service can't just trust whatever token shows up; before releasing anything, it needs to:
+
+* verify the token's signature against the identity provider that issued it
+* check that the token was issued for this purpose (the audience)
+* confirm which user it's tied to (the subject)
+
+Skip these checks and you've built a vending machine that hands out real Notion credentials to whoever asks nicely. Get it right and you have a small, auditable piece of infrastructure.
 
 That's the basic shape. It's not elegant, but it works, and it's the pattern I'd point people toward if their provider doesn't do native scoping, which, again, is most providers right now.
 
@@ -81,7 +87,7 @@ First, 69% of teams don't have a plan to measure whether their AI tooling in the
 
 Second, 24% of teams have developers using their personal credentials to access AI tools, instead of provisioning separate ones. This is the same identity problem as the agentic gateway thing above, just less exotic. If a developer's personal login authenticates to your AI coding assistant, you've lost the ability to audit what the assistant did versus what the human did. You can't lock it down separately, and you can't revoke one without revoking the other.
 
-This is slightly less scary for the developer use case. If you're inside something like GitHub, where there are already guardrails such as protected branches, easy rollbacks, and required reviews, the blast radius is smaller. That's a legitimate mitigation.
+This is slightly less scary for the developer use case. If you're inside something like GitHub, where there are already guardrails such as protected branches, easy rollbacks, and required reviews, the blast radius is smaller.
 
 It doesn't apply once you're outside a tool with those gates built in.
 
