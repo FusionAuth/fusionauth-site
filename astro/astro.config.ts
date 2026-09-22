@@ -71,7 +71,7 @@ const mdxComponentImports =
   "import IconButton from 'src/components/IconButton.astro';\n" +
   "import ChildCards from 'astro-better-cards/ChildCards.astro';\n" +
   "import Card from 'astro-better-cards/Card.astro';\n" +
-  "import CardGrid from 'src/components/CardGrid.astro';\n" +
+  "import CardGrid from 'astro-better-cards/CardGrid.astro';\n" +
   "import ExtractedCode from 'astro-better-code-snippet-extractor/ExtractedCode.astro';\n" +
   "import Tabs from 'astro-better-tabs/Tabs.astro';\n" +
   "import TabItem from 'astro-better-tabs/TabItem.astro';\n" +
