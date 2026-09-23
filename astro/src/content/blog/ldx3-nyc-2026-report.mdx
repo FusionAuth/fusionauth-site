@@ -45,6 +45,47 @@ There are two valid answers, and which one you get depends on the third-party pr
 
 2. Build a gateway to control access to Notion for the agent. This is the messier, more common reality, and I think most teams will end up here, so let me walk through it.
 
+Here's a diagram of this flow, illustrating the major moving pieces.
+
+```mermaid
+sequenceDiagram
+    participant Dan as Dan (User)
+    participant Harness as Agent Harness
+    participant IdP as Identity Provider
+    participant Gateway as Gateway (agentgateway)
+    participant Store as Credential Store
+    participant Notion as Notion API
+
+    Note over Dan,IdP: Setup (one-time)
+    Dan->>IdP: Authenticate & authorize Notion access
+    IdP->>Store: Store Notion refresh token, linked to Dan
+    IdP->>Harness: Issue agentic identity for "agent acting as Dan"
+
+    Note over Dan,Notion: Runtime request
+    Dan->>Harness: Ask agent to act (e.g. update doc)
+    Harness->>Gateway: Forward Dan's local token
+
+    Gateway->>IdP: Exchange local token (on-behalf-of)
+    IdP-->>Gateway: Return token with Dan's sub claim + agentic flag
+
+    Gateway->>Gateway: Verify token signature
+    Gateway->>Gateway: Check audience (issued for this purpose)
+    Gateway->>Gateway: Confirm subject (which user)
+    Gateway->>Gateway: Apply access rules (e.g. /docs allowed, /secrets denied)
+
+    alt Rules pass
+        Gateway->>Store: Request real Notion credential for Dan
+        Store-->>Gateway: Return Notion credential
+        Gateway->>Notion: Forward request with injected credential
+        Notion-->>Gateway: Response
+        Gateway-->>Harness: Response
+        Harness-->>Dan: Result
+    else Rules fail
+        Gateway-->>Harness: Deny request
+        Harness-->>Dan: Access denied
+    end
+```
+
 First, have Dan get a refresh token for Notion with scopes an agent might want to use.
 
 Then mint an agentic identity associated with Dan: not Dan's identity, but a distinct one that represents "the agent acting for Dan."
