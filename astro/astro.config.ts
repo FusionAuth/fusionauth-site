@@ -172,6 +172,13 @@ const config = defineConfig({
     ],
     build: {
       chunkSizeWarningLimit: 700,
+      rollupOptions: {
+        output: {
+          // Vite names the Tailwind bundle after a leaf component (Kapa); use a stable descriptive name instead.
+          assetFileNames: (info) =>
+            info.names?.some(n => n === 'Kapa.css') ? '_astro/styles.[hash][extname]' : '_astro/[name].[hash][extname]',
+        },
+      },
     },
     cacheDir: '.vite-cache',
     ssr: {
