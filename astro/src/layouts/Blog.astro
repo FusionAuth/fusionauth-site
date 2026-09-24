@@ -37,8 +37,23 @@ const categories = splitTags(frontmatter.categories);
 const authors = splitTags(frontmatter.authors);
 const tags = splitTags(frontmatter.tags);
 
-const featuredTag = frontmatter.featured_tag || tags[0] || 'passwords';
-const featuredCategory = frontmatter.featured_category || categories[0] || 'tutorials';
+const featuredTag = tags[0] || 'passwords';
+const featuredCategory = categories[0] || 'tutorials';
+
+const origin = Astro.site?.origin ?? 'https://fusionauth.io';
+
+const blogPostingSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: title,
+  ...(description && { description }),
+  image: origin + ogImage,
+  datePublished: publishedDate?.toISOString(),
+  ...(updatedDate && { dateModified: updatedDate.toISOString() }),
+  author: authors.map(name => ({ '@type': 'Person', name })),
+  url: origin + '/blog/' + slug,
+  ...(tags.length > 0 && { keywords: tags.join(', ') }),
+};
 
 const collection = await getCollection<BlogContent>('blog');
 const relatedPosts = await mapRelated(collection, 'categories', featuredCategory, slug);
@@ -61,7 +76,7 @@ const markdownStyles = [
 ---
 <!DOCTYPE html>
 <html class="antialiased" lang="en">
-<HeadComponent title={htmlTitle} canonicalUrl={canonicalUrl} description={description} openGraphImage={ogImage} {markdownTitle} llmsTxtHref="/blog/llms.txt" />
+<HeadComponent title={htmlTitle} canonicalUrl={canonicalUrl} description={description} openGraphImage={ogImage} {markdownTitle} llmsTxtHref="/blog/llms.txt" tags={tags.join(', ') || undefined} pageSchema={blogPostingSchema} />
 <body class="antialiased leading-tight dark:bg-articles-dark dark:bg-slate-900 dark:text-slate-200">
   <Nav
     noSideNav={false}

@@ -5,6 +5,7 @@ import Navigation from 'src/components/Navigation.astro';
 import GitHubEdit from 'src/components/GitHubEdit.astro';
 import DocSearch from 'src/components/search/DocSearch.astro';
 import TOC from 'astro-toc-smol/TOC.astro';
+import InlineTOC from 'astro-toc-smol/InlineTOC.astro';
 import { specialCaps } from 'src/tools/string';
 import { Marked } from 'marked';
 import CodeCopyButton from 'astro-better-code-blocks/CopyCodeButton.astro';
@@ -99,6 +100,25 @@ const tocStyles = "order-3 lg:order-3 bottom-0 hidden overflow-hidden pb-10 pt-0
 const isProd = import.meta.env.PROD as boolean;
 const mdPath = isProd ? "LLM_MD_PATH_PLACEHOLDER" : Astro.url.pathname + "?format=md";
 
+const splitTags = (s?: string) => s ? s.split(',').map(t => t.trim()).filter(Boolean) : [];
+const pageTags = splitTags(frontmatter?.tags);
+const pageTagString = pageTags.length > 0 ? pageTags.join(', ') : undefined;
+
+const techArticleSchema = (frontmatter?.title && frontmatter?.description) ? {
+  '@context': 'https://schema.org',
+  '@type': 'TechArticle',
+  headline: frontmatter.title,
+  description: frontmatter.description,
+  url: (Astro.site?.origin ?? 'https://fusionauth.io') + Astro.url.pathname,
+  ...(pageTags.length > 0 && { keywords: pageTagString, teaches: pageTags }),
+  ...(frontmatter?.datePublished && {
+    datePublished: frontmatter.datePublished instanceof Date
+      ? frontmatter.datePublished.toISOString()
+      : String(frontmatter.datePublished),
+  }),
+  ...(frontmatter?.section && { about: { '@type': 'Thing', name: frontmatter.section } }),
+} : undefined;
+
 const remark = new Marked();
 const markdownifiedTitle = remark.parseInline(htmlTitle);
 const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.*?\)/g, '$1').trim();
@@ -107,7 +127,7 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
 
 <!DOCTYPE html>
 <html class="antialiased min-h-full lg:overscroll-y-none" lang="en">
-<Head title={`${cleanedHtmlTitle} | FusionAuth Docs`} description={description} canonicalUrl={frontmatter?.canonicalUrl} {isIndexPage} {openGraphImage} markdownTitle={markdownTitleValue} {llmsTxtHref} />
+<Head title={`${cleanedHtmlTitle} | FusionAuth Docs`} description={description} canonicalUrl={frontmatter?.canonicalUrl} {isIndexPage} {openGraphImage} markdownTitle={markdownTitleValue} {llmsTxtHref} tags={pageTagString} pageSchema={techArticleSchema} />
 <body class:list={[
   "font-sans antialiased bg-white min-h-full text-slate-700 dark:bg-slate-900 dark:text-slate-200",
   !hideBgImage && "bg-articles bg-right-top bg-no-repeat dark:bg-articles-dark"
@@ -164,6 +184,8 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
   </script>
   
   <slot name="nav"/>
+
+  <input type="checkbox" id="sidebar-toggle" class="sr-only" />
 
   <div id="layout-outer" class={outerStyles}>
 
@@ -250,6 +272,8 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
         </div>
       </div>
 
+      {!disableTOC && <InlineTOC maxDepth={maxTocDepth} />}
+
       <section>
         <slot/>
       </section>
@@ -269,6 +293,7 @@ const cleanedHtmlTitle = htmlTitle.replace(/[#*`_~]/g, '').replace(/\[(.*?)\]\(.
     }
   </main>
 
+    <label for="sidebar-toggle" class="sidebar-close fixed inset-0 z-30 bg-black/30 lg:hidden" aria-hidden="true"></label>
     <div id="side-nav" class={sideNavStyles} data-markdown-ignore>
       <div class="relative">
         <div class="bg-white hidden pb-1 pr-2 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
