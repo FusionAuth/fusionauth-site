@@ -162,6 +162,7 @@ _DEFAULT_EXCLUDE_DEST = [
     r"developers\.docusign\.com",   # spurious 500
     r"geldata\.com",                # spurious 404
     r"gluecon\.com",                # DNE, not evergreen content so will ignore
+    r"rfc-editor\.org",             # times out from CI; RFC links are stable by definition
     r"app\.xkit\.co",               # spurious 500
     r"azure\.microsoft\.com",       # returns 503 from CI environments; works in browsers
 ]
