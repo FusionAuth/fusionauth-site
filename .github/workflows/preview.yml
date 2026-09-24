@@ -87,16 +87,16 @@ jobs:
             EXISTING_BODY=$(gh api "repos/$REPO/issues/comments/$EXISTING" --jq '.body')
             UPDATED=$(printf '%s\n' "$EXISTING_BODY" \
               | awk '/^## /{if(!r){print "## ⏳ Building preview…"; r=1; next}} {print}')
-            gh api -X PATCH "repos/$REPO/issues/comments/$EXISTING" \
-              --input - <<< "$(jq -n --arg b "$UPDATED" '{body:$b}')"
+            printf '%s' "$UPDATED" | jq -Rs '{body:.}' \
+              | gh api -X PATCH "repos/$REPO/issues/comments/$EXISTING" --input -
             echo "id=$EXISTING" >> "$GITHUB_OUTPUT"
           else
             BODY="<!-- fusionauth-preview -->
           ## ⏳ Building preview…
 
           Building \`${BRANCH}\` @ \`${SHORT_SHA}\` — [build logs](${RUN_URL})"
-            NEW_ID=$(gh api -X POST "repos/$REPO/issues/$PR/comments" \
-              --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')" 2>/dev/null \
+            NEW_ID=$(printf '%s' "$BODY" | jq -Rs '{body:.}' \
+              | gh api -X POST "repos/$REPO/issues/$PR/comments" --input - 2>/dev/null \
               | jq -r '.id // empty' 2>/dev/null || echo "")
             echo "id=$NEW_ID" >> "$GITHUB_OUTPUT"
           fi
@@ -187,10 +187,10 @@ jobs:
             PAGES_SECTION="_No content files changed — browse the [full preview](${PREVIEW_URL})._"
           fi
 
-          BODY="<!-- fusionauth-preview -->${NL}## 🚀 Preview ready — \`${BRANCH}\`${NL}${NL}**Preview:** ${PREVIEW_URL}${NL}${NL}${PAGES_SECTION}${NL}*Commit \`${SHORT_SHA}\` · [build logs](${RUN_URL})*"
+          BODY="<!-- fusionauth-preview -->${NL}## 🚀 Preview ready: \`${BRANCH}\`${NL}${NL}**Preview:** ${PREVIEW_URL}${NL}${NL}${PAGES_SECTION}${NL}*Commit \`${SHORT_SHA}\` · [build logs](${RUN_URL})*"
 
-          gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" \
-            --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')"
+          printf '%s' "$BODY" | jq -Rs '{body:.}' \
+            | gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" --input -
 
       - name: Update deployment — failure
         if: failure() && steps.deployment.outputs.id != ''
@@ -217,8 +217,8 @@ jobs:
           BODY=$(printf \
             '<!-- fusionauth-preview -->\n## ❌ Preview build failed\n\nBuild failed for `%s` @ `%s`.\n[View logs](%s)' \
             "$BRANCH" "${SHA:0:7}" "$RUN_URL")
-          gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" \
-            --input - <<< "$(jq -n --arg b "$BODY" '{body:$b}')"
+          printf '%s' "$BODY" | jq -Rs '{body:.}' \
+            | gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" --input -
 
   # ── Release slot when PR closes ─────────────────────────────────────────────
   cleanup:
