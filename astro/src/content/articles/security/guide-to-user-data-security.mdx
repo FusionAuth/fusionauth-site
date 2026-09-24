@@ -11,21 +11,19 @@ section: Security
 date: 2019-11-04
 dateModified: 2019-11-04
 ---
-import GuidelineBox from 'src/components/GuidelineBox.astro';
+import { YouTube } from '@astro-community/astro-embed-youtube';
 
-## Overview
+These headlines scream that software security is a big deal:
 
-_"Facebook says new hack leaked data of 50 million users."_
+> Facebook says new hack leaked data of 50 million users.
 
-_"Uber Pays $148 Million Over Yearlong Cover-Up Of Data Breach."_
+> Uber Pays $148 Million Over Yearlong Cover-Up Of Data Breach.
 
-_"LinkedIn hack releases 167 million accounts."_
+> LinkedIn hack releases 167 million accounts.
 
-_"Milwaukee Bucks organization accidentally leaks player financials onto the Internet."_
+> Milwaukee Bucks organization accidentally leaks player financials onto the Internet.
 
-_"4.8 Million V-Tech customer's data stolen."_
-
-These headlines scream: software security is a big deal.
+> 4.8 Million V-Tech customer's data stolen.
 
 While thinking about software security often creates that sinking, pit-like feeling in your stomach, it pales in comparison to the nausea that strikes when the CEO is on the news explaining that the software system you built leaked [private information](/articles/authentication/common-authentication-implementation-risks#regulatory-compliance) about users.
 
@@ -57,7 +55,7 @@ We've also had a number of questions regarding which parts of this guide are not
 
 The first step to securing user data is to secure the servers you will be running your applications and/or databases on. The process of securing servers centers on a couple of core guidelines.
 
-<GuidelineBox header="CORE GUIDELINES">
+<Aside type="tip" title="Core Guidelines">
 
 * Use the least privilege possible
 * Prevent direct access when it isn't required
@@ -65,7 +63,7 @@ The first step to securing user data is to secure the servers you will be runnin
 * Send notifications for all activity
 * Identify users that can access the server
 
-</GuidelineBox>
+</Aside>
 
 This section details a step-by-step process to secure your servers.
 
@@ -104,11 +102,11 @@ In this step, be sure to select a long and secure root password. Later you will 
 
 ![Linode setup select operating system](/img/articles/guide-to-user-data-security/linode-setup-2.png)
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Prevent direct access when it isn't required
 
-</GuidelineBox>
+</Aside>
 
 #### Step 3: Configure a private IP address
 
@@ -144,32 +142,32 @@ Both servers should now be running. The next step of the process is to lock down
 
 First, log into your server as the root user using the password you entered above. To log into the server, execute this command:
 
-```bash
-$ ssh root@192.81.133.144
+```shell-session
+ssh root@192.81.133.144
 ```
 
 You can leave this terminal window open while you configure the server. This makes life simpler and will allow you to fix issues if something breaks along the way.
 
 ### Securing Passwords
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Automate security checks and constraints
 
-</GuidelineBox>
+</Aside>
 
 By forcing users to select secure passwords you will prevent users with accounts on your servers from using passwords like `"password"`.
 
 To ensure passwords are secure, you will install a PAM module called Cracklib. This module provides the ability to set password constraints. To install this module, execute this command:
 
-```bash
-$ apt-get install libpam-cracklib
+```shell-session
+apt-get install libpam-cracklib
 ```
 
 To make the most of this module, you need to edit the configuration file to require user passwords to contain complex characters including uppercase, lowercase, digits and punctuation. To set this configuration, edit the file `/etc/pam.d/common-password` like this:
 
-```bash
-$ nano /etc/pam.d/common-password
+```shell-session
+nano /etc/pam.d/common-password
 ```
 
 **NOTE:** You can also use `vi` if you prefer that over `nano` for text file editing. If you aren't familiar with vi, `nano` will save you a lot of headache learning `vi` commands.
@@ -206,8 +204,8 @@ To prevent this, we will lock down the `sudo` command to require all users to ty
 
 From your terminal window that is logged into the root account, edit the file `/etc/sudoers` like this:
 
-```bash
-$ nano /etc/sudoers
+```shell-session
+nano /etc/sudoers
 ```
 
 This file should contain a line that looks like this:
@@ -226,11 +224,11 @@ You will want to remove the `"NOPASSWD":` part of the line.
 
 ### Setup Ordinary User Account
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
-Identify users that can access the server
+Identify users that can access the server.
 
-</GuidelineBox>
+</Aside>
 
 Up to this point, we have been using the root user account for everything. This is fine when you are setting up a server but it is better to create an ordinary user account and start using that instead. This method provides better security because ordinary user accounts must use the `sudo` command in order to gain superuser privileges. Plus, we know that our configuration change above will require them to type in their password as well.  
 
@@ -238,28 +236,28 @@ Up to this point, we have been using the root user account for everything. This 
 
 To create an ordinary user account, run this command and specify the username you want to use from the terminal window that is logged in as the root user:
 
-```bash
-$ useradd -m -G sudo -s /bin/bash your-username
+```shell-session
+useradd -m -G sudo -s /bin/bash your-username
 ```
 
 This command specifies that the user should have an extra group of sudo (the `-G sudo` option). This group will allow the user permissions to execute superuser commands on the server.
 
 Now that the user has been created, you need to set a strong password for this user. This password should be complex. To set the password for your user, execute this command:
 
-```bash
-$ passwd your-username
+```shell-session
+passwd your-username
 ```
 
 In another terminal window, ensure that you can log into this user account using the password you just created:
 
-```bash
-$ ssh your-username@173.255.241.203
+```shell-session
+ssh your-username@173.255.241.203
 ```
 
 While you are here, you should also verify that this user has sudo access. Type this command to test for sudo access:
 
-```bash
-$ sudo ls /
+```shell-session
+sudo ls /
 ```
 
 You should see a directory listing of the server. However, if you see a message that says you aren't in the sudoers file, you will need to edit your `/etc/sudoers` file from the terminal that is logged in as root and add this line:
@@ -278,39 +276,54 @@ To secure remote access to your servers, we will change the server configuration
 
 To start this process, you need to create a public/private key pair on your local computer. To generate a key pair on a Mac or Linux machine, execute this command:
 
-```bash
-$ ssh-keygen -t rsa -b 2048
+```shell-session
+ssh-keygen -t rsa -b 2048
 ```
 
 This process will ask for a passphrase for the key. You should select a passphrase that is complex.
 
-**NOTE:** A complex passphrase generally means it is 16 characters or longer and contains numbers, letters and punctuation. You should always use a complex passphrase for your keys because leaving the key without a passphrase makes it much more vulnerable overall. Even if your private key is stolen or socially hacked, a passphrase will ensure it will be much more difficult to use.
+<Aside type="note">
+A complex passphrase generally means it is 16 characters or longer and contains numbers, letters and punctuation. You should always use a complex passphrase for your keys because leaving the key without a passphrase makes it much more vulnerable overall. Even if your private key is stolen or socially hacked, a passphrase will ensure it will be much more difficult to use.
+</Aside>
 
 Next, copy your public key from your local computer to the server and store it under the ordinary user account we created above.
 
-**NOTE:** Be sure to copy your public key only and NOT your private key.
+<Aside type="caution">
+Be sure to copy your public key only and _not_ your private key.
+</Aside>
 
 Here's the command to copy your public key to the server:
 
-```bash
-$ scp ~/.ssh/id_rsa.pub your-username@173.255.241.203:/home/your-username
+```shell-session
+scp ~/.ssh/id_rsa.pub your-username@173.255.241.203:/home/your-username
 ```
 
 After the public key is on the server, put the key into the `~/.ssh/authorized_keys` file so that the SSH system will use it next time you log in rather than prompting for a password. Log back into the server as the ordinary user and then execute the following commands:
 
-```bash
-$ mkdir .ssh
-$ chmod 700 .ssh
-$ mv id_rsa.pub .ssh/authorized_keys
-$ chmod 600 .ssh/authorized_keys
+```shell-session
+mkdir .ssh
 ```
 
-**NOTE:** The commands above change the permissions of the `.ssh` directory and the `authorized_keys` file so that only the ordinary user can read them. This is required for this model of using RSA keys to work on the server. If you don't do this and jump ahead to where we disable password login for SSH, your server could become inaccessible.  
+```shell-session
+chmod 700 .ssh
+```
+
+```shell-session
+mv id_rsa.pub .ssh/authorized_keys
+```
+
+```shell-session
+chmod 600 .ssh/authorized_keys
+```
+
+<Aside type="tip">
+The commands above change the permissions of the `.ssh` directory and the `authorized_keys` file so that only the ordinary user can read them. This is required for this model of using RSA keys to work on the server. If you don't do this and jump ahead to where we disable password login for SSH, your server could become inaccessible.
+</Aside>
 
 Now, logout of the server and log back in as the ordinary user. You should not be prompted to type in a password. You should instead be prompted to enter the passphrase you used when creating the SSH key above. If you are prompted for a password rather than the passphrase you likely renamed your key files or specified a different name when you created them. Therefore, you must use the `-i` flag to tell SSH to use the proper identity file for this server like this:
 
-```bash
-$ ssh -i server_rsa your-username@173.255.241.203
+```shell-session
+ssh -i server_rsa your-username@173.255.241.203
 ```
 
 The server is now ready to have the SSH system secured. In the terminal that is still logged in as root, edit the `/etc/ssh/sshd_config` file. You need to change a few lines in this file to prevent anyone from logging into the server without a SSH key pair and to prevent the root user from logging into the server via SSH. Find these configuration options and change their values to those below. Some of these options might be commented out because they are prefixed with a # character. Simply remove the # character and change the setting.
@@ -322,13 +335,13 @@ PasswordAuthentication no
 
 Save this file and restart the SSH service like this:
 
-```bash
-$ service ssh restart
+```shell-session
+service ssh restart
 ```
 
 You can verify that your server is now secure by attempting to SSH to it as the root user. You should receive an error message like this:
 
-```shell
+```plaintext
 Permission denied (publickey).
 ```
 
@@ -340,8 +353,8 @@ The feature you will use is called SSH agent. By enabling an SSH agent, you will
 
 To setup an SSH agent, add your private key to the agent by running this command:
 
-```bash
-$ ssh-add
+```shell-session
+ssh-add
 ```
 
 This will add your default private key to the SSH agent.
@@ -350,19 +363,19 @@ This will add your default private key to the SSH agent.
 
 You need to enable your SSH agent when you SSH to a server. To do this, you will use the `-A` option like this:
 
-```bash
-$ ssh -A -i server_rsa your-username@173.255.241.203
+```shell-session
+ssh -A -i server_rsa your-username@173.255.241.203
 ```
 
 You can also add an alias for the SSH command to automatically add the `-A` option in your shell's configuration file.
 
 ### 3.9. Locking the Root Account
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Prevent direct access when it isn't required
 
-</GuidelineBox>
+</Aside>
 
 Next, we will disable the root user's login to prevent users from trying to brute force attack the root user if they ever gain access to the server. You might be concerned that if you lock the root account you won't be able to administer the server easily. Even if the root user account is locked, you'll still be able to use the root account via the command `sudo su -`, but you won't be able to log in directly to the root user's account. To lock the root user's login, type this command into the terminal window that is logged in as the root user:
 
@@ -372,24 +385,24 @@ $ usermod -p '*' root
 
 ### Two-Factor Authentication
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Identify users that can access to the server
 
-</GuidelineBox>
+</Aside>
 
 Since we are going for über security, let's get crazy and add one more layer of authentication to your remote access. We will add two-factor authentication to the server. This will require users to type in a 6-digit code from their mobile phone in order to log in. Even if a user's private key is compromised, two-factor authentication ensures a hacker would still need the user's mobile phone to log into the server.
 
 First, you will need to install a two-factor app on your mobile phone. There are many two-factor applications available for iOS and Android. I personally like the Authy app because it has slick icons for different services like AWS and GitHub. Next, install the Google Authenticator two-factor PAM module on the server by executing this command in the root user terminal:
 
-```bash
-$ apt-get install libpam-google-authenticator
+```shell-session
+apt-get install libpam-google-authenticator
 ```
 
 Edit the PAM configuration file for SSH like this:
 
-```bash
-$ nano /etc/pam.d/sshd
+```shell-session
+nano /etc/pam.d/sshd
 ```
 
 Add this line to the top of the file:
@@ -400,8 +413,8 @@ auth [success=done new_authtok_reqd=done default=die] pam_google_authenticator.s
 
 This line enables the two-factor PAM module and also specifies what happens if the user fails two-factor login. In this case, the handling will be to reject the login if the two-factor code is invalid (i.e. `default=die`). Save this file and then open the SSH configuration file like this:
 
-```bash
-$ nano /etc/ssh/sshd_config
+```shell-session
+nano /etc/ssh/sshd_config
 ```
 
 Find and modify or add the configuration parameters below:
@@ -417,18 +430,18 @@ Before enabling this module for a user, you must install the network time system
 
 To install this package, type this command:
 
-```bash
-$ apt-get install ntp
+```shell-session
+apt-get install ntp
 ```
 Now restart the SSH service to pick up all of our changes like this:
 
-```bash
-$ service ssh restart
+```shell-session
+service ssh restart
 ```
 Finally, log into the ordinary user account and execute this command to enable two-factor authentication:
 
-```bash
-$ google-authenticator -l 'your-username@Application Server'
+```shell-session
+google-authenticator -l 'your-username@Application Server'
 ```
 
 This will display a QRCode that you can scan from the two-factor authentication app on your smartphone. It will also ask you additional questions to determine how you want to handle time-skew and brute force login attempts. Additionally, there will be 5 emergency scratch codes generated for your account. You should write these down in a secure location such as iCloud Secure Notes.
@@ -439,11 +452,11 @@ If you install the two-factor authentication as described above and a user doesn
 
 ### Firewalling
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Prevent direct access when it isn't required
 
-</GuidelineBox>
+</Aside>
 
 This section covers how to prevent access to the servers except on specific ports and from specific IP addresses.
 
@@ -451,8 +464,8 @@ Configuration are different for each server to ensure that each server prevents 
 
 First, install the firewall package. This package will ensure that the firewall rules are loaded each time the server is restarted. To install this package, execute this command in the root terminal:
 
-```bash
-$ apt-get install iptables-persistent
+```shell-session
+apt-get install iptables-persistent
 ```
 
 Make sure you save both the rules.v4 and rules.v6 file during this installation process.
@@ -623,8 +636,8 @@ These rules read like this, "append to the PREROUTING chain (`-A PREROUTING`) fo
 
 Now that the rules are setup, load this configuration by executing this command:
 
-```bash
-$ service netfilter-persistent reload
+```shell-session
+service netfilter-persistent reload
 ```
 
 Next, configure the firewall on the Database Server. Each database will have different ports that it needs open. You will only allow connections from your Application Server's private IP address, which you will need to know and insert into the rules below. Here are the IPTable rules for the Database Server.
@@ -711,16 +724,16 @@ Both are challenging feats and it is likely the hacker will be discovered well b
 
 ### Intrusion Detection
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Send notifications for all activity
 
-</GuidelineBox>
+</Aside>
 
 Since most servers aren't actively logged into on a frequent basis, you should be notified when anyone logs into the server. There are many ways to handle this, but we will cover how to setup notifications using a tool called Monit. Monit allows you to watch log files for messages that contain certain text and generate alerts. To install Monit, execute this command in the root terminal window:
 
-```bash
-$ apt-get install monit
+```shell-session
+apt-get install monit
 ```
 
 After Monit is installed, you can create a configuration file to monitor SSH login. Copy and paste the configuration below into the file `/etc/monit/conf.d/ssh-logins`:
@@ -753,8 +766,8 @@ set daemon 5
 
 Finally, restart the Monit daemon so that it picks up the configuration change:
 
-```bash
-$ service monit restart
+```shell-session
+service monit restart
 ```
 
 As an added option, you can have Monit send push notifications to your mobile devices and/or send notifications to a Slack channel. One option for handling push notifications is using the Pushover service. To implement this you need to change the last line in `/etc/monit/conf.d/ssh-logins` to this:
@@ -833,15 +846,18 @@ For Slack integration, configure an Incoming Webhook using these steps:
 
 To ensure the Ruby script above will run properly, make sure you have Ruby installed and the script is executable by executing these commands:
 
-```bash
-$ apt-get install ruby
-$ chmod +x /etc/monit/monit-slack-pushover.rb
+```shell-session
+apt-get install ruby
+```
+
+```shell-session
+chmod +x /etc/monit/monit-slack-pushover.rb
 ```
 
 Finally, restart Monit again using this command:
 
-```bash
-$ service monit restart
+```shell-session
+service monit restart
 ```
 
 ### Database Server Specific Security
@@ -852,8 +868,8 @@ This section will cover security measures that are specific to the Database Serv
 
 First, install MySQL. To install MySQL on the Database Server, execute this command in the root terminal window:
 
-```bash
-$ apt-get install mysql-server
+```shell-session
+apt-get install mysql-server
 ```
 
 During this installation process you will be prompted to create a password for the MySQL root user. Make sure that you select a very strong password and store it somewhere safe.
@@ -864,11 +880,11 @@ By default, MySQL only listens on the loopback interface. Change this configurat
 bind-address = 192.168.142.213
 ```
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Prevent direct access when it isn't required
 
-</GuidelineBox>
+</Aside>
 
 This is the private IP address from our example above. You will need to change this to your private IP address. This will ensure that only servers on the same LAN will be able to connect to the database.
 
@@ -876,8 +892,8 @@ Lastly, verify that the MySQL data directory is properly secured and the MySQL u
 
 This is the default on nearly all Linux distributions, but let's double check. In the MySQL configuration file, you can determine where the data directory is by finding the configuration property datadir. On most Debian distributions, the data directory is located at `/var/lib/mysql`. Do a long directory listing in `/var/lib` to see if the directory is secure. Here's the command and what the output should look like:
 
-```bash
-$ ls -alu /var/lib
+```shell-session
+ls -alu /var/lib
 ...
 drwx------  5 mysql mysql 4096 Apr 28 19:32 mysql
 drwx------  2 mysql mysql 4096 Apr 28 19:33 mysql-files
@@ -886,9 +902,8 @@ drwx------  2 mysql mysql 4096 Apr 28 19:33 mysql-keyring
 
 Your directories should look similar. They should all be owned by the user and group named `mysql`. The permissions should be read, write, execute for that user only (that's what `"drwx------"` means). If this is not how your directories are set, you can change the ownership and permissions for these directories by executing these commands:
 
-```bash
-$ chown -R mysql:mysql /var/lib/mysql*
-$ chmod -R go-rwx /var/lib/mysql*
+```shell-session
+chown -R mysql:mysql /var/lib/mysql* && chmod -R go-rwx /var/lib/mysql*
 ```
 
 Also, open the file `/etc/password` and ensure that the line that starts with `"mysql"` ends with `"/bin/false"`. It should look something like this:
@@ -901,31 +916,38 @@ If the MySQL user's line doesn't end in `"/bin/false"`, you can edit this file m
 
 #### Backups
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Automate security checks and constraints
 
-</GuidelineBox>
+</Aside>
 
 You'll want to make backups of your Database Server and store them offsite in case of a server failure. One issue that arises with backups is that they are often not secured. The server they are stored on might have been built by a hosting provider or some other third party therefore, the Backup Server might not have the level of security you require. You should encrypt database backups before transferring them offsite. This reduces the likelihood that a Backup Server breach will allow the hacker to gain access to your data.
 
 First, set up encryption keys. To properly encrypt backups from a script, you need a public/private key pair. As the root user on your Database Server, change to the root user's home directory and then execute these commands:
 
-```bash
-$ openssl genrsa -out private-key.pem 2048
-$ openssl rsa -in private-key.pem -out public-key.pem -outform PEM -pubout
+```shell-session
+openssl genrsa -out private-key.pem 2048
+```
+
+```shell-session
+openssl rsa -in private-key.pem -out public-key.pem -outform PEM -pubout
 ```
 
 Now that you have the key pair, leave the `public-key.pem` on the Database Server and move the `private-key.pem` file to the Backup Server (or any other secure location). Now you are ready to backup the database and encrypt the backup file.
 
 First, get the backups running on your Database Server. The simplest way to run a backup is using the `mysqldump` command via cron. To start, you need to create a shell script in a protected directory. For this example, we are going to use the root user's home directory. From the root user terminal, type these commands:
 
-```bash
-$ cd
-$ mkdir bin
-$ touch bin/backup.sh
-$ chmod +x bin/backup.sh
-$ nano bin/backup.sh
+```shell-session
+cd
+```
+
+```shell-session
+mkdir bin && touch bin/backup.sh && chmod +x bin/backup.sh
+```
+
+```shell-session
+nano bin/backup.sh
 ```
 
 In this file, you will need to dump the contents of your database to a file. The command to do this is `mysqldump`. Here's an example script that creates a backup of a database called production to the `/tmp/backups` directory:
@@ -979,13 +1001,13 @@ You might want to backup additional files and directories in this script as well
 
 The last step to setup your backups is to enable them via cron. To accomplish this, type this command in as the root user on the Database Server:
 
-```bash
-$ crontab -e
+```shell-session
+crontab -e
 ```
 
 You can select the editor you want to use and then add this line to the end of the crontab file:
 
-```bash
+```cron
 1 0 * * * /root/bin/backup.sh
 ```
 
@@ -993,9 +1015,12 @@ Save this file. Your backups will run each night at 12:01am.
 
 If you ever need to use a backup, you will need to decrypt it first. To decrypt a backup, you will need the private key you created above and the two encrypted files that the backup script created (the encrypted tar.gz and the encrypted passphrase file). If you are in a directory that contains all of these files, execute these commands to decrypt the backup (you'll need to change the file names below to match your file names):
 
-```bash
-$ openssl rsautl -decrypt -inkey private-key.pem < 20160502.passphrase.enc > 20160502.passphrase
-$ openssl enc -aes-256-cbc -d -pass file:20160502.passphrase < 20160502.tar.gz.enc > 20160502.tar.gz
+```shell-session
+openssl rsautl -decrypt -inkey private-key.pem < 20160502.passphrase.enc > 20160502.passphrase
+```
+
+```shell-session
+openssl enc -aes-256-cbc -d -pass file:20160502.passphrase < 20160502.tar.gz.enc > 20160502.tar.gz
 ```
 
 ## Application Security
@@ -1004,7 +1029,7 @@ Now that your servers are nicely secured, let's take a look at securing the appl
 
 Application Security centers around a set of guidelines:
 
-<GuidelineBox>
+<Aside type="tip">
 
 * Use the least privilege possible
 * Encrypt all communications
@@ -1012,18 +1037,18 @@ Application Security centers around a set of guidelines:
 * Cleanse user input
 * Keep it on the server
 
-</GuidelineBox>
+</Aside>
 
 
 This section will cover the different aspects of securing an application.
 
 ### Application User
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Use the least privilege possible
 
-</GuidelineBox>
+</Aside>
 
 When you install and start your application on the Application Server you have a couple of options. You can run the application using root, the ordinary user you created above or a new user. We recommend that you create a new user to run your application for a couple of reasons:
 
@@ -1033,8 +1058,8 @@ When you install and start your application on the Application Server you have a
 
 You should instead create a new user that is a locked account just for your application. To create this user, execute this command as root on the Application Server (you can change the username if you want):
 
-```bash
-$ useradd -M -s /bin/false application
+```shell-session
+useradd -M -s /bin/false application
 ```
 
 This command creates a user named `application` that has no password and no home directory. It cannot be logged into. However, you will be able to start your application as this user using the `sudo` or `su` commands like this:
@@ -1051,22 +1076,22 @@ sudo -u application nodejs /usr/local/application/app.js
 
 The first level of defense for any application is to use SSL for all network traffic to the web server. Without SSL encryption, a hacker could intercept network traffic in and out of the server and store it. Since this network traffic would contain usernames, passwords and other user data this would generally be the same level of breach as a hacker gaining access to the user database.
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Encrypt all communications
 
-</GuidelineBox>
+</Aside>
 
 Each web server will have a different mechanism for implementing SSL. In all cases, you will need to obtain a validated and signed SSL certificate from a known certificate authority (also known as a CA). Rather than cover all possible web servers and how you configure SSL, we'll cover the example application we built for this guide. You can translate these instructions for your application.
 
 Our application was developed on Node.js and we obtained an SSL certificate through LetsEncrypt. LetsEncrypt is an awesome free service that allows you to obtain a certificate and also ensure it never expires. LetsEncrypt will automatically check and renew your certificate using a cron job on the server. To setup LetsEncrypt on our Ubuntu 18.04 server we used these steps:
 
-```bash
-$ sudo apt-get update
-$ sudo apt-get install software-properties-common
-$ sudo add-apt-repository ppa:certbot/certbot
-$ sudo apt-get update
-$ sudo apt-get install certbot
+```shell-session
+sudo apt-get update && sudo apt-get install software-properties-common
+```
+
+```shell-session
+sudo add-apt-repository ppa:certbot/certbot && sudo apt-get update && sudo apt-get install certbot
 ```
 
 These commands install Certbot. Certbot is an implementation of an automated bot that will contact LetsEncrypt using the ACME protcol to issue and renew certificates. On Ubuntu, the Certbot installation creates a systemd timer that will run the Certbot twice per day to check the certificates on the server and possibly renew them.
@@ -1075,8 +1100,8 @@ Before you generate a certificate, you need to setup your DNS entry to point to 
 
 Now that Certbot is installed and we have setup our DNS, we can generate a certificate. To do this, execute this command:
 
-```bash
-$ certbot certonly
+```shell-session
+certbot certonly
 ```
 
 This command is interactive and will ask you if you want to spin up a local HTTP server or use Apache (webroot). This process is necessary for LetsEncrypt to verify domain ownership. You will also need to provide an email address where notices will be sent. We suggest that you use a mailing list for this so that it doesn't go to an employee's email that could eventually stop working. Finally, this command will ask you for one or more domain names that the certificate will be assigned to. You can enter multiple domain names if your server will respond to multiple requests.
@@ -1132,11 +1157,11 @@ You can also another CA like GoDaddy if you prefer. We don't cover the process o
 
 ### Password Security
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Automate security checks and constraints
 
-</GuidelineBox>
+</Aside>
 
 When a user registers, they will provide a password for their account. The application needs to ensure that all passwords provided by users are secure. This usually means that the password is sufficiently complex.
 
@@ -1336,15 +1361,15 @@ SQL injection is an application level vulnerability that is caused when an appli
 
 ![SQL Injection](/img/articles/guide-to-user-data-security/sql-injection.png)
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Cleanse user input
 
-</GuidelineBox>
+</Aside>
 
 A classic example of a SQL injection is a set of search results or tabular data that can be sorted. Many applications put the sorting column and direction on the anchor tags or the select box used to select the sort. When a user selects the sort, the browser will make a request like this:
 
-```
+```plaintext
 http://www.my-application.com/some-data?sort=first_name+desc
 ```
 
@@ -1362,7 +1387,7 @@ http://www.my-application.com/some-data?sort=(select%20CAST((select concat(email
 
 It will cause an SQL error, which will also contain the email and password for the first user in the database. The error might look something like this:
 
-```shell
+```plaintext
 Cannot CAST "admin@fusionauth.io:173ad94aa37d140a5aab46795b14cef88efe8be76930b90460b5da60f4cff76e" to Date.
 ```
 
@@ -1414,11 +1439,11 @@ Finally, you should evaluate the database table that is being accessed and selec
 
 ### Configuration
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Keep it on the server
 
-</GuidelineBox>
+</Aside>
 
 Server applications generally need access to a database in order to store and retrieve data. The credentials that the application uses to connect to the database should be stored in a configuration file. However, this configuration file should not be checked into source control. A development version of the configuration file can be checked in to make it simpler for developers to work. Therefore, a mechanism that determines which configuration file to load is required. Here's a simple code snippet from our Node.js application that determines if a production configuration file exists or if the development version should be used:
 
@@ -1442,10 +1467,8 @@ It is also vital to secure the production configuration on the server. If a hack
 
 Therefore, the configuration file must be secured. To secure the file on Linux simply change the ownership and permissions of the configuration directory and file. Lock down your configuration file by executing these commands as the root user:
 
-```bash
-$ chown -R application:application /usr/local/application/config
-$ chmod 700 /usr/local/application/config
-$ chmod 400 /usr/local/application/config/*
+```shell-session
+chown -R application:application /usr/local/application/config && chmod 700 /usr/local/application/config && chmod 400 /usr/local/application/config/*
 ```
 
 This will ensure that only the user running the application can read the configuration file.
@@ -1460,11 +1483,11 @@ All sensitive configuration should be locked down in a similar manner. This incl
 
 We talked about securing the database at the server level in the previous section. Here we will cover securing the database at the application level. Since most applications connect to a database, these connections must be secured.
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Use the least privilege possible
 
-</GuidelineBox>
+</Aside>
 
 The most important aspect of securing a database is the database user the application connects with. Never connect your application to your database as a superuser (AKA a root database user). Instead, create an application user and limit the privileges of this user to only those needed for the application.
 
@@ -1483,11 +1506,11 @@ Most modern applications use a combination of server-side code and client-side c
 
 After a user logs in, the application will need the user Id in order to look up additional data for the user as well as ensure the user has the correct permissions to take actions. This user id will also be used when the user modifies, creates or deletes their data.
 
-<GuidelineBox float={true}>
+<Aside type="tip">
 
 Keep it on the server
 
-</GuidelineBox>
+</Aside>
 
 Since the user Id is such a powerful component of an application, it needs to be secured and validated. Applications can send the user id to the front-end but should do so in a secure and verifiable way. Leveraging JSON Web Tokens (JWTs) is a good way to send user data (including their id) to the front-end of an application. On the server side, the APIs that are open to the front-end should never take a user id as the way to identify a user. This would allow any hacker to send it arbitrary ids and exploit user accounts. Instead, a secure token should be sent to APIs from the front-end. If you are using JWTs, these should be signed using RSA key-pairs. The server can then verify that the JWT is valid (by checking the RSA signature) and extract the user id from the JWT. Other solutions to this include using session cookies as the token, OAuth access tokens or other types of tokens.
 
@@ -1678,9 +1701,7 @@ Social hacking is another issue that your application could be subject to. An ex
 
 Here's a scene from the movie Hackers that illustrates this concept:
 
-<div class="video-container">
-<iframe src="https://www.youtube.com/embed/2efhrCxI4J0" frameborder="0" allowfullscreen></iframe>
-</div>
+<YouTube id="2efhrCxI4J0" />
 
 Of course, you'll want to ensure your "BLT drive" is secure, but in this case you need to ensure that your application prevents your employees from falling prey to social hacks.
 
@@ -1697,7 +1718,6 @@ If you find any errors in this guide, please let us know. Also, if you find any 
 ## References
 
 In addition to the experience and knowledge of our development team, we used additional resources to build this guide. Below is a non-exhaustive list of the references and resources we used:
-
 
 **General**
 

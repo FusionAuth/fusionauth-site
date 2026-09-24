@@ -93,11 +93,29 @@ if (overridePages && overridePages.length > 0) {
     .filter((e): e is Candidate => e != null)
     .map(e => ({ ...e, shared: sharedTags(e.tags), url: entryUrl(e) }));
 } else if (tagSet.size > 0) {
-  const tagResults = candidates
-    .map(e => ({ ...e, shared: sharedTags(e.tags), url: entryUrl(e) }))
-    .filter(e => e.shared.length > 0)
-    .sort((a, b) => b.shared.length - a.shared.length)
-    .slice(0, limit);
+  function topTagResults(pool: Candidate[], n: number): Result[] {
+    return pool
+      .map(e => ({ ...e, shared: sharedTags(e.tags), url: entryUrl(e) }))
+      .filter(e => e.shared.length > 0)
+      .sort((a, b) => b.shared.length - a.shared.length)
+      .slice(0, n);
+  }
+
+  let tagResults: Result[];
+  if (collection === 'both') {
+    // Score docs and articles separately so docs aren't crowded out by articles
+    // that share many generic tags with each other.
+    const docsPool = candidates.filter(c => c.prefix === '/docs');
+    const articlePool = candidates.filter(c => c.prefix === '/articles');
+    const docsSlots = Math.ceil(limit / 2);
+    const articleSlots = limit - docsSlots;
+    tagResults = [
+      ...topTagResults(docsPool, docsSlots),
+      ...topTagResults(articlePool, articleSlots),
+    ];
+  } else {
+    tagResults = topTagResults(candidates, limit);
+  }
 
   if (pinIds.length > 0) {
     const pinned = pinIds
