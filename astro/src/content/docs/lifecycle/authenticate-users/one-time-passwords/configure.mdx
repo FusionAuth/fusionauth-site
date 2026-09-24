@@ -1,0 +1,169 @@
+---
+title: Configure
+htmlTitle: Configure One-Time Passwords
+description: Set up a passwordless experience using magic links and codes.
+---
+
+To implement One-Time Passwords in your application, choose one of the following options:
+
+* hosted login pages: customizable using a theme and templates
+* passwordless API: fully customizable behavior since you call this API from your application
+
+<Tabs>
+ <TabItem label="Hosted Login Pages">
+  <AvailableSince since="1.59.0">
+  Hosted [Messenger](/docs/customize/email-and-messages/messengers) passwordless logins are available in FusionAuth `1.59.0` and later.
+  </AvailableSince>
+
+  You will need at least one Application with an OAuth redirect URL configured and the [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant) enabled.
+
+  To implement one-time passwords using hosted login pages, complete the following steps:
+
+  <Steps>
+  1. Choose the communication method(s) you want to use to send one-time passwords:
+     * To send over email, navigate to <Breadcrumb>Tenants -> Email Templates</Breadcrumb> and create an [Email Template based on our example](/docs/customize/email-and-messages/message-templates-replacement-variables#passwordless-login).
+     * To send using a [Messenger](/docs/customize/email-and-messages/messengers), navigate to <Breadcrumb>Tenants -> Message Templates</Breadcrumb> and create a [Message Template based on our example](/docs/customize/email-and-messages/message-templates-replacement-variables#passwordless-login).
+  1. Create the communication method:
+     * To communicate over email, navigate to <Breadcrumb>Tenants -> Edit -> Email</Breadcrumb> and configure your SMTP server. For testing, consider [mailcatcher](https://mailcatcher.me/).
+     * To communicate over a [Messenger](/docs/customize/email-and-messages/messengers), navigate to <Breadcrumb>Tenants -> Edit -> Identities</Breadcrumb> and choose a Messenger. If you have not already configured a messenger, you can create one in <Breadcrumb>Settings -> Messengers</Breadcrumb>.
+  1. Choose a default template for your phone or email communication in <Breadcrumb>Tenants -> Edit -> Identities -> Template Settings</Breadcrumb>. Use the **Passwordless login** option in the **Email** and **Phone** columns to control the default template for each separately.
+  1. Enable one-time passwords in your Application by navigating to <Breadcrumb>Applications -> Edit -> Security</Breadcrumb> and enabling the **Enable passwordless login** checkbox:
+     <Screenshot url="/admin/application/edit?applicationId=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&tenantId=30663132-6464-6665-3032-326466613934" alt="Enable passwordless login in the application Security tab." id="passwordless-application-enable">
+       <Highlight selector="#application_passwordlessConfiguration_enabled-form-row" />
+     </Screenshot>
+     
+  1. Choose a strategy for each communication method you plan to use:
+     * **Clickable link**: Authenticate by visiting a link passed in the template, e.g. `${baseUrl}/oauth2/passwordless/${code}` -> `https://example.com/oauth2/passwordless/correct-horse-battery-staple`.
+     * **Form field**: Authenticate by entering a code passed in the template, e.g. `${oneTimeCode}` -> "123 456".
+     
+     <Screenshot url="/admin/application/edit?applicationId=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&tenantId=30663132-6464-6665-3032-326466613934" alt="Turn on passwordless login in the application Security tab." id="passwordless-application-security">
+       <Highlight selector="fieldset:has([name*='passwordlessConfiguration'])" />
+     </Screenshot>
+  </Steps>
+
+  To customize the look of the login pages, use [themes](/docs/customize/look-and-feel/). While editing the theme, you could remove the username/password form. This would force everyone to use one-time password authentication.
+
+  Changing a theme modifies it for all applications in a tenant, so these changes can affect the FusionAuth admin UI (if the new application is in the default tenant) and other applications in the same tenant.
+
+  <Details title="Hide the username and password form for individual Applications">
+  * Use separate tenants.
+  * Add logic to your theme to hide parts of the HTML based on the `client_id`.
+  * Use [Application-specific themes](/docs/customize/look-and-feel/application-specific-themes).
+  </Details>
+  
+  <Details title="Limitations of hosted login pages">
+  * You can only communicate using email or a [Messenger](/docs/customize/email-and-messages/messengers).
+  * You must use the [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant).
+  </Details>
+ </TabItem>
+ <TabItem label="Passwordless API">
+  You can use the [Passwordless API](/docs/apis/passwordless) to implement one-time password authentication from your own application. This enables you to:
+
+  * customize every part of the user login experience.
+  * send the code using any method you choose, for instance a Slack direct message.
+
+  The Passwordless API requires an [API key](/docs/apis/authentication) with at least the `POST` permission to the `/api/passwordless/start` endpoint.
+
+  <Steps>
+    1. Start one-time password login by calling the [`/api/passwordless/start`](/docs/apis/passwordless/start-passwordless-login) endpoint. Because this endpoint requires an API key, you must emit this request from a secure environment (likely your application backend, not a browser or app).
+
+       ```shell title="Start Magic Link Login API call"
+       API_KEY=...
+       REQUEST_PAYLOAD='{...}'
+       curl  -H "Content-type: application/json" -H "Authorization: $API_KEY" https://local.fusionauth.io/api/passwordless/start -d "$REQUEST_PAYLOAD"
+       ```
+       
+       Here's an example request payload:
+       
+       <JSON title="Start Magic Link Login Request JSON" src="passwordless/start-request.json" />
+       
+       <Details>
+       <span slot="title">The `state` property in the JSON is optional.</span>
+
+       If present, it is echoed back to your application at the end of the one-time password login workflow. This allows anonymous users to interact with your application, then log in and have data from their anonymous session available.
+       
+       For example, if you have a shopping site, you may want to allow a user to add items to their cart before they sign in. Once they have logged in, the `state` parameter can be used to associate their cart Id with the authenticated user. In this case, the `state` key might be set to a JSON object like this:
+       
+       ```json
+       { "cart_id" : 1234 }
+       ```
+       </Details>
+       
+       The call to [`/api/passwordless/start`](/docs/apis/passwordless/start-passwordless-login) begins the authentication process, and returns a response with a code:
+       
+       <JSON title="Start Magic Link Email Login Response JSON" src="passwordless/start-response.json" />
+       
+       <JSON title="Start Magic Link Phone Login Response JSON" src="passwordless/start-phone-response.json" />
+       
+       Possession of this one-time code authenticates the end user.
+
+    1. Send the code. To send the code using a locale-aware template via Messenger or SMTP configuration in FusionAuth, call [`/api/passwordless/send`](/docs/apis/passwordless/send-passwordless-login).
+    
+    1. The user enters the code. You must build an interface for them to do so. For email use cases, the email message will often contain a link to a form where the user can enter the `code`, or the link will hit an endpoint that processes the code.
+
+       For phone number use cases, the typical pattern is for your application to present a form immediately after sending the code to the user. The `code` value can be available as a hidden field on a form, but the `oneTimeCode` value must be provided by the user.
+
+    1. Complete the login via a call to [`/api/passwordless/login`](/docs/apis/passwordless/complete-a-passwordless-login). You can pass other information such as IP address, but only the code is required.
+    
+       <JSON title="Complete Magic Link Email Login Request JSON" src="passwordless/start-response.json" />
+
+       <JSON title="Complete Magic Link Phone Login Request JSON" src="passwordless/start-phone-response.json" />
+       
+       If the code (and for phone numbers, `oneTimeCode`) is valid, your application will receive user data, a JWT, and other data based on the application configuration. If you send a `state` property in the JSON when starting the authentication process, it will also be included in the response, under the `state` key.
+       
+       <JSON title="Complete Magic Link Response JSON" src="users/passwordless-login-response.json" />
+       
+       The user is now authenticated. Your application has user data, pre-existing state if provided, and a JWT which can be used to represent the user to other resources. If you want to send the JWT to a client as a cookie, you can now do so.
+  </Steps>
+
+  JWTs are typically passed to other systems like an API server to enable access to protected resources ([more about JWTs](/articles/tokens/)). If you are using one-time password authentication and are not using the JWT, you can turn off its generation. Creating and signing the JWT requires server resources; turning JWT generation off will improve performance.
+
+  To disable JWTs, set the `noJWT` parameter to true when you call the complete API endpoint.
+ </TabItem>
+</Tabs>
+
+## Two-Factor Authentication
+
+You can combine FusionAuth one-time password authentication with [Multi-Factor Authentication (MFA/2FA)](/docs/lifecycle/authenticate-users/multi-factor-authentication).
+
+<Tabs>
+ <TabItem label="Hosted Login Pages">
+  When two-factor authentication is enabled, after the one-time password has been provided, FusionAuth will prompt the user to provide an additional verification code.
+ </TabItem>
+ <TabItem label="Passwordless API">
+  when you complete the one-time password authentication, instead of getting the user data, you'll get a `twoFactorId`:
+
+  ```json
+  {"twoFactorId":"VnNILnXs_EDG-cjwokwITRApmAxCMkojeT3CUqqLhLc"}
+  ```
+  
+  Your application must then prompt the user for their two-factor code using whatever method they have defined. Pass the `twoFactorId` and the two-factor code to the [`/api/two-factor/login`](/docs/apis/login/complete-mfa) endpoint in order to complete the two-factor authentication.
+  
+  If a user has previously completed a two-factor authentication and has decided to trust the device, you may have a `twoFactorTrustId` value. This can be passed to the [`/api/passwordless/login`](/docs/apis/passwordless/complete-a-passwordless-login) endpoint. If valid, this will skip the two-factor challenge.
+ </TabItem>
+</Tabs>
+
+## Try One-Time Passwords
+
+To test how your users would experience one-time passwords:
+
+<Steps>
+1. Go to your application login page and click the <Breadcrumb>Login with a magic link</Breadcrumb> button
+   <Screenshot url="/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-callback&prompt=login" alt="The FusionAuth login page showing the Login with a magic link button." id="passwordless-login-page">
+     <Highlight selector="a[href*='/oauth2/passwordless']" />
+   </Screenshot>
+
+1. Enter the user's unique identifier (email address, phone number, or username).
+
+1. Check your secure communication method of choice for the one-time password.
+1. Click the link or enter the code into the form.
+   <Screenshot url="/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-callback&prompt=login#phone-otp" alt="Entering the one-time code into the form." id="passwordless-phone-otp-form" />
+ </Steps>
+
+As soon as the one-time password is used, the user has begun an Authorization Code grant. You can [consume the authorization code](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant) using a library or your own code. Whatever you would normally do if someone signed in with a password, you can now do here. This means that you'll be provided with the same refresh tokens, user data, or JWTs that would be delivered if the user had signed in with a password.
+
+## Troubleshooting
+
+Every time you start a one-time password login for a given user, FusionAuth invalidates all other codes for that user. Codes are also invalidated after a configurable time limit.
+
+If a user provides a code that is invalid, if their account is locked, or if there is any other issue in the request, a status code in the 400 range will be returned. Please consult the [passwordless API reference docs](/docs/apis/passwordless/complete-a-passwordless-login#response-3) for more details about return status codes.

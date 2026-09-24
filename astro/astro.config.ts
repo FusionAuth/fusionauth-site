@@ -16,6 +16,7 @@ import { rehypeCodeBlocks, remarkShellSession } from 'astro-better-code-blocks';
 import { extractedCodeSnippets } from 'astro-better-code-snippet-extractor';
 import astroToc from 'astro-toc-smol';
 import { openapiSummary } from './src/plugins/openapi-summary.js';
+import { cssPreload } from './src/plugins/css-preload.mjs';
 
 function buildSitemap() {
   let siteUrl: string;
@@ -71,12 +72,15 @@ const mdxComponentImports =
   "import IconButton from 'src/components/IconButton.astro';\n" +
   "import ChildCards from 'astro-better-cards/ChildCards.astro';\n" +
   "import Card from 'astro-better-cards/Card.astro';\n" +
+  "import CardGrid from 'astro-better-cards/CardGrid.astro';\n" +
   "import ExtractedCode from 'astro-better-code-snippet-extractor/ExtractedCode.astro';\n" +
   "import Tabs from 'astro-better-tabs/Tabs.astro';\n" +
   "import TabItem from 'astro-better-tabs/TabItem.astro';\n" +
   "import Details from 'astro-better-details/Details.astro';\n" +
   "import { Steps } from 'astro-better-steps';\n" +
   "import Table from 'astro-better-tables/Table.astro';\n" +
+  "import Screenshot from 'astro-better-declarative-screenshots/Screenshot.astro';\n" +
+  "import Highlight from 'astro-better-declarative-screenshots/Highlight.astro';\n" +
   "import MarkdownOnly from 'astro-gen-markdown-pages/MarkdownOnly.astro';\n\n";
 
 // inject imports into MDX source before the MDX compiler runs, so that component
@@ -164,9 +168,17 @@ const config = defineConfig({
       tailwindcss(),
       mdxComponentImporter(),
       lightboxProvider(),
+      cssPreload(),
     ],
     build: {
       chunkSizeWarningLimit: 700,
+      rollupOptions: {
+        output: {
+          // Vite names the Tailwind bundle after a leaf component (Kapa); use a stable descriptive name instead.
+          assetFileNames: (info) =>
+            info.names?.some(n => n === 'Kapa.css') ? '_astro/styles.[hash][extname]' : '_astro/[name].[hash][extname]',
+        },
+      },
     },
     cacheDir: '.vite-cache',
     ssr: {
