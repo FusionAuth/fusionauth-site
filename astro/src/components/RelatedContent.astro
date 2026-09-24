@@ -1,0 +1,122 @@
+---
+import { getCollection } from 'astro:content';
+
+interface Props {
+  tags?: string;
+  overrideTags?: string;
+  overridePages?: string[];
+  collection?: 'docs' | 'articles' | 'both';
+  currentId?: string;
+  limit?: number;
+}
+
+const {
+  tags,
+  overrideTags,
+  overridePages,
+  collection = 'docs',
+  currentId,
+  limit = 4,
+} = Astro.props;
+
+const effectiveTags = (overrideTags ?? tags ?? '')
+  .split(',').map((t: string) => t.trim().toLowerCase()).filter(Boolean);
+const tagSet = new Set<string>(effectiveTags);
+
+const docsEntries = (collection === 'docs' || collection === 'both')
+  ? await getCollection('docs') : [];
+const articleEntries = (collection === 'articles' || collection === 'both')
+  ? await getCollection('articles') : [];
+
+interface Candidate {
+  id: string;
+  title: string;
+  description?: string;
+  tags?: string;
+  prefix: string;
+}
+
+const candidates: Candidate[] = [
+  ...docsEntries.map(e => ({
+    id: e.id,
+    title: e.data.title,
+    description: e.data.description,
+    tags: e.data.tags,
+    prefix: '/docs',
+  })),
+  ...articleEntries.map(e => ({
+    id: e.id,
+    title: e.data.title,
+    description: e.data.description,
+    tags: e.data.tags,
+    prefix: '/articles',
+  })),
+].filter(e => e.id !== currentId);
+
+function entryUrl(e: Candidate): string {
+  let slug = e.id;
+  if (slug === 'index') return `${e.prefix}/`;
+  if (slug.endsWith('/index')) return `${e.prefix}/${slug.replace(/\/index$/, '')}/`;
+  return `${e.prefix}/${slug}`;
+}
+
+function sharedTags(entryTagStr?: string): string[] {
+  if (!entryTagStr || tagSet.size === 0) return [];
+  return entryTagStr.split(',').map((t: string) => t.trim().toLowerCase()).filter((t: string) => tagSet.has(t));
+}
+
+const SECTION_CAPS: Record<string, string> = {
+  oauth: 'OAuth', oidc: 'OIDC', saml: 'SAML', samlv2: 'SAMLv2',
+  api: 'API', apis: 'APIs', sdk: 'SDK', sdks: 'SDKs', scim: 'SCIM', spa: 'SPA',
+};
+
+function sectionLabel(id: string): string {
+  return id.split('/')[0].split('-')
+    .map((w: string) => SECTION_CAPS[w.toLowerCase()] ?? (w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(' ');
+}
+
+interface Result extends Candidate {
+  shared: string[];
+  url: string;
+}
+
+let results: Result[] = [];
+
+if (overridePages && overridePages.length > 0) {
+  results = overridePages
+    .map(id => candidates.find(c => c.id === id))
+    .filter((e): e is Candidate => e != null)
+    .map(e => ({ ...e, shared: sharedTags(e.tags), url: entryUrl(e) }));
+} else if (tagSet.size > 0) {
+  results = candidates
+    .map(e => ({ ...e, shared: sharedTags(e.tags), url: entryUrl(e) }))
+    .filter(e => e.shared.length > 0)
+    .sort((a, b) => b.shared.length - a.shared.length)
+    .slice(0, limit);
+}
+---
+
+{results.length > 0 && (
+  <div class="not-prose mt-10 pt-6">
+    <h2 class="text-sm font-semibold tracking-wide text-slate-500 dark:text-slate-400 mb-4">Related</h2>
+    <div class="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth">
+      {results.map(r => (
+        <a href={r.url} class="group flex-none w-64 snap-start flex flex-col gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 p-4 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md transition-all no-underline">
+          <div class="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">{sectionLabel(r.id)}</div>
+          <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 m-0">{r.title}</h3>
+          {r.description && (
+            <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 flex-1 leading-relaxed m-0">{r.description}</p>
+          )}
+          {r.shared.length > 0 && (
+            <div class="flex flex-wrap gap-1 mt-auto pt-1">
+              {r.shared.slice(0, 3).map(tag => (
+                <span class="text-xs bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">{tag}</span>
+              ))}
+            </div>
+          )}
+        </a>
+      ))}
+    </div>
+  </div>
+)}
