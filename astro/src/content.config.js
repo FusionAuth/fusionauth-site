@@ -111,6 +111,7 @@ const docsCollection = defineCollection({
     sectionIndex: z.boolean().default(false),
     next: z.string().optional(),
     prev: z.string().optional(),
+    relatedPinFirst: z.string().optional(),
   }),
 });
 
