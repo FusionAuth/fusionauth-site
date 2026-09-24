@@ -72,6 +72,13 @@ const SECTION_CAPS: Record<string, string> = {
   api: 'API', apis: 'APIs', sdk: 'SDK', sdks: 'SDKs', scim: 'SCIM', spa: 'SPA',
 };
 
+function inlineMarkdown(text: string): string {
+  return text
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+}
+
 function sectionLabel(id: string): string {
   return id.split('/')[0].split('-')
     .map((w: string) => SECTION_CAPS[w.toLowerCase()] ?? (w.charAt(0).toUpperCase() + w.slice(1)))
@@ -138,7 +145,7 @@ if (overridePages && overridePages.length > 0) {
       {results.map(r => (
         <a href={r.url} class="group flex-none w-64 snap-start flex flex-col gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 p-4 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md transition-all no-underline">
           <div class="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">{sectionLabel(r.id)}</div>
-          <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 m-0">{r.title}</p>
+          <p class="related-card-title text-sm font-semibold text-slate-800 dark:text-slate-200 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 m-0" set:html={inlineMarkdown(r.title)} />
           {r.description && (
             <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 flex-1 leading-relaxed m-0">{r.description}</p>
           )}
@@ -154,3 +161,17 @@ if (overridePages && overridePages.length > 0) {
     </div>
   </div>
 )}
+
+<style is:global>
+  .related-card-title code {
+    font-family: ui-monospace, monospace;
+    font-size: 0.85em;
+    background: rgb(241 245 249);
+    padding: 0.1em 0.3em;
+    border-radius: 0.2em;
+    font-weight: normal;
+  }
+  :root.dark .related-card-title code {
+    background: rgb(30 41 59);
+  }
+</style>
