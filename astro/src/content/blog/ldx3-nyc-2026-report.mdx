@@ -1,0 +1,131 @@
+---
+publish_date: 2026-09-24
+title: "Notes from LDX3 NYC: Nobody Has a Good Answer for Agentic Identity Yet"
+description: "A recap of LDX3 NYC, where the hallway conversations resounded with discussions about AI."
+authors: Dan Moore
+image: /img/blogs/ldx3-nyc-2026-report/ldx3-nyc-blog.png
+categories: Community, Education
+tags: ldx3, leaddev, event, ai, identity, tokens
+excerpt_separator: "{/* more */}"
+---
+
+
+I spent a couple of days at LDX3 NYC last week. [LeadDev](https://leaddev.com/) runs a handful of these conferences, and this one is aimed squarely at senior+ engineers, engineering managers, and directors. I try to get to a few of these a year, not because every conversation turns into a sales discussion (most don't), but because talking to software developers tells me what's keeping them up at night. It's also a chance to catch up with folks I only know from Slacks (hi [RLS](https://randsinrepose.com/welcome-to-rands-leadership-slack/) folks!) or other online interactions.
+
+{/* more */}
+
+This year, no surprise: AI dominated the conversation. Since "AI is a big topic at a conference" isn't exactly an unusual hot take, let me be specific.
+
+## What engineering managers are actually worried about
+
+The AI discussion split into a few threads:
+
+* Team effects: what does it mean to manage a team where some fraction of the code is AI-written? What does "senior engineer" mean if the bar for writing working code has dropped?
+* Tooling fatigue: a lot of people are trying to distinguish reality from fad. It's hard to know what deserves attention.
+* If junior engineers used to learn from unglamorous work that AI now does, how do you grow senior engineers for the future? Nobody I talked to had a clean answer. I don't either.
+
+## The booth conversations I had were mostly about agentic identity
+
+There were only a few identity-focused vendors present, but plenty of tools to help developers manage their agents, enable their agents, or use agents in their systems. The booth next to us was an AI SRE.
+
+Which tells you something about who shows up to these things now.
+
+I talked to people about their customer identity needs, how we compared to competitors, and the problem we solve. But most folks who stopped by wanted to talk about agentic systems for employees, more than customer identity.
+
+### Controlling third party tool access
+I had one great conversation about what happens to access when an agent acts on someone's behalf in a third party tool like Notion.
+
+Say I'm Dan. I have access to a set of Notion docs. I want an agent to act on my behalf: update docs, look things up, whatever. That agent should reach some of the documents I have access to, but not all of them. For example, it should see general docs (under `/docs`), but not the documents where we keep production details or customer info (under `/secrets`).
+
+How do you actually build that? I've written before about [this AI authorization problem](/blog/ai-authorization), and it's a doozie.
+
+There are two valid answers, and which one you get depends on the third-party provider.
+
+1. The provider supports granular scoping. If Notion (or whatever the third party tool is) lets you scope access down to specific documents or folders, use that. Unfortunately, this option is also, in my experience, rarely available.
+
+2. Build a gateway to control access to Notion for the agent. This is the messier, more common reality, and I think most teams will end up here, so let me walk through it.
+
+Here's a diagram of this flow, illustrating the major moving pieces.
+
+```mermaid
+sequenceDiagram
+    participant Dan as Dan (User)
+    participant Harness as Agent Harness
+    participant IdP as Identity Provider
+    participant Gateway as Gateway (agentgateway)
+    participant Store as Credential Store
+    participant Notion as Notion API
+
+    Note over Dan,IdP: Setup (one-time)
+    Dan->>IdP: Authenticate & authorize Notion access
+    IdP->>Store: Store Notion refresh token, linked to Dan
+    IdP->>Harness: Issue agentic identity for "agent acting as Dan"
+
+    Note over Dan,Notion: Runtime request
+    Dan->>Harness: Ask agent to act (e.g. update doc)
+    Harness->>Gateway: Forward Dan's local token
+
+    Gateway->>IdP: Exchange local token (on-behalf-of)
+    IdP-->>Gateway: Return token with Dan's sub claim + agentic flag
+
+    Gateway->>Gateway: Verify token signature
+    Gateway->>Gateway: Check audience (issued for this purpose)
+    Gateway->>Gateway: Confirm subject (which user)
+    Gateway->>Gateway: Apply access rules (e.g. /docs allowed, /secrets denied)
+
+    alt Rules pass
+        Gateway->>Store: Request real Notion credential for Dan
+        Store-->>Gateway: Return Notion credential
+        Gateway->>Notion: Forward request with injected credential
+        Notion-->>Gateway: Response
+        Gateway-->>Harness: Response
+        Harness-->>Dan: Result
+    else Rules fail
+        Gateway-->>Harness: Deny request
+        Harness-->>Dan: Access denied
+    end
+```
+
+First, have Dan get a refresh token for Notion with scopes an agent might want to use.
+
+Then mint an agentic identity associated with Dan: not Dan's identity, but a distinct one that represents "the agent acting for Dan."
+
+Dan authenticates with the system, not Notion, and then the agentic harness does an on-behalf-of token exchange. The harness exchanges Dan's local token (via an identity provider) for a token that represents the agent acting on Dan's behalf. That token carries Dan's subject claim plus something that flags it as agentic. That token means nothing to Notion; Notion has no idea what to do with it.
+
+But you can put a proxy in front of Notion that does.
+
+Two things happen at the gateway: exchange for the right identity, then inject the right credential if the rules pass.
+
+I've explored this idea against the open-source agentgateway project. There are other efforts in this space too, and I'd expect more to show up. Here are the relevant docs for the [token exchange](https://agentgateway.dev/docs/standalone/latest/configuration/security/backend-authn/), [HTTP](https://agentgateway.dev/docs/standalone/latest/documentation/configuration/security/http-authz/) and [MCP rules](https://agentgateway.dev/docs/standalone/latest/documentation/configuration/security/mcp-authz/).
+
+First, put an MCP/HTTP gateway in front of Notion. All requests to Notion must go through that proxy instead of hitting the Notion API directly. The harness hands the gateway Dan's local token as-is. The gateway does the exchange first, presenting Dan's token to the identity provider and getting back the token that carries Dan's subject claim plus the agentic information.
+
+Once it has that, the gateway applies the access rules and, if they pass, pulls and injects the real Notion credential.
+
+The token the gateway holds still isn't a Notion-native token even after the request is approved. It's the internally minted one that the agent holds, with Dan's sub claim on it. Somewhere, you need a store that holds the real Notion credential associated with Dan (FusionAuth stores these on identity links).
+
+A service needs to pull that credential and inject it into the request. That service can't just trust whatever token shows up; before releasing anything, it needs to:
+
+* verify the token's signature against the identity provider that issued it
+* check that the token was issued for this purpose (the audience)
+* confirm which user it's tied to (the subject)
+
+Skip these checks and you've built a vending machine that hands out real Notion credentials to whoever asks nicely. Get it right and you have a small, auditable piece of infrastructure.
+
+That's the basic shape. It's not elegant, but it works, and it's the pattern I'd point people toward if their provider doesn't do native scoping, which, again, is most providers right now.
+
+This also breaks down if the Notion API doesn't use paths. MCP rules have their own limits and split things up by tool rather than path.
+
+## The part that should worry you
+
+We also ran a survey with LDX3 on the [state of AI in software development](https://leaddev.com/the-ai-impact-report-2026), and I participated in a short overview of it at the conference.
+
+Two numbers from the survey stuck with me.
+
+First, 69% of teams don't have a plan to measure whether their AI tooling in the SDLC actually works, but they're moving forward anyway. Not "considering AI." Already shipping with it, with no way to tell if it's helping or how much.
+
+Second, 24% of teams have developers using their personal credentials to access AI tools, instead of provisioning separate ones. This is the same identity problem as the agentic gateway use case above, just less exotic. If a developer's personal account authenticates to your AI coding assistant, you've lost the ability to audit what the assistant did versus what the human did. You can't lock it down separately, and you can't revoke one without revoking the other. Use a separate account.
+
+However, the ramifications are slightly less scary for the developer use case. If you're interacting with something like GitHub, there are already guardrails such as protected branches, easy rollbacks, and required reviews, so the blast radius is smaller. But if you're using a tool without those gates, there's no safety net. The agent can (and might) do any destructive action the human has permissions for.
+
+Give agents their own identity and their own access token, always, because the moment something goes wrong, you want to know whether it was the human or the agent. Shared credentials mean you never will.
