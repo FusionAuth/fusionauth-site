@@ -14,10 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Wait for Copilot to finish processing
-        # Give Copilot time to analyze the PR and post its failure review
-        run: sleep 30
+        run: sleep 15
 
-      - name: Scan and dismiss Copilot spam
+      - name: Scan and minimize Copilot spam
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -28,29 +27,31 @@ jobs:
           # Fetch all reviews for this PR
           REVIEWS=$(gh api "/repos/$REPO/pulls/$PR_NUMBER/reviews")
 
-          # Find the IDs of any reviews authored by Copilot that contain the spam text
-          # (Using jq to safely parse the JSON response)
-          SPAM_REVIEW_IDS=$(echo "$REVIEWS" | jq -r '
+          # Find the GraphQL node_ids of reviews authored by Copilot containing the spam text
+          SPAM_NODE_IDS=$(echo "$REVIEWS" | jq -r '
             .[] | 
             select(.user.login | ascii_downcase | contains("copilot")) | 
             select(.body | test("Copilot wasn'\''t able to review|could not review"; "i")) | 
-            .id
+            .node_id
           ')
 
-          if [[ -z "$SPAM_REVIEW_IDS" ]]; then
+          if [[ -z "$SPAM_NODE_IDS" ]]; then
             echo "No Copilot spam found. Exiting."
             exit 0
           fi
 
-          echo "Found spam review(s): $SPAM_REVIEW_IDS"
+          echo "Found spam review(s): $SPAM_NODE_IDS"
 
-          # Loop through found spam reviews and dismiss them
-          for ID in $SPAM_REVIEW_IDS; do
-            echo "Dismissing review $ID..."
-            gh api -X PUT "/repos/$REPO/pulls/$PR_NUMBER/reviews/$ID/dismissals" \
-              -f message="Automated cleanup: Copilot spam removed" --silent || true
+          # Loop through found spam reviews and minimize them as SPAM
+          for NODE_ID in $SPAM_NODE_IDS; do
+            echo "Minimizing review $NODE_ID..."
             
-            # Note: We skip the GraphQL minimization here because dismissing a 
-            # review entirely collapses it and removes the "Changes requested" block.
-            echo "✅ Review $ID dismissed."
+            gh api graphql -f query='
+              mutation($subjectId: ID!) {
+                minimizeComment(input: {subjectId: $subjectId, classifier: SPAM}) {
+                  minimizedComment { isMinimized }
+                }
+              }' -F subjectId="$NODE_ID" --silent
+              
+            echo "✅ Review $NODE_ID minimized."
           done
