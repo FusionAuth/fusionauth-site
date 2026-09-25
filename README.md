@@ -45,7 +45,7 @@ To run a full site build:
 npm run start
 ```
 
-This may take a minute or two. Output can be noisy, but do pay attention to the output from [`astro-link-checker`](https://github.com/nathan-contino/astro-link-checker), which runs at the very end of the `build`. This check ensures that all internal links on the site point to valid URLs. For development convenience, this check only fails development builds (so it can never break a deploy), but _please_ keep the broken link count at zero before merging into `main`.
+This may take a minute or two. Output can be noisy, but do pay attention to the output from [`astro-link-checker`](https://better-static-sites.github.io/build-tools/link-checker/), which runs at the very end of the `build`. This check ensures that all internal links on the site point to valid URLs. For development convenience, this check only fails development builds (so it can never break a deploy), but _please_ keep the broken link count at zero before merging into `main`.
 
 ## Write Content
 
