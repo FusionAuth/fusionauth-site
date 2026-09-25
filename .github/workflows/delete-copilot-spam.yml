@@ -7,6 +7,7 @@ on:
     types: [created]
   issue_comment:
     types: [created]
+  workflow_dispatch:
 
 permissions:
   pull-requests: write
@@ -15,59 +16,52 @@ permissions:
 jobs:
   delete-spam:
     runs-on: ubuntu-latest
-    if: >-
-      contains(github.event.comment.body, 'Copilot wasn''t able to review') ||
-      contains(github.event.review.body, 'Copilot wasn''t able to review') ||
-      contains(github.event.comment.body, 'could not review') ||
-      contains(github.event.review.body, 'could not review')
     steps:
-      - name: Clean Up Bot Comment
+      - name: Inspect and Clean Up Copilot Spam
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMENT_URL: ${{ github.event.comment.url || format('/repos/{0}/pulls/{1}/reviews/{2}', github.repository, github.event.pull_request.number, github.event.review.id) }}
           COMMENT_BODY: ${{ github.event.comment.body || github.event.review.body }}
-          
-          # grab the actual author of the payload to log it
           COMMENT_AUTHOR: ${{ github.event.comment.user.login || github.event.review.user.login }}
           COMMENTER_TYPE: ${{ github.event.comment.user.type || github.event.review.user.type }}
-          
-          # graphQL node ID for minimizing, and review ID for dismissing
           NODE_ID: ${{ github.event.comment.node_id || github.event.review.node_id }}
           REVIEW_ID: ${{ github.event.review.id }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
         run: |
-          echo "Workflow triggered by actor: ${{ github.actor }}"
-          echo "Actual comment written by: $COMMENT_AUTHOR (Type: $COMMENTER_TYPE)"
+          # Exit early if the comment or review does not contain Copilot failure messaging
+          if ! echo "$COMMENT_BODY" | grep -qiE "Copilot wasn't able to review|could not review"; then
+            echo "Standard comment detected. No action required."
+            exit 0
+          fi
 
-          # if a human developer pastes the error message to ask a question, we abort.
-          # (We allow 'User' type ONLY if the author login explicitly contains 'copilot', just in case 
-          # GitHub Enterprise categorizes the Copilot integration weirdly).
+          echo "Copilot failure comment detected."
+
+          # Prevent accidental deletion of human comments containing the targeted phrases
           if [[ "$COMMENTER_TYPE" == "User" && ! "$COMMENT_AUTHOR" =~ [Cc]opilot ]]; then
-            echo "Safety abort: The comment author is a human 'User'. Protecting human comment."
+            echo "Author is a human user. Skipping deletion."
             exit 0
           fi
 
           if [[ -z "$COMMENT_URL" || "$COMMENT_URL" == *"/reviews/" ]]; then
-             echo "Error: Could not resolve a valid URL."
-             exit 0
+            echo "Unable to resolve target comment or review URL."
+            exit 0
           fi
-            
-          # 1. standard API deletion (works for issue_comment and line-comments)
+
+          # Attempt standard REST API deletion (applies to issue and inline review comments)
           if gh api -X DELETE "$COMMENT_URL" --silent 2>/dev/null; then
-            echo "✅ Standard deletion successful."
+            echo "Comment successfully deleted."
           else
-            echo "⚠️ Deletion blocked by GitHub (This is a submitted PR Review)."
-            echo "Falling back to Dismiss and Minimize..."
-            
-            # 2. dismiss the review so it stops showing as an active reviewer request
+            echo "Deletion unavailable for top-level PR review. Dismissing and minimizing..."
+
+            # Dismiss the review status on the pull request
             if [[ -n "$REVIEW_ID" ]]; then
               gh api -X PUT "/repos/$REPO/pulls/$PR_NUMBER/reviews/$REVIEW_ID/dismissals" \
-                -f message="Automated cleanup: Copilot spam removed" --silent || true
-              echo "✅ Review dismissed."
+                -f message="Automated cleanup: Copilot automated review removed" --silent || true
+              echo "Review dismissed."
             fi
 
-            # 3. minimize the review in the PR timeline using GraphQL (folds it out of view)
+            # Hide the review from the pull request timeline using GraphQL
             if [[ -n "$NODE_ID" ]]; then
               gh api graphql -f query='
                 mutation($subjectId: ID!) {
@@ -75,7 +69,6 @@ jobs:
                     minimizedComment { isMinimized }
                   }
                 }' -F subjectId="$NODE_ID" --silent || true
-              
-              echo "✅ Review permanently minimized and hidden."
+              echo "Review minimized as spam."
             fi
           fi
