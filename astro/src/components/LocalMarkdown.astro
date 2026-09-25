@@ -1,0 +1,34 @@
+---
+import { Marked } from "marked";
+import Prism from "prismjs";
+import { readLocalFile } from 'src/utils/localFileReader';
+
+export interface Props {
+  /**
+   * File path relative to extractedcode (source) or src/generated-code-snippets (snippet).
+   * Snippet paths contain ".snippet." in the filename.
+   */
+  src: string;
+}
+
+const { src } = Astro.props as Props;
+
+const marked = new Marked({
+  renderer: {
+    code({ text, lang }) {
+      const language = (lang || "").trim().split(/\s+/)[0];
+      if (language && Prism.languages[language]) {
+        const highlighted = Prism.highlight(text, Prism.languages[language], language);
+        return `<pre><code class="language-${language}">${highlighted}</code></pre>`;
+      }
+      return `<pre><code class="language-${language}">${text}</code></pre>`;
+    }
+  }
+});
+
+const html = marked.parse(readLocalFile(src));
+---
+
+<article>
+  <Fragment set:html={html} />
+</article>
