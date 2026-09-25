@@ -15,7 +15,11 @@ permissions:
 jobs:
   delete-spam:
     runs-on: ubuntu-latest
-    if: contains(github.actor, 'copilot') && endsWith(github.actor, '[bot]')
+    # apply to only the MS-internal Copilot system actors OR any matching [bot] integration
+    if: >-
+      github.actor == 'Copilot' ||
+      github.actor == 'copilot-pull-request-reviewer' ||
+      (contains(github.actor, 'copilot') && endsWith(github.actor, '[bot]'))
     steps:
       - name: Delete Bot Comment
         env:
@@ -26,18 +30,20 @@ jobs:
         run: |
           echo "Triggered by actor: ${{ github.actor }}"
           
-          # Check if Copilot made the comment
-          if [[ "$COMMENTER_TYPE" != "Bot" ]]; then
-            echo "Safety abort: The comment author is a '$COMMENTER_TYPE', not a 'Bot'. Protecting human comment."
+          # abort if the user type is a human "User", UNLESS it is the exact reserved Copilot actor 
+          # (because the internal Copilot actor sometimes returns weird metadata)
+          if [[ "$COMMENTER_TYPE" == "User" && "${{ github.actor }}" != "Copilot" && "${{ github.actor }}" != "copilot-pull-request-reviewer" ]]; then
+            echo "Safety abort: The comment author is a human 'User'. Protecting human comment."
             exit 0
           fi
 
+          # ensure we actually have a URL before trying to delete
           if [[ -z "$COMMENT_URL" || "$COMMENT_URL" == *"/reviews/" ]]; then
              echo "Error: Could not resolve a valid comment or review URL."
              exit 0
           fi
 
-          # Verify the comment body matches the specific Copilot error string
+          # verify the comment body matches the specific Copilot spam error string
           if [[ "$COMMENT_BODY" == *"Copilot wasn't able to review"* || "$COMMENT_BODY" == *"could not review"* ]]; then
             echo "Copilot spam detected. Deleting at $COMMENT_URL..."
             gh api -X DELETE "$COMMENT_URL"
