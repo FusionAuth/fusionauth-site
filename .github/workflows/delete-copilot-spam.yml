@@ -7,23 +7,68 @@ on:
     types: [created]
   issue_comment:
     types: [created]
+  workflow_dispatch:
+
+permissions:
+  pull-requests: write
+  issues: write
 
 jobs:
   delete-spam:
     runs-on: ubuntu-latest
-    # Prevent the workflow from running in an endless loop if it modifies a comment
-    if: github.actor == 'github-copilot[bot]' || github.actor == 'copilot-code-review[bot]'
     steps:
-      - name: Delete Bot Comment
+      - name: Inspect and Clean Up Copilot Spam
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMMENT_URL: ${{ github.event.comment.url || github.event.review.url }}
+          COMMENT_URL: ${{ github.event.comment.url || format('/repos/{0}/pulls/{1}/reviews/{2}', github.repository, github.event.pull_request.number, github.event.review.id) }}
           COMMENT_BODY: ${{ github.event.comment.body || github.event.review.body }}
+          COMMENT_AUTHOR: ${{ github.event.comment.user.login || github.event.review.user.login }}
+          COMMENTER_TYPE: ${{ github.event.comment.user.type || github.event.review.user.type }}
+          NODE_ID: ${{ github.event.comment.node_id || github.event.review.node_id }}
+          REVIEW_ID: ${{ github.event.review.id }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
         run: |
-          # Verify the comment body matches the specific Copilot error string
-          if [[ "$COMMENT_BODY" == *"Copilot wasn't able to review"* || "$COMMENT_BODY" == *"could not review"* ]]; then
-            echo "Copilot spam detected. Deleting comment..."
-            gh api -X DELETE "$COMMENT_URL"
+          # Exit early if the comment or review does not contain Copilot failure messaging
+          if ! echo "$COMMENT_BODY" | grep -qiE "Copilot wasn't able to review|could not review"; then
+            echo "Standard comment detected. No action required."
+            exit 0
+          fi
+
+          echo "Copilot failure comment detected."
+
+          # Prevent accidental deletion of human comments containing the targeted phrases
+          if [[ "$COMMENTER_TYPE" == "User" && ! "$COMMENT_AUTHOR" =~ [Cc]opilot ]]; then
+            echo "Author is a human user. Skipping deletion."
+            exit 0
+          fi
+
+          if [[ -z "$COMMENT_URL" || "$COMMENT_URL" == *"/reviews/" ]]; then
+            echo "Unable to resolve target comment or review URL."
+            exit 0
+          fi
+
+          # Attempt standard REST API deletion (applies to issue and inline review comments)
+          if gh api -X DELETE "$COMMENT_URL" --silent 2>/dev/null; then
+            echo "Comment successfully deleted."
           else
-            echo "Comment did not match spam criteria. Skipping."
+            echo "Deletion unavailable for top-level PR review. Dismissing and minimizing..."
+
+            # Dismiss the review status on the pull request
+            if [[ -n "$REVIEW_ID" ]]; then
+              gh api -X PUT "/repos/$REPO/pulls/$PR_NUMBER/reviews/$REVIEW_ID/dismissals" \
+                -f message="Automated cleanup: Copilot automated review removed" --silent || true
+              echo "Review dismissed."
+            fi
+
+            # Hide the review from the pull request timeline using GraphQL
+            if [[ -n "$NODE_ID" ]]; then
+              gh api graphql -f query='
+                mutation($subjectId: ID!) {
+                  minimizeComment(input: {subjectId: $subjectId, classifier: SPAM}) {
+                    minimizedComment { isMinimized }
+                  }
+                }' -F subjectId="$NODE_ID" --silent || true
+              echo "Review minimized as spam."
+            fi
           fi
