@@ -1,12 +1,8 @@
-name: Delete Copilot Spam Comments
+name: Clean Up Copilot Spam
 
 on:
-  pull_request_review:
-    types: [submitted]
-  pull_request_review_comment:
-    types: [created]
-  issue_comment:
-    types: [created]
+  pull_request:
+    types: [opened, synchronize]
   workflow_dispatch:
 
 permissions:
@@ -14,61 +10,48 @@ permissions:
   issues: write
 
 jobs:
-  delete-spam:
+  sweep-spam:
     runs-on: ubuntu-latest
     steps:
-      - name: Inspect and Clean Up Copilot Spam
+      - name: Wait for Copilot to finish processing
+        run: sleep 15
+
+      - name: Scan and minimize Copilot spam
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMMENT_URL: ${{ github.event.comment.url || format('/repos/{0}/pulls/{1}/reviews/{2}', github.repository, github.event.pull_request.number, github.event.review.id) }}
-          COMMENT_BODY: ${{ github.event.comment.body || github.event.review.body }}
-          COMMENT_AUTHOR: ${{ github.event.comment.user.login || github.event.review.user.login }}
-          COMMENTER_TYPE: ${{ github.event.comment.user.type || github.event.review.user.type }}
-          NODE_ID: ${{ github.event.comment.node_id || github.event.review.node_id }}
-          REVIEW_ID: ${{ github.event.review.id }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
         run: |
-          # Exit early if the comment or review does not contain Copilot failure messaging
-          if ! echo "$COMMENT_BODY" | grep -qiE "Copilot wasn't able to review|could not review"; then
-            echo "Standard comment detected. No action required."
+          echo "Scanning PR #$PR_NUMBER for Copilot spam..."
+
+          # Fetch all reviews for this PR
+          REVIEWS=$(gh api "/repos/$REPO/pulls/$PR_NUMBER/reviews")
+
+          # Find the GraphQL node_ids of reviews authored by Copilot containing the spam text
+          SPAM_NODE_IDS=$(echo "$REVIEWS" | jq -r '
+            .[] | 
+            select(.user.login | ascii_downcase | contains("copilot")) | 
+            select(.body | test("Copilot wasn'\''t able to review|could not review"; "i")) | 
+            .node_id
+          ')
+
+          if [[ -z "$SPAM_NODE_IDS" ]]; then
+            echo "No Copilot spam found. Exiting."
             exit 0
           fi
 
-          echo "Copilot failure comment detected."
+          echo "Found spam review(s): $SPAM_NODE_IDS"
 
-          # Prevent accidental deletion of human comments containing the targeted phrases
-          if [[ "$COMMENTER_TYPE" == "User" && ! "$COMMENT_AUTHOR" =~ [Cc]opilot ]]; then
-            echo "Author is a human user. Skipping deletion."
-            exit 0
-          fi
-
-          if [[ -z "$COMMENT_URL" || "$COMMENT_URL" == *"/reviews/" ]]; then
-            echo "Unable to resolve target comment or review URL."
-            exit 0
-          fi
-
-          # Attempt standard REST API deletion (applies to issue and inline review comments)
-          if gh api -X DELETE "$COMMENT_URL" --silent 2>/dev/null; then
-            echo "Comment successfully deleted."
-          else
-            echo "Deletion unavailable for top-level PR review. Dismissing and minimizing..."
-
-            # Dismiss the review status on the pull request
-            if [[ -n "$REVIEW_ID" ]]; then
-              gh api -X PUT "/repos/$REPO/pulls/$PR_NUMBER/reviews/$REVIEW_ID/dismissals" \
-                -f message="Automated cleanup: Copilot automated review removed" --silent || true
-              echo "Review dismissed."
-            fi
-
-            # Hide the review from the pull request timeline using GraphQL
-            if [[ -n "$NODE_ID" ]]; then
-              gh api graphql -f query='
-                mutation($subjectId: ID!) {
-                  minimizeComment(input: {subjectId: $subjectId, classifier: SPAM}) {
-                    minimizedComment { isMinimized }
-                  }
-                }' -F subjectId="$NODE_ID" --silent || true
-              echo "Review minimized as spam."
-            fi
-          fi
+          # Loop through found spam reviews and minimize them as SPAM
+          for NODE_ID in $SPAM_NODE_IDS; do
+            echo "Minimizing review $NODE_ID..."
+            
+            gh api graphql -f query='
+              mutation($subjectId: ID!) {
+                minimizeComment(input: {subjectId: $subjectId, classifier: SPAM}) {
+                  minimizedComment { isMinimized }
+                }
+              }' -F subjectId="$NODE_ID" --silent
+              
+            echo "✅ Review $NODE_ID minimized."
+          done
