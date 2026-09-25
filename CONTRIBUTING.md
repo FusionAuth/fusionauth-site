@@ -58,7 +58,7 @@ Follow these guidelines when writing documentation (everything under [docs](astr
   import MyComponent from 'src/components/MyComponent.astro';
   ```
 
-## LLM cliches
+## LLM Cliches
 
 - Avoid emdashes
 - Avoid lists of three items when one example will do
@@ -74,7 +74,7 @@ Follow these guidelines when writing documentation (everything under [docs](astr
 - Capitalize the first word unless the bullet points continue a sentence started in the introduction.
 - If the list item is a sentence, include a period at the end.
 
-### List examples
+### List Examples
 
 
 ```plaintext
@@ -148,7 +148,7 @@ To make a smoothie:
 - webview
 - X.509
 
-## Version signposting
+## Version Signposting
 
 - When adding a feature, mark the top of the page or top of the section (if added to an existing page) with the [`AvailableSince` component](astro/src/components/api/AvailableSince.astro):
 
@@ -261,7 +261,7 @@ Common optional fields:
 
 ### Cards
 
-Docs cards are rendered using [astro-better-cards](https://better-static-sites.github.io/docs/ui/cards/). You can use [`ChildCards`](https://better-static-sites.github.io/docs/ui/cards/#childcards) to automatically render a collection of links to sub-pages within a folder (with configurable depth). Or you can use [`PageNav`](https://better-static-sites.github.io/docs/ui/cards/#pagenav) to display next and last links using `nextPage` and `lastPage` in page front matter.
+Docs cards are rendered using [astro-better-cards](https://better-static-sites.github.io/content/cards/). You can use [`ChildCards`](https://better-static-sites.github.io/content/cards/#childcards) to automatically render a collection of links to sub-pages within a folder (with configurable depth). Or you can use [`PageNav`](https://better-static-sites.github.io/content/cards/#pagenav) to display next and last links using `nextPage` and `lastPage` in page front matter.
 
 ### API docs
 
@@ -304,12 +304,12 @@ Docs cards are rendered using [astro-better-cards](https://better-static-sites.g
   <PlanBlurbApi plan="enterprise" feature="this feature" />
   ```
 
-### Screenshots
+### Generative Screenshots
 
 > [!NOTE]
 > Migration still in progress.
 
-Screenshots in the docs are generated automatically from a headless browser pointed at a local FusionAuth instance using [astro-better-declarative-screenshots](https://better-static-sites.github.io/docs/ui/declarative-screenshots/). Docker, the FusionAuth container, and a PostgreSQL database all start automatically when you run the screenshot command.
+Screenshots in the docs are generated automatically from a headless browser pointed at a local FusionAuth instance using [astro-better-declarative-screenshots](https://better-static-sites.github.io/content/declarative-screenshots/). Docker, the FusionAuth container, and a PostgreSQL database all start automatically when you run the screenshot command.
 
 #### Setup
 
@@ -320,7 +320,7 @@ cd astro/screenshots
 npm install
 ```
 
-#### Running screenshots
+#### Generate Screenshots
 
 From the `astro/` directory:
 
@@ -336,7 +336,7 @@ To regenerate a single screenshot, pass a filter matching the filename or URL:
 npm run screenshots -- --filter groups
 ```
 
-#### Adding a screenshot to a page
+#### Add a Screenshot to a Page
 
 Place the component where you want the screenshot to appear:
 
@@ -367,7 +367,7 @@ Available `<Screenshot>` props:
 | `height` | 800 | Viewport height in px |
 | `fullPage` | false | Capture full scrollable height |
 
-### Moving pictures
+### Moving Pictures
 
 GIFs take up quite a lot of space. Use WEBMs instead:
 
@@ -380,20 +380,15 @@ ffmpeg -i terminalizer.gif terminalizer.webm
 Follow everything in the `Content Style Guidelines` section.
 
 - If updating an blog post, please update the add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
-- If you have a common component that you want to include, make sure the blog is a `.mdx` file and create a component. [Example components](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/src/components/blog) - [Example blog post using a component](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/amazon-cognito-and-fusionauth-comparison.mdx)
-- Images should be pulled in using markdown: `![alt text](/path/to/images)`
-- Images for a blog post should go under /astro/public/img/blogs/` in a directory related to the blog title.
-- We use Shiki for code formatting. Supported languages are listed here: https://shiki.style/languages
-- For site navigation and sequential UI operations (tabs, pages, sidebar entries, links), use Breadcrumb: `Navigate to <Breadcrumb>Tenants -> Password</Breadcrumb>`.
+- You can use docs components in blog posts, but please don't create new components for individual blog posts. File a request with `#devsuccess` on Slack if you have a need that isn't satisfied by our current suite of components and Docs will consider creating it with or for you.
+- Use markdown image syntax: `![alt text](/path/to/images)`
+- Locate blog post images in `/astro/public/img/blogs/` in a directory related to the blog title.
+- We use Prism for code formatting; see [this list](https://prismjs.com/docs/prism.languages) for supported language names.
+- For site navigation and sequential UI operations (tabs, pages, sidebar entries, links), use Breadcrumb: `Navigate to <Breadcrumb>Tenants -> Password</Breadcrumb>` with arrows.
 - For field names and labels (keys), use **bold**: `**Login Identifier Attribute**`.
 - For field values (values), use `monospace`: ``userPrincipalName``. Use quotes only when presenting a literal text value for an editable field.
-- In summary, **bold** is for attributes (keys), `monospace` is for values, and **`bold monospace`** is for literal attribute names in files, requests, and code. Filenames, directories, paths and command line are always `monospace`. If it is unclear how to format something, ask "is it a key or a value?". If it matches neither, it could be a navigation element which would be handled with a `Breadcrumb`. If none of these fit, check this guideline. If the guideline does not provide results, the guideline needs to be updated.
-- Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/config/contentcheck/known-blog-categories.txt). You can separate categories with commas.
-- Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter. You can [learn more about the logic by reviewing the layout](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/layouts/Blog.astro).
-- You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
-- All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
-- When using an aside in the blog, please use the `nodark="true"` attribute.
-- Make descriptions full sentences. They must end in a period or other punctuation.
-- Titles should not end in a period. They can end in a ? or ! if needed.
-- All blogs that use non-trivial code examples should have a github repo with an example app. See (Adding an example app)[#adding-an-example-app] for more.
-
+- In summary, **bold** is for attributes (keys), `monospace` is for values, and **`bold monospace`** is for literal attribute names in files, requests, and code. Filenames, directories, paths, and commands are always `monospace`.
+- Every blog post needs at least one category.
+- Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter.
+- Descriptions must be full sentences ending with a period.
+- Titles should not end in a period. They can end in a ? or ! if absolutely necessary.
