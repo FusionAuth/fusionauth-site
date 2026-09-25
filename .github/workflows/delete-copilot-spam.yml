@@ -1,0 +1,29 @@
+name: Delete Copilot Spam Comments
+
+on:
+  pull_request_review:
+    types: [submitted]
+  pull_request_review_comment:
+    types: [created]
+  issue_comment:
+    types: [created]
+
+jobs:
+  delete-spam:
+    runs-on: ubuntu-latest
+    # Prevent the workflow from running in an endless loop if it modifies a comment
+    if: github.actor == 'github-copilot[bot]' || github.actor == 'copilot-code-review[bot]'
+    steps:
+      - name: Delete Bot Comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_URL: ${{ github.event.comment.url || github.event.review.url }}
+          COMMENT_BODY: ${{ github.event.comment.body || github.event.review.body }}
+        run: |
+          # Verify the comment body matches the specific Copilot error string
+          if [[ "$COMMENT_BODY" == *"Copilot wasn't able to review"* || "$COMMENT_BODY" == *"could not review"* ]]; then
+            echo "Copilot spam detected. Deleting comment..."
+            gh api -X DELETE "$COMMENT_URL"
+          else
+            echo "Comment did not match spam criteria. Skipping."
+          fi
