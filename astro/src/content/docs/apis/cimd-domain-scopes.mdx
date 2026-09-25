@@ -1,0 +1,171 @@
+---
+title: CIMD Domain OAuth Scopes
+htmlTitle: CIMD Domain OAuth Scopes API
+description: Learn about the APIs for creating, retrieving, updating and deleting the custom OAuth scopes of a CIMD domain.
+---
+import GenericUpdateExplanationFragment from 'src/content/docs/apis/_shared/_generic-update-explanation-fragment.mdx';
+import ScopeRequestBody from 'src/content/docs/apis/_shared/_scope-request-body.mdx';
+import ScopeResponseBody from 'src/content/docs/apis/_shared/_scope-response-body.mdx';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_shared/_standard-delete-response-codes.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_shared/_standard-get-response-codes.astro';
+import StandardPostResponseCodes from 'src/content/docs/apis/_shared/_standard-post-response-codes.astro';
+import StandardPutResponseCodes from 'src/content/docs/apis/_shared/_standard-put-response-codes.astro';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_shared/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+
+<PlanBlurb plan="enterprise" />
+
+<AvailableSince since="1.XX.0"/>
+
+This page contains the APIs for managing the custom OAuth scopes of a [CIMD domain](/docs/get-started/core-concepts/cimd-domains). These scopes are requestable by any client that registers through the domain, in addition to the standard OpenID Connect scopes enabled by the domain's **providedScopePolicy**.
+
+A CIMD domain's initial scopes may be supplied when [creating the domain](/docs/apis/cimd-domains/create-a-cimd-domain). Every change after that goes through the APIs on this page — the [Update a CIMD Domain](/docs/apis/cimd-domains/update-a-cimd-domain) API ignores the **domain.scopes** field.
+
+<Aside type="note">
+There is no API to retrieve all of a CIMD domain's scopes as a collection. The full `scopes` list is returned on the domain itself by the [Retrieve a CIMD Domain](/docs/apis/cimd-domains/retrieve-a-cimd-domain) API.
+</Aside>
+
+## Create a CIMD Domain OAuth Scope
+
+This API is used to create a custom OAuth scope for a CIMD domain. Specifying an Id on the URI will instruct FusionAuth to use that Id when creating the OAuth scope. Otherwise, FusionAuth will generate an Id for the OAuth scope.
+
+### Request
+
+<API method="POST" uri="/api/cimd/domain/{cimdDomainId}/scope" authentication={["api-key"]} title="Create a CIMD Domain OAuth Scope with a randomly generated Id" />
+
+<API method="POST" uri="/api/cimd/domain/{cimdDomainId}/scope/{scopeId}" authentication={["api-key"]} title="Create a CIMD Domain OAuth Scope with a provided unique Id" />
+
+#### Request Headers
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="cimdDomainId" type="UUID" required>
+    The Id of the CIMD domain.
+  </APIField>
+  <APIField name="scopeId" type="UUID" optional immutable defaults="secure random UUID">
+    The Id to use for the new OAuth scope. If not specified a secure random UUID will be generated.
+  </APIField>
+</APIBlock>
+
+##### Request Body
+
+<ScopeRequestBody json_dir="cimd-domain-scopes" />
+
+### Response
+
+The response for this API contains the information for the OAuth scope that was created.
+
+<StandardPostResponseCodes never_search_error />
+
+#### Response Body
+
+<ScopeResponseBody is_cimd json_dir="cimd-domain-scopes" />
+
+## Retrieve a CIMD Domain OAuth Scope
+
+This API is used to retrieve a single custom OAuth scope for a CIMD domain by unique Id.
+
+<Aside type="note">
+Unlike the other CIMD domain OAuth scope APIs, this operation does not require the CIMD feature to be enabled on your license. You can always read your existing scope configuration.
+</Aside>
+
+### Request
+
+<API method="GET" uri="/api/cimd/domain/{cimdDomainId}/scope/{scopeId}" authentication={["api-key"]} title="Retrieve a CIMD Domain OAuth Scope by Id" />
+
+#### Request Headers
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="cimdDomainId" type="UUID" required>
+    The Id of the CIMD domain.
+  </APIField>
+  <APIField name="scopeId" type="UUID" required>
+    The Id of the OAuth scope to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains a single OAuth scope.
+
+<StandardGetResponseCodes never_search_error />
+
+#### Response Body
+
+<ScopeResponseBody is_cimd json_dir="cimd-domain-scopes" />
+
+## Update a CIMD Domain OAuth Scope
+
+<GenericUpdateExplanationFragment capitalized_object_name="OAuth Scope" />
+
+### Request
+
+<API method="PUT" uri="/api/cimd/domain/{cimdDomainId}/scope/{scopeId}" authentication={["api-key"]} showPatch={true} title="Update a CIMD Domain OAuth Scope by Id" />
+
+#### Request Headers
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="cimdDomainId" type="UUID" required>
+    The Id of the CIMD domain.
+  </APIField>
+  <APIField name="scopeId" type="UUID" required>
+    The Id of the OAuth scope to update.
+  </APIField>
+</APIBlock>
+
+##### Request Body
+
+<ScopeRequestBody is_update json_dir="cimd-domain-scopes" />
+
+### Response
+
+The response for this API contains the new information for the OAuth scope that was updated.
+
+<StandardPutResponseCodes never_search_error />
+
+#### Response Body
+
+<ScopeResponseBody is_cimd is_update json_dir="cimd-domain-scopes" />
+
+## Delete a CIMD Domain OAuth Scope
+
+This API is used to permanently delete a custom OAuth scope from a CIMD domain. You must specify the Id of the CIMD domain and the Id of the OAuth scope on the URI.
+
+<Aside type="caution">
+This is a hard delete and cannot be reversed. OAuth workflows that continue to request the deleted scope will fail, because a CIMD domain always rejects unknown scopes.
+</Aside>
+
+### Request
+
+<API method="DELETE" uri="/api/cimd/domain/{cimdDomainId}/scope/{scopeId}" authentication={["api-key"]} title="Delete a CIMD Domain OAuth Scope by Id" />
+
+#### Request Headers
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="cimdDomainId" type="UUID" required>
+    The Id of the CIMD domain.
+  </APIField>
+  <APIField name="scopeId" type="UUID" required>
+    The Id of the OAuth scope to delete.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes never_search_error />
