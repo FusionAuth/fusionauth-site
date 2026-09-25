@@ -8,22 +8,40 @@ on:
   issue_comment:
     types: [created]
 
+permissions:
+  pull-requests: write
+  issues: write
+
 jobs:
   delete-spam:
     runs-on: ubuntu-latest
-    # Prevent the workflow from running in an endless loop if it modifies a comment
-    if: github.actor == 'github-copilot[bot]' || github.actor == 'copilot-code-review[bot]'
+    if: contains(github.actor, 'copilot') && endsWith(github.actor, '[bot]')
     steps:
       - name: Delete Bot Comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMMENT_URL: ${{ github.event.comment.url || github.event.review.url }}
+          COMMENT_URL: ${{ github.event.comment.url || format('/repos/{0}/pulls/{1}/reviews/{2}', github.repository, github.event.pull_request.number, github.event.review.id) }}
           COMMENT_BODY: ${{ github.event.comment.body || github.event.review.body }}
+          COMMENTER_TYPE: ${{ github.event.comment.user.type || github.event.review.user.type }}
         run: |
+          echo "Triggered by actor: ${{ github.actor }}"
+          
+          # Check if Copilot made the comment
+          if [[ "$COMMENTER_TYPE" != "Bot" ]]; then
+            echo "Safety abort: The comment author is a '$COMMENTER_TYPE', not a 'Bot'. Protecting human comment."
+            exit 0
+          fi
+
+          if [[ -z "$COMMENT_URL" || "$COMMENT_URL" == *"/reviews/" ]]; then
+             echo "Error: Could not resolve a valid comment or review URL."
+             exit 0
+          fi
+
           # Verify the comment body matches the specific Copilot error string
           if [[ "$COMMENT_BODY" == *"Copilot wasn't able to review"* || "$COMMENT_BODY" == *"could not review"* ]]; then
-            echo "Copilot spam detected. Deleting comment..."
+            echo "Copilot spam detected. Deleting at $COMMENT_URL..."
             gh api -X DELETE "$COMMENT_URL"
+            echo "Deletion successful."
           else
             echo "Comment did not match spam criteria. Skipping."
           fi
