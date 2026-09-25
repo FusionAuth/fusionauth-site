@@ -145,29 +145,110 @@ Then create a file named `[...nextauth].js` in that directory.
 
 Next, you'll configure the [built-in support for FusionAuth](https://next-auth.js.org/providers/fusionauth). Doing so ensures every request to the `/api/auth/*` path is handled by NextAuth.js.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/app/src/pages/api/auth/[...nextauth].js" lang="jsx" />
+```jsx
+import NextAuth from "next-auth"
+import FusionAuthProvider from "next-auth/providers/fusionauth"
+
+export const authOptions = {
+    providers: [
+        FusionAuthProvider({
+            issuer: process.env.FUSIONAUTH_ISSUER,
+            clientId: process.env.FUSIONAUTH_CLIENT_ID,
+            clientSecret: process.env.FUSIONAUTH_CLIENT_SECRET,
+            wellKnown: `${process.env.FUSIONAUTH_URL}/.well-known/openid-configuration/${process.env.FUSIONAUTH_TENANT_ID}`,
+            tenantId: process.env.FUSIONAUTH_TENANT_ID, // Only required if you're using multi-tenancy
+        }),
+    ],
+}
+
+export default NextAuth(authOptions)
+```
 
 ### Exposing session state
 
 To allow components to check whether the current user is logged in, change `src/pages/_app.js` to have your application rendered inside a `<SessionProvider>` context, like shown below.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/app/src/pages/_app.js" lang="jsx" />
+```jsx
+import '@/styles/globals.css'
+import { SessionProvider } from "next-auth/react"
+
+export default function App({
+    Component,
+    pageProps: {session, ...pageProps},
+}) {
+    return (
+        <SessionProvider session={session}>
+            <Component {...pageProps} />
+        </SessionProvider>
+    );
+}
+```
 
 This will make the [`useSession()`](https://next-auth.js.org/getting-started/client#usesession) React Hook accessible to your entire application.
 
 Now, create a component that will either render a "Log in" or <Breadcrumb>Log out</Breadcrumb> button, depending on the session state, in a `src/components/login-button.jsx` file.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/app/src/components/login-button.jsx" lang="jsx" />
+```jsx
+import { useSession, signIn, signOut } from "next-auth/react"
+
+export default function Component() {
+    const { data: session } = useSession()
+    if (session) {
+        return (
+            <>
+                Status: Logged in as {session.user.email} <br />
+                <button onClick={() => signOut()}>Log out</button>
+            </>
+        )
+    }
+    return (
+        <>
+            Status: Not logged in <br />
+            <button onClick={() => signIn()}>Log in</button>
+        </>
+    )
+}
+```
 
 Then, you change your home component located at `src/pages/index.js` to include the `<LoginButton />` component inside `<main>`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/app/src/pages/index.js" lang="jsx" />
+```jsx
+import Head from 'next/head'
+import LoginButton from '@/components/login-button'
+
+export default function Home() {
+  return (
+    <>
+      <Head>
+        <title>Next.js + FusionAuth</title>
+        <meta name="description" content="Sample app to demonstrate implementing authentication in a Next.js application with FusionAuth" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <main>
+        <LoginButton />
+      </main>
+    </>
+  )
+}
+```
 
 ## Environment variables
 
 If you cloned the demo repository, you can copy `.env.local.dist` to `.env.local` and change the values there. If not, create a `.env.local` file and fill in the details from your FusionAuth application.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/app/.env.local.dist" lang="shell" />
+```shell
+# example: my-website.com
+FUSIONAUTH_ISSUER=http://localhost:9011
+FUSIONAUTH_CLIENT_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
+FUSIONAUTH_CLIENT_SECRET=super-secret-secret-that-should-be-regenerated-for-production
+# Leave blank if you only have the default tenant
+FUSIONAUTH_TENANT_ID=
+# example: http://localhost:9011
+FUSIONAUTH_URL=http://localhost:9011
+# you can run `openssl rand -base64 32`
+NEXTAUTH_SECRET=random_value_please_change
+```
 
 ## Testing
 

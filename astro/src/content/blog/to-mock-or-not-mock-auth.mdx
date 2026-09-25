@@ -7,7 +7,6 @@ image: /img/blogs/to-mock-or-not/to-mock-or-not.png
 categories: Education
 tags: mock, security
 excerpt_separator: "{/* more */}"
-url: https://raw.githubusercontent.com/fusionauth/fusionauth-example-to-mock-or-not-mock/refs/heads/main/
 publish_date: 2025-06-03
 ---
 
@@ -29,7 +28,25 @@ Here's a quick overview of common test doubles used to mock auth:
 
 For example, here is a service mock that acts as an authentication server.
 
-<RemoteCode url={frontmatter.url + "service_mock_auth_server.py"} lang="python"/>
+```python
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route("/login", methods=["POST"])
+def login():
+    return jsonify({"token": "test-token", "user": {"id": "user_123"}})
+
+@app.route("/validate", methods=["GET"])
+def validate():
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if token == "test-token":
+        return jsonify({"id": "user_123", "email": "test@example.com"})
+    return jsonify({"error": "invalid token"}), 401
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8001)
+```
 
 You can run this service mock in Docker and point your tests to it for full control without needing access to the real system.
 
@@ -76,7 +93,40 @@ Here is an example of a test that does not use mocking to check the reference fi
 
 Let's say you have an example Flask app like the one below.
 
-<RemoteCode url={frontmatter.url + "app.py"} lang="python"/>
+```python
+import uuid
+import requests
+from flask import Flask, request, jsonify, abort
+
+app = Flask(__name__)
+
+def get_user_from_token(token):
+    response = requests.get("http://auth-service.local/validate", headers={
+        "Authorization": f"Bearer {token}"
+    })
+    if response.status_code != 200:
+        abort(401)
+    return response.json()
+
+def create_payment_for_user(user):
+    if not user or not user.get("id"):
+        raise PermissionError("User must be authenticated to create payment")
+    return {
+        "id": str(uuid.uuid4()),
+        "reference": str(uuid.uuid4()),
+        "user_id": user["id"]
+    }
+
+@app.route("/payments", methods=["POST"])
+def create_payment():
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    user = get_user_from_token(token)
+    payment = create_payment_for_user(user)
+    return jsonify(payment), 201
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
 
 In this application, creating a payment requires a valid token. The app pulls the token from the request header, validates it by calling an external authentication service, and then generates a payment with a reference field (a UUID).
 
@@ -84,13 +134,68 @@ When testing, we're primarily interested in verifying that every time a payment 
 
 Here is how you might write a test for this behavior.
 
-<RemoteCode url={frontmatter.url + "test_without_mocking.py"} lang="python"/>
+```python
+import pytest
+import requests
+from app import app
+
+def get_token():
+    res = requests.post("http://auth-service.local/login", json={
+        "loginId": "test@example.com",
+        "password": "secure123"
+    })
+    return res.json()["token"]
+
+@pytest.fixture
+def client():
+    app.config["TESTING"] = True
+    return app.test_client()
+
+def test_create_payment_reference_exists(client):
+    token = get_token()
+    response = client.post(
+        "/payments",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 201
+    data = response.get_json()
+    assert "reference" in data
+    assert len(data["reference"]) == 36
+```
 
 You're now making two network calls: One to retrieve the token and another inside your app to validate it. Neither has anything to do with the reference field, the only thing you intended to validate. This test introduces real latency and real points of failure, but worst of all, it doesn't help you catch bugs effectively.
 
 Instead of calling the authentication server, you can override the `get_user_from_token()` function directly in the test to simulate a successful authentication.
 
-<RemoteCode url={frontmatter.url + "test_payments.py"} lang="python"/>
+```python
+import pytest
+from app import app
+
+@pytest.fixture
+def client():
+    app.config["TESTING"] = True
+    return app.test_client()
+
+def test_create_payment_with_mocked_user(client, monkeypatch):
+    def mock_get_user_from_token(token):
+        if token == "good-token":
+            return {"id": "user_123", "email": "good@example.com"}
+        elif token == "admin-token":
+            return {"id": "admin_456", "email": "admin@example.com"}
+        else:
+            raise ValueError("Invalid token")
+
+    monkeypatch.setattr("app.get_user_from_token", mock_get_user_from_token)
+
+    response = client.post("/payments", headers={"Authorization": "Bearer good-token"})
+    assert response.status_code == 201
+    data = response.get_json()
+    assert data["user_id"] == "user_123"
+    assert "reference" in data
+    assert len(data["reference"]) == 36
+    assert "id" in data
+    assert len(data["id"]) == 36
+```
 
 This version keeps the full `request/response` cycle, still expects an `Authorization` header, and passes through your actual handler code, but it doesn't depend on any real login flow or token infrastructure. You're simulating the outcome of a successful authentication, not the entire process.
 
@@ -104,7 +209,29 @@ Let's say you want to test what happens when a user's account is locked. In a re
 
 Neither is fast. Neither is repeatable. So, you can mock the outcome.
 
-<RemoteCode url={frontmatter.url + "test_locked_user.py"} lang="python"/>
+```python
+import pytest
+from app import app
+from flask import abort
+
+@pytest.fixture
+def client():
+    app.config["TESTING"] = True
+    return app.test_client()
+
+def test_locked_user_auth(client, monkeypatch):
+    def mock_get_user_from_token(token):
+        abort(403, description="Account locked")
+
+    monkeypatch.setattr("app.get_user_from_token", mock_get_user_from_token)
+
+    response = client.post(
+        "/payments",
+        headers={"Authorization": "Bearer test-token"}
+    )
+    assert response.status_code == 403
+    assert b"Account locked" in response.data
+```
 
 The test above ensures the payment creation endpoint correctly returns a `403` error when the user's account is locked. You're testing your application's fallback behavior, not the identity provider.
 
@@ -138,11 +265,58 @@ Now imagine your webhook handler uses a helper function to authenticate and veri
 
 So, during testing, you can bypass the signature verification entirely.
 
-<RemoteCode url={frontmatter.url + "webhook_app.py"} lang="python"/>
+```python
+from flask import Flask, request, jsonify
+from webhook_utils import verify_signature
+
+app = Flask(__name__)
+
+def handle_webhook(data):
+    return {"status": "accepted", "event": data.get("type")}
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    payload = request.get_json()
+
+    if not verify_signature(payload, request.headers):
+        return jsonify({"error": "invalid signature"}), 403
+
+    result = handle_webhook(payload)
+    return jsonify(result), 200
+```
 
 In your test, you now **bypass** the `verify_signature` function to focus on what happens after a valid webhook is received.
 
-<RemoteCode url={frontmatter.url + "test_webhook.py"} lang="python"/>
+```python
+import pytest
+from app import app
+
+@pytest.fixture
+def client():
+    app.config["TESTING"] = True
+    return app.test_client()
+
+def test_webhook_with_mocked_signature(client, monkeypatch):
+    def mock_verify_signature(payload, signature):
+        return True  # Always accept during tests
+
+    monkeypatch.setattr("app.verify_signature", mock_verify_signature)
+
+    payload = {
+        "type": "invoice.created",
+        "invoice_id": "inv_001"
+    }
+
+    response = client.post(
+        "/webhook",
+        json=payload,
+        headers={"svix-signature": "fake-signature"}
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["status"] == "accepted"
+    assert response.get_json()["event"] == "invoice.created"
+```
 
 In the code above, the `verify_signature` function is monkey patched during the test to always return `True`, bypassing the actual signature verification logic. Mocking works here because there is no need to go through signing or verification. You can assume a valid request and focus on checking the fields returned in the responses.
 

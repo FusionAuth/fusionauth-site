@@ -385,19 +385,36 @@ You'll need to be more communicative if you are removing a scope entirely than i
 
 Let's talk a bit about what the API or service that gets an access token containing a scope needs to do. APIs must check scopes correctly when responding to a request. Here's a few example routes from a fictitious Changebank API which check for scopes.
 
-<RemoteCode lang="javascript"
-            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-api-consents-platform/refs/heads/main/changebank-apis/routes/index.js"
-            title="Example Changebank API routes" 
-            tags="routes"
-            />
+```javascript title="Example Changebank API routes"
+router.get('/read-balance', hasScope('accounts.read'), function (req, res, next) {
+  res.json({ balance: 42 });
+});
+router.post('/make-transfer', hasScope('transfers.write'), function (req, res, next) {
+  const amount = req.query.newbalance;
+
+  // update balance
+
+  res.json({ message: "ok"});
+});
+```
 
 The `hasScope` method looks like this:
 
-<RemoteCode lang="javascript"
-            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-api-consents-platform/refs/heads/main/changebank-apis/services/hasScope.js"
-            title="The hasScope logic" 
-            tags="hasScope"
-            />
+```javascript title="The hasScope logic"
+function hasScope(scope) {
+  return (req, res, next) => {
+    const decodedToken = jose.decodeJwt(req.verifiedToken);
+    let scopes = []
+    if (decodedToken.scope) {
+      // need to check array, not string, to avoid partial matches
+      scopes = decodedToken.scope.split(" ");
+    }
+    if (scopes.includes(scope)) return next();
+    res.status(403);
+    res.send({ error: `You do not have permissions to do this.` });
+  }
+}
+```
 
 Don't forget to sanitize user input. Since scopes are part of a URL that is displayed in the browser, a nefarious user or client can modify them before making the authorization request. Make sure your application handles unexpected scopes, whether policy prohibits them for a certain third-party application or whether they are completely unknown. 
 

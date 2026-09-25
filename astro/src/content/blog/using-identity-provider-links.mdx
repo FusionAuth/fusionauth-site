@@ -8,7 +8,6 @@ authors: Colin Frick, Aaron Ritter
 categories: Education
 tags: identity provider, social login, google, twitter, links, oauth, video upload, youtube
 excerpt_separator: "{/* more */}"
-codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-example-using-links-fastify/refs/heads/main
 ---
 
 In today's content-driven world, a regular requirement is to share content across multiple platforms to maximize reach and engagement. However, managing separate accounts and authentication flows for each platform can be cumbersome. What if you could build an application that allows users to upload videos to both YouTube (Google) and X.com (Twitter) with a single login? This is where FusionAuth's Identity Provider Links feature becomes invaluable.
@@ -81,7 +80,61 @@ npm i -D @types/passport-oauth2 @biomejs/biome
 
 Next, create a new file in the `src` directory called `utils.ts` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/utils.ts"} lang="typescript"/>
+```typescript
+import FusionAuthClient from "@fusionauth/typescript-client";
+import { cleanEnv, port, str, url } from "envalid";
+import type { preValidationMetaHookHandler } from "fastify/types/hooks";
+
+export const ALLOWED_MIME_TYPES = [
+	"video/mp4",
+	"video/webm",
+	"video/ogg",
+	"video/quicktime",
+	"video/x-msvideo",
+	"video/x-ms-wmv",
+	"video/x-flv",
+];
+
+/**
+ * Check if the user is authenticated
+ */
+export const checkAuthenticated: preValidationMetaHookHandler = (
+	request,
+	reply,
+	done,
+) => {
+	if (!request.isAuthenticated()) {
+		reply.redirect("/");
+	}
+	done();
+};
+
+export const env = cleanEnv(process.env, {
+	FUSIONAUTH_URL: url(),
+	FUSIONAUTH_API_KEY: str(),
+	FUSIONAUTH_CLIENT_ID: str(),
+	FUSIONAUTH_CLIENT_SECRET: str(),
+	FUSIONAUTH_REDIRECT_URI: url(),
+
+	TWITTER_PROVIDER_ID: str(),
+	TWITTER_API_KEY: str(),
+	TWITTER_API_SECRET: str(),
+
+	GOOGLE_PROVIDER_ID: str(),
+	GOOGLE_CLIENT_ID: str(),
+	GOOGLE_CLIENT_SECRET: str(),
+
+	SESSION_SECRET: str({
+		default: "this_should_be_at_least_32_chars_long_and_secure_random_string",
+	}),
+
+	PORT: port({ default: 3000 }),
+});
+export const faClient = new FusionAuthClient(
+	env.FUSIONAUTH_API_KEY,
+	env.FUSIONAUTH_URL,
+);
+```
 
 The `utils.ts` file contains helper functions that we'll use throughout the application. In our utilities we initialize the `faClient` using the previously installed [FusionAuth TypeScript Client](/docs/sdks/typescript) library which we use later on to `retrievUserLinksByUserId` and `deleteUserLink`.
 
@@ -89,31 +142,350 @@ The `utils.ts` file contains helper functions that we'll use throughout the appl
 
 We'll use EJS to render the views for our application. Create a new file in the `src/plugins` directory called `view.ts` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/plugins/view.ts"} lang="typescript"/>
+```typescript
+import fastifyView, { type FastifyViewOptions } from "@fastify/view";
+import fp from "fastify-plugin";
+
+/**
+ * This plugins adds some utilities to handle http errors
+ *
+ * @see https://github.com/fastify/fastify-sensible
+ */
+export default fp<FastifyViewOptions>(async (fastify) => {
+	fastify.register(fastifyView, {
+		engine: {
+			ejs: require("ejs"),
+		},
+		root: "./templates",
+		layout: "_layout.ejs",
+	});
+});
+```
 
 The plugin registers the EJS view engine with Fastify and configures the view directory.
 
 Next, create a new file in the root located `templates` directory called `_layout.ejs` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/templates/_layout.ejs"} lang="html"/>
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Upload</title>
+    <link href="//cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link href="//cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <script src="//unpkg.com/alpinejs" defer></script>
+</head>
+<body>
+<div class="p-5" style="margin: 0 auto; max-width: 750px;">
+    <h1 class="text-center">Video Upload</h1>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <%- body %>
+        </div>
+    </div>
+</div>
+<script src="//cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+</body>
+</html>
+```
 
 The layout file defines the basic structure of our application.
 
 Next, create a new file in the `templates` directory called `root.ejs` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/templates/root.ejs"} lang="html"/>
+```html
+<style>
+    #drop-zone {
+        cursor: pointer;
+    }
+
+    #drop-zone > * {
+        pointer-events: none;
+    }
+
+    video {
+        inset: 0;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+    }
+</style>
+
+<div x-data="video">
+    <div class="d-flex flex-column gap-3" :style="{'pointer-events': posting ? 'none' : 'auto'}">
+        <span>
+            Hello <%= user %>!
+        </span>
+
+        <div class="alert alert-danger" role="alert" x-show="error" x-text="error" x-transition></div>
+
+        <div class="alert alert-danger" role="alert" x-show="results?.error.length" x-transition>
+            <p>Error posting video!</p>
+
+            <ul>
+                <template x-for="error in results?.error">
+                    <li>
+                        <span x-text="error.name"></span>:
+                        <span x-text="error.message"></span>
+                    </li>
+                </template>
+            </ul>
+        </div>
+
+        <div class="alert alert-success" role="alert" x-show="results?.success.length" x-transition>
+            <p>Video successfully posted!</p>
+            <ul>
+                <template x-for="link in results?.success">
+                    <li>
+                        <span x-text="link.name"></span>:
+                        <a :href="link.url" target="_blank" rel="noopener noreferrer" x-text="link.url"></a>
+                    </li>
+                </template>
+            </ul>
+        </div>
+
+        <div class="ratio ratio-4x3 position-relative">
+            <div id="drop-zone" class="rounded border border-primary p-4 text-center" x-data="{ dragging: false }"
+                 :class="{'bg-light': dragging}"
+                 @dragover.prevent="dragging = true"
+                 @dragleave.prevent="dragging = false"
+                 @click="selectFile"
+                 @drop.prevent="upload($event.dataTransfer.files[0])"
+                 x-show="!file">
+                <div>Drag and drop video file</div>
+                <div>or</div>
+                <label for="file-upload" class="btn btn-primary">click to choose file</label>
+                <input type="file" id="file-upload" name="file" class="d-none" accept="video/*"
+                       @change="upload($event.target.files[0])"/>
+            </div>
+
+            <div class="rounded border border-primary p-4 text-center" x-show="file">
+                <video controls :src="file"></video>
+
+                <div class="position-absolute top-0 end-0 p-1 z-1">
+                    <button class="btn btn-outline-danger" @click="resetFile"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress" x-show="uploading" x-transition x-transition:leave.duration.500ms id="progress"
+             role="progressbar"
+             aria-label="Basic example" aria-valuenow="0"
+             aria-valuemin="0"
+             aria-valuemax="100">
+            <div class="progress-bar" id="progress-bar" :class="{'bg-success': progress >= 99}"
+                 :style="{width: progress + '%'}" x-text="!uploaded ? progress + '%' : 'Uploaded!'">
+            </div>
+        </div>
+
+        <div class="row row-cols-2 g-3" id="link">
+            <% links.forEach(function(link){ %>
+                <div class="d-flex gap-2" x-data="<%= JSON.stringify(link) %>">
+                    <div class="d-flex flex-column flex-grow-1">
+                        <input type="checkbox" class="btn-check" id="link-<%= link.id %>"
+                               value="<%= link.id %>"
+                               x-model="links"
+                        <% if(link.disabled) { %>
+                               disabled
+                                <% } %>
+                        >
+                        <label class="btn text-start" for="link-<%= link.id %>">
+                            <i class="<%= link.icon %>" style="color: <%= link.color %>"></i>
+                            <%= link.name %>
+                        </label>
+                    </div>
+                    <% if(link.disabled) { %>
+                        <button class="float-end d-flex align-items-center btn btn-outline-info"
+                            title="Do link your account, logout and use the <%= link.name %> IdP to login"
+                            @click="link(providerId)">
+                            <i class="bi bi-link-45deg"></i>
+                        </button>
+                    <% } else { %>
+                        <button class="float-end d-flex align-items-center btn btn-outline-info"
+                                title="Unlink account" @click="unlink(providerId)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    <% } %>
+                </div>
+            <% }); %>
+        </div>
+
+        <button class="btn btn-primary" id="post-video" :disabled="!uploaded || !links.length" @click="postFiles">
+            Post
+        </button>
+
+        <div class="d-flex justify-content-end">
+            <a href="/auth/logout" class="btn btn-warning">Logout</a>
+        </div>
+    </div>
+
+    <div class="container w-100 h-100 position-absolute top-0 start-0 d-flex justify-content-center align-items-center bg-secondary bg-opacity-50"
+         x-show.important="posting" x-transition x-transition.opacity>
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    addEventListener('alpine:init', () => {
+        const SUPPORTED_TYPES = <%- JSON.stringify(mimeTypes) %>;
+        const links = <%- JSON.stringify(links) %>;
+
+        Alpine.data('video', () => ({
+            file: null,
+            links: links.filter(link => !link.disabled).map(link => link.id),
+            progress: 0,
+            uploading: false,
+            uploaded: false,
+            dragging: false,
+            posting: false,
+            results: null,
+
+            error: null,
+
+            resetFile() {
+                this.file = null;
+                this.progress = 0;
+                this.uploading = false;
+                this.uploaded = false;
+                this.posting = false;
+            },
+
+            selectFile() {
+                document.getElementById('file-upload').click();
+            },
+
+            async upload(file) {
+                if (!SUPPORTED_TYPES.includes(file.type)) {
+                    this.error = 'File type not supported';
+                    return;
+                }
+
+                this.error = null;
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                this.file = URL.createObjectURL(file);
+
+                this.uploading = true;
+                this.uploaded = false;
+
+                const xhr = new XMLHttpRequest();
+                xhr.upload.addEventListener('progress', e => {
+                    if (e.lengthComputable) {
+                        this.progress = (e.loaded / e.total) * 100;
+                    }
+                });
+
+                xhr.addEventListener('readystatechange', () => {
+                    if (xhr.readyState !== 4) {
+                        return;
+                    }
+                    this.uploaded = true;
+                })
+
+                xhr.open('POST', '/upload');
+                xhr.send(formData);
+            },
+
+            postFiles() {
+                this.posting = true;
+                fetch('/upload/post', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        links: this.links
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.posting = false;
+
+                        const results = data.map(link => ({
+                            ...link,
+                            name: links.find(link => link.id === link.id).name,
+                        }));
+
+                        this.results = {
+                            success: results.filter(link => link.status === 'success'),
+                            error: results.filter(link => link.status === 'error'),
+                        }
+
+                        this.resetFile();
+                    });
+            },
+
+            link(providerId) {
+                if (confirm('Do you want to link your account? You will be logged out and redirected to the IdP to login.')) {
+                    document.location.href = '/links/' + providerId + '/link';
+                }
+            },
+
+            unlink(providerId) {
+                if (confirm('Are you sure you want to unlink this account?')) {
+                    document.location.href = '/links/' + providerId + '/unlink';
+                }
+            }
+        }));
+    });
+</script>
+```
 
 The root template defines the layout for the home page if the user is authenticated.
 
 Finally, create a new file in the `templates` directory called `login.ejs` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/templates/login.ejs"} lang="html"/>
+```html
+<p class="card-text">You are not logged in.</p>
+
+<a href="/auth/login" class="btn btn-primary">Login now</a>
+```
 
 The login template defines the layout for the login page.
 
 To render the views, we'll need to update the `src/routes/root.ts` file:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/root.ts"} lang="typescript"/>
+```typescript
+import type { FastifyPluginAsync } from "fastify";
+
+import { LINKS } from "../links";
+import { ALLOWED_MIME_TYPES, faClient } from "../utils";
+
+const root: FastifyPluginAsync = async (fastify): Promise<void> => {
+	fastify.get("/", async (request, reply) => {
+		if (!request.isAuthenticated()) {
+			return reply.view("login.ejs");
+		}
+
+		// Check if the user has any links
+		const identityProviderLinks = await faClient.retrieveUserLinksByUserId(
+			"",
+			request.user?.id ?? "",
+		);
+
+		const links = LINKS.map((social) => ({
+			...social,
+			disabled: !identityProviderLinks.response.identityProviderLinks?.some(
+				(link) => link.identityProviderId === social.providerId,
+			),
+		}));
+
+		return reply.view("root.ejs", {
+			user: request.user?.displayName,
+			links,
+			mimeTypes: ALLOWED_MIME_TYPES,
+		});
+	});
+};
+
+export default root;
+```
 
 #### Setting Up Authentication
 
@@ -123,13 +495,167 @@ We'll use Passport to handle authentication.
 
 Create a new file in the `src/plugins` directory called `auth.ts` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/plugins/auth.ts"} lang="typescript"/>
+```typescript
+import fastifyCookie from "@fastify/cookie";
+import { Authenticator } from "@fastify/passport";
+import fastifySession from "@fastify/session";
+import fp from "fastify-plugin";
+import { decodeJwt } from "jose";
+import OAuth2Strategy, { type VerifyCallback } from "passport-oauth2";
+
+import { env } from "../utils";
+
+export const fastifyAuthenticator = new Authenticator();
+
+class FusionAuthStrategy extends OAuth2Strategy {
+	// biome-ignore lint/suspicious/noExplicitAny: We need to use any here because the base class doesn't have a type for the options parameter
+	authenticate(req: any, options?: any) {
+		if (req.params?.providerId) {
+			options.idp_hint = req.params.providerId;
+		}
+		super.authenticate(req, options);
+	}
+
+	// biome-ignore lint/suspicious/noExplicitAny: We need to use any here because the base class doesn't have a type for the options parameter
+	authorizationParams(options: any): object {
+		options = options || {};
+		const params = Object.assign({}, options);
+
+		delete params.idp_hint;
+
+		if (options.idp_hint && typeof options.idp_hint === "string") {
+			params.idp_hint = options.idp_hint;
+		}
+
+		return params;
+	}
+}
+
+export default fp(async (fastify) => {
+	fastify.register(fastifyCookie);
+	fastify.register(fastifySession, {
+		secret: env.SESSION_SECRET,
+		cookieName: "user-session",
+		saveUninitialized: false,
+		cookie: {
+			secure: process.env.NODE_ENV === "production", // true in production, false in development
+			httpOnly: true, // Prevents JavaScript access to the cookie
+			sameSite: "lax", // Protects against CSRF attacks
+			maxAge: 604_800_000, // 7 days
+		},
+	});
+
+	fastify.register(fastifyAuthenticator.initialize());
+	fastify.register(fastifyAuthenticator.secureSession());
+
+	fastifyAuthenticator.registerUserSerializer<
+		{
+			sub: string;
+			given_name: string;
+			family_name: string;
+			email: string;
+		},
+		{ id: string; displayName: string }
+	>(async (user) => {
+		const { sub, given_name, family_name, email } = user;
+		return {
+			id: sub,
+			displayName:
+				given_name || family_name
+					? `${given_name ?? ""} ${family_name ?? ""}`
+					: email,
+		};
+	});
+
+	fastifyAuthenticator.registerUserDeserializer(async (userFromSession) => {
+		return userFromSession;
+	});
+
+	fastifyAuthenticator.use(
+		"fusionauth",
+		new FusionAuthStrategy(
+			{
+				authorizationURL: `${env.FUSIONAUTH_URL}/oauth2/authorize`,
+				tokenURL: `${env.FUSIONAUTH_URL}/oauth2/token`,
+				clientID: env.FUSIONAUTH_CLIENT_ID,
+				clientSecret: env.FUSIONAUTH_CLIENT_SECRET,
+				callbackURL: env.FUSIONAUTH_REDIRECT_URI,
+				scope: "openid profile email offline_access",
+				pkce: true,
+				state: true,
+			},
+			(
+				_accessToken: string,
+				_refreshToken: string,
+				results: {
+					id_token: string;
+				},
+				_profile: object,
+				cb: VerifyCallback,
+			) => {
+				const { id_token } = results;
+
+				return cb(null, decodeJwt(id_token));
+			},
+		),
+	);
+});
+
+declare module "fastify" {
+	interface PassportUser {
+		id: string;
+		displayName: string;
+	}
+}
+```
 
 The plugin registers the Passport OAuth2 strategy with Fastify and configures the OAuth2 settings.
 
 Next, create a new file in the `src/routes` directory called `auth.ts` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/auth.ts"} lang="typescript"/>
+```typescript
+import type { FastifyPluginAsync } from "fastify";
+import { fastifyAuthenticator } from "../plugins/auth";
+
+import { env } from "../utils";
+
+const auth: FastifyPluginAsync = async (fastify): Promise<void> => {
+	fastify.get(
+		"/auth/login",
+		fastifyAuthenticator.authenticate("fusionauth", {
+			authInfo: false,
+			failWithError: true,
+		}),
+	);
+
+	fastify.get("/auth/logout", async (request, reply) => {
+		await request.logOut();
+		reply.redirect(
+			`${env.FUSIONAUTH_URL}/oauth2/logout?client_id=${env.FUSIONAUTH_CLIENT_ID}`,
+		);
+	});
+
+	fastify.get(
+		"/auth/callback",
+		fastifyAuthenticator.authenticate("fusionauth", {
+			authInfo: false,
+			successRedirect: "/",
+			failWithError: true,
+		}),
+	);
+
+	fastify.get(
+		"/auth/idp/:providerId",
+		fastifyAuthenticator.authenticate("fusionauth", {
+			authInfo: false,
+			successRedirect: "/",
+			failWithError: true,
+		}),
+	);
+};
+
+export default auth;
+```
 
 The routes handle the authentication flow and redirect the user to the login page.
 
@@ -139,13 +665,191 @@ We'll use Fastify Multipart to handle file uploads.
 
 Create a new file in the `src/plugins` directory called `upload.ts` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/plugins/multipart.ts"} lang="typescript"/>
+```typescript
+import multipart, { type FastifyMultipartOptions } from "@fastify/multipart";
+import fp from "fastify-plugin";
+
+/**
+ * This plugins adds some utilities to handle http errors
+ *
+ * @see https://github.com/fastify/fastify-sensible
+ */
+export default fp<FastifyMultipartOptions>(async (fastify) => {
+	fastify.register(multipart);
+});
+```
 
 The plugin registers the Fastify Multipart plugin with Fastify and configures the upload settings.
 
 Next, create a new file in the `src/routes` directory called `upload.ts` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/upload.ts"} lang="typescript"/>
+```typescript
+import * as fs from "node:fs";
+import { unlink } from "node:fs/promises";
+import { pipeline } from "node:stream/promises";
+import type { FastifyPluginAsync } from "fastify";
+
+import { LINKS } from "../links";
+import { ALLOWED_MIME_TYPES, checkAuthenticated, faClient } from "../utils";
+
+const file: FastifyPluginAsync = async (fastify): Promise<void> => {
+	fastify.post(
+		"/upload",
+		{
+			preValidation: checkAuthenticated,
+		},
+		async (req, rep) => {
+			const data = await req.file({
+				limits: {
+					fileSize: 25 * 1024 * 1024, // 25MB limit
+				},
+			});
+
+			if (!data) {
+				return rep.status(400).send({
+					error: "No file provided",
+				});
+			}
+
+			// Validate file type
+			if (!ALLOWED_MIME_TYPES.includes(data.mimetype)) {
+				return rep.status(400).send({
+					error: "Invalid file type. Only video files are allowed.",
+					allowedTypes: ALLOWED_MIME_TYPES,
+				});
+			}
+
+			const newFileName = `${Date.now()}-${data.filename}`;
+
+			await pipeline(data.file, fs.createWriteStream(`./files/${newFileName}`));
+
+			req.session.set("file", `./files/${newFileName}`);
+
+			rep.send({
+				file: newFileName,
+			});
+		},
+	);
+
+	fastify.post<{
+		Body: { links: string[]; metadata?: Record<string, object> };
+	}>(
+		"/upload/post",
+		{
+			schema: {
+				body: {
+					type: "object",
+					properties: {
+						links: {
+							type: "array",
+							items: {
+								type: "string",
+							},
+						},
+						metadata: {
+							type: "object",
+							properties: {
+								twitter: {
+									type: "object",
+									properties: {
+										text: { type: "string" },
+									},
+								},
+								youtube: {
+									type: "object",
+									properties: {
+										title: { type: "string" },
+										description: { type: "string" },
+										privacyStatus: {
+											type: "string",
+											enum: ["public", "unlisted", "private"],
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			preValidation: checkAuthenticated,
+		},
+		async (req, rep) => {
+			const file = req.session.get("file") as string;
+
+			if (!file) {
+				return rep.status(400).send({
+					message: "No file uploaded",
+				});
+			}
+
+			const { links, metadata = {} } = req.body;
+
+			if (!links.length) {
+				return rep.status(400).send({
+					message: "No links selected",
+				});
+			}
+
+			const activeLinks = LINKS.filter((social) => links.includes(social.id));
+
+			const promises = activeLinks.map(async (social) => {
+				return await faClient
+					.retrieveUserLinksByUserId(social.providerId, req.user?.id ?? "")
+					.then((response) => {
+						if (!response.response.identityProviderLinks?.length) {
+							return;
+						}
+
+						const { token } = response.response.identityProviderLinks[0];
+
+						if (!token) {
+							return;
+						}
+
+						// Pass platform-specific metadata to the upload method
+						const platformMetadata = metadata[social.id];
+						return social.upload(token, file, platformMetadata);
+					});
+			});
+
+			// Process all uploads and prepare response
+			const results = await Promise.allSettled(promises).then((results) => {
+				return results.map((result, index) => {
+					if (result.status === "fulfilled") {
+						return {
+							id: activeLinks[index].id,
+							status: "success",
+							url: result.value,
+						};
+					} else {
+						return {
+							id: activeLinks[index].id,
+							status: "error",
+							message: result.reason,
+						};
+					}
+				});
+			});
+
+			// Clean up the file after processing
+			try {
+				await unlink(file);
+				console.log(`File ${file} has been deleted after processing`);
+
+				// Clear the file path from the session
+				req.session.set("file", null);
+			} catch (err) {
+				console.error(`Error deleting file ${file}:`, err);
+				// Continue with the response even if file deletion fails
+			}
+
+			rep.send(results);
+		},
+	);
+};
+
+export default file;
+```
 
 The routes handle the file uploads and posts to the appropriate video platforms.
 
@@ -244,7 +948,101 @@ npm i google-auth-library googleapis
 
 Then create a new file in the `src/links` directory called `youtube.ts` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/youtube.ts"} lang="typescript"/>
+```typescript
+import { createReadStream } from "node:fs";
+import path from "node:path";
+import { OAuth2Client } from "google-auth-library";
+import { google } from "googleapis";
+
+import { env } from "../utils";
+import type { LinkDefinition } from "./";
+
+export type YouTubeMetadata = {
+	title?: string; // Video title
+	description?: string; // Video description
+	privacyStatus?: "public" | "unlisted" | "private"; // Video privacy setting
+};
+
+export const YoutubeLinkDefinition: LinkDefinition<YouTubeMetadata> = {
+	id: "youtube",
+	providerId: env.GOOGLE_PROVIDER_ID,
+	name: "Youtube",
+	icon: "bi bi-youtube",
+	url: "https://www.youtube.com",
+	color: "#ff0000",
+	upload: async (token, file, metadata?: YouTubeMetadata) => {
+		try {
+			const authClient = new OAuth2Client({
+				clientId: env.GOOGLE_CLIENT_ID,
+				clientSecret: env.GOOGLE_CLIENT_SECRET,
+				redirectUri: env.FUSIONAUTH_REDIRECT_URI,
+			});
+			authClient.setCredentials({
+				refresh_token: token,
+			});
+
+			google.options({ auth: authClient });
+
+			// Use custom metadata if provided, or fall back to defaults
+			const {
+				title = "Video Upload",
+				description = "Uploaded video",
+				privacyStatus = "private",
+			} = metadata ?? {};
+
+			const insert = await google.youtube("v3").videos.insert({
+				part: ["snippet", "status"],
+				requestBody: {
+					snippet: {
+						title: title,
+						description: description,
+					},
+					status: {
+						privacyStatus: privacyStatus,
+					},
+				},
+				media: {
+					body: createReadStream(path.resolve(file)),
+				},
+			});
+
+			return `https://www.youtube.com/watch?v=${insert.data.id}`;
+		} catch (e) {
+			// Log the original error for debugging purposes
+			console.error("YouTube upload error:", e);
+
+			// Determine the type of error and provide a user-friendly message
+			if (e instanceof Error) {
+				// Check for specific error types
+				if (
+					e.message.includes("authentication") ||
+					e.message.includes("auth")
+				) {
+					throw new Error(
+						"Authentication failed with YouTube. Please try reconnecting your account.",
+					);
+				} else if (e.message.includes("quota") || e.message.includes("limit")) {
+					throw new Error("YouTube quota exceeded. Please try again later.");
+				} else if (
+					e.message.includes("invalid") &&
+					e.message.includes("video")
+				) {
+					throw new Error(
+						"The video format is not supported by YouTube. Please try a different file.",
+					);
+				} else if (e.message.includes("size")) {
+					throw new Error(
+						"The video file is too large for YouTube. Please try a smaller file.",
+					);
+				}
+			}
+
+			// Generic error message that doesn't expose internal details
+			throw new Error("Failed to upload to YouTube. Please try again later.");
+		}
+	},
+};
+```
 
 The `youtube.ts` file contains the logic for interacting with the YouTube API.
 
@@ -308,13 +1106,105 @@ npm i twitter-api-v2
 
 Then create a new file in the `src/links` directory called `twitter.ts` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/twitter.ts"} lang="typescript"/>
+```typescript
+import https from "node:https";
+import path from "node:path";
+import qs from "qs";
+import TwitterApi, { type TwitterApiTokens } from "twitter-api-v2";
+
+import { env } from "../utils";
+import type { LinkDefinition } from "./";
+
+export type TwitterMetadata = {
+	text?: string; // Tweet text
+};
+
+export const TwitterLinkDefinition: LinkDefinition<TwitterMetadata> = {
+	id: "twitter",
+	providerId: env.TWITTER_PROVIDER_ID,
+	name: "Twitter",
+	icon: "bi bi-twitter",
+	url: "https://twitter.com",
+	color: "#1da1f2",
+	upload: async (token, file, metadata?: TwitterMetadata) => {
+		try {
+			const { oauth_token, oauth_token_secret } = qs.parse(token);
+			const twitterClient = new TwitterApi(
+				{
+					appKey: env.TWITTER_API_KEY,
+					appSecret: env.TWITTER_API_SECRET,
+					accessToken: oauth_token,
+					accessSecret: oauth_token_secret,
+				} as TwitterApiTokens,
+				{ httpAgent: new https.Agent({ keepAlive: false }) },
+			);
+
+			const mediaId = await twitterClient.v1.uploadMedia(path.resolve(file));
+
+			// Use custom tweet text from metadata if provided, or fall back to default
+			const { text = "Check out my video!" } = metadata ?? {};
+
+			const tweet = await twitterClient.v2.tweet(text, {
+				media: {
+					media_ids: [mediaId],
+				},
+			});
+
+			return `https://twitter.com/i/statuses/${tweet.data.id}`;
+		} catch (e) {
+			// Log the original error for debugging purposes
+			console.error("Twitter upload error:", e);
+
+			// Determine the type of error and provide a user-friendly message
+			if (e instanceof Error) {
+				// Check for specific error types
+				if (e.message.includes("authentication")) {
+					throw new Error(
+						"Authentication failed with Twitter. Please try reconnecting your account.",
+					);
+				} else if (e.message.includes("rate limit")) {
+					throw new Error(
+						"Twitter rate limit exceeded. Please try again later.",
+					);
+				} else if (e.message.includes("media")) {
+					throw new Error(
+						"There was a problem with your media file. Please try a different file.",
+					);
+				}
+			}
+
+			// Generic error message that doesn't expose internal details
+			throw new Error("Failed to post to Twitter. Please try again later.");
+		}
+	},
+};
+```
 
 #### Stitching It All Together
 
 Create a new file in the `src/links` directory called `index.ts` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/index.ts"} lang="typescript"/>
+```typescript
+import { TwitterLinkDefinition } from "./twitter";
+import { YoutubeLinkDefinition } from "./youtube";
+
+export type LinkDefinition<TMetadata = undefined> = {
+	id: "twitter" | "youtube";
+	providerId: string;
+	name: string;
+	icon: string;
+	url: string;
+	color: string;
+	// Add optional metadata parameter with default empty object
+	upload: (
+		token: string,
+		file: string,
+		metadata?: TMetadata,
+	) => Promise<string>;
+};
+
+export const LINKS = [TwitterLinkDefinition, YoutubeLinkDefinition];
+```
 
 The `index.ts` file combines all of the identity provider logic into a single file.
 
@@ -368,7 +1258,58 @@ Let's look at how to use these endpoints in our application.
 
 To add linking functionality to the application, create a new file in the `src/routes` directory called `links.ts` and add the following code:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/links.ts"} lang="typescript"/>
+```typescript
+import type { FastifyPluginAsync } from "fastify";
+
+import { checkAuthenticated, env, faClient } from "../utils";
+
+const links: FastifyPluginAsync = async (fastify): Promise<void> => {
+	fastify.get<{ Params: { id: string } }>(
+		"/links/:id/link",
+		{
+			preValidation: checkAuthenticated,
+		},
+		async (req, rep) => {
+			await req.logOut();
+			rep.redirect(
+				`${env.FUSIONAUTH_URL}/oauth2/logout?client_id=${env.FUSIONAUTH_CLIENT_ID}&post_logout_redirect_uri=` +
+					encodeURI(`http://localhost:3000/auth/idp/${req.params.id}`),
+			);
+		},
+	);
+
+	fastify.get<{ Params: { id: string } }>(
+		"/links/:id/unlink",
+		{
+			preValidation: checkAuthenticated,
+		},
+		async (req, rep) => {
+			const { id } = req.params;
+
+			const link = await faClient.retrieveUserLinksByUserId(
+				id,
+				req.user?.id ?? "",
+			);
+
+			if (link.response.identityProviderLinks?.length) {
+				const { identityProviderId, identityProviderUserId, userId } =
+					link.response.identityProviderLinks[0];
+
+				if (identityProviderId && identityProviderUserId && userId) {
+					await faClient.deleteUserLink(
+						identityProviderId,
+						identityProviderUserId,
+						userId,
+					);
+				}
+			}
+			return rep.redirect("/");
+		},
+	);
+};
+
+export default links;
+```
 
 The route handles linking and unlinking a user and an identity provider.
 
