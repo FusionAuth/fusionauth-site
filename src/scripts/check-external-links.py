@@ -66,6 +66,10 @@ def extract_links(path: Path, exclude_dest: list) -> list:
     seen = set()
 
     for lineno, line in enumerate(text.splitlines(), 1):
+        # skip resource hint lines — preconnect/dns-prefetch hrefs are not navigable URLs
+        if 'rel="preconnect"' in line or "rel='preconnect'" in line \
+                or 'rel="dns-prefetch"' in line or "rel='dns-prefetch'" in line:
+            continue
         for m in _LINK_RE.finditer(line):
             raw = m.group(1) or m.group(2) or m.group(3)
             if not raw:
