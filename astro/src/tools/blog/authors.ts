@@ -30,6 +30,8 @@ export const authors = {
     description: `Read Dan Moore's articles on developer education and security insights.`
   },
   'Emily Rodenhuis': {
+    linkText: '@emilysrodenhuis',
+    linkUrl: 'https://www.linkedin.com/in/emilysrodenhuis/',
     description: `Read Emily Rodenhuis's posts on customer identity and retail.`
   },
   'Mark Robustelli': {
