@@ -32,7 +32,7 @@ export const authors = {
   'Emily Rodenhuis': {
     linkText: '@emilysrodenhuis',
     linkUrl: 'https://www.linkedin.com/in/emilysrodenhuis/',
-    description: `Read Emily Rodenhuis's posts on customer identity and retail.`
+    description: `Read Emily Rodenhuis's posts on customer identity.`
   },
   'Mark Robustelli': {
     linkText: '@mark-robustelli',
