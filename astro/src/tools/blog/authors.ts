@@ -29,6 +29,9 @@ export const authors = {
     linkUrl: 'https://x.com/mooreds?lang=en',
     description: `Read Dan Moore's articles on developer education and security insights.`
   },
+  'Emily Rodenhuis': {
+    description: `Read Emily Rodenhuis's posts on customer identity and retail.`
+  },
   'Mark Robustelli': {
     linkText: '@mark-robustelli',
     linkUrl: 'https://www.linkedin.com/in/mark-robustelli/',
