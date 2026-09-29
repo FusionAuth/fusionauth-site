@@ -19,6 +19,7 @@ cd "$PROJECT_DIR"
 npm ci
 npx tsc --noEmit
 
+# Step 7 displays snippets from tests/example.spec.ts; this runner stays docs-only.
 # These routes work without a FusionAuth instance and catch a broken copied app.
 # The external example's Playwright workflow covers the complete login journey.
 node --experimental-strip-types src/index.mts >"$APP_LOG" 2>&1 &
