@@ -1,94 +1,45 @@
 ---
 title: Configure SMTP
 description: Learn how to enable and configure the SMTP server.
+order: 0
 tags: smtp configuration, email setup, transactional email, spf, dkim, dmarc, email provider, sendgrid, mailgun, email security
 ---
 
 Before you can use email templates and other email features in FusionAuth, you must first enable and configure a Simple Mail Transfer Protocol (SMTP) server.
 
 <Aside type="note">
-  FusionAuth doesn't come bundled with an SMTP server, but expects one to be configured to enable all email based functionality ("bring your own SMTP server" or BYOSS). This design choice allows you to:
+  FusionAuth doesn't include an SMTP server. Instead, you configure FusionAuth to connect to one ("bring your own SMTP server" or BYOSS). This design choice allows you to:
 
   * use whatever email sending service you'd like (some are listed below, but FusionAuth will work with any providers with an SMTP API)
   * send email from your own IPs with reputation you control
   * skip configuring an SMTP server if you are not sending email from FusionAuth
 </Aside>
 
-This guide briefly explains SMTP security and SMTP providers, describes in detail how to configure the most popular SMTP providers with FusionAuth, and lists best practices to consider when working with email.
+## Configure an SMTP Provider in FusionAuth
 
-SMTP providers handle two types of email: marketing (like newsletters and sale advertisements) and transactional (like account notifications and password resets). FusionAuth is concerned only with transactional email.
+To enable and configure the FusionAuth SMTP server, navigate to <Breadcrumb>Tenants -> Edit -> Email</Breadcrumb>.
 
-## Understand Email Security
+![Email Settings](/img/docs/customize/email-and-messages/email-settings.png)
 
-Email service providers (ESPs) such as Gmail, Yahoo Mail, and Proton Mail rely on several methods to prevent spam and phishing emails from being sent to their users. As of 2024, these methods have become even stricter. Google [requires SMTP providers to allow users to send only from their own registered domains](https://help.brevo.com/hc/en-us/articles/14925263522578-Prepare-for-Gmail-and-Yahoo-s-new-requirements-for-email-senders) to reduce spam.
+Enable email by clicking on the <Breadcrumb>Enabled</Breadcrumb> toggle, and save your settings once you have completed your configuration.
 
-Here are the ways ESPs implement email security:
-- **Rate limits:** Emails that are received too frequently or show sudden spikes in volume are blocked.
-- **IP address block lists:** Emails received from dynamic IP addresses, those known to send spam, or those with a low reputation are added to lists that receivers use to reject mail.
-- **DNS records of email senders:** Emails must have valid records for Sender Policy Framework (SPF) (RFC 7208), Domain Keys Identified Mail (DKIM) (RFC 6376), and Domain-based Message Authentication, Reporting, and Conformance (DMARC) (RFC 7489).
+To avoid disrupting your application's current DNS records, you may want to point FusionAuth SMTP fields to a temporary subdomain. For example, if your application is hosted at `myapp.com`, you can create `testemail.myapp.com`, and point the SMTP service and FusionAuth there while testing.
 
-SPF, DKIM, and DMARC are TXT records you need to add to the DNS records for your domain. Your SMTP provider will tell you what records to add.
+Strict SMTP providers require you to have a trustworthy-looking domain and website before they activate your account.
 
-- An SPF record looks like `v=spf1 ip4:129.6.100.200 ip6:2610:20:6005:100::20 -all` and lists the IP addresses permitted to send email on behalf of the domain. ESPs should reject emails arriving from an IP address other than these.
-- A DKIM record looks like `k=rsa;p=MIGfMA0GCSqGSIb3DQEBAQ8c7wIDAQAB` and specifies a public key. The SMTP provider will sign the sender address of an email with the corresponding private key. ESPs should reject emails with an invalid sender address signature.
-- A DMARC record looks like `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com` and specifies the policies supported by the email sender and where to send rejected email for analysis by the sender.
+There is a troubleshooting section below this one if you encounter errors while trying to send a test email.
 
-Together, these three records allow an ESP to know that the email server and sender are valid and what responses the sender supports if an invalid email is received.
+<Aside type="note">
+The DNS records you need to add for SMTP will usually be of type `TXT`. A value of `@` for the **Host** of a record means the domain itself, and is a common default value.
+</Aside>
 
-You might also encounter the term Author Domain Signing Practices (ADSP), an optional extension to DKIM that enables a domain to publish the signing practices it adopts when relaying mail on behalf of associated authors.
+<Aside type="caution">
+Be careful not to duplicate the domain name when entering DNS records. For example, if your host is `myapp.com` and the TXT record value the SMTP provider wants you to add is `send.myapp`, be sure the final value is `send.myapp.com`, and not `send.myapp.myapp.com`. Check the suffix your host attaches to the field.
+</Aside>
 
-## Which Provider To Choose?
-
-An SMTP provider is an online service that sends email on your behalf. In return for payment, an SMTP provider guarantees you a service that provides IP addresses with a high reputation.
-
-Some providers are easy to test, requiring nothing more than registering with an email address. Others require comprehensive company details, your verified phone number, domain verification, having a professional business website, and communicating with support agents. The easiest providers to configure are:
-- MailerSend — Requires only an email address.
-- Gmail — Requires phone verification, and email is intended only for small tests. Not for production use.
-- AWS SES — Requires email and domain verification.
-- Postmark — Requires email and domain verification.
-- Resend — Requires email and domain verification.
-
-Postmark had especially clear documentation and an easy setup experience.
-
-The more difficult providers are:
-- Brevo
-- Mailgun (Sinch)
-- SendGrid (Twilio)
-
-These providers automatically disable your account on signup and require you to contact their support to have it activated. This involves having a business website ready for review, explaining what your purpose in sending email is, and explaining how you obtained your recipients' email addresses. However, Mailgun and Brevo support were friendly and quick, and unlocked the FusionAuth test account after reasonable discussion. SendGrid is the most onerous provider, with full company details needed for every sender address.
-
-The worst provider is Mailchimp (Mandrill). Mailchimp was the only SMTP provider that refused to provide FusionAuth an account, giving no explanation and accusing us of sharing prohibited content. Mailchimp support was poor — entirely automated, and no human could be contacted.
-
-Be aware that providers can cancel your account at any time, without explanation or a chance to appeal. This can cripple your business.
-
-Choose an SMTP provider that you feel is trustworthy. At the time of writing, these were the scores on https://www.trustpilot.com for each provider in this guide:
-
-| Provider             | Score     | Link                                                |
-|----------------------|-----------|-----------------------------------------------------|
-| Mailgun (Sinch)      | 4.4       | https://www.trustpilot.com/review/mailgun.com       |
-| Brevo                | 4.2       | https://www.trustpilot.com/review/www.brevo.com     |
-| Postmark             | 3.5       | https://www.trustpilot.com/review/postmarkapp.com   |
-| Resend               | 3.2       | https://www.trustpilot.com/review/resend.com        |
-| MailerSend           | 2.8       | https://www.trustpilot.com/review/mailersend.com    |
-| Mailchimp (Mandrill) | 1.3       | https://www.trustpilot.com/review/www.mailchimp.com |
-| SendGrid (Twilio)    | 1.2       | https://www.trustpilot.com/review/sendgrid.com      |
-| AWS SES              | No review |                                                     |
-
-These scores, especially the low ones for Mailchimp and SendGrid, are consistent with the experiences we had writing this guide.
-
-When comparing pricing, note that some providers charge a flat monthly fee, and some charge only for the number of emails you send. One provider might be cheaper than another for small volumes of email, but more expensive for large volumes.
-
-## Can You Use A Self-Hosted SMTP Server?
-
-It is possible to send email through an SMTP server hosted on your server using an application like [Postfix](https://www.postfix.org/documentation.html), [Haraka](https://haraka.github.io/getting_started), [mailcow](https://docs.mailcow.email/), or [Mail-in-a-Box](https://mailinabox.email/guide.html). Hosting your own server will cost you nothing more than a few dollars a month for a cloud server, or nothing if you already have a server for other applications.
-
-However, over time, hosting your own SMTP server will almost certainly cost you more time and money than paying a dedicated email company to handle mail for you. Below are some things you'll need to handle if you want to self-host:
-- Deliverability: Email service providers block or filter emails from dynamic IP addresses and untrusted servers. You need to maintain IP reputation, implement SPF, DKIM, and DMARC properly, and handle feedback loops with ESPs (bounces and spam requests).
-- Scalability: As email volume grows, you need to scale your infrastructure.
-- Technical expertise: Properly configuring and maintaining an email server requires understanding both the software and the network infrastructure. You need to continuously monitor your server and ensure it is available with 100% uptime.
-- Security: Your server must be secured against unauthorized access and data must be protected against breaches, requiring regular security audits and updates.
-
-Using your own SMTP server is appropriate if you are using FusionAuth for a hobby project or a small team where all users know to check their spam folders.
+<Aside type="note">
+If your DNS provider uses cPanel, alter your records at <Breadcrumb>Domains -> Zone Editor</Breadcrumb>.
+</Aside>
 
 ## SMTP Settings
 
@@ -135,33 +86,7 @@ Below are descriptions of the SMTP settings you will configure in FusionAuth in 
   </APIField>
 </APIBlock>
 
-## How To Configure SMTP Providers In FusionAuth
-
-To enable and configure the FusionAuth SMTP server, navigate to <Breadcrumb>Tenants -> Edit -> Email</Breadcrumb>.
-
-![Email Settings](/img/docs/customize/email-and-messages/email-settings.png)
-
-Enable email by clicking on the <Breadcrumb>Enabled</Breadcrumb> toggle, and save your settings once you have completed your configuration.
-
-To avoid disrupting your application's current DNS records, you may want to point FusionAuth SMTP fields to a temporary subdomain. For example, if your application is hosted at `myapp.com`, you can create `testemail.myapp.com`, and point the SMTP service and FusionAuth there while testing.
-
-Strict SMTP providers require you to have a trustworthy-looking domain and website before they activate your account.
-
-There is a troubleshooting section below this one if you encounter errors while trying to send a test email.
-
-<Aside type="note">
-The DNS records you need to add for SMTP will usually be of type `TXT`. A value of `@` for the **Host** of a record means the domain itself, and is a common default value.
-</Aside>
-
-<Aside type="caution">
-Be careful not to duplicate the domain name when entering DNS records. For example, if your host is `myapp.com` and the TXT record value the SMTP provider wants you to add is `send.myapp`, be sure the final value is `send.myapp.com`, and not `send.myapp.myapp.com`. Check the suffix your host attaches to the field.
-</Aside>
-
-<Aside type="note">
-If your DNS provider uses cPanel, alter your records at <Breadcrumb>Domains -> Zone Editor</Breadcrumb>.
-</Aside>
-
-The SMTP providers are presented in alphabetical order below.
+## Providers
 
 ### AWS SES
 - Create an account at https://aws.amazon.com.
@@ -342,6 +267,54 @@ For an overview of all the records Resend asks you to set on your domain, please
   - **Security**: `TLS`
   - **Default from address**: Your verified sender created earlier
 - Click <Breadcrumb>Send test email</Breadcrumb> to test that the settings work, then click the save icon at the top right.
+
+## Send A Test Email
+
+<AvailableSince since="1.16.0"/>
+
+The first step is to ensure that you can send a test email. Navigate to <Breadcrumb>Tenants -> Your Tenant -> Edit -> Email</Breadcrumb> and send a test email. If it is received, FusionAuth can send emails via SMTP.
+
+![Sending a test email](/img/docs/customize/email-and-messages/send-test-email.png)
+
+If sending a test email fails, a tool such as [SWAKS](https://www.jetmore.org/john/code/swaks/) can help debug SMTP issues. Using this tool removes FusionAuth from the equation. 
+
+### Further Investigation
+
+If the test email succeeds, but you aren't receiving other emails, investigate further by following these steps:
+
+* Send emails to different addresses at different providers and check the spam folder.
+* Make sure that you are firing the event that you expect to send email correctly. For instance, if you are looking for email verification of users, make sure that is enabled.
+* Test with a different FusionAuth function. Sending a password reset email is easy to do from the user details screen.
+* Make sure the email template is correct, or use [a default template](/docs/email/).
+
+Additionally, confirm that the template content matches up with the template type. Otherwise template variables will be missing. If this occurs, you may see a message like this in the Event Log.
+
+```plaintext
+Render Errors
+---------------
+html : freemarker.core.InvalidReferenceException: The following has evaluated to null or missing:
+##> changePasswordId  [in nameless template at line 5, column 59]
+```
+
+## Enable SMTP Logging
+
+To enable SMTP logging prior to `1.37.0` follow these steps:
+
+1. Enable debugging by navigating to <Breadcrumb>Tenants -> Your Tenant -> Edit -> Advanced -> SMTP Settings -> Additional properties</Breadcrumb> and add `mail.debug=true`.
+1. Save the tenant.
+1. Send an email. 
+1. View the system logs by navigating to <Breadcrumb>System -> Logs</Breadcrumb>.
+1. Select `fusionauth-app.log` and you will see verbose SMTP output.
+
+To enable SMTP logging for version `1.37.0` or later follow these steps:
+
+1. Enable debugging by navigating to <Breadcrumb>Tenants -> Your Tenant -> Edit -> Email -> Debug</Breadcrumb>.
+1. Save the tenant.
+1. Send an email.
+1. View the Event Logs by navigating to <Breadcrumb>System -> Event Logs</Breadcrumb>.
+1. Select the Event Log that starts with `"Email debug information"`.
+
+Doing this logs the full SMTP conversation, which can be verbose. You should remove this setting when you have finished troubleshooting.
 
 ## Troubleshoot
 

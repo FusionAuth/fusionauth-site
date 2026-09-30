@@ -98,8 +98,10 @@ The root `fusionauth.io` LLMs.txt file lives in [`astro/public/llms.txt`](astro/
 
 * Keep items in alphabetical order!
 * Move a page? Update `/src/redirects.json`.
-* Add a new index page? Update `indexPages` in `/src/redirects.json`.
+* Add a new index page? Update `indexPaths` in `/src/redirects.json`. Every routable `<folder>/index.mdx` needs exactly one entry, written with a trailing slash, because [astro-index-pages](astro/src/integrations/astro-index-pages/index.js) deploys all of them as `<folder>/index.html`.
 * Add a new top-level file or folder adjacent to `/docs/` (e.g. `fusionauth.io/mycoolpagethatisntinthedocsfolder`)?
   * For a new file, update `s3Paths` in `/src/redirects.json`.
   * For a new top-level folder, update `s3Prefixes` in `/src/redirects.json`.
   * Add a behavior in CloudFront. You'll need to submit a PR in [fusionauth-site-infra](https://github.com/FusionAuth/fusionauth-site-infra/).
+
+For the first two, `src/scripts/check-redirects.mjs` works out what a diff needs and prints the exact entries. It defaults to your working tree; pass `--base origin/main` to check a whole branch, and `--write` to apply what it found. The `Check redirects` GitHub action runs it on every PR that touches content, and fails with the same output.
