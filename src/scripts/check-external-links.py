@@ -66,6 +66,10 @@ def extract_links(path: Path, exclude_dest: list) -> list:
     seen = set()
 
     for lineno, line in enumerate(text.splitlines(), 1):
+        # skip resource hint lines — preconnect/dns-prefetch hrefs are not navigable URLs
+        if 'rel="preconnect"' in line or "rel='preconnect'" in line \
+                or 'rel="dns-prefetch"' in line or "rel='dns-prefetch'" in line:
+            continue
         for m in _LINK_RE.finditer(line):
             raw = m.group(1) or m.group(2) or m.group(3)
             if not raw:
@@ -162,6 +166,7 @@ _DEFAULT_EXCLUDE_DEST = [
     r"developers\.docusign\.com",   # spurious 500
     r"geldata\.com",                # spurious 404
     r"gluecon\.com",                # DNE, not evergreen content so will ignore
+    r"rfc-editor\.org",             # times out from CI; RFC links are stable by definition
     r"app\.xkit\.co",               # spurious 500
     r"azure\.microsoft\.com",       # returns 503 from CI environments; works in browsers
 ]
