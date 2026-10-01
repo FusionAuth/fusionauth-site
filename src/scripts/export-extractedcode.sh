@@ -41,6 +41,7 @@ publish_repo() {
 		npx bluehawk copy --state published \
 			-i "repositoryUrl.txt" \
 			-i "tests" \
+			-i ".github" \
 			-i "node_modules" \
 			--output "$CLEANED_DIR" \
 			"$RELATIVE_PATH"
@@ -50,7 +51,8 @@ publish_repo() {
 		git checkout main
 		git config user.email "github-actions[bot]@users.noreply.github.com"
 		git config user.name "github-actions[bot]"
-		git rm -rf .
+		# Keep repository-owned workflows, CODEOWNERS, and other GitHub configuration.
+		git rm -rf -- . ':(exclude).github' ':(exclude).github/**'
 		git clean -fdxq
 		cp -r "$CLEANED_DIR/." .
 		git add -A
