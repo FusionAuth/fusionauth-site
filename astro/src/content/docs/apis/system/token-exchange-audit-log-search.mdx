@@ -1,0 +1,219 @@
+---
+title: Token Exchange Audit Log Search API
+description: APIs for searching token exchange audit logs.
+---
+import StandardGetResponseCodes from 'src/content/docs/apis/_shared/_standard-get-response-codes.astro';
+import StandardPostResponseCodes from 'src/content/docs/apis/_shared/_standard-post-response-codes.astro';
+
+<AvailableSince since="1.70.0"/>
+
+## Overview
+
+This API provides the ability to search and retrieve Token Exchange audit logs. Every token exchange attempt (successful or failed) creates an audit log entry containing complete details about the exchange, including the exchanger, subject token, policy decision, outcome, and actor chain.
+
+Token Exchange audit logs are distinct from standard audit logs and have configurable retention periods (default: 7 days).
+
+## Search Token Exchange Audit Logs
+
+This API is used to search Token Exchange audit logs. Results are paginated and sorted by `insertInstant` in descending order (most recent first).
+
+<API method="POST" uri="/api/system/token-exchange-audit-log/search"/>
+
+### Request Headers
+
+<APIBlock>
+  <APIField name="Authorization" type="String" required>
+    The API key to authenticate the request. See [Authentication](/docs/apis/authentication).
+  </APIField>
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/json`.
+  </APIField>
+</APIBlock>
+
+### Request Body
+
+<APIBlock>
+  <APIField name="search.exchangerClientId" type="String" optional>
+    Filter logs to only those where the exchanger client ID matches this value.
+  </APIField>
+  <APIField name="search.outcome" type="String" optional>
+    Filter logs to only those with this outcome. Valid values:
+    - `SUCCESS` - Exchange completed successfully
+    - `CLIENT_AUTHENTICATION_FAILED` - Exchanger authentication failed
+    - `CLIENT_DISALLOWED` - Exchanger not permitted to perform exchanges
+    - `CLIENT_REQUEST_FAILURE` - Invalid request parameters
+    - `DEPTH_EXCEEDED` - Actor chain depth limit exceeded
+    - `POLICY_DENIED` - Policy engine denied the request
+    - `POLICY_LAMBDA_ERROR` - Policy lambda error
+    - `POPULATE_LAMBDA_ERROR` - Populate lambda error
+    - `SUBJECT_TOKEN_INVALID` - Subject token validation failed
+    - `TENANT_DISALLOWED` - Tenant configuration disallows exchange
+    - `WEBHOOK_FAILURE` - Webhook processing failed
+  </APIField>
+  <APIField name="search.start" type="Long" optional>
+    The start instant (milliseconds since epoch) for filtering logs. Only logs with `insertInstant` greater than or equal to this value are returned.
+  </APIField>
+  <APIField name="search.end" type="Long" optional>
+    The end instant (milliseconds since epoch) for filtering logs. Only logs with `insertInstant` less than or equal to this value are returned.
+  </APIField>
+  <APIField name="search.subjectTokenJti" type="String" optional>
+    Filter logs to only those where the subject token JTI matches this value.
+  </APIField>
+  <APIField name="search.numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return. Maximum is 500.
+  </APIField>
+  <APIField name="search.startRow" type="Integer" optional defaults="0">
+    The start row within the result set to return. Used for pagination.
+  </APIField>
+</APIBlock>
+
+```json title="Example JSON Request"
+{
+  "search": {
+    "exchangerClientId": "todo-app-client-id",
+    "outcome": "SUCCESS",
+    "start": 1727827200000,
+    "end": 1728432000000,
+    "numberOfResults": 50,
+    "startRow": 0
+  }
+}
+```
+
+### Response
+
+<StandardPostResponseCodes />
+
+### Response Body
+
+<APIBlock>
+  <APIField name="logs" type="Array">
+    Array of Token Exchange audit log objects. Each log contains complete information about a token exchange attempt, including fields such as:
+    - `id`, `insertInstant`, `tenantId`
+    - `exchangerClientId` - The client performing the exchange
+    - `subjectToken` - Information about the token being exchanged (jti, sub, iss, type, validationStatus)
+    - `actorToken` - Information about the actor token (optional)
+    - `requestedAudience`, `requestedScope` - What was requested
+    - `grantedAudience`, `grantedScope` - What was granted
+    - `outcome` - The result (SUCCESS, POLICY_DENIED, etc.)
+    - `policyEngine`, `policyDecision`, `policyDecisionDurationMs` - Policy evaluation details
+    - `issuedTokenJti` - The JTI of the issued token
+    - `actChain` - The actor claim chain
+    - `delegationSemantics` - DELEGATION or IMPERSONATION
+    - `intent` - Optional intent string
+  </APIField>
+  <APIField name="total" type="Integer">
+    The total number of logs matching the search criteria.
+  </APIField>
+</APIBlock>
+
+```json title="Example JSON Response"
+{
+  "logs": [
+    {
+      "id": "e7d9b3f0-8c2a-4d1b-9e6f-1a2b3c4d5e6f",
+      "insertInstant": 1728400000000,
+      "tenantId": "30663132-6464-6665-3032-326466613934",
+      "exchangerClientId": "todo-app-client-id",
+      "subjectToken": {
+        "jti": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "sub": "user123",
+        "iss": "https://piedpiper.fusionauth.io",
+        "type": "urn:ietf:params:oauth:token-type:access_token",
+        "validationStatus": "AUTHORITATIVE"
+      },
+      "actorToken": null,
+      "requestedAudience": ["email-service-client-id"],
+      "requestedScope": ["email:send"],
+      "grantedAudience": ["email-service-client-id"],
+      "grantedScope": ["email:send"],
+      "outcome": "SUCCESS",
+      "policyEngine": "ENTITY",
+      "policyDecision": "ALLOW",
+      "policyDecisionDurationMs": 12,
+      "issuedTokenJti": "f1e2d3c4-b5a6-7980-cdef-123456789abc",
+      "delegationSemantics": "DELEGATION",
+      "intent": null,
+      "actChain": {
+        "sub": "todo-app-client-id",
+        "sub_profile": "Todo Application"
+      }
+    }
+  ],
+  "total": 1
+}
+```
+
+## Retrieve Token Exchange Chain
+
+Retrieve the complete delegation chain for an issued token by its JTI (JWT ID).
+
+<API method="GET" uri="/api/system/token-exchange-audit-log/chain/{jti}"/>
+
+### Request Parameters
+
+<APIBlock>
+  <APIField name="jti" type="String" required>
+    The JWT ID (jti claim) of the issued token whose chain you want to retrieve.
+  </APIField>
+</APIBlock>
+
+### Request Headers
+
+<APIBlock>
+  <APIField name="Authorization" type="String" required>
+    The API key to authenticate the request. See [Authentication](/docs/apis/authentication).
+  </APIField>
+</APIBlock>
+
+```plaintext title="Example HTTP Request"
+GET /api/system/token-exchange-audit-log/chain/f1e2d3c4-b5a6-7980-cdef-123456789abc HTTP/1.1
+Host: piedpiper.fusionauth.io
+Authorization: YOUR_API_KEY
+```
+
+### Response
+
+<StandardGetResponseCodes success_code="200" success_message="The request was successful. The response will contain the delegation chain." />
+
+### Response Body
+
+<APIBlock>
+  <APIField name="chain" type="Array">
+    Array of Token Exchange audit log objects representing the complete delegation chain from the original token to the requested token, ordered chronologically (oldest first).
+    
+    Each element shows one exchange in the chain. The first element is the earliest exchange, and the last element is the exchange that issued the token with the requested JTI.
+  </APIField>
+</APIBlock>
+
+```json title="Example JSON Response"
+{
+  "chain": [
+    {
+      "id": "e7d9b3f0-8c2a-4d1b-9e6f-1a2b3c4d5e6f",
+      "insertInstant": 1728400000000,
+      "exchangerClientId": "todo-app-client-id",
+      "subjectToken": {
+        "jti": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "sub": "user123",
+        "iss": "https://piedpiper.fusionauth.io",
+        "type": "urn:ietf:params:oauth:token-type:access_token",
+        "validationStatus": "AUTHORITATIVE"
+      },
+      "issuedTokenJti": "f1e2d3c4-b5a6-7980-cdef-123456789abc",
+      "outcome": "SUCCESS",
+      "actChain": {
+        "sub": "todo-app-client-id",
+        "sub_profile": "Todo Application"
+      }
+    }
+  ]
+}
+```
+
+## Related Documentation
+
+- [OAuth Token Exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange) - High-level overview
+- [Token Exchange API](/docs/apis/oauth/token#token-exchange-grant-request) - Perform token exchanges
+- [Token Exchange Policy Lambda](/docs/extend/code/lambdas/token-exchange-policy) - Authorization logic
+- [Actor Chain](/docs/lifecycle/authenticate-users/oauth/token-exchange#actor-chain-and-the-act-claim) - Understanding delegation chains
