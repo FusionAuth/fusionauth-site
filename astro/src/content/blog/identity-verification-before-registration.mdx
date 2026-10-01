@@ -9,7 +9,6 @@ tags: identity verification, email verification, self-service registration, regi
 excerpt_separator: "{/* more */}"
 ---
 import {Content as DockerCompose} from "src/components/download/docker-compose.mdx";
-import RemoteValue from 'src/components/RemoteValue/RemoteValue.astro';
 
 Self-service registration lets your users sign up for an account, providing credentials and other required profile attributes, and immediately gain access to the application.
 
@@ -147,7 +146,7 @@ Don't forget to configure the following environment variables:
 Kickstart will set up FusionAuth with the correct configuration for this use case. This includes:
 
 * a sample application with a custom look and feel
-* an admin user with an email of "<RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/kickstart.json" selector="$.variables.adminEmail" />" and a password of "<RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/kickstart.json" selector="$.variables.adminPassword" />"
+* an admin user with an email of "admin@example.com" and a password of "password"
 * an advanced registration form which asks for email address, password and first name
 * a self-service registration lambda which calls the Fideo API
 * a custom error message
@@ -204,10 +203,57 @@ Let's take a look at the JavaScript code for the self-service registration lambd
 
 Here's the validation function that Kickstart installed for you:
 
-<RemoteCode 
-   url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/lambdas/fideo.js"
-   language="javascript" 
-   tags="validate" />
+```javascript
+function validate(result, user, registration, formContext) {
+  try {
+
+    var fideoAPIKey = getAPIKey();
+
+    if (!fideoAPIKey) {
+      throw new Error("No API Key available");
+    }
+
+    var emails = [ user.email ];
+    var firstName  = user.firstName;
+
+    var response = fetch("https://api.fideo.ai/verify", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + fideoAPIKey,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        emails: emails,
+        name: { given : firstName } 
+      })
+    });
+    
+    var registrationSucceed = false;
+    
+    if (response.status == 200) {
+      try {
+        var responseData = JSON.parse(response.body);
+        var risk = responseData.risk;
+        if (risk && risk < FAIL_THRESHOLD) {
+          registrationSucceed = true;
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    }
+    
+    if (!registrationSucceed) {
+      result.errors.generalErrors = [{
+        // with the "invalid" error code that we have defined in the theme
+        code: '[invalid]user.identityverification.fail'
+      }];
+    }
+  } catch (error) {
+    // default to accepting registrations if Fideo is down
+    console.log("General error:", error);
+  }
+}
+```
 
 This code does the following:
 
@@ -220,10 +266,9 @@ If the value is above the threshold, the code adds an error. If it is below the 
 
 The threshold value is defined in the lambda function:
 
-<RemoteCode 
-   url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/lambdas/fideo.js"
-   language="javascript" 
-   tags="failthreshold" />
+```javascript
+var FAIL_THRESHOLD = 0.6;
+```
 
 
 Storing the Fideo API key on the application object makes the key easier to rotate without modifying the lambda code. But the value is not secret; it is still available to API keys and users with sufficient access. There's an open GitHub issue to add [lambda secrets management](https://github.com/FusionAuth/fusionauth-issues/issues/1629).
@@ -236,7 +281,7 @@ If the API is not available or the request times out, this code fails open. In o
 
 Next up, let's change the lambda code and see how that affects the registration process. While you could add any logic, let's change our risk threshold.
 
-Open up the [admin UI](http://localhost:9011). Use an incognito window or a different browser than you used to test the registration process. Log in as the admin user, with an email of "<RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/kickstart.json" selector="$.variables.adminEmail" />" and a password of "<RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/kickstart.json" selector="$.variables.adminPassword" />".
+Open up the [admin UI](http://localhost:9011). Use an incognito window or a different browser than you used to test the registration process. Log in as the admin user, with an email of "admin@example.com" and a password of "password".
 
 Navigate to <Breadcrumb>Customizations -> Lambdas</Breadcrumb>. Find and edit the `Fideo Self Service Registration Validation` lambda. Change the `FAIL_THRESHOLD` value at the top of the edit screen to `0.99`. This threshold lets almost any identity successfully register.
 
@@ -268,10 +313,24 @@ You can make a fetch call for every failed registration.
 
 Here's a sample implementation which captures the failed email address. This is called when the risk threshold is reached.
 
-<RemoteCode 
-   url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/lambdas/fideo.js"
-   language="javascript" 
-   tags="registrationfailfetch" />
+```javascript
+function trackRegistrationFailedFetch(email) {
+  var response = fetch("http://example.com/trackregistrationfail", {
+    method: "POST",
+    headers: {
+      "Authorization": "APIKEY",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      email: email
+    })
+  });
+
+  if (response.status !== 200) {
+    console.log("error tracking registration: " + response.status);
+  }
+}
+```
 
 This requires you to set up a remote API.
 
@@ -279,10 +338,12 @@ This requires you to set up a remote API.
 
 You can also create an event log entry. In this case, you make a `console.log` function call when the risk threshold is reached. This creates an Event Log entry.
 
-<RemoteCode 
-   url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/lambdas/fideo.js"
-   language="javascript" 
-   tags="registrationfaillog" />
+```javascript
+function trackRegistrationFailedEventLog(email) {
+  var LOG_PREFIX = 'fideo-registration-failed ';
+  console.log(LOG_PREFIX + email);
+}
+```
 
 You can be notified of this via the Event Log webhook](/docs/extend/events-and-webhooks/events/event-log-create). You can also poll [the event logs](/docs/apis/event-logs#search-event-logs) for the `fideo-registration-failed` prefix.
 

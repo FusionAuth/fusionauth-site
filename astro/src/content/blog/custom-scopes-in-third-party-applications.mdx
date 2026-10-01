@@ -54,7 +54,48 @@ The APIs use the [rack-jwt](https://github.com/FusionAuth/rack-jwt) Gem to help 
 
 The important part of the code in the controller is that it checks for the correct Budget Buddy Client Id and checks for the scope `balance:read`.  If those values are confirmed, then a balance is returned. If this were a real application, it would also retrieve the `change_bank_user_id` and look up the actual balance for the user.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-on-rails-custom-scopes/main/fusionauth-quickstart-ruby-on-rails-api-modifications/app/controllers/get_balance_controller.rb" lang="ruby" />
+```ruby
+class GetBalanceController < ApplicationController
+  def index
+
+    jwt_payload = request.env['jwt.payload']
+    aud = jwt_payload["aud"]
+    scope_string = jwt_payload["scope"]
+    scopes = scope_string.split(" ")
+    change_bank_user_id = jwt_payload["sub"]
+    balance = nil
+    success = false
+    message = nil
+
+    # Could use introspection against FusionAuth server to further validate token 
+    if !jwt_payload.blank?
+        if (aud == ENV['BUDGET_BUDDY_CLIENT_ID'])
+          if scopes.include?('balance:read')
+            # This is where you would use the change_bank_user_id to look up their balance
+            balance = "$100.32"
+            success = true
+          else
+            message = "You do not have the correct balance:read scope."
+          end
+        end
+    else
+      message = "Token was empty, authorization failed."
+    end
+
+    output = {
+          balance: balance,
+          jwt: jwt_payload,
+          aud: aud,
+          change_bank_user_id: change_bank_user_id,
+          scopes: scope_string,
+          success: success,
+          message: message
+        }
+    
+    render json: output.to_json, status: :ok
+  end
+end
+```
 
 ## Budget Buddy Integration
 
@@ -95,4 +136,3 @@ It should be clear that Budget Buddy is its own application with its own identit
 In the future, should Budget Buddy want to integrate further with Change Bank, the same process could be followed. Let's say at some point Budget Buddy would like to allow their users to transfer money from their Change Bank account to another account. Change Bank would have to create an additional scope on the Budget Buddy application like `balance:transfer` and implement the endpoint checking for that scope. Budget Buddy would have to request this scope and the user would have to grant consent. Then Budget Buddy could transfer money from the user's account.
 
 For a full working example and all the code for this blog, please see the [FusionAuth Custom Scopes example application](https://github.com/FusionAuth/fusionauth-example-ruby-on-rails-custom-scopes).
-
