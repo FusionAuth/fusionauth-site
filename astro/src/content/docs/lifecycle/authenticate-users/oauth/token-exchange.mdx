@@ -1,14 +1,16 @@
 ---
 title: OAuth Token Exchange
-description: Learn how to use OAuth 2.0 Token Exchange (RFC 8693) with FusionAuth to enable delegation, impersonation, and token type conversion scenarios.
-tags: token exchange, rfc 8693, oauth token exchange, delegation, impersonation, actor chain, act claim
+description: Learn how to use OAuth 2.0 Token Exchange (RFC 8693) with FusionAuth to enable delegation and token type conversion scenarios.
+tags: token exchange, rfc 8693, oauth token exchange, delegation, actor chain, act claim
 ---
 
 <PlanBlurb plan="enterprise" />
 
-OAuth 2.0 Token Exchange is a protocol for exchanging one type of security token for another. It enables clients to obtain tokens on behalf of users or other services, supporting delegation, impersonation, and cross-domain authentication scenarios.
+OAuth 2.0 Token Exchange is a protocol for exchanging one type of security token for another. It enables clients to obtain tokens on behalf of users or other services, supporting delegation and cross-domain authentication scenarios.
 
 Token Exchange is defined in [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693).
+
+**Note**: FusionAuth 1.70.0 implements delegation semantics as defined in RFC 8693. Impersonation semantics are not currently supported.
 
 ## Use Cases
 
@@ -20,11 +22,11 @@ A service acts on behalf of a user while maintaining a clear audit trail. The is
 
 **Example**: A todo application needs to send email reminders on behalf of users. It exchanges a user's access token for a token that allows it to call the email service as that user.
 
-### Impersonation
+### Administrative Access (Using Delegation)
 
-An administrator or support system needs to act as another user for troubleshooting or administrative purposes.
+An administrator or support system needs to access user resources while maintaining an audit trail.
 
-**Example**: A customer support agent exchanges their admin token for a token that grants them the same permissions as a specific user, allowing them to debug issues the user is experiencing.
+**Example**: A support dashboard service exchanges its credentials for a token scoped to a specific user's resources. The resulting token's `act` claim shows the support service identity, maintaining accountability while accessing the user's data.
 
 ### Token Type Conversion
 
@@ -36,7 +38,7 @@ Convert between different token formats or upgrade/downgrade token scopes for sp
 
 Enable secure token exchange across different security domains or trust boundaries.
 
-**Example**: A user authenticated in one tenant needs to access resources in another tenant. Their token is exchanged for a token valid in the target tenant's security domain.
+**Example**: A user authenticated in one security domain (e.g., a partner IdP) needs to access resources in your system. Their external token is exchanged for a FusionAuth-issued token valid within your security domain.
 
 ## How Token Exchange Works
 
@@ -182,19 +184,11 @@ When a client performs token exchange with a token that already has an `act` cla
 
 ## Delegation Semantics
 
-Token Exchange supports two delegation semantics:
+FusionAuth implements delegation semantics for token exchange, where the actor is authorized to act on behalf of the subject but retains its own identity. The `act` claim shows the delegation chain.
 
-### Delegation
+**Use case**: A service calling another service on a user's behalf, where both the user's identity and the service's identity matter for authorization and auditing.
 
-The actor is authorized to act on behalf of the subject but retains its own identity. The `act` claim shows the delegation chain.
-
-**Use case**: A service calling another service on a user's behalf, where both the user's identity and the service's identity matter.
-
-### Impersonation
-
-The actor assumes the complete identity and permissions of the subject. Less common and generally requires stricter authorization.
-
-**Use case**: Administrative troubleshooting where a support agent needs to see exactly what the user sees.
+The token's `sub` (subject) claim represents the original user or entity, while the `act` (actor) claim shows who is performing actions on their behalf. This preserves accountability and enables fine-grained authorization at resource servers.
 
 ## Configuration
 
@@ -321,15 +315,15 @@ The email service can now:
 Always validate tokens thoroughly:
 - Verify signature using FusionAuth's public keys
 - Check `aud` claim matches your service's client ID
-- Validate `exp` (expiration) and `nbf` (not before)
+- Validate `exp` (expiration) claim
 - Verify `iss` (issuer) matches your FusionAuth instance
 
 ### Actor Chain Verification
 
-When processing tokens with `act` claims:
-- Verify the actor has permission to act on behalf of the subject
-- Log the complete actor chain for audit purposes
-- Consider implementing actor-specific rate limits
+When processing tokens with `act` claims, resource servers should:
+- Use the **immediate actor** (top-level `act.sub`) for authorization decisions
+- The rest of the actor chain is for **audit trail purposes** only
+- Log the complete actor chain for compliance and debugging
 - Validate the chain depth doesn't exceed your policy
 
 ### Scope Reduction
