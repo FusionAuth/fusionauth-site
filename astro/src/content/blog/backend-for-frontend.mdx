@@ -8,7 +8,6 @@ authors: Dan Moore
 categories: Education
 tags: oauth, security, BFF, serverless, server, SPA, React, Angular, Vue, Svelte, cookies, tokens, hosted backend, oauth proxy, token handler pattern
 excerpt_separator: "{/* more */}"
-url: https://raw.githubusercontent.com/fusionauth/fusionauth-example-hostedbackend/refs/heads/main
 ---
 
 
@@ -211,7 +210,23 @@ FusionAuth redirects you back to the app, which detects you're logged in and dis
 
 The frontend for this app is simple. Look at the file `index.html`.
 
-<RemoteCode url={frontmatter.url + "/nodeApp/index.html"} lang="html"/>
+```html
+<!DOCTYPE html>
+<html>
+<head><title>Simplest BFF</title></head>
+<body><a href="/login">Log in</a></body>
+<script>
+  async function checkLoggedIn() {
+    const response = await fetch('/getUser');
+    if (!response.ok) return;
+    const username = await response.text();
+    if (!username) return;
+    document.body.appendChild(Object.assign(document.createElement('p'), { textContent: `Logged in as: ${username}` }));
+  }
+  checkLoggedIn();
+</script>
+</html>
+```
 
 The only text on this page is the login link. In reality, the HTML body could contain a full Angular, React, or Vue app – it wouldn't affect the BFF setup. To add BFF support, all you need to do is add a login link somewhere in your app.
 
@@ -219,13 +234,74 @@ The page has a `checkLoggedIn()` function, which gets the username of the curren
 
 The BFF is the tiniest Express.js server possible. It is in `app.js`.
 
-<RemoteCode url={frontmatter.url + "/nodeApp/app.js"} lang="js"/>
+```js
+const http = require('http');
+const express = require('express');
+const session = require("express-session");
+const passport = require('passport');
+const cookieParser = require('cookie-parser');
+
+const app = express();
+app.use(express.json());
+app.use(cookieParser());
+require('./authentication')(app);
+app.get('/', function (req, res, next) { res.sendFile('/app/index.html'); });
+app.get('/favicon.ico', function (req, res, next) { return res.send(null); });
+app.get('/login', passport.authenticate('oauth2'));
+app.get('/auth/callback', passport.authenticate('oauth2', {successRedirect: '/', failureRedirect: '/'}));
+app.get('/getUser', function (req, res, next) { return res.send(req.user); });
+app.set('port', 3000);
+const server = http.createServer(app);
+server.listen(3000, '0.0.0.0');
+```
 
 The code contains a lot of Node Express boilerplate, including imports of the session and the cookie parser packages. There are only four main routes: the first returns the HTML file, and the others use Passport.js to check the user's authentication status. Passport.js is a JavaScript wrapper to call authorization servers.
 
 The `authentication.js` file is more complicated.
 
-<RemoteCode url={frontmatter.url + "/nodeApp/authentication.js"} lang="js"/>
+```js
+require("dotenv/config");
+const session = require("express-session");
+const passport = require("passport");
+const oauthStrategy = require("passport-oauth2");
+const jwt_decode = require("jwt-decode");
+
+function setupPassport(app) {
+  app.use(session({secret: "s3cr3t", resave: false, saveUninitialized: true,}));
+  app.use(passport.session());
+
+  const authOptions = {
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    authorizationURL: process.env.AUTH_URL,
+    tokenURL: process.env.TOKEN_URL,
+    callbackURL: process.env.AUTH_CALLBACK_URL,
+    scope: "openid email profile offline_access",
+  };
+
+  passport.use(
+    "oauth2",
+    new oauthStrategy.Strategy(authOptions, function (accessToken, refreshToken, params, profile, callback) {
+      const token = jwt_decode(accessToken);
+      const email = jwt_decode(params.id_token).email;
+      const user = { ...token, email };
+      callback(null, user);
+    }),
+  );
+
+  passport.serializeUser((user, callback) => {
+    if (!user.email)
+      throw new Error("FusionAuth did not return email for user");
+    callback(null, user.email);
+  });
+
+  passport.deserializeUser((user, callback) => {
+    callback(null, user);
+  });
+}
+
+module.exports = setupPassport;
+```
 
 The code in this file is closely based on the [sample application from the Passport website](https://github.com/jaredhanson/passport-oauth2). Passport abstracts away all OAuth complexities. All you need to do is set the correct configuration values to access FusionAuth.
 
@@ -262,7 +338,63 @@ As before, browse to http://localhost:3000 to view the app. Click the login link
 
 Though this app looks identical to the previous one, it has no server and uses only FusionAuth for all authentication. The entire application is contained in the `index.html` file in the `serverlessApp` directory.
 
-<RemoteCode url={frontmatter.url + "/serverlessApp/index.html"} lang="html"/>
+```html
+<!DOCTYPE html>
+<html>
+<head><title>Hosted backend app</title></head>
+<body><a href="#" id="loginLink">Log in</a></body>
+<script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+<script>
+  const AUTH_URL="http://localhost:9011/app/login/E9FDB985-9173-4E01-9D73-AC2D60D1DC8E";
+  const AUTH_CALLBACK_URL="http://localhost:3000/auth/callback"
+
+  function setupLogin() {
+    const state = Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('auth_state', state);
+    const authorizeUrl = AUTH_URL + `?redirect_uri=${encodeURIComponent(AUTH_CALLBACK_URL)}&state=${state}&scope=openid`;
+    document.getElementById('loginLink').addEventListener('click', function(event) {
+      event.preventDefault();
+      window.location.href = authorizeUrl;
+    });
+  }
+
+  async function handleCallback() {
+    if (window.location.pathname != '/auth/callback') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const callbackState = urlParams.get('state');
+    const storedState = localStorage.getItem('auth_state');
+    localStorage.removeItem('auth_state');
+    if (callbackState != storedState)
+      return alert("State check returned from authentication server does not match saved state");
+    if (!getToken())
+      return alert("app.idt cookie not found");
+    window.location.href = 'http://localhost:3000';
+  }
+
+  function displayEmail() {
+    const jwt = getToken();
+    if (!jwt) return;
+    const email = jwt_decode(jwt).email;
+    document.body.appendChild(Object.assign(document.createElement('p'), { textContent: `Logged in as: ${email}` }));
+  }
+
+  function getToken() {
+    const cookies = document.cookie.split(';');
+    let jwt = null;
+    for(let i = 0; i < cookies.length && !jwt; i++)
+      if (cookies[i].trim().startsWith('app.idt='))
+        jwt = cookies[i].trim().substring('app.idt='.length + 1);
+    return jwt;
+  }
+
+  displayEmail();
+  if (window.location.pathname == '/auth/callback')
+    handleCallback();
+  else
+    setupLogin();
+</script>
+</html>
+```
 
 In a full single-page app, you would probably use a client-side routing framework. However, this example checks for only two cases: either it handles a callback from the authentication server and verifies the challenge code, or it displays the login link for any other route. In either case, if a logged-in user Id cookie is present, the user's email address is displayed on the screen.
 

@@ -127,7 +127,74 @@ cd ios ; pod install
 
 Then, we need to open the React Native project with Xcode. Edit the `ios/RNfusionauth/info.plist` file and register the redirect URL scheme as shown below:
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-native-0-71/main/ios/RNfusionauth/Info.plist" lang="xml" />
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>RNfusionauth</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string></string>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.your.app.identifier</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fusionauth.demo</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
+```
 
 Here, the `CFBundleURLSchemes` defines the URL schemes handled by this application. The scheme we are registering, `fusionauth.demo`, should look familiar, as we configured FusionAuth to redirect to a URL with that scheme in it. If you modify it here, you should modify it there as well.
 
@@ -135,11 +202,69 @@ The last step is to change `ios/RNfusionauth/AppDelegate.h` and `ios/RNfusionaut
 
 Here's the `AppDelegate.h` file contents:
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-native-0-71/main/ios/RNfusionauth/AppDelegate.h" lang="objectivec" />
+```objectivec
+#import <RCTAppDelegate.h>
+#import <UIKit/UIKit.h>
+#import "RNAppAuthAuthorizationFlowManager.h"
+
+@interface AppDelegate : RCTAppDelegate <RNAppAuthAuthorizationFlowManager>
+
+@property(nonatomic, weak)id<RNAppAuthAuthorizationFlowManagerDelegate>authorizationFlowManagerDelegate;
+
+@end
+```
 
 Here's the `AppDelegate.mm` file contents:
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-native-0-71/main/ios/RNfusionauth/AppDelegate.mm" lang="objectivec" />
+```objectivec
+#import "AppDelegate.h"
+
+#import <React/RCTBundleURLProvider.h>
+#import <React/RCTLinkingManager.h>
+
+@implementation AppDelegate
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+  self.moduleName = @"RNfusionauth";
+  // You can add your custom initial props in the dictionary below.
+  // They will be passed down to the ViewController used by React Native.
+  self.initialProps = @{};
+
+  return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
+
+- (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
+{
+#if DEBUG
+  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
+#else
+  return [[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];
+#endif
+}
+
+- (BOOL)application:(UIApplication *)app
+            openURL:(NSURL *)url
+            options:(NSDictionary<NSString *, id> *)options
+{
+  if ([self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url]) {
+    return YES;
+  }
+  return [RCTLinkingManager application:app openURL:url options:options];
+}
+
+/// This method controls whether the `concurrentRoot`feature of React18 is turned on or off.
+///
+/// @see: https://reactjs.org/blog/2022/03/29/react-v18.html
+/// @note: This requires to be rendering on Fabric (i.e. on the New Architecture).
+/// @return: `true` if the `concurrentRoot` feature is enabled. Otherwise, it returns `false`.
+- (BOOL)concurrentRootEnabled
+{
+  return true;
+}
+
+@end
+```
 
 The changes in `AppDelegate.mm` allows authentication with [Magic Links](/docs/lifecycle/authenticate-users/one-time-passwords/).
 
@@ -171,7 +296,270 @@ Big picture, we're going to be building out our logic and views in the `App.tsx`
 
 Here's what `App.tsx` will look like when we are done (don't worry, it looks like a lot, but we'll explain most of it):
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-native-0-71/main/App.tsx" lang="typescript" />
+```typescript
+import React, {useState} from 'react';
+import {
+  Alert,
+  Image,
+  Pressable,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from 'react-native';
+import {AuthConfiguration, authorize} from 'react-native-app-auth';
+import * as Keychain from 'react-native-keychain';
+
+import {Colors} from 'react-native/Libraries/NewAppScreen';
+
+import Config from 'react-native-config';
+
+const configs: Record<string, AuthConfiguration> = {
+  fusionauth: {
+    issuer: Config.FUSIONAUTH_SERVER_URL!,
+    clientId: Config.FUSIONAUTH_CLIENT_ID!,
+    redirectUrl: 'fusionauth.demo:/oauthredirect',
+    scopes: ['offline_access'],
+  },
+};
+
+const defaultAuthState = {
+  hasLoggedInOnce: false,
+  accessToken: '',
+  accessTokenExpirationDate: '',
+  refreshToken: '',
+};
+
+function UserInfo({
+  text,
+  value,
+}: {
+  text: string;
+  value?: string | Date;
+}): JSX.Element {
+  const isDarkMode = useColorScheme() === 'dark';
+
+  return (
+    <View style={styles.userInfo}>
+      <Text
+        style={{
+          ...styles.userInfoLabel,
+          ...(isDarkMode ? styles.textDark : styles.textLight),
+        }}>
+        {text}
+      </Text>
+      <Text
+        style={{
+          ...styles.userInfoValue,
+          ...(isDarkMode ? styles.textDark : styles.textLight),
+        }}
+        numberOfLines={1}>
+        {value?.toString()}
+      </Text>
+    </View>
+  );
+}
+
+function App(): JSX.Element {
+  const isDarkMode = useColorScheme() === 'dark';
+
+  const backgroundStyle = {
+    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    textColor: isDarkMode ? Colors.light : Colors.dark,
+  };
+
+  const [authState, setAuthState] = useState(defaultAuthState);
+
+  const handleAuthorize = async () => {
+    try {
+      const newAuthState = await authorize(configs.fusionauth);
+
+      setAuthState({
+        hasLoggedInOnce: true,
+        ...newAuthState,
+      });
+
+      await Keychain.setGenericPassword(
+        'accessToken',
+        newAuthState.accessToken,
+      );
+    } catch (error) {
+      Alert.alert(
+        'Failed to log in',
+        (error as Record<string, never>)?.message,
+      );
+    }
+  };
+
+  const getAccessToken = async (): Promise<string | undefined> => {
+    try {
+      // Retrieve the credentials
+      const credentials = await Keychain.getGenericPassword();
+      if (credentials) {
+        return credentials.password;
+      } else {
+        console.log('No credentials stored');
+      }
+    } catch (error) {
+      console.log("Keychain couldn't be accessed!", error);
+    }
+  };
+
+  const [userInfo, setUserInfo] = useState<Record<string, string> | null>(null);
+
+  const getUser = async () => {
+    try {
+      const access_token = await getAccessToken();
+      if (access_token !== null) {
+        fetch(configs.fusionauth.issuer + '/oauth2/userinfo', {
+          method: 'GET',
+          headers: {
+            Authorization: 'Bearer ' + access_token,
+          },
+        })
+          .then(response => response.json())
+          .then(json => {
+            console.log(json);
+            setUserInfo(json);
+          })
+          .catch(error => {
+            console.error(error);
+          });
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  return (
+    <SafeAreaView style={{...backgroundStyle, ...styles.safeArea}}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={backgroundStyle.backgroundColor}
+      />
+      <View style={styles.header}>
+        <Image
+          source={
+            isDarkMode
+              ? require('./fusion_auth_logo_dark.png')
+              : require('./fusion_auth_logo.png')
+          }
+          style={styles.headerImage}
+        />
+      </View>
+      <View style={styles.container}>
+        {authState.accessToken ? (
+          <View style={styles.userInfoContainer}>
+            <UserInfo text={'Access token'} value={authState.accessToken} />
+            <UserInfo
+              text={'Expiration'}
+              value={authState.accessTokenExpirationDate}
+            />
+            {userInfo ? (
+              <View>
+                <UserInfo text={'User ID'} value={userInfo.sub} />
+                <UserInfo text={'Email'} value={userInfo.email} />
+                <UserInfo text={'Given Name'} value={userInfo.given_name} />
+                <UserInfo text={'Family Name'} value={userInfo.family_name} />
+                {userInfo.picture ? (
+                  <Image
+                    source={{uri: userInfo.picture}}
+                    style={styles.userImage}
+                  />
+                ) : null}
+              </View>
+            ) : (
+              <Pressable
+                onPress={() => getUser()}
+                android_ripple={{color: 'white'}}
+                style={({pressed}) => [
+                  styles.button,
+                  pressed ? styles.buttonPressed : null,
+                ]}>
+                <Text>Get User</Text>
+              </Pressable>
+            )}
+          </View>
+        ) : (
+          <Pressable
+            onPress={() => handleAuthorize()}
+            android_ripple={{color: 'white'}}
+            style={({pressed}) => [
+              styles.button,
+              pressed ? styles.buttonPressed : null,
+            ]}>
+            <Text>Login with FusionAuth</Text>
+          </Pressable>
+        )}
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 40,
+  },
+  headerImage: {
+    width: '100%',
+    resizeMode: 'contain',
+  },
+  container: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+  },
+  buttonPressed: {
+    backgroundColor: '#FF963B',
+  },
+  button: {
+    backgroundColor: '#f58321',
+    padding: 20,
+  },
+
+  userInfoContainer: {
+    padding: 20,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-evenly',
+    gap: 10,
+  },
+  userInfoLabel: {
+    fontWeight: 'bold',
+    color: 'green',
+    flex: 0,
+  },
+  userInfoValue: {
+    textAlign: 'right',
+    flex: 1,
+    overflow: 'hidden',
+  },
+  userImage: {
+    marginTop: 20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignSelf: 'center',
+  },
+
+  textLight: {
+    color: Colors.darker,
+  },
+  textDark: {
+    color: Colors.lighter,
+  },
+});
+
+export default App;
+```
 
 [//]: # (TODO when we move to new blogging platform, have these fragments pulled out instead of hardcoded in here, because they'll decay if the content of `App.tsx` changes.)
 

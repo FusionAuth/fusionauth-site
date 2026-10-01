@@ -180,7 +180,43 @@ The application will have only one page apart from the FusionAuth login page. Th
 
 For the landing page view, add the following to `views/index.pug`. Note that the page uses data from a view model, which you will populate in the home route later.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-family-api/main/app/views/index.pug" lang="javascript" />
+```javascript
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{title}
+
+  - var clientId = '779d01fb-94c1-4f8c-9c0f-6783aff44a34'
+  if user
+    p Hello #{user.firstName}
+    if family
+      - var self = family.filter(elem => elem.id == user.id)[0]
+      - family = family.filter(elem => elem.id != user.id)
+      if family.length > 0 && self.role == "Adult"
+        p Confirmed children
+        ul
+          each child in family
+             form(action='/change-consent-status', method='POST')
+                p #{child.email}
+                  |
+                  Consent #{child.consentstatus}
+                  input(type='hidden', name='userConsentId', value=child.userConsentId)
+                  |
+                  if child.status == "Active"
+                    input(type='submit', value='Revoke Consent')
+                    input(type='hidden', name='desiredStatus', value='Revoked')
+                    input(type='hidden', name='userId', value=child.id)
+                  else
+                    input(type='hidden', name='desiredStatus', value='Active')
+                    input(type='submit', value='Grant Consent')
+                    input(type='hidden', name='userId', value=child.id)
+    if self.role == "Adult" || self.status == "Active"
+      h2 Restricted Section
+      p This is a restricted section. Only adults and children granted consent by an adult can view it.
+  else
+    a(href='http://localhost:9011/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&scope=offline_access&code_challenge='+challenge+'&code_challenge_method=S256') Login
+```
 
 Replace `clientId` with the Id of your FusionAuth application and `http://localhost:9011` with the fully qualified URL of your FusionAuth instance, including the protocol. For example, `clientId` might look like `7d31ada6-27b4-461e-bf8a-f642aacf5775` and your FusionAuth URL might look like `https://local.fusionauth.io`.
 
@@ -210,7 +246,172 @@ There are three main routes needed:
 
 Update the `routes/index.js` file to look like this:
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-family-api/main/app/routes/index.js" lang="javascript" />
+```javascript
+var express = require('express');
+var router = express.Router();
+
+const pkceChallenge = require('pkce-challenge').default;
+const { FusionAuthClient } = require('@fusionauth/typescript-client');
+const clientId = '779d01fb-94c1-4f8c-9c0f-6783aff44a34';
+const clientSecret = 'fs9PIEj-Th-qiribC9H-x5Rnw1s3YnALnqSCXnGwdFQ';
+const client = new FusionAuthClient('6iIiGfOSMgzpQusy5M4MlM8iU04uuLqnbABwUE_HcAlBjf0IP4k9Pxv4', 'http://localhost:9011');
+const consentId = '512603b1-89ed-4027-9e69-40fc275fcfd8';
+
+async function getUserProfiles(familyUsers) {
+  const getUsers = familyUsers.map(elem => client.retrieveUser(elem.userId));
+  const profiles = await Promise.all(getUsers);
+  return profiles;
+}
+
+async function getUserConsentStatuses(users) {
+  const getUserConsentStatuses = users.map(elem => client.retrieveUserConsents(elem.userId));
+  const consentsResponseArray = await Promise.all(getUserConsentStatuses);
+  return consentsResponseArray;
+}
+
+function buildFamilyArray(users) {
+  const family = [];
+  users.forEach(user => {
+    family.push({ "id": user.response.user.id, "email": user.response.user.email, "role": user.response.user.role });
+  });
+  return family;
+}
+
+function updateFamilyWithConsentStatus(family, consentsResponseArray) {
+  const userIdToStatus = {};
+  const userIdToUserConsentId = {};
+  consentsResponseArray.forEach((consent) => {
+    const matchingConsent = consent.response.userConsents.filter((userConsent) => userConsent.consent.id === consentId)[0];
+    if (matchingConsent) {
+      const userId = matchingConsent.userId;
+      userIdToUserConsentId[userId] = matchingConsent.id;
+      userIdToStatus[userId] = matchingConsent.status;
+    }
+  });
+  return family.map((member) => {
+    member["status"] = userIdToStatus[member.id];
+    member["userConsentId"] = userIdToUserConsentId[member.id];
+    return member;
+  });
+}
+
+
+/* GET home page. */
+router.get('/', async function (req, res, next) {
+  try {
+    let familyProfiles = [];
+    const pkce_pair = pkceChallenge();
+    req.session.verifier = pkce_pair['code_verifier'];
+    req.session.challenge = pkce_pair['code_challenge'];
+    if (req.session.user && req.session.user.id) {
+      const response = await client.retrieveFamilies(req.session.user.id);
+      if (response.response.families && response.response.families.length >= 1) {
+        let familyMembers = response.response.families[0].members.filter(elem => elem.role !== 'Adult' || elem.userId === req.session.user.id);
+        const userProfiles = await getUserProfiles(familyMembers);
+        userProfiles.forEach(user => {
+          let self = familyMembers.filter(elem => elem.userId === user.response.user.id)[0];
+          user.response.user.role = self.role;
+        });
+        familyProfiles = buildFamilyArray(userProfiles);
+        const consentsResponseArray = await getUserConsentStatuses(familyMembers);
+        familyProfiles = updateFamilyWithConsentStatus(familyProfiles, consentsResponseArray);
+      }
+    }
+    res.render('index', {
+      family: familyProfiles,
+      user: req.session.user,
+      title: 'Family Example',
+      challenge: pkce_pair['code_challenge']
+    });
+  } catch (error) {
+    console.error("in error");
+    console.error(JSON.stringify(error));
+    next(error);
+  }
+});
+
+router.get('/oauth-redirect', async function (req, res, next) {
+  try {
+    const response = await client.exchangeOAuthCodeForAccessTokenUsingPKCE(
+      req.query.code,
+      clientId,
+      clientSecret,
+      'http://localhost:3000/oauth-redirect',
+      req.session.verifier
+    );
+
+    req.session.state = req.query.state;
+
+    const userResponse = await client.retrieveUserUsingJWT(
+      response.response.access_token
+    );
+
+    req.session.user = userResponse.response.user;
+
+    res.redirect(302, '/');
+  } catch (err) {
+    console.log('in error');
+    console.error(JSON.stringify(err));
+  }
+});
+
+
+/* Change consent */
+/* Change consent */
+router.post('/change-consent-status', async function (req, res, next) {
+  if (!req.session.user) {
+    // force signin
+    res.redirect(302, '/');
+  }
+
+  let desiredStatus = req.body.desiredStatus;
+  if (desiredStatus !== 'Active') {
+    desiredStatus = 'Revoked';
+  }
+
+  try {
+    // check current user is an adult and that the child is part of their family.
+    const response = await client.retrieveFamilies(req.session.user.id);
+    if (response.response.families && response.response.families.length >= 1) {
+      let self = response.response.families[0].members.filter(elem => elem.userId === req.session.user.id)[0];
+      if (self.role !== 'Adult') {
+       return res.status(403).send('Only Adult users can change consents');
+      }
+      if (response.response.families[0].members.filter(elem => elem.userId === req.body.userId).length < 1) {
+       return res.status(403).send('You cannot access families you are not part of');
+      }
+    }
+
+    // Now get the UserConsent for the child, or create one if one hasn't been granted yet:
+    const consentsResponse = await client.retrieveUserConsents(req.body.userId);
+    let userConsent = consentsResponse.response.userConsents.filter((userConsent) => userConsent.consent.id === consentId)[0];
+    if (!userConsent) {
+      // The child does not yet have a consent. Create a consent for this child.
+      const createConsent = await client.createUserConsent(null, {
+        userConsent: {
+          consentId: consentId,
+          giverUserId: req.session.user.id,
+          status: "Active",
+          userId: req.body.userId
+        }
+      });
+      userConsent = createConsent.response.userConsent;
+    }
+
+    const patchBody = { userConsent: { status: desiredStatus } };
+    await client.patchUserConsent(userConsent.id, patchBody);
+
+    res.redirect(302, '/');
+  } catch (err) {
+    console.log('in error');
+    console.error(JSON.stringify(err));
+    next(err);
+  }
+});
+
+
+module.exports = router;
+```
 
 Each route will be reviewed in more detail below.
 
