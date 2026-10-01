@@ -1,0 +1,175 @@
+{
+  "variables": {
+    "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+    "apiKey": "this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works",
+    "asymmetricKeyId": "#{UUID()}",
+    "defaultTenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
+    "adminEmail": "admin@example.com",
+    "adminPassword": "password",
+    "tellerEmail": "teller@example.com",
+    "tellerPassword": "password",
+    "tellerUserId": "00000000-0000-0000-0000-111111111111",
+    "customerEmail": "customer@example.com",
+    "customerPassword": "password",
+    "customerUserId": "00000000-0000-0000-0000-222222222222"
+  },
+  "apiKeys": [
+    {
+      "key": "#{apiKey}",
+      "description": "Unrestricted API key"
+    }
+  ],
+  "requests": [
+    {
+      "method": "PATCH",
+      "url": "/api/tenant/#{defaultTenantId}",
+      "body": {
+        "tenant": {
+          "issuer": "http://localhost:9011"
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "api/system-configuration",
+      "body": {
+        "systemConfiguration": {
+          "usageDataConfiguration": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/key/generate/#{asymmetricKeyId}",
+      "body": {
+        "key": {
+          "algorithm": "RS256",
+          "name": "For exampleapp",
+          "length": 2048
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration",
+      "body": {
+        "user": {
+          "email": "#{adminEmail}",
+          "password": "#{adminPassword}"
+        },
+        "registration": {
+          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+          "roles": [
+            "admin"
+          ]
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/application/#{applicationId}",
+      "tenantId": "#{defaultTenantId}",
+      "body": {
+        "application": {
+          "name": "Example app",
+          "oauthConfiguration": {
+            "authorizedRedirectURLs": [],
+            "clientSecret": "super-secret-secret-that-should-be-regenerated-for-production",
+            "logoutURL": "http://localhost:8080/logout",
+            "enabledGrants": [
+              "authorization_code",
+              "refresh_token"
+            ],
+            "proofKeyForCodeExchangePolicy": "Required",
+            "requireRegistration": true
+          },
+          "jwtConfiguration": {
+            "enabled": true,
+            "accessTokenKeyId": "#{asymmetricKeyId}",
+            "idTokenKeyId": "#{asymmetricKeyId}"
+          },
+          "registrationConfiguration": {
+            "birthDate": {
+              "enabled": false,
+              "required": false
+            },
+            "confirmPassword": false,
+            "enabled": true,
+            "firstName": {
+              "enabled": false,
+              "required": false
+            },
+            "fullName": {
+              "enabled": true,
+              "required": true
+            },
+            "lastName": {
+              "enabled": false,
+              "required": false
+            },
+            "loginIdType": "email",
+            "middleName": {
+              "enabled": false,
+              "required": false
+            },
+            "mobilePhone": {
+              "enabled": false,
+              "required": false
+            },
+            "type": "basic"
+          },
+          "roles": [
+            {
+              "name": "teller"
+            },
+            {
+              "name": "customer"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{tellerUserId}",
+      "body": {
+        "user": {
+          "birthDate": "1985-11-23",
+          "email": "#{tellerEmail}",
+          "firstName": "Tammy",
+          "lastName": "Teller",
+          "fullName": "Tammy Teller",
+          "password": "#{tellerPassword}"
+        },
+        "registration": {
+          "applicationId": "#{applicationId}",
+          "roles": [
+            "teller"
+          ]
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{customerUserId}",
+      "body": {
+        "user": {
+          "birthDate": "1985-11-23",
+          "email": "#{customerEmail}",
+          "firstName": "Charlie",
+          "lastName": "Customer",
+          "fullName": "Charlie Customer",
+          "password": "#{customerPassword}"
+        },
+        "registration": {
+          "applicationId": "#{applicationId}",
+          "roles": [
+            "customer"
+          ]
+        }
+      }
+    }
+  ]
+}

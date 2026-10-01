@@ -17,6 +17,10 @@ export function register({ bluehawk }) {
     languageId: "ini",
     lineComments: [/#/],
   });
+  bluehawk.addLanguage("pug", {
+    languageId: "pug",
+    lineComments: [/\/\//],
+  });
   bluehawk.addLanguage("toml", {
     languageId: "toml",
     lineComments: [/#/],
@@ -41,5 +45,9 @@ export function register({ bluehawk }) {
   bluehawk.addLanguage(["dockerfile", "containerfile"], {
     languageId: "dockerfile",
     lineComments: [/#/],
+  });
+  bluehawk.addLanguage("erb", {
+    languageId: "erb",
+    blockComments: [[/<%# BLUEHAWK/, /!BLUEHAWK %>/]],
   });
 }
