@@ -46,4 +46,8 @@ export function register({ bluehawk }) {
     languageId: "dockerfile",
     lineComments: [/#/],
   });
+  bluehawk.addLanguage("erb", {
+    languageId: "erb",
+    blockComments: [[/<%# BLUEHAWK/, /!BLUEHAWK %>/]],
+  });
 }

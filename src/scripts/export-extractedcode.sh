@@ -38,7 +38,7 @@ publish_repo() {
 		set -euo pipefail
 
 		cd "$REPO_ROOT/astro"
-		npx bluehawk copy --state published \
+		npx bluehawk copy --plugin bluehawk-languages.js --state published \
 			-i "repositoryUrl.txt" \
 			-i "tests" \
 			-i ".github" \
