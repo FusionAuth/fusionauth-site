@@ -11,32 +11,41 @@ Client ID Metadata Documents (CIMD) is an OAuth extension, described by [draft-i
 
 When a client presents such a `client_id`, FusionAuth fetches the document, validates it, caches it, and registers the client just-in-time. Once you've configured a CIMD domain for that origin, neither you nor the client's developer has to register each individual client ahead of time.
 
-The driving use case is [Model Context Protocol (MCP)](https://modelcontextprotocol.io/seps/991-enable-url-based-client-registration-using-oauth-c) clients. An MCP client such as `claude.ai` cannot be pre-registered with every MCP server it might connect to, and MCP references CIMD in SEP-991 for exactly this reason.
+CIMD addresses a trust issue with [Model Context Protocol (MCP)](https://modelcontextprotocol.io/seps/991-enable-url-based-client-registration-using-oauth-c) clients: clients (e.g. `claude.ai`) cannot preregister with every MCP server. CIMD provides a way to dynamically register MCP clients with your MCP server. [Dynamic Client Registration (DCR)](/blog/cimd-vs-dcr) previously solved the same problem, but CIMD involves less state and complexity.
 
-<Aside type="note">
-FusionAuth does not implement [Dynamic Client Registration (DCR)](/blog/cimd-vs-dcr). CIMD covers the same problem — clients you cannot enumerate in advance — while leaving you in control of which clients are trusted, because you decide which domains may register at all.
-</Aside>
 
 ## CIMD Domains
 
-A **CIMD domain** is the unit of that trust. Each CIMD domain names one origin that clients may register from, and it is always scoped to a single [Tenant](/docs/get-started/core-concepts/types/tenants).
+CIMD configuration starts with a **CIMD domain**, which names one origin that clients may register from (e.g. `https://claude.ai`). You configure CIMD domains at the [Tenant](/docs/get-started/core-concepts/types/tenants) level.
 
-The **Domain** value is an origin — a scheme, hostname, and optional port, such as `https://claude.ai`. It is normalized on save. It may not contain a path, query string, or fragment, and it may not use a wildcard as part of a hostname, so `https://*.example.com` is not a valid CIMD domain. Bare IP addresses, `localhost`, and loopback addresses are rejected.
+CIMD domains do not support:
 
-A CIMD domain may instead be the literal value `*`, which allows clients to register from any origin. Because that is a much broader grant, a tenant may have either any number of specific domains or a single `*` domain, but never both. When you use `*`, a [registration lambda](/docs/extend/code/lambdas) is the only way to filter which clients are allowed to register.
+* paths, query strings, or fragments
+* wildcards (e.g. `https://*.example.com`)
+* bare IP addresses
+* `localhost`
+* loopback addresses.
 
-Each incoming `client_id` URL is validated too. It must use HTTPS, include a path, contain no fragment and no userinfo component, be no longer than 2048 characters, and its origin must match one of the tenant's CIMD domains.
+To register a client from any origin, specify a CIMD domain with the wildcard `*`. Since the wildcard matches any domain, you cannot specify specific domains in addition to the wildcard. However, you can use a [registration Lambda](/docs/extend/code/lambdas) to filter clients even when you allow any domain with the wildcard.
+
+FusionAuth also validates the Client Ids provided in client metadata. Client Ids must:
+
+* use HTTPS
+* include a path
+* contain no fragment and no userinfo component
+* be no longer than 2048 characters
+* match one of the tenant's CIMD domains (or the wildcard)
 
 ### Fixed OAuth Behavior
 
-The CIMD flow has fixed security requirements, so the following behavior applies to every client that registers through a CIMD domain and cannot be configured:
+The CIMD standard requires the following security measures:
 
-* CIMD clients are public clients. Client authentication is not required, and PKCE is required.
-* Only the `authorization_code` and `refresh_token` grants are available, and refresh tokens are generated.
-* CIMD clients are third-party clients, so users always see a consent screen.
-* Redirect URL validation is an exact match against the redirect URIs in the client's metadata document.
-* Unknown scopes are rejected, so a scope that is not enabled on the domain — or that you delete from it — will cause the OAuth request to fail.
-* Roles, SAML, WebAuthn, and self-service registration are not available to CIMD clients.
+* Clients must implement [PKCE](/articles/oauth/modern-guide-to-oauth#authorization-code-grant).
+* Clients can only use the `authorization_code` and `refresh_token` grants.
+* Redirect URLs must exactly match the redirect URIs specified in the client's metadata document.
+* Clients can only use scopes enabled on the domain and agreed to during the user consent screen, or the OAuth request will fail.
+* CIMD clients cannot use roles, SAML, WebAuthn, and self-service registration.
+* Many CIMD clients are public, so client authentication is not required.
 
 ## Managing CIMD Domains
 
@@ -56,9 +65,9 @@ Managing CIMD domains requires the `admin` or `cimd_domain_manager` role. To man
 
 ### Create and Edit a CIMD Domain
 
-Creating and editing a CIMD domain is straightforward. Click <Breadcrumb>CIMD Domains</Breadcrumb> in the left navigation, then click the **Add** button at the top of the page.
+Click <Breadcrumb>CIMD Domains</Breadcrumb> in the left navigation, then click the **Add** button at the top of the page.
 
-Here is what you can expect when creating a new CIMD domain:
+When creating a new CIMD domain, you will see the following form:
 
 ![The Add CIMD domain form.](/img/docs/get-started/core-concepts/cimd-domain-add.png)
 
@@ -86,7 +95,7 @@ Here is what you can expect when updating an existing CIMD domain:
 
 <APIBlock>
   <APIField name="Domain" required>
-    The origin CIMD clients register from — the scheme, hostname, and optional port of the URL where FusionAuth expects to find the CIMD document. FusionAuth uses this to validate each client's `client_id` URL. Use `*` to allow CIMD registrations from any domain. This value cannot be changed after creation.
+    The origin CIMD clients register from, including the scheme, hostname, and optional port of the URL where FusionAuth expects to find the CIMD document. FusionAuth uses this to validate each client's `client_id` URL. Use `*` to allow CIMD registrations from any domain. This value cannot be changed after creation.
   </APIField>
   <APIField name="Authorized resource URIs" optional>
     The resource URIs that clients on this domain may request using the [RFC 8707](https://datatracker.ietf.org/doc/html/rfc8707) `resource` parameter.
@@ -109,7 +118,7 @@ Here is what you can expect when updating an existing CIMD domain:
     Whether users must grant consent each time scopes are requested, or whether FusionAuth remembers their decision. The available values are `Always prompt` and `Remember decision`. A CIMD domain cannot skip the consent prompt entirely.
   </APIField>
   <APIField name="Provided scopes" optional>
-    Controls how FusionAuth handles the standard OpenID Connect scopes — `address`, `email`, `phone`, and `profile` — for clients on this domain. Marking a scope **Enabled** allows clients to request it; a disabled scope is treated as unknown and will fail the request. Marking a scope **Required** means users must consent to it before they can complete authorization. Each scope is enabled and not required by default.
+    Controls how FusionAuth handles the standard OpenID Connect scopes (`address`, `email`, `phone`, and `profile`) for clients on this domain. Marking a scope **Enabled** allows clients to request it; a disabled scope is treated as unknown and will fail the request. Marking a scope **Required** means users must consent to it before they can complete authorization. Each scope is enabled and not required by default.
 
     The `offline_access` scope is always enabled and cannot be turned off. When a client requests it, a refresh token is issued alongside the access and Id tokens, governed by the Tenant's refresh token settings. It is not shown on the consent screen.
   </APIField>
