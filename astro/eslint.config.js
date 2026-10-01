@@ -8,7 +8,15 @@ import * as astroParser from 'astro-eslint-parser';
 
 export default [
   {files: ["**/*.{js,mjs,cjs,ts,md,mdx}"]},
-  {ignores: ["localcode/**/eslint.config.js", "localcode/**/vite.config.ts"]},
+  {ignores: [
+    "localcode/**/eslint.config.js",
+    "localcode/**/vite.config.ts",
+    "dist/**",
+    ".astro/**",
+    ".vite-cache/**",
+    "public/js/**",
+    "extractedcode/**",
+  ]},
   {languageOptions: { globals: globals.browser }},
   {
     ...pluginJs.configs.recommended,

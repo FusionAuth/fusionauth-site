@@ -72,7 +72,7 @@ If you prefer not to use Terraform:
 
 1. Add the cron job (keeps the master clone warm so builds start from a fresh tree):
 
-   ```cron
+   ```bash
    # Add to preview user's crontab: sudo -u preview crontab -e
    */10 * * * * git -C /opt/preview/repo pull --ff-only --quiet
    ```

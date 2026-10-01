@@ -1,0 +1,57 @@
+name: Clean Up Copilot Spam
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  sweep-spam:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Copilot to finish processing
+        run: sleep 15
+
+      - name: Scan and minimize Copilot spam
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Scanning PR #$PR_NUMBER for Copilot spam..."
+
+          # Fetch all reviews for this PR
+          REVIEWS=$(gh api "/repos/$REPO/pulls/$PR_NUMBER/reviews")
+
+          # Find the GraphQL node_ids of reviews authored by Copilot containing the spam text
+          SPAM_NODE_IDS=$(echo "$REVIEWS" | jq -r '
+            .[] | 
+            select(.user.login | ascii_downcase | contains("copilot")) | 
+            select(.body | test("Copilot wasn'\''t able to review|could not review"; "i")) | 
+            .node_id
+          ')
+
+          if [[ -z "$SPAM_NODE_IDS" ]]; then
+            echo "No Copilot spam found. Exiting."
+            exit 0
+          fi
+
+          echo "Found spam review(s): $SPAM_NODE_IDS"
+
+          # Loop through found spam reviews and minimize them as SPAM
+          for NODE_ID in $SPAM_NODE_IDS; do
+            echo "Minimizing review $NODE_ID..."
+            
+            gh api graphql -f query='
+              mutation($subjectId: ID!) {
+                minimizeComment(input: {subjectId: $subjectId, classifier: SPAM}) {
+                  minimizedComment { isMinimized }
+                }
+              }' -F subjectId="$NODE_ID" --silent
+              
+            echo "✅ Review $NODE_ID minimized."
+          done

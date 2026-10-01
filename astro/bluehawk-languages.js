@@ -34,6 +34,10 @@ export function register({ bluehawk }) {
     languageId: "properties",
     lineComments: [/#/],
   });
+  bluehawk.addLanguage(["md", "markdown"], {
+    languageId: "markdown",
+    blockComments: [[/<!--/, /-->/]],
+  });
   bluehawk.addLanguage(["dockerfile", "containerfile"], {
     languageId: "dockerfile",
     lineComments: [/#/],
