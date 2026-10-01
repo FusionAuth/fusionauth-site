@@ -38,15 +38,15 @@ import TokenExchangeReservedClaims from './_token-exchange-reserved-claims.mdx';
 
 ### Passthrough Claims
 
-The following claims are automatically copied from the subject token (if present) and cannot be modified:
+The following claims are automatically copied from the subject token (if present) and cannot be modified in the populate lambda. They preserve the original authentication context:
 
-- `amr` - Authentication Methods References
-- `applicationId` - FusionAuth application identifier
-- `auth_time` - Authentication timestamp
-- `authenticationType` - FusionAuth authentication type
-- `sid` - Session ID
+- `amr` (Authentication Methods References) - Array of identifiers for authentication methods used (e.g., `["pwd"]` for password, `["mfa"]` for multi-factor)
+- `applicationId` - FusionAuth application UUID that the original token was issued for
+- `auth_time` - Unix timestamp of when the end-user authentication occurred
+- `authenticationType` - FusionAuth-specific authentication method (e.g., `PASSWORD`, `REFRESH_TOKEN`, `PASSWORDLESS`)
+- `sid` (Session ID) - Identifier for the user's SSO session, enabling session tracking across token exchanges
 
-These claims preserve the authentication context from the original token.
+These claims ensure that the exchanged token maintains full traceability to the original authentication event, even after multiple exchanges. If the subject token is from an external issuer that doesn't include these claims, they will be absent from the issued token.
 
 ### `subjectToken` object
 
@@ -57,7 +57,10 @@ The subject token object contains information about the token being exchanged:
 * `sub` - <AvailableSince since="1.70.0"/> - the subject (user or entity ID)
 * `iss` - <AvailableSince since="1.70.0"/> - the token issuer
 * `type` - <AvailableSince since="1.70.0"/> - the token type
-* `validationStatus` - <AvailableSince since="1.70.0"/> - validation status: `AUTHORITATIVE`, `BEST_EFFORT`, or `FAILED`
+* `validationStatus` - <AvailableSince since="1.70.0"/> - validation status indicating how the token was verified:
+  * `AUTHORITATIVE` - Token issued by this FusionAuth instance and fully validated
+  * `BEST_EFFORT` - External token validated through signature/claims only
+  * `FAILED` - Token validation failed
 
 ### `actorToken` object
 
@@ -69,9 +72,9 @@ The token exchange request object contains:
 
 * `clientId` - <AvailableSince since="1.70.0"/> - the client ID of the exchanger
 * `requestedAudience` - <AvailableSince since="1.70.0"/> - array of requested audience values
-* `requestedScope` - <AvailableSince since="1.70.0"/> - array of requested scope values
-* `resource` - <AvailableSince since="1.70.0"/> - array of requested resource URIs
+* `requestedScopes` - <AvailableSince since="1.70.0"/> - array of requested scope values
 * `intent` - <AvailableSince since="1.70.0"/> - optional intent string
+* `state` - <AvailableSince since="1.70.0"/> - optional opaque string provided by the client for contextual information (max 1024 characters)
 
 ### `context` object
 

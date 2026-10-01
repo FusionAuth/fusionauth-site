@@ -93,7 +93,18 @@ sequenceDiagram
 
 ## Policy Engines
 
-FusionAuth supports two policy engines for authorizing token exchange requests:
+FusionAuth supports two policy engines for authorizing token exchange requests. Choose the engine that best fits your authorization requirements:
+
+| Feature | Entity Engine | Lambda Engine |
+|---------|---------------|---------------|
+| **Authorization Model** | Grant-based (entity grants) | Custom JavaScript logic |
+| **Complexity** | Simple, declarative | Flexible, programmable |
+| **Grant Checking** | Existence only (permissions ignored) | Custom logic in lambda |
+| **Audience Parameter** | Required | Optional (lambda decides) |
+| **Scope Handling** | Passes through subject token scopes (ignores request) | Custom logic (can reduce scopes) |
+| **Resource Parameter** | Not supported | Supported (available in lambda) |
+| **Dynamic Authorization** | No | Yes (time, context, external APIs) |
+| **Best For** | M2M with static rules | Complex, contextual authorization |
 
 ### Entity Policy Engine
 
@@ -109,6 +120,13 @@ Uses FusionAuth's entity grants system for authorization. The exchanger entity m
 2. Grant permissions from exchanger entities to target entities
 3. Enable the `actAsTokenExchangeClient` flag on exchanger entities
 4. Set tenant policy engine to `ENTITY`
+
+**Important behaviors**:
+- The engine checks only for grant **existence** between exchanger and audience entities; specific permission names are not evaluated
+- The `audience` parameter is **required** (requests without audience will be denied)
+- The `scope` request parameter is **ignored**; the subject token's scopes are passed through unchanged
+- The `resource` parameter is **not supported** (requests with resource will be denied)
+- For scope reduction or resource-based authorization, use the Lambda policy engine instead
 
 ### Lambda Policy Engine
 
@@ -215,6 +233,7 @@ curl -X POST 'http://localhost:9011/api/entity' \
   }'
 
 # Create todo app entity (exchanger)
+# Note: actAsTokenExchangeClient must be true to allow this entity to perform token exchange
 curl -X POST 'http://localhost:9011/api/entity' \
   -H 'Authorization: YOUR_API_KEY' \
   -H 'Content-Type: application/json' \
@@ -229,6 +248,7 @@ curl -X POST 'http://localhost:9011/api/entity' \
   }'
 
 # Grant todo app permission to call email service
+# Note: The Entity policy engine checks for grant existence only; specific permissions are not evaluated
 curl -X POST 'http://localhost:9011/api/entity/grant' \
   -H 'Authorization: YOUR_API_KEY' \
   -H 'Content-Type: application/json' \

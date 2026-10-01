@@ -38,13 +38,16 @@ The token exchange request object contains the following properties:
   * `sub` - the subject (user or entity ID)
   * `iss` - the token issuer
   * `type` - the token type (`urn:ietf:params:oauth:token-type:access_token` or `urn:ietf:params:oauth:token-type:jwt`)
-  * `validationStatus` - validation status: `AUTHORITATIVE`, `BEST_EFFORT`, or `FAILED`
+  * `validationStatus` - validation status indicating how the token was verified:
+    * `AUTHORITATIVE` - Token issued by this FusionAuth instance and fully validated against internal state
+    * `BEST_EFFORT` - External token validated through signature/claims only (issuer in allowed list)
+    * `FAILED` - Token validation failed (expired, invalid signature, etc.)
 * `actorToken` - <AvailableSince since="1.70.0"/> - information about the actor token (optional, only present if provided in the request)
   * Same structure as `subjectToken`
 * `requestedAudience` - <AvailableSince since="1.70.0"/> - array of requested audience values
-* `requestedScope` - <AvailableSince since="1.70.0"/> - array of requested scope values
-* `resource` - <AvailableSince since="1.70.0"/> - array of requested resource URIs (optional)
+* `requestedScopes` - <AvailableSince since="1.70.0"/> - array of requested scope values
 * `intent` - <AvailableSince since="1.70.0"/> - optional intent string describing the purpose of the exchange
+* `state` - <AvailableSince since="1.70.0"/> - optional opaque string provided by the client for contextual information (max 1024 characters)
 
 ### `context` object
 
@@ -101,6 +104,18 @@ Common OAuth error codes:
 ```
 
 Use `ERROR` when the lambda itself encounters an error (e.g., external API failure, unexpected exception).
+
+### Exception Handling
+
+If your lambda throws an unhandled exception during execution, FusionAuth automatically:
+1. Catches the exception and logs the details internally
+2. Returns an `ERROR` decision to the caller
+3. Responds with an OAuth error: `invalid_request` with description "The Token Exchange Policy Lambda failed."
+4. Creates an audit log entry with outcome `POLICY_LAMBDA_ERROR`
+
+**Important**: Exception details are logged for debugging but are **not** exposed to the client via the OAuth error response. This prevents leaking sensitive information about your authorization logic.
+
+To provide meaningful error messages to clients, catch exceptions in your lambda and return explicit `DENY` or `ERROR` decisions with appropriate `error_description` values.
 
 ## Assigning The Lambda
 
