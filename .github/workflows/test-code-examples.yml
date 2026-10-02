@@ -22,9 +22,15 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Validate every extractedcode dir has tests/test.sh
+          # templates-* directories hold static reference files that the docs
+          # render and readers download. There is no project to run, so they are
+          # exempt from the tests/test.sh requirement and from the matrix below.
+          is_templates() { case "$1" in templates-*) return 0;; *) return 1;; esac; }
+
+          # Validate every other extractedcode dir has tests/test.sh
           for dir in astro/extractedcode/*/; do
             name=$(basename "$dir")
+            is_templates "$name" && continue
             if [ ! -f "${dir}tests/test.sh" ]; then
               echo "ERROR: extractedcode directory missing tests/test.sh: $name" >&2
               exit 1
@@ -35,7 +41,9 @@ jobs:
             # Manual trigger: test all suites
             dirs=()
             for dir in astro/extractedcode/*/; do
-              dirs+=("$(basename "$dir")")
+              name=$(basename "$dir")
+              is_templates "$name" && continue
+              dirs+=("$name")
             done
           else
             # PR: only test suites whose files changed
@@ -43,6 +51,7 @@ jobs:
             dirs=()
             for dir in astro/extractedcode/*/; do
               name=$(basename "$dir")
+              is_templates "$name" && continue
               if ! git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- "astro/extractedcode/$name/"; then
                 dirs+=("$name")
               fi

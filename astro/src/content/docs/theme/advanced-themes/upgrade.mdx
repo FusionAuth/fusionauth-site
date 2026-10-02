@@ -1,0 +1,1438 @@
+---
+title: Advanced Theme Upgrade Notes
+description: Detailed information about required theme changes between versions of FusionAuth.
+tags: theme upgrade notes, advanced theme migration, version upgrade, breaking changes, theme compatibility, freemarker changes
+order: 2
+---
+
+New versions of FusionAuth sometimes include new or updated theme templates. If a new template is not part of a custom theme, FusionAuth will render the template from the default theme. Occasionally, modifications to existing templates or [helper macros](/docs/theme/advanced-themes/helpers) introduced in a FusionAuth release will require changes to an existing custom theme in order for it to continue functioning correctly.
+
+This page contains notes on changes in recent versions of FusionAuth that require changes to a customized theme.
+
+<Aside type="note">
+For an explanation of how to upgrade a custom theme, see [Upgrade an Advanced Theme](/docs/theme/advanced-themes/upgrade-advanced-theme).
+</Aside>
+
+## Version 1.69.0
+
+### Custom form field labels on account and OAuth2 pages
+
+**OPTIONAL - SEE BELOW**
+
+Version `1.69.0` updates the `Account edit`, `OAuth2 register`, and `OAuth2 complete registration` theme templates to make labels available for [custom form fields](/docs/lifecycle/register-users/advanced-registration-forms#custom-form-fields) rendered on those pages. Previously, these templates did not render labels for non-text custom form controls.
+
+
+You only need to apply the updates below if your FusionAuth instance meets all of the following criteria:
+
+* You use an advanced theme for FusionAuth-hosted pages.
+* You use a custom form with the `Account edit`, `OAuth2 register`, or `OAuth2 complete registration` template.
+* Your custom form uses one or more non-text controls, such as checkboxes, radio buttons, or select dropdowns.
+
+
+#### Helpers template
+
+##### Macro customField
+
+Update the custom field label styling:
+
+```ftl diff
+-            <label for="${id}" class="block text-sm/6 font-medium text-input-text mb-2[#if (fieldMessages[name]![])?size > 0] error[/#if]">
++            <label for="${id}" class="block text-xs font-medium text-input-text mb-1[#if (fieldMessages[name]![])?size > 0] error[/#if]">
+```
+
+##### Macro passwordField
+
+Update the confirm field call so it passes a label:
+
+```ftl diff
+-          [@customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
++          [@customField field=field key="confirm.${field.key}" autofocus=false placeholder="[confirm]${field.key}" label=theme.optionalMessage("confirm.${field.key}")/]
+```
+
+#### Account edit template
+
+Update custom field calls to pass labels for both the primary and confirm fields:
+
+```ftl diff
+-                      [@helpers.customField field key field?is_first field.key /]
++                      [@helpers.customField field=field key=key autofocus=field?is_first placeholder=field.key label=theme.optionalMessage(key)/]
+
+                       [#if field.confirm]
+-                        [@helpers.customField field "confirm.${key}" false "[confirm]${field.key}" /]
++                        [@helpers.customField field=field key="confirm.${key}" autofocus=false placeholder="[confirm]${field.key}" label=theme.optionalMessage("confirm.${key}")/]
+                       [/#if]
+```
+
+#### OAuth2 complete registration template
+
+Update custom field calls to pass labels for both the primary and confirm fields:
+
+```ftl diff
+-              [@helpers.customField field field.key field?is_first?then(true, false) field.key /]
++              [@helpers.customField field=field key=field.key autofocus=field?is_first?then(true, false) placeholder=field.key label=theme.optionalMessage(field.key)/]
+               [#if field.confirm]
+-                [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
++                [@helpers.customField field=field key="confirm.${field.key}" autofocus=false placeholder="[confirm]${field.key}" label=theme.optionalMessage("confirm.${field.key}")/]
+               [/#if]
+```
+
+#### OAuth2 register template
+
+Update custom field calls to pass labels for both the primary and confirm fields:
+
+```ftl diff
+-              [@helpers.customField field key field?is_first field.key /]
++              [@helpers.customField field=field key=key autofocus=field?is_first placeholder=field.key label=theme.optionalMessage(key)/]
+               [#if field.confirm]
+-                [@helpers.customField field "confirm.${key}" false "[confirm]${field.key}" /]
++                [@helpers.customField field=field key="confirm.${key}" autofocus=false placeholder="[confirm]${field.key}" label=theme.optionalMessage("confirm.${key}")/]
+               [/#if]
+```
+
+### Return to application link on account self-service pages
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+Version `1.69.0` adds a `redirectURI` template variable to the account self-service templates and updates the default theme to render a **Return to application** link at the bottom of the `Account index` page. Before this release, a user who finished managing their profile had no way back to your application unless your theme hard-coded a link.
+
+`redirectURI` is available on every account template: `Account index`, `Account edit`, the `Account two-factor` templates, and the `Account WebAuthn` templates. FusionAuth resolves it from the `redirect_uri` request parameter, falling back to the `Referer` header when a user navigates into the account pages directly from your application. When neither is present, or the user arrived from another FusionAuth page, the variable is undefined, so always reference it with a null safe strategy such as `redirectURI??`.
+
+For the link to survive as the user moves around the account section, `redirect_uri` has to be carried on every internal account link and through each form post. The `accountFooter` macro does this for you once you apply the change below. The `Account index` and `Account edit` templates build their own links and form, so they need the additional updates below.
+
+#### Helpers template
+
+##### Macro accountFooter
+
+Append `redirect_uri` to the generated action URLs:
+
+```ftl diff
+ [#if !actionURL?contains("tenantId")]
+     [#if actionURL?contains("?")]
+         [#local actionURL = actionURL + "&tenantId=${tenantId}"/]
+     [#else]
+         [#local actionURL = actionURL + "?tenantId=${tenantId}"/]
+     [/#if]
+ [/#if]
++[#if redirectURI?? && !actionURL?contains("redirect_uri")]
++    [#if actionURL?contains("?")]
++        [#local actionURL = actionURL + "&redirect_uri=${redirectURI?url('UTF-8')}"/]
++    [#else]
++        [#local actionURL = actionURL + "?redirect_uri=${redirectURI?url('UTF-8')}"/]
++    [/#if]
++[/#if]
+```
+
+#### Account index template
+
+Declare the new template variable:
+
+```ftl diff
+ [#-- @ftlvariable name="multiFactorAvailable" type="boolean" --]
++[#-- @ftlvariable name="redirectURI" type="java.lang.String" --]
+ [#-- @ftlvariable name="tenant" type="io.fusionauth.domain.Tenant" --]
+```
+
+Carry `redirect_uri` on the links to the edit profile, two-factor, and WebAuthn pages:
+
+```ftl diff
+- <a id="edit-profile" class="block w-full rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-text shadow-sm hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" href="${request.contextPath}/account/edit?client_id=${client_id}&tenantId=${tenantId!''}">
++ <a id="edit-profile" class="block w-full rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-text shadow-sm hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" href="${request.contextPath}/account/edit?client_id=${client_id}&tenantId=${tenantId!''}[#if redirectURI??]&redirect_uri=${redirectURI?url('UTF-8')}[/#if]">
+```
+
+```ftl diff
+- <a href="${request.contextPath}/account/two-factor/?client_id=${client_id}&tenantId=${tenantId!''}" class="text-link hover:text-link-hover text-sm">
++ <a href="${request.contextPath}/account/two-factor/?client_id=${client_id}&tenantId=${tenantId!''}[#if redirectURI??]&redirect_uri=${redirectURI?url('UTF-8')}[/#if]" class="text-link hover:text-link-hover text-sm">
+```
+
+```ftl diff
+- <a href="${request.contextPath}/account/webauthn/?client_id=${client_id}&tenantId=${tenantId!''}" class="text-link hover:text-link-hover text-sm">
++ <a href="${request.contextPath}/account/webauthn/?client_id=${client_id}&tenantId=${tenantId!''}[#if redirectURI??]&redirect_uri=${redirectURI?url('UTF-8')}[/#if]" class="text-link hover:text-link-hover text-sm">
+```
+
+Render the link back to the application next to the locale selector:
+
+```ftl diff
+- [#-- Locale selector at bottom with mt-3 spacing --]
+- <div class="w-full flex justify-center max-w-[352px] mt-3">
+-   <div class="w-min-content">[@helpers.localeSelector/]</div>
++ [#-- redirectURI is the resolved URL back to the application. --]
++ <div class="w-full max-w-[352px] mt-3 flex items-center justify-between gap-4">
++   <div class="flex-shrink-0">[@helpers.localeSelector/]</div>
++   [#if redirectURI??]
++     <div class="flex-shrink-0 text-right">
++       <a href="${redirectURI}" class="text-sm text-link hover:text-link-hover hover:underline inline-flex items-center gap-2"><i class="fa fa-arrow-left"></i> ${theme.message("return-to-application")}</a>
++     </div>
++   [/#if]
+  </div>
+```
+
+#### Account edit template
+
+Declare the new template variable:
+
+```ftl diff
+ [#-- @ftlvariable name="fields" type="java.util.Map<java.lang.Integer, java.util.List<io.fusionauth.domain.form.FormField>>" --]
++[#-- @ftlvariable name="redirectURI" type="java.lang.String" --]
+ [#-- @ftlvariable name="user" type="io.fusionauth.domain.User" --]
+```
+
+Add a hidden field so the link back to the application survives the form post, which has no query string:
+
+```ftl diff
+  [@helpers.hidden name="client_id" /]
+  [@helpers.hidden name="tenantId" /]
++ [#-- Carries the link back to the application across the POST, which has no query string. --]
++ [@helpers.hidden name="redirect_uri" value=redirectURI!'' /]
+```
+
+#### Messages
+
+To support these template changes, add the following message, replacing the value with your own:
+
+```plaintext
+return-to-application=Return to application
+```
+
+## Version 1.68.0
+
+### Account and OAuth2 updates for named two-factor methods
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+Version `1.68.0` introduces named two-factor methods and updates account/OAuth2 templates to support naming, editing, and displaying method names. It also includes account layout updates for alert and panel width behavior.
+
+#### Helpers template
+
+##### Macro accountMain
+
+Update `accountMain` to support a wide layout mode:
+
+```ftl diff
+- [#macro accountMain rowClass="row center-xs" colClass="col-xs col-sm-8 col-md-6 col-lg-5 col-xl-4" actionURL="" actionText="Go back" actionDirection="back"]
++ [#macro accountMain rowClass="row center-xs" colClass="col-xs col-sm-8 col-md-6 col-lg-5 col-xl-4" actionURL="" actionText="Go back" actionDirection="back" wide=false]
+```
+
+Update container sizing when `wide=true`:
+
+```ftl diff
+-    <div class="w-full max-w-[352px]">
+-      [@printErrorAlerts rowClass="" colClass=""/]
+-      [@printInfoAlerts rowClass="" colClass=""/]
++    <div class="w-full [#if wide == true]max-w-2xl[#else]max-w-[352px][/#if]">
++      <div class="w-full [#if wide == true]max-w-2xl[#else]max-w-[352px][/#if]">
++        [@printErrorAlerts rowClass="" colClass=""/]
++        [@printInfoAlerts rowClass="" colClass=""/]
++      </div>
+       <div class="w-full">
+           [#nested/]
+       </div>
+```
+
+##### Macro alert
+
+Allow alert components to fill parent width:
+
+```ftl diff
+-  <div class="alert [#if type == 'error'] border-error-icon/50 [#else] border-info-icon/60 [/#if] border-1 bg-alert-background rounded-theme p-3 mb-4 w-full max-w-[352px]">
++  <div class="alert [#if type == 'error'] border-error-icon/50 [#else] border-info-icon/60 [/#if] border-1 bg-alert-background rounded-theme p-3 mb-4 w-full">
+```
+
+#### Account index template
+
+Wrap alerts in a fixed-width container and simplify alert macro arguments:
+
+```ftl diff
+-      [@helpers.printErrorAlerts rowClass="flex justify-center" colClass="w-full max-w-[352px]"/]
+-      [@helpers.printInfoAlerts rowClass="flex justify-center" colClass="w-full max-w-[352px]"/]
++      <div class="w-full max-w-[352px]">
++        [@helpers.printErrorAlerts rowClass="" colClass=""/]
++        [@helpers.printInfoAlerts rowClass="" colClass=""/]
++      </div>
+```
+
+#### Account two-factor index template
+
+Use the wider account layout:
+
+```ftl diff
+-    [@helpers.accountMain rowClass="row center" colClass="col-xs-12 col-sm-12 col-md-10 col-lg-8" actionURL="/account/" actionText=theme.message("go-back")]
++    [@helpers.accountMain rowClass="row center" colClass="col-xs-12 col-sm-12 col-md-10 col-lg-8" actionURL="/account/" actionText=theme.message("go-back") wide=true]
+```
+
+Add a two-factor name column:
+
+```ftl diff
+ <tr class="border-b border-slate-400">
+   <th>${theme.message("method")}</th>
++  <th>${theme.message("two-factor-name")}</th>
+   <th>${theme.message("value")}</th>
+   <th class="action">${theme.message("action")}</th>
+ </tr>
+```
+
+Display each method name:
+
+```ftl diff
+ <tr>
+   <td class="py-2"> ${theme.message(method.method)} </td>
++  <td class="py-2"> ${helpers.display(method, "name")} </td>
+   <td class="py-2">
+```
+
+Replace the delete-style disable button with explicit edit/disable links:
+
+```ftl diff
+-                      <td class="action py-2">
+-                       [@helpers.buttonLink type="delete" size="sm" text=theme.message('disable') href="${request.contextPath}/account/two-factor/disable?client_id=${client_id}&methodId=${method.id?url}&tenantId=${tenantId!''}"?no_esc][/@helpers.buttonLink]
+-[#--                       <a class="small-square gray button ml-2 pr-0" href="${request.contextPath}/account/two-factor/disable?client_id=${client_id}&methodId=${method.id?url}&tenantId=${tenantId!''}" data-tooltip="${theme.message('disable')}"> <i class="fa fa-minus"></i> </a>--]
+-                      </td>
++                      <td class="action py-2">
++                        <div class="inline-flex items-center gap-3">
++                           <a href="${request.contextPath}/account/two-factor/edit?client_id=${client_id}&methodId=${method.id?url}&tenantId=${tenantId!''}"
++                              class="text-sm text-link hover:text-link-hover hover:underline">
++                               ${theme.message("edit")}
++                          </a>
++                          <span class="text-slate-300" aria-hidden="true">|</span>
++                          <a href="${request.contextPath}/account/two-factor/disable?client_id=${client_id}&methodId=${method.id?url}&tenantId=${tenantId!''}"
++                             class="text-sm text-link hover:text-link-hover hover:underline">
++                               ${theme.message("disable")}
++                          </a>
++                        </div>
++                      </td>
+```
+
+#### Account two-factor enable template
+
+Persist `twoFactorName` while sending a code:
+
+```ftl diff
+ [@helpers.hidden name="secret" /]
+ [@helpers.hidden name="secretBase32Encoded" /]
++[@helpers.hidden name="twoFactorName" /]
+```
+
+Collect method name when enabling:
+
+```ftl diff
+ [@helpers.hidden name="secret" /]
+ [@helpers.hidden name="secretBase32Encoded" /]
+
++[@helpers.input type="text" name="twoFactorName" id="two-factor-name" label=theme.message("two-factor-name") placeholder="${theme.message('{placeholder}two-factor-name')}" autocapitalize="none" autocorrect="off"/]
+ [@helpers.input type="text" name="code" id="verification-code" label=theme.message("verification-code") placeholder="${theme.message('{placeholder}two-factor-code')}" autocapitalize="none"  autocomplete="one-time-code" autocorrect="off" required=true/]
+```
+
+#### New account two-factor edit template
+
+<Aside type="note">
+This is a new template in `1.68.0`. If your custom theme does not include it, open your theme in the FusionAuth editor and import/copy the default `Account two-factor edit` template as a starting point, then apply your customizations.
+</Aside>
+
+Add a new template to edit a two-factor method name:
+
+```ftl diff
++[#ftl/]
++[#-- @ftlvariable name="client_id" type="java.lang.String" --]
++[#-- @ftlvariable name="methodId" type="java.lang.String" --]
++[#-- @ftlvariable name="twoFactorName" type="java.lang.String" --]
++[#-- @ftlvariable name="tenantId" type="java.util.UUID" --]
++
++[#import "../../_helpers.ftl" as helpers/]
++
++[@helpers.html]
++  [@helpers.head title=theme.message("account-two-factor-edit-page-title")/]
++  [@helpers.body]
++    [@helpers.header]
++      [#-- Custom header code goes here --]
++    [/@helpers.header]
++
++    [@helpers.accountMain rowClass="row center" colClass="col-xs-12 col-sm-12 col-md-10 col-lg-8" actionURL="/account/two-factor/" actionText=theme.message("cancel-go-back")]
++      [@helpers.accountPanelFull title="${theme.message('edit-two-factor')}" ]
++        <fieldset>
++          <p class="mt-0 mb-4">${theme.message("{description}edit-two-factor")}</p>
++
++          [@helpers.structuredForm id="two-factor-form" action="${request.contextPath}/account/two-factor/edit" method="POST"; section]
++            [#if section == "formFields"]
++              [@helpers.hidden name="client_id" /]
++              [@helpers.hidden name="tenantId" /]
++              [@helpers.hidden name="methodId" /]
++
++              [@helpers.input type="text" name="twoFactorName" id="two-factor-name" label=theme.message("two-factor-name") placeholder="${theme.message('{placeholder}two-factor-name')}" autocapitalize="none" autocorrect="off"/]
++            [#elseif section == "buttons"]
++              [@helpers.button icon="save" text=theme.message("save")/]
++            [/#if]
++          [/@helpers.structuredForm]
++        </fieldset>
++      [/@helpers.accountPanelFull]
++    [/@helpers.accountMain]
++
++    [@helpers.footer]
++      [#-- Custom footer code goes here --]
++    [/@helpers.footer]
++
++  [/@helpers.body]
++[/@helpers.html]
+```
+
+#### OAuth2 two-factor enable template
+
+Add the `twoFactorName` template variable:
+
+```ftl diff
+ [#-- @ftlvariable name="trustComputer" type="boolean" --]
+ [#-- @ftlvariable name="twoFactorId" type="java.lang.String" --]
++[#-- @ftlvariable name="twoFactorName" type="java.lang.String" --]
+ [#-- @ftlvariable name="version" type="java.lang.String" --]
+```
+
+Persist `twoFactorName` while sending a code:
+
+```ftl diff
+ [@helpers.hidden name="secret" /]
+ [@helpers.hidden name="secretBase32Encoded" /]
+ [@helpers.hidden name="twoFactorId"/]
++[@helpers.hidden name="twoFactorName"/]
+```
+
+Collect `twoFactorName` when enabling:
+
+```ftl diff
+ [@helpers.hidden name="secretBase32Encoded" /]
+ [@helpers.hidden name="twoFactorId"/]
+
++[@helpers.input type="text" name="twoFactorName" id="two-factor-name" label=theme.message("two-factor-name") placeholder="${theme.message('{placeholder}two-factor-name')}" autocapitalize="none" autocorrect="off" /]
+ [@helpers.input type="text" name="code" id="verification-code" label=theme.message("verification-code") placeholder="${theme.message('{placeholder}two-factor-code')}" autocapitalize="none"  autocomplete="one-time-code" autocorrect="off" required=true/]
+```
+
+#### OAuth2 two-factor methods template
+
+Update radio/input layout classes:
+
+```html diff
+-<input class="relative size-4 appearance-none rounded-full border border-input-placeholder bg-input-bg before:absolute before:inset-1 before:rounded-full before:bg-input-bg not-checked:before:hidden checked:border-primary checked:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:border-slate-300 disabled:bg-slate-100 disabled:before:bg-slate-400 forced-colors:appearance-auto forced-colors:before:hidden"
++<input class="relative size-4 shrink-0 appearance-none rounded-full border border-input-placeholder bg-input-bg before:absolute before:inset-1 before:rounded-full before:bg-input-bg not-checked:before:hidden checked:border-primary checked:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:border-slate-300 disabled:bg-slate-100 disabled:before:bg-slate-400 forced-colors:appearance-auto forced-colors:before:hidden"
+```
+
+```ftl diff
+-<label for="method-${optionId}" class="ml-3 block text-sm font-medium text-text">
++<label for="method-${optionId}" class="ml-3 block text-sm font-medium text-text wrap-anywhere">
+```
+
+Show method names in labels when present:
+
+```ftl diff
+ [#if method.method == "email"]
+-  <span class="block">${theme.message("two-factor-method-email")}</span>
++  <span class="block">[#if method.name?has_content]${method.name} (${theme.message("two-factor-method-email")})[#else]${theme.message("two-factor-method-email")}[/#if]</span>
+ ...
+ [#elseif method.method == "authenticator"]
+-  <span class="block">${theme.message("two-factor-method-authenticator")}</span>
++  <span class="block">[#if method.name?has_content]${method.name} (${theme.message("two-factor-method-authenticator")})[#else]${theme.message("two-factor-method-authenticator")}[/#if]</span>
+ ...
+ [#elseif method.method == "sms" && messageType == "Voice"]
+-  <span class="block">${theme.message('two-factor-method-voice')}</span>
++  <span class="block">[#if method.name?has_content]${method.name} (${theme.message('two-factor-method-voice')})[#else]${theme.message('two-factor-method-voice')}[/#if]</span>
+ ...
+ [#elseif method.method == "sms"]
+-  <span class="block">${theme.message('two-factor-method-sms')}</span>
++  <span class="block">[#if method.name?has_content]${method.name} (${theme.message('two-factor-method-sms')})[#else]${theme.message('two-factor-method-sms')}[/#if]</span>
+```
+
+#### Messages
+
+To support these template changes, add or update the following variables, replacing the values with your own:
+
+```plaintext
+two-factor-name=Name
+{placeholder}two-factor-name=Enter a name to identify this method
+[tooLong]twoFactorName=Two-factor method name exceeds the maximum length requirement
+account-two-factor-edit-page-title=Edit two-factor
+edit-two-factor=Edit two-factor
+{description}edit-two-factor=Update the name used to identify this two-factor method.
+edit=Edit
+cancel-go-back=Cancel and go back
+```
+
+## Version 1.65.0
+
+### Add voice option for sending two-factor codes
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+Version `1.65.0` adds support for sending phone-based two-factor codes by voice message in addition to SMS. The default theme templates have been updated to add a voice option in addition/as an alternative to SMS where appropriate.
+
+#### Account two-factor enable template
+
+Update the instruction message based on which message types are available:
+
+```ftl diff
+-[#-- Email or SMS Instructions --]
+-<p class="mt-0 mb-3">${theme.message("${method}-enable-step-1", helpers.display(user, (method == "email")?then("email", "mobilePhone")))}</p>
++[#-- Email or Phone Instructions --]
++[#assign messageKey = "${method}-enable-step-1"/]
++[#if method == "sms"]
++  [#assign smsEnabled = phoneMessageTypes?seq_contains("SMS")/]
++  [#assign voiceEnabled = phoneMessageTypes?seq_contains("Voice")/]
++  [#if phoneMessageTypes?size == 1 && smsEnabled]
++    [#assign messageKey = "sms-enable-smsMessage-step-1"/]
++  [#elseif phoneMessageTypes?size == 1 && voiceEnabled]
++    [#assign messageKey = "sms-enable-voiceMessage-step-1"/]
++  [/#if]
++[/#if]
++<p class="mt-0 mb-3">${theme.message(messageKey)}</p>
+```
+
+Add a field to select the type of message to send:
+
+```ftl diff
+ [#elseif method == "sms"]
++  [#if phoneMessageTypes?size > 1]
++      [@helpers.select name="messageType" id="select-message-type" options=phoneMessageTypes label="${theme.message('select-two-factor-message-type')}"/]
+   [@helpers.input type="text" id="mobilePhone" name="mobilePhone" label="Mobile phone" required=true/]
+ [/#if]
+```
+
+#### OAuth2 two-factor enable template
+
+Update the instruction message based on which message types are available:
+
+```ftl diff
+-[#-- Email or SMS Instructions --]
+-<p class="mt-0 mb-3">${theme.message("oauth2-${method}-enable-step-1")}</p>
++[#-- Email or Phone Instructions --]
++[#assign messageKey = "oauth2-${method}-enable-step-1"/]
++[#if method == "sms"]
++  [#assign smsEnabled = phoneMessageTypes?seq_contains("SMS")/]
++  [#assign voiceEnabled = phoneMessageTypes?seq_contains("Voice")/]
++  [#if phoneMessageTypes?size == 1 && smsEnabled]
++    [#assign messageKey = "oauth2-sms-enable-smsMessage-step-1"/]
++  [#elseif (phoneMessageTypes![])?size == 1 && voiceEnabled]
++    [#assign messageKey = "oauth2-sms-enable-voiceMessage-step-1"/]
++  [/#if]
++[/#if]
++<p class="mt-0 mb-3">${theme.message(messageKey)}</p>
+```
+
+Add a field to select the type of message to send:
+
+```ftl diff
+ [#elseif method == "sms"]
++  [#if phoneMessageTypes?size > 1]
++    [@helpers.select name="messageType" id="select-message-type" options=phoneMessageTypes label="${theme.message('select-two-factor-message-type')}"/]
+   [@helpers.input type="text" id="mobilePhone" name="mobilePhone" label="Mobile phone" required=true/]
+ [/#if]
+```
+
+#### OAuth2 two-factor methods template
+
+Update the form so it supplies a message type along with a method:
+
+```ftl diff
+-[#macro methodOption id method]
++[#macro methodOption id method messageType='']
++   [#assign optionId = id + messageType?has_content?then('-' + messageType, '')/]
+   <div class="flex items-center">
+     <input class="..."
+-           type="radio" name="methodId" id="method-${id}" value="${id}" [#if id = methodId!'']checked[/#if]>
+-    <label for="method-${id}" class="ml-3 block text-sm font-medium text-text">
++           type="radio" name="methodId" id="method-${optionId}" value="${optionId}" [#if optionId = methodId!'']checked[/#if]>
++    <label for="method-${optionId}" class="ml-3 block text-sm font-medium text-text">
+```
+
+Update the description message:
+
+```ftl diff
+        </span>
++     [#elseif method.method == "sms" && messageType == "Voice"]
++       <span class="block">${theme.message('two-factor-method-voice')}</span>
++       <span class="block text-xs font-normal text-text">
++         ${theme.message('two-factor-get-code-at-voice', method.mobilePhone?substring(method.mobilePhone?length - 2))}
++       </span>
+      [#elseif method.method == "sms"]
+```
+
+Include separate items for SMS and voice:
+
+```ftl diff
+ [#list availableMethodsMap as id, method]
+-  [@methodOption id method/]
++  [#if method.method == "sms"]
++    [#list phoneMessageTypes as messageType]
++      [@methodOption id=id method=method messageType=messageType/]
++    [/#list]
++  [#else]
++    [@methodOption id=id method=method/]
++  [/#if]
+ [/#list]
+```
+
+#### Messages
+
+To support these template changes, add/update the following message keys:
+
+```plaintext
+sms=Phone
+...
+voice=Voice
+...
+select-two-factor-message-type=Select a message type
+two-factor-method-sms=Text message
+two-factor-method-voice=Voice call
+two-factor-get-code-at-sms=Send code via SMS to (***) ***-**%s
+two-factor-get-code-at-voice=Send code via voice message to (***) ***-**%s
+...
+sms-disable-step-1=To disable two-factor using phone, click the button to send a one-time use code to %s. Once you receive the code, enter it in the form below.
+sms-enable-step-1=To enable two-factor using phone, enter a mobile phone and click the button to send a one-time use code. Once you receive the code, enter it in the form below.
+sms-enable-smsMessage-step-1=To enable two-factor using phone, enter a mobile phone and click the button to send a one-time use code via SMS message. Once you receive the code, enter it in the form below.
+sms-enable-voiceMessage-step-1=To enable two-factor using phone, enter a mobile phone and click the button to send a one-time use code via voice message. Once you receive the code, enter it in the form below.
+oauth2-sms-enable-step-1=To enable two-factor using phone, enter a mobile phone and click the button to send a one-time use code. Once you receive the code, enter it in the form below.
+oauth2-sms-enable-smsMessage-step-1=To enable two-factor using phone, enter a mobile phone and click the button to send a one-time use code via SMS message. Once you receive the code, enter it in the form below.
+oauth2-sms-enable-voiceMessage-step-1=To enable two-factor using phone, enter a mobile phone and click the button to send a one-time use code via voice message. Once you receive the code, enter it in the form below.
+```
+
+## Version 1.63.0
+
+### Enable show/hide password button
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+Version 1.63.0 introduces a show password toggle for password input fields. To use this new toggle, update the the `head`, `input`, and `_input_text` macros. You can find these macros on the `Helpers` page in the UI, and the API template `helpers`. Make the following modifications:
+
+* `head`: Add the following JavaScript to the `head` macro to enable the show password toggle button functionality. This code should be added inside the `<script>` tag, as an additional block inside the anonymous function passed to `Document.onReady`.
+
+  ```javascript title="Add show password button initialization"
+  document.querySelectorAll('button.show-password-button').forEach(button => {
+    button.classList.remove('hidden');
+    button.addEventListener('click', () => FusionAuth.Util.togglePasswordMasking(button));
+  });
+  ```
+
+* `input`: Add the `canShowPassword` parameter to the `input` macro. This parameter controls whether the show password toggle button is displayed on password fields.
+
+  ```ftl title="After"
+  [#macro input type name id autocapitalize="none" autocomplete="on" autocorrect="off" autofocus=false spellcheck="false" label="" placeholder="" leftAddon="" required=false tooltip="" disabled=false class="" dateTimeFormat="" value="" uncheckedValue="" checked=false canShowPassword=true]
+  ```
+
+  Also update the call to `_input_text` within the `input` macro to pass the new `canShowPassword` parameter:
+
+  ```ftl title="After"
+  [@_input_text type=type name=name id=id autocapitalize=autocapitalize autocomplete=autocomplete autocorrect=autocorrect autofocus=autofocus spellcheck=spellcheck label=label placeholder=placeholder leftAddon=leftAddon required=required tooltip=tooltip disabled=disabled class=class dateTimeFormat=dateTimeFormat canShowPassword=canShowPassword/]
+  ```
+
+* `_input_text`: Add the `canShowPassword` parameter to the `_input_text` macro and update the template to include the show password toggle button.
+
+  ```ftl title="After"
+  [#macro _input_text type name id autocapitalize autocomplete autocorrect autofocus spellcheck label placeholder leftAddon required tooltip disabled class dateTimeFormat canShowPassword=true]
+  ```
+
+  Update the `<input>` element and surrounding code to wrap the input in a `<div>` and add the show password button for password fields. Replace the `<input>` element and its associated hidden fields with:
+
+  ```ftl title="After"
+  <div class="relative w-full flex items-center">
+    <input id="${id}" type="${the_type}" name="${name}" [#if type != "password"]value="${value}"[/#if]
+           class="block w-full rounded-theme bg-input-bg px-3 py-1.5 text-base text-input-text outline-1 -outline-offset-1 [#if (fieldMessages[name]![])?size > 0] outline-error/50 focus:outline-2 focus:-outline-offset-2 focus:outline-error [#else] outline-input-text/50 focus:outline-2 focus:-outline-offset-2 focus:outline-primary [/#if] placeholder:text-input-text/50 disabled:bg-input-bg disabled:text-input-text/70 disabled:outline-input-text/30 sm:text-sm/6 ${the_class}"
+           autocapitalize="${autocapitalize}" autocomplete="${autocomplete}" autocorrect="${autocorrect}"
+           spellcheck="${spellcheck}" [#if autofocus]autofocus="autofocus"[/#if] [#if disabled]disabled="disabled"[/#if] [#if placeholder?has_content]placeholder="${placeholder}"[/#if]/>
+
+    [#if dateTimeFormat != ""]
+      <input type="hidden" name="${name}@dateTimeFormat" value="${dateTimeFormat}"/>
+    [#elseif type == "date"]
+      <input type="hidden" name="${name}@dateTimeFormat" value="yyyy-MM-dd"/>
+    [/#if]
+
+    [#if type == "password" && canShowPassword]
+      <button type="button" data-visibility-target="${id}" tabindex="-1"
+              class="show-password-button hidden absolute inset-y-0 right-0 flex items-center px-3 text-input-text/50 hover:text-primary cursor-pointer border-none bg-transparent">
+        <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+        </svg>
+        <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 hidden">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+        </svg>
+      </button>
+    [/#if]
+  </div>
+  ```
+
+## Version 1.62.0
+
+<Aside type="caution">
+When upgrading from older versions of FusionAuth with a customized theme, we recommend skipping this version and instead upgrading to `1.62.1`, which more gracefully handles missing templates.
+
+See [Theme Upgrades](/docs/theme/advanced-themes/upgrade-advanced-theme) for additional information about the upgrade process.
+</Aside>
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+To utilize the new pre-verification feature in Advanced Registration Forms, you will need to make the following modifications. No custom theme modifications are required unless you want to use pre-verification.
+
+### OAuth register template
+
+Summary of changes:
+* `[#if step == totalSteps]` => `[#if readyToRegister]`
+* `[#if fields?has_content]` => `[#if advancedRegistration]`
+* Remove `step`, `parentEmailRequired`, and `collectBirthDate` hidden fields
+* Add a `<p>` if `formStep` is set below `passwordValidationRules` to explain pre-verification steps
+* Add a `linkButton` for resending verification messages if `formStep?? && formStep.resendMessage??`
+
+## Version 1.61.0 - `prompt` parameter
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+To ensure that FusionAuth is able to forward the `prompt` parameter to third party identity providers, you will need to make the following modifications.
+
+### Helpers template
+
+Update the `oauthHiddenFields`, `link` and `logoutLink` macros to add the `max_age` parameter. When editing a theme in the UI, this page will be shown as `Helpers`, and the API template name is `helpers`.
+
+#### Macro oauthHiddenFields
+
+Add `max_age` to the `oauthHiddenFields` macro.
+
+```ftl title="Add prompt"
+[@hidden name="max_age"/]
+```
+
+For example, this is a macro that includes `max_age`:
+
+```ftl title="After"
+[#macro oauthHiddenFields]
+  [@hidden name="captcha_token"/]
+  [@hidden name="client_id"/]
+  [@hidden name="code_challenge"/]
+  [@hidden name="code_challenge_method"/]
+  [@hidden name="metaData.device.name"/]
+  [@hidden name="metaData.device.type"/]
+  [@hidden name="nonce"/]
+  [@hidden name="oauth_context"/]
+  [@hidden name="max_age"/]
+  [@hidden name="pendingIdPLinkId"/]
+  [@hidden name="prompt"/]
+  [@hidden name="redirect_uri"/]
+  [@hidden name="response_mode"/]
+  [@hidden name="response_type"/]
+  [@hidden name="scope"/]
+  [@hidden name="state"/]
+  [@hidden name="tenantId"/]
+  [@hidden name="timezone"/]
+  [@hidden name="user_code"/]
+[/#macro]
+```
+
+#### Macro link
+Add `max_age` to the `link` macro.
+
+```ftl title="Add max_age to the query string"
+&max_age=${(max_age?url)!''}
+```
+
+```ftl title="After"
+[#macro link url extraParameters=""]
+  <a href="${url}?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&nonce=${(nonce?url)!''}&pendingIdPLinkId=${(pendingIdPLinkId)!''}&redirect_uri=${(redirect_uri?url)!''}&response_mode=${(response_mode?url)!''}&response_type=${(response_type?url)!''}&scope=${(scope?url)!''}&state=${(state?url)!''}&timezone=${(timezone?url)!''}&metaData.device.name=${(metaData.device.name?url)!''}&metaData.device.type=${(metaData.device.type?url)!''}${(extraParameters!'')?no_esc}&code_challenge=${(code_challenge?url)!''}&code_challenge_method=${(code_challenge_method?url)!''}&user_code=${(user_code?url)!''}&prompt=${(prompt?url)!''}&max_age=${(max_age?url)!''}">
+      [#nested/]
+  </a>
+[/#macro]
+```
+
+#### Macro logoutLink
+
+Add `max_age` to the `logoutLink` macro.
+
+```ftl title="Add max_age to the query string"
+&max_age=${(max_age?url)!''}
+```
+
+```ftl title="After"
+[#macro logoutLink redirectURI extraParameters=""]
+[#-- Note that in order for the post_logout_redirect_uri to be correctly URL escaped, you must use this syntax for assignment --]
+    [#local post_logout_redirect_uri]${redirectURI}?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&nonce=${(nonce?url)!''}&pendingIdPLinkId=${(pendingIdPLinkId)!''}&redirect_uri=${(redirect_uri?url)!''}&response_mode=${(response_mode?url)!''}&response_type=${(response_type?url)!''}&scope=${(scope?url)!''}&state=${(state?url)!''}&timezone=${(timezone?url)!''}&metaData.device.name=${(metaData.device.name?url)!''}&metaData.device.type=${(metaData.device.type?url)!''}${(extraParameters?no_esc)!''}&code_challenge=${(code_challenge?url)!''}&code_challenge_method=${(code_challenge_method?url)!''}&user_code=${(user_code?url)!''}&prompt=${(prompt?url)!''}&max_age=${(max_age?url)!''}[/#local]
+  <a
+  href="/oauth2/logout?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&post_logout_redirect_uri=${post_logout_redirect_uri?markup_string?url}">[#t]
+    [#nested/][#t]
+  </a>[#t]
+[/#macro]
+```
+
+## Version 1.61.0 - Multiple identity provider configurations
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+Previously the following [identity provider types](/docs/apis/identity-providers) were limited to a single configuration per FusionAuth instance: Apple, Epic Games, Facebook, Google, HYPR, LinkedIn, Nintendo, Sony PlayStation Network, Steam, Twitch, Twitter, and Xbox.
+
+To enable support for multiple identity provider configurations of these types on a single login page, you will need to make the following modifications. The default theme is available on every FusionAuth instance as a point of comparison or guide to theme upgrades.
+
+### Helpers template
+
+Update the `alternativeLoginsScript`, `alternativeLogins`, and various external identity provider button rendering macros. When editing a theme in the UI, this page will be shown as `Helpers`, and the API template name is `helpers`.
+
+#### Macro alternativeLoginsScript
+
+Remove the `data-app-id` attribute from the `<script>` tag including `Facebook.js`. The attribute must be set by each `facebookButton` macro invocation to support multiple Facebook IdP configurations.
+
+```ftl title="Remove data-app-id"
+data-app-id="${identityProviders["Facebook"][0].lookupAppId(clientId)}"
+```
+
+Here is an example `<script>` tag without the attribute
+
+```ftl title="After"
+<script src="${request.contextPath}/js/identityProvider/Facebook.js?version=${version}"></script>
+```
+
+Remove the `data-client-id` attribute from the `<script>` tag including `Twitter.js`. The attribute must be set by each `twitterButton` macro invocation to support multiple Twitter IdP configurations.
+
+```ftl title="Remove data-client-id"
+data-client-id="${clientId}"
+```
+
+Here is an example `<script>` tag without the attribute
+
+```ftl title="After"
+<script src="${request.contextPath}/js/identityProvider/Twitter.js?version=${version}"></script>
+```
+
+Replace the `[#if]` block including Google's GSI client JavaScript and `Google.js`. Only one Google identity provider using the GSI client can be included on the page. See [Google IdP limitations](/docs/lifecycle/authenticate-users/identity-providers/social/google#limitations) for more detail.
+
+```ftl title="The old [#if] block"
+[#if identityProviders["Google"]?has_content && identityProviders["Google"][0].lookupLoginMethod(clientId) != "UseRedirect"]
+  <script src="https://accounts.google.com/gsi/client" async></script>
+  <script src="${request.contextPath}/js/identityProvider/Google.js?version=${version}"
+          data-client-id="${identityProviders["Google"][0].lookupClientId(clientId)}"></script>
+[/#if]
+```
+
+Here is the updated `[#if]` block. The updated logic selects the first Google IdP configured to use the GSI client and stores it in a **`gsiIdentityProvider`** variable to be used later in the `alternativeLogins` macro.
+
+```ftl title="The updated [#if] block"
+[#if identityProviders["Google"]?has_content]
+  [#list identityProviders["Google"] as idp]
+    [#if idp.lookupLoginMethod(clientId) != "UseRedirect"]
+      [#-- Only one Google IdP can use the GSI APIs on a page. Assign the IdP for later use and load scripts. --]
+      [#assign gsiIdentityProvider = idp/]
+      <script src="https://accounts.google.com/gsi/client" async></script>
+      <script src="${request.contextPath}/js/identityProvider/Google.js?version=${version}"
+              data-client-id="${gsiIdentityProvider.lookupClientId(clientId)}"
+              data-identity-provider-id="${gsiIdentityProvider.id}"></script>
+      [#break]
+    [/#if]
+  [/#list]
+[/#if]
+```
+
+#### Macro alternativeLogins
+
+The `alternativeLogins` macro checks for various IdP types in the `identityProviders` Freemarker variable and renders the appropriate button for that type. Several identity provider types now support multiple configurations and need to update rendering a single button to looping over the IdPs of that type.alternativeLogins
+
+Here is an example rendering the "Sign in with Apple" button hard-coded to expect a single Apple IdP configuration.
+
+```ftl title="Single configuration"
+[#if identityProviders["Apple"]?has_content]
+  <div class="form-row push-less-top">
+      [@appleButton identityProvider=identityProviders["Apple"][0] clientId=clientId/]
+  </div>
+[/#if]
+```
+
+Here is an example that supports rendering zero or more buttons based on available Apple IdP configurations by looping over all Apple IdP configurations and rendering the button with the `identityProvider` for that loop.
+
+```ftl title="Multiple configurations"
+[#if identityProviders["Apple"]?has_content]
+  [#list identityProviders["Apple"] as identityProvider]
+    <div class="form-row push-less-top">
+        [@appleButton identityProvider=identityProvider clientId=clientId/]
+    </div>
+  [/#list]
+[/#if]
+```
+
+The above is just one example of several identity provider types requiring updates in `alternativeLogins` to render multiple buttons by replacing the hard-coded single instance with a loop. As you work through the different identity provider types, pay special attention to the key in the `identityProviders` map and the name of the button rendering macro in each case. The following identity provider types require this update in the `alternativeLogins` macro: Apple, Epic Games, Facebook, LinkedIn, Nintendo, Sony PlayStation Network, Steam, Twitch, Twitter, Xbox.
+
+The Google identity provider type requires a bit more modification in the `alternativeLogins` macro in order to render the single button using the GSI client in addition to other Google IdP configurations with the `UseRedirect` login method. Remove the existing `[#if]` block and replace with the updated code below.
+
+```ftl title="Remove the [#if] block"
+[#if identityProviders["Google"]?has_content]
+  <div class="form-row push-less-top">
+      [@googleButton identityProvider=identityProviders["Google"][0] clientId=clientId idpRedirectState=idpRedirectState/]
+  </div>
+[/#if]
+```
+
+In its place add two `[#if]` blocks. The first block checks whether it should render a GSI client button using the **`gsiIdentityProvider`** variable assigned in the `alternativeLoginsScript` macro. The second block calls the `googleButton` macro to render a login button for Google IdPs configured with the `UseRedirect` login method.
+
+```ftl title="Render GSI and UseRedirect Google buttons"
+[#-- Check whether a Google IdP was assigned to use GSI APIs and render the button --]
+[#if gsiIdentityProvider?has_content]
+  <div class="form-row push-less-top">
+      [@googleGsiButton identityProvider=gsiIdentityProvider clientId=clientId idpRedirectState=idpRedirectState/]
+  </div>
+[/#if]
+
+[#if identityProviders["Google"]?has_content]
+  [#list identityProviders["Google"] as identityProvider]
+    <div class="form-row push-less-top">
+        [#-- The googleButton macro only renders buttons for IdPs configured with the UseRedirect login methods --]
+        [@googleButton identityProvider=identityProvider clientId=clientId idpRedirectState=idpRedirectState/]
+    </div>
+  [/#list]
+[/#if]
+```
+
+#### Macro appleButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```ftl title="Apple <button>"
+<button class="apple login-button" data-scope="${identityProvider.lookupScope(clientId)!''}"
+          data-services-id="${identityProvider.lookupServicesId(clientId)}"
+          data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro epicButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```ftl title="Epic Games <button>"
+<button class="epicgames login-button" data-login-method="UseRedirect"
+          data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro facebookButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```ftl title="Facebook <button>"
+<button class="facebook login-button" data-login-method="${identityProvider.lookupLoginMethod(clientId)!''}"
+          data-permissions="${identityProvider.lookupPermissions(clientId)!''}" data-identity-provider-id="${identityProvider.id}"
+          data-app-id="${identityProvider.lookupAppId(clientId)}">
+```
+
+#### Macro googleButton
+
+This macro should now only render buttons for Google IdP configurations with the `UseRedirect` login method. Replace the opening tag of the `<button>` element inside the macro with the following
+
+```ftl title="Google <button>"
+<button class="google login-button" data-login-method="UseRedirect"
+              data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
+```
+
+Remove the `[#else]` block that renders `<div>`s with Ids `g_id_onload` and `g_id_signin`. The updated macro structure looks like this with the `<button>` children removed for brevity
+
+```ftl title="googleButton macro structure"
+[#macro googleButton identityProvider clientId idpRedirectState=""]
+    [#-- When using this loginMethod - the Google JavaScript API is not used at all. --]
+    [#if identityProvider.lookupLoginMethod(clientId) == "UseRedirect"]
+      <button class="google login-button" data-login-method="UseRedirect"
+              data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
+        ...
+      </button>
+    [/#if]
+[/#macro]
+```
+
+#### New macro googleGsiButton
+
+The `[#else]` block removed from `googleButton` macro gets its own macro. Add the following macro to your theme
+
+```ftl title="New googleGsiButton macro"
+[#macro googleGsiButton identityProvider clientId idpRedirectState=""]
+  [#-- UsePopup or UseVendorJavaScript --]
+  [#--
+   Use the Google Identity Service (GIS) API.
+   https://developers.google.com/identity/gsi/web/reference/html-reference
+  --]
+  <div id="g_id_onload" [#list identityProvider.lookupAPIProperties(clientId)!{} as attribute, value] data-${attribute}="${value}" [/#list]
+       data-client_id="${identityProvider.lookupClientId(clientId)}"
+       data-callback="googleLoginCallback">
+  </div>
+  [#-- This the Google Signin button. If only using One tap, you can delete or comment out this element --]
+  <div class="g_id_signin" [#list identityProvider.lookupButtonProperties(clientId)!{} as attribute, value] data-${attribute}="${value}" [/#list]
+       [#-- Optional click handler, when using ux_mode=popup. --]
+       data-click_listener="googleButtonClickHandler">
+  </div>
+[/#macro]
+```
+
+#### Macro linkedInBottom
+
+You read that correctly. If you'd like, update the name of the macro to `linkedInButton` along with the invocation from the `alternativeLogins` macro. Replace the opening tag of the `<button>` element inside the macro with the following
+
+```ftl title="LinkedIn <button>"
+<button class="linkedin login-button" data-login-method="UseRedirect" data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro sonypsnButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```ftl title="Sony PlayStation Network <button>"
+<button class="sonypsn login-button" data-login-method="UseRedirect"
+          data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro steamButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```ftl title="Steam <button>"
+<button class="steam login-button" data-login-method="UseRedirect" data-scope="${identityProvider.lookupScope(clientId)!''}"
+          data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro twitchButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```ftl title="Twitch <button>"
+<button class="twitch login-button" data-login-method="UseRedirect"
+          data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro twitterButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```ftl title="Twitter <button>"
+<button class="twitter login-button" data-client-id="${clientId}" data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro xboxButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```ftl title="Xbox <button>"
+<button class="xbox login-button" data-login-method="UseRedirect" data-scope="${identityProvider.lookupScope(clientId)!''}"
+          data-identity-provider-id="${identityProvider.id}">
+```
+
+
+## Version 1.60.0
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+To enable support of the `prompt` parameter, you will need to make the following modifications.
+
+### Helpers template
+
+Update the `oauthHiddenFields`, `link` and `logoutLink` macros to add the `prompt` parameter. When editing a theme in the UI, this page will be shown as `Helpers`, and the API template name is `helpers`.
+
+#### Macro oauthHiddenFields
+
+Add `prompt` to the `oauthHiddenFields` macro.
+
+```ftl title="Add prompt"
+[@hidden name="prompt"/]
+```
+
+For example, this is a macro that includes `prompt`:
+
+```ftl title="After"
+[#macro oauthHiddenFields]
+  [@hidden name="captcha_token"/]
+  [@hidden name="client_id"/]
+  [@hidden name="code_challenge"/]
+  [@hidden name="code_challenge_method"/]
+  [@hidden name="metaData.device.name"/]
+  [@hidden name="metaData.device.type"/]
+  [@hidden name="nonce"/]
+  [@hidden name="oauth_context"/]
+  [@hidden name="pendingIdPLinkId"/]
+  [@hidden name="prompt"/]
+  [@hidden name="redirect_uri"/]
+  [@hidden name="response_mode"/]
+  [@hidden name="response_type"/]
+  [@hidden name="scope"/]
+  [@hidden name="state"/]
+  [@hidden name="tenantId"/]
+  [@hidden name="timezone"/]
+  [@hidden name="user_code"/]
+[/#macro]
+```
+
+#### Macro link
+Add `prompt` to the `link` macro.
+
+```ftl title="Add prompt to the query string"
+&prompt=${(prompt?url)!''}
+```
+
+```ftl title="After"
+[#macro link url extraParameters=""]
+  <a href="${url}?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&nonce=${(nonce?url)!''}&pendingIdPLinkId=${(pendingIdPLinkId)!''}&redirect_uri=${(redirect_uri?url)!''}&response_mode=${(response_mode?url)!''}&response_type=${(response_type?url)!''}&scope=${(scope?url)!''}&state=${(state?url)!''}&timezone=${(timezone?url)!''}&metaData.device.name=${(metaData.device.name?url)!''}&metaData.device.type=${(metaData.device.type?url)!''}${(extraParameters!'')?no_esc}&code_challenge=${(code_challenge?url)!''}&code_challenge_method=${(code_challenge_method?url)!''}&user_code=${(user_code?url)!''}&prompt=${(prompt?url)!''}">
+      [#nested/]
+  </a>
+[/#macro]
+```
+
+#### Macro logoutLink
+
+Add `prompt` to the `logoutLink` macro.
+
+```ftl title="Add prompt to the query string"
+&prompt=${(prompt?url)!''}
+```
+
+```ftl title="After"
+[#macro logoutLink redirectURI extraParameters=""]
+[#-- Note that in order for the post_logout_redirect_uri to be correctly URL escaped, you must use this syntax for assignment --]
+    [#local post_logout_redirect_uri]${redirectURI}?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&nonce=${(nonce?url)!''}&pendingIdPLinkId=${(pendingIdPLinkId)!''}&redirect_uri=${(redirect_uri?url)!''}&response_mode=${(response_mode?url)!''}&response_type=${(response_type?url)!''}&scope=${(scope?url)!''}&state=${(state?url)!''}&timezone=${(timezone?url)!''}&metaData.device.name=${(metaData.device.name?url)!''}&metaData.device.type=${(metaData.device.type?url)!''}${(extraParameters?no_esc)!''}&code_challenge=${(code_challenge?url)!''}&code_challenge_method=${(code_challenge_method?url)!''}&user_code=${(user_code?url)!''}&prompt=${(prompt?url)!''}[/#local]
+  <a
+  href="/oauth2/logout?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&post_logout_redirect_uri=${post_logout_redirect_uri?markup_string?url}">[#t]
+    [#nested/][#t]
+  </a>[#t]
+[/#macro]
+```
+
+
+## Version 1.59.0
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+Starting in version `1.59.0`, user passwords are optional and phone identities are now supported. While theme updates are not required, there are some areas that you may want to consider making changes.
+
+| Template                                | Changed For Phone Identities | Password |
+| --------------------------------------- | ---------------------------- | -------- |
+| Messages                                | X                            |          |
+| Account edit template (self-service)    |                              | X        |
+| Account index template (self-service)   | X                            |          |
+| Forgot password template                | X                            |          |
+| Forgot password sent template           | X                            |          |
+| OAuth complete registration template    |                              | X        |
+| OAuth passwordless template             | X                            |          |
+| OAuth register template                 | X                            |          |
+
+### Messages
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+To properly support phone identities, several themed `Messages` have changed. If `forgot-password-email-sent` or `forgot-password-email-sent-title` was previously customized in a theme, the same customizations need to be applied to the new `forgot-password-message-sent` and `forgot-password-message-sent-title` messages.
+
+```plaintext title="Messages Before"
+forgot-password-email-sent=We have sent an email to %s containing a link that will allow you to reset your password. Once you receive the email follow the instructions to change your password.
+forgot-password-email-sent-title=Email sent
+loginId=Email
+...
+[PasswordlessRequestSent]=An email is on the way.
+```
+
+```plaintext title="Messages After"
+forgot-password-message-sent=We have sent a message to %s containing a link that will allow you to reset your password. Once you receive the message follow the instructions to change your password.
+forgot-password-message-sent-title=Message sent
+loginId=Login
+...
+[PasswordlessRequestSent]=A message is on the way.
+```
+
+### Account edit template (self-service)
+
+To accommodate the use case of an existing user, without a password, setting a password for the first time, there is a new template variable, `passwordSet`, that can be used on the `Helpers` page to hide the "current password" field for users that do not have a password.
+
+```ftl title="Before"
+<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
+  ...
+  [#list fieldValues as field]
+    [#if field.key == "user.password"]
+      [@helpers.passwordField field application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange/]
+    [#else]
+      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
+      [#if field.confirm]
+        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
+      [/#if]
+    [/#if]
+  [/#list]
+</form>
+```
+
+```ftl title="After"
+<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
+  ...
+  [#list fieldValues as field]
+    [#if field.key == "user.password"]
+      [@helpers.passwordField field=field
+                              showCurrentPasswordField=(passwordSet && application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange)/]
+    [#else]
+      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
+      [#if field.confirm]
+        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
+      [/#if]
+    [/#if]
+  [/#list]
+</form>
+```
+
+### Account index template (self-service)
+
+New installations of FusionAuth show the new `user.phoneNumber` field on the account index page, rather than `user.mobilePhone`.
+
+```ftl title="Before"
+<dl class="horizontal">
+  <dt>${theme.message("user.mobilePhone")}</dt>
+  <dd>${helpers.display(user, "mobilePhone")}</dd>
+</dl>
+```
+
+```ftl title="After"
+<dl class="horizontal">
+  <dt>${theme.message("user.phoneNumber")}</dt>
+  <dd>${fusionAuth.phone_format(user.phoneNumber!"\x2013")}</dd>
+</dl>
+```
+
+### Forgot password template
+
+To improve the user experience for phone number identities, the `email` field should be replaced with a `loginId` field which will use the label `Login` instead of `Email` (see Messages above). Everything will continue to function even if this change is not made, but the user experience will be improved with the new field because of the more accurate label.
+
+```ftl title="Before"
+<fieldset class="push-less-top">
+  [@helpers.input type="text" name="email" id="email" autocapitalize="none" autofocus=true autocomplete="on" autocorrect="off" placeholder=theme.message('email') leftAddon="user" required=true/]
+  [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+</fieldset>
+```
+
+```ftl title="After"
+<fieldset class="push-less-top">
+  [@helpers.input type="text" name="loginId" id="loginId" autocapitalize="none" autofocus=true autocomplete="on" autocorrect="off" placeholder=theme.message('loginId') leftAddon="user" required=true/]
+  [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+</fieldset>
+```
+
+### Forgot password sent template
+
+Similar to the `Forgot password` template, the `Forgot password sent` template should also be updated to use the `loginId` field instead of the `email` field. This will improve the user experience for phone number identities.
+
+```ftl title="Before"
+[@helpers.main title=theme.message('forgot-password-email-sent-title')]
+  <p>
+    ${theme.message('forgot-password-email-sent', email)}
+  </p>
+  <p class="mt-2">[@helpers.link url="/oauth2/authorize"]${theme.message('return-to-login')}[/@helpers.link]</p>
+[/@helpers.main]
+```
+
+```ftl title="After"
+[@helpers.main title=theme.message('forgot-password-message-sent-title')]
+  <p>
+    ${theme.message('forgot-password-message-sent', loginId)}
+  </p>
+  <p class="mt-2">[@helpers.link url="/oauth2/authorize"]${theme.message('return-to-login')}[/@helpers.link]</p>
+[/@helpers.main]
+```
+
+### OAuth complete registration template
+
+You may need users to have passwords, but passwords are optional. Consider the following example:
+* A user has already logged in
+* The user does not have a password
+* The user performs self-serve registration for an application that uses basic registration
+
+In this case, FusionAuth takes the user to the `OAuth complete registration` page to add any required fields for the application. If the user does not have a password you can collect it on this page.
+
+To support this, FusionAuth provides a new template variable named `passwordSet`, which indicates whether or not the user has a password. Use this variable to show a password field if you require the user to have a password.
+
+Note that for a new or logged-out user that registers for this application, the password will generally be collected on the initial registration page. Logged-in users bypass the initial page.
+
+For example, before:
+
+```ftl title="Before"
+[#if application.registrationConfiguration.mobilePhone.enabled]
+  [@helpers.input type="text" name="user.mobilePhone" id="mobilePhone" placeholder=theme.message("mobilePhone") leftAddon="phone" required=application.registrationConfiguration.mobilePhone.required/]
+[/#if]
+[#if application.registrationConfiguration.preferredLanguages.enabled]
+  [@helpers.locale_select field="" name="user.preferredLanguages"  id="preferredLanguages" label=theme.message("preferredLanguage") required=application.registrationConfiguration.preferredLanguages.required /]
+[/#if]
+```
+
+```ftl title="After"
+[#if application.registrationConfiguration.mobilePhone.enabled]
+  [@helpers.input type="text" name="user.mobilePhone" id="mobilePhone" placeholder=theme.message("mobilePhone") leftAddon="phone" required=application.registrationConfiguration.mobilePhone.required/]
+[/#if]
+[#if !(passwordSet!false)]
+  [@helpers.input type="password" name="user.password" id="password" autocomplete="new-password" placeholder=theme.message('password') leftAddon="lock" required=true/]
+  [#if application.registrationConfiguration.confirmPassword]
+    [@helpers.input type="password" name="confirm.user.password" id="passwordConfirm" autocomplete="new-password" placeholder=theme.message('passwordConfirm') leftAddon="lock" required=true/]
+  [/#if]
+[/#if]
+[#if application.registrationConfiguration.preferredLanguages.enabled]
+  [@helpers.locale_select field="" name="user.preferredLanguages"  id="preferredLanguages" label=theme.message("preferredLanguage") required=application.registrationConfiguration.preferredLanguages.required /]
+[/#if]
+```
+
+### OAuth passwordless template
+
+To support passwordless logins with phone numbers, several changes must be made to allow submission of one-time or short codes on the passwordless page. The changes include: new hidden form fields, an `if` surrounding the `loginId` field with a new `oneTimeCode` field, and a change to the button text based on whether the form is being submitted or a code is being sent.
+
+```ftl title="Before"
+<form action="${request.contextPath}/oauth2/passwordless" method="POST" class="full">
+  [@helpers.oauthHiddenFields/]
+  <fieldset>
+    [@helpers.input type="text" name="loginId" id="loginId" autocomplete="username" autocapitalize="none" autocomplete="on" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message("loginId") leftAddon="user" required=true/]
+    [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+  </fieldset>
+
+  [@helpers.input id="rememberDevice" type="checkbox" name="rememberDevice" label=theme.message("remember-device") value="true" uncheckedValue="false"]
+  <i class="fa fa-info-circle" data-tooltip="${theme.message('{tooltip}remember-device')}"></i>[#t/]
+  [/@helpers.input]
+
+  <div class="form-row">
+    [@helpers.button icon="send" text=theme.message('send')/]
+    <p class="mt-2">[@helpers.link url="/oauth2/authorize"]${theme.message('return-to-login')}[/@helpers.link]</p>
+  </div>
+</form>
+```
+
+```ftl title="After"
+<form action="${request.contextPath}/oauth2/passwordless" method="POST" class="full">
+  [@helpers.oauthHiddenFields/]
+  [@helpers.hidden name="code"/]
+  [@helpers.hidden name="formField"/]
+
+  <fieldset>
+    [#if (formField!false)]
+      [@helpers.input type="text" name="oneTimeCode" id="otp" autocapitalize="none" autofocus=true autocomplete="one-time-code" autocorrect="off" placeholder="${theme.message('passwordless-code')}" leftAddon="lock"/]
+    [#else]
+      [@helpers.input type="text" name="loginId" id="loginId" autocomplete="username" autocapitalize="none" autocomplete="on" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message("loginId") leftAddon="user" required=true/]
+    [/#if]
+    [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+  </fieldset>
+
+  [@helpers.input id="rememberDevice" type="checkbox" name="rememberDevice" label=theme.message("remember-device") value="true" uncheckedValue="false"]
+  <i class="fa fa-info-circle" data-tooltip="${theme.message('{tooltip}remember-device')}"></i>[#t/]
+  [/@helpers.input]
+
+  <div class="form-row">
+    [#if (formField!false)]
+      [@helpers.button text=theme.message('submit')/]
+    [#else]
+      [@helpers.button icon="send" text=theme.message('send')/]
+    [/#if]
+  </div>
+</form>
+```
+
+### OAuth register template
+
+To support phone numbers in basic registration, a `user.phoneNumber` field must be added.
+
+```ftl title="Before"
+[#if application.registrationConfiguration.loginIdType == 'email']
+  [@helpers.input type="text" name="user.email" id="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('email') leftAddon="user" required=true/]
+[#else]
+  [@helpers.input type="text" name="user.username" id="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('username') leftAddon="user" required=true/]
+[/#if]
+```
+
+```ftl title="After"
+[#if application.registrationConfiguration.loginIdType == 'email']
+  [@helpers.input type="text" name="user.email" id="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('email') leftAddon="user" required=true/]
+[#elseif application.registrationConfiguration.loginIdType == 'phoneNumber']
+  [@helpers.input type="text" name="user.phoneNumber" id="phoneNumber" autocomplete="mobile" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('phoneNumber') leftAddon="mobile" required=true/]
+[#else]
+  [@helpers.input type="text" name="user.username" id="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('username') leftAddon="user" required=true/]
+[/#if]
+```
+
+## Version 1.53.3
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+Version `1.53.3` includes a change to persist the value of the `Keep me signed in` checkbox from the hosted login pages through an external identity provider workflow. This checkbox value indicates whether the user wishes to create an SSO session after login. If the Google IdP's `loginMethod` is configured as `UsePopup` or `UseVendorJavaScript`, existing custom advanced themes require an update to incorporate the fix for the Google IdP. You can update the template via the API using `theme.templates.helpers` or by modifying the *Helpers* template in the admin UI. Google IdPs configured with a `loginMethod` value of `UseRedirect` do not require this update, but you may consider making the change preemptively in case the `loginMethod` is changed later.
+
+To allow the `Keep me signed in` value to be persisted through a Google IdP login in an existing custom advanced theme, remove the `data-login_uri` attribute and its value from the `div` with Id `g_id_onload` in the `googleButton` macro and add the `data-callback` attribute in its place.
+
+Replace
+
+```ftl
+<div id="g_id_onload" [#list identityProvider.lookupAPIProperties(clientId)!{} as attribute, value] data-${attribute}="${value}" [/#list]
+     data-client_id="${identityProvider.lookupClientId(clientId)}"
+     data-login_uri="${currentBaseURL}/oauth2/callback?state=${idpRedirectState}&identityProviderId=${identityProvider.id}" >
+</div>
+```
+
+with
+
+```ftl
+<div id="g_id_onload" [#list identityProvider.lookupAPIProperties(clientId)!{} as attribute, value] data-${attribute}="${value}" [/#list]
+     data-client_id="${identityProvider.lookupClientId(clientId)}"
+     data-callback="googleLoginCallback" >
+</div>
+```
+
+## Version 1.52.0
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+Version `1.52.0` includes a change to use the browser-default date picker to enhance the experience on mobile. Existing custom advanced themes require an update to incorporate the change. You can update the template via the API using `theme.templates.helpers` or by modifying the *Helpers* template in the admin UI.
+
+To include the new date picker in an existing custom advanced theme, replace the `Prime.Document.query('.date-picker')` line in the `head` macro with the following:
+
+```javascript
+document.querySelectorAll('.date-picker').forEach(datePicker => {
+  datePicker.onfocus = () => datePicker.type = 'date';
+  datePicker.onblur = () => {
+    if (datePicker.value === '') {
+      datePicker.type = 'text';
+    }
+  };
+});
+```
+
+## Version 1.50.0
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+Version `1.50.0` added the ability to prompt users for consent to custom OAuth scopes in third-party applications. This change requires a new themed template `oauth2Consent` as well as a new macro and function in the `helpers` template.
+
+The `oauth2Consent` template from the default theme will be used until it is added to an existing custom theme. You can copy the new template from the default theme as a starting point and add it to a custom theme via the API using `theme.templates.oauth2Consent` or the _Consent prompt_ template in the admin UI.
+
+The new `scopeConsentField` macro and `resolveScopeMessaging` function *must* be added to an existing custom theme's `helpers` template in order for the theme to continue functioning. Add these new items to the template via the API using `theme.templates.helpers` or the *Helpers* template in the admin UI. You can copy them from the default template or use the following:
+
+```ftl
+[#macro scopeConsentField application scope type]
+  [#-- Resolve the consent message and detail for the provided scope --]
+  [#if type != "unknown"]
+    [#local scopeMessage = resolveScopeMessaging('message', application, scope.name, scope.defaultConsentMessage!scope.name) /]
+    [#local scopeDetail = resolveScopeMessaging('detail', application, scope.name, scope.defaultConsentDetail!'') /]
+  [/#if]
+
+  [#if type == "required"]
+    [#-- Required scopes should use a hidden form field with a value of "true". The user cannot change this selection, --]
+    [#-- but there should be a display element to inform the user that they must consent to the scopes to continue. --]
+    <div class="form-row consent-item col-lg-offset-0">
+      [@hidden name="scopeConsents['${scope.name}']" value="true" /]
+      <i class="fa fa-check"></i>
+      <span>
+        ${scopeMessage}
+        [#if scopeDetail?has_content]
+          <i class="fa fa-info-circle" data-tooltip="${scopeDetail}"></i>
+        [/#if]
+      </span>
+    </div>
+  [#elseif type == "optional"]
+    [#-- Optional scopes should render a checkbox to allow a user to change their selection. The available values should be "true" and "false" --]
+    <div class="consent-item col-lg-offset-0">
+      [@input type="checkbox" name="scopeConsents['${scope.name}']" id="${scope.name}" label=scopeMessage value="true" uncheckedValue="false" tooltip=scopeDetail /]
+    </div>
+  [#elseif type == "unknown"]
+    [#-- Unknown scopes and the reserved "openid" and "offline_access" scopes are considered required and do not have an associated display element. --]
+    [@hidden name="scopeConsents['${scope}']" value="true" /]
+  [/#if]
+[/#macro]
+
+[#function resolveScopeMessaging messageType application scopeName default]
+  [#-- Application specific, tenant specific, not application/tenant specific, then default --]
+  [#local message = theme.optionalMessage("[{application}${application.id}]{scope-${messageType}}${scopeName}") /]
+  [#local resolvedMessage = message != "[{application}${application.id}]{scope-${messageType}}${scopeName}" /]
+  [#if !resolvedMessage]
+     [#local message = theme.optionalMessage("[{tenant}${application.tenantId}]{scope-${messageType}}${scopeName}") /]
+     [#local resolvedMessage = message != "[{tenant}${application.tenantId}]{scope-${messageType}}${scopeName}" /]
+  [/#if]
+  [#if !resolvedMessage]
+    [#local message = theme.optionalMessage("{scope-${messageType}}${scopeName}") /]
+    [#local resolvedMessage = message != "{scope-${messageType}}${scopeName}" /]
+  [/#if]
+  [#if !resolvedMessage]
+    [#return default /]
+  [#else]
+    [#return message /]
+  [/#if]
+[/#function]
+```
