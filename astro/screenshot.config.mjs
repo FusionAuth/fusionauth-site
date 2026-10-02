@@ -363,7 +363,7 @@ export default {
 
     // tenant edit: click Email, Passwordless, or WebAuthn tab based on URL fragment
     if (pathname.includes('/admin/tenant/edit/') && fragment) {
-      const tabLabel = { email: 'Email', identities: 'Identities', passwordless: 'Advanced', webauthn: 'WebAuthn' }[fragment];
+      const tabLabel = { email: 'Email', 'email-test': 'Email', identities: 'Identities', passwordless: 'Advanced', webauthn: 'WebAuthn' }[fragment];
       if (tabLabel) {
         try {
           // use JS click to handle tabs that are scrolled off the visible tab bar
@@ -379,6 +379,21 @@ export default {
         } catch (e) {
           console.error(`[screenshot] tenant/edit ${tabLabel} tab failed:`, e.message);
         }
+      }
+
+      // send-test-email screenshot: tag and scroll to the test email control
+      if (ctx?.name === 'tenant-send-test-email') {
+        const tagged = await page.evaluate(() => {
+          const btn = [...document.querySelectorAll('a, button')]
+            .find(el => /send test email/i.test(el.textContent.trim()));
+          if (!btn) return false;
+          const row = btn.closest('fieldset, .form-row, div') ?? btn;
+          row.setAttribute('data-hl', 'send-test-email');
+          row.scrollIntoView({ block: 'center', behavior: 'instant' });
+          return true;
+        });
+        if (!tagged) console.error('[screenshot] send test email control not found');
+        await page.waitForTimeout(300);
       }
 
       // webauthn tab: click enable toggle only if workflow fieldsets aren't already visible

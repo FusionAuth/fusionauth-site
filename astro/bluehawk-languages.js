@@ -55,4 +55,11 @@ export function register({ bluehawk }) {
     languageId: "erb",
     blockComments: [[/<%# BLUEHAWK/, /!BLUEHAWK %>/]],
   });
+  // FreeMarker, for the default email and message templates under
+  // extractedcode/templates-*. They carry no annotations, but bluehawk still
+  // needs a language for the extension or `check` fails on them.
+  bluehawk.addLanguage("ftl", {
+    languageId: "ftl",
+    blockComments: [[/<#--/, /-->/]],
+  });
 }
