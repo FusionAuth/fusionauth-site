@@ -2,9 +2,11 @@ class FusionAuthPasswordChecker {
   #minLength;
   #maxLength;
   #passwordField;
+  #feedbackContainer;
   #requireMixedCase;
   #requireNonAlpha;
   #requireNumber;
+  #submitButton;
   #timer;
 
   constructor(minLength, maxLength, requireMixedCase, requireNonAlpha, requireNumber) {
@@ -16,19 +18,29 @@ class FusionAuthPasswordChecker {
     this.#requireNumber = requireNumber;
 
     this.#passwordField = document.querySelector('input[type="password"]');
+    const form = this.#passwordField?.closest('form');
+    this.#submitButton = [...(form?.querySelectorAll('button, input[type="submit"]') ?? [])]
+      .find((button) => button.type === 'submit');
+    this.#feedbackContainer = this.#passwordField?.closest('.form-row') ?? this.#passwordField?.parentElement?.parentElement;
+    this.#timer = null;
 
-    if (this.#passwordField !== null) {
+    if (this.#passwordField && this.#submitButton && this.#feedbackContainer) {
       this.#passwordField.addEventListener('input', () => this.#score());
-      this.#passwordField.closest('form').querySelector('button').disabled = true;
-      this.#passwordField.closest('form').querySelector('button').classList.add('disabled');
+      this.#setSubmitEnabled(false);
+      this.#score();
     }
+  }
+
+  #setSubmitEnabled(enabled) {
+    this.#submitButton.disabled = !enabled;
+    this.#submitButton.classList.toggle('disabled', !enabled);
   }
 
   #check(password, check, errorTextSupplier) {
     if (check(password)) {
       return;
     }
-    
+
     this.#invalid(errorTextSupplier());
   }
 
@@ -38,13 +50,12 @@ class FusionAuthPasswordChecker {
     }
 
     this.#timer = setTimeout(() => {
-      const error = this.#passwordField.closest('.form-row').querySelector('span.error');
-      if (error !== null) {
-        error.remove();
-      }
+      this.#feedbackContainer.querySelector('.fa-password-rule-error')?.remove();
 
       const password = this.#passwordField.value;
       if (password.length === 0) {
+        this.#passwordField.classList.remove('ok', 'validation');
+        this.#setSubmitEnabled(false);
         return;
       }
 
@@ -63,15 +74,14 @@ class FusionAuthPasswordChecker {
         this.#check(password, (value) => /\W/.test(value), () => 'must contain a special character');
       }
 
-      if (this.#passwordField.closest('.form-row').querySelector('span.error') === null) {
+      if (this.#feedbackContainer.querySelector('.fa-password-rule-error') === null) {
         // Add classes, or style to provide visual feedback
         this.#passwordField.classList.add('ok');
         this.#passwordField.classList.remove('validation');
 
-        this.#passwordField.closest('form').querySelector('button').disabled = false;
-        this.#passwordField.closest('form').querySelector('button').classList.remove('disabled');
+        this.#setSubmitEnabled(true);
       }
-      
+
     }, 500);
   }
 
@@ -80,28 +90,18 @@ class FusionAuthPasswordChecker {
     this.#passwordField.classList.add('validation');
     this.#passwordField.classList.remove('ok');
 
-    let errorSpan = this.#passwordField.closest('.form-row').querySelector('span.error');
+    let errorSpan = this.#feedbackContainer.querySelector('.fa-password-rule-error');
     if (errorSpan === null) {
       errorSpan = document.createElement("span");
-      errorSpan.classList.add('error');
-      this.#passwordField.closest('.form-row').appendChild(errorSpan);
+      errorSpan.classList.add('error', 'fa-password-rule-error');
+      this.#feedbackContainer.appendChild(errorSpan);
     }
 
-    if (errorSpan.innerHTML !== '') {
-      errorSpan.innerHTML = errorSpan.innerHTML + ', ';
+    if (errorSpan.textContent !== '') {
+      errorSpan.textContent += ', ';
     }
 
-    errorSpan.innerHTML = errorSpan.innerHTML + errorText;
-    this.#passwordField.closest('form').querySelector('button').disabled = true;
-    this.#passwordField.closest('form').querySelector('button').classList.add('disabled');
+    errorSpan.textContent += errorText;
+    this.#setSubmitEnabled(false);
   }
 }
-
-// Note, this will initialize these values during the server side .ftl template rendering.
-const minLength = ${passwordValidationRules.minLength};
-const maxLength = ${passwordValidationRules.maxLength}; 
-const requireMixedCase = ${passwordValidationRules.requireMixedCase?c};
-const requireNonAlpha = ${passwordValidationRules.requireNonAlpha?c};
-const requireNumber = ${passwordValidationRules.requireNumber?c};
-                        
-document.addEventListener('DOMContentLoaded', () => new FusionAuthPasswordChecker(minLength, maxLength, requireMixedCase, requireNonAlpha, requireNumber));    
