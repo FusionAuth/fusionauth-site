@@ -1,0 +1,60 @@
+# Fails when a PR moves, renames, or deletes content pages without the matching
+# src/redirects.json changes, and prints the entries to add.
+#
+# Thin wrapper around src/scripts/check-redirects.mjs, which is the same thing
+# you run locally: `src/scripts/check-redirects.mjs --base origin/main`.
+
+name: Check redirects
+
+env:
+  BASE_BRANCH: ${{ github.base_ref || github.event.inputs.base || 'main' }}
+
+on:
+  pull_request:
+    paths:
+      - 'astro/src/content/docs/**'
+      - 'astro/src/content/articles/**'
+      - 'astro/src/content/blog/**'
+      - 'src/redirects.json'
+  workflow_dispatch:
+    inputs:
+      base:
+        description: branch to diff against
+        required: false
+        default: main
+        type: string
+
+jobs:
+  check:
+    name: Check redirects.json covers moved content
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0 # the script diffs against the merge base with the target branch
+
+      - name: Set up Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: '22'
+
+      - name: Check redirects
+        run: |
+          set -o pipefail
+          src/scripts/check-redirects.mjs --base "origin/$BASE_BRANCH" --head HEAD \
+            | tee /tmp/redirects.txt
+
+      - name: Summarize
+        if: always()
+        run: |
+          {
+            echo '## Redirects check'
+            echo
+            echo '```'
+            cat /tmp/redirects.txt 2>/dev/null || echo 'The check did not produce any output.'
+            echo '```'
+            echo
+            echo "Add the entries above to \`src/redirects.json\`, or apply them locally with"
+            echo "\`src/scripts/check-redirects.mjs --base origin/$BASE_BRANCH --write\`."
+          } >> "$GITHUB_STEP_SUMMARY"

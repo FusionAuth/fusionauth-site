@@ -5,16 +5,16 @@ import mdx from "@astrojs/mdx";
 import { unified } from '@astrojs/markdown-remark';
 import tailwindcss from '@tailwindcss/vite';
 import indexPages from "astro-index-pages/index.js";
-import genMarkdownPages from 'astro-gen-markdown-pages';
-import { remarkMermaidSSR, mermaidTitleFix } from 'astro-mermaid-renderer-cli-smol';
+import genMarkdownPages from 'astro-better-gen-markdown-pages';
+import { remarkMermaidSSR, mermaidTitleFix } from 'astro-better-mermaid';
 import remarkMdx from 'remark-mdx';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import linkChecker, { markdownLinkSyntaxChecker } from 'astro-link-checker';
+import linkChecker, { markdownLinkSyntaxChecker } from 'astro-better-link-checker';
 import icon from "astro-iconset";
 import { rehypeCodeBlocks, remarkShellSession } from 'astro-better-code-blocks';
 import { extractedCodeSnippets } from 'astro-better-code-snippet-extractor';
-import astroToc from 'astro-toc-smol';
+import astroToc from 'astro-better-toc';
 import { openapiSummary } from './src/plugins/openapi-summary.js';
 import { cssPreload } from './src/plugins/css-preload.mjs';
 
@@ -81,7 +81,7 @@ const mdxComponentImports =
   "import Table from 'astro-better-tables/Table.astro';\n" +
   "import Screenshot from 'astro-better-declarative-screenshots/Screenshot.astro';\n" +
   "import Highlight from 'astro-better-declarative-screenshots/Highlight.astro';\n" +
-  "import MarkdownOnly from 'astro-gen-markdown-pages/MarkdownOnly.astro';\n\n";
+  "import MarkdownOnly from 'astro-better-gen-markdown-pages/MarkdownOnly.astro';\n\n";
 
 // inject imports into MDX source before the MDX compiler runs, so that component
 // references compile to direct variable lookups rather than _components map lookups
@@ -188,7 +188,16 @@ const config = defineConfig({
     },
   },
   integrations: [
-    extractedCodeSnippets({ plugin: 'bluehawk-languages.js' }),
+    extractedCodeSnippets({
+      plugin: 'bluehawk-languages.js',
+      // Step 7 displays snippets from a Playwright spec in tests/.
+      // Exclude docs-only test runners without hiding that source file.
+      ignore: [
+        'node_modules', 'vendor', '.gitignore', '.DS_Store',
+        'package*.json', '*.lock', 'repositoryUrl.txt',
+        'tests/test.sh', 'LICENSE', 'SECURITY.md',
+      ],
+    }),
     icon(),
     mdx({
       syntaxHighlight: false,
