@@ -188,7 +188,16 @@ const config = defineConfig({
     },
   },
   integrations: [
-    extractedCodeSnippets({ plugin: 'bluehawk-languages.js' }),
+    extractedCodeSnippets({
+      plugin: 'bluehawk-languages.js',
+      // Step 7 displays snippets from a Playwright spec in tests/.
+      // Exclude docs-only test runners without hiding that source file.
+      ignore: [
+        'node_modules', 'vendor', '.gitignore', '.DS_Store',
+        'package*.json', '*.lock', 'repositoryUrl.txt',
+        'tests/test.sh', 'LICENSE', 'SECURITY.md',
+      ],
+    }),
     icon(),
     mdx({
       syntaxHighlight: false,

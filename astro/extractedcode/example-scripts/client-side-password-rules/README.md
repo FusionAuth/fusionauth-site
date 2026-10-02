@@ -18,10 +18,19 @@ These password rules are enforced in the hosted HTML login pages, but only after
 
 This example shows how to use the `passwordValidationRules` freemarker variables to offer user feedback client-side using JavaScript, in the hosted login pages. It will also disable submission of the form if the rules are not met.
 
-To use this script, make `FusionAuthPasswordChecker.js` available at a public URL or modify the FusionAuth template files to include this JavaScript on the registration page and change password pages.
+Save the JavaScript class as `FusionAuthPasswordChecker.js` and make it available at a public URL. In the registration and change password theme templates, load the file and initialize it with the FreeMarker variables:
 
 ```html
 <script src="https://yourcdn.example.com/path/to/FusionAuthPasswordChecker.js"></script>
+<script>
+const minLength = ${passwordValidationRules.minLength};
+const maxLength = ${passwordValidationRules.maxLength};
+const requireMixedCase = ${passwordValidationRules.requireMixedCase?c};
+const requireNonAlpha = ${passwordValidationRules.requireNonAlpha?c};
+const requireNumber = ${passwordValidationRules.requireNumber?c};
+
+document.addEventListener('DOMContentLoaded', () => new FusionAuthPasswordChecker(minLength, maxLength, requireMixedCase, requireNonAlpha, requireNumber));
+</script>
 ```
 
 This JavaScript expects the names and DOM structure of the pages to be the same as the default theme structure. If you've modified your theme, this code will be a starting point, but is not guaranteed to work.
@@ -31,4 +40,3 @@ You'll also need to create CSS classes `validation` and `ok` to visually inform 
 Password rules are also available via an [unauthenticated API call](https://fusionauth.io/docs/apis/tenants#retrieve-the-password-validation-rules) if you'd prefer to build your own validation logic without using JavaScript. This might be useful for a mobile application, for example.
 
 <!-- :snippet-end: -->
-
