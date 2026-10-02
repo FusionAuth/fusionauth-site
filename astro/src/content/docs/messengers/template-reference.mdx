@@ -1,111 +1,40 @@
 ---
-title: Message Variables
-description: Learn which replacement variables and corresponding message templates are available.
+title: Template Reference
+htmlTitle: Message Template Reference
+description: A list of default message templates.
 tags: message template variables, sms template variables, replacement variables, multi-factor authentication, message customization, freemarker
 ---
-import TemplateBaseUrlNote from 'src/content/docs/email/_template-base-url-note.mdx';
-import TwoFactorRemovePhone from 'src/content/docs/_shared/message/_two-factor-remove-txt.mdx';
-import PasswordlessLoginTemplates from 'src/content/docs/_shared/message/_passwordless-txt.mdx';
-import SetupPasswordTemplates from 'src/content/docs/_shared/message/_setup-password-txt.mdx';
-import ForgotPasswordPhone from 'src/content/docs/_shared/message/_forgot-password-txt.mdx';
-import TwoFactorLoginPhone from 'src/content/docs/_shared/message/_two-factor-login-txt.mdx';
-import PhoneVerification from 'src/content/docs/_shared/message/_phone-verification-txt.mdx';
-import ThreatDetectedPhone from 'src/content/docs/_shared/message/_threat-detected-txt.mdx';
-import TwoFactorAddPhone from 'src/content/docs/_shared/message/_two-factor-add-txt.mdx';
-import AdminTwoFactorRemovePhone from 'src/content/docs/_shared/message/_admin-two-factor-remove-txt.mdx';
 
-{/* MAKE SURE YOU UPDATE astro/src/content/docs/_shared/message/template_url_list if you add any templates */}
+This page contains an overview of each message template that ships with FusionAuth.
 
-The message template body supports replacement variables. This means place holders can be inserted and the value will be calculated at the time the message template is rendered and sent to a user.
+## Retrieve Default Templates
 
-Most templates will contain the User object as returned on the Retrieve User API. This means you can utilize any value found on the User object such as email, first name, last name, etc.
+You can use the Admin UI to version control or customize templates. If you would rather have
+the message templates as a collection of files, they live in
+[`extractedcode/templates-messengers`](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/templates-messengers) in the docs repository. Browse that folder to see
+exactly what you are getting, or download every file in it at once:
 
-Below you will find each stock template that FusionAuth ships for reference. The available replacement values will be outlined below for each template.
-
-## Previewing Message Templates
-
-FusionAuth provides the capability to preview message templates via the [Message Template API](/docs/apis/message-templates) or the administrative user interface by navigating to <Breadcrumb>Customizations -> Message Templates -> Edit -> Preview</Breadcrumb>. The following sample values are used when rendering the template.
-
-| Parameter                    | Sample Value                                                                | Purpose                                                                 |
-|------------------------------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| `${application}`             | `{ "name": "My Application", "oauthConfiguration": { "clientId": "123456" } }` | Application name, `oauthConfiguration.clientId` for themed message links |
-| `${baseUrl}`                 | `https://example.com`                                                       | Base URL used when rendering links in message templates.               |
-| `${changePasswordId}`        | `1234567890`                                                                | Embedded in change password and set password URLs                          |
-| `${code}`                    | `123456`                                                                    | Embedded in MFA/Two-Factor messages                                         |
-| `${event}`                   | `{ "type": "UserLoginSuspicious", "info": {...} }`                          | Embedded in User Event messages                                             |
-| `${method}`                  | `{ "id" : "FQLM", "method" : "email" }`                                     | Embedded in Two-Factor Add/Remove event messages                            |
-| `${oneTimeCode}`             | `88888`                                                                     | Embedded in passwordless login messages                                     |
-| `${spokenCode}`              | `1 2 3 4 5 6`                                                               | Embedded in MFA/Two-Factor messages when sent via voice. Use instead of `{code}` so the code is not read as a single number. |
-| `${tenant}`                  | `{ "name": "My Tenant", "id": "78910" }`                                    | `tenant.id` allows links embedded in messages to render using the correct theme for that tenant. |
-| `${user}`                    | `{ "firstName": "John", "lastName": "Doe" }`                                | User information and `user.tenantId` for themed message links          |
-| `${verificationId}`          | `987654`                                                                    | Embedded in phone number verification messages                              |
-| `${verificationOneTimeCode}` | `abcdef`                                                                    | Embedded in phone number verification messages                              |
-
-## Retrieving Default Templates
-
-In order to version control the templates or customize them, you can use the admin UI. But you can also pull retrieve them all by using the following command:
-
-```shell
-wget -i https://raw.githubusercontent.com/FusionAuth/fusionauth-site/main/astro/src/content/docs/_shared/message/template_url_list
+```shell-session
+npx degit FusionAuth/fusionauth-site/astro/extractedcode/templates-messengers templates-messengers
 ```
 
-This will place all the message templates in the current working directory.
+If you would rather not use Node, pull the same folder out of a repository tarball:
 
-## Using Replacement Variables
-
-Below are some basic examples of using replacement values in your message templates.
-
-Consider the following User represented by this condensed JSON object.
-
-```json
-{
-  "phoneNumber": "+15555551234",
-  "firstName": "Monica",
-  "id": "1c592f8a-59c6-4a09-82f8-f4257e3ea4c8",
-  "lastName": "Hall"
-}
+```shell-session
+curl -L https://github.com/FusionAuth/fusionauth-site/archive/refs/heads/main.tar.gz \
+  | tar -xz --strip-components=4 fusionauth-site-main/astro/extractedcode/templates-messengers
 ```
 
-The following are example usages with a rendered output based upon the above mentioned example User. The replacement variables are rendered
-using [Apache FreeMarker](https://freemarker.apache.org/docs/index.html) which is an HTML template language.
+Either command writes the templates into a `templates-messengers` directory. Both always match the folder
+linked above, so there is no separate list of files to fall out of date.
 
-A default value should be provided for variables that may be undefined at runtime such as `firstName`. See `firstName` in the example below
-is followed by a bang `!` and then the string `Unknown User`. This indicates that if `firstName` is undefined when the template is rendered the value
-of `Unknown User` should be used as a default value.
-
-*Template Source*
-```ftl
-Hi ${user.firstName!'Unknown User'}, welcome to Pied Piper.
-
-Please verify your phone number ${user.phoneNumber} by following the provided link.
-
-https://piedpiper.fusionauth.io/identity/verify/${verificationId}
-- Admin
-```
-
-*Rendered Output*
-```html
-Hi Monica, welcome to Pied Piper.
-
-Please verify your phone number +15555551234 by following the provided link.
-
-https://piedpiper.fusionauth.io/identity/verify/YkQY5Gsyo4RlfmDciBGRmvfj3RmatUqrbjoIZ19fmw4
-- Admin
-```
-
-## Available Message Templates
-
-Below is an overview of each message template that ships with FusionAuth.
-
-<TemplateBaseUrlNote />
-
-### Forgot Password
+## Forgot Password
 
 This is also known as the "Change Password" template.
 
-<ForgotPasswordPhone />
+<ExtractedCode src="templates-messengers/phone-forgot-password.txt.ftl" lang="ftl" />
 
-#### Replacement Variables
+### Replacement Variables
 
 <APIBlock>
   <APIField name="application" type="Application">
@@ -131,11 +60,11 @@ This is also known as the "Change Password" template.
   </APIField>
 </APIBlock>
 
-### Passwordless Login
+## Passwordless Login
 
-<PasswordlessLoginTemplates />
+<ExtractedCode src="templates-messengers/phone-passwordless-login.txt.ftl" lang="ftl" />
 
-#### Replacement Variables
+### Replacement Variables
 
 <APIBlock>
   <APIField name="application" type="Application">
@@ -161,11 +90,11 @@ This is also known as the "Change Password" template.
   </APIField>
 </APIBlock>
 
-### Phone Verification
+## Phone Verification
 
-<PhoneVerification />
+<ExtractedCode src="templates-messengers/phone-verification.txt.ftl" lang="ftl" />
 
-#### Replacement Variables
+### Replacement Variables
 
 <APIBlock>
   <APIField name="application" type="Application">
@@ -191,11 +120,11 @@ This is also known as the "Change Password" template.
   </APIField>
 </APIBlock>
 
-### Set Up Password
+## Set Up Password
 
-<SetupPasswordTemplates/>
+<ExtractedCode src="templates-messengers/phone-setup-password.txt.ftl" lang="ftl" />
 
-#### Replacement Variables
+### Replacement Variables
 
 <APIBlock>
   <APIField name="application" type="Application">
@@ -218,13 +147,13 @@ This is also known as the "Change Password" template.
   </APIField>
 </APIBlock>
 
-### Threat Detected
+## Threat Detected
 
 <PlanBlurb plan="enterprise" />
 
-<ThreatDetectedPhone />
+<ExtractedCode src="templates-messengers/phone-threat-detected.txt.ftl" lang="ftl" />
 
-#### Replacement Variables
+### Replacement Variables
 
 <APIBlock>
   <APIField name="application" type="Application">
@@ -241,13 +170,28 @@ This is also known as the "Change Password" template.
   </APIField>
 </APIBlock>
 
-### Two-Factor Authentication
+## Two-Factor Authentication
 
 <PlanBlurb plan="enterprise" />
 
-<TwoFactorLoginPhone />
+FusionAuth ships two templates for a two-factor code request, one for messengers that deliver
+text and one for messengers that place a voice call. The voice template uses `spokenCode`
+rather than `code` so that the digits are read out individually instead of as a single number.
 
-#### Replacement Variables
+### Text
+
+Used by messengers that deliver the code as a message, whether that is SMS, RCS, or a chat
+platform such as WhatsApp.
+
+<ExtractedCode src="templates-messengers/sms-two-factor-request.txt.ftl" lang="ftl" />
+
+### Voice
+
+Used by messengers that deliver the code as a phone call.
+
+<ExtractedCode src="templates-messengers/voice-two-factor-request.txt.ftl" lang="ftl" />
+
+### Replacement Variables
 
 <APIBlock>
   <APIField name="application" type="Application">
@@ -277,6 +221,11 @@ This is also known as the "Change Password" template.
   <APIField name="mobilePhone" type="String">
     Mobile phone number associated with the `user`.
   </APIField>
+  <APIField name="spokenCode" type="String">
+    The same code as `code`, with the digits separated so that a voice messenger reads them
+    out one at a time rather than as a single number. Use this instead of `code` in templates
+    delivered by voice.
+  </APIField>
   <APIField name="tenant" type="Tenant">
     The Tenant object, see the [Tenant API](/docs/apis/tenants) for field definitions.
   </APIField>
@@ -285,13 +234,13 @@ This is also known as the "Change Password" template.
   </APIField>
 </APIBlock>
 
-### Two-Factor Authentication Method Added
+## Two-Factor Authentication Method Added
 
 <PlanBlurb plan="enterprise" />
 
-<TwoFactorAddPhone />
+<ExtractedCode src="templates-messengers/phone-two-factor-add.txt.ftl" lang="ftl" />
 
-#### Replacement Variables
+### Replacement Variables
 
 <APIBlock>
   <APIField name="application" type="Application">
@@ -314,13 +263,13 @@ This is also known as the "Change Password" template.
   </APIField>
 </APIBlock>
 
-### Two-Factor Authentication Method Removed
+## Two-Factor Authentication Method Removed
 
 <PlanBlurb plan="enterprise" />
 
-<TwoFactorRemovePhone />
+<ExtractedCode src="templates-messengers/phone-two-factor-remove.txt.ftl" lang="ftl" />
 
-#### Replacement Variables
+### Replacement Variables
 
 <APIBlock>
   <APIField name="application" type="Application">
@@ -343,11 +292,11 @@ This is also known as the "Change Password" template.
   </APIField>
 </APIBlock>
 
-### Admin Two-Factor Authentication Method Removed
+## Admin Two-Factor Authentication Method Removed
 
-<AdminTwoFactorRemovePhone />
+<ExtractedCode src="templates-messengers/phone-admin-two-factor-remove.txt.ftl" lang="plaintext" />
 
-#### Replacement Variables
+### Replacement Variables
 
 <APIBlock>
   <APIField name="method" type="Object" since="1.68.0">
