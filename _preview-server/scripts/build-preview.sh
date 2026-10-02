@@ -128,32 +128,58 @@ SLOT_PKG_HASH=$(
   } | sha256sum | cut -d' ' -f1
 )
 
-# Refresh the shared node_modules when main's packages changed, the Astro binary is
-# missing, or a prior slot-specific install corrupted the shared directory (e.g. npm ci
-# followed a symlink and deleted files).  The throw-and-exit.js check catches the most
-# common partial-install symptom; add others here if new corruption patterns emerge.
 MAIN_NM_HASH_FILE="$PREVIEW_DIR/.main-nm-hash"
-CACHED_NM_HASH=$(cat "$MAIN_NM_HASH_FILE" 2>/dev/null || echo "")
-if [[ "$MAIN_PKG_HASH" != "$CACHED_NM_HASH" ]] || \
-   [[ ! -x "$REPO_DIR/astro/node_modules/.bin/astro" ]] || \
-   [[ ! -f "$REPO_DIR/astro/node_modules/astro/dist/cli/throw-and-exit.js" ]]; then
-  log "Shared node_modules missing, stale, or corrupt — running npm ci in main repo …"
-  flock "$PREVIEW_DIR/.npm-lock" \
-    npm ci --silent --prefix "$REPO_DIR/astro" >&2
+
+# Is the shared node_modules a complete install of main's current manifest?
+# The marker alone is not enough: GitHub cancels in-progress preview builds, so an
+# npm ci killed partway leaves a gutted tree, and if another build wrote the marker
+# first the tree looks current forever after.  Verifying every top-level dependency
+# is cheap (a stat per package) and catches exactly that, where probing astro's own
+# files did not.
+shared_nm_complete() {
+  [[ "$(cat "$MAIN_NM_HASH_FILE" 2>/dev/null || true)" == "$MAIN_PKG_HASH" ]] || return 1
+  [[ -x "$REPO_DIR/astro/node_modules/.bin/astro" ]] || return 1
+  local missing
+  missing=$(node -e '
+const fs = require("fs"), path = require("path"), root = process.argv[1];
+const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+const deps = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies });
+const gone = deps.filter(n => !fs.existsSync(path.join(root, "node_modules", n, "package.json")));
+process.stdout.write(gone.join(" "));
+' "$REPO_DIR/astro") || return 1
+  [[ -z "$missing" ]] && return 0
+  log "Shared node_modules is incomplete, missing: $missing"
+  return 1
+}
+
+# One lock around check-and-install, not just around npm ci.  Two builds could both
+# read a stale marker, queue on the lock, and reinstall in turn; cancelling the
+# second one then wrecked the tree the first had just finished.  Re-checking under
+# the lock means the second build finds the tree current and does nothing.
+refresh_shared_nm() {
+  if shared_nm_complete; then return 0; fi
+  log "Refreshing shared node_modules (npm ci in main repo) …"
+  # drop the marker first so an interrupted install never passes as current
+  rm -f "$MAIN_NM_HASH_FILE"
+  npm ci --silent --prefix "$REPO_DIR/astro" >&2
   echo "$MAIN_PKG_HASH" > "$MAIN_NM_HASH_FILE"
-fi
+}
 
 if [[ "$MAIN_PKG_HASH" == "$SLOT_PKG_HASH" ]]; then
-  # Packages match main — safe to symlink to the shared node_modules.
+  # Packages match main, so share the install.
+  exec 9>"$PREVIEW_DIR/.npm-lock"
+  flock 9
+  refresh_shared_nm
+  flock -u 9
   rm -rf "$SLOT_DIR/astro/node_modules"
   ln -sfn "$REPO_DIR/astro/node_modules" "$SLOT_DIR/astro/node_modules"
   log "Using shared node_modules (packages match main)."
 else
-  # Packages differ — install fresh in the slot directory.  Do NOT create the
+  # Packages differ, install fresh in the slot directory.  Do NOT create the
   # symlink first: npm ci would follow it, delete the shared node_modules
   # contents, and leave every concurrent build with a broken install.
   rm -rf "$SLOT_DIR/astro/node_modules"
-  log "package.json changed — running npm ci for slot …"
+  log "package.json changed, running npm ci for slot …"
   flock "$PREVIEW_DIR/.npm-lock" \
     npm ci --silent --prefix "$SLOT_DIR/astro" >&2
 fi
