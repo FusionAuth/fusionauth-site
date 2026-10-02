@@ -19,6 +19,12 @@ and --include-source are ignored). Useful for CI checks on changed files only.
 A set of sensible default exclusions is built in (see _DEFAULT_EXCLUDE_DEST).
 Any --exclude-dest patterns you pass are added on top of the defaults.
 
+Links into this repository on the main branch, like
+https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/templates-email,
+are resolved against the working tree instead of over HTTP (see resolve_self_repo_link).
+A branch that adds the path would otherwise fail against main until it merged, and a link
+to a path the branch deletes would wrongly pass because main still has it.
+
 Run with --help for the full option list.
 """
 
@@ -34,7 +40,7 @@ import urllib.request
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from urllib.parse import urldefrag, urlparse
+from urllib.parse import unquote, urldefrag, urlparse
 
 # ── URL extraction ─────────────────────────────────────────────────────────────
 
@@ -87,6 +93,35 @@ def extract_links(path: Path, exclude_dest: list) -> list:
             results.append((url, lineno))
 
     return results
+
+
+# ── Links into this repository ─────────────────────────────────────────────────
+
+# Docs sometimes link to a folder or file in this repo on the main branch, for example
+# so a reader can browse the default email templates before downloading them. Checking
+# those over HTTP means a branch that adds the path fails against main until it merges,
+# and a typo only shows up after merge once nobody is looking. Resolve them against the
+# working tree instead: a path this branch adds passes, and a wrong path fails here.
+_SELF_REPO_RE = re.compile(
+    r"^https?://(?:www\.)?github\.com/FusionAuth/fusionauth-site/"
+    r"(?:tree|blob)/main/(?P<path>[^?#]+)$"
+)
+
+
+def resolve_self_repo_link(url: str, repo_root: Path):
+    """
+    (status, error) for a main-branch link into this repo, checked on disk.
+    Returns None when the URL is not such a link, so the caller falls back to HTTP.
+    """
+    m = _SELF_REPO_RE.match(url)
+    if not m:
+        return None
+    rel = unquote(m.group("path")).rstrip("/")
+    if not rel or ".." in Path(rel).parts:
+        return (0, f"suspicious repo path: {rel}")
+    if (repo_root / rel).exists():
+        return (200, None)
+    return (0, f"not found in this repo: {rel}")
 
 
 # ── HTTP checking ──────────────────────────────────────────────────────────────
@@ -389,6 +424,23 @@ def run(args) -> int:
         print("No external links to check.")
         return 0
 
+    # ── Resolve links into this repo on disk, not over HTTP ───────────────────
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    url_status: dict = {}
+    self_repo_urls = []
+    for url in unique_urls:
+        resolved = resolve_self_repo_link(url, repo_root)
+        if resolved is not None:
+            url_status[url] = resolved
+            self_repo_urls.append(url)
+    if self_repo_urls:
+        bad = [u for u in self_repo_urls if url_status[u][1] is not None]
+        print(
+            f"Resolved {len(self_repo_urls)} link(s) into this repo against the working tree"
+            f"{f', {len(bad)} missing' if bad else ''}."
+        )
+    unique_urls = [u for u in unique_urls if u not in url_status]
+
     # ── Check URLs in parallel ────────────────────────────────────────────────
     ok_statuses = _ALWAYS_OK | frozenset(args.ignore_status)
     global_sem = threading.BoundedSemaphore(args.workers)
@@ -397,7 +449,10 @@ def run(args) -> int:
     done_count = [0]
     done_lock = threading.Lock()
 
-    print(f"Checking {len(unique_urls)} URL(s) …")
+    if not unique_urls:
+        print("No remaining external links to check over HTTP.")
+    else:
+        print(f"Checking {len(unique_urls)} URL(s) …")
     start = time.monotonic()
 
     def check_and_track(url):
@@ -409,7 +464,6 @@ def run(args) -> int:
                 print(f"  {d}/{n} ({d * 100 // n}%) …", end="\r", flush=True)
         return result
 
-    url_status: dict = {}
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         futures = {pool.submit(check_and_track, u): u for u in unique_urls}
         for future in as_completed(futures):
@@ -417,7 +471,8 @@ def run(args) -> int:
 
     elapsed = time.monotonic() - start
     n = len(unique_urls)
-    print(f"  {n}/{n} (100%) — done in {elapsed:.1f}s{' ' * 20}")
+    if n:
+        print(f"  {n}/{n} (100%) — done in {elapsed:.1f}s{' ' * 20}")
 
     # ── Collate broken links by file, split errors vs warnings ───────────────
     errors_by_file: dict = defaultdict(list)
