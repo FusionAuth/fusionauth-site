@@ -103,3 +103,24 @@ test('settings contain placeholders and Function binding retains authorization',
   assert.equal(binding.authLevel, 'function');
   assert.ok(binding.methods.includes('post'));
 });
+
+test('actual Graph/MSAL dependencies initialize without application npm/install packages', () => {
+  const keys = ['TENANT_NAME', 'GRAPH_CLIENT_ID', 'GRAPH_CLIENT_SECRET'];
+  const previous = Object.fromEntries(keys.map(key => [key, process.env[key]]));
+  Object.assign(process.env, {
+    TENANT_NAME: 'fixture',
+    GRAPH_CLIENT_ID: '00000000-0000-0000-0000-000000000001',
+    GRAPH_CLIENT_SECRET: 'fixture-not-a-real-secret',
+  });
+  try {
+    // Actual SDK constructors and imports, without calling any Graph/cloud method.
+    const graph = localRequire('./RopcProxyFunction/graph.js');
+    assert.equal(typeof graph.getUser, 'function');
+    assert.equal(typeof graph.getUsers, 'function');
+  } finally {
+    for (const key of keys) {
+      if (previous[key] === undefined) delete process.env[key];
+      else process.env[key] = previous[key];
+    }
+  }
+});

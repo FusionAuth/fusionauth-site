@@ -13,5 +13,6 @@ Changes from the source:
 - Add the generated-source warning and settings instructions to the README.
 - Add this provenance file and local tests. `tests/` is excluded by the existing publisher.
 - Normalize line endings to LF and remove trailing whitespace.
+- Remove unused `npm` and `install` production dependencies and regenerate the package lock. Application imports do not use either package; development commands use the environment's npm CLI. This removes unused CLI dependencies flagged by the production audit without changing the Function or upgrading MSAL.
 
 Local fixture tests execute the actual Function and its Graph adapter using fake upstream responses. They do not prove an Azure AD B2C login or FusionAuth Connector migration. That journey requires an existing Azure tenant, its credentials and a paid FusionAuth Connector.
