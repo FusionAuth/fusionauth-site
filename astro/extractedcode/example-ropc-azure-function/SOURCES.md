@@ -12,6 +12,6 @@ Changes from the source:
 - Replace tenant, flow, application and secret values in `local.settings.json` with explicit `YOUR_` placeholders. Configure these locally before running. No source credentials are distributed.
 - Add the generated-source warning and settings instructions to the README.
 - Add this provenance file and local tests. `tests/` is excluded by the existing publisher.
-- Normalize line endings to LF.
+- Normalize line endings to LF and remove trailing whitespace.
 
 Local fixture tests execute the actual Function and its Graph adapter using fake upstream responses. They do not prove an Azure AD B2C login or FusionAuth Connector migration. That journey requires an existing Azure tenant, its credentials and a paid FusionAuth Connector.
