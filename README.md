@@ -84,6 +84,18 @@ For projects that benefit from a cloneable repository, the `/astro/extractedcode
 
 Astro builds automatically generate code snippets before rendering pages.
 
+## Refresh external content
+
+Docker, Kubernetes, and Kafka configuration examples remain owned by their external repositories. To refresh only the files displayed in the docs, run this from the repository root (requires Bash, Git, and curl):
+
+```console
+bash src/scripts/fetch_external_content.sh
+```
+
+Review the diff and affected guides before committing. Add `--check` to show upstream changes without modifying local files; the weekly **Check external content** workflow runs this check and fails with a diff when the snapshots are stale. It does not commit or push changes.
+
+Run the offline refresh regression tests with `bash astro/extractedcode/configuration-snippets/tests/test.sh` (requires Python 3.9 or newer). The extractedcode CI workflow also runs them when the snapshots, refresh tooling, or related workflows change.
+
 ## Sitemap
 
 We automatically generate a single `sitemap.xml` file that we use for the entire `fusionauth.io` domain. All of the docs, blog, dev-tools, articles, and isolated pages involved in the Astro build get automatically included during the build itself. For `fusionauth.io` content managed externally, we manually add entries to [`astro/public/sitemap-io.xml`](astro/public/sitemap-io.xml).
