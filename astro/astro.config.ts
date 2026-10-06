@@ -4,7 +4,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import mdx from "@astrojs/mdx";
 import { unified } from '@astrojs/markdown-remark';
 import tailwindcss from '@tailwindcss/vite';
-import indexPages from "astro-index-pages/index.js";
+import indexPages from "./src/integrations/astro-index-pages/index.js";
 import genMarkdownPages from 'astro-better-gen-markdown-pages';
 import { remarkMermaidSSR, mermaidTitleFix } from 'astro-better-mermaid';
 import remarkMdx from 'remark-mdx';

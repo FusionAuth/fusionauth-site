@@ -39,7 +39,7 @@ done
 
 chown -R "$PREVIEW_USER:$PREVIEW_USER" "$PREVIEW_DIR"
 
-# ── Clone master repo and install deps ─────────────────────────────────────────
+# ── Clone master repo (build-preview.sh installs deps on first build) ───────
 sudo -u "$PREVIEW_USER" bash -c "
   ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
   git config --global --add safe.directory '$PREVIEW_DIR/repo'
@@ -48,8 +48,6 @@ sudo -u "$PREVIEW_USER" bash -c "
   else
     git -C '$PREVIEW_DIR/repo' pull --ff-only
   fi
-  cd '$PREVIEW_DIR/repo/astro'
-  npm ci --silent
 "
 
 # ── Copy scripts ────────────────────────────────────────────────────────────────

@@ -10,6 +10,11 @@
 
 set -euo pipefail
 
+# own process group, so a newer build for the same slot can kill this one and all its children
+if [[ "${PREVIEW_PGRP:-}" != 1 ]]; then
+  PREVIEW_PGRP=1 exec setsid -w "$0" "$@"
+fi
+
 PR="$1"
 SHA="$2"
 
@@ -17,8 +22,12 @@ PREVIEW_DIR=/opt/preview
 REPO_DIR="$PREVIEW_DIR/repo"
 SLOTS_DIR="$PREVIEW_DIR/slots"
 BUILDS_DIR="$PREVIEW_DIR/builds"
+CLAIMS_DIR="$PREVIEW_DIR/claims"
+LOCKS_DIR="$PREVIEW_DIR/locks"
+NM_STORE="$PREVIEW_DIR/node_modules"
 NUM_SLOTS=25
 BASE_PORT=4000
+mkdir -p "$CLAIMS_DIR" "$LOCKS_DIR" "$NM_STORE"
 
 # Derive HTTPS URL via sslip.io.  setup.sh caches the domain so we don't hit
 # IMDSv2 on every build; fall back to a live lookup if the cache is missing.
@@ -39,49 +48,81 @@ fi
 log() { echo "[preview] $*" >&2; }
 
 # ── Slot management ──────────────────────────────────────────────────────────
+# claims/NN holds the PR number that owns slot NN.  It lives outside the worktree
+# so a slot can be claimed before its worktree exists, and it is written as soon
+# as the slot is picked so two new PRs can never pick the same free slot.
 
 # Returns the slot number (without zero-padding) already assigned to this PR,
 # or exits with status 1 if none.
 find_slot() {
   for i in $(seq 1 $NUM_SLOTS); do
     p=$(printf "%02d" "$i")
-    if [[ -f "$SLOTS_DIR/$p/.slot-pr" ]] && \
-       [[ "$(cat "$SLOTS_DIR/$p/.slot-pr")" == "$PR" ]]; then
+    if [[ "$(cat "$CLAIMS_DIR/$p" 2>/dev/null)" == "$PR" ]]; then
       echo "$i"; return 0
     fi
   done
   return 1
 }
 
-# Returns the number of the first free slot, or evicts the oldest if all full.
+# Returns the number of the first free slot, or evicts the least recently built.
 alloc_slot() {
   for i in $(seq 1 $NUM_SLOTS); do
     p=$(printf "%02d" "$i")
-    if [[ ! -f "$SLOTS_DIR/$p/.slot-pr" ]]; then
+    if [[ ! -f "$CLAIMS_DIR/$p" ]]; then
       echo "$i"; return 0
     fi
   done
-  # All slots occupied — evict the one whose lock file is oldest.
-  oldest=$(find "$SLOTS_DIR" -name ".slot-pr" -printf '%T+ %p\n' \
-    | sort | head -1 | awk '{print $2}' | xargs dirname | xargs basename)
-  evicted_pr=$(cat "$SLOTS_DIR/$oldest/.slot-pr" 2>/dev/null || echo "unknown")
-  log "All slots full. Evicting slot $oldest (was PR #$evicted_pr)."
-  rm -f "$SLOTS_DIR/$oldest/.slot-pr"
+  oldest=$(ls -tr "$CLAIMS_DIR" | head -1)
+  log "All slots full. Evicting slot $oldest (was PR #$(cat "$CLAIMS_DIR/$oldest"))."
   echo "$((10#$oldest))"
 }
 
-SLOT=$(find_slot 2>/dev/null || alloc_slot)
+exec 7>"$LOCKS_DIR/slots.lock"
+flock 7
+
+# migrate claims from the old in-worktree .slot-pr markers
+for i in $(seq 1 $NUM_SLOTS); do
+  p=$(printf "%02d" "$i")
+  if [[ -f "$SLOTS_DIR/$p/.slot-pr" ]]; then
+    [[ -f "$CLAIMS_DIR/$p" ]] || cp -p "$SLOTS_DIR/$p/.slot-pr" "$CLAIMS_DIR/$p"
+    rm -f "$SLOTS_DIR/$p/.slot-pr"
+  fi
+done
+
+SLOT=$(find_slot || alloc_slot)
 PADDED=$(printf "%02d" "$SLOT")
 PORT=$((BASE_PORT + SLOT))
 SLOT_DIR="$SLOTS_DIR/$PADDED"
 BUILD_DIR="$BUILDS_DIR/$PADDED"
+# rewriting also bumps the mtime that eviction orders by
+echo "$PR" > "$CLAIMS_DIR/$PADDED"
+
+# One build per slot.  GitHub cancels the Actions job on a new push, but that only
+# drops the SSH connection, and the old build can keep running on this host.  Two
+# builds sharing a worktree delete each other's dist/ (Cannot find module
+# .../dist/.prerender/chunks/...), so the newest build kills whatever came before.
+# Recording our pid under the slots lock means the latest arrival always wins,
+# whether the earlier build is running or still waiting for the slot.
+SLOT_PID_FILE="$LOCKS_DIR/slot-$PADDED.pid"
+old_pid=$(cat "$SLOT_PID_FILE" 2>/dev/null || true)
+if [[ -n "$old_pid" ]] && grep -qs build-preview "/proc/$old_pid/cmdline"; then
+  log "Stopping earlier build in slot $PADDED (pid $old_pid) …"
+  kill -TERM -- "-$old_pid" 2>/dev/null || true
+fi
+echo "$$" > "$SLOT_PID_FILE"
+
+flock -u 7
+exec 7>&-
+
+exec 8>"$LOCKS_DIR/slot-$PADDED.lock"
+flock 8
 
 log "Using slot $PADDED (port $PORT) for PR #$PR @ $SHA"
 
 # ── Fetch the PR ref and main ────────────────────────────────────────────────
 # refs/pull/N/head is created by GitHub for every PR, including forks.
 # Fetch main alongside the PR ref so origin/main:astro/package.json is current
-# when the shared-node_modules staleness check runs below.
+# when the deps step below picks main's node_modules tree.
 log "Fetching refs/pull/$PR/head and main …"
 git -C "$REPO_DIR" fetch origin \
   "refs/pull/${PR}/head:refs/preview/pr-${PR}" main --force >&2
@@ -113,10 +154,17 @@ if [[ ! -d "$SLOT_DIR/astro/src/generated-code-snippets" ]]; then
          "$SLOT_DIR/astro/src/generated-code-snippets" 2>/dev/null || true
 fi
 
-# Clear Astro's compiled-component cache so layout/component changes always take effect
-rm -rf "$SLOT_DIR/astro/.astro"
+# Clear Astro's compiled-component cache so layout/component changes always take effect,
+# and any half-written output from a build that got killed
+rm -rf "$SLOT_DIR/astro/.astro" "$SLOT_DIR/astro/dist"
 
 # ── deps ──────────────────────────────────────────────────────────────────────
+# Main's dependencies get installed once per distinct package.json + lock, into
+# node_modules/<hash>.  A tree there never changes after it is marked complete,
+# so slots keep building against it while a newer one installs alongside.
+#   - packages match main: symlink the slot to main's tree (no copy, no install)
+#   - packages differ: copy main's tree into the slot, then npm install only
+#     the difference; the slot keeps that tree until its packages change again
 MAIN_PKG_HASH=$(
   { git -C "$REPO_DIR" show "origin/main:astro/package.json"
     git -C "$REPO_DIR" show "origin/main:astro/package-lock.json"
@@ -127,62 +175,58 @@ SLOT_PKG_HASH=$(
     cat "$SLOT_DIR/astro/package-lock.json"
   } | sha256sum | cut -d' ' -f1
 )
+MAIN_NM="$NM_STORE/$MAIN_PKG_HASH"
+SLOT_NM="$SLOT_DIR/astro/node_modules"
+SLOT_NM_STAMP="$SLOT_NM/.preview-pkg-hash"
 
-MAIN_NM_HASH_FILE="$PREVIEW_DIR/.main-nm-hash"
-
-# Is the shared node_modules a complete install of main's current manifest?
-# The marker alone is not enough: GitHub cancels in-progress preview builds, so an
-# npm ci killed partway leaves a gutted tree, and if another build wrote the marker
-# first the tree looks current forever after.  Verifying every top-level dependency
-# is cheap (a stat per package) and catches exactly that, where probing astro's own
-# files did not.
-shared_nm_complete() {
-  [[ "$(cat "$MAIN_NM_HASH_FILE" 2>/dev/null || true)" == "$MAIN_PKG_HASH" ]] || return 1
-  [[ -x "$REPO_DIR/astro/node_modules/.bin/astro" ]] || return 1
-  local missing
-  missing=$(node -e '
-const fs = require("fs"), path = require("path"), root = process.argv[1];
-const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-const deps = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies });
-const gone = deps.filter(n => !fs.existsSync(path.join(root, "node_modules", n, "package.json")));
-process.stdout.write(gone.join(" "));
-' "$REPO_DIR/astro") || return 1
-  [[ -z "$missing" ]] && return 0
-  log "Shared node_modules is incomplete, missing: $missing"
-  return 1
+install_main_nm() {
+  [[ -f "$MAIN_NM/.complete" ]] && return 0
+  log "Installing main's dependencies into $MAIN_NM …"
+  rm -rf "$MAIN_NM"
+  mkdir -p "$MAIN_NM"
+  git -C "$REPO_DIR" show "origin/main:astro/package.json" > "$MAIN_NM/package.json"
+  git -C "$REPO_DIR" show "origin/main:astro/package-lock.json" > "$MAIN_NM/package-lock.json"
+  npm ci --silent --no-audit --no-fund --prefix "$MAIN_NM" >&2
+  touch "$MAIN_NM/.complete"
+  prune_main_nm
 }
 
-# One lock around check-and-install, not just around npm ci.  Two builds could both
-# read a stale marker, queue on the lock, and reinstall in turn; cancelling the
-# second one then wrecked the tree the first had just finished.  Re-checking under
-# the lock means the second build finds the tree current and does nothing.
-refresh_shared_nm() {
-  if shared_nm_complete; then return 0; fi
-  log "Refreshing shared node_modules (npm ci in main repo) …"
-  # drop the marker first so an interrupted install never passes as current
-  rm -f "$MAIN_NM_HASH_FILE"
-  npm ci --silent --prefix "$REPO_DIR/astro" >&2
-  echo "$MAIN_PKG_HASH" > "$MAIN_NM_HASH_FILE"
+# drop trees that are neither main's current one nor symlinked from a slot
+prune_main_nm() {
+  local in_use=" $MAIN_PKG_HASH " d target
+  for d in "$SLOTS_DIR"/*/astro/node_modules; do
+    target=$(readlink "$d" 2>/dev/null) || continue
+    in_use+=" $(basename "$(dirname "$target")") "
+  done
+  for d in "$NM_STORE"/*; do
+    [[ -d "$d" && "$in_use" != *" $(basename "$d") "* ]] || continue
+    log "Removing unused dependency tree $d"
+    rm -rf "$d"
+  done
 }
 
+# install, prune, and the copy below all touch node_modules/<hash>, so they share one lock
+exec 9>"$LOCKS_DIR/npm.lock"
+flock 9
+install_main_nm
 if [[ "$MAIN_PKG_HASH" == "$SLOT_PKG_HASH" ]]; then
-  # Packages match main, so share the install.
-  exec 9>"$PREVIEW_DIR/.npm-lock"
-  flock 9
-  refresh_shared_nm
+  rm -rf "$SLOT_NM"
+  ln -s "$MAIN_NM/node_modules" "$SLOT_NM"
   flock -u 9
-  rm -rf "$SLOT_DIR/astro/node_modules"
-  ln -sfn "$REPO_DIR/astro/node_modules" "$SLOT_DIR/astro/node_modules"
-  log "Using shared node_modules (packages match main)."
+  log "Using main's node_modules (packages match main)."
+elif [[ ! -L "$SLOT_NM" && "$(cat "$SLOT_NM_STAMP" 2>/dev/null)" == "$SLOT_PKG_HASH" ]]; then
+  flock -u 9
+  log "Reusing this slot's node_modules (packages unchanged since last build)."
 else
-  # Packages differ, install fresh in the slot directory.  Do NOT create the
-  # symlink first: npm ci would follow it, delete the shared node_modules
-  # contents, and leave every concurrent build with a broken install.
-  rm -rf "$SLOT_DIR/astro/node_modules"
-  log "package.json changed, running npm ci for slot …"
-  flock "$PREVIEW_DIR/.npm-lock" \
-    npm ci --silent --prefix "$SLOT_DIR/astro" >&2
+  log "Packages differ from main, copying main's node_modules into the slot …"
+  rm -rf "$SLOT_NM"
+  cp -a "$MAIN_NM/node_modules" "$SLOT_NM"
+  flock -u 9
+  log "Installing changed packages …"
+  npm install --silent --no-audit --no-fund --no-save --prefix "$SLOT_DIR/astro" >&2
+  echo "$SLOT_PKG_HASH" > "$SLOT_NM_STAMP"
 fi
+exec 9>&-
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 PREVIEW_URL="https://${PORT}.${SSLIP_DOMAIN}"
@@ -197,9 +241,6 @@ NODE_OPTIONS=--max_old_space_size=8192 \
 log "Publishing build output to slot $PADDED …"
 rm -rf "$BUILD_DIR"
 mv "$SLOT_DIR/astro/dist" "$BUILD_DIR"
-
-# Write slot lock after a successful build (so a failed build doesn't hold a slot)
-echo "$PR" > "$SLOT_DIR/.slot-pr"
 
 log "Done. Serving at ${PREVIEW_URL}"
 
