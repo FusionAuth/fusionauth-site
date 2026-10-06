@@ -5,6 +5,7 @@ import mdx from "@astrojs/mdx";
 import { satteri } from '@astrojs/markdown-satteri';
 import tailwindcss from '@tailwindcss/vite';
 import indexPages from "./src/integrations/astro-index-pages/index.js";
+import contentChecks from "./src/integrations/content-checks.mjs";
 import genMarkdownPages from 'astro-better-gen-markdown-pages';
 import { mermaidSSR, mermaidTitle } from 'astro-better-mermaid/satteri';
 import linkChecker, { markdownLinkSyntaxChecker } from 'astro-better-link-checker';
@@ -189,6 +190,7 @@ const config = defineConfig({
     },
   },
   integrations: [
+    contentChecks(),
     extractedCodeSnippets({
       plugin: 'bluehawk-languages.js',
       // Step 7 displays snippets from a Playwright spec in tests/.

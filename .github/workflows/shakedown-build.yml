@@ -1,9 +1,12 @@
-name: lint changed files, build site, check APIs for completeness
-env:
-    BASE_REF: origin/${{ github.base_ref }}
+name: Shakedown build
+
 on:
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
 
 # a new push to the PR cancels the run for the old commit, freeing its runner slots
 concurrency:
@@ -11,12 +14,10 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  run_lint:
+  shakedown:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          fetch-depth: 0 # needed for git diff ...merge-base against base branch in lint-recent-files.mjs
 
       - name: Set up Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
@@ -52,10 +53,18 @@ jobs:
           npm ci
         shell: bash
 
-      - name: ESLint
+      # the PR's file list comes from the API, so the checkout needs no history
+      - name: ESLint changed files
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          files=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate \
+            --jq '.[] | select(.status == "added" or .status == "modified") | .filename')
           cd astro
-          npm run lint-pr
+          CHANGED_FILES="$files" npm run lint-pr
         shell: /usr/bin/bash -e -o pipefail {0}
 
       - name: Run a dev build
