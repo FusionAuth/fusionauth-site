@@ -10,9 +10,9 @@ variable "region" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance type. m6i.2xlarge (8 vCPU / 32 GB) matches the prod build runner."
+  description = "EC2 instance type. Must be Graviton (arm64) to match the AMI; c8g.2xlarge is 8 vCPU / 16 GB."
   type        = string
-  default     = "m6i.2xlarge"
+  default     = "c8g.2xlarge"
 }
 
 variable "github_repo_url" {

@@ -41,7 +41,7 @@ resource "aws_security_group" "preview" {
   }
 
   ingress {
-    description = "HTTP (ACME redirect + Let's Encrypt webroot challenge)"
+    description = "HTTP (ACME redirect + Lets Encrypt webroot challenge)"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -66,32 +66,37 @@ resource "aws_security_group" "preview" {
   tags = { Name = "preview-server" }
 }
 
-# ── Latest Ubuntu 24.04 LTS (Noble) AMI ───────────────────────────────────────
-data "aws_ami" "ubuntu_24_04" {
+# ── Latest Ubuntu 26.04 LTS AMI for Graviton (arm64) ──────────────────────────
+data "aws_ami" "ubuntu_arm64" {
   most_recent = true
   owners      = ["099720109477"] # Canonical
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-*-26.04-arm64-server-*"]
   }
 
   filter {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
+  filter {
+    name   = "architecture"
+    values = ["arm64"]
+  }
 }
 
 # ── EC2 instance ───────────────────────────────────────────────────────────────
 resource "aws_instance" "preview" {
-  ami                    = data.aws_ami.ubuntu_24_04.id
+  ami                    = data.aws_ami.ubuntu_arm64.id
   instance_type          = var.instance_type
   key_name               = aws_key_pair.preview_admin.key_name
   vpc_security_group_ids = [aws_security_group.preview.id]
 
   root_block_device {
     volume_type           = "gp3"
-    volume_size           = 100
+    volume_size           = 500
     delete_on_termination = true
   }
 
@@ -102,6 +107,11 @@ resource "aws_instance" "preview" {
     repo_url    = var.github_repo_url
     admin_email = var.admin_email
   })
+
+  # a newer AMI or setup script must not replace the server; instance_type still changes in place
+  lifecycle {
+    ignore_changes = [ami, user_data]
+  }
 
   tags = { Name = "preview-server" }
 }
