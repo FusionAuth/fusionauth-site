@@ -160,8 +160,10 @@ rm -rf "$SLOT_DIR/astro/.astro" "$SLOT_DIR/astro/dist"
 
 # ── deps ──────────────────────────────────────────────────────────────────────
 # Main's dependencies get installed once per distinct package.json + lock, into
-# node_modules/<hash>.  A tree there never changes after it is marked complete,
-# so slots keep building against it while a newer one installs alongside.
+# node_modules/<hash>.  Its packages never change after it is marked complete,
+# so slots keep building against it while a newer one installs alongside.  Build
+# caches under its .cache/ (rendered mermaid diagrams) are content-keyed and
+# written atomically, so every slot on that tree shares them safely.
 #   - packages match main: symlink the slot to main's tree (no copy, no install)
 #   - packages differ: copy main's tree into the slot, then npm install only
 #     the difference; the slot keeps that tree until its packages change again
