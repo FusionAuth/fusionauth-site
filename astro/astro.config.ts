@@ -2,21 +2,20 @@ import {defineConfig, fontProviders} from 'astro/config';
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import mdx from "@astrojs/mdx";
-import { unified } from '@astrojs/markdown-remark';
+import { satteri } from '@astrojs/markdown-satteri';
 import tailwindcss from '@tailwindcss/vite';
-import indexPages from "astro-index-pages/index.js";
+import indexPages from "./src/integrations/astro-index-pages/index.js";
+import contentChecks from "./src/integrations/content-checks.mjs";
 import genMarkdownPages from 'astro-better-gen-markdown-pages';
-import { remarkMermaidSSR, mermaidTitleFix } from 'astro-better-mermaid';
-import remarkMdx from 'remark-mdx';
-import rehypeSlug from 'rehype-slug';
-import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import { mermaidSSR, mermaidTitle } from 'astro-better-mermaid/satteri';
 import linkChecker, { markdownLinkSyntaxChecker } from 'astro-better-link-checker';
 import icon from "astro-iconset";
-import { rehypeCodeBlocks, remarkShellSession } from 'astro-better-code-blocks';
+import { codeBlocks, shellSession } from 'astro-better-code-blocks/satteri';
 import { extractedCodeSnippets } from 'astro-better-code-snippet-extractor';
 import astroToc from 'astro-better-toc';
 import { openapiSummary } from './src/plugins/openapi-summary.js';
 import { cssPreload } from './src/plugins/css-preload.mjs';
+import { headingLinks } from './src/plugins/satteri-heading-links.mjs';
 
 function buildSitemap() {
   let siteUrl: string;
@@ -143,6 +142,9 @@ const lightboxProvider = () => ({
   enforce: 'post' as const,
   transform(code: string, id: string) {
     if (!id.endsWith('.mdx')) return;
+    // satteri appends the layout import; hoist it so layout CSS loads first, as with unified
+    const layoutImport = code.match(/^import \{ jsx as __astro_layout_jsx__ \} from 'astro\/jsx-runtime';\nimport __astro_layout_component__ from .*;$/m);
+    if (layoutImport) code = `${layoutImport[0]}\n${code.replace(layoutImport[0], '')}`;
     code = `import _LightboxImage from "src/components/LightboxImage.astro";\n${code}`;
     code = code.replace(
       "components: { Fragment: _Fragment, ...props.components, },",
@@ -188,6 +190,7 @@ const config = defineConfig({
     },
   },
   integrations: [
+    contentChecks(),
     extractedCodeSnippets({
       plugin: 'bluehawk-languages.js',
       // Step 7 displays snippets from a Playwright spec in tests/.
@@ -201,36 +204,27 @@ const config = defineConfig({
     icon(),
     mdx({
       syntaxHighlight: false,
-      processor: unified({
-          remarkPlugins: [
-          remarkMdx,
-          mermaidTitleFix,      // inserts title nodes before we transform code blocks
-          remarkMermaidSSR,     // replaces mermaid blocks with pre-rendered SVGs
-          remarkShellSession,
+      processor: satteri({
+        mdastPlugins: [
+          mermaidTitle(),       // inserts title nodes before we transform code blocks
+          mermaidSSR(),         // replaces mermaid blocks with pre-rendered SVGs
+          shellSession(),
         ],
-        rehypePlugins: [
-          [rehypeCodeBlocks, { excludeLangs: ['mermaid'] }],
-          rehypeSlug,
-          [
-            rehypeAutolinkHeadings,
-            {
-              behavior: 'append',
-              content: {
-                type: 'text',
-                value: '#',
-              },
-              properties: {
-                title: ['link to header'],
-                ariaLabel: ['Anchor'],
-                class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
-              },
-              headingProperties: {
-                class: 'group articleHeading'
-              }
+        hastPlugins: [
+          codeBlocks({ excludeLangs: ['mermaid'] }),
+          headingLinks({
+            content: '#',
+            properties: {
+              title: 'link to header',
+              ariaLabel: 'Anchor',
+              class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
             },
-          ],
+            headingProperties: {
+              class: 'group articleHeading'
+            }
+          }),
         ],
-        smartypants: false,
+        features: { smartPunctuation: false },
       })
     }),
     buildSitemap(),

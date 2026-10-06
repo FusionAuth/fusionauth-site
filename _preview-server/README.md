@@ -2,7 +2,7 @@
 
 This folder contains the setup scripts for a server that automatically builds and serves the site when someone opens a PR. Use this to validate that the rendered result of a change is indeed what you expect.
 
-All preview builds run on a single EC2 instance using 25 numbered slots. Each slot symlinks `node_modules` and uses a per-slot `.content-cache` to reduce build time. If a PR changes a dependency, `npm ci` runs. The preview server assigns new PRs to the oldest free slot and refreshes existing slots when new commits arrive.
+All preview builds run on a single EC2 instance using 25 numbered slots. Main's dependencies get installed once per distinct `package.json` and lockfile into `/opt/preview/node_modules/<hash>`. Slots whose packages match main symlink that tree. If a PR changes a dependency, the slot copies main's tree and runs `npm install` for the difference only. Each slot also uses a per-slot `.content-cache` to reduce build time. Only one build runs per slot at a time: a new push kills the previous build for that PR on the server, since cancelling the Actions job does not stop it. The preview server assigns new PRs to the oldest free slot and refreshes existing slots when new commits arrive.
 
 Nginx serves the static build output on HTTPS via [sslip.io](https://sslip.io) wildcard DNS — no separate DNS record needed.
 

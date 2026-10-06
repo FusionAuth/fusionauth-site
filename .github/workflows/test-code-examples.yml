@@ -10,6 +10,11 @@ on:
       - '.github/workflows/test-code-examples.yml'
   workflow_dispatch:
 
+# a new push to the PR cancels the run for the old commit, freeing its runner slots
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   discover:
     name: Discover changed test suites
@@ -85,6 +90,8 @@ jobs:
     if: ${{ needs.discover.outputs.matrix != '[]' }}
     runs-on: ubuntu-latest
     strategy:
+      # leaves runner slots for other PR workflows (including Preview) when many examples change
+      max-parallel: 8
       matrix:
         extractedcode: ${{ fromJson(needs.discover.outputs.matrix) }}
       fail-fast: false
