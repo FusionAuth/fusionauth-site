@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Run once on a fresh EC2 instance (Ubuntu 24.04 LTS recommended).
-# Tested on m6i.2xlarge (8 vCPU / 32 GB RAM).
+# Run once on a fresh EC2 instance (Ubuntu 26.04 LTS, arm64).
+# Runs on c8g.2xlarge (Graviton4, 8 vCPU / 16 GB RAM).
 #
 # Usage:
 #   sudo bash setup.sh <github-repo-ssh-url> <admin-email>

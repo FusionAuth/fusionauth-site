@@ -36,73 +36,6 @@ jobs:
           sparse-checkout: |
             _preview-server/scripts
 
-      # Create a GitHub Deployment for this PR environment so the PR header
-      # shows a yellow "in progress" indicator immediately, turning green/red
-      # when the build finishes.  Failures here are non-fatal (|| true).
-      - name: Create GitHub deployment
-        id: deployment
-        env:
-          REPO:    ${{ github.repository }}
-          SHA:     ${{ github.event.pull_request.head.sha }}
-          BRANCH:  ${{ github.head_ref }}
-          PR:      ${{ github.event.pull_request.number }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          DEPLOY_RESPONSE=$(jq -n \
-            --arg ref  "$BRANCH" \
-            --arg env  "preview-pr-$PR" \
-            --arg desc "PR #$PR preview build" \
-            '{ref:$ref, environment:$env, auto_merge:false,
-              required_contexts:[], transient_environment:true,
-              description:$desc}' \
-            | gh api -X POST "repos/$REPO/deployments" --input - 2>/dev/null \
-            || echo "{}")
-          DEPLOY_ID=$(echo "$DEPLOY_RESPONSE" | jq -r '.id // empty')
-          echo "id=${DEPLOY_ID}" >> "$GITHUB_OUTPUT"
-          [ -z "$DEPLOY_ID" ] && exit 0
-          jq -n --arg log "$RUN_URL" \
-            '{state:"in_progress", log_url:$log, description:"Building preview…"}' \
-            | gh api -X POST "repos/$REPO/deployments/$DEPLOY_ID/statuses" \
-                --input - || true
-
-      # Post an initial "building" comment so reviewers see immediate feedback.
-      # On subsequent pushes we find the existing comment by its marker and
-      # update it, so there's always exactly one preview comment per PR.
-      - name: Post / update "building" comment
-        id: comment
-        env:
-          REPO:    ${{ github.repository }}
-          PR:      ${{ github.event.pull_request.number }}
-          SHA:     ${{ github.event.pull_request.head.sha }}
-          BRANCH:  ${{ github.head_ref }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          SHORT_SHA="${SHA:0:7}"
-
-          EXISTING=$(gh api "repos/$REPO/issues/$PR/comments" \
-            --jq '[.[] | select(.body | contains("<!-- fusionauth-preview -->"))][0].id // empty' \
-            2>/dev/null || echo "")
-
-          if [ -n "$EXISTING" ]; then
-            # Preserve existing preview links — only replace the status heading so
-            # reviewers can still follow previous-build URLs during the rebuild.
-            EXISTING_BODY=$(gh api "repos/$REPO/issues/comments/$EXISTING" --jq '.body')
-            UPDATED=$(printf '%s\n' "$EXISTING_BODY" \
-              | awk '/^## /{if(!r){print "## ⏳ Building preview…"; r=1; next}} {print}')
-            printf '%s' "$UPDATED" | jq -Rs '{body:.}' \
-              | gh api -X PATCH "repos/$REPO/issues/comments/$EXISTING" --input -
-            echo "id=$EXISTING" >> "$GITHUB_OUTPUT"
-          else
-            BODY="<!-- fusionauth-preview -->
-          ## ⏳ Building preview…
-
-          Building \`${BRANCH}\` @ \`${SHORT_SHA}\` — [build logs](${RUN_URL})"
-            NEW_ID=$(printf '%s' "$BODY" | jq -Rs '{body:.}' \
-              | gh api -X POST "repos/$REPO/issues/$PR/comments" --input - 2>/dev/null \
-              | jq -r '.id // empty' 2>/dev/null || echo "")
-            echo "id=$NEW_ID" >> "$GITHUB_OUTPUT"
-          fi
-
       # Keep server-side scripts in sync with the repo — scp before every build
       # so script changes take effect without manual server access.
       - name: Sync scripts to EC2
@@ -118,27 +51,97 @@ jobs:
             preview@"$PREVIEW_HOST":/opt/preview/scripts/
           rm -f /tmp/pk
 
-      # SSH into the preview EC2 instance and run the slot build script.
-      # Stdout carries structured lines (PORT:, URL:, PAGE:) that we capture;
-      # stderr carries build logs (visible in the Actions run log).
+      # Runs the slot build over SSH. Stdout carries structured lines (PORT:, URL:,
+      # PAGE:) that we capture; stderr carries build logs (visible in the run log).
+      # The deployment and "building" comment API calls take ~9s and don't affect
+      # the build, so they run in the background while it starts.
       - name: Build on EC2
         id: build
         env:
           SSH_KEY:      ${{ secrets.PREVIEW_SSH_KEY }}
           PREVIEW_HOST: ${{ secrets.PREVIEW_HOST }}
+          REPO:         ${{ github.repository }}
           PR:           ${{ github.event.pull_request.number }}
           SHA:          ${{ github.event.pull_request.head.sha }}
+          BRANCH:       ${{ github.head_ref }}
+          RUN_URL:      ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
+
+          # GitHub Deployment for this PR environment: the PR header shows a yellow
+          # "in progress" indicator, turning green/red when the build finishes.
+          # Failures here are non-fatal.
+          create_deployment() {
+            DEPLOY_RESPONSE=$(jq -n \
+              --arg ref  "$BRANCH" \
+              --arg env  "preview-pr-$PR" \
+              --arg desc "PR #$PR preview build" \
+              '{ref:$ref, environment:$env, auto_merge:false,
+                required_contexts:[], transient_environment:true,
+                description:$desc}' \
+              | gh api -X POST "repos/$REPO/deployments" --input - 2>/dev/null \
+              || echo "{}")
+            DEPLOY_ID=$(echo "$DEPLOY_RESPONSE" | jq -r '.id // empty')
+            echo "$DEPLOY_ID" > /tmp/deploy-id
+            [ -z "$DEPLOY_ID" ] && return 0
+            jq -n --arg log "$RUN_URL" \
+              '{state:"in_progress", log_url:$log, description:"Building preview…"}' \
+              | gh api -X POST "repos/$REPO/deployments/$DEPLOY_ID/statuses" \
+                  --input - > /dev/null || true
+          }
+
+          # "Building" comment. On later pushes, find the existing comment by its
+          # marker and update it, so there's always exactly one per PR.
+          post_building_comment() {
+            SHORT_SHA="${SHA:0:7}"
+            EXISTING=$(gh api "repos/$REPO/issues/$PR/comments" \
+              --jq '[.[] | select(.body | contains("<!-- fusionauth-preview -->"))][0].id // empty' \
+              2>/dev/null || echo "")
+            if [ -n "$EXISTING" ]; then
+              # Preserve existing preview links — only replace the status heading so
+              # reviewers can still follow previous-build URLs during the rebuild.
+              EXISTING_BODY=$(gh api "repos/$REPO/issues/comments/$EXISTING" --jq '.body')
+              UPDATED=$(printf '%s\n' "$EXISTING_BODY" \
+                | awk '/^## /{if(!r){print "## ⏳ Building preview…"; r=1; next}} {print}')
+              printf '%s' "$UPDATED" | jq -Rs '{body:.}' \
+                | gh api -X PATCH "repos/$REPO/issues/comments/$EXISTING" --input - > /dev/null
+              echo "$EXISTING" > /tmp/comment-id
+            else
+              BODY="<!-- fusionauth-preview -->
+          ## ⏳ Building preview…
+
+          Building \`${BRANCH}\` @ \`${SHORT_SHA}\` — [build logs](${RUN_URL})"
+              NEW_ID=$(printf '%s' "$BODY" | jq -Rs '{body:.}' \
+                | gh api -X POST "repos/$REPO/issues/$PR/comments" --input - 2>/dev/null \
+                | jq -r '.id // empty' 2>/dev/null || echo "")
+              echo "$NEW_ID" > /tmp/comment-id
+            fi
+          }
+
+          create_deployment > /tmp/announce-deployment.log 2>&1 &
+          deployment_pid=$!
+          post_building_comment > /tmp/announce-comment.log 2>&1 &
+          comment_pid=$!
+
           install -m600 /dev/null /tmp/pk
           printf '%s\n' "$SSH_KEY" | sed 's/\\n/\n/g' | tr -d '\r' > /tmp/pk
 
+          set +e
           ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -i /tmp/pk \
             preview@"$PREVIEW_HOST" \
             "/opt/preview/scripts/build-preview.sh '$PR' '$SHA'" \
             > /tmp/preview-out.txt
-
+          build_status=$?
+          wait "$deployment_pid" "$comment_pid"
+          set -e
           rm -f /tmp/pk
+          cat /tmp/announce-deployment.log /tmp/announce-comment.log >&2
+
+          # written before any exit, so the success and failure steps can find them
+          echo "deployment_id=$(cat /tmp/deploy-id 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
+          echo "comment_id=$(cat /tmp/comment-id 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
+          [ "$build_status" -eq 0 ] || exit "$build_status"
+
           echo "url=$(grep '^URL:' /tmp/preview-out.txt | sed 's/^URL://')" >> "$GITHUB_OUTPUT"
           {
             echo 'pages<<PAGES_EOF'
@@ -148,10 +151,10 @@ jobs:
           rm -f /tmp/preview-out.txt
 
       - name: Update deployment — success
-        if: success() && steps.deployment.outputs.id != ''
+        if: success() && steps.build.outputs.deployment_id != ''
         env:
           REPO:        ${{ github.repository }}
-          DEPLOY_ID:   ${{ steps.deployment.outputs.id }}
+          DEPLOY_ID:   ${{ steps.build.outputs.deployment_id }}
           PREVIEW_URL: ${{ steps.build.outputs.url }}
           RUN_URL:     ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
@@ -167,7 +170,7 @@ jobs:
         if: success()
         env:
           REPO:        ${{ github.repository }}
-          COMMENT_ID:  ${{ steps.comment.outputs.id }}
+          COMMENT_ID:  ${{ steps.build.outputs.comment_id }}
           PREVIEW_URL: ${{ steps.build.outputs.url }}
           PAGES:       ${{ steps.build.outputs.pages }}
           BRANCH:      ${{ github.head_ref }}
@@ -195,10 +198,10 @@ jobs:
             | gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" --input -
 
       - name: Update deployment — failure
-        if: failure() && steps.deployment.outputs.id != ''
+        if: failure() && steps.build.outputs.deployment_id != ''
         env:
           REPO:      ${{ github.repository }}
-          DEPLOY_ID: ${{ steps.deployment.outputs.id }}
+          DEPLOY_ID: ${{ steps.build.outputs.deployment_id }}
           RUN_URL:   ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           jq -n --arg log "$RUN_URL" \
@@ -210,7 +213,7 @@ jobs:
         if: failure()
         env:
           REPO:       ${{ github.repository }}
-          COMMENT_ID: ${{ steps.comment.outputs.id }}
+          COMMENT_ID: ${{ steps.build.outputs.comment_id }}
           BRANCH:     ${{ github.head_ref }}
           SHA:        ${{ github.event.pull_request.head.sha }}
           RUN_URL:    ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
