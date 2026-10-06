@@ -45,7 +45,8 @@ else
   SSLIP_DOMAIN=$(echo "$PUBLIC_IP" | tr '.' '-').sslip.io
 fi
 
-log() { echo "[preview] $*" >&2; }
+# timestamped like astro's own log lines, so slow setup steps show up in the job log
+log() { echo "$(date +%T) [preview] $*" >&2; }
 
 # ── Slot management ──────────────────────────────────────────────────────────
 # claims/NN holds the PR number that owns slot NN.  It lives outside the worktree
@@ -278,6 +279,7 @@ NODE_OPTIONS=--max_old_space_size=8192 \
   PROD=true \
   npm run build >&2
 
+log "Build finished; saving caches …"
 # Keep this slot's snippets for any slot that builds the same extractedcode.
 BUILT_SNIPPET_HASH=$(cat "$SLOT_SNIPPETS/.snippets-hash" 2>/dev/null || true)
 if [[ -n "$BUILT_SNIPPET_HASH" && ! -d "$SNIPPETS_STORE/$BUILT_SNIPPET_HASH" ]]; then
