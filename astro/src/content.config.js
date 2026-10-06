@@ -24,7 +24,9 @@ async function fetchWithCache(url, cacheFile) {
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     const text = await res.text();
     fs.mkdirSync(CACHE_DIR, { recursive: true });
-    fs.writeFileSync(cacheFile, text, 'utf-8');
+    // tmp + rename so a killed build can't leave a truncated file that still looks fresh
+    fs.writeFileSync(`${cacheFile}.tmp`, text, 'utf-8');
+    fs.renameSync(`${cacheFile}.tmp`, cacheFile);
     return text;
   } catch (err) {
     try {

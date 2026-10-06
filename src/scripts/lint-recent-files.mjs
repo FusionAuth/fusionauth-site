@@ -6,17 +6,23 @@ const headRef = process.env.HEAD_REF || 'HEAD';
 const validExtensions = ['js', 'mjs', 'cjs', 'ts', 'md', 'mdx'];
 
 let diffOutput;
-try {
-  console.log(`Comparing ${headRef} against ${baseRef}...`);
-  // --name-only returns just the file paths (no git status formatting)
-  // --diff-filter=AM inherently restricts the output to (A)dded and (M)odified files
-  // '...' finds the merge-base, effectively showing what changed in the PR
-  diffOutput = execSync(`git diff --name-only --diff-filter=AM ${baseRef}...${headRef}`)
-    .toString()
-    .trim();
-} catch (error) {
-  console.error(`Error executing git diff. Ensure your base ref exists locally.\n${error.message}`);
-  process.exit(1);
+if (process.env.CHANGED_FILES !== undefined) {
+  // CI passes the PR's added and modified files (from the GitHub API), so it needs no git history
+  console.log('Using changed files from CHANGED_FILES...');
+  diffOutput = process.env.CHANGED_FILES.trim();
+} else {
+  try {
+    console.log(`Comparing ${headRef} against ${baseRef}...`);
+    // --name-only returns just the file paths (no git status formatting)
+    // --diff-filter=AM inherently restricts the output to (A)dded and (M)odified files
+    // '...' finds the merge-base, effectively showing what changed in the PR
+    diffOutput = execSync(`git diff --name-only --diff-filter=AM ${baseRef}...${headRef}`)
+      .toString()
+      .trim();
+  } catch (error) {
+    console.error(`Error executing git diff. Ensure your base ref exists locally.\n${error.message}`);
+    process.exit(1);
+  }
 }
 
 if (!diffOutput) {
