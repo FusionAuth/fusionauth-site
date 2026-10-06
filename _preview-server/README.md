@@ -17,7 +17,7 @@ Nginx serves the static build output on HTTPS via [sslip.io](https://sslip.io) w
 
 ## Quick setup (Terraform)
 
-Prerequisites: `terraform`, `aws` CLI (authenticated), `gh` CLI (authenticated), `ssh`, `jq`.
+Prerequisites: `terraform`, `aws` CLI (authenticated), `ssh`, `jq`.
 
 ```shell-session
 cd _preview-server
@@ -25,11 +25,11 @@ cd _preview-server
 ```
 
 `provision.sh` does everything end-to-end:
-1. `terraform apply` — creates EC2 instance (m6i.2xlarge, Ubuntu 24.04 LTS), security group (80/443/22), and Elastic IP.
+1. `terraform apply` — creates EC2 instance (c8g.2xlarge, Ubuntu 26.04 LTS arm64, 500 GB gp3), security group (80/443/22), and Elastic IP.
 2. Waits for `user_data` to finish running `setup.sh` on the instance (~5 min).
 3. Generates a deploy SSH keypair and installs the public key on the instance.
 4. Adds a cron job to keep the repo clone warm (`git pull` every 10 min).
-5. Sets `PREVIEW_HOST` and `PREVIEW_SSH_KEY` as GitHub secrets on the repo.
+5. Prints the values for the `PREVIEW_HOST` and `PREVIEW_SSH_KEY` GitHub secrets and saves the deploy key to `~/preview-deploy-key-<timestamp>`. Paste them in at Settings > Secrets and variables > Actions, then delete the key file.
 
 To tear down: `cd terraform && terraform destroy`.
 
@@ -38,9 +38,9 @@ To tear down: `cd terraform && terraform destroy`.
 If you prefer not to use Terraform:
 
 1. Launch an EC2 instance:
-   - AMI: Ubuntu 24.04 LTS
-   - Instance type: m6i.2xlarge (8 vCPU, 32 GB RAM)
-   - Storage: 100 GB gp3
+   - AMI: Ubuntu 26.04 LTS, 64-bit (Arm)
+   - Instance type: c8g.2xlarge (Graviton4, 8 vCPU, 16 GB RAM); any Graviton C or M type works, not T types
+   - Storage: 500 GB gp3
    - Security group inbound: port 22, 80, 443 from `0.0.0.0/0`
    - Allocate an Elastic IP and associate it (so the IP stays stable across reboots)
 
@@ -63,12 +63,9 @@ If you prefer not to use Terraform:
      < /tmp/preview-key.pub
    ```
 
-1. Set GitHub secrets:
-
-   ```shell-session
-   gh secret set PREVIEW_HOST    --repo FusionAuth/fusionauth-site --body "<ec2-ip>"
-   gh secret set PREVIEW_SSH_KEY --repo FusionAuth/fusionauth-site --body "$(cat /tmp/preview-key)"
-   ```
+1. Set GitHub secrets at Settings > Secrets and variables > Actions:
+   - `PREVIEW_HOST`: the Elastic IP
+   - `PREVIEW_SSH_KEY`: the full contents of `/tmp/preview-key`, then delete that file
 
 1. Add the cron job (keeps the master clone warm so builds start from a fresh tree):
 
