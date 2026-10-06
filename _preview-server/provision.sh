@@ -2,7 +2,7 @@
 # Provisions the preview server end-to-end using Terraform, then runs
 # post-provisioning steps (deploy keypair, cron, GitHub secrets).
 #
-# Prerequisites: terraform, aws CLI (authenticated), gh CLI (authenticated), ssh, jq
+# Prerequisites: terraform, aws CLI (authenticated), ssh, jq
 #
 # Usage:
 #   ./provision.sh <admin-email> [--github-repo <owner/repo>]
@@ -26,7 +26,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-for cmd in terraform aws gh ssh ssh-keygen jq; do
+for cmd in terraform aws ssh ssh-keygen jq; do
   command -v "$cmd" >/dev/null || { echo "Missing prerequisite: $cmd" >&2; exit 1; }
 done
 
@@ -93,16 +93,20 @@ ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 \
       echo '*/10 * * * * git -C /opt/preview/repo pull --ff-only --quiet') \
     | sudo -u preview crontab -"
 
-# ── 6. Set GitHub secrets ─────────────────────────────────────────────────────
-echo "==> Setting GitHub secrets on $GITHUB_REPO…"
-gh secret set PREVIEW_HOST    --repo "$GITHUB_REPO" --body "$PREVIEW_IP"
-gh secret set PREVIEW_SSH_KEY --repo "$GITHUB_REPO" --body "$(cat "$DEPLOY_KEY_FILE")"
+# ── 6. Save the deploy key for the GitHub secret ──────────────────────────────
+# the /tmp copy is deleted on exit, so keep one outside the repo for pasting
+SAVED_KEY_FILE="$HOME/preview-deploy-key-$(date +%Y%m%d%H%M%S)"
+install -m600 "$DEPLOY_KEY_FILE" "$SAVED_KEY_FILE"
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 echo ""
 echo "Preview server is ready."
 echo "  Elastic IP:  $PREVIEW_IP"
 echo "  URL pattern: https://<4001-4025>.\$(ssh ubuntu@$PREVIEW_IP cat /opt/preview/.sslip-domain)"
-echo "  Secrets set: PREVIEW_HOST, PREVIEW_SSH_KEY on $GITHUB_REPO"
+echo ""
+echo "Set these repository secrets at https://github.com/$GITHUB_REPO/settings/secrets/actions"
+echo "  PREVIEW_HOST     $PREVIEW_IP"
+echo "  PREVIEW_SSH_KEY  the full contents of $SAVED_KEY_FILE"
+echo "Then delete the key file: rm '$SAVED_KEY_FILE'"
 echo ""
 echo "Open a test PR to verify preview builds are working."
