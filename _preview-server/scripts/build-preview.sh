@@ -45,7 +45,8 @@ else
   SSLIP_DOMAIN=$(echo "$PUBLIC_IP" | tr '.' '-').sslip.io
 fi
 
-log() { echo "[preview] $*" >&2; }
+# timestamped like astro's own log lines, so slow setup steps show up in the job log
+log() { echo "$(date +%T) [preview] $*" >&2; }
 
 # ── Slot management ──────────────────────────────────────────────────────────
 # claims/NN holds the PR number that owns slot NN.  It lives outside the worktree
@@ -147,11 +148,50 @@ fi
 # and a shared cache causes one PR's compiled content to bleed into another's.
 mkdir -p "$SLOT_DIR/astro/.content-cache"
 
-# generated-code-snippets: pre-seed with a hard-linked copy from master so the
-# hash check in generate-code-snippets.sh exits early when localcode/ is unchanged.
-if [[ ! -d "$SLOT_DIR/astro/src/generated-code-snippets" ]]; then
-  cp -al "$REPO_DIR/astro/src/generated-code-snippets" \
-         "$SLOT_DIR/astro/src/generated-code-snippets" 2>/dev/null || true
+# generated-code-snippets: the snippet extractor reruns bluehawk whenever
+# extractedcode/ no longer matches the hash in its .snippets-hash.  A slot's copy
+# goes stale as soon as it builds different extractedcode, so finished outputs are
+# kept in snippets/<hash> and copied into any slot whose extractedcode hashes the
+# same.  Entries are renamed into place once and only ever copied out, never
+# linked, so no slot can change another slot's snippets.
+SNIPPETS_STORE="$PREVIEW_DIR/snippets"
+SLOT_SNIPPETS="$SLOT_DIR/astro/src/generated-code-snippets"
+
+# must match hashDir() in astro-better-code-snippet-extractor
+snippet_source_hash() {
+  node -e '
+const { createHash } = require("crypto"), fs = require("fs"), path = require("path");
+const src = path.resolve(process.argv[1]), hash = createHash("sha256");
+const walk = (dir) => {
+  const entries = fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name));
+  for (const e of entries) {
+    if (e.name === "node_modules" || e.name === ".git") continue;
+    const full = path.join(dir, e.name);
+    if (e.isDirectory()) walk(full);
+    else { hash.update(full.slice(src.length)); hash.update(fs.readFileSync(full)); }
+  }
+};
+walk(src);
+process.stdout.write(hash.digest("hex"));
+' "$SLOT_DIR/astro/extractedcode"
+}
+
+# older builds hard-linked these from the repo checkout; give the slot its own files
+if [[ -d "$SLOT_SNIPPETS" && -n "$(find "$SLOT_SNIPPETS" -type f -links +1 -print -quit)" ]]; then
+  rm -rf "$SLOT_SNIPPETS.tmp"
+  cp -a "$SLOT_SNIPPETS" "$SLOT_SNIPPETS.tmp"
+  rm -rf "$SLOT_SNIPPETS"
+  mv "$SLOT_SNIPPETS.tmp" "$SLOT_SNIPPETS"
+fi
+
+SNIPPET_HASH=$(snippet_source_hash 2>/dev/null || true)
+if [[ -n "$SNIPPET_HASH" && -d "$SNIPPETS_STORE/$SNIPPET_HASH" ]]; then
+  touch "$SNIPPETS_STORE/$SNIPPET_HASH"   # mtime marks it as recently used
+  if [[ "$(cat "$SLOT_SNIPPETS/.snippets-hash" 2>/dev/null || true)" != "$SNIPPET_HASH" ]]; then
+    log "Restoring generated code snippets from cache …"
+    rm -rf "$SLOT_SNIPPETS"
+    cp -a "$SNIPPETS_STORE/$SNIPPET_HASH" "$SLOT_SNIPPETS"
+  fi
 fi
 
 # Clear Astro's compiled-component cache so layout/component changes always take effect,
@@ -160,8 +200,10 @@ rm -rf "$SLOT_DIR/astro/.astro" "$SLOT_DIR/astro/dist"
 
 # ── deps ──────────────────────────────────────────────────────────────────────
 # Main's dependencies get installed once per distinct package.json + lock, into
-# node_modules/<hash>.  A tree there never changes after it is marked complete,
-# so slots keep building against it while a newer one installs alongside.
+# node_modules/<hash>.  Its packages never change after it is marked complete,
+# so slots keep building against it while a newer one installs alongside.  Build
+# caches under its .cache/ (rendered mermaid diagrams) are content-keyed and
+# written atomically, so every slot on that tree shares them safely.
 #   - packages match main: symlink the slot to main's tree (no copy, no install)
 #   - packages differ: copy main's tree into the slot, then npm install only
 #     the difference; the slot keeps that tree until its packages change again
@@ -236,6 +278,20 @@ NODE_OPTIONS=--max_old_space_size=8192 \
   SITE_URL="${PREVIEW_URL}" \
   PROD=true \
   npm run build >&2
+
+log "Build finished; saving caches …"
+# Keep this slot's snippets for any slot that builds the same extractedcode.
+BUILT_SNIPPET_HASH=$(cat "$SLOT_SNIPPETS/.snippets-hash" 2>/dev/null || true)
+if [[ -n "$BUILT_SNIPPET_HASH" && ! -d "$SNIPPETS_STORE/$BUILT_SNIPPET_HASH" ]]; then
+  mkdir -p "$SNIPPETS_STORE"
+  snippet_tmp="$SNIPPETS_STORE/.tmp-$$"
+  rm -rf "$snippet_tmp"
+  cp -a "$SLOT_SNIPPETS" "$snippet_tmp"
+  # -T fails if another slot saved the same hash first; keep theirs
+  mv -T "$snippet_tmp" "$SNIPPETS_STORE/$BUILT_SNIPPET_HASH" 2>/dev/null || rm -rf "$snippet_tmp"
+fi
+# drop entries (and leftovers from killed builds) unused for two weeks
+find "$SNIPPETS_STORE" -mindepth 1 -maxdepth 1 -mtime +14 -exec rm -rf {} + 2>/dev/null || true
 
 # ── Publish output ────────────────────────────────────────────────────────────
 log "Publishing build output to slot $PADDED …"

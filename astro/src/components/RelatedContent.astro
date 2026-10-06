@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import { parseTagList } from 'src/tools/parseTagList';
 
 interface Props {
   tags?: string;
@@ -64,7 +65,7 @@ function entryUrl(e: Candidate): string {
 
 function sharedTags(entryTagStr?: string): string[] {
   if (!entryTagStr || tagSet.size === 0) return [];
-  return entryTagStr.split(',').map((t: string) => t.trim().toLowerCase()).filter((t: string) => tagSet.has(t));
+  return parseTagList(entryTagStr).filter((t: string) => tagSet.has(t));
 }
 
 const SECTION_CAPS: Record<string, string> = {
@@ -102,8 +103,9 @@ if (overridePages && overridePages.length > 0) {
 } else if (tagSet.size > 0) {
   function topTagResults(pool: Candidate[], n: number): Result[] {
     return pool
-      .map(e => ({ ...e, shared: sharedTags(e.tags), url: entryUrl(e) }))
-      .filter(e => e.shared.length > 0)
+      .map(e => ({ e, shared: sharedTags(e.tags) }))
+      .filter(({ shared }) => shared.length > 0)
+      .map(({ e, shared }) => ({ ...e, shared, url: entryUrl(e) }))
       .sort((a, b) => b.shared.length - a.shared.length)
       .slice(0, n);
   }
