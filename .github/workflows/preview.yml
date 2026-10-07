@@ -1,8 +1,8 @@
-name: Preview build of entire astro site
+name: Preview build
 
 on:
   workflow_run:
-    workflows: ["Record PR Metadata"]
+    workflows: ["Request preview build"] # must match preview-kickoff.yml name
     types: [completed]
 
 permissions:
@@ -30,7 +30,7 @@ jobs:
             _preview-server/scripts
 
       - name: Download PR Metadata
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: pr-metadata
           path: pr-metadata
@@ -40,10 +40,12 @@ jobs:
       - name: Load Metadata
         id: meta
         run: |
-          echo "pr=$(cat pr-metadata/pr)" >> "$GITHUB_OUTPUT"
-          echo "sha=$(cat pr-metadata/sha)" >> "$GITHUB_OUTPUT"
-          echo "branch=$(cat pr-metadata/branch)" >> "$GITHUB_OUTPUT"
-          echo "action=$(cat pr-metadata/action)" >> "$GITHUB_OUTPUT"
+          {
+            echo "pr=$(cat pr-metadata/pr)"
+            echo "sha=$(cat pr-metadata/sha)"
+            echo "branch=$(cat pr-metadata/branch)"
+            echo "action=$(cat pr-metadata/action)"
+          } >> "$GITHUB_OUTPUT"
           chmod +x _preview-server/scripts/*.sh
 
       - name: Handle Build

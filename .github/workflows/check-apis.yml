@@ -1,8 +1,8 @@
-name: Check that API docs match released client libraries
+name: Check API docs against client libraries
 
 on:
   schedule:
-    - cron: '31 18 * * *'
+    - cron: '31 8 * * 1'
   workflow_dispatch:
 
 jobs:
@@ -10,17 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: '3.4'
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
       - name: Check APIs for completeness against client libs
-        run: |
-          # check out last released version of the client libs
-          tagver=`curl --silent https://account.fusionauth.io/api/version -o - | jq 'last(.versions[-1])'|sed 's/"//g'`
-          if ! git ls-remote --exit-code --heads https://github.com/fusionauth/fusionauth-client-builder "$tagver" > /dev/null 2>&1; then
-            tagver=$(echo "$tagver" | sed 's/\.[0-9]*$/.0/')
-          fi
-          git clone --depth 1 --branch $tagver https://github.com/fusionauth/fusionauth-client-builder
-          src/check-apis-against-client-json.rb -f $PWD/src/.checkapis.yaml -c $PWD/fusionauth-client-builder -v
-        shell: bash
+        run: bash src/scripts/check-apis.sh
+
+  report:
+    needs: check_apis
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/report-scheduled-run.yml
+    with:
+      result: ${{ needs.check_apis.result }}
+    permissions:
+      contents: read
+      issues: write

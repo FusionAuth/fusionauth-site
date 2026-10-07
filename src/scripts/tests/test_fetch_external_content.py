@@ -11,6 +11,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[3]
 SNAPSHOTS = Path("astro/extractedcode/configuration-snippets")
 JSON_GEN = Path("astro/src/content/json/generated")
+THEME_TEMPLATES = Path("astro/src/content/json/themes/templates.json")
 
 # An independent list verifies the whitelist and the two ignored-path mappings.
 SOURCES = {
@@ -53,6 +54,13 @@ elif command == "jq":
     print("1.99.0")
 elif command == "javac":
     pass
+elif command == "javap":
+    assert args[-1] == "io.fusionauth.domain.Theme$Templates", args
+    print("public class io.fusionauth.domain.Theme$Templates {")
+    for field in data["theme_fields"]:
+        print(f"  public java.lang.String {field};")
+    print("  public io.fusionauth.domain.Theme$Templates();")
+    print("}")
 elif command == "java":
     if "GenerateJSONFromAnnotations" in args:
         out_dir = pathlib.Path(args[args.index("GenerateJSONFromAnnotations") + 1])
@@ -65,8 +73,8 @@ elif command == "unzip":
         sys.stdout.write(data["json"]["sample-usage-data.json"])
     else:
         out = pathlib.Path(args[args.index("-d") + 1])
-        (out / "fusionauth-app/fusionauth-app/lib").mkdir(parents=True)
-        (out / "fusionauth-app/fusionauth-app/lib/dummy.jar").touch()
+        (out / "fusionauth-app/lib").mkdir(parents=True)
+        (out / "fusionauth-app/lib/dummy.jar").touch()
 elif command == "curl":
     if any("account.fusionauth.io" in a for a in args):
         print('{"versions": ["1.99.0"]}')
@@ -103,6 +111,10 @@ class RefreshTests(unittest.TestCase):
         else:
             self.json_dir.mkdir()
 
+        self.theme_templates = self.root / THEME_TEMPLATES
+        self.theme_templates.parent.mkdir(parents=True)
+        shutil.copy2(ROOT / THEME_TEMPLATES, self.theme_templates)
+
         self.script = self.root / "src/scripts/fetch_external_content.sh"
         self.script.parent.mkdir(parents=True)
         shutil.copy2(ROOT / "src/scripts/fetch_external_content.sh", self.script)
@@ -126,11 +138,12 @@ class RefreshTests(unittest.TestCase):
             if not path.exists():
                 path.write_text('{\n  "mock": "data"\n}')
             self.fixture["json"][json_file] = path.read_text()
+        self.fixture["theme_fields"] = [t["fieldName"] for t in json.loads(self.theme_templates.read_text())]
 
         # Wire up mock tools
         fake_bin = self.root / "bin"
         fake_bin.mkdir()
-        for command in ("git", "curl", "jq", "unzip", "javac", "java"):
+        for command in ("git", "curl", "jq", "unzip", "javac", "java", "javap"):
             executable = fake_bin / command
             executable.write_text(FAKE_COMMAND)
             executable.chmod(0o755)
@@ -138,11 +151,14 @@ class RefreshTests(unittest.TestCase):
         self.fixture_path = self.root / "fixture.json"
         self.requests = self.root / "requests.jsonl"
         self.environment = dict(os.environ, PATH=f"{fake_bin}:{os.environ['PATH']}",
-                                FETCH_FIXTURE=str(self.fixture_path), FETCH_REQUESTS=str(self.requests))
+                                FETCH_FIXTURE=str(self.fixture_path), FETCH_REQUESTS=str(self.requests),
+                                GITHUB_STEP_SUMMARY=str(self.root / "summary.md"))
+        for name in ("FUSIONAUTH_VERSION", "FUSIONAUTH_APP_ZIP"):
+            self.environment.pop(name, None)
         self.before = self.contents()
 
     def _tracked_files(self):
-        files = list(self.snapshots.rglob("*")) + list(self.json_dir.rglob("*"))
+        files = list(self.snapshots.rglob("*")) + list(self.json_dir.rglob("*")) + [self.theme_templates]
         return [p for p in files if p.is_file()]
 
     def contents(self):
@@ -189,13 +205,16 @@ class RefreshTests(unittest.TestCase):
         self.assertIn("No local files were modified", result.stderr)
         self.assertEqual(self.contents(), self.before)
         self.assertEqual(self.file_metadata(), metadata)
+        summary = (self.root / "summary.md").read_text()
+        self.assertIn("bash src/scripts/fetch_external_content.sh", summary)
+        self.assertIn("+# upstream change", summary)
 
     def test_json_drift_is_detected_and_fails_check(self):
         self.fixture["json"]["api-endpoints.json"] = '{\n  "changed": true\n}'
         result = self.run_script("--check")
         self.assertEqual(result.returncode, 1)
         self.assertIn("Changed JSON: api-endpoints.json", result.stdout)
-        self.assertIn('+"changed": true', result.stdout)
+        self.assertIn('+  "changed": true', result.stdout)
         self.assertEqual(self.contents(), self.before)
 
     def test_json_whitespace_drift_is_ignored_by_check(self):
@@ -204,6 +223,13 @@ class RefreshTests(unittest.TestCase):
         result = self.run_script("--check")
         self.assertEqual(result.returncode, 0)
         self.assertEqual(self.contents(), self.before)
+
+    def test_refresh_skips_whitespace_only_json_changes(self):
+        self.fixture["json"]["api-endpoints.json"] = self.fixture["json"]["api-endpoints.json"].replace("{", "{\n    ")
+        self.change_container()
+        self.assertEqual(self.run_script().returncode, 0)
+        path = str(JSON_GEN / "api-endpoints.json")
+        self.assertEqual(self.contents()[path], self.before[path])
 
     def test_curl_does_not_load_user_configuration(self):
         self.assertEqual(self.run_script("--check").returncode, 0)
@@ -263,6 +289,32 @@ class RefreshTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Empty upstream file", result.stderr)
         self.assertEqual(self.contents(), self.before)
+
+    def test_theme_template_drift_fails_both_modes_without_editing_templates_json(self):
+        self.fixture["theme_fields"] = [f for f in self.fixture["theme_fields"] if f != "oauth2Wait"] + ["newTemplate"]
+        for arguments in (("--check",), ()):
+            with self.subTest(arguments=arguments):
+                result = self.run_script(*arguments)
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("+ newTemplate", result.stdout)
+                self.assertIn("- oauth2Wait", result.stdout)
+                self.assertEqual(self.contents(), self.before)
+        self.assertIn("templates.json` by hand", (self.root / "summary.md").read_text())
+
+    def test_unreadable_theme_class_fails(self):
+        self.fixture["theme_fields"] = []
+        result = self.run_script("--check")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Could not read fields", result.stderr)
+
+    def test_shared_app_zip_skips_version_lookup_and_download(self):
+        zip_path = self.root / "shared.zip"
+        zip_path.write_text("mock zip")
+        self.environment.update(FUSIONAUTH_APP_ZIP=str(zip_path))
+        self.assertEqual(self.run_script("--check").returncode, 0)
+        requests = [json.loads(line) for line in self.requests.read_text().splitlines()]
+        curl_args = [" ".join(args) for command, args in requests if command == "curl"]
+        self.assertFalse(any("account.fusionauth.io" in a or "files.fusionauth.io" in a for a in curl_args))
 
     def test_head_resolution_failure_leaves_snapshots_untouched(self):
         self.change_container()

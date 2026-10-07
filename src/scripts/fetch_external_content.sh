@@ -9,6 +9,7 @@ case "${1:-}" in
   --help)
     printf 'Usage: bash src/scripts/fetch_external_content.sh [--check]\n'
     printf 'Refresh configuration snapshots and generated JSON, or report drift without changing files.\n'
+    printf 'Set FUSIONAUTH_APP_ZIP to reuse a downloaded release zip, or FUSIONAUTH_VERSION to pin the download.\n'
     exit 0 ;;
   *) printf 'Unknown argument: %s\n' "$1" >&2; exit 2 ;;
 esac
@@ -20,6 +21,7 @@ fi
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 snapshot_dir="$repo_root/astro/extractedcode/configuration-snippets"
 json_dir="$repo_root/astro/src/content/json/generated"
+templates_json="$repo_root/astro/src/content/json/themes/templates.json"
 
 if [[ -n "$(find "$snapshot_dir" -name repositoryUrl.txt -print 2>/dev/null)" ]]; then
   printf 'Externally owned configuration snapshots must not be exported.\n' >&2
@@ -57,7 +59,11 @@ staging_dir="$(mktemp -d)"
 trap 'rm -rf "$staging_dir"' EXIT
 cp "$snapshot_dir/SOURCES.md" "$staging_dir/SOURCES.md"
 mkdir -p "$staging_dir/json"
+drift="$staging_dir/drift.diff"
+: > "$drift"
 changed=0
+changed_json=()
+theme_drift=0
 
 # fetch snapshots
 for repository in "${repositories[@]}"; do
@@ -108,7 +114,7 @@ for repository in "${repositories[@]}"; do
       printf '\nChanged snapshot: %s\n' "$local_path"
       previous="$snapshot_dir/$local_path"
       [[ -f "$previous" ]] || previous=/dev/null
-      diff -u "$previous" "$destination" \vert{}\vert{} [[ $? -eq 1 ]]
+      { diff -u "$previous" "$destination" || [[ $? -eq 1 ]]; } | tee -a "$drift"
     fi
   done
   
@@ -122,15 +128,18 @@ done
 
 # generate json content
 printf '\nFetching fusionauth-app for JSON generation...\n'
-version=$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')
-printf 'Downloading version %s\n' "$version"
-
-curl -f -L -s "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" -o "$staging_dir/app.zip"
+app_zip="${FUSIONAUTH_APP_ZIP:-}"
+if [[ -z "$app_zip" ]]; then
+  version="${FUSIONAUTH_VERSION:-$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')}"
+  app_zip="$staging_dir/app.zip"
+  printf 'Downloading version %s\n' "$version"
+  curl -f -L -s "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" -o "$app_zip"
+fi
 mkdir -p "$staging_dir/fusionauth-app"
-unzip -q "$staging_dir/app.zip" -d "$staging_dir/fusionauth-app"
+unzip -q "$app_zip" -d "$staging_dir/fusionauth-app"
 
 lib_dir="$staging_dir/fusionauth-app/fusionauth-app/lib"
-cp=$(find "$lib_dir" -name '*.jar' \vert{} tr '\n' ':' \vert{} sed 's/:$//')
+cp=$(find "$lib_dir" -name '*.jar' | tr '\n' ':' | sed 's/:$//')
 java_classes="$staging_dir/java-classes"
 mkdir -p "$java_classes"
 
@@ -166,13 +175,34 @@ for json_file in "${json_files[@]}"; do
   fi
   
   # Check for meaningful (non-whitespace) drift
-  if [[ ! -f "$prev" ]] || ! diff -w -q "$prev" "$dest" >/dev/null 2>&1; then
+  if [[ ! -f "$prev" ]] || ! cmp -s <(tr -d '[:space:]' < "$prev") <(tr -d '[:space:]' < "$dest"); then
     changed=1
+    changed_json+=("$json_file")
     printf '\nChanged JSON: %s\n' "$json_file"
     [[ -f "$prev" ]] || prev=/dev/null
-    diff -u "$prev" "$dest" || true
+    { diff -u "$prev" "$dest" || true; } | tee -a "$drift"
   fi
 done
+
+# theme templates: templates.json is hand-written, so report field differences instead of regenerating
+theme_fields="$(javap -cp "$cp" 'io.fusionauth.domain.Theme$Templates' |
+  sed -nE 's/^ *public java\.lang\.String ([A-Za-z0-9]+);$/\1/p' | LC_ALL=C sort)"
+if [[ -z "$theme_fields" ]]; then
+  printf 'Could not read fields from io.fusionauth.domain.Theme$Templates.\n' >&2
+  exit 1
+fi
+documented_fields="$(sed -nE 's/^ *"fieldName": *"([^"]+)".*/\1/p' "$templates_json" | LC_ALL=C sort)"
+missing="$(LC_ALL=C comm -13 <(printf '%s\n' "$documented_fields") <(printf '%s\n' "$theme_fields"))"
+stale="$(LC_ALL=C comm -23 <(printf '%s\n' "$documented_fields") <(printf '%s\n' "$theme_fields"))"
+if [[ -n "$missing$stale" ]]; then
+  changed=1
+  theme_drift=1
+  printf '\nChanged theme templates (edit astro/src/content/json/themes/templates.json by hand):\n'
+  {
+    [[ -z "$missing" ]] || sed 's/^/+ /' <<< "$missing"
+    [[ -z "$stale" ]] || sed 's/^/- /' <<< "$stale"
+  } | tee -a "$drift"
+fi
 
 # resolve updates
 if [[ "$changed" -eq 0 ]]; then
@@ -181,6 +211,19 @@ if [[ "$changed" -eq 0 ]]; then
 fi
 
 if [[ "$mode" == check ]]; then
+  if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    {
+      printf '## External content has changed\n\n'
+      printf 'Run this from the repo root, review the diff and affected guides, then open a PR:\n\n'
+      printf '```bash\nbash src/scripts/fetch_external_content.sh\n```\n\n'
+      if [[ "$theme_drift" -eq 1 ]]; then
+        printf 'Theme template fields changed. Add (+) or remove (-) entries in `astro/src/content/json/themes/templates.json` by hand.\n\n'
+      fi
+      printf '<details><summary>Diff</summary>\n\n```diff\n'
+      cat "$drift"
+      printf '```\n\n</details>\n'
+    } >> "$GITHUB_STEP_SUMMARY"
+  fi
   printf '\nExternal content has changed. No local files were modified.\n' >&2
   printf 'Run bash src/scripts/fetch_external_content.sh, then review the diff and affected guides.\n' >&2
   exit 1
@@ -196,10 +239,16 @@ for file in "${files[@]}"; do
 done
 cp "$staging_dir/SOURCES.md" "$snapshot_dir/SOURCES.md"
 
-# Apply JSON
+# Apply JSON, skipping whitespace-only changes
 mkdir -p "$json_dir"
-for json_file in "${json_files[@]}"; do
-  cp "$staging_dir/json/$json_file" "$json_dir/$json_file"
-done
+if [[ "${#changed_json[@]}" -gt 0 ]]; then
+  for json_file in "${changed_json[@]}"; do
+    cp "$staging_dir/json/$json_file" "$json_dir/$json_file"
+  done
+fi
 
 printf '\nContent refreshed. Review the diff and affected guides before committing.\n'
+if [[ "$theme_drift" -eq 1 ]]; then
+  printf 'Theme template fields changed. Update astro/src/content/json/themes/templates.json by hand.\n' >&2
+  exit 1
+fi

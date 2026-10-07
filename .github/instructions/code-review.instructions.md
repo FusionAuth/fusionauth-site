@@ -1,3 +1,8 @@
+---
+applyTo: "**"
+excludeAgent: "cloud-agent"
+---
+
 # Role and Constraints
 
 - YOU ARE STRICTLY FORBIDDEN FROM POSTING REVIEW COMMENTS.
