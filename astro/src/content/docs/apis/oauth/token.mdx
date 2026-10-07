@@ -560,7 +560,11 @@ _Response Codes_
 
 This is an implementation of the OAuth 2.0 Token Exchange specification as defined by [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693).
 
-Token Exchange allows clients to obtain a new token by exchanging an existing token. This enables delegation, impersonation, and token type conversion scenarios. See [OAuth Token Exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange) for a comprehensive overview.
+Token Exchange allows clients to obtain a new token by exchanging an existing token. This enables delegation and token type conversion scenarios. See [OAuth Token Exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange) for a comprehensive overview.
+
+<Aside type="note">
+FusionAuth currently supports **delegation** use cases as of version 1.70.0. Impersonation is not currently supported.
+</Aside>
 
 <API method="POST" uri="/oauth2/token"/>
 
@@ -603,16 +607,6 @@ Ensure you are sending these parameters as form encoded data in the request body
     - `urn:ietf:params:oauth:token-type:access_token` - OAuth 2.0 access token issued by FusionAuth
     - `urn:ietf:params:oauth:token-type:jwt` - Generic JWT (may be from external issuers)
   </APIField>
-  <APIField name="actor_token" type="String" optional>
-    A security token representing the identity of the acting party. This is typically used for delegation scenarios where one party is authorized to act on behalf of another.
-  </APIField>
-  <APIField name="actor_token_type" type="String" optional>
-    An identifier for the type of the `actor_token`. Required when `actor_token` is provided.
-
-    Supported values:
-    - `urn:ietf:params:oauth:token-type:access_token` - OAuth 2.0 access token
-    - `urn:ietf:params:oauth:token-type:jwt` - Generic JWT
-  </APIField>
   <APIField name="requested_token_type" type="String" optional>
     An identifier for the type of the requested security token. If not provided, defaults to an access token.
 
@@ -625,6 +619,10 @@ Ensure you are sending these parameters as form encoded data in the request body
 
     When specified, the issued token's `aud` claim will contain this value.
     The policy engine may restrict which audiences the client can request.
+    
+    This parameter can be specified multiple times to request multiple audiences. Maximum of 50 audiences per request.
+    
+    **Note:** Only one of `audience` or `resource` may be used in a single request. If both are provided, the request will fail.
   </APIField>
   <APIField name="scope" type="String" optional>
     A space-delimited list of requested scope values for the issued token.
@@ -638,9 +636,19 @@ Ensure you are sending these parameters as form encoded data in the request body
   </APIField>
   <APIField name="resource" type="String" optional>
     The URI of the target resource where the client intends to use the requested token.
-    May be specified multiple times to indicate multiple target resources.
+    This parameter can be specified multiple times to indicate multiple target resources. Maximum of 50 resources per request.
 
-    Note: Not supported by the Entity policy engine.
+    **Note:** Only one of `audience` or `resource` may be used in a single request. If both are provided, the request will fail.
+    
+    Not supported by the Entity policy engine.
+  </APIField>
+  <APIField name="intent" type="String" optional>
+    An optional string describing the purpose or intent of the token exchange request.
+    This value is passed to the policy lambda (if configured) and can be used for authorization decisions.
+    
+    Maximum length: 255 characters.
+    
+    This parameter is not included in the issued token and serves only to provide context during policy evaluation.
   </APIField>
   <APIField name="state" type="String" optional>
     An opaque string provided by the client for contextual information about the exchange request.
@@ -658,10 +666,10 @@ FusionAuth supports the following token type identifiers for Token Exchange:
 
 | URI | Description | Usage |
 |-----|-------------|-------|
-| `urn:ietf:params:oauth:token-type:access_token` | OAuth 2.0 access token | `subject_token_type`, `actor_token_type`, `requested_token_type` |
-| `urn:ietf:params:oauth:token-type:jwt` | Generic JWT | `subject_token_type`, `actor_token_type` |
+| `urn:ietf:params:oauth:token-type:access_token` | OAuth 2.0 access token | `subject_token_type`, `requested_token_type` |
+| `urn:ietf:params:oauth:token-type:jwt` | Generic JWT | `subject_token_type` |
 
-Note: [RFC 8693 § 3](https://datatracker.ietf.org/doc/html/rfc8693#section-3) defines additional token types (refresh_token, id_token, saml1, saml2) which are not currently supported by FusionAuth.
+Note: [RFC 8693 § 3](https://datatracker.ietf.org/doc/html/rfc8693#section-3) defines additional token types (refresh_token, id_token, saml1, saml2, actor_token) which are not currently supported by FusionAuth.
 
 ```plaintext title="Example HTTP Request"
 POST /oauth2/token HTTP/1.1
@@ -684,7 +692,7 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&client_secret=YOUR_CLIENT_SECRET&
     
     The decoded JWT will contain:
     - `act` claim - The actor chain representing delegation (see [Actor Chain](/docs/lifecycle/authenticate-users/oauth/token-exchange#actor-chain-and-the-act-claim))
-    - `gty` claim - Grant type used to issue the token (`urn:ietf:params:oauth:grant-type:token-exchange`)
+    - `gty` claim - An array of grant types used in the token's history. Always contains `["urn:ietf:params:oauth:grant-type:token-exchange"]` for tokens issued via token exchange. If the subject token had a `gty` value, it will be appended to the array.
     - Standard claims (`aud`, `sub`, `iss`, `exp`, `iat`, etc.)
   </APIField>
   <APIField name="issued_token_type" type="String">
@@ -729,11 +737,11 @@ The issued access token decoded:
     "sub_profile": "Todo Application"
   },
   "scope": "email:send",
-  "gty": "urn:ietf:params:oauth:grant-type:token-exchange"
+  "gty": ["urn:ietf:params:oauth:grant-type:token-exchange"]
 }
 ```
 
-Note the `act` claim which identifies the actor (the client that performed the exchange) and the `gty` claim indicating the token was issued via token exchange.
+Note the `act` claim which identifies the actor (the client that performed the exchange) and the `gty` claim (an array) indicating the token was issued via token exchange. If the subject token had a prior `gty` value, those grant types would also appear in this array, creating a history of grant types used.
 
 ### Error Responses
 

@@ -15,7 +15,7 @@ When you create a new lambda using the FusionAuth UI we will provide you an empt
 If you are using the API to create the lambda you will need to ensure your function has the following signature:
 
 ```javascript
-function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) {
+function populate(jwt, exchange, context) {
   // Lambda code goes here
 }
 ```
@@ -23,9 +23,7 @@ function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) 
 This lambda must contain a function named `populate` that accepts the following parameters:
 
 * `jwt` - the claims object to be signed and returned as the JWT payload. You can modify this object.
-* `subjectToken` - information about the token being exchanged. This object is read-only.
-* `actorToken` - information about the actor token (may be `undefined`). This object is read-only.
-* `tokenExchangeRequest` - the token exchange request information. This object is read-only.
+* `exchange` - an object containing information about the token exchange request. This object is read-only.
 * `context` - an object containing the context of the request, including access to [secrets](/docs/extend/code/lambdas#secrets). This object is read-only.
 
 ### `jwt` object
@@ -35,6 +33,27 @@ You may add or modify claims in the `jwt` object. However, you may not modify ce
 import TokenExchangeReservedClaims from './_token-exchange-reserved-claims.mdx';
 
 <TokenExchangeReservedClaims />
+
+### Namespacing Custom Claims
+
+When adding custom claims to the JWT in your populate lambda, **always use a namespace** to avoid conflicts with future standard or FusionAuth-specific claims. Use a URL-based namespace that you control:
+
+```javascript
+// Good - namespaced claims
+jwt['https://myapp.com/dept'] = 'engineering';
+jwt['https://myapp.com/permissions'] = ['read', 'write'];
+
+// Bad - unprefixed claims risk future conflicts
+jwt.dept = 'engineering';
+jwt.permissions = ['read', 'write'];
+```
+
+Namespacing ensures that:
+- Your claims won't conflict with future JWT standards or FusionAuth claims
+- Resource servers can distinguish between standard claims and your custom claims
+- Multiple systems can add their own claims without collision
+
+All examples in this documentation use namespaced custom claims as a best practice.
 
 ### Passthrough Claims
 
@@ -48,33 +67,27 @@ The following claims are automatically copied from the subject token (if present
 
 These claims ensure that the exchanged token maintains full traceability to the original authentication event, even after multiple exchanges. If the subject token is from an external issuer that doesn't include these claims, they will be absent from the issued token.
 
-### `subjectToken` object
+<Aside type="note">
+Claims from the subject token are **not** automatically carried over to the issued token unless they are in the passthrough list above. If you need to preserve custom claims from the subject token, you must explicitly copy them in your populate lambda using `exchange.subjectToken`.
+</Aside>
 
-The subject token object contains information about the token being exchanged:
+### `exchange` object
 
-* `jwt` - <AvailableSince since="1.70.0"/> - the parsed JWT object (if the subject token is a JWT)
-* `jti` - <AvailableSince since="1.70.0"/> - the token ID
-* `sub` - <AvailableSince since="1.70.0"/> - the subject (user or entity ID)
-* `iss` - <AvailableSince since="1.70.0"/> - the token issuer
-* `type` - <AvailableSince since="1.70.0"/> - the token type
-* `validationStatus` - <AvailableSince since="1.70.0"/> - validation status indicating how the token was verified:
-  * `AUTHORITATIVE` - Token issued by this FusionAuth instance and fully validated
-  * `BEST_EFFORT` - External token validated through signature/claims only
-  * `FAILED` - Token validation failed
+The exchange object contains information about the token exchange request:
 
-### `actorToken` object
-
-The actor token object contains information about the actor token (only present if an actor token was provided in the exchange request). It has the same structure as the `subjectToken` object. This parameter may be `undefined`.
-
-### `tokenExchangeRequest` object
-
-The token exchange request object contains:
-
-* `clientId` - <AvailableSince since="1.70.0"/> - the client ID of the exchanger
-* `requestedAudience` - <AvailableSince since="1.70.0"/> - array of requested audience values
-* `requestedScopes` - <AvailableSince since="1.70.0"/> - array of requested scope values
-* `intent` - <AvailableSince since="1.70.0"/> - optional intent string
-* `state` - <AvailableSince since="1.70.0"/> - optional opaque string provided by the client for contextual information (max 1024 characters)
+* `subjectToken` - <AvailableSince since="1.70.0"/> - the subject token JWT claims as a plain JavaScript object. Access claims using standard property access (e.g., `exchange.subjectToken.sub`, `exchange.subjectToken.custom_claim`)
+* `entity` - <AvailableSince since="1.70.0"/> - the exchanger entity object containing:
+  * `id` - entity UUID
+  * `clientId` - the client ID performing the exchange
+  * `name` - entity name
+  * `type` - entity type object with `name` and other properties
+  * `data` - custom data object
+  * `tenantId` - tenant UUID
+  * Other entity properties (see [Entity API](/docs/apis/entities) for full structure)
+* `audiences` - <AvailableSince since="1.70.0"/> - array of granted audience values (may be `undefined` if no audience was granted)
+* `intent` - <AvailableSince since="1.70.0"/> - optional intent string describing the purpose of the exchange (may be `undefined`)
+* `scopes` - <AvailableSince since="1.70.0"/> - array of granted scope values (may be `undefined` if no scopes were granted)
+* `state` - <AvailableSince since="1.70.0"/> - optional opaque string provided by the client for contextual information (may be `undefined`, max 1024 characters)
 
 ### `context` object
 
@@ -102,16 +115,20 @@ This lambda is optional. If not assigned, tokens are issued with standard claims
 Add custom claims from the exchanger entity:
 
 ```javascript
-function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) {
-  // Add department and cost center from entity metadata
-  // (Assumes entity data is available through FusionAuth context or external lookup)
-  jwt['https://myapp.com/dept'] = 'engineering';
-  jwt['https://myapp.com/cost_center'] = 'CC-1234';
+function populate(jwt, exchange, context) {
+  // Add department and cost center from entity data
+  if (exchange.entity.data.department) {
+    jwt['https://myapp.com/dept'] = exchange.entity.data.department;
+  }
+  
+  if (exchange.entity.data.costCenter) {
+    jwt['https://myapp.com/cost_center'] = exchange.entity.data.costCenter;
+  }
   
   // Add delegation timestamp
   jwt['https://myapp.com/delegated_at'] = Math.floor(Date.now() / 1000);
   
-  console.info('Added custom claims for entity:', tokenExchangeRequest.clientId);
+  console.info('Added custom claims for entity:', exchange.entity.clientId);
 }
 ```
 
@@ -120,9 +137,9 @@ function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) 
 Reduce token scope for external tokens or specific scenarios:
 
 ```javascript
-function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) {
+function populate(jwt, exchange, context) {
   // If subject token is from external issuer, reduce scope
-  if (subjectToken.iss !== 'https://fusionauth.example.com') {
+  if (exchange.subjectToken.iss !== 'https://fusionauth.example.com') {
     // Only grant read access for external tokens
     jwt.scope = 'read';
     
@@ -148,29 +165,34 @@ function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) 
 Add claims describing the delegation scenario:
 
 ```javascript
-function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) {
+function populate(jwt, exchange, context) {
   // Add delegation context
   jwt['https://myapp.com/delegation'] = {
-    intent: tokenExchangeRequest.intent || 'unspecified',
-    exchanger: tokenExchangeRequest.clientId,
-    original_token_id: subjectToken.jti,
+    intent: exchange.intent || 'unspecified',
+    exchanger: exchange.entity.clientId,
+    original_token_id: exchange.subjectToken.jti,
     exchange_timestamp: Math.floor(Date.now() / 1000)
   };
 
-  // Add actor information from actor token if present
-  if (actorToken) {
-    jwt['https://myapp.com/actor_info'] = {
-      actor_sub: actorToken.sub,
-      actor_iss: actorToken.iss
-    };
+  // Add entity type information
+  if (exchange.entity.type) {
+    jwt['https://myapp.com/exchanger_type'] = exchange.entity.type.name;
   }
 
-  // Track exchange in claims
-  if (!jwt['https://myapp.com/exchange_count']) {
-    jwt['https://myapp.com/exchange_count'] = 1;
-  } else {
-    jwt['https://myapp.com/exchange_count']++;
+  // Track exchange depth by examining existing act claim
+  const currentDepth = jwt.act && jwt.act.act ? countActDepth(jwt.act) : 0;
+  jwt['https://myapp.com/exchange_depth'] = currentDepth + 1;
+}
+
+// Helper function to count delegation depth
+function countActDepth(act) {
+  let depth = 1;
+  let current = act;
+  while (current.act) {
+    depth++;
+    current = current.act;
   }
+  return depth;
 }
 ```
 
@@ -179,13 +201,13 @@ function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) 
 Call external services to enrich token claims using secrets:
 
 ```javascript
-function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) {
+function populate(jwt, exchange, context) {
   // Get API key from secrets
   const apiKey = context.services.secrets.get('user-profile-api-key');
 
   try {
     // Fetch additional user profile data
-    const response = fetch(`https://api.example.com/users/${subjectToken.sub}/profile`, {
+    const response = fetch(`https://api.example.com/users/${exchange.subjectToken.sub}/profile`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey}`
@@ -223,31 +245,28 @@ function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) 
 Selectively copy additional claims from the subject token:
 
 ```javascript
-function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) {
+function populate(jwt, exchange, context) {
   // Copy custom claims from subject token
-  const subjectJwt = subjectToken.jwt;
+  const subjectToken = exchange.subjectToken;
   
-  if (subjectJwt) {
-    // Copy organization claims
-    if (subjectJwt['https://myapp.com/org_id']) {
-      jwt['https://myapp.com/org_id'] = subjectJwt['https://myapp.com/org_id'];
-    }
-    
-    if (subjectJwt['https://myapp.com/org_role']) {
-      jwt['https://myapp.com/org_role'] = subjectJwt['https://myapp.com/org_role'];
-    }
-
-    // Copy permission claims
-    if (subjectJwt['permissions']) {
-      // Filter permissions based on audience
-      const audience = jwt.aud;
-      jwt['permissions'] = subjectJwt['permissions'].filter(p => 
-        p.resource === audience || p.resource === '*'
-      );
-    }
-
-    console.info('Copied selective claims from subject token');
+  // Copy organization claims
+  if (subjectToken['https://myapp.com/org_id']) {
+    jwt['https://myapp.com/org_id'] = subjectToken['https://myapp.com/org_id'];
   }
+  
+  if (subjectToken['https://myapp.com/org_role']) {
+    jwt['https://myapp.com/org_role'] = subjectToken['https://myapp.com/org_role'];
+  }
+
+  // Copy permission claims filtered by audience
+  if (subjectToken['permissions'] && jwt.aud) {
+    const audiences = Array.isArray(jwt.aud) ? jwt.aud : [jwt.aud];
+    jwt['permissions'] = subjectToken['permissions'].filter(p => 
+      audiences.includes(p.resource) || p.resource === '*'
+    );
+  }
+
+  console.info('Copied selective claims from subject token');
 }
 ```
 
@@ -256,24 +275,33 @@ function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) 
 Add correlation IDs for tracing token chains:
 
 ```javascript
-function populate(jwt, subjectToken, actorToken, tokenExchangeRequest, context) {
+function populate(jwt, exchange, context) {
   // Generate unique trace ID for this exchange
-  const traceId = generateUUID(); // Assuming UUID function available
+  const traceId = generateUUID();
   
   jwt['https://myapp.com/trace_id'] = traceId;
   
   // Copy parent trace ID if present
-  if (subjectToken.jwt && subjectToken.jwt['https://myapp.com/trace_id']) {
-    jwt['https://myapp.com/parent_trace_id'] = subjectToken.jwt['https://myapp.com/trace_id'];
+  if (exchange.subjectToken['https://myapp.com/trace_id']) {
+    jwt['https://myapp.com/parent_trace_id'] = exchange.subjectToken['https://myapp.com/trace_id'];
   }
 
   // Add exchange metadata for debugging
   jwt['https://myapp.com/debug'] = {
-    exchanger: tokenExchangeRequest.clientId,
-    subject_issuer: subjectToken.iss,
-    validation_status: subjectToken.validationStatus,
-    requested_audience: tokenExchangeRequest.requestedAudience.join(',')
+    exchanger: exchange.entity.clientId,
+    exchanger_name: exchange.entity.name,
+    subject_issuer: exchange.subjectToken.iss,
+    subject_sub: exchange.subjectToken.sub,
+    intent: exchange.intent || 'none'
   };
+  
+  // Add granted values for observability
+  if (exchange.audiences) {
+    jwt['https://myapp.com/debug'].granted_audiences = exchange.audiences;
+  }
+  if (exchange.scopes) {
+    jwt['https://myapp.com/debug'].granted_scopes = exchange.scopes;
+  }
 }
 
 // Helper function
