@@ -28,7 +28,7 @@ if [ -n "$PAGES" ]; then
   export URL
   # Formats tab-delimited pages into markdown links
   PAGES_FORMATTED=$(echo "$PAGES" | awk -F'\t' '{print "- [" $2 "](" ENVIRON["URL"] $1 ")"}' | paste -sd '\n' -)
-  PAGES_TEXT="**Changed Pages:**\n$PAGES_FORMATTED"
+  PAGES_TEXT="**Changed Pages:**"$'\n'"$PAGES_FORMATTED"
 else
   PAGES_TEXT="_No content files changed._"
 fi

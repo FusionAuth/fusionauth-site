@@ -5,6 +5,7 @@ STATE=$1
 shift || true
 
 MARKER="<!-- fusionauth-preview -->"
+NL=$'\n' # "\n" in double quotes stays a literal backslash-n
 AUTH_HEADER="Authorization: token $GH_TOKEN"
 API_URL="https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$PR/comments"
 
@@ -18,7 +19,7 @@ case "$STATE" in
     PREVIEW_URL=$1
     PAGES_TEXT=$2
     TITLE="✅ Preview Ready"
-    BODY="**URL:** ${PREVIEW_URL}\n\n${PAGES_TEXT}\n\n_Commit \`${SHA:0:7}\` · [View build logs](${RUN_URL})_"
+    BODY="**URL:** ${PREVIEW_URL}${NL}${NL}${PAGES_TEXT}${NL}${NL}_Commit \`${SHA:0:7}\` · [View build logs](${RUN_URL})_"
     ;;
   failure)
     TITLE="❌ Build Failed"
@@ -32,7 +33,7 @@ case "$STATE" in
 esac
 
 # Create JSON payload using jq
-PAYLOAD=$(jq -n --arg body "$MARKER\n### $TITLE\n$BODY" '{body: $body}')
+PAYLOAD=$(jq -n --arg body "$MARKER${NL}### $TITLE${NL}$BODY" '{body: $body}')
 
 # Find existing comment ID
 COMMENT_ID=$(curl -s -H "$AUTH_HEADER" "$API_URL" | \

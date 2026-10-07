@@ -204,6 +204,8 @@ _DEFAULT_EXCLUDE_DEST = [
     r"rfc-editor\.org",             # times out from CI; RFC links are stable by definition
     r"app\.xkit\.co",               # spurious 500
     r"azure\.microsoft\.com",       # returns 503 from CI environments; works in browsers
+    # social share/submit endpoints; need a logged-in browser, so crawlers get 4xx (e.g. HN 419)
+    r"^https?://(www\.)?(news\.ycombinator\.com/submit|reddit\.com/submit|(twitter|x)\.com/intent/|linkedin\.com/sharing/)",
 ]
 
 
