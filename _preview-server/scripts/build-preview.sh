@@ -184,13 +184,20 @@ if [[ -d "$SLOT_SNIPPETS" && -n "$(find "$SLOT_SNIPPETS" -type f -links +1 -prin
   mv "$SLOT_SNIPPETS.tmp" "$SLOT_SNIPPETS"
 fi
 
-SNIPPET_HASH=$(snippet_source_hash 2>/dev/null || true)
-if [[ -n "$SNIPPET_HASH" && -d "$SNIPPETS_STORE/$SNIPPET_HASH" ]]; then
-  touch "$SNIPPETS_STORE/$SNIPPET_HASH"   # mtime marks it as recently used
-  if [[ "$(cat "$SLOT_SNIPPETS/.snippets-hash" 2>/dev/null || true)" != "$SNIPPET_HASH" ]]; then
+# the generator's inputs join the key, so a package upgrade or option change never restores stale output
+snippet_generator_hash() {
+  cat "$SLOT_DIR/astro/package-lock.json" "$SLOT_DIR/astro/astro.config.ts" "$SLOT_DIR/astro/bluehawk-languages.js" 2>/dev/null \
+    | sha256sum | cut -c1-16
+}
+SNIPPET_GENERATOR_HASH=$(snippet_generator_hash)
+SNIPPET_SOURCE_HASH=$(snippet_source_hash 2>/dev/null || true)
+SNIPPET_KEY=${SNIPPET_SOURCE_HASH:+$SNIPPET_SOURCE_HASH-$SNIPPET_GENERATOR_HASH}
+if [[ -n "$SNIPPET_KEY" && -d "$SNIPPETS_STORE/$SNIPPET_KEY" ]]; then
+  touch "$SNIPPETS_STORE/$SNIPPET_KEY"   # mtime marks it as recently used
+  if [[ "$(cat "$SLOT_SNIPPETS/.preview-snippets-key" 2>/dev/null || true)" != "$SNIPPET_KEY" ]]; then
     log "Restoring generated code snippets from cache …"
     rm -rf "$SLOT_SNIPPETS"
-    cp -a "$SNIPPETS_STORE/$SNIPPET_HASH" "$SLOT_SNIPPETS"
+    cp -a "$SNIPPETS_STORE/$SNIPPET_KEY" "$SLOT_SNIPPETS"
   fi
 fi
 
@@ -282,13 +289,17 @@ NODE_OPTIONS=--max_old_space_size=8192 \
 log "Build finished; saving caches …"
 # Keep this slot's snippets for any slot that builds the same extractedcode.
 BUILT_SNIPPET_HASH=$(cat "$SLOT_SNIPPETS/.snippets-hash" 2>/dev/null || true)
-if [[ -n "$BUILT_SNIPPET_HASH" && ! -d "$SNIPPETS_STORE/$BUILT_SNIPPET_HASH" ]]; then
+BUILT_SNIPPET_KEY=${BUILT_SNIPPET_HASH:+$BUILT_SNIPPET_HASH-$SNIPPET_GENERATOR_HASH}
+if [[ -n "$BUILT_SNIPPET_KEY" ]]; then
+  printf '%s\n' "$BUILT_SNIPPET_KEY" > "$SLOT_SNIPPETS/.preview-snippets-key"
+fi
+if [[ -n "$BUILT_SNIPPET_KEY" && ! -d "$SNIPPETS_STORE/$BUILT_SNIPPET_KEY" ]]; then
   mkdir -p "$SNIPPETS_STORE"
   snippet_tmp="$SNIPPETS_STORE/.tmp-$$"
   rm -rf "$snippet_tmp"
   cp -a "$SLOT_SNIPPETS" "$snippet_tmp"
-  # -T fails if another slot saved the same hash first; keep theirs
-  mv -T "$snippet_tmp" "$SNIPPETS_STORE/$BUILT_SNIPPET_HASH" 2>/dev/null || rm -rf "$snippet_tmp"
+  # -T fails if another slot saved the same key first; keep theirs
+  mv -T "$snippet_tmp" "$SNIPPETS_STORE/$BUILT_SNIPPET_KEY" 2>/dev/null || rm -rf "$snippet_tmp"
 fi
 # drop entries (and leftovers from killed builds) unused for two weeks
 find "$SNIPPETS_STORE" -mindepth 1 -maxdepth 1 -mtime +14 -exec rm -rf {} + 2>/dev/null || true
