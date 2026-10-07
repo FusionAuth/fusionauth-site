@@ -200,6 +200,8 @@ const config = defineConfig({
         'package*.json', '*.lock', 'repositoryUrl.txt',
         'tests/test.sh', 'LICENSE', 'SECURITY.md',
       ],
+      // same state export-extractedcode.sh publishes to the artifact repos
+      state: 'published',
     }),
     icon(),
     mdx({
