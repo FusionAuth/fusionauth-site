@@ -1,0 +1,29 @@
+name: Report scheduled run
+
+# called by scheduled workflows; keeps one issue open per failing workflow
+on:
+  workflow_call:
+    inputs:
+      result:
+        required: true
+        type: string
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            .github/CODEOWNERS
+            src/scripts/report-scheduled-run.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Open, update, or close the failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+        run: bash src/scripts/report-scheduled-run.sh "${{ inputs.result }}"

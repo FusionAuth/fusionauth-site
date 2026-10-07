@@ -2,7 +2,7 @@ name: Check external content
 
 on:
   schedule:
-    - cron: '23 8 * * 1' # Every Monday at 08:23 UTC
+    - cron: '23 8 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -11,8 +11,39 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - name: Check configuration snapshots for upstream changes
+      - uses: actions/checkout@v7
+
+      # compiles and runs the JSON generators
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      # one ~83MB download shared by both scripts
+      - name: Download latest FusionAuth release
+        run: |
+          set -euo pipefail
+          version=$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')
+          curl -f -L -s "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" \
+            -o "$RUNNER_TEMP/fusionauth-app.zip"
+          echo "FUSIONAUTH_VERSION=$version" >> "$GITHUB_ENV"
+          echo "FUSIONAUTH_APP_ZIP=$RUNNER_TEMP/fusionauth-app.zip" >> "$GITHUB_ENV"
+
+      - name: Check configuration snapshots and generated JSON
         run: bash src/scripts/fetch_external_content.sh --check
+
+      - name: Check email and message templates
+        if: ${{ !cancelled() }}
+        run: src/scripts/update-templates.sh all
+
+  report:
+    needs: check
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/report-scheduled-run.yml
+    with:
+      result: ${{ needs.check.result }}
+    permissions:
+      contents: read
+      issues: write

@@ -1,0 +1,29 @@
+name: Request preview build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      # env, not inline expressions, so a crafted branch name can't inject shell
+      - name: Save PR metadata
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          BRANCH: ${{ github.head_ref }}
+          ACTION: ${{ github.event.action }}
+        run: |
+          mkdir -p pr-metadata
+          printf '%s\n' "$PR" > pr-metadata/pr
+          printf '%s\n' "$SHA" > pr-metadata/sha
+          printf '%s\n' "$BRANCH" > pr-metadata/branch
+          printf '%s\n' "$ACTION" > pr-metadata/action
+          
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pr-metadata
+          path: pr-metadata/
+          retention-days: 1  # Auto-expires in 24 hours

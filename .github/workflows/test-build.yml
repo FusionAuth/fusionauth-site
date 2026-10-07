@@ -17,10 +17,10 @@ jobs:
   shakedown:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
@@ -28,19 +28,19 @@ jobs:
 
       - name: Cache node_modules
         id: cache-node-modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@v6
         with:
           path: astro/node_modules
           key: ${{ runner.os }}-node-modules-${{ hashFiles('astro/package-lock.json') }}
 
       - name: Cache generated code snippets
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@v6
         with:
           path: astro/src/generated-code-snippets
           key: ${{ runner.os }}-snippets-${{ hashFiles('astro/extractedcode/**') }}
 
       - name: Cache remote content fetches
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@v6
         with:
           path: astro/.content-cache
           key: content-cache-${{ runner.os }}
@@ -55,7 +55,7 @@ jobs:
 
       # after npm ci, which deletes node_modules; entries are keyed by diagram source, so the newest cache is always safe
       - name: Cache rendered mermaid diagrams
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@v6
         with:
           path: astro/node_modules/.cache/astro-better-mermaid
           key: mermaid-${{ runner.os }}-${{ github.run_id }}
@@ -82,11 +82,4 @@ jobs:
         shell: /usr/bin/bash -e -o pipefail {0}
 
       - name: Check APIs for completeness against client libs
-        run: |
-          tagver=`curl --silent https://account.fusionauth.io/api/version -o - | jq 'last(.versions[-1])'|sed 's/"//g'`
-          if ! git ls-remote --exit-code --heads https://github.com/fusionauth/fusionauth-client-builder "$tagver" > /dev/null 2>&1; then
-            tagver=$(echo "$tagver" | sed 's/\.[0-9]*$/.0/')
-          fi
-          git clone --depth 1 --branch $tagver https://github.com/fusionauth/fusionauth-client-builder
-          src/check-apis-against-client-json.rb -f $PWD/src/.checkapis.yaml -c $PWD/fusionauth-client-builder -v --pr
-        shell: bash
+        run: bash src/scripts/check-apis.sh --pr
