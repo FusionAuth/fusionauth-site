@@ -204,20 +204,27 @@ import '@docsearch/css';
     },
   };
 
-  const init = async () => {
-    const container = document.getElementById('docsearch');
-    if (!container) return;
+  let initialized = false;
+
+  const ready = (async () => {
+    if (document.readyState === 'loading') {
+      await new Promise((resolve) => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
+    }
+    if (!document.getElementById('docsearch')) return null;
 
     const { default: docsearch } = await docsearchImport;
     const instance = docsearch(options);
-    document
-      .querySelectorAll<HTMLElement>('[data-widget="search-button"]')
-      .forEach((button) => button.addEventListener('click', () => instance.open()));
-  };
+    initialized = true;
+    return instance;
+  })();
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init, { once: true });
-  } else {
-    init();
-  }
+  // listen right away so clicks made while the docsearch chunk is still loading open the modal once it's ready
+  document.addEventListener('click', (event) => {
+    const target = (event.target as Element).closest('[data-widget="search-button"], #docsearch .DocSearch-Button');
+    // after init, docsearch handles clicks on its own button
+    if (!target || (initialized && !target.matches('[data-widget="search-button"]'))) return;
+
+    event.preventDefault();
+    ready.then((instance) => instance?.open());
+  });
 </script>
