@@ -1,4 +1,4 @@
-"""Exercise the real refresh script offline, using temporary Git/curl fixtures."""
+"""Exercise the real refresh script offline, using temporary Git/curl/java fixtures."""
 import json
 import os
 from pathlib import Path
@@ -10,6 +10,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 SNAPSHOTS = Path("astro/extractedcode/configuration-snippets")
+JSON_GEN = Path("astro/src/content/json/generated")
+
 # An independent list verifies the whitelist and the two ignored-path mappings.
 SOURCES = {
     "containers": ("fusionauth-containers", {
@@ -30,6 +32,7 @@ SOURCES = {
         "plugin/docker-compose.yml": "plugin/docker-compose.yml",
     }),
 }
+
 FAKE_COMMAND = r'''#!/usr/bin/env python3
 import json, os, pathlib, sys
 data = json.loads(pathlib.Path(os.environ["FETCH_FIXTURE"]).read_text())
@@ -37,6 +40,7 @@ args = sys.argv[1:]
 command = pathlib.Path(sys.argv[0]).name
 with open(os.environ["FETCH_REQUESTS"], "a") as log:
     log.write(json.dumps([command, args]) + "\n")
+
 if command == "git":
     assert "ls-remote" in args and args[-1] == "refs/heads/main", args
     assert args[0] == "-C" and pathlib.Path(args[1]).is_dir(), args
@@ -45,16 +49,39 @@ if command == "git":
     if data.get("git_error") == repo:
         sys.exit(128)
     print(data["heads"][repo] + "\trefs/heads/main")
-else:
-    assert args[-1].startswith("https://raw.githubusercontent.com/FusionAuth/")
-    repo, revision, path = args[-1].split("/", 4)[4].split("/", 2)
-    assert revision == data["heads"][repo], "Fetch was not pinned to the documented branch"
-    key = repo + "/" + path
-    if data.get("curl_error") == key:
-        pathlib.Path(args[args.index("--output") + 1]).write_text("partial response")
-        print("curl: (22) simulated HTTP 404", file=sys.stderr)
-        sys.exit(22)
-    pathlib.Path(args[args.index("--output") + 1]).write_text(data["files"][key])
+elif command == "jq":
+    print("1.99.0")
+elif command == "javac":
+    pass
+elif command == "java":
+    if "GenerateJSONFromAnnotations" in args:
+        out_dir = pathlib.Path(args[args.index("GenerateJSONFromAnnotations") + 1])
+        for f in ["indexentity.json", "indexuser.json", "cookies.json", "authenticationtype.json"]:
+            (out_dir / f).write_text(data["json"][f])
+    elif "GenerateEndpointsJSON" in args:
+        pathlib.Path(args[args.index("GenerateEndpointsJSON") + 1]).write_text(data["json"]["api-endpoints.json"])
+elif command == "unzip":
+    if "-p" in args:
+        sys.stdout.write(data["json"]["sample-usage-data.json"])
+    else:
+        out = pathlib.Path(args[args.index("-d") + 1])
+        (out / "fusionauth-app/fusionauth-app/lib").mkdir(parents=True)
+        (out / "fusionauth-app/fusionauth-app/lib/dummy.jar").touch()
+elif command == "curl":
+    if any("account.fusionauth.io" in a for a in args):
+        print('{"versions": ["1.99.0"]}')
+    elif any("files.fusionauth.io" in a for a in args):
+        pathlib.Path(args[args.index("-o") + 1]).write_text("mock zip")
+    else:
+        assert args[-1].startswith("https://raw.githubusercontent.com/FusionAuth/")
+        repo, revision, path = args[-1].split("/", 4)[4].split("/", 2)
+        assert revision == data["heads"][repo], "Fetch was not pinned to the documented branch"
+        key = repo + "/" + path
+        if data.get("curl_error") == key:
+            pathlib.Path(args[args.index("--output") + 1]).write_text("partial response")
+            print("curl: (22) simulated HTTP 404", file=sys.stderr)
+            sys.exit(22)
+        pathlib.Path(args[args.index("--output") + 1]).write_text(data["files"][key])
 '''
 
 
@@ -63,13 +90,27 @@ class RefreshTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix="external-content-test-")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        
+        # Setup snapshots
         self.snapshots = self.root / SNAPSHOTS
         shutil.copytree(ROOT / SNAPSHOTS, self.snapshots)
+        
+        # Setup JSON directory
+        self.json_dir = self.root / JSON_GEN
+        self.json_dir.parent.mkdir(parents=True, exist_ok=True)
+        if (ROOT / JSON_GEN).exists():
+            shutil.copytree(ROOT / JSON_GEN, self.json_dir)
+        else:
+            self.json_dir.mkdir()
+
         self.script = self.root / "src/scripts/fetch_external_content.sh"
         self.script.parent.mkdir(parents=True)
         shutil.copy2(ROOT / "src/scripts/fetch_external_content.sh", self.script)
-        self.fixture = {"heads": {}, "files": {}}
+        
+        self.fixture = {"heads": {}, "files": {}, "json": {}}
         attribution = (self.snapshots / "SOURCES.md").read_text()
+        
+        # Load snapshot fixtures
         for directory, (repo, files) in SOURCES.items():
             revision = re.search(rf"\| `{directory}/` \|.*\| `([a-f0-9]{{40}})`", attribution)[1]
             self.fixture["heads"][repo] = revision
@@ -77,26 +118,39 @@ class RefreshTests(unittest.TestCase):
                 content = (self.snapshots / directory / local).read_text()
                 self.assertTrue(content, f"Missing or empty real snapshot: {local}")
                 self.fixture["files"][f"{repo}/{remote}"] = content
+                
+        # Load JSON fixtures
+        for json_file in ["sample-usage-data.json", "indexentity.json", "indexuser.json", 
+                          "cookies.json", "authenticationtype.json", "api-endpoints.json"]:
+            path = self.json_dir / json_file
+            if not path.exists():
+                path.write_text('{\n  "mock": "data"\n}')
+            self.fixture["json"][json_file] = path.read_text()
+
+        # Wire up mock tools
         fake_bin = self.root / "bin"
         fake_bin.mkdir()
-        for command in ("git", "curl"):
+        for command in ("git", "curl", "jq", "unzip", "javac", "java"):
             executable = fake_bin / command
             executable.write_text(FAKE_COMMAND)
             executable.chmod(0o755)
+            
         self.fixture_path = self.root / "fixture.json"
         self.requests = self.root / "requests.jsonl"
         self.environment = dict(os.environ, PATH=f"{fake_bin}:{os.environ['PATH']}",
                                 FETCH_FIXTURE=str(self.fixture_path), FETCH_REQUESTS=str(self.requests))
         self.before = self.contents()
 
+    def _tracked_files(self):
+        files = list(self.snapshots.rglob("*")) + list(self.json_dir.rglob("*"))
+        return [p for p in files if p.is_file()]
+
     def contents(self):
-        return {str(path.relative_to(self.snapshots)): path.read_bytes()
-                for path in self.snapshots.rglob("*") if path.is_file()}
+        return {str(path.relative_to(self.root)): path.read_bytes() for path in self._tracked_files()}
 
     def file_metadata(self):
-        return {str(path.relative_to(self.snapshots)):
-                (path.stat().st_mtime_ns, path.stat().st_ino, path.stat().st_mode)
-                for path in self.snapshots.rglob("*")}
+        return {str(path.relative_to(self.root)): (path.stat().st_mtime_ns, path.stat().st_ino, path.stat().st_mode)
+                for path in self._tracked_files()}
 
     def run_script(self, *arguments):
         self.fixture_path.write_text(json.dumps(self.fixture))
@@ -110,11 +164,15 @@ class RefreshTests(unittest.TestCase):
     def test_current_snapshots_match_and_all_mappings_are_fetched(self):
         result = self.run_script("--check")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("All 11", result.stdout)
+        self.assertIn("All configuration snapshots and generated JSON files match upstream", result.stdout)
         self.assertEqual(self.contents(), self.before)
         requests = [json.loads(line) for line in self.requests.read_text().splitlines()]
+        
         self.assertEqual(sum(command == "git" for command, _ in requests), 3)
-        self.assertEqual(sum(command == "curl" for command, _ in requests), 11)
+        self.assertEqual(sum(command == "curl" for command, _ in requests), 13) # 11 github + 1 API + 1 zip
+        self.assertEqual(sum(command == "unzip" for command, _ in requests), 2)
+        self.assertEqual(sum(command == "javac" for command, _ in requests), 2)
+        self.assertEqual(sum(command == "java" for command, _ in requests), 2)
 
     def test_unrelated_upstream_commits_do_not_create_false_drift(self):
         self.fixture["heads"] = dict.fromkeys(self.fixture["heads"], "b" * 40)
@@ -132,12 +190,26 @@ class RefreshTests(unittest.TestCase):
         self.assertEqual(self.contents(), self.before)
         self.assertEqual(self.file_metadata(), metadata)
 
+    def test_json_drift_is_detected_and_fails_check(self):
+        self.fixture["json"]["api-endpoints.json"] = '{\n  "changed": true\n}'
+        result = self.run_script("--check")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Changed JSON: api-endpoints.json", result.stdout)
+        self.assertIn('+"changed": true', result.stdout)
+        self.assertEqual(self.contents(), self.before)
+
+    def test_json_whitespace_drift_is_ignored_by_check(self):
+        original = self.fixture["json"]["api-endpoints.json"]
+        self.fixture["json"]["api-endpoints.json"] = original.replace("{", "{\n    ")
+        result = self.run_script("--check")
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(self.contents(), self.before)
+
     def test_curl_does_not_load_user_configuration(self):
         self.assertEqual(self.run_script("--check").returncode, 0)
         requests = [json.loads(line) for line in self.requests.read_text().splitlines()]
         for command, args in requests:
-            if command == "curl":
-                # curlrc can enable --output, --dump-header, or --insecure.
+            if command == "curl" and "raw.githubusercontent" in args[-1]:
                 self.assertIn(args[0], ("-q", "--disable"))
 
     def test_refresh_updates_content_and_only_changed_repository_provenance(self):
@@ -145,8 +217,8 @@ class RefreshTests(unittest.TestCase):
         self.assertEqual(self.run_script().returncode, 0)
         after = self.contents()
         changed = {key for key in after if after[key] != self.before[key]}
-        self.assertEqual(changed, {"SOURCES.md", "containers/docker/fusionauth/docker-compose.yml"})
-        self.assertIn("a" * 40, after["SOURCES.md"].decode())
+        self.assertEqual(changed, {f"{SNAPSHOTS}/SOURCES.md", f"{SNAPSHOTS}/containers/docker/fusionauth/docker-compose.yml"})
+        self.assertIn("a" * 40, after[f"{SNAPSHOTS}/SOURCES.md"].decode())
         self.assertEqual(self.run_script("--check").returncode, 0)
 
     def test_all_repositories_can_refresh_in_one_run(self):
