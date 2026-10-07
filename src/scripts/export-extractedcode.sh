@@ -4,9 +4,10 @@
 # Loops through every directory in astro/extractedcode/, strips Bluehawk annotations, and mirrors the content to the remote repository specified in repositoryUrl.txt.
 # Directories without a repositoryUrl.txt are skipped silently. If any publish fails, the script continues with the rest and exits non-zero after printing a summary.
 
+# Environment:
+#   PUBLISH_TOKEN: GitHub token with write access to the external repositories.
 # Arguments:
-#   $1 — The GitHub access token for pushing to external repositories.
-#   $2 — The source commit SHA of the documentation repository to include in the commit message of the extractedcode repository.
+#   $1: The source commit SHA of the documentation repository to include in the commit message of the extractedcode repository.
 
 set -uo pipefail
 
@@ -14,13 +15,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$REPO_ROOT"
 
-if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
-	echo "Usage: export-extractedcode.sh <github-token> <commit-sha>" >&2
+if [ -z "${PUBLISH_TOKEN:-}" ] || [ -z "${1:-}" ]; then
+	echo "Usage: PUBLISH_TOKEN=<github-token> export-extractedcode.sh <commit-sha>" >&2
 	exit 1
 fi
 
-GITHUB_TOKEN="$1"
-DOCUMENTATION_COMMIT_HASH="$2"
+DOCUMENTATION_COMMIT_HASH="$1"
 
 successes=()
 failures=()
@@ -52,7 +52,7 @@ publish_repo() {
 			--output "$CLEANED_DIR" \
 			"$RELATIVE_PATH"
 
-		git clone "https://x-access-token:${GITHUB_TOKEN}@${PARTIAL_REMOTE_URL}" "$CLONED_DIR"
+		git clone "https://x-access-token:${PUBLISH_TOKEN}@${PARTIAL_REMOTE_URL}" "$CLONED_DIR"
 		cd "$CLONED_DIR"
 		git checkout main
 		git config user.email "github-actions[bot]@users.noreply.github.com"
