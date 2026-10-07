@@ -1,0 +1,30 @@
+---
+title: CIMD Client Registration Lambda
+description: An overview of the CIMD client registration lambda.
+tags: cimd client registration lambda, client id metadata document, cimd, mcp, oauth client registration, fusionauth lambda, enterprise feature
+---
+
+## TODO
+
+- PlanBlurb (enterprise) + AvailableSince 1.70.0
+- intro: runs when a CIMD client registers after login, and again for a `resource` not yet seen within the cache window. at most once per resource per cache window
+- only way to filter clients when the domain is `*`; link CIMD Domains page and `client-registration.mdx`
+- assigned per CIMD domain: **Registration lambda** field / `domain.registrationLambdaId`
+- structure: `function evaluate(result, clientMetadata, context)`
+- `clientMetadata` (read-only): `clientId`, `clientIdHost`, `clientIdPath`, `clientName`, `clientUri`, `clientUriHost`, `clientUriPath`, `redirectUris`
+- `context` (read-only): `eventInfo`, `authenticationThreats`
+- `result`, pre-populated from the domain:
+  - `allowed` (default `true`): `false` rejects the client for this request and stores nothing
+  - `revoke` (default `false`): `true` deletes the registration
+  - `scopes`: custom scopes, defaults to the domain's
+  - `providedScopePolicy`: defaults to the domain's
+  - `ttlInSeconds`: cache TTL; clamped to the domain's max and the 15 minute floor
+  - `jwtPopulateLambdaId`: defaults to the domain's; must be a JWT populate lambda
+- fail closed: lambda error, nulling `scopes`/`providedScopePolicy`, or a bad `jwtPopulateLambdaId` all reject the client
+- example: allow only clients whose `clientIdHost` is in an allowlist (open mode)
+- example: narrow scopes for a given client
+- Lambda HTTP Connect note, latency warning like other lambda pages
+- add to lambdas index table and nav
+- replace `(TODO: add link)` on the CIMD Domains page with a link here
+
+{/* TODO: double-check whether the lambda can see the requested resource. CIMDClientRegistrationContext only has eventInfo and authenticationThreats, but the service docs say the lambda is "invoked with the requested resource" */}
