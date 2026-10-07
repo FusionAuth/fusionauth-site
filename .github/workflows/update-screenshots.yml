@@ -1,20 +1,8 @@
-# Weekly screenshot refresh. Regenerates every screenshot and opens a PR only when one of
-# them meaningfully changed, judged by a pixel diff with a tolerance rather than by bytes.
-#
-# All logic lives in src/scripts/refresh-screenshots.sh, which runs the same way locally:
-#
-#   src/scripts/refresh-screenshots.sh                   # regenerate and compare
-#   src/scripts/refresh-screenshots.sh --compare-only    # compare what is already on disk
-#   src/scripts/refresh-screenshots.sh --threshold 0.005 # looser tolerance
-#
-# It exits 0 when nothing meaningful changed and 2 when there is something to review, and
-# leaves diff images in astro/.screenshot-diffs.
-
 name: Update screenshots
 
 on:
   schedule:
-    - cron: '0 8 * * 1'  # every Monday at 08:00 UTC
+    - cron: '0 8 * * 1'
   workflow_dispatch:
     inputs:
       threshold:
@@ -32,9 +20,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
@@ -54,6 +42,7 @@ jobs:
         run: npx playwright install webkit --with-deps
         working-directory: ./astro/screenshots
 
+      # script exits 0 when unchanged, 2 when there's something to review, else failed
       - name: Regenerate and compare
         id: refresh
         run: |
@@ -69,7 +58,7 @@ jobs:
 
       - name: Upload diff images
         if: steps.refresh.outputs.changed == 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@v7
         with:
           name: screenshot-diffs
           path: astro/.screenshot-diffs/
@@ -104,3 +93,13 @@ jobs:
       - name: No changes
         if: steps.refresh.outputs.changed == 'false'
         run: echo "All screenshots within tolerance -- no PR needed."
+
+  report:
+    needs: update
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/report-scheduled-run.yml
+    with:
+      result: ${{ needs.update.result }}
+    permissions:
+      contents: read
+      issues: write

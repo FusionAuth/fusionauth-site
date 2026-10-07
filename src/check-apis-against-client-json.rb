@@ -388,6 +388,11 @@ def downcase(string)
   dcs
 end
 
+# Dir.glob follows filesystem case rules, so macOS matches case-insensitively; fnmatch keeps it case-sensitive like CI
+def domain_glob(pattern)
+  Dir.glob(pattern).select { |f| File.fnmatch(pattern, f) }
+end
+
 def skip_file(fn)
 
   # this is an intermediate identity provider, we don't want to process it
@@ -511,7 +516,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     unless fields && fields.length > 0
       fields = {}
     end
-    files = Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+ex["type"]+".json")
+    files = domain_glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+ex["type"]+".json")
     file = files[0]
     ef = File.open(file)
     efs = ef.read
@@ -558,7 +563,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       end
     else
       # "need to look up other object for type " + field_type
-      files = Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+field_type+".json")
+      files = domain_glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+field_type+".json")
       if options[:verbose] && files.length > 1
         puts "for field_type: " + field_type + ", found " + files.length.to_s + " files, picking closest one"
         puts files
@@ -596,7 +601,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
             puts "handling special case of Identity Provider lambda config"
           end
 	  if field_type =="LambdaConfiguration" && ancestor_type.end_with?("IdentityProvider")
-            file = Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.provider.BaseIdentityProvider$LambdaConfiguration.json")[0]
+            file = domain_glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.provider.BaseIdentityProvider$LambdaConfiguration.json")[0]
 	  end
         end
         unless file
@@ -625,13 +630,13 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
 end
 
 if options[:fileprefix]
-  files = Dir.glob(options[:clientlibdir]+"/src/main/domain/*"+options[:fileprefix]+".json")
+  files = domain_glob(options[:clientlibdir]+"/src/main/domain/*"+options[:fileprefix]+".json")
 elsif options[:configfile]
   config = YAML.load(File.read(options[:configfile]))
   files = []
   filenames = config["files"]
   filenames.each do |f|
-    matching_files = Dir.glob(options[:clientlibdir]+"/src/main/domain/*"+f+".json")
+    matching_files = domain_glob(options[:clientlibdir]+"/src/main/domain/*"+f+".json")
     matching_files.each do |mf|
       files.append(mf)
     end
