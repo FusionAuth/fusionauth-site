@@ -10,8 +10,8 @@ cleanup() {
   echo "Cleaning up..."
   [ -n "$LOGS_PID" ] && kill "$LOGS_PID" 2>/dev/null || true
   docker stop springboot 2>/dev/null || true
-  # build output would otherwise get picked up by the docs site's snippet extraction
-  rm -rf "$PROJECT_DIR/complete-application/target"
+  # keeps build output out of snippet extraction; containers write it as root, so delete it from one
+  docker run --rm -v "$PROJECT_DIR/complete-application":/app eclipse-temurin:17-jdk rm -rf /app/target
   cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
 }
 trap cleanup EXIT

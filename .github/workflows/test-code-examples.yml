@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.scan.outputs.matrix }}
+      macos_matrix: ${{ steps.scan.outputs.macos_matrix }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -78,10 +79,24 @@ jobs:
           if [ "${#dirs[@]}" -eq 0 ]; then
             echo "No extractedcode directories changed"
             echo "matrix=[]" >> "$GITHUB_OUTPUT"
+            echo "macos_matrix=[]" >> "$GITHUB_OUTPUT"
           else
             matrix=$(printf '%s\n' "${dirs[@]}" | jq -R . | jq -sc .)
             echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
             echo "Suites to test: ${dirs[*]}"
+
+            # iOS apps only build on macOS, so suites with tests/macos.sh also get a macOS runner
+            macos_dirs=()
+            for name in "${dirs[@]}"; do
+              [ -f "astro/extractedcode/$name/tests/macos.sh" ] && macos_dirs+=("$name")
+            done
+            if [ "${#macos_dirs[@]}" -eq 0 ]; then
+              echo "macos_matrix=[]" >> "$GITHUB_OUTPUT"
+            else
+              macos_matrix=$(printf '%s\n' "${macos_dirs[@]}" | jq -R . | jq -sc .)
+              echo "macos_matrix=$macos_matrix" >> "$GITHUB_OUTPUT"
+              echo "Suites to build on macOS: ${macos_dirs[*]}"
+            fi
           fi
 
   test:
@@ -109,4 +124,20 @@ jobs:
 
       - name: Run tests
         run: bash tests/test.sh
+        working-directory: astro/extractedcode/${{ matrix.extractedcode }}
+
+  test-macos:
+    name: Test ${{ matrix.extractedcode }} on macOS
+    needs: discover
+    if: ${{ needs.discover.outputs.macos_matrix != '[]' }}
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        extractedcode: ${{ fromJson(needs.discover.outputs.macos_matrix) }}
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Run tests
+        run: bash tests/macos.sh
         working-directory: astro/extractedcode/${{ matrix.extractedcode }}

@@ -1,11 +1,5 @@
 ## Client-side Password Validation Example
 
-<!--
-this tag, and the corresponding end tag, are used to delineate what is pulled into the FusionAuth docs site. Don't remove unless you also change the docs site.
--->
-
-<!-- :snippet-start: forDocSite -->
-
 FusionAuth provides password rules, configurable at the [tenant level](https://fusionauth.io/docs/get-started/core-concepts/tenants). These include checks on a password value such as:
 
 * a password must have one special character
@@ -38,5 +32,3 @@ This JavaScript expects the names and DOM structure of the pages to be the same 
 You'll also need to create CSS classes `validation` and `ok` to visually inform your users about the status of their password.
 
 Password rules are also available via an [unauthenticated API call](https://fusionauth.io/docs/apis/tenants#retrieve-the-password-validation-rules) if you'd prefer to build your own validation logic without using JavaScript. This might be useful for a mobile application, for example.
-
-<!-- :snippet-end: -->

@@ -171,8 +171,6 @@ _DEFAULT_EXCLUDE_DEST = [
     r"cloud\.es\.io",               # Elastic Cloud cluster hostnames (customer placeholders)
     # ── Additional bot/crawler-hostile or placeholder domains ─────────────────
     r"googletagmanager\.com",       # GTM JS snippet URL; refuses non-browser connections
-    r"remote\.url",                 # component example placeholder (RemoteValue)
-    r"some\.address",               # component example placeholder (RemoteValue)
     r"application\.com",            # example domain used in SAML/SSO tutorials
     r"piedpiper\.",                  # fictional Silicon Valley company used in tutorials
     r"hooli\.",                      # fictional Silicon Valley company used in tutorials

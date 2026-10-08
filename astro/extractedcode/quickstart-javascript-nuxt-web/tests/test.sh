@@ -13,8 +13,8 @@ cleanup() {
   [ -n "$LOGS_PID" ] && kill "$LOGS_PID" 2>/dev/null || true
   docker stop nuxt 2>/dev/null || true
   [ -n "$CREATED_ENV" ] && rm -f "$APP_DIR/.env"
-  # build output would otherwise get picked up by the docs site's snippet extraction
-  rm -rf "$APP_DIR/.nuxt" "$APP_DIR/.output"
+  # keeps build output out of snippet extraction; containers write it as root, so delete it from one
+  docker run --rm -v "$APP_DIR":/app node:22 rm -rf /app/.nuxt /app/.output
   cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
 }
 trap cleanup EXIT
