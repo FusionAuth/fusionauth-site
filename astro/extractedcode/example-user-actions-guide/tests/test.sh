@@ -16,6 +16,7 @@ cleanup() {
   fi
   echo "Cleaning up..."
   docker rm -f user-actions-app > /dev/null 2>&1 || true
+  if [ "${status:-0}" -ne 0 ]; then docker compose -f "$SCRIPT_DIR/docker-compose.yml" logs --tail 80 2>&1 || true; fi
   docker compose -f "$SCRIPT_DIR/docker-compose.yml" down -v 2>/dev/null || true
 }
 trap cleanup EXIT

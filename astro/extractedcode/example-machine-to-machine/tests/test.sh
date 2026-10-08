@@ -8,8 +8,10 @@ API_KEY=33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
+  status=$?
   echo "Cleaning up..."
   docker stop m2m-apis 2>/dev/null || true
+  if [ "${status:-0}" -ne 0 ]; then (cd "$PROJECT_DIR" && docker compose logs --tail 80 2>&1) || true; fi
   cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
   rm -rf "$WORK_DIR"
 }

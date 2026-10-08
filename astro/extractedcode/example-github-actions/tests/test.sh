@@ -13,6 +13,7 @@ cleanup() {
   fi
   echo "Cleaning up..."
   docker rm -f github-actions-app > /dev/null 2>&1 || true
+  if [ "${status:-0}" -ne 0 ]; then (cd "$PROJECT_DIR" && docker compose logs --tail 80 2>&1) || true; fi
   cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
 }
 trap cleanup EXIT

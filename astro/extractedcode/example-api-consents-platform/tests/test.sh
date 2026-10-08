@@ -9,8 +9,10 @@ APPLICATION_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
+  status=$?
   echo "Cleaning up..."
   docker stop changebank-apis moneyscope 2>/dev/null || true
+  if [ "${status:-0}" -ne 0 ]; then (cd "$PROJECT_DIR" && docker compose logs --tail 80 2>&1) || true; fi
   cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
   rm -rf "$WORK_DIR"
 }

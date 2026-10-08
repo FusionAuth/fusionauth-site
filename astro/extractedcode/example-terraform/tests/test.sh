@@ -10,7 +10,9 @@ TERRAFORM_IMAGE=hashicorp/terraform:1.9
 WORK_DIR="$(mktemp -d)"
 
 cleanup() {
+  status=$?
   echo "Cleaning up..."
+  if [ "${status:-0}" -ne 0 ]; then docker compose -f "$SCRIPT_DIR/docker-compose.yml" logs --tail 80 2>&1 || true; fi
   docker compose -f "$SCRIPT_DIR/docker-compose.yml" down -v 2>/dev/null || true
   # terraform runs as root in its container, so remove its working copies from one
   docker run --rm -v "$WORK_DIR":/work alpine rm -rf /work/create /work/data-source /work/import 2>/dev/null || true
