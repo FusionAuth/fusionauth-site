@@ -64,6 +64,7 @@ const mdxComponentImports =
   "import Breadcrumb from 'src/components/Breadcrumb.astro';\n" +
   "import Aside from 'src/components/Aside.astro';\n" +
   "import RemoteCode from 'src/components/RemoteCode.astro';\n" +
+  "import LocalValue from 'src/components/LocalValue/LocalValue.astro';\n" +
   "import PlanBlurb from 'src/components/plan/PlanBlurb.astro';\n" +
   "import PlanBlurbApi from 'src/components/plan/PlanBlurbApi.astro';\n" +
   "import If from 'src/components/If.astro';\n" +

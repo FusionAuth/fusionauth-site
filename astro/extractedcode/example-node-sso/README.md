@@ -1,5 +1,8 @@
 # FusionAuth Node.js SSO example
 
+> [!WARNING]
+> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/example-node-sso). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
+
 This project is two simple example Node.js applications that illustrates how you can easily implement single sign-on (SSO) using FusionAuth.
 
 ## Prerequisites

@@ -1,5 +1,8 @@
 # FusionAuth Node.js centralized sessions example
 
+> [!WARNING]
+> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/example-node-centralized-sessions). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
+
 This project is two example Node.js applications that illustrates how you can easily implement sessions using refresh tokens to give you fine grained revocation using FusionAuth.
 
 ## Prerequisites
