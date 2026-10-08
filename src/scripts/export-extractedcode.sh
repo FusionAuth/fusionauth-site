@@ -5,7 +5,9 @@
 # Directories without a repositoryUrl.txt are skipped silently. If any publish fails, the script continues with the rest and exits non-zero after printing a summary.
 
 # Environment:
-#   PUBLISH_TOKEN: GitHub token with write access to the external repositories.
+#   QUICKSTART_PUBLISH_TOKEN: GitHub token with write access to the fusionauth-quickstart-* repositories.
+#   EXAMPLE_PUBLISH_TOKEN: GitHub token with write access to every other external repository.
+#   (A fine-grained PAT can address at most 50 repositories, so one token can't cover them all.)
 # Arguments:
 #   $1: The source commit SHA of the documentation repository to include in the commit message of the extractedcode repository.
 
@@ -15,8 +17,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$REPO_ROOT"
 
-if [ -z "${PUBLISH_TOKEN:-}" ] || [ -z "${1:-}" ]; then
-	echo "Usage: PUBLISH_TOKEN=<github-token> export-extractedcode.sh <commit-sha>" >&2
+if [ -z "${QUICKSTART_PUBLISH_TOKEN:-}" ] || [ -z "${EXAMPLE_PUBLISH_TOKEN:-}" ] || [ -z "${1:-}" ]; then
+	echo "Usage: QUICKSTART_PUBLISH_TOKEN=<github-token> EXAMPLE_PUBLISH_TOKEN=<github-token> export-extractedcode.sh <commit-sha>" >&2
 	exit 1
 fi
 
@@ -52,7 +54,11 @@ publish_repo() {
 			--output "$CLEANED_DIR" \
 			"$RELATIVE_PATH"
 
-		git clone "https://x-access-token:${PUBLISH_TOKEN}@${PARTIAL_REMOTE_URL}" "$CLONED_DIR"
+		local token="$EXAMPLE_PUBLISH_TOKEN"
+		case "$(basename "$PARTIAL_REMOTE_URL" .git)" in
+			fusionauth-quickstart-*) token="$QUICKSTART_PUBLISH_TOKEN" ;;
+		esac
+		git clone "https://x-access-token:${token}@${PARTIAL_REMOTE_URL}" "$CLONED_DIR"
 		cd "$CLONED_DIR"
 		git checkout main
 		git config user.email "github-actions[bot]@users.noreply.github.com"
