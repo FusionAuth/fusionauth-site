@@ -34,8 +34,9 @@ wait_for() {
   echo "${description} is ready."
 }
 
+# the kickstart's custom login template breaks <title> across lines, so check the status API instead of the page
 fusionauth_ready() {
-  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null
+  curl -sf http://localhost:9011/api/status > /dev/null
 }
 
 # the tenant update is the last request in the kickstart
