@@ -1,3 +1,6 @@
+> [!WARNING]
+> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/example-password-encryptor). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
+
 ## Example Password Hasher
 
 If you need to write a custom hasher (also known as a password encryptor) to import users into FusionAuth, you may use this example build. This is intended to be used with the Writing a Plugin guide provided in the FusionAuth documentation.

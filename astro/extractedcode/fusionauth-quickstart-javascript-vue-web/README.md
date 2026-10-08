@@ -1,5 +1,8 @@
 # Quickstart: Vue app with FusionAuth
 
+> [!WARNING]
+> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/fusionauth-quickstart-javascript-vue-web). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
+
 This repository contains a Vue app that works with a locally running instance of [FusionAuth](https://fusionauth.io/), the authentication and authorization platform.
 
 ## Setup

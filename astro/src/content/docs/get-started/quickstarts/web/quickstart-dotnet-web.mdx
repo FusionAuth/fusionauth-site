@@ -6,7 +6,6 @@ htmlTitle: FusionAuth QuickStart for .NET
 codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-web/main
 icon: /img/icons/dotnet-c.svg
 ---
-import DockerSpinup from 'src/components/quickstarts/DockerSpinup.astro';
 import Intro from 'src/components/quickstarts/Intro.astro';
 import {Content as LoginArchitectureWeb} from 'src/components/quickstarts/LoginArchitectureWeb.mdx';
 import NextSteps from 'src/components/quickstarts/NextSteps.astro';
@@ -43,7 +42,37 @@ cd fusionauth-quickstart-dotnet-web
 
 ### Run FusionAuth via Docker
 
-<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
+You'll find a Docker Compose file (`docker-compose.yml`) and an environment variables configuration file (`.env`) in the root directory of the repo.
+
+Assuming you have Docker installed, you can stand up FusionAuth on your machine with the following.
+
+```shell-session
+docker compose up -d
+```
+
+Here you are using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
+
+<Aside type="note">
+  If you ever want to reset the FusionAuth application, you need to delete the volumes created by Docker Compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
+</Aside>
+
+FusionAuth will be initially configured with these settings:
+
+* Your client Id is <code><LocalValue path="quickstart-dotnet-web/kickstart/kickstart.json" selector="$.variables.applicationId" /></code>.
+* Your client secret is <code><LocalValue path="quickstart-dotnet-web/kickstart/kickstart.json" selector="$.variables.clientSecret" /></code>.
+* Your example username is <code><LocalValue path="quickstart-dotnet-web/kickstart/kickstart.json" selector="$.variables.userEmail" /></code> and the password is <code><LocalValue path="quickstart-dotnet-web/kickstart/kickstart.json" selector="$.variables.userPassword" /></code>.
+* Your admin username is <code><LocalValue path="quickstart-dotnet-web/kickstart/kickstart.json" selector="$.variables.adminEmail" /></code> and the password is <code><LocalValue path="quickstart-dotnet-web/kickstart/kickstart.json" selector="$.variables.adminPassword" /></code>.
+* The base URL of FusionAuth is `http://localhost:9011/`.
+
+You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want to, but with Docker and Kickstart, everything will already be configured correctly.
+
+<Aside type="note">
+  If you want to see where the FusionAuth values came from, they can be found in the [FusionAuth app](http://localhost:9011/admin). The tenant Id is found on the Tenants page. To see the Client Id and Client Secret, go to the Applications page and click the `View` icon under the actions for the ChangeBank application. You'll find the Client Id and Client Secret values in the `OAuth configuration` section.
+</Aside>
+
+<Aside type="caution">
+  The `.env` file contains passwords. In a real application, always add this file to your `.gitignore` file and never commit secrets to version control.
+</Aside>
 
 ### Create your .NET 7 Application
 
@@ -59,7 +88,7 @@ cd complete-application && \
 dotnet run
 ```
 
-Then view the website at the following location `http://localhost:5000`.
+Then view the website at the following location `http://localhost:9012`.
 </Aside>
 
 To get started building your own application, open your command-line shell (i.e. Terminal on a Mac or PowerShell on Windows) and navigate to the directory of your choice. Then create a new web application using the `dotnet` CLI and go to that directory:
@@ -114,25 +143,21 @@ Create `Account.cshtml` and `Account.cshtml.cs` in the `Pages` directory. To pro
 
 Copy the following code into `Account.cshtml.cs`:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Pages/Account.cshtml.cs"}
-  lang="csharp" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Pages/Account.cshtml.cs" lang="csharp" />
 
 Copy the following code into `Account.cshtml`:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Pages/Account.cshtml"}
-  lang="razor" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Pages/Account.cshtml" lang="razor" />
 
 Create `MakeChange.cshtml` and `MakeChange.cshtml.cs` in the `Pages` directory. You will use the same [Authorize filter attribute](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/filter?view=aspnetcore-3.1#authorize-filter-attribute) to secure the page.
 
 Copy the following code into `MakeChange.cshtml.cs`:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Pages/MakeChange.cshtml.cs"}
-  lang="csharp" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Pages/MakeChange.cshtml.cs" lang="csharp" />
 
 Copy the following code into `MakeChange.cshtml`:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Pages/MakeChange.cshtml"}
-  lang="razor" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Pages/MakeChange.cshtml" lang="razor" />
 
 You will need a way to allow the user to logout of the application as well. You'll build the logout functionality in the `Logout` page. This will:
 
@@ -143,36 +168,31 @@ FusionAuth will then destroy its session and redirect the user back to the app's
 
 Add the following file to the `Pages` directory and call it `Logout.cshtml.cs`:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Pages/Logout.cshtml.cs"}
-  lang="csharp" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Pages/Logout.cshtml.cs" lang="csharp" />
 
 `OnGet` is the important method. Here you sign out using a method of the authentication library, delete the JWT cookie, and send the user to the FusionAuth OAuth logout endpoint.
 
 Now add `Logout.cshtml` to the `Pages` directory. No content is necessary. Just declare the page and model as shown below.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Pages/Logout.cshtml"}
-  lang="razor" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Pages/Logout.cshtml" lang="razor" />
 
 ### Application Configuration
 You will need to do a little plumbing to ensure things like having the correct settings and configuring the cookies properly to work over HTTP for the sample application.
 
 #### App Settings
-Replace the text in the `appsettings.json` file with the text below. The important part here is that we are adding the `FusionAuthSettings` section so that the code above will run with the correct configuration settings. `Authority` is just the location of the user identity server, in this case, FusionAuth. `Urls` ensures the application runs on the specified port, 5000.
+Replace the text in the `appsettings.json` file with the text below. The important part here is that we are adding the `FusionAuthSettings` section so that the code above will run with the correct configuration settings. `Authority` is just the location of the user identity server, in this case, FusionAuth. `Urls` ensures the application runs on the specified port, 9012.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/appsettings.json"}
-  lang="json" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/appsettings.json" lang="json" />
 
 #### Program Settings
 Replace the text in the `Program.cs` file. Since you are using unsecured cookies, you need to allow this in the configuration. Safari and Chrome require different settings and that is reflected in the code below.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Program.cs"}
-  lang="csharp" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Program.cs" lang="csharp" />
 
 #### Startup Settings
 Add the `Startup.cs` file in the root directory of the application. This sets the correct port and manages unsecured cookies for the browsers. The `CheckSameSite` and `DisallowsSameSiteNone` functions help manage the cookie settings for the different browsers.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Startup.cs"}
-  lang="csharp" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Startup.cs" lang="csharp" />
 
 <Aside type="caution">
 There are a few settings applied to simplify the sample application. In a production application, do not allow cookies over `http` or keep the `ClientSecret` in a .json file for production applications. Get the `ClientSecret` from an environmental variable that has been set on a production machine or some other secure way.
@@ -181,29 +201,25 @@ There are a few settings applied to simplify the sample application. In a produc
 #### Navigation
 This application will display different menu items for authenticated users and non authenticated users. To add this type of navigation update `/Pages/Shared/_Layout.cshtml` with the following:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Pages/Shared/_Layout.cshtml"}
-  lang="razor" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Pages/Shared/_Layout.cshtml" lang="razor" />
 
 #### Homepage
 Update the default page.
 
 Copy the following code into `Pages/Index.cshtml.cs`:
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Pages/Index.cshtml.cs"}
-  lang="csharp" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Pages/Index.cshtml.cs" lang="csharp" />
 
 Copy the following code into `Index.cshtml` and notice the logic to show a different view to users that have not logged in.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Pages/Index.cshtml"}
-  lang="razor" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Pages/Index.cshtml" lang="razor" />
 
 #### Styling
 To give the pages the look and feel of an application, apply the following styling and images.
 
 Add the `changebank.css` file in the `wwwroot/css` directory of the application.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/wwwroot/css/changebank.css"}
-  lang="css" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/wwwroot/css/changebank.css" lang="css" />
 
 Copy the money image for the `Index` page. Run the following command in a terminal window. Make sure you are in the root directory for your application.
 
@@ -216,18 +232,15 @@ Next we need to do a little clean up and make sure all the namespaces work toget
 
 Replace the text in the `Pages/_ViewImports.cshtml` file with the following code.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Pages/_ViewImports.cshtml"}
-  lang="csharp" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Pages/_ViewImports.cshtml" lang="csharp" />
 
 Replace the text in the `Pages/Error.cshtml.cs` file with the following code.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Pages/Error.cshtml.cs"}
-  lang="csharp" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Pages/Error.cshtml.cs" lang="csharp" />
 
 Replace the text in the `Pages/Privacy.cshtml.cs` file with the following code.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Pages/Privacy.cshtml.cs"}
-  lang="csharp" />
+<ExtractedCode src="quickstart-dotnet-web/complete-application/Pages/Privacy.cshtml.cs" lang="csharp" />
 
 ## Run The Application
 
@@ -237,7 +250,7 @@ You can start up the .NET application using this command in a terminal window fr
 dotnet run
 ```
 
-You can now open up an incognito window and visit the app at http://localhost:5000. Log in with the user account you created when setting up FusionAuth, and you'll see the email of the user next to a logout button.
+You can now open up an incognito window and visit the app at http://localhost:9012. Log in with the user account you created when setting up FusionAuth, and you'll see the email of the user next to a logout button.
 
 <QuickstartTshirtCTA/>
 

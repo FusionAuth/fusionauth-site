@@ -1,0 +1,30 @@
+// test-only: maven central 429s CI runners, so swap in google's mirror (runs from ~/.gradle/init.d)
+def mirror = 'https://maven-central.storage-download.googleapis.com/maven2/'
+def useMirror = { RepositoryHandler repositories ->
+    repositories.withType(MavenArtifactRepository).configureEach { repository ->
+        if (repository.url.toString().startsWith('https://repo.maven.apache.org/maven2')) {
+            repository.url = mirror
+        }
+    }
+}
+
+beforeSettings { settings ->
+    // the plugin portal redirects to maven central, even for misses, so check the mirror and google first
+    settings.pluginManagement.repositories {
+        maven { url mirror }
+        google()
+        gradlePluginPortal()
+    }
+    useMirror(settings.pluginManagement.repositories)
+    useMirror(settings.dependencyResolutionManagement.repositories)
+}
+
+allprojects {
+    buildscript.repositories {
+        maven { url mirror }
+        google()
+    }
+    useMirror(buildscript.repositories)
+    // no added repos here: projects may set FAIL_ON_PROJECT_REPOS
+    useMirror(repositories)
+}
