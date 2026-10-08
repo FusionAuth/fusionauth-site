@@ -1,7 +1,7 @@
 # Testing Lambdas Application
 
 > [!WARNING]
-> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/localcode/example-testing-lambdas). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
+> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/example-testing-lambdas). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
 
 This repo holds a modified version of the FusionAuth 5 minute getting started guide. It uses the kickstart functionality to obviate manual configuration of FusionAuth.
 

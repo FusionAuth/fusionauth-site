@@ -1,5 +1,8 @@
 # Example Next.js Application
 
+> [!WARNING]
+> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/fusionauth-quickstart-javascript-nextjs-web). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
+
 This repo holds an example Next.js application that uses FusionAuth as the identity provider.
 This application uses [NextAuth.js](https://next-auth.js.org/) which includes a [FusionAuth](https://next-auth.js.org/providers/fusionauth) provider.
 

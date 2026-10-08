@@ -37,7 +37,7 @@ echo "Starting FusionAuth..."
 (cd "$FA_REPO_DIR" && docker compose up -d)
 
 echo "Waiting for FusionAuth to be ready..."
-timeout 480 bash -c 'until curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "<title>Login"; do
+timeout 480 bash -c 'until curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null; do
   echo "  Waiting for FusionAuth..."
   sleep 5
 done'

@@ -1,0 +1,43 @@
+name: Test FusionAuth login
+on:
+  push:
+    branches:
+      - main_RENAME_THIS_TO_ENABLE_TEST
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      docker:
+        image: docker:19.03.12
+        options: --privileged # container has full access to host
+        ports:
+          - 9011:9011
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Start FusionAuth in Docker
+        run: docker compose up -d # -d in background
+
+      - name: Install npm dependencies
+        run: |
+          npm install
+          npx playwright install-deps
+          npx playwright install
+        working-directory: ./app
+
+      - name: Start app
+        run: npm run start & # & in background
+        working-directory: ./app
+
+      - name: Run Playwright tests
+        run: npx playwright test --project=chromium
+        working-directory: ./app
