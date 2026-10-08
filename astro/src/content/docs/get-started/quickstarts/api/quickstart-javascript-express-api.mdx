@@ -1,11 +1,11 @@
 ---
 title: Node.js/Express.js API
 description: QuickStart integration of a JavaScript Express.js API application action as a resource server with FusionAuth.
+tags: express api, node.js api, javascript api quickstart, express authentication, node authentication, bearer token
 htmlTitle: FusionAuth QuickStart for Node.js/Express.js API
 codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-api/main
 icon: /img/icons/javascript.svg
 ---
-import DockerSpinup from 'src/components/quickstarts/DockerSpinup.astro';
 import Intro from 'src/components/quickstarts/Intro.astro';
 import {Content as LoginArchitectureApi} from 'src/components/quickstarts/LoginArchitectureApi.mdx';
 import NextStepsApi from 'src/components/quickstarts/NextStepsApi.astro';
@@ -29,17 +29,14 @@ For this QuickStart, you'll need:
 
 ## Getting Started
 
-In this section, you'll get FusionAuth up and running and create a resource server that will serve the API.
+In this section, you’ll get FusionAuth up and running and create a resource server that will serve the API.
 
 ### Clone The Code
 
 First off, grab the code from the repository and change into that directory.
 
 ```shell-session
-git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api.git
-```
-
-```shell-session
+git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api.git && \
 cd fusionauth-quickstart-javascript-express-api
 ```
 
@@ -49,7 +46,38 @@ All the files you'll create in this guide already exist in the `complete-applica
 
 ### Run FusionAuth Via Docker
 
-<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} api />
+You'll find a Docker Compose file (`docker-compose.yml`) and an environment variables configuration file (`.env`) in the root directory of the repo.
+
+Assuming you have Docker installed, you can stand up FusionAuth on your machine with the following.
+
+```shell-session
+docker compose up -d
+```
+
+Here you are using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
+
+<Aside type="note">
+  If you ever want to reset the FusionAuth application, you need to delete the volumes created by Docker Compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
+</Aside>
+
+FusionAuth will be initially configured with these settings:
+
+* Your client Id is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.applicationId" /></code>.
+* Your client secret is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.requests[?(@.url == '/api/application/#{applicationId}')].body.application.oauthConfiguration.clientSecret" /></code>.
+* Your example teller username is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.tellerEmail" /></code> and the password is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.tellerPassword" /></code>. They will have the role of `teller`.
+* Your example customer username is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.customerEmail" /></code> and the password is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.customerPassword" /></code>. They will have the role of `customer`.
+* Your admin username is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.adminEmail" /></code> and the password is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.adminPassword" /></code>.
+* The base URL of FusionAuth is `http://localhost:9011/`.
+
+You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want to, but with Docker and Kickstart, everything will already be configured correctly.
+
+<Aside type="note">
+  If you want to see where the FusionAuth values came from, they can be found in the [FusionAuth app](http://localhost:9011/admin). The tenant Id is found on the Tenants page. To see the Client Id and Client Secret, go to the Applications page and click the `View` icon under the actions for the ChangeBank application. You'll find the Client Id and Client Secret values in the `OAuth configuration` section.
+</Aside>
+
+<Aside type="caution">
+  The `.env` file contains passwords. In a real application, always add this file to your `.gitignore` file and never commit secrets to version control.
+</Aside>
 
 ### Create A Basic Express Application
 
@@ -64,12 +92,15 @@ Both endpoints will be protected such that a valid JSON web token (JWT) will be 
 Create the starter app called `your-application` for this API. Accept all the defaults.
 
 ```shell-session
-npx express-generator@latest your-application --no-view
-cd your-application
-npm install
+npx express-generator@latest your-application --no-view && \
+cd your-application && \
+npm install && \
 npm audit fix --force
-npm install dotenv
-npm install jose
+```
+
+```shell-session
+npm install dotenv && \
+npm install jose@4
 ```
 
 Here you set up your application and add project dependencies. The [`dotenv`](https://www.npmjs.com/package/dotenv) library allows the code to read your `.env` environment variable file. Additionally, the [`jose`](https://www.npmjs.com/package/jose) library allows you to validate the authenticity of the JWT.
@@ -80,8 +111,7 @@ Now, create the `.env` file in your `your-application` folder and add the follow
 This is a different environment file to the one in the root folder used by Docker for FusionAuth
 </Aside>
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-api/main/complete-application/.env"
- lang="shell" />
+<ExtractedCode src="fusionauth-quickstart-javascript-express-api/complete-application/.env" lang="shell" />
 
  ## Authentication
 
@@ -89,8 +119,7 @@ Before you configure authentication, you need to change the default `app.js` fil
 
 Add the following lines in `app.js` just above `app.use('/', indexRouter);`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-api/main/complete-application/app.js"
- lang="javascript" tags="verifyToken" />
+<ExtractedCode src="fusionauth-quickstart-javascript-express-api/app.snippet.verifyToken.js" lang="javascript" />
 
 The line, `const verifyJWT = require('./services/verifyJWT');`, imports middleware to add authentication to the app. Let's create that file now.
 
@@ -102,8 +131,7 @@ mkdir services
 
 In this `services` folder, add the file `verifyJWT.js`, and copy in the following code.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-api/main/complete-application/services/verifyJWT.js"
- lang="javascript" />
+<ExtractedCode src="fusionauth-quickstart-javascript-express-api/complete-application/services/verifyJWT.js" lang="javascript" />
 
 The first line, `require('dotenv/config');`, tells the application to use the settings from `.env` you created earlier.
 
@@ -113,8 +141,7 @@ Now, you'll add one more file that will check if the user has a role with permis
 
 In the `services` folder, add the file `hasRole.js` and copy in the following code.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-api/main/complete-application/services/hasRole.js"
- lang="javascript" />
+<ExtractedCode src="fusionauth-quickstart-javascript-express-api/complete-application/services/hasRole.js" lang="javascript" />
 
 This function is given a list of roles, any of which allow the user's request. It returns a middleware function that checks if the JWT contains one of the required roles, and either returns an error or allows the next function in the middleware stack to proceed.
 
@@ -128,8 +155,7 @@ All that's left to do is write the two endpoints that will demonstrate your auth
 
 Overwrite `routes/index.js` with the following code.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-api/main/complete-application/routes/index.js"
- lang="javascript" />
+<ExtractedCode src="fusionauth-quickstart-javascript-express-api/complete-application/routes/index.js" lang="javascript" />
 
 The POST `panic` route uses the `hasRole` function with the `'teller'` parameter to disallow non-tellers.
 
@@ -166,7 +192,7 @@ Copy the `token` from the response, which should look like this:
 
 ```json
 {
-  "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InVOYl9iQzFySHZZTnZMc285VzRkOEprZkxLWSJ9.eyJhdWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJleHAiOjE2ODkzNTMwNTksImlhdCI6MTY4OTM1Mjk5OSwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo5MDExIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMTExMTExMTExMTExIiwianRpIjoiY2MzNWNiYjUtYzQzYy00OTRjLThmZjMtOGE4YWI1NTI0M2FjIiwiYXV0aGVudGljYXRpb25UeXBlIjoiUEFTU1dPUkQiLCJlbWFpbCI6InRlbGxlckBleGFtcGxlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhcHBsaWNhdGlvbklkIjoiZTlmZGI5ODUtOTE3My00ZTAxLTlkNzMtYWMyZDYwZDFkYzhlIiwicm9sZXMiOlsiY3VzdG9tZXIiLCJ0ZWxsZXIiXSwiYXV0aF90aW1lIjoxNjg5MzUyOTk5LCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMifQ.WLzI9hSsCDn3ZoHKA9gaifkd6ASjT03JUmROGFZaezz9xfVbO3quJXEpUpI3poLozYxVcj2hrxKpNT9b7Sp16CUahev5tM0-4_FaYlmUEoMZBKo2JRSH8hg-qVDvnpeu8nL6FXxJII0IK4FNVwrQVFmAz99ZCf7m5xruQSziXPrfDYSU-3OZJ3SRuvD8bMopSiyRvZLx6YjWfBsvGSmMXeh_8vHG5fVkq5w1IkaDdugHnivtJIivHuCfl38kQBgw9rAqJLJoKRHHW0Ha7vHIcS6OCWWMDIIVspLyQNcLC16pL9Nss_5v9HMofow1OvQ9sUSMrbbkipjKq2peSjG7qA",
+  "token": "eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA",
   "tokenExpirationInstant": 1689353059670,
   "user": {
       ...
@@ -304,11 +330,10 @@ Ensure you have the latest version of Docker, or try `docker-compose` instead. I
 You can always pull down a complete running application and compare what's different.
 
 ```shell-session
-git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api.git
-cd fusionauth-quickstart-javascript-express-api
-docker compose up -d
-cd complete-application
-npm install
+git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api.git && \
+cd fusionauth-quickstart-javascript-express-api && \
+docker compose up -d && \
+cd complete-application && \
+npm install && \
 npm run start
 ```
-

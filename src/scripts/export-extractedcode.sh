@@ -4,9 +4,12 @@
 # Loops through every directory in astro/extractedcode/, strips Bluehawk annotations, and mirrors the content to the remote repository specified in repositoryUrl.txt.
 # Directories without a repositoryUrl.txt are skipped silently. If any publish fails, the script continues with the rest and exits non-zero after printing a summary.
 
+# Environment:
+#   QUICKSTART_PUBLISH_TOKEN: GitHub token with write access to the fusionauth-quickstart-* repositories.
+#   EXAMPLE_PUBLISH_TOKEN: GitHub token with write access to every other external repository.
+#   (A fine-grained PAT can address at most 50 repositories, so one token can't cover them all.)
 # Arguments:
-#   $1 — The GitHub access token for pushing to external repositories.
-#   $2 — The source commit SHA of the documentation repository to include in the commit message of the extractedcode repository.
+#   $1: The source commit SHA of the documentation repository to include in the commit message of the extractedcode repository.
 
 set -uo pipefail
 
@@ -14,13 +17,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$REPO_ROOT"
 
-if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
-	echo "Usage: export-extractedcode.sh <github-token> <commit-sha>" >&2
+if [ -z "${QUICKSTART_PUBLISH_TOKEN:-}" ] || [ -z "${EXAMPLE_PUBLISH_TOKEN:-}" ] || [ -z "${1:-}" ]; then
+	echo "Usage: QUICKSTART_PUBLISH_TOKEN=<github-token> EXAMPLE_PUBLISH_TOKEN=<github-token> export-extractedcode.sh <commit-sha>" >&2
 	exit 1
 fi
 
-GITHUB_TOKEN="$1"
-DOCUMENTATION_COMMIT_HASH="$2"
+DOCUMENTATION_COMMIT_HASH="$1"
 
 successes=()
 failures=()
@@ -38,19 +40,38 @@ publish_repo() {
 		set -euo pipefail
 
 		cd "$REPO_ROOT/astro"
-		npx bluehawk copy --state published \
-			-i "repositoryUrl.txt" \
-			-i "tests" \
+		# The Start Here app's Playwright spec is part of the documented example;
+		# only its docs-only test runner should be excluded from export.
+		# Leading slashes anchor the patterns to the project root, so an app's own tests/ or .github/ directories still publish.
+		local test_ignore="/tests"
+		if [ "$(basename "$REPOSITORY_PATH")" = "example-get-started" ]; then
+			test_ignore="/tests/test.sh"
+		fi
+		# A project opts in to publishing its .github directory (e.g. when a workflow is the example) with publishGithubDirectory.txt.
+		local github_ignore=(-i "/.github")
+		if [ -f "$REPO_ROOT/$REPOSITORY_PATH/publishGithubDirectory.txt" ]; then
+			github_ignore=()
+		fi
+		npx bluehawk copy --plugin bluehawk-languages.js --state published \
+			-i "/repositoryUrl.txt" \
+			-i "/publishGithubDirectory.txt" \
+			-i "$test_ignore" \
+			${github_ignore[@]+"${github_ignore[@]}"} \
 			-i "node_modules" \
 			--output "$CLEANED_DIR" \
 			"$RELATIVE_PATH"
 
-		git clone "https://x-access-token:${GITHUB_TOKEN}@${PARTIAL_REMOTE_URL}" "$CLONED_DIR"
+		local token="$EXAMPLE_PUBLISH_TOKEN"
+		case "$(basename "$PARTIAL_REMOTE_URL" .git)" in
+			fusionauth-quickstart-*) token="$QUICKSTART_PUBLISH_TOKEN" ;;
+		esac
+		git clone "https://x-access-token:${token}@${PARTIAL_REMOTE_URL}" "$CLONED_DIR"
 		cd "$CLONED_DIR"
 		git checkout main
 		git config user.email "github-actions[bot]@users.noreply.github.com"
 		git config user.name "github-actions[bot]"
-		git rm -rf .
+		# Keep repository-owned workflows, CODEOWNERS, and other GitHub configuration. Opted-in projects overlay theirs below.
+		git rm -rf -- . ':(exclude).github' ':(exclude).github/**'
 		git clean -fdxq
 		cp -r "$CLEANED_DIR/." .
 		git add -A

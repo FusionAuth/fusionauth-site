@@ -74,15 +74,118 @@ The [FusionAuth SPA quickstarts](/docs/get-started/quickstarts/spa/) use SDKs wh
 
 Here's a component from the [Angular quickstart](/docs/get-started/quickstarts/spa/quickstart-javascript-angular-web).
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-angular-web/main/complete-application/src/app/app.component.ts" lang="typescript" />
+```typescript
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { FusionAuthService, UserInfo } from '@fusionauth/angular-sdk';
+import { Subscription } from 'rxjs';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css'],
+})
+export class AppComponent implements OnInit, OnDestroy {
+  private fusionAuthService: FusionAuthService = inject(FusionAuthService);
+
+  isLoggedIn: boolean = this.fusionAuthService.isLoggedIn();
+  userInfo: UserInfo | null = null;
+  isGettingUserInfo: boolean = false;
+  subscription?: Subscription;
+
+  ngOnInit(): void {
+    if (this.isLoggedIn) {
+      this.subscription = this.fusionAuthService
+        .getUserInfoObservable({
+          onBegin: () => (this.isGettingUserInfo = true),
+          onDone: () => (this.isGettingUserInfo = false),
+        })
+        .subscribe({
+          next: (userInfo) => (this.userInfo = userInfo),
+          error: (error) => console.error(error),
+        });
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.subscription?.unsubscribe();
+  }
+
+  logout() {
+    this.fusionAuthService.logout();
+  }
+
+  login() {
+    this.fusionAuthService.startLogin();
+  }
+}
+```
 
 Here's an example dynamic header from the [React quickstart](/docs/get-started/quickstarts/spa/react).
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/components/LogoHeader.tsx" lang="tsx" />
+```tsx
+import { useFusionAuth } from "@fusionauth/react-sdk";
+import changebankLogo from "../assets/changebank.svg";
+
+export default function LogoHeader() {
+  const { isLoggedIn, userInfo, startLogin, startLogout } = useFusionAuth();
+
+  return (
+    <div id="logo-header">
+      <img src={changebankLogo} alt="Change Bank" width="259" height="70" />
+      {isLoggedIn ? (
+        <div className="h-row">
+          <p className="header-email">{userInfo?.email}</p>
+          <button
+            className="button-lg"
+            style={{ cursor: "pointer" }}
+            onClick={() => startLogout()}
+          >
+            Logout
+          </button>
+        </div>
+      ) : (
+        <button
+          className="button-lg"
+          style={{ cursor: "pointer" }}
+          onClick={() => startLogin("state-from-login")}
+        >
+          Login
+        </button>
+      )}
+    </div>
+  );
+}
+```
 
 And, finally, here's code from the [Vue quickstart](/docs/get-started/quickstarts/spa/quickstart-javascript-vue-web) showing `<RequireAuth>` usage which controls access to user interface elements based on whether someone has authenticated.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-vue-web/main/complete-application/src/components/LogoHeader.vue" lang="markup" />
+```markup
+<template>
+  <div id="logo-header">
+    <img src="@/assets/changebank.svg" alt="Change Bank" width="259" height="70"/>
+
+    <RequireAuth>
+      <div class="h-row">
+        <p class="header-email" v-if="userInfo?.email">
+          {{ userInfo.email }}
+        </p>
+        <a class="button-lg" style="cursor: pointer" @click="logout()">Logout</a>
+      </div>
+    </RequireAuth>
+
+    <RequireAnonymous>
+      <a class="button-lg" style="cursor: pointer" @click="login()">Login</a>
+    </RequireAnonymous>
+
+  </div>
+</template>
+
+<script setup lang="ts">
+import {useFusionAuth} from "@fusionauth/vue-sdk";
+
+const {userInfo, login, logout} = useFusionAuth();
+</script>
+```
 
 ## More about SDKs
 
@@ -111,12 +214,12 @@ When you use the Authorization Code grant for authentication, as well as redirec
 * forgot password
 * email verification
 * [MFA](/docs/lifecycle/authenticate-users/multi-factor-authentication)
-* [magic link authentication](/docs/lifecycle/authenticate-users/passwordless/magic-links)
+* [magic link authentication](/docs/lifecycle/authenticate-users/one-time-passwords/)
 * password expiration
 * [enterprise single sign-on (SAML, OIDC)](/docs/lifecycle/authenticate-users/identity-providers/enterprise/)
 * [social sign-on (Google, Facebook, etc)](/docs/lifecycle/authenticate-users/identity-providers/social/)
 * [profile management](/docs/lifecycle/manage-users/account-management/) (with a paid license)
-* [passkeys](/docs/lifecycle/authenticate-users/passwordless/webauthn-passkeys) (with a paid license)
+* [passkeys](/docs/lifecycle/authenticate-users/passkeys/configure) (with a paid license)
 * and more
 
 Now, it's not entirely effortless. You must configure FusionAuth, but all this functionality is present, tested, and maintained over time. For example, instead of having to figure out how to set up email verification, you configure a customizable email and enable it in FusionAuth, and it works. In addition, browser redirects work with any language, framework, or browser. This ensures your application's login page is never a barrier to your users.
@@ -140,7 +243,7 @@ In addition, FusionAuth has built-in security features such as:
 
 Additional functionality and security are great, but you typically want your login pages to look like your application. Doesn't a browser redirect make that difficult?
 
-Well, no. FusionAuth allows complete control over the look and feel of the hosted login pages, including adding or removing HTML, CSS, images, and JavaScript to the pages. Learn more about this functionality, which we call [themes](/docs/customize/look-and-feel/), including an [example using Tailwind CSS](/docs/customize/look-and-feel/advanced-themes/tailwind).
+Well, no. FusionAuth allows complete control over the look and feel of the hosted login pages, including adding or removing HTML, CSS, images, and JavaScript to the pages. Learn more about this functionality, which we call [themes](/docs/theme/), including an [example using Tailwind CSS](/docs/theme/advanced-themes/tailwind).
 
 One other common objection to redirection is the ability to send a successfully authenticated user right back to where they started. It's common to allow users to log in from multiple states in your SPA, after all. Luckily, you can use the `state` parameter to deep link from any page in your SPA to FusionAuth and then send the user right back to that page after a successful login. Here's a video displaying that:
 
@@ -148,7 +251,41 @@ One other common objection to redirection is the ability to send a successfully 
 
 Here's code from an [example application](https://github.com/FusionAuth/fusionauth-example-node-deeplink/) that extracts a URL from a `state` parameter and returns the user to that URL after a successful exchange at the token endpoint.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node-deeplink/main/routes/index.js" lang="javascript" tags="extractURLFromState" />
+```javascript
+const stateFromServer = req.query.state;
+const stateValue = stateFromServer.split('-')[0];
+const urlToEndUpAt = stateFromServer.split('-')[1];
+if (stateValue !== req.session.stateValue) {
+  console.log("State doesn't match. uh-oh.");
+  console.log("Saw: " + stateFromServer + ", but expected: " + req.session.stateValue);
+  res.redirect(302, '/');
+  return;
+}
+// This code stores the user in a server-side session
+client.exchangeOAuthCodeForAccessTokenUsingPKCE(req.query.code,
+  clientId,
+  clientSecret,
+  'http://localhost:3000/oauth-redirect',
+  req.session.verifier)
+  .then((response) => {
+    return client.retrieveUserUsingJWT(response.response.access_token);
+  })
+  .then((response) => {
+    if (!response.response.user.registrations || response.response.user.registrations.length == 0 || (response.response.user.registrations.filter(reg => reg.applicationId === clientId)).length == 0) {
+      console.log("User not registered, not authorized.");
+      res.redirect(302, '/');
+      return;
+    }
+
+    req.session.user = response.response.user;
+  })
+  .then((response) => {
+    res.redirect(302, urlToEndUpAt);
+  }).catch((err) => {
+  console.log("in error");
+  console.error(JSON.stringify(err));
+});
+```
 
 The takeaway from this code is that you can set the `state` parameter when redirecting the user to the login page, then extract a value from it and redirect back to the correct location.
 

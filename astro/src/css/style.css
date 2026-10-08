@@ -5,7 +5,12 @@
 @import "astro-better-steps/style.css";
 @import "astro-better-nav-bar/style.css";
 @plugin "@tailwindcss/typography";
-@source "../../node_modules/astro-toc-smol/src/index.js";
+@source "../../node_modules/astro-better-toc/src/index.js";
+@source "../../node_modules/astro-better-toc/src/InlineTOC.astro";
+@source "../../node_modules/astro-better-cards/PageNav.astro";
+@source "../../node_modules/astro-better-cards/ChildCards.astro";
+@source "../../node_modules/astro-better-cards/Card.astro";
+@source "../../node_modules/astro-better-cards/CardGrid.astro";
 
 /* Restore Manual Dark Mode */
 @custom-variant dark (&:where(.dark, .dark *));
@@ -172,6 +177,11 @@
       display: none;
     }
 
+    /* cap prose width to match the layout width when the TOC sidebar is present */
+    @media (min-width: 1024px) {
+      max-width: 56rem;
+    }
+
     /* Code Blocks (Restores 9pt font and purple backgrounds!) */
     pre[class*="language-"] {
       background-color: var(--color-code-background-light) !important;
@@ -193,6 +203,34 @@
     h5 { font-weight: 500; }
   }
 
+  /* --- Inline (mobile) TOC --- */
+  .toc-inline {
+    @apply mt-6 mb-4 xl:hidden rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden;
+    &[hidden] { display: none; }
+    a { border-bottom: none; }
+    /* override generated space-y-* (Tailwind v4 uses margin-block-start) and pt-* */
+    ul { padding-top: 0 !important; list-style: none; padding-left: 0; }
+    ul > * { margin-block: 0 !important; }
+    ul ul { margin-left: 0.5rem; padding-top: 0 !important; }
+  }
+
+  .toc-inline-summary {
+    @apply flex items-center gap-2 px-3 py-2 cursor-pointer text-sm font-semibold
+           text-slate-700 dark:text-slate-300 select-none
+           hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors;
+    list-style: none;
+    &::-webkit-details-marker { display: none; }
+    svg { transition: transform 0.2s; }
+  }
+
+  .toc-inline[open] .toc-inline-summary svg {
+    transform: rotate(90deg);
+  }
+
+  .toc-inline-body {
+    @apply px-3 pt-1 pb-0;
+  }
+
   /* Dark mode code block override */
   .dark .fusion-article pre[class*="language-"] {
     background-color: var(--color-code-background-dark) !important;
@@ -204,6 +242,10 @@
   }
 
 
+}
+
+#layout-outer {
+  min-height: 95vh;
 }
 
 #blog-content {
@@ -577,7 +619,7 @@ foreignObject { overflow: visible; }
 
   /* --- Details / Disclosure (uses astro-better-details) --- */
   .abt-details {
-    @apply mb-4 rounded-lg bg-inherit shadow-sm overflow-hidden min-h-[60px];
+    @apply mb-4 rounded-lg bg-inherit shadow-sm overflow-hidden min-h-[44px];
     transition: height 300ms ease-in-out;
     interpolate-size: allow-keywords;
     --abt-details-border:     color-mix(in srgb, currentColor 10%, transparent);
@@ -587,14 +629,19 @@ foreignObject { overflow: visible; }
   }
   .abt-details[open]      { height: auto; }
   @starting-style {
-    .abt-details[open]    { height: 60px; }
+    .abt-details[open]    { height: 44px; }
   }
-  .abt-details-summary    { @apply flex w-full items-center justify-between px-5 py-4 text-left cursor-pointer list-none transition-colors focus:outline-none select-none; }
+  /* 28px title + 16px pad = 44px row, over wcag 2.2's 24px min */
+  .abt-details-summary    { @apply flex w-full items-center justify-between px-3 py-2 text-left cursor-pointer list-none transition-colors select-none; }
   .abt-details-summary:hover { --abt-details-summary-bg: color-mix(in srgb, currentColor 10%, transparent); }
   .abt-details-chevron    { @apply h-5 w-5 opacity-50 transition-transform duration-300; }
   .abt-details-title      { @apply text-lg font-semibold; }
-  .abt-details-body       { @apply px-5 py-5 prose prose-slate max-w-none; }
+  /* drop prose edge margins so only the padding shows */
+  .abt-details-body       { @apply px-3 py-2 prose prose-slate max-w-none [&>:first-child]:mt-0 [&>:last-child]:mb-0; }
   .dark .abt-details-body { @apply prose-invert; }
+  /* code titles and pre margins collapse through their wrappers to the panel edge */
+  .abt-details-body > .code-figure:first-child > .code-title { @apply mt-0; }
+  .abt-details-body > :is(.code-figure, .ccb-wrapper):last-child pre { @apply mb-0; }
 
   /* --- Checklist --- */
   .checklist      { @apply list-none p-0 m-0; }
@@ -611,3 +658,10 @@ foreignObject { overflow: visible; }
   /* Remove bottom padding so the parent link's border-b underline is not obscured */
   .fusion-article a code { padding-bottom: 0; }
 }
+
+/* Mobile sidebar checkbox trick */
+.sidebar-close { display: none; }
+
+#sidebar-toggle:checked ~ #layout-outer .sidebar-close { display: block; }
+
+#sidebar-toggle:checked ~ #layout-outer #side-nav { display: block; }

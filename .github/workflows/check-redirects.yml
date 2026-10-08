@@ -1,0 +1,65 @@
+# Fails when a PR moves, renames, or deletes content pages without the matching
+# src/redirects.json changes, and prints the entries to add.
+#
+# Thin wrapper around src/scripts/check-redirects.mjs, which is the same thing
+# you run locally: `src/scripts/check-redirects.mjs --base origin/main`.
+
+name: Check redirects
+
+env:
+  BASE_BRANCH: ${{ github.base_ref || github.event.inputs.base || 'main' }}
+
+on:
+  pull_request:
+    paths:
+      - 'astro/src/content/docs/**'
+      - 'astro/src/content/articles/**'
+      - 'astro/src/content/blog/**'
+      - 'src/redirects.json'
+  workflow_dispatch:
+    inputs:
+      base:
+        description: branch to diff against
+        required: false
+        default: main
+        type: string
+
+# new push cancels the old run
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Check redirects.json covers moved content
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # script diffs against the merge base
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Check redirects
+        run: |
+          set -o pipefail
+          src/scripts/check-redirects.mjs --base "origin/$BASE_BRANCH" --head HEAD \
+            | tee /tmp/redirects.txt
+
+      - name: Summarize
+        if: always()
+        run: |
+          {
+            echo '## Redirects check'
+            echo
+            echo '```'
+            cat /tmp/redirects.txt 2>/dev/null || echo 'The check did not produce any output.'
+            echo '```'
+            echo
+            echo "Add the entries above to \`src/redirects.json\`, or apply them locally with"
+            echo "\`src/scripts/check-redirects.mjs --base origin/$BASE_BRANCH --write\`."
+          } >> "$GITHUB_STEP_SUMMARY"

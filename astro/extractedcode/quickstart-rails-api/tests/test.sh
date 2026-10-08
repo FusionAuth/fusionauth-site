@@ -67,7 +67,7 @@ LOGS_PID=$!
 # Checks for the rendered login page rather than just an open port, so the test
 # does not start before Kickstart has finished configuring FusionAuth.
 fusionauth_ready() {
-  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "<title>Login"
+  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null
 }
 
 # The API is protected, so an unauthenticated request returning 401 is what

@@ -2,8 +2,14 @@ name: Update screenshots
 
 on:
   schedule:
-    - cron: '0 8 * * 1'  # every Monday at 08:00 UTC
+    - cron: '0 8 * * 1'
   workflow_dispatch:
+    inputs:
+      threshold:
+        description: differing-pixel ratio that counts as a real change
+        required: false
+        default: '0.002'
+        type: string
 
 permissions:
   contents: write
@@ -12,14 +18,11 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./astro
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
@@ -29,6 +32,7 @@ jobs:
 
       - name: Install site modules
         run: npm ci
+        working-directory: ./astro
 
       - name: Install screenshots CLI
         run: npm ci
@@ -38,64 +42,64 @@ jobs:
         run: npx playwright install webkit --with-deps
         working-directory: ./astro/screenshots
 
-      - name: Check for newer FusionAuth version
+      # script exits 0 when unchanged, 2 when there's something to review, else failed
+      - name: Regenerate and compare
+        id: refresh
         run: |
-          PINNED=$(grep 'fusionauth/fusionauth-app:' screenshots/docker-compose.yml | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-          LATEST=$(curl -sf "https://hub.docker.com/v2/repositories/fusionauth/fusionauth-app/tags?page_size=100&ordering=last_updated" \
-            | jq -r '[.results[].name | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))] | first // empty')
-          echo "Pinned: $PINNED  Latest: $LATEST"
-          if [ -n "$LATEST" ] && [ "$LATEST" != "$PINNED" ]; then
-            echo "::warning::FusionAuth $LATEST is available; docker-compose.yml is pinned to $PINNED -- consider updating and regenerating screenshots"
-          fi
+          set +e
+          src/scripts/refresh-screenshots.sh --threshold "${{ inputs.threshold || '0.002' }}"
+          status=$?
+          set -e
+          if [ "$status" -gt 2 ]; then exit "$status"; fi
+          if [ "$status" -eq 1 ]; then exit 1; fi
+          echo "changed=$([ "$status" -eq 2 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+        env:
+          FUSIONAUTH_LICENSE_KEY: ${{ secrets.FUSIONAUTH_LICENSE_KEY }}
 
-      - name: Delete cached screenshots
-        run: rm -f public/img/docs/screenshots/*.png
-
-      - name: Generate screenshots
-        run: npm run screenshots
-
-      - name: Check for changes
-        id: diff
-        run: |
-          git add public/img/docs/screenshots/
-          if git diff --cached --quiet; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            git diff --cached --name-only > /tmp/changed-files.txt
-            echo "files=$(cat /tmp/changed-files.txt | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Upload diff images
+        if: steps.refresh.outputs.changed == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshot-diffs
+          path: astro/.screenshot-diffs/
+          if-no-files-found: ignore
 
       - name: Open PR with updated screenshots
-        if: steps.diff.outputs.changed == 'true'
+        if: steps.refresh.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CHANGED: ${{ steps.diff.outputs.files }}
         run: |
           BRANCH="screenshots/auto-update-$(date +%Y-%m-%d)"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
+          git add astro/public/img/docs/screenshots/
           git commit -m "chore: update screenshots $(date +%Y-%m-%d)"
           git push origin "$BRANCH"
 
-          FILE_LIST=$(echo "$CHANGED" | tr ' ' '\n' | grep -v '^$' | sed 's|.*/||' | sed 's/^/- /' | head -20)
-
+          FILES=$(git diff --name-only HEAD~1 HEAD | sed 's|.*/||' | sed 's/^/- /')
           gh pr create \
             --title "chore: update screenshots $(date +%Y-%m-%d)" \
-            --body "$(cat <<'EOF'
-          Weekly automated screenshot refresh.
+            --body "Weekly screenshot refresh. Only images whose pixel diff exceeded the tolerance are included; anything within tolerance was reverted to the committed version.
 
-          ### Changed files
+          ### Changed
 
-          ${FILE_LIST}
+          ${FILES}
 
-          Review the diff to verify the UI changes are expected before merging.
-          EOF
-          )" \
+          Diff images are attached to this workflow run as the \`screenshot-diffs\` artifact." \
             --label "screenshots" \
             --base main
 
       - name: No changes
-        if: steps.diff.outputs.changed == 'false'
-        run: echo "All screenshots match -- no PR needed."
+        if: steps.refresh.outputs.changed == 'false'
+        run: echo "All screenshots within tolerance -- no PR needed."
+
+  report:
+    needs: update
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/report-scheduled-run.yml
+    with:
+      result: ${{ needs.update.result }}
+    permissions:
+      contents: read
+      issues: write

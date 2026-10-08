@@ -1,29 +1,23 @@
-#
-# Build the astro-based artifacts and deploy them to the production website bucket
-#
-name: (prod) astro deployment
+name: (prod) Astro deployment
 env:
   BUCKET_NAME: "fusionauth-io-website-astro-2023"
   PUBLISHER_ROLE_ARN: "${{ secrets.PUBLISHER_ROLE_ARN }}"
   AWS_REGION: "us-east-1"
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches:
       - main
     paths:
       - 'astro/**'
-      - '.github/workflows/prod-astro.yml'
+      - '.github/workflows/prod-deploy.yml'
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 permissions:
-  id-token: write # Used to get an access token, which is then used to assume an AWS IAM role
+  id-token: write # OIDC to assume the AWS role
   contents: read
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# queue deploys; never cancel one mid-flight
 concurrency:
   group: "deploy-prod"
   cancel-in-progress: false
@@ -38,10 +32,10 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
@@ -49,26 +43,27 @@ jobs:
 
       - name: Cache node_modules
         id: cache-node-modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@v6
         with:
           path: astro/node_modules
           key: ${{ runner.os }}-node-modules-${{ hashFiles('astro/package-lock.json') }}
 
+      # keyed on the generator too, so a package upgrade or option change can't restore stale output
       - name: Cache generated code snippets
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@v6
         with:
           path: astro/src/generated-code-snippets
-          key: ${{ runner.os }}-snippets-${{ hashFiles('astro/extractedcode/**') }}
+          key: ${{ runner.os }}-snippets-${{ hashFiles('astro/extractedcode/**', 'astro/package-lock.json', 'astro/astro.config.ts', 'astro/bluehawk-languages.js') }}
 
       - name: Cache remote content fetches
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@v6
         with:
           path: astro/.content-cache
           key: content-cache-${{ runner.os }}
           restore-keys: content-cache-
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           role-to-assume: ${{ env.PUBLISHER_ROLE_ARN }}
           role-session-name: site_publisher_session

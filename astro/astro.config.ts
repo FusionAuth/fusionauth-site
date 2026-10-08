@@ -2,20 +2,20 @@ import {defineConfig, fontProviders} from 'astro/config';
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import mdx from "@astrojs/mdx";
-import { unified } from '@astrojs/markdown-remark';
+import { satteri } from '@astrojs/markdown-satteri';
 import tailwindcss from '@tailwindcss/vite';
-import indexPages from "astro-index-pages/index.js";
-import genMarkdownPages from 'astro-gen-markdown-pages';
-import { remarkMermaidSSR, mermaidTitleFix } from 'astro-mermaid-renderer-cli-smol';
-import remarkMdx from 'remark-mdx';
-import rehypeSlug from 'rehype-slug';
-import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import linkChecker, { markdownLinkSyntaxChecker } from 'astro-link-checker';
+import indexPages from "./src/integrations/astro-index-pages/index.js";
+import contentChecks from "./src/integrations/content-checks.mjs";
+import genMarkdownPages from 'astro-better-gen-markdown-pages';
+import { mermaidSSR, mermaidTitle } from 'astro-better-mermaid/satteri';
+import linkChecker, { markdownLinkSyntaxChecker } from 'astro-better-link-checker';
 import icon from "astro-iconset";
-import { rehypeCodeBlocks, remarkShellSession } from 'astro-better-code-blocks';
+import { codeBlocks, shellSession } from 'astro-better-code-blocks/satteri';
 import { extractedCodeSnippets } from 'astro-better-code-snippet-extractor';
-import astroToc from 'astro-toc-smol';
+import astroToc from 'astro-better-toc';
 import { openapiSummary } from './src/plugins/openapi-summary.js';
+import { cssPreload } from './src/plugins/css-preload.mjs';
+import { headingLinks } from './src/plugins/satteri-heading-links.mjs';
 
 function buildSitemap() {
   let siteUrl: string;
@@ -63,7 +63,7 @@ const mdxComponentImports =
   "import JSON from 'src/components/JSON.astro';\n" +
   "import Breadcrumb from 'src/components/Breadcrumb.astro';\n" +
   "import Aside from 'src/components/Aside.astro';\n" +
-  "import RemoteCode from 'src/components/RemoteCode.astro';\n" +
+  "import LocalValue from 'src/components/LocalValue/LocalValue.astro';\n" +
   "import PlanBlurb from 'src/components/plan/PlanBlurb.astro';\n" +
   "import PlanBlurbApi from 'src/components/plan/PlanBlurbApi.astro';\n" +
   "import If from 'src/components/If.astro';\n" +
@@ -71,13 +71,16 @@ const mdxComponentImports =
   "import IconButton from 'src/components/IconButton.astro';\n" +
   "import ChildCards from 'astro-better-cards/ChildCards.astro';\n" +
   "import Card from 'astro-better-cards/Card.astro';\n" +
+  "import CardGrid from 'astro-better-cards/CardGrid.astro';\n" +
   "import ExtractedCode from 'astro-better-code-snippet-extractor/ExtractedCode.astro';\n" +
   "import Tabs from 'astro-better-tabs/Tabs.astro';\n" +
   "import TabItem from 'astro-better-tabs/TabItem.astro';\n" +
   "import Details from 'astro-better-details/Details.astro';\n" +
   "import { Steps } from 'astro-better-steps';\n" +
   "import Table from 'astro-better-tables/Table.astro';\n" +
-  "import MarkdownOnly from 'astro-gen-markdown-pages/MarkdownOnly.astro';\n\n";
+  "import Screenshot from 'astro-better-declarative-screenshots/Screenshot.astro';\n" +
+  "import Highlight from 'astro-better-declarative-screenshots/Highlight.astro';\n" +
+  "import MarkdownOnly from 'astro-better-gen-markdown-pages/MarkdownOnly.astro';\n\n";
 
 // inject imports into MDX source before the MDX compiler runs, so that component
 // references compile to direct variable lookups rather than _components map lookups
@@ -139,6 +142,9 @@ const lightboxProvider = () => ({
   enforce: 'post' as const,
   transform(code: string, id: string) {
     if (!id.endsWith('.mdx')) return;
+    // satteri appends the layout import; hoist it so layout CSS loads first, as with unified
+    const layoutImport = code.match(/^import \{ jsx as __astro_layout_jsx__ \} from 'astro\/jsx-runtime';\nimport __astro_layout_component__ from .*;$/m);
+    if (layoutImport) code = `${layoutImport[0]}\n${code.replace(layoutImport[0], '')}`;
     code = `import _LightboxImage from "src/components/LightboxImage.astro";\n${code}`;
     code = code.replace(
       "components: { Fragment: _Fragment, ...props.components, },",
@@ -164,9 +170,17 @@ const config = defineConfig({
       tailwindcss(),
       mdxComponentImporter(),
       lightboxProvider(),
+      cssPreload(),
     ],
     build: {
       chunkSizeWarningLimit: 700,
+      rollupOptions: {
+        output: {
+          // Vite names the Tailwind bundle after a leaf component (Kapa); use a stable descriptive name instead.
+          assetFileNames: (info) =>
+            info.names?.some(n => n === 'Kapa.css') ? '_astro/styles.[hash][extname]' : '_astro/[name].[hash][extname]',
+        },
+      },
     },
     cacheDir: '.vite-cache',
     ssr: {
@@ -176,40 +190,43 @@ const config = defineConfig({
     },
   },
   integrations: [
-    extractedCodeSnippets({ plugin: 'bluehawk-languages.js' }),
+    contentChecks(),
+    extractedCodeSnippets({
+      plugin: 'bluehawk-languages.js',
+      // Step 7 displays snippets from a Playwright spec in tests/.
+      // Exclude docs-only test runners without hiding that source file.
+      ignore: [
+        'node_modules', 'vendor', '.gitignore', '.DS_Store',
+        'package*.json', '*.lock', 'repositoryUrl.txt',
+        'tests/test.sh', 'LICENSE', 'SECURITY.md', 'publishGithubDirectory.txt',
+      ],
+      // same state export-extractedcode.sh publishes to the artifact repos
+      state: 'published',
+    }),
     icon(),
     mdx({
       syntaxHighlight: false,
-      processor: unified({
-          remarkPlugins: [
-          remarkMdx,
-          mermaidTitleFix,      // inserts title nodes before we transform code blocks
-          remarkMermaidSSR,     // replaces mermaid blocks with pre-rendered SVGs
-          remarkShellSession,
+      processor: satteri({
+        mdastPlugins: [
+          mermaidTitle(),       // inserts title nodes before we transform code blocks
+          mermaidSSR(),         // replaces mermaid blocks with pre-rendered SVGs
+          shellSession(),
         ],
-        rehypePlugins: [
-          [rehypeCodeBlocks, { excludeLangs: ['mermaid'] }],
-          rehypeSlug,
-          [
-            rehypeAutolinkHeadings,
-            {
-              behavior: 'append',
-              content: {
-                type: 'text',
-                value: '#',
-              },
-              properties: {
-                title: ['link to header'],
-                ariaLabel: ['Anchor'],
-                class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
-              },
-              headingProperties: {
-                class: 'group articleHeading'
-              }
+        hastPlugins: [
+          codeBlocks({ excludeLangs: ['mermaid'] }),
+          headingLinks({
+            content: '#',
+            properties: {
+              title: 'link to header',
+              ariaLabel: 'Anchor',
+              class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
             },
-          ],
+            headingProperties: {
+              class: 'group articleHeading'
+            }
+          }),
         ],
-        smartypants: false,
+        features: { smartPunctuation: false },
       })
     }),
     buildSitemap(),

@@ -1,6 +1,7 @@
 ---
 title: CloudWatch
 description: Learn how to monitor FusionAuth with CloudWatch.
+tags: aws cloudwatch, monitoring, metrics, aws monitoring, docker, observability, alerting, amazon web services
 ---
 
 Amazon CloudWatch monitors your Amazon Web Services (AWS) resources and the applications you run on AWS in real-time. You can use CloudWatch to collect and track metrics for your resources and applications. Additionally, you can create dashboards to display metrics for your applications or to show custom collections of metrics. 
@@ -87,7 +88,7 @@ The access keys will look something like this:
 In this guide, use your actual AWS credential values instead of `your_key_id` and `your_access_key` wherever these placeholder texts occur.
 </Aside>
 
-```shell-session
+```ini
 aws_access_key_id = your_key_id
 aws_secret_access_key = your_access_key
 ```
@@ -259,8 +260,8 @@ environment:
 Now, in the same folder as the Dockerfile, create a `.aws` folder with a file called `credentials` using the command below.
 
 ```shell-session
-mkdir .aws
-cd .aws
+mkdir -p .aws && \
+cd .aws && \
 touch credentials
 ```
 
@@ -520,7 +521,7 @@ touch requirements.txt
 
 Add the dependencies.
 
-```shell-session
+```text title="requirements.txt"
 boto3==1.26.90
 watchtower==3.0.1
 requests==2.28.2
@@ -529,9 +530,9 @@ requests==2.28.2
 Create a new `.aws` folder.
 
 ```shell-session
-mkdir .aws
-cd .aws
-touch credentials
+mkdir -p .aws && \
+cd .aws && \
+touch credentials && \
 touch config
 ```
 
@@ -673,34 +674,20 @@ Answer "yes" to the fingerprint question and you will be connected to your EC2 s
 The following shell commands will set up the EC2 instance with Docker, `docker-compose`, and Vim, and create the necessary files and folders for the FusionAuth installation.
 
 ```shell-session
-sudo dnf update -y
-#enter
-sudo dnf install vim -y
-#enter
-sudo dnf install docker -y
-#enter
-sudo systemctl start docker
-#enter
-sudo systemctl enable docker
-#enter
-sudo usermod -aG docker ec2-user
-#enter
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-#enter
-sudo chmod +x /usr/local/bin/docker-compose
-#enter
-mkdir fusionauth-project
-#enter
-cd fusionauth-project
-#enter
-mkdir .aws
-#enter
-touch .aws/credentials
-#enter
-touch .aws/config
-#enter
+sudo dnf update -y && \
+sudo dnf install vim -y && \
+sudo dnf install docker -y && \
+sudo systemctl start docker && \
+sudo systemctl enable docker && \
+sudo usermod -aG docker ec2-user && \
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
+sudo chmod +x /usr/local/bin/docker-compose && \
+mkdir fusionauth-project && \
+cd fusionauth-project && \
+mkdir .aws && \
+touch .aws/credentials && \
+touch .aws/config && \
 touch .env
-#enter
 ```
 
 Log out and log back in to apply the group changes.
@@ -744,7 +731,7 @@ vim  ~/fusionauth-project/.env
 
 Add the following.
 
-```shell-session
+```ini title=".env"
 DATABASE_USERNAME=fusionauth
 DATABASE_PASSWORD=hkaLBMBRVnyYeYeq=3W11w2e4Avpy0Wd503s3
 FUSIONAUTH_APP_MEMORY=512M
@@ -761,8 +748,7 @@ Since there are no changes to the configuration files, you can use the same `clo
 Using SCP, copy the FusionAuth files over from the working directory you used to set up the collector to the EC2 instance using the same `.pem` file and the AWS EC2 folder we created for the FusionAuth project.
 
 ```shell-session
-scp -i ./test.pem   ./cloudwatch-config.json  ec2-user@16.16.204.161:~/fusionauth-project/
-#enter
+scp -i ./test.pem   ./cloudwatch-config.json  ec2-user@16.16.204.161:~/fusionauth-project/ && \
 scp -i ./test.pem   ./Dockerfile  ec2-user@16.16.204.161:~/fusionauth-project/
 ```
 
@@ -776,12 +762,14 @@ SSH back into your EC2 instance to build the FusionAuth image and start the serv
 
 ```shell-session
 ssh -i   ./test.pem ec2-user@16.16.204.161
-cd fusionauth-project/
-#enter
-docker build --platform linux/amd64 -t faimage .
-#enter
+```
+
+Then, on the EC2 instance:
+
+```shell-session
+cd fusionauth-project/ && \
+docker build --platform linux/amd64 -t faimage . && \
 docker-compose  up -d
-#enter
 ```
 
 Now navigate to  `http://your_instance_public_ip:9011/` (use your EC2 instance public IP here), as configured in your FusionAuth instance on EC2.

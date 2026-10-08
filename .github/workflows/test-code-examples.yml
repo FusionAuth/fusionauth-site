@@ -1,10 +1,19 @@
-name: Test extractedcode
+name: Code examples
 
 on:
   pull_request:
     paths:
       - 'astro/extractedcode/**'
+      - 'src/scripts/fetch_external_content.sh'
+      - 'src/scripts/tests/test_fetch_external_content.py'
+      - '.github/workflows/check-external-content.yml'
+      - '.github/workflows/test-code-examples.yml'
   workflow_dispatch:
+
+# a new push to the PR cancels the run for the old commit, freeing its runner slots
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   discover:
@@ -13,7 +22,7 @@ jobs:
     outputs:
       matrix: ${{ steps.scan.outputs.matrix }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -22,9 +31,15 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Validate every extractedcode dir has tests/test.sh
+          # templates-* directories hold static reference files that the docs
+          # render and readers download. There is no project to run, so they are
+          # exempt from the tests/test.sh requirement and from the matrix below.
+          is_templates() { case "$1" in templates-*) return 0;; *) return 1;; esac; }
+
+          # Validate every other extractedcode dir has tests/test.sh
           for dir in astro/extractedcode/*/; do
             name=$(basename "$dir")
+            is_templates "$name" && continue
             if [ ! -f "${dir}tests/test.sh" ]; then
               echo "ERROR: extractedcode directory missing tests/test.sh: $name" >&2
               exit 1
@@ -35,7 +50,9 @@ jobs:
             # Manual trigger: test all suites
             dirs=()
             for dir in astro/extractedcode/*/; do
-              dirs+=("$(basename "$dir")")
+              name=$(basename "$dir")
+              is_templates "$name" && continue
+              dirs+=("$name")
             done
           else
             # PR: only test suites whose files changed
@@ -43,42 +60,71 @@ jobs:
             dirs=()
             for dir in astro/extractedcode/*/; do
               name=$(basename "$dir")
+              is_templates "$name" && continue
               if ! git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- "astro/extractedcode/$name/"; then
+                dirs+=("$name")
+              elif [ "$name" = "configuration-snippets" ] &&
+                ! git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- \
+                  src/scripts/fetch_external_content.sh \
+                  src/scripts/tests/test_fetch_external_content.py \
+                  .github/workflows/check-external-content.yml \
+                  .github/workflows/test-code-examples.yml; then
+                # Refresh tooling lives outside its extractedcode suite.
                 dirs+=("$name")
               fi
             done
           fi
 
-          if [ "${#dirs[@]}" -eq 0 ]; then
+          # one entry per check (readable label, runner, script); suites with tests/macos.sh also get a macOS entry for the iOS build
+          entries=()
+          for name in ${dirs[@]+"${dirs[@]}"}; do
+            label="Test $(printf '%s' "${name#fusionauth-}" | tr '-' ' ')"
+            entries+=("$(jq -nc --arg dir "$name" --arg label "$label" '{dir: $dir, label: $label, os: "ubuntu-latest", script: "test.sh"}')")
+            if [ -f "astro/extractedcode/$name/tests/macos.sh" ]; then
+              entries+=("$(jq -nc --arg dir "$name" --arg label "$label on macOS" '{dir: $dir, label: $label, os: "macos-latest", script: "macos.sh"}')")
+            fi
+          done
+          # a skipped matrix job shows its name template raw, so an empty run gets a no-op entry instead of being skipped
+          if [ "${#entries[@]}" -eq 0 ]; then
             echo "No extractedcode directories changed"
-            echo "matrix=[]" >> "$GITHUB_OUTPUT"
-          else
-            matrix=$(printf '%s\n' "${dirs[@]}" | jq -R . | jq -sc .)
-            echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
-            echo "Suites to test: ${dirs[*]}"
+            entries+=('{"dir": "", "label": "No code example changes", "os": "ubuntu-latest", "script": ""}')
           fi
+          matrix=$(printf '%s\n' "${entries[@]}" | jq -sc .)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "Checks: $(jq -r 'map(.label) | join(", ")' <<< "$matrix")"
 
   test:
-    name: Test ${{ matrix.extractedcode }}
+    name: ${{ matrix.label }}
     needs: discover
-    if: ${{ needs.discover.outputs.matrix != '[]' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      # leaves runner slots for other PR workflows (including Preview) when many examples change
+      max-parallel: 8
       matrix:
-        extractedcode: ${{ fromJson(needs.discover.outputs.matrix) }}
+        include: ${{ fromJson(needs.discover.outputs.matrix) }}
       fail-fast: false
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - name: Nothing to test
+        if: ${{ matrix.dir == '' }}
+        run: echo "No extractedcode directories changed in this pull request."
+
+      - uses: actions/checkout@v7
+        if: ${{ matrix.dir != '' }}
 
       - name: Cache Cargo registry
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        if: ${{ matrix.dir != '' && runner.os == 'Linux' }}
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ matrix.extractedcode }}-${{ hashFiles(format('astro/extractedcode/{0}/**/Cargo.toml', matrix.extractedcode)) }}
+          key: ${{ runner.os }}-cargo-${{ matrix.dir }}-${{ hashFiles(format('astro/extractedcode/{0}/**/Cargo.toml', matrix.dir)) }}
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: Run tests
-        run: bash tests/test.sh
-        working-directory: astro/extractedcode/${{ matrix.extractedcode }}
+        if: ${{ matrix.dir != '' }}
+        run: bash tests/${{ matrix.script }}
+        working-directory: astro/extractedcode/${{ matrix.dir }}
+        env:
+          # examples that need a paid plan write this into a temporary kickstart; fork PRs get no secrets and skip those checks
+          FUSIONAUTH_LICENSE_KEY: ${{ secrets.FUSIONAUTH_LICENSE_KEY }}

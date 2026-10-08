@@ -98,7 +98,23 @@ This cookie can be stored as an HttpOnly, Secure cookie since only your server-s
 
 Here's an example of code that sets a JWT with a user Id, using the [FusionAuth JWT Vend API](/docs/apis/jwt/vend-a-jwt).
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py" lang="python" tags="createJWT" />
+```python
+# create a JWT, good for a year
+jwt_ttl=60*60*24*365
+jwt={
+  'claims': {
+    'userId': user_id
+  },
+  'keyId': env.get("SIGNING_KEY_ID"),
+  'timeToLiveInSeconds': jwt_ttl
+}
+response = client.vend_jwt(jwt).success_response
+token=response['token']
+resp = make_response(render_template("video.html"))
+
+# set the cookie
+resp.set_cookie(ANON_JWT_COOKIE_NAME, token, max_age=jwt_ttl, httponly=True, samesite="Lax")
+```
 
 Because you are storing information on the device, if a person accesses your site from a different browser or device, you have no way of reconciling them. This is also true if the user removes the cookie or the cookie expires. These are limitations of cookies, so there's no way around it.
 
@@ -108,7 +124,36 @@ When you convert an account, you associate the user Id stored in the cookie and 
 
 Here's an example of code that does this:
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py" lang="python" tags="registerAnonymousUserRoute" />
+```python
+# if they have a cookie, look up the user and convert them and send a password reset
+  if request.method == 'POST':
+    user_id = get_anon_user_id_from_cookie()
+    if user_id is None:
+      print("couldn't find user")
+      message["message"] = "Couldn't find your user id."
+      return render_template("register.html", message=message)
+    
+    # correct the email address using patch if the email doesn't already exist
+    email_param = request.form["email"]
+   
+    user = client.retrieve_user_by_email(email_param).success_response
+    message["message"] = "Please check your email to set your password."
+
+    # if we already have the user in our system, fail silently. depending on your use case, you may want to sent the forgot password email, or display an error message
+    if user is None:
+      patch_data = {
+        'user': {
+          'email': email_param
+        }
+      }
+      patch_response = client.patch_user(user_id, patch_data).success_response
+
+      forgot_password_data = {
+        'loginId': email_param,
+        'state': { 'anon_user': 'true' }
+      }
+      trigger_email_response = client.forgot_password(forgot_password_data)
+```
 
 ### Verifying Accounts
 
@@ -120,7 +165,29 @@ One easy way to verify ownership is to send the password reset email or text aft
 
 Then you can update the associated profile to remove anonymous account indicators. Below you can see the code to do this.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py" lang="python" tags="cleanupAnonymousUserRoute" />
+```python
+@app.route("/webhook", methods=['POST'])
+def webhook():
+  # look up the user by id. If they are not an anonymous user return 204 directly, otherwise update their anonymous user status to be false and return 204
+  # looking for email user login event because email verified is only fired on explicit email verification
+  if request.method == 'POST':
+    webhookjson = request.json
+    event_type = webhookjson['event']['type']
+    is_anon_user = webhookjson['event']['user'] and webhookjson['event']['user']['data'] and webhookjson['event']['user']['data']['anonymousUser']
+    if event_type == 'user.login.success' and is_anon_user:
+      user_id = webhookjson['event']['user']['id']
+      patch_data = {
+        'user': {
+          'username': '',
+          'data' : {
+            'anonymousUser':False
+          }
+        }
+      }
+      patch_response = client.patch_user(user_id, patch_data).success_response
+
+  return '', 204
+```
 
 In FusionAuth, the easiest way to do this is via a webhook, but different systems have different mechanisms. The important point is to leave the profile untouched until ownership is proven.
 

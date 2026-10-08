@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Run once on a fresh EC2 instance (Ubuntu 24.04 LTS recommended).
-# Tested on m6i.2xlarge (8 vCPU / 32 GB RAM).
+# Run once on a fresh EC2 instance (Ubuntu 26.04 LTS, arm64).
+# Runs on c8g.2xlarge (Graviton4, 8 vCPU / 16 GB RAM).
 #
 # Usage:
 #   sudo bash setup.sh <github-repo-ssh-url> <admin-email>
@@ -39,7 +39,7 @@ done
 
 chown -R "$PREVIEW_USER:$PREVIEW_USER" "$PREVIEW_DIR"
 
-# ── Clone master repo and install deps ─────────────────────────────────────────
+# ── Clone master repo (build-preview.sh installs deps on first build) ───────
 sudo -u "$PREVIEW_USER" bash -c "
   ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
   git config --global --add safe.directory '$PREVIEW_DIR/repo'
@@ -48,8 +48,6 @@ sudo -u "$PREVIEW_USER" bash -c "
   else
     git -C '$PREVIEW_DIR/repo' pull --ff-only
   fi
-  cd '$PREVIEW_DIR/repo/astro'
-  npm ci --silent
 "
 
 # ── Copy scripts ────────────────────────────────────────────────────────────────

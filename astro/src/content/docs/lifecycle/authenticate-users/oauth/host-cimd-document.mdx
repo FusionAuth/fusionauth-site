@@ -1,0 +1,89 @@
+---
+title: Host A Client ID Metadata Document
+htmlTitle: Host A Client ID Metadata Document (CIMD)
+description: Publish a Client ID Metadata Document so your OAuth client can log in to FusionAuth without being registered ahead of time.
+tags: cimd, client id metadata document, oauth client registration, mcp client, public client, pkce
+---
+
+<PlanBlurb plan="enterprise" />
+
+<AvailableSince since="1.70.0"/>
+
+This page shows how to publish a Client ID Metadata Document (CIMD) for an OAuth client you build, such as an MCP client or an AI agent. FusionAuth fetches the document the first time your client logs in and registers the client from it. For background, see [OAuth Client Registration](/docs/lifecycle/authenticate-users/oauth/client-registration).
+
+Before you start, the FusionAuth Tenant your client logs in to needs a [CIMD domain](/docs/get-started/core-concepts/types/cimd-domains) that matches the origin of your document URL, or the `*` domain.
+
+## Publish The Document
+
+<Steps>
+1. Choose the URL for the document. This URL becomes your client's `client_id`. It must:
+   * use `https`
+   * have a path other than `/`, such as `/oauth/client.json`
+   * contain no fragment and no user info
+   * be at most 2048 characters long
+   * resolve to a public IP address. FusionAuth won't fetch from private, loopback or link-local addresses.
+
+1. Write the document. FusionAuth reads these fields:
+
+   | Field | Required | Description |
+   |---|---|---|
+   | `client_id` | Yes | The document's own URL, exactly as your client sends it. |
+   | `client_name` | Yes | The name users see on the consent screen. |
+   | `redirect_uris` | Yes | At least one absolute redirect URI. Wildcards aren't allowed. Custom schemes, such as `com.example.app:/callback`, are allowed. |
+   | `client_uri` | No | A URL for your client's home page, shown on the consent screen. |
+
+   FusionAuth ignores every other field. Your client's scopes come from the CIMD domain, so a `scope` value in the document has no effect. FusionAuth treats every CIMD client as a public client that uses PKCE, regardless of `token_endpoint_auth_method`.
+
+   ```json title="https://app.example.com/oauth/client.json"
+   {
+     "client_id": "https://app.example.com/oauth/client.json",
+     "client_name": "Example Agent",
+     "client_uri": "https://app.example.com",
+     "redirect_uris": [
+       "https://app.example.com/oauth/callback",
+       "http://localhost:3334/callback"
+     ]
+   }
+   ```
+
+1. Serve the document at the URL. FusionAuth needs a `2xx` response of at most 5KB within 5 seconds, and it doesn't follow redirects. FusionAuth doesn't check the content type, but `application/json` is a good choice.
+
+1. Set a `Cache-Control: max-age` header to control how long FusionAuth caches the document. FusionAuth uses the smaller of your `max-age` and the domain's **Maximum cache duration**, and never caches for less than 15 minutes. FusionAuth ignores the `Expires` header.
+
+1. Check the response:
+
+   ```shell
+   curl -i https://app.example.com/oauth/client.json
+   ```
+
+   You should get a `200` with no redirect, and the `client_id` in the body must match the URL you requested character for character. Even a trailing slash counts as a mismatch.
+</Steps>
+
+## Log In With The Document
+
+Start the Authorization Code grant from your client with the document URL as the `client_id`:
+
+* Use the Tenant's endpoints under `https://<host>/<tenantId>`. You can find them in the Tenant's `https://<host>/<tenantId>/.well-known/openid-configuration` document, which reports `"client_id_metadata_document_supported": true` once CIMD is set up.
+* Send a PKCE `code_challenge` with the `S256` method.
+* Send exactly one `resource` parameter. For an MCP client, this is the URL of the MCP server.
+* Use a `redirect_uri` that appears in your document's `redirect_uris` exactly.
+
+{/* TODO: double-check how a CIMD request identifies the Tenant. assuming tenant-scoped endpoints under https://<host>/<tenantId>, matching the ChatGPT E2E run */}
+
+## Update The Document
+
+FusionAuth keeps using its cached copy until it expires. The next login after that fetches the document again, so a change, such as a new redirect URI, takes effect at the first login after the cached copy expires.
+
+If that fetch fails, FusionAuth keeps using the old copy for the domain's **Grace period**. Refresh tokens your client already holds keep working even after the registration expires.
+
+## Troubleshooting
+
+If FusionAuth rejects your client, ask the FusionAuth administrator to enable **Enable debug logging** on the CIMD domain. FusionAuth then writes an Event Log entry explaining each rejected registration, under <Breadcrumb>System -> Event Log</Breadcrumb>.
+
+The most common causes are:
+
+* The `client_id` in the document doesn't exactly match the URL.
+* The URL redirects, for example from a path without a trailing slash to one with it.
+* The document's origin doesn't match a CIMD domain in the Tenant.
+* The `redirect_uri` on the request isn't listed in the document.
+* The request has no `resource` parameter, or more than one.

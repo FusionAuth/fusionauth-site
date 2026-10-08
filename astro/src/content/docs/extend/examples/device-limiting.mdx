@@ -1,8 +1,7 @@
 ---
 title: Device Limiting
 description: Learn how to limit the number of devices a user can log in to concurrently.
-codeRootSimple: https://raw.githubusercontent.com/FusionAuth/fusionauth-example-device-limit-simple/main
-codeRootFriendly: https://raw.githubusercontent.com/FusionAuth/fusionauth-example-device-limit-friendly/main
+tags: device limiting, concurrent login, device management, session management, fusionauth device, login limits
 ---
 
 You may want to limit the number of devices a user can simultaneously log in to your app from. This guide will show you how to limit concurrent logins on user devices with FusionAuth.  
@@ -59,7 +58,7 @@ Now you can use this key to call the API to retrieve the active refresh tokens f
 
 You can now use the number of active refresh tokens filtered for the particular application as a proxy for the number of active logins for the user. Calling the API using Node and filtering the results looks something like the following.
 
-<RemoteCode url={frontmatter.codeRootSimple + "/complete-application/src/index.ts"} tags="active-session-count" lang="typescript"/>
+<ExtractedCode src="example-device-limit-simple/index.snippet.active-session-count.ts" lang="typescript" />
 
 The **`clientId`** variable stores the FusionAuth application Id of the application you are limiting logins for, and **`userId`** is the Id of the user you are checking the active sessions for.
 
@@ -88,7 +87,7 @@ When logging out of FusionAuth with the `/oauth2/logout` endpoint, the refresh t
 
 The best place to do this is in the logout callback configured under <Breadcrumb>Applications -> Edit -> OAuth</Breadcrumb> on the **Logout URL** field. This is the route that the user is redirected to after they have been logged out of FusionAuth. You should also remove any local cookies at the same time. The complete logout return route should look like the following.
 
-<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="oauth-logout" lang="typescript"/>
+<ExtractedCode src="example-device-limit-friendly/index.snippet.oauth-logout.ts" lang="typescript" />
 
 
 ## Simpler Scheme
@@ -115,7 +114,7 @@ In production, you should [add security to the webhook](/docs/extend/events-and-
 
 In the application, you will need to listen for the `user.login.success` event and check the number of active sessions for the user. Here is an example of how to do this in an Express application, like the ChangeBank application.
 
-<RemoteCode url={frontmatter.codeRootSimple + "/complete-application/src/index.ts"} tags="device-limiting" lang="typescript"/>
+<ExtractedCode src="example-device-limit-simple/index.snippet.device-limiting.ts" lang="typescript" />
 
 As described in the [documentation](/docs/extend/events-and-webhooks/events/user/login/user-login-success), the event data sent by FusionAuth as JSON in the body of the webhook includes the `applicationId` and `userId`. The `applicationId` is used to check that the login event is for the application you are limiting logins for. The `userId` is used to retrieve the active refresh tokens for the user.
 
@@ -166,7 +165,7 @@ For any route that you would normally check for authentication, add a middleware
 
 The middleware function should look similar to the following.
 
-<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="get-active-devicelist" lang="typescript"/>
+<ExtractedCode src="example-device-limit-friendly/index.snippet.get-active-devicelist.ts" lang="typescript" />
 
 Notice that in the `getActiveDeviceList` function, the current session's refresh token is removed from the list of active sessions. This is because it would not make sense to allow the user to end the current session to continue using the application. The user Id is also retrieved from the existing authentication cookie. For this reason, the device-limit middleware must always be placed after the user authentication and token validation middleware for any secured route. 
 
@@ -174,7 +173,7 @@ The `getActiveDeviceList` function returns a list of view models containing all 
 
 The middleware function `checkDeviceLimit` can be used on restricted routes, such as the `make-change` and `account` routes in the ChangeBank app, as follows.
 
-<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="make-change-check-devicelimit" lang="typescript"/>
+<ExtractedCode src="example-device-limit-friendly/index.snippet.make-change-check-devicelimit.ts" lang="typescript" />
 
 ### Create A Page To Display The User's Current Logins
 
@@ -186,21 +185,21 @@ npm install handlebars
 
 Then add it to the express app.
 
-<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="views-hbs" lang="typescript"/>
+<ExtractedCode src="example-device-limit-friendly/index.snippet.views-hbs.ts" lang="typescript" />
 
  You will need a GET route to render the `device-limit` page. The route should look something like the following.
 
-<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="device-limiting-maxcount" lang="typescript"/>
+<ExtractedCode src="example-device-limit-friendly/index.snippet.device-limiting-maxcount.ts" lang="typescript" />
 
 The Handlebars template page should look similar to the following.
 
-<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/templates/device-limit.hbs"} lang="html"/>
+<ExtractedCode src="example-device-limit-friendly/complete-application/templates/device-limit.hbs" lang="html" />
 
 ### Revoking A Chosen Session
 
 The web page posts the selected token Ids to the backend. You will need a route that accepts these token Ids and revokes the selected tokens using the DELETE method on the FusionAuth Refresh Token API.
 
-<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="device-limiting-validatetoken" lang="typescript"/>
+<ExtractedCode src="example-device-limit-friendly/index.snippet.device-limiting-validatetoken.ts" lang="typescript" />
 
 ## Example Applications
 

@@ -1,0 +1,44 @@
+name: (prod) Publish redirect rules
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/redirects.json'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: src/redirects.json
+
+      - name: validate json
+        run: jq empty src/redirects.json
+
+      - name: validate all redirects start with a `/`
+        run: exit "$(jq '.redirects | to_entries | map(select(.key | startswith("/") | not)) | length' src/redirects.json)"
+        shell: bash
+
+      - name: validate all indexPaths start with a `/`
+        run: exit "$(jq '.indexPaths | to_entries | map(select(.key | startswith("/") | not)) | length' src/redirects.json)"
+        shell: bash
+
+      - name: set aws credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::121700706967:role/gha-fusionauth-site-prod
+          role-session-name: github-actions
+          aws-region: us-east-1
+
+      - name: upload file to s3
+        run: aws s3 cp src/redirects.json s3://${{ secrets.S3_ARTIFACTS_PROD }}/lambda/site-origin-request-handler/redirects.json

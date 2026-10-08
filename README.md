@@ -45,7 +45,7 @@ To run a full site build:
 npm run start
 ```
 
-This may take a minute or two. Output can be noisy, but do pay attention to the output from [`astro-link-checker`](https://github.com/nathan-contino/astro-link-checker), which runs at the very end of the `build`. This check ensures that all internal links on the site point to valid URLs. For development convenience, this check only fails development builds (so it can never break a deploy), but _please_ keep the broken link count at zero before merging into `main`.
+This may take a minute or two. Output can be noisy, but do pay attention to the output from [`astro-link-checker`](https://better-static-sites.github.io/build-tools/link-checker/), which runs at the very end of the `build`. This check ensures that all internal links on the site point to valid URLs. For development convenience, this check only fails development builds (so it can never break a deploy), but _please_ keep the broken link count at zero before merging into `main`.
 
 ## Write Content
 
@@ -84,6 +84,18 @@ For projects that benefit from a cloneable repository, the `/astro/extractedcode
 
 Astro builds automatically generate code snippets before rendering pages.
 
+## Refresh external content
+
+Docker, Kubernetes, and Kafka configuration examples remain owned by their external repositories. To refresh only the files displayed in the docs, run this from the repository root (requires Bash, Git, and curl):
+
+```console
+bash src/scripts/fetch_external_content.sh
+```
+
+Review the diff and affected guides before committing. Add `--check` to show upstream changes without modifying local files; the weekly **Check external content** workflow runs this check and fails with a diff when the snapshots are stale. It does not commit or push changes.
+
+Run the offline refresh regression tests with `bash astro/extractedcode/configuration-snippets/tests/test.sh` (requires Python 3.9 or newer). The extractedcode CI workflow also runs them when the snapshots, refresh tooling, or related workflows change.
+
 ## Sitemap
 
 We automatically generate a single `sitemap.xml` file that we use for the entire `fusionauth.io` domain. All of the docs, blog, dev-tools, articles, and isolated pages involved in the Astro build get automatically included during the build itself. For `fusionauth.io` content managed externally, we manually add entries to [`astro/public/sitemap-io.xml`](astro/public/sitemap-io.xml).
@@ -98,8 +110,10 @@ The root `fusionauth.io` LLMs.txt file lives in [`astro/public/llms.txt`](astro/
 
 * Keep items in alphabetical order!
 * Move a page? Update `/src/redirects.json`.
-* Add a new index page? Update `indexPages` in `/src/redirects.json`.
+* Add a new index page? Update `indexPaths` in `/src/redirects.json`. Every routable `<folder>/index.mdx` needs exactly one entry, written with a trailing slash, because [astro-index-pages](astro/src/integrations/astro-index-pages/index.js) deploys all of them as `<folder>/index.html`.
 * Add a new top-level file or folder adjacent to `/docs/` (e.g. `fusionauth.io/mycoolpagethatisntinthedocsfolder`)?
   * For a new file, update `s3Paths` in `/src/redirects.json`.
   * For a new top-level folder, update `s3Prefixes` in `/src/redirects.json`.
   * Add a behavior in CloudFront. You'll need to submit a PR in [fusionauth-site-infra](https://github.com/FusionAuth/fusionauth-site-infra/).
+
+For the first two, `src/scripts/check-redirects.mjs` works out what a diff needs and prints the exact entries. It defaults to your working tree; pass `--base origin/main` to check a whole branch, and `--write` to apply what it found. The `Check redirects` GitHub action runs it on every PR that touches content, and fails with the same output.

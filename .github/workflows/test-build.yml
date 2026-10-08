@@ -1,0 +1,86 @@
+name: Shakedown build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+# a new push to the PR cancels the run for the old commit, freeing its runner slots
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  shakedown:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'astro/package-lock.json'
+
+      - name: Cache node_modules
+        id: cache-node-modules
+        uses: actions/cache@v6
+        with:
+          path: astro/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('astro/package-lock.json') }}
+
+      # keyed on the generator too, so a package upgrade or option change can't restore stale output
+      - name: Cache generated code snippets
+        uses: actions/cache@v6
+        with:
+          path: astro/src/generated-code-snippets
+          key: ${{ runner.os }}-snippets-${{ hashFiles('astro/extractedcode/**', 'astro/package-lock.json', 'astro/astro.config.ts', 'astro/bluehawk-languages.js') }}
+
+      - name: Cache remote content fetches
+        uses: actions/cache@v6
+        with:
+          path: astro/.content-cache
+          key: content-cache-${{ runner.os }}
+          restore-keys: content-cache-
+
+      - name: NPM Install
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: |
+          cd astro
+          npm ci
+        shell: bash
+
+      # after npm ci, which deletes node_modules; entries are keyed by diagram source, so the newest cache is always safe
+      - name: Cache rendered mermaid diagrams
+        uses: actions/cache@v6
+        with:
+          path: astro/node_modules/.cache/astro-better-mermaid
+          key: mermaid-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: mermaid-${{ runner.os }}-
+
+      # the PR's file list comes from the API, so the checkout needs no history
+      - name: ESLint changed files
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate \
+            --jq '.[] | select(.status == "added" or .status == "modified") | .filename')
+          cd astro
+          CHANGED_FILES="$files" npm run lint-pr
+        shell: /usr/bin/bash -e -o pipefail {0}
+
+      - name: Run a dev build
+        run: |
+          cd astro
+          NODE_OPTIONS=--max_old_space_size=8192 npm run dev-build
+        shell: /usr/bin/bash -e -o pipefail {0}
+
+      - name: Check APIs for completeness against client libs
+        run: bash src/scripts/check-apis.sh --pr

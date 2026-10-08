@@ -1,8 +1,8 @@
-name: check-closed-github-issues
+name: Check for closed GitHub issues in docs
 
 on:
   schedule:
-    - cron: '31 18 * * *'
+    - cron: '31 8 * * 1'
   workflow_dispatch:
 
 jobs:
@@ -11,7 +11,17 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@v7
       - name: Check for closed issues referenced in documentation
         run: src/scripts/check-for-closed-github-issues-in-docs.sh
         shell: bash
+
+  report:
+    needs: check_closed_github_issues
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/report-scheduled-run.yml
+    with:
+      result: ${{ needs.check_closed_github_issues.result }}
+    permissions:
+      contents: read
+      issues: write

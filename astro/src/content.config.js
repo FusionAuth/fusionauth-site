@@ -24,7 +24,9 @@ async function fetchWithCache(url, cacheFile) {
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     const text = await res.text();
     fs.mkdirSync(CACHE_DIR, { recursive: true });
-    fs.writeFileSync(cacheFile, text, 'utf-8');
+    // tmp + rename so a killed build can't leave a truncated file that still looks fresh
+    fs.writeFileSync(`${cacheFile}.tmp`, text, 'utf-8');
+    fs.renameSync(`${cacheFile}.tmp`, cacheFile);
     return text;
   } catch (err) {
     try {
@@ -60,6 +62,7 @@ const articlesCollection = defineCollection({
     author: z.string().optional(),
     canonicalUrl: z.string().optional(),
     cta: z.string().optional(),
+    datePublished: z.date().optional(),
     description: z.string(),
     disableTOC: z.boolean().default(false),
     excludeFromNav: z.boolean().default(false),
@@ -67,6 +70,8 @@ const articlesCollection = defineCollection({
     icon: z.string().optional(),
     darkIcon: z.string().optional(),
     order: z.number().default(1000),
+    section: z.string().optional(),
+    tags: z.string().optional(),
     title: z.string(),
     featured: z.boolean().default(false),
     enableKapa: z.boolean().optional(),
@@ -93,6 +98,7 @@ const docsCollection = defineCollection({
     sidenavTitle: z.string().optional(),
     nestedHeadings: z.boolean().optional(),
     disableTOC: z.boolean().default(false),
+    tags: z.string().optional(),
     route: z.boolean().default(true),
     order: z.number().default(1000),
     idpDisplayName: z.string().optional(),
@@ -105,8 +111,9 @@ const docsCollection = defineCollection({
     cardImage: z.string().optional(),
     excludeFromNav: z.boolean().default(false),
     sectionIndex: z.boolean().default(false),
-    nextPage: z.string().optional(),
-    lastPage: z.string().optional(),
+    next: z.string().optional(),
+    prev: z.string().optional(),
+    relatedPinFirst: z.string().optional(),
   }),
 });
 
@@ -133,8 +140,6 @@ const blogCollection = defineCollection({
     tags: z.string().optional(), // comma-separated string
     publish_date: z.date(),
     updated_date: z.date().optional(),
-    featured_tag: z.string().optional(),
-    featured_category: z.string().optional(),
     excerpt_separator: z.string().optional(),
     canonicalUrl: z.string().optional(),
     blurb: z.string().optional(),

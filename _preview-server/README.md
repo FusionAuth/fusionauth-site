@@ -2,7 +2,7 @@
 
 This folder contains the setup scripts for a server that automatically builds and serves the site when someone opens a PR. Use this to validate that the rendered result of a change is indeed what you expect.
 
-All preview builds run on a single EC2 instance using 25 numbered slots. Each slot symlinks `node_modules` and uses a per-slot `.content-cache` to reduce build time. If a PR changes a dependency, `npm ci` runs. The preview server assigns new PRs to the oldest free slot and refreshes existing slots when new commits arrive.
+All preview builds run on a single EC2 instance using 25 numbered slots. Main's dependencies get installed once per distinct `package.json` and lockfile into `/opt/preview/node_modules/<hash>`. Slots whose packages match main symlink that tree. If a PR changes a dependency, the slot copies main's tree and runs `npm install` for the difference only. Each slot also uses a per-slot `.content-cache` to reduce build time. Only one build runs per slot at a time: a new push kills the previous build for that PR on the server, since cancelling the Actions job does not stop it. The preview server assigns new PRs to the oldest free slot and refreshes existing slots when new commits arrive.
 
 Nginx serves the static build output on HTTPS via [sslip.io](https://sslip.io) wildcard DNS — no separate DNS record needed.
 
@@ -17,7 +17,7 @@ Nginx serves the static build output on HTTPS via [sslip.io](https://sslip.io) w
 
 ## Quick setup (Terraform)
 
-Prerequisites: `terraform`, `aws` CLI (authenticated), `gh` CLI (authenticated), `ssh`, `jq`.
+Prerequisites: `terraform`, `aws` CLI (authenticated), `ssh`, `jq`.
 
 ```shell-session
 cd _preview-server
@@ -25,11 +25,11 @@ cd _preview-server
 ```
 
 `provision.sh` does everything end-to-end:
-1. `terraform apply` — creates EC2 instance (m6i.2xlarge, Ubuntu 24.04 LTS), security group (80/443/22), and Elastic IP.
+1. `terraform apply` — creates EC2 instance (c8g.2xlarge, Ubuntu 26.04 LTS arm64, 500 GB gp3), security group (80/443/22), and Elastic IP.
 2. Waits for `user_data` to finish running `setup.sh` on the instance (~5 min).
 3. Generates a deploy SSH keypair and installs the public key on the instance.
 4. Adds a cron job to keep the repo clone warm (`git pull` every 10 min).
-5. Sets `PREVIEW_HOST` and `PREVIEW_SSH_KEY` as GitHub secrets on the repo.
+5. Prints the values for the `PREVIEW_HOST` and `PREVIEW_SSH_KEY` GitHub secrets and saves the deploy key to `~/preview-deploy-key-<timestamp>`. Paste them in at Settings > Secrets and variables > Actions, then delete the key file.
 
 To tear down: `cd terraform && terraform destroy`.
 
@@ -38,9 +38,9 @@ To tear down: `cd terraform && terraform destroy`.
 If you prefer not to use Terraform:
 
 1. Launch an EC2 instance:
-   - AMI: Ubuntu 24.04 LTS
-   - Instance type: m6i.2xlarge (8 vCPU, 32 GB RAM)
-   - Storage: 100 GB gp3
+   - AMI: Ubuntu 26.04 LTS, 64-bit (Arm)
+   - Instance type: c8g.2xlarge (Graviton4, 8 vCPU, 16 GB RAM); any Graviton C or M type works, not T types
+   - Storage: 500 GB gp3
    - Security group inbound: port 22, 80, 443 from `0.0.0.0/0`
    - Allocate an Elastic IP and associate it (so the IP stays stable across reboots)
 
@@ -63,16 +63,13 @@ If you prefer not to use Terraform:
      < /tmp/preview-key.pub
    ```
 
-1. Set GitHub secrets:
-
-   ```shell-session
-   gh secret set PREVIEW_HOST    --repo FusionAuth/fusionauth-site --body "<ec2-ip>"
-   gh secret set PREVIEW_SSH_KEY --repo FusionAuth/fusionauth-site --body "$(cat /tmp/preview-key)"
-   ```
+1. Set GitHub secrets at Settings > Secrets and variables > Actions:
+   - `PREVIEW_HOST`: the Elastic IP
+   - `PREVIEW_SSH_KEY`: the full contents of `/tmp/preview-key`, then delete that file
 
 1. Add the cron job (keeps the master clone warm so builds start from a fresh tree):
 
-   ```cron
+   ```bash
    # Add to preview user's crontab: sudo -u preview crontab -e
    */10 * * * * git -C /opt/preview/repo pull --ff-only --quiet
    ```
