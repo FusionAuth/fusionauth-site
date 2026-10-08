@@ -57,11 +57,11 @@ router.get('/oauth-redirect', function (req, res, next) {
 // :snippet-end:
       .then((response) => {
         console.log(response.response.access_token);
-        return client.retrieveUserUsingJWT(response.response.access_token);
+        return client.retrieveUserInfoFromAccessToken(response.response.access_token);
       })
       .then((response) => {
 // :snippet-start: setUserInSession
-        req.session.user = response.response.user;
+        req.session.user = { firstName: response.response.given_name, email: response.response.email };
         return response;
       })
 // :snippet-end:

@@ -58,7 +58,7 @@ LOGS_PID=$!
 # FusionAuth answers on its root URL before Kickstart has finished creating the
 # application, so both conditions have to be waited on separately.
 fusionauth_ready() {
-  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "<title>Login"
+  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null
 }
 
 kickstart_done() {
@@ -82,7 +82,7 @@ wait_for "Kickstart" kickstart_done
 # an application-specific signing key; the OIDC discovery endpoint needs a moment
 # after kickstart to serve it before the first JWT validation attempt.
 jwks_ready() {
-  curl -sf http://localhost:9011/.well-known/jwks.json 2>/dev/null | grep -q '"kty"'
+  curl -sf http://localhost:9011/.well-known/jwks.json 2>/dev/null | grep '"kty"' > /dev/null
 }
 wait_for "JWKS signing keys" jwks_ready
 

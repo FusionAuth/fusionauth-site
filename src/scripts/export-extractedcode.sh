@@ -42,14 +42,21 @@ publish_repo() {
 		cd "$REPO_ROOT/astro"
 		# The Start Here app's Playwright spec is part of the documented example;
 		# only its docs-only test runner should be excluded from export.
-		local test_ignore="tests"
+		# Leading slashes anchor the patterns to the project root, so an app's own tests/ or .github/ directories still publish.
+		local test_ignore="/tests"
 		if [ "$(basename "$REPOSITORY_PATH")" = "example-get-started" ]; then
-			test_ignore="tests/test.sh"
+			test_ignore="/tests/test.sh"
+		fi
+		# A project opts in to publishing its .github directory (e.g. when a workflow is the example) with publishGithubDirectory.txt.
+		local github_ignore=(-i "/.github")
+		if [ -f "$REPO_ROOT/$REPOSITORY_PATH/publishGithubDirectory.txt" ]; then
+			github_ignore=()
 		fi
 		npx bluehawk copy --plugin bluehawk-languages.js --state published \
-			-i "repositoryUrl.txt" \
+			-i "/repositoryUrl.txt" \
+			-i "/publishGithubDirectory.txt" \
 			-i "$test_ignore" \
-			-i ".github" \
+			${github_ignore[@]+"${github_ignore[@]}"} \
 			-i "node_modules" \
 			--output "$CLEANED_DIR" \
 			"$RELATIVE_PATH"
@@ -63,7 +70,7 @@ publish_repo() {
 		git checkout main
 		git config user.email "github-actions[bot]@users.noreply.github.com"
 		git config user.name "github-actions[bot]"
-		# Keep repository-owned workflows, CODEOWNERS, and other GitHub configuration.
+		# Keep repository-owned workflows, CODEOWNERS, and other GitHub configuration. Opted-in projects overlay theirs below.
 		git rm -rf -- . ':(exclude).github' ':(exclude).github/**'
 		git clean -fdxq
 		cp -r "$CLEANED_DIR/." .

@@ -23,6 +23,10 @@ SOURCES = {
     }),
     "contrib": ("fusionauth-contrib", {
         "kubernetes/istio/fusionauth-all-in-one.yaml": "kubernetes/istio/fusionauth-all-in-one.yaml",
+        "password-hashing-plugins/ExampleFirebaseScryptPasswordEncryptor.java":
+            "Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleFirebaseScryptPasswordEncryptor.java",
+        "password-hashing-plugins/ExampleWordPressPhpassPasswordEncryptor.java":
+            "Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleWordPressPhpassPasswordEncryptor.java",
     }),
     "example-docker-compose": ("fusionauth-example-docker-compose", {
         "plugin-build/docker-compose.yml": "build/docker-compose.yml",
@@ -35,7 +39,7 @@ SOURCES = {
 }
 
 FAKE_COMMAND = r'''#!/usr/bin/env python3
-import json, os, pathlib, sys
+import json, os, pathlib, sys, urllib.parse
 data = json.loads(pathlib.Path(os.environ["FETCH_FIXTURE"]).read_text())
 args = sys.argv[1:]
 command = pathlib.Path(sys.argv[0]).name
@@ -83,6 +87,8 @@ elif command == "curl":
     else:
         assert args[-1].startswith("https://raw.githubusercontent.com/FusionAuth/")
         repo, revision, path = args[-1].split("/", 4)[4].split("/", 2)
+        assert " " not in path, "Spaces in the upstream path must be encoded"
+        path = urllib.parse.unquote(path)
         assert revision == data["heads"][repo], "Fetch was not pinned to the documented branch"
         key = repo + "/" + path
         if data.get("curl_error") == key:
@@ -185,7 +191,7 @@ class RefreshTests(unittest.TestCase):
         requests = [json.loads(line) for line in self.requests.read_text().splitlines()]
         
         self.assertEqual(sum(command == "git" for command, _ in requests), 3)
-        self.assertEqual(sum(command == "curl" for command, _ in requests), 13) # 11 github + 1 API + 1 zip
+        self.assertEqual(sum(command == "curl" for command, _ in requests), 15) # 13 github + 1 API + 1 zip
         self.assertEqual(sum(command == "unzip" for command, _ in requests), 2)
         self.assertEqual(sum(command == "javac" for command, _ in requests), 2)
         self.assertEqual(sum(command == "java" for command, _ in requests), 2)
@@ -380,6 +386,16 @@ class RefreshTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 1)
                 self.assertIn("Changed snapshot: containers/docker/fusionauth/sample.env", result.stdout)
                 self.assertEqual(self.contents(), self.before)
+
+    def test_asciidoc_tag_markers_become_bluehawk_markers(self):
+        key = ("fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/"
+               "ExampleFirebaseScryptPasswordEncryptor.java")
+        snapshot = self.fixture["files"][key]
+        self.assertIn("// :snippet-start: scryptParameters", snapshot)
+        self.fixture["files"][key] = (snapshot.replace("// :snippet-start: scryptParameters", "// tag::scryptParameters[]")
+                                      .replace("// :snippet-end:", "// end::scryptParameters[]"))
+        self.assertEqual(self.run_script("--check").returncode, 0)
+        self.assertEqual(self.contents(), self.before)
 
     def test_help_and_invalid_arguments_do_not_fetch(self):
         self.assertEqual(self.run_script("--help").returncode, 0)

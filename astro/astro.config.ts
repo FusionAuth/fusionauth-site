@@ -63,7 +63,6 @@ const mdxComponentImports =
   "import JSON from 'src/components/JSON.astro';\n" +
   "import Breadcrumb from 'src/components/Breadcrumb.astro';\n" +
   "import Aside from 'src/components/Aside.astro';\n" +
-  "import RemoteCode from 'src/components/RemoteCode.astro';\n" +
   "import LocalValue from 'src/components/LocalValue/LocalValue.astro';\n" +
   "import PlanBlurb from 'src/components/plan/PlanBlurb.astro';\n" +
   "import PlanBlurbApi from 'src/components/plan/PlanBlurbApi.astro';\n" +
@@ -199,7 +198,7 @@ const config = defineConfig({
       ignore: [
         'node_modules', 'vendor', '.gitignore', '.DS_Store',
         'package*.json', '*.lock', 'repositoryUrl.txt',
-        'tests/test.sh', 'LICENSE', 'SECURITY.md',
+        'tests/test.sh', 'LICENSE', 'SECURITY.md', 'publishGithubDirectory.txt',
       ],
       // same state export-extractedcode.sh publishes to the artifact repos
       state: 'published',

@@ -28,7 +28,7 @@ wait_for() {
 }
 
 fusionauth_ready() {
-  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "<title>Login"
+  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null
 }
 
 kickstart_done() {
@@ -41,7 +41,7 @@ mysql_ready() {
 }
 
 drupal_ready() {
-  curl -sf http://localhost/ | grep -q "Welcome to Changebank"
+  curl -sf http://localhost/ | grep "Welcome to Changebank" > /dev/null
 }
 
 echo "Validating docker compose config..."
