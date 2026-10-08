@@ -1,4 +1,4 @@
-name: Test extractedcode
+name: Code examples
 
 on:
   pull_request:
@@ -21,7 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.scan.outputs.matrix }}
-      macos_matrix: ${{ steps.scan.outputs.macos_matrix }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -76,73 +75,56 @@ jobs:
             done
           fi
 
-          if [ "${#dirs[@]}" -eq 0 ]; then
-            echo "No extractedcode directories changed"
-            echo "matrix=[]" >> "$GITHUB_OUTPUT"
-            echo "macos_matrix=[]" >> "$GITHUB_OUTPUT"
-          else
-            matrix=$(printf '%s\n' "${dirs[@]}" | jq -R . | jq -sc .)
-            echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
-            echo "Suites to test: ${dirs[*]}"
-
-            # iOS apps only build on macOS, so suites with tests/macos.sh also get a macOS runner
-            macos_dirs=()
-            for name in "${dirs[@]}"; do
-              [ -f "astro/extractedcode/$name/tests/macos.sh" ] && macos_dirs+=("$name")
-            done
-            if [ "${#macos_dirs[@]}" -eq 0 ]; then
-              echo "macos_matrix=[]" >> "$GITHUB_OUTPUT"
-            else
-              macos_matrix=$(printf '%s\n' "${macos_dirs[@]}" | jq -R . | jq -sc .)
-              echo "macos_matrix=$macos_matrix" >> "$GITHUB_OUTPUT"
-              echo "Suites to build on macOS: ${macos_dirs[*]}"
+          # one entry per check (readable label, runner, script); suites with tests/macos.sh also get a macOS entry for the iOS build
+          entries=()
+          for name in ${dirs[@]+"${dirs[@]}"}; do
+            label="Test $(printf '%s' "${name#fusionauth-}" | tr '-' ' ')"
+            entries+=("$(jq -nc --arg dir "$name" --arg label "$label" '{dir: $dir, label: $label, os: "ubuntu-latest", script: "test.sh"}')")
+            if [ -f "astro/extractedcode/$name/tests/macos.sh" ]; then
+              entries+=("$(jq -nc --arg dir "$name" --arg label "$label on macOS" '{dir: $dir, label: $label, os: "macos-latest", script: "macos.sh"}')")
             fi
+          done
+          # a skipped matrix job shows its name template raw, so an empty run gets a no-op entry instead of being skipped
+          if [ "${#entries[@]}" -eq 0 ]; then
+            echo "No extractedcode directories changed"
+            entries+=('{"dir": "", "label": "No code example changes", "os": "ubuntu-latest", "script": ""}')
           fi
+          matrix=$(printf '%s\n' "${entries[@]}" | jq -sc .)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "Checks: $(jq -r 'map(.label) | join(", ")' <<< "$matrix")"
 
   test:
-    # a skipped matrix job shows its name unexpanded, so keep matrix values out of it; GitHub appends them to real runs
-    name: Test on Linux
+    name: ${{ matrix.label }}
     needs: discover
-    if: ${{ needs.discover.outputs.matrix != '[]' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       # leaves runner slots for other PR workflows (including Preview) when many examples change
       max-parallel: 8
       matrix:
-        extractedcode: ${{ fromJson(needs.discover.outputs.matrix) }}
+        include: ${{ fromJson(needs.discover.outputs.matrix) }}
       fail-fast: false
     steps:
+      - name: Nothing to test
+        if: ${{ matrix.dir == '' }}
+        run: echo "No extractedcode directories changed in this pull request."
+
       - uses: actions/checkout@v7
+        if: ${{ matrix.dir != '' }}
 
       - name: Cache Cargo registry
+        if: ${{ matrix.dir != '' && runner.os == 'Linux' }}
         uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ matrix.extractedcode }}-${{ hashFiles(format('astro/extractedcode/{0}/**/Cargo.toml', matrix.extractedcode)) }}
+          key: ${{ runner.os }}-cargo-${{ matrix.dir }}-${{ hashFiles(format('astro/extractedcode/{0}/**/Cargo.toml', matrix.dir)) }}
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: Run tests
-        run: bash tests/test.sh
-        working-directory: astro/extractedcode/${{ matrix.extractedcode }}
+        if: ${{ matrix.dir != '' }}
+        run: bash tests/${{ matrix.script }}
+        working-directory: astro/extractedcode/${{ matrix.dir }}
         env:
           # examples that need a paid plan write this into a temporary kickstart; fork PRs get no secrets and skip those checks
           FUSIONAUTH_LICENSE_KEY: ${{ secrets.FUSIONAUTH_LICENSE_KEY }}
-
-  test-macos:
-    # a skipped matrix job shows its name unexpanded, so keep matrix values out of it; GitHub appends them to real runs
-    name: Test on macOS
-    needs: discover
-    if: ${{ needs.discover.outputs.macos_matrix != '[]' }}
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        extractedcode: ${{ fromJson(needs.discover.outputs.macos_matrix) }}
-      fail-fast: false
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Run tests
-        run: bash tests/macos.sh
-        working-directory: astro/extractedcode/${{ matrix.extractedcode }}

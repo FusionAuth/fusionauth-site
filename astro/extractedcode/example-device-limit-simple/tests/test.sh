@@ -56,13 +56,15 @@ docker compose up -d
 
 wait_for "FusionAuth" fusionauth_ready
 wait_for "Kickstart" kickstart_done
-python3 "$SCRIPT_DIR/check-kickstart.py"
 
 # a copy keeps node_modules out of the repo
 echo "Starting the app..."
 docker run -d --network host --name device-limit-app -v "$PROJECT_DIR/complete-application":/src:ro node:20 bash -c \
   "cp -r /src /app && cd /app && npm ci --no-audit --no-fund --loglevel=error && npm run dev" > /dev/null
 wait_for "the app" curl -sf http://localhost:8080/
+
+# every login fires the transactional login webhook, so the app has to be up before the kickstart checks log in
+python3 "$SCRIPT_DIR/check-kickstart.py"
 
 echo "Running Playwright tests..."
 docker run --network host --name playwright-test --rm -e NODE_PATH=/usr/lib/node_modules -v "$SCRIPT_DIR/integration.spec.js":/tests/integration.spec.js \
