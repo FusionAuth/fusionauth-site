@@ -1,0 +1,54 @@
+services:
+  faDb:
+    image: postgres:16.0-bookworm
+    container_name: faDb
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - db_net
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  fa:
+    image: fusionauth/fusionauth-app:1.51.2
+    container_name: fa
+    depends_on:
+      faDb:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://faDb:5432/fusionauth
+      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
+      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
+      FUSIONAUTH_APP_RUNTIME_MODE: development
+      FUSIONAUTH_APP_URL: http://fa:9011
+      SEARCH_TYPE: database
+      FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
+      FUSIONAUTH_APP_INSTALLATION_SOURCE: fusionauth-example-multiapp-dashboard
+
+    networks:
+      - db_net
+    restart: unless-stopped
+    ports:
+      - 9011:9011
+    volumes:
+      - fusionauth_config:/usr/local/fusionauth/config
+      - ./kickstart:/usr/local/fusionauth/kickstart
+
+networks:
+  db_net:
+    driver: bridge
+    name: faNetwork
+
+volumes:
+  db_data:
+  fusionauth_config:

@@ -39,6 +39,8 @@ files=(
   'containers/docker/fusionauth/fusionauth-app/Dockerfile|docker/fusionauth/fusionauth-app/Dockerfile'
   'containers/docker/fusionauth/fusionauth-app-mysql/Dockerfile|docker/fusionauth/fusionauth-app-mysql/Dockerfile'
   'contrib/kubernetes/istio/fusionauth-all-in-one.yaml|kubernetes/istio/fusionauth-all-in-one.yaml'
+  'contrib/password-hashing-plugins/ExampleFirebaseScryptPasswordEncryptor.java|Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleFirebaseScryptPasswordEncryptor.java'
+  'contrib/password-hashing-plugins/ExampleWordPressPhpassPasswordEncryptor.java|Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleWordPressPhpassPasswordEncryptor.java'
   'example-docker-compose/plugin-build/docker-compose.yml|build/docker-compose.yml'
   'example-docker-compose/plugin-build/fusionauth-app/Dockerfile|build/fusionauth-app/Dockerfile'
   'example-docker-compose/kafka/docker-compose.yml|kafka/docker-compose.yml'
@@ -92,7 +94,7 @@ for repository in "${repositories[@]}"; do
     curl --disable --fail --silent --show-error --location --retry 2 \
       --connect-timeout 15 --max-time 60 --proto '=https' --proto-redir '=https' \
       --output "$destination" \
-      "https://raw.githubusercontent.com/FusionAuth/$upstream_repo/$revision/$upstream_path" || {
+      "https://raw.githubusercontent.com/FusionAuth/$upstream_repo/$revision/${upstream_path// /%20}" || {
         printf 'Failed to fetch %s/%s. No snapshots were modified.\n' "$upstream_repo" "$upstream_path" >&2
         exit 1
       }
@@ -102,7 +104,11 @@ for repository in "${repositories[@]}"; do
       exit 1
     fi
     
-    sed '/^[[:blank:]]*$/s/[[:blank:]]//g' "$destination" > "$staging_dir/normalized"
+    # upstream asciidoc tag markers become Bluehawk snippet markers
+    sed -E -e '/^[[:blank:]]*$/s/[[:blank:]]//g' \
+      -e 's%^([[:blank:]]*)(//|#)[[:blank:]]*tag::([A-Za-z0-9_.-]+)\[\][[:blank:]]*$%\1\2 :snippet-start: \3%' \
+      -e 's%^([[:blank:]]*)(//|#)[[:blank:]]*end::([A-Za-z0-9_.-]+)\[\][[:blank:]]*$%\1\2 :snippet-end:%' \
+      "$destination" > "$staging_dir/normalized"
     mv "$staging_dir/normalized" "$destination"
     if [[ -n "$(tail -c 1 "$destination")" ]]; then
       printf '\n' >> "$destination"
