@@ -27,7 +27,7 @@ PORT="$PORT" CLIENT_ID=test-client CLIENT_SECRET=test-secret BASE_URL=http://loc
 APP_PID=$!
 
 for attempt in $(seq 1 30); do
-  if curl -fsS --max-time 2 "http://127.0.0.1:$PORT/" 2>/dev/null | grep -q 'oauth2/authorize'; then
+  if curl -fsS --max-time 2 "http://127.0.0.1:$PORT/" 2>/dev/null | grep 'oauth2/authorize' > /dev/null; then
     break
   fi
   if ! kill -0 "$APP_PID" 2>/dev/null; then
@@ -42,8 +42,8 @@ for attempt in $(seq 1 30); do
   sleep 1
 done
 
-curl -fsS "http://127.0.0.1:$PORT/" | grep -q 'client_id=test-client'
-curl -fsS "http://127.0.0.1:$PORT/" | grep -q 'code_challenge_method=S256'
+curl -fsS "http://127.0.0.1:$PORT/" | grep 'client_id=test-client' > /dev/null
+curl -fsS "http://127.0.0.1:$PORT/" | grep 'code_challenge_method=S256' > /dev/null
 test "$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/logout")" = 302
 
 echo "Five-minute example install, syntax, login link, and logout smoke test passed"

@@ -35,7 +35,7 @@ wait_for() {
 }
 
 fusionauth_ready() {
-  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "<title>Login"
+  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null
 }
 
 # the tenant update is the last request in the kickstart
@@ -69,4 +69,4 @@ docker run --network host --name playwright-test --rm -e NODE_PATH=/usr/lib/node
   mcr.microsoft.com/playwright:v1.62.0 bash -c "npm install -g @playwright/test@1.62.0 && playwright test /tests/integration.spec.js"
 
 echo "Checking the login webhook refused the third device..."
-docker logs device-limit-app 2>&1 | grep -q "User is not allowed to log in."
+docker logs device-limit-app 2>&1 | grep "User is not allowed to log in." > /dev/null

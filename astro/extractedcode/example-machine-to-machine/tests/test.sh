@@ -34,13 +34,13 @@ wait_for() {
 }
 
 fusionauth_ready() {
-  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "<title>Login"
+  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null
 }
 
 # the API entity's grant is the last thing Kickstart creates
 kickstart_done() {
   curl -sf "http://localhost:9011/api/entity/dc99eb28-006c-480e-9854-f2d68cd72dcb/grant/search?recipientEntityId=f1ae8766-a4d8-4a92-acb6-869e47e9f38e" \
-    -H "Authorization: $API_KEY" | grep -q '"grants"'
+    -H "Authorization: $API_KEY" | grep '"grants"' > /dev/null
 }
 
 apis_ready() {

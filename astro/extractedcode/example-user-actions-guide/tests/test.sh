@@ -71,13 +71,13 @@ docker run --network host --name playwright-test --rm -e NODE_PATH=/usr/lib/node
 echo "Sending sample events to the Intercom and Slack webhooks..."
 [ "$(post_json /intercom '{"event": {"type": "user.action", "action": "Subscribe", "phase": "start"}}')" = 200 ]
 [ "$(post_json /slack '{"event": {"type": "user.action", "action": "Subscribe", "phase": "start"}}')" = 200 ]
-docker logs user-actions-app 2>&1 | grep -q "Incoming Request to Intercom:"
-docker logs user-actions-app 2>&1 | grep -q "Incoming Request to Slack:"
+docker logs user-actions-app 2>&1 | grep "Incoming Request to Intercom:" > /dev/null
+docker logs user-actions-app 2>&1 | grep "Incoming Request to Slack:" > /dev/null
 
 echo "Ending the subscription, which should ban the user..."
 expire_event="$(printf '{"event": {"type": "user.action", "action": "Subscribe", "phase": "end", "actioneeUserId": "%s", "actionerUserId": "%s"}}' "$USER_ID" "$ADMIN_ID")"
 [ "$(post_json /expire "$expire_event")" = 200 ]
-docker logs user-actions-app 2>&1 | grep -q "User banned successfully"
+docker logs user-actions-app 2>&1 | grep "User banned successfully" > /dev/null
 curl -sf "http://localhost:9011/api/user/action?userId=$USER_ID&active=true" -H "Authorization: $API_KEY" |
   python3 -c 'import json, sys; actions = json.load(sys.stdin).get("actions", []); assert any(a["userActionId"] == sys.argv[1] for a in actions), actions' "$BAN_ACTION_ID"
 

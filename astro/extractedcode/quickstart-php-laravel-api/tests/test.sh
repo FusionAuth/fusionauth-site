@@ -33,7 +33,7 @@ wait_for() {
 # FusionAuth answers on its root URL before Kickstart has finished creating the
 # application, so both conditions have to be waited on separately.
 fusionauth_ready() {
-  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "<title>Login"
+  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null
 }
 
 kickstart_done() {

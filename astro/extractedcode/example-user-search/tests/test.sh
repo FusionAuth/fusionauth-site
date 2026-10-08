@@ -19,7 +19,7 @@ echo "Starting FusionAuth + OpenSearch..."
 (cd "$PROJECT_DIR" && docker compose up -d)
 
 echo "Waiting for FusionAuth to be ready..."
-timeout 480 bash -c "until curl -sfL $BASE_URL/admin/ 2>/dev/null | grep -q '<title>Login'; do
+timeout 480 bash -c "until curl -sfL $BASE_URL/admin/ 2>/dev/null | grep '<title>Login' > /dev/null; do
   echo '  Waiting for FusionAuth...'
   sleep 5
 done"

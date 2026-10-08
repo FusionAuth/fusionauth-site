@@ -40,7 +40,7 @@ for attempt in $(seq 1 30); do
   sleep 1
 done
 
-curl -fsS http://localhost:8080/ | grep -q 'href="/login"'
+curl -fsS http://localhost:8080/ | grep 'href="/login"' > /dev/null
 login_headers="$(curl -sS -D - -o /dev/null http://localhost:8080/login)"
 printf '%s\n' "$login_headers" | grep -q '^HTTP/1.1 302'
 printf '%s\n' "$login_headers" | grep -qi '^location: http://localhost:9011/oauth2/authorize?'

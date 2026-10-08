@@ -28,7 +28,7 @@ wait_for() {
 }
 
 fusionauth_ready() {
-  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "<title>Login"
+  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null
 }
 
 # the application is one of the last things Kickstart creates
