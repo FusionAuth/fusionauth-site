@@ -63,5 +63,6 @@ python3 "$SCRIPT_DIR/check-kickstart.py"
 # The Android build tools only ship x86-64 binaries, so the build runs as amd64 everywhere.
 # android-sdk:36 matches the app's compileSdk.
 echo "Building the Android app..."
-docker run --rm --platform linux/amd64 -v "$PROJECT_DIR/complete-application":/app -w /app \
-  ghcr.io/cirruslabs/android-sdk:36 ./gradlew --no-daemon --console=plain assembleDebug
+# builds a copy so build output stays out of the repo (and out of snippet extraction)
+docker run --rm --platform linux/amd64 -v "$PROJECT_DIR/complete-application":/src:ro \
+  ghcr.io/cirruslabs/android-sdk:36 bash -c "cp -r /src /app && cd /app && ./gradlew --no-daemon --console=plain assembleDebug"

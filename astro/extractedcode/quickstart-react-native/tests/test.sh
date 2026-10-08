@@ -63,5 +63,6 @@ python3 "$SCRIPT_DIR/check-kickstart.py"
 # This is a managed Expo app with no native projects, so the build is Expo bundling the app's
 # JavaScript for each platform, which fails on syntax, import and dependency errors.
 echo "Bundling the Expo app for Android and iOS..."
-docker run --rm -v "$PROJECT_DIR/complete-application":/app -w /app node:18 bash -c \
-  "npm ci && npx expo export --platform android --output-dir /tmp/expo-android && npx expo export --platform ios --output-dir /tmp/expo-ios"
+# builds a copy so build output stays out of the repo (and out of snippet extraction)
+docker run --rm -v "$PROJECT_DIR/complete-application":/src:ro node:18 bash -c \
+  "cp -r /src /app && cd /app && npm ci && npx expo export --platform android --output-dir /tmp/expo-android && npx expo export --platform ios --output-dir /tmp/expo-ios"

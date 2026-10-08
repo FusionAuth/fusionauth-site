@@ -63,5 +63,6 @@ python3 "$SCRIPT_DIR/check-kickstart.py"
 # The Android build tools only ship x86-64 binaries, so the build runs as amd64 everywhere.
 # Flutter 3.13 has JDK 17, which the app's Gradle 7.5 and Android Gradle plugin 7.3 support.
 echo "Building the Android app..."
-docker run --rm --platform linux/amd64 -v "$PROJECT_DIR/complete-application":/app -w /app \
-  ghcr.io/cirruslabs/flutter:3.13.9 flutter build apk --debug
+# builds a copy so build output stays out of the repo (and out of snippet extraction)
+docker run --rm --platform linux/amd64 -v "$PROJECT_DIR/complete-application":/src:ro \
+  ghcr.io/cirruslabs/flutter:3.13.9 bash -c "cp -r /src /app && cd /app && flutter build apk --debug"
