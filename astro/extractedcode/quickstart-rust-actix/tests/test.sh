@@ -38,7 +38,7 @@ docker logs -f rust-actix &
 LOGS_PID=$!
 
 echo "Waiting for FusionAuth to be ready..."
-until curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q "Login | FusionAuth"; do
+until curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep -q 'id="loginId"'; do
   echo "  Waiting for FusionAuth..."
   sleep 5
 done
