@@ -65,4 +65,5 @@ python3 "$SCRIPT_DIR/check-kickstart.py"
 echo "Building the Android app..."
 # builds a copy so build output stays out of the repo (and out of snippet extraction)
 docker run --rm --platform linux/amd64 -v "$PROJECT_DIR/complete-application":/src:ro \
+  -v "$SCRIPT_DIR/maven-mirror.gradle":/root/.gradle/init.d/maven-mirror.gradle:ro \
   ghcr.io/cirruslabs/flutter:3.13.9 bash -c "cp -r /src /app && cd /app && flutter build apk --debug"
