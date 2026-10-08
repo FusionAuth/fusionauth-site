@@ -1,0 +1,140 @@
+{
+  "variables": {
+    "apiKey": "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod",
+    "asymmetricKeyId": "#{UUID()}",
+    "piedPiperApplicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+    "hooliApplicationId": "a7fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+    "piedPiperClientSecret": "pied-piper-super-secret-secret-that-should-be-regenerated-for-production",
+    "hooliClientSecret": "hooli-super-secret-secret-that-should-be-regenerated-for-production",
+    "newThemeId": "#{UUID()}",
+    "defaultTenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
+    "adminEmail": "admin@example.com",
+    "adminPassword": "password",
+    "adminUserId": "00000000-0000-0000-0000-000000000001",
+    "userEmail": "richard@example.com",
+    "userPassword": "password",
+    "userUserId": "00000000-0000-0000-0000-111111111111"
+  },
+  "apiKeys": [
+    {
+      "key": "#{apiKey}",
+      "description": "Unrestricted API key"
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "url": "/api/key/generate/#{asymmetricKeyId}",
+      "body": {
+        "key": {
+          "algorithm": "RS256",
+          "name": "For exampleapp",
+          "length": 2048
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/application/#{piedPiperApplicationId}",
+      "tenantId": "#{defaultTenantId}",
+      "body": {
+        "application": {
+          "name": "Pied Piper Single Sign-on Example",
+          "oauthConfiguration": {
+            "authorizedRedirectURLs": [
+              "http://piedpiper.local:3000/oauth-redirect"
+            ],
+            "logoutURL": "http://piedpiper.local:3000/endsession",
+            "clientSecret": "#{piedPiperClientSecret}",
+            "enabledGrants": [
+              "authorization_code",
+              "refresh_token"
+            ],
+            "generateRefreshTokens": true,
+            "requireRegistration": true
+          },
+          "jwtConfiguration": {
+            "enabled": true,
+            "accessTokenKeyId": "#{asymmetricKeyId}",
+            "idTokenKeyId": "#{asymmetricKeyId}"
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/application/#{hooliApplicationId}",
+      "tenantId": "#{defaultTenantId}",
+      "body": {
+        "application": {
+          "name": "Hooli Single Sign-on Example",
+          "oauthConfiguration": {
+            "authorizedRedirectURLs": [
+              "http://hooli.local:3001/oauth-redirect"
+            ],
+            "logoutURL": "http://hooli.local:3001/endsession",
+            "clientSecret": "#{hooliClientSecret}",
+            "enabledGrants": [
+              "authorization_code",
+              "refresh_token"
+            ],
+            "generateRefreshTokens": true,
+            "requireRegistration": true
+          },
+          "jwtConfiguration": {
+            "enabled": true,
+            "accessTokenKeyId": "#{asymmetricKeyId}",
+            "idTokenKeyId": "#{asymmetricKeyId}"
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{adminUserId}",
+      "body": {
+        "registration": {
+          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+          "roles": [
+            "admin"
+          ]
+        },
+        "roles": [
+          "admin"
+        ],
+        "skipRegistrationVerification": true,
+        "user": {
+          "email": "#{adminEmail}",
+          "firstName": "Dinesh",
+          "lastName": "Chugtai",
+          "password": "#{adminPassword}"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{userUserId}",
+      "body": {
+        "user": {
+          "birthDate": "1985-11-23",
+          "email": "#{userEmail}",
+          "firstName": "Richard",
+          "lastName": "Hendricks",
+          "password": "#{userPassword}"
+        },
+        "registration": {
+          "applicationId": "#{piedPiperApplicationId}"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{userUserId}",
+      "body": {
+        "registration": {
+          "applicationId": "#{hooliApplicationId}"
+        }
+      }
+    }
+  ]
+}

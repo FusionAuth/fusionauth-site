@@ -1,7 +1,6 @@
 ---
 title: Implementing Single Sign-on
 description: Learn how to implement single sign-on between applications using FusionAuth.
-codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node-sso/main
 tags: app suite
 ---
 import BootstrappingSSO from 'src/content/docs/lifecycle/authenticate-users/_bootstrapping-sso.mdx'
@@ -175,10 +174,7 @@ mkdir pied-piper && cd pied-piper
 
 Set up your needed packages. Here's what the `package.json` file should look like:
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/package.json"}
-  lang="javascript"
-  title="package.json" />
+<ExtractedCode lang="javascript" src="example-node-sso/pied-piper/package.json" title="package.json" />
 
 Go ahead and install the needed modules:
 
@@ -192,10 +188,7 @@ This guide uses express for each application and the [typescript client](/docs/s
 
 This is a pretty standard express application which uses pug and sessions. It reads routes from files in the `routes` directory and views from the `views` directory.
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/app.js"}
-  lang="javascript"
-  title="app.js" />
+<ExtractedCode lang="javascript" src="example-node-sso/pied-piper/app.js" title="app.js" />
 
 The session length for this application is 60 seconds; the `maxAge` value is in milliseconds. When the node application's session expires, it will redirect the end user to FusionAuth. If the single sign-on session has not expired, the user will be transparently redirected back. If it has expired, the user must re-authenticate.
 
@@ -203,10 +196,7 @@ The session length for this application is 60 seconds; the `maxAge` value is in 
 
 The next step is to create a script which starts up express. Place the contents of this file in `bin/www`.
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/bin/www"}
-  lang="javascript"
-  title="bin/www" />
+<ExtractedCode lang="javascript" src="example-node-sso/pied-piper/bin/www" title="bin/www" />
 
 This script is what running `npm start` actually executes.
 
@@ -218,10 +208,7 @@ It looks for a port from the environment or uses `3000` as the default. It also 
 
 Here's the `.env` file, which should be placed at `.env`:
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/.env"}
-  lang="properties"
-  title="The .env File" />
+<ExtractedCode lang="properties" src="example-node-sso/pied-piper/.env" title="The .env File" />
 
 This contains configuration settings such as the Client Id and Client Secret. Make sure to update it with the correct values you've copied in the [Configure The Applications In FusionAuth](#configure-the-applications-in-fusionauth) section.
 
@@ -231,18 +218,11 @@ Next, build out the `indexRouter` code referenced from the `app.js` file above.
 
 Here's the entire `index.js` file, which should be placed at `routes/index.js`:
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/routes/index.js"}
-  lang="javascript"
-  title="routes/index.js" />
+<ExtractedCode lang="javascript" src="example-node-sso/index.snippet.routes.js" title="routes/index.js" />
 
 This code handles a number of paths. Let's look at the code in more detail.
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/routes/index.js"}
-  tags="constants"
-  lang="javascript"
-  title="Constants section" />
+<ExtractedCode lang="javascript" src="example-node-sso/index.snippet.constants.js" title="Constants section" />
 
 The top of the `index.js` file has configuration values and some needed constants.
 
@@ -250,47 +230,27 @@ The `clientId` and `clientSecret` are the values noted in the administrative use
 
 The first argument to the FusionAuth client creation is `noapikeyneeded` because the client interactions this application performs do not require an API key. If you extend these applications to update user data or make other privileged API calls, you'll need to change that value to a [real API key](/docs/apis/authentication#managing-api-keys).
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/routes/index.js"}
-  tags="homepageroute"
-  lang="javascript"
-  title="Home page route" />
+<ExtractedCode lang="javascript" src="example-node-sso/index.snippet.homepageroute.js" title="Home page route" />
 
 In this SSO implementation, users can't view the homepage if they aren't signed in. This is a design choice you can make. The code checks for the presence of a user in the session and if it isn't present, the user is redirected to the FusionAuth login page.
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/routes/index.js"}
-  tags="loginpageroute"
-  lang="javascript"
-  title="Login page route" />
+<ExtractedCode lang="javascript" src="example-node-sso/index.snippet.loginpageroute.js" title="Login page route" />
 
 This page is available to users who are not logged in. For this guide, the only information on this page is a login link, but for a real application you'd probably want to entice the user to register or log in.
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/routes/index.js"}
-  tags="logoutpageroute"
-  lang="javascript"
-  title="Logout page route" />
+<ExtractedCode lang="javascript" src="example-node-sso/index.snippet.logoutpageroute.js" title="Logout page route" />
 
 This route removes the user object from the session and then redirects to the FusionAuth logout URL.
 
 Recall that there are three sessions present in this system: the FusionAuth session and one for each application. This route invalidates the local node application's session and then sends the browser to FusionAuth's logout URL, which will invalidate both the FusionAuth session and all other Node application sessions.
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/routes/index.js"}
-  tags="endsessionroute"
-  lang="javascript"
-  title="End session route" />
+<ExtractedCode lang="javascript" src="example-node-sso/index.snippet.endsessionroute.js" title="End session route" />
 
 This route is what FusionAuth requests when a user logs out from any other application in this tenant. If a user is in the Hooli application and logs out, they will be signed out from the Pied Piper application as well. You configured this endpoint in the FusionAuth application details; FusionAuth is responsible for calling this endpoint. This is a separate endpoint from the `/logout` endpoint because in this request, the browser needs to end up on a page accessible to unauthenticated users, but in the `/logout` case, the user needs to be sent to FusionAuth.
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/routes/index.js"}
-  tags="oauthredirectroute"
-  lang="javascript"
-  title="OAuth redirect route" />
+<ExtractedCode lang="javascript" src="example-node-sso/index.snippet.oauthredirectroute.js" title="OAuth redirect route" />
 
-This route is responsible for catching the authorization code request from FusionAuth after the user has signed in. It retrieves an access token and from that gathers the user data. This code ensures that the user is registered for this application, and then places the user data in the session.
+This route handles the authorization code returned by FusionAuth after the user has signed in. It exchanges the code for an access token, uses that token to retrieve the user's OpenID Connect claims from the UserInfo endpoint, and stores the user details in the session.
 
 Implementation of features that might cause a user to want to log in are left as an exercise for the reader.
 
@@ -298,28 +258,19 @@ Implementation of features that might cause a user to want to log in are left as
 
 Next, create the views. Each of these live in the `views` subdirectory. First, the layout view, which looks like this:
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/views/layout.pug"}
-  lang="pug"
-  title="Layout view" />
+<ExtractedCode lang="pug" src="example-node-sso/pied-piper/views/layout.pug" title="Layout view" />
 
 The content is displayed using the `block content` directive. Above it is a menu which lets users switch between both applications.
 
 Next, the login view:
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/views/login.pug"}
-  lang="pug"
-  title="Login view" />
+<ExtractedCode lang="pug" src="example-node-sso/pied-piper/views/login.pug" title="Login view" />
 
 This is where you'd put information about your application for unauthorized users.
 
 Then, create the index view:
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/pied-piper/views/index.pug"}
-  lang="pug"
-  title="Index view" />
+<ExtractedCode lang="pug" src="example-node-sso/pied-piper/views/index.pug" title="Index view" />
 
 This welcomes the user by name. If you were building a more complicated application, this is where you would put functionality that required a user to be authenticated..
 
@@ -343,10 +294,7 @@ In real life, these applications would have different functionality. For this gu
 * Change `index.js` constants to use the Hooli values for the title (to 'Hooli'), hostname (`hooli.local`), port (`3001`), and the Client Id and Client Secret (from the admin UI application screen).
 * Change the layout so that the menu links to the Pied Piper application. Make sure to include the port.
 
-<RemoteCode
-  url={frontmatter.codeRoot + "/hooli/views/layout.pug"}
-  lang="pug"
-  title="Index view" />
+<ExtractedCode lang="pug" src="example-node-sso/hooli/views/layout.pug" title="Index view" />
 
 * Start the application on the port `3001`. Use a different terminal window so that you can have both Node applications running at once.
 
