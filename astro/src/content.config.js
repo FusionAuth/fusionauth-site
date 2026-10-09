@@ -7,6 +7,7 @@ import process from 'node:process';
 
 const CACHE_DIR = path.join(process.cwd(), '.content-cache');
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const STALE_LIMIT_MS = 7 * 24 * 60 * 60 * 1000; // older than this, a failed fetch fails the build instead of serving stale data
 
 function readCache(cacheFile) {
   try {
@@ -29,11 +30,16 @@ async function fetchWithCache(url, cacheFile) {
     fs.renameSync(`${cacheFile}.tmp`, cacheFile);
     return text;
   } catch (err) {
+    let stale;
     try {
-      const stale = fs.readFileSync(cacheFile, 'utf-8');
+      const age = Date.now() - fs.statSync(cacheFile).mtimeMs;
+      if (age < STALE_LIMIT_MS) stale = fs.readFileSync(cacheFile, 'utf-8');
+      else console.error(`[content] Cached copy of ${url} is ${Math.round(age / 86400000)} days old, too stale to use`);
+    } catch { /* no stale cache available */ }
+    if (stale !== undefined) {
       console.warn(`[content] Fetch failed for ${url}, using stale cache: ${err.message}`);
       return stale;
-    } catch { /* no stale cache available */ }
+    }
     throw err;
   }
 }
@@ -182,10 +188,8 @@ const apiEndpoints = defineCollection({
   loader: {
     name: 'openapi-endpoints',
     load: async ({ store }) => {
-      const file = await fetchWithCache(
-        'https://raw.githubusercontent.com/FusionAuth/fusionauth-openapi/main/openapi.yaml',
-        path.join(CACHE_DIR, 'openapi.yaml')
-      );
+      // committed copy, also served as-is at /docs/openapi.yaml; refresh with src/scripts/update_openapi_spec.sh
+      const file = fs.readFileSync(path.join(process.cwd(), 'public/docs/openapi.yaml'), 'utf-8');
 
       const spec = yamlLoad(file);
 
