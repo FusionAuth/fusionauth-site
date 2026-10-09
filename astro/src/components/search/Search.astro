@@ -1,0 +1,291 @@
+---
+import '@algolia/autocomplete-theme-classic';
+---
+<div id="search" class="search">
+  <kbd class="search-shortcut" aria-hidden="true" hidden></kbd>
+</div>
+
+<style is:global>
+  /* aa vars are "r, g, b" triples (tailwind slate/indigo), text picked for 4.5:1 incl. selected rows */
+  :root {
+    --aa-font-family: inherit;
+    --aa-font-size: 14px;
+    --aa-search-input-height: 34px;
+    --aa-input-icon-size: 16px;
+    --aa-icon-size: 16px;
+    --aa-panel-max-height: min(36rem, calc(100vh - 6rem));
+    --aa-detached-media-query: (max-width: 1023.98px);
+    --aa-detached-modal-media-query: (min-width: 680px);
+    --aa-text-color-rgb: 51, 65, 85;
+    --aa-primary-color-rgb: 79, 70, 229;
+    --aa-primary-color-alpha: 1;
+    --aa-muted-color-rgb: 71, 85, 105;
+    --aa-muted-color-alpha: 1;
+    --aa-icon-color-rgb: 100, 116, 139;
+    --aa-input-border-color-rgb: 203, 213, 225;
+    --aa-input-border-color-alpha: 1;
+    --aa-panel-border-color-rgb: 226, 232, 240;
+    --aa-panel-border-color-alpha: 1;
+    --aa-background-color-rgb: 255, 255, 255;
+    --aa-input-background-color-rgb: 255, 255, 255;
+    --aa-selected-color-rgb: 241, 245, 249;
+    --aa-selected-color-alpha: 1;
+    --aa-overlay-color-rgb: 15, 23, 42;
+    --aa-overlay-color-alpha: 0.5;
+    --aa-panel-shadow: 0 0 0 1px rgba(15, 23, 42, 0.1), 0 8px 24px -4px rgba(15, 23, 42, 0.25);
+    --aa-scrollbar-track-background-color-rgb: 241, 245, 249;
+    --search-ring: #818cf8;
+    --search-placeholder: #64748b;
+    --search-key-bg: #f1f5f9;
+    --search-key-text: #475569;
+  }
+
+  html.dark {
+    --aa-text-color-rgb: 226, 232, 240;
+    --aa-primary-color-rgb: 165, 180, 252;
+    --aa-muted-color-rgb: 148, 163, 184;
+    --aa-icon-color-rgb: 148, 163, 184;
+    --aa-input-border-color-rgb: 71, 85, 105;
+    --aa-panel-border-color-rgb: 51, 65, 85;
+    --aa-background-color-rgb: 15, 23, 42;
+    --aa-input-background-color-rgb: 30, 41, 59;
+    --aa-selected-color-rgb: 30, 41, 59;
+    --aa-overlay-color-alpha: 0.8;
+    --aa-panel-shadow: 0 0 0 1px rgba(71, 85, 105, 0.6), 0 8px 24px -4px rgba(0, 0, 0, 0.6);
+    --aa-scrollbar-track-background-color-rgb: 30, 41, 59;
+    --search-placeholder: #94a3b8;
+    --search-key-bg: #334155;
+    --search-key-text: #cbd5e1;
+  }
+
+  /* place search on the right, just before the Resources dropdown */
+  .nav-search {
+    margin-left: auto;
+  }
+
+  .nav-search + .nav-dropdowns {
+    margin-left: 0.5rem;
+  }
+
+  .search {
+    position: relative;
+    width: 100%;
+  }
+
+  .aa-Form {
+    border-radius: 0.375rem;
+  }
+
+  /* visible focus ring; nav bar is slate-900 in both themes, indigo-400 is 6:1 on it */
+  .search .aa-Form:focus-within {
+    box-shadow: none;
+    outline: 2px solid var(--search-ring);
+    outline-offset: 2px;
+  }
+
+  .aa-DetachedFormContainer .aa-Form:focus-within {
+    box-shadow: none;
+    outline: 2px solid rgb(var(--aa-primary-color-rgb));
+    outline-offset: 1px;
+  }
+
+  .aa-Input::placeholder {
+    color: var(--search-placeholder);
+    opacity: 1;
+  }
+
+  .search .aa-Input {
+    padding-right: 3rem;
+  }
+
+  .search-shortcut {
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    pointer-events: none;
+    padding: 0 0.3rem;
+    border-radius: 0.25rem;
+    background: var(--search-key-bg);
+    color: var(--search-key-text);
+    font-family: inherit;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+  }
+
+  .search:focus-within .search-shortcut,
+  .search:has(.aa-Input:not(:placeholder-shown)) .search-shortcut {
+    display: none;
+  }
+
+  .aa-Panel {
+    width: min(36rem, calc(100vw - 2rem));
+    border-radius: 0.375rem;
+  }
+
+  .aa-SourceHeaderTitle {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .aa-Item {
+    min-height: 0;
+  }
+
+  .aa-ItemLink {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.5rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .aa-ItemTitle {
+    display: block;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .aa-ItemPath {
+    display: block;
+    margin-top: 0.125rem;
+    font-size: 0.75rem;
+    line-height: 1.3;
+    color: rgb(var(--aa-muted-color-rgb));
+  }
+
+  .aa-ItemTitle mark,
+  .aa-ItemPath mark {
+    background: none;
+    color: rgb(var(--aa-primary-color-rgb));
+    font-weight: 600;
+  }
+
+  .aa-NoResults {
+    padding: 0.75rem 0.5rem;
+    color: rgb(var(--aa-muted-color-rgb));
+  }
+</style>
+
+<script>
+  import { autocomplete, getAlgoliaResults } from '@algolia/autocomplete-js';
+  import { liteClient } from 'algoliasearch/lite';
+  import { algoliaConfig } from 'src/config';
+
+  const SECTIONS = [
+    { id: 'docs', label: 'Documentation', lvl0: 'Documentation', hits: 10 },
+    { id: 'articles', label: 'Articles', lvl0: 'Articles', hits: 5 },
+    { id: 'blog', label: 'Blog', lvl0: 'Blog', hits: 5 },
+  ];
+
+  const LEVELS = ['lvl1', 'lvl2', 'lvl3', 'lvl4', 'lvl5', 'lvl6'];
+
+  const container = document.getElementById('search');
+
+  if (container) {
+    const searchClient = liteClient(algoliaConfig.appId, algoliaConfig.apiKey);
+
+    // current section's results first, then the rest in default order
+    const path = window.location.pathname;
+    const current = path.startsWith('/articles') ? 'articles' : path.startsWith('/blog') ? 'blog' : 'docs';
+    const ordered = [...SECTIONS].sort((a, b) => Number(b.id === current) - Number(a.id === current));
+
+    const toLocalUrl = (url: string) =>
+      import.meta.env.DEV ? url.replace(/^https?:\/\/[^/]+/, window.location.origin) : url;
+
+    const instance = autocomplete({
+      container,
+      placeholder: 'Search docs',
+      openOnFocus: true,
+      panelPlacement: 'end',
+      detachedMediaQuery: '(max-width: 1023.98px)',
+      translations: {
+        detachedSearchButtonTitle: 'Search',
+        detachedCancelButtonText: 'Cancel',
+        submitButtonTitle: 'Search',
+        clearButtonTitle: 'Clear',
+      },
+      getSources({ query }) {
+        if (!query) return [];
+        return ordered.map((section, index) => ({
+          sourceId: section.id,
+          getItemUrl: ({ item }: any) => item.url,
+          getItems: () =>
+            getAlgoliaResults({
+              searchClient,
+              queries: [{
+                indexName: algoliaConfig.indexName,
+                params: {
+                  query,
+                  filters: `hierarchy.lvl0:"${section.lvl0}"`,
+                  hitsPerPage: section.hits,
+                  attributesToRetrieve: ['hierarchy', 'content', 'type', 'url'],
+                  attributesToSnippet: ['content:20'],
+                  snippetEllipsisText: '…',
+                },
+              }],
+              transformResponse: ({ hits }: any) =>
+                hits.map((list: any[]) => list.map((hit) => ({ ...hit, url: toLocalUrl(hit.url) }))),
+            }),
+          templates: {
+            header: ({ items, html }: any) =>
+              items.length ? html`<span class="aa-SourceHeaderTitle">${section.label}</span><div class="aa-SourceHeaderLine"></div>` : null,
+            item: ({ item, components, html }: any) => {
+              const isContent = item.type === 'content';
+              const depth = isContent ? LEVELS.filter((l) => item.hierarchy[l]).length : LEVELS.indexOf(item.type) + 1;
+              const trail = LEVELS.slice(0, isContent ? depth : depth - 1).map((l) => item.hierarchy[l]).filter(Boolean);
+              const title = isContent
+                ? components.Snippet({ hit: item, attribute: 'content' })
+                : components.Highlight({ hit: item, attribute: ['hierarchy', item.type] });
+              return html`<a class="aa-ItemLink" href=${item.url}>
+                <span class="aa-ItemTitle">${title}</span>
+                ${trail.length ? html`<span class="aa-ItemPath">${trail.join(' › ')}</span>` : null}
+              </a>`;
+            },
+            // only the first source reports "no results", and only when every source is empty
+            noResults: ({ state, html }: any) =>
+              index === 0 && state.collections.every((c: any) => c.items.length === 0)
+                ? html`<div class="aa-NoResults">No results for "${state.query}"</div>`
+                : null,
+          },
+        }));
+      },
+    });
+
+    // magnifier is decorative for keyboard users; input already has the label
+    container.querySelector('.aa-SubmitButton')?.setAttribute('tabindex', '-1');
+
+    const isMac =/mac|iphone|ipad/i.test(navigator.platform || navigator.userAgent);
+    const hint = container.querySelector<HTMLElement>('.search-shortcut');
+    if (hint) {
+      hint.textContent = isMac ? '⌘K' : 'Ctrl K';
+      hint.hidden = false;
+      // keep the hint after the input wrapper so it overlays the right edge
+      container.append(hint);
+    }
+
+    const open = () => {
+      const input = container.querySelector<HTMLInputElement>('.aa-Input');
+      // inline input is only rendered when not in detached (mobile) mode
+      if (input && input.offsetParent !== null) input.focus();
+      else instance.setIsOpen(true);
+    };
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        open();
+      }
+    });
+
+    // mobile nav search icon
+    document.addEventListener('click', (event) => {
+      if ((event.target as Element).closest('[data-widget="search-button"]')) {
+        event.preventDefault();
+        open();
+      }
+    });
+  }
+</script>
