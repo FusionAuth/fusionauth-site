@@ -188,8 +188,8 @@ const apiEndpoints = defineCollection({
   loader: {
     name: 'openapi-endpoints',
     load: async ({ store }) => {
-      // pinned to a fusionauth-openapi release; refresh with src/scripts/update_openapi_spec.sh (see SOURCE.md)
-      const file = fs.readFileSync(path.join(process.cwd(), 'src/content/openapi/openapi.yaml'), 'utf-8');
+      // committed copy, also served as-is at /docs/openapi.yaml; refresh with src/scripts/update_openapi_spec.sh
+      const file = fs.readFileSync(path.join(process.cwd(), 'public/docs/openapi.yaml'), 'utf-8');
 
       const spec = yamlLoad(file);
 

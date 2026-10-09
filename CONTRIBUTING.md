@@ -265,11 +265,11 @@ Docs cards are rendered using [astro-better-cards](https://better-static-sites.g
 
 ### API docs
 
-- The interactive client on each API reference page (`<API>`) renders from a snapshot of the OpenAPI spec in `astro/src/content/openapi/openapi.yaml`, pinned to a [fusionauth-openapi](https://github.com/FusionAuth/fusionauth-openapi) release tag. `SOURCE.md` next to it records the tag and commit. After each FusionAuth release, refresh it from the repository root and commit the result:
+- The OpenAPI spec lives in `astro/public/docs/openapi.yaml`. The site serves it at `/docs/openapi.yaml`, the [OpenAPI Specification page](https://fusionauth.io/docs/apis/openapi) renders it in full, and the interactive client on each API reference page (`<API>`) uses it. It's a copy of the spec in [fusionauth-openapi](https://github.com/FusionAuth/fusionauth-openapi), so builds don't change when that repository does. After each FusionAuth release, refresh it from the repository root, review the diff, and commit it:
   ```shell
   bash src/scripts/update_openapi_spec.sh
   ```
-  Pass a tag (for example `bash src/scripts/update_openapi_spec.sh 1.70.0`) to pin a specific release, or `--check` to see whether a newer one exists. The weekly Check external content workflow runs `--check` and reports when the snapshot falls behind.
+  The weekly Check external content workflow runs `bash src/scripts/update_openapi_spec.sh --check` and reports when the copy differs from upstream.
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
 - `Defaults` is always capitalized.
 - If a field is required, but only when another feature is enabled, mark it optional rather than required in the API. Then, add a note in the description saying when it is required, like so:
