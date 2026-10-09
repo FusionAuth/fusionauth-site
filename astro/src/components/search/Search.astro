@@ -1,0 +1,442 @@
+---
+import '@algolia/autocomplete-theme-classic';
+---
+<div class="search-wrap">
+  <div id="search">
+    <div class="search-shell">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M16.041 15.856c-0.034 0.026-0.067 0.055-0.099 0.087s-0.060 0.064-0.087 0.099c-1.258 1.213-2.969 1.958-4.855 1.958-1.933 0-3.682-0.782-4.95-2.050s-2.050-3.017-2.050-4.95 0.782-3.682 2.050-4.95 3.017-2.050 4.95-2.050 3.682 0.782 4.95 2.050 2.050 3.017 2.050 4.95c0 1.886-0.745 3.597-1.959 4.856zM21.707 20.293l-3.675-3.675c1.231-1.540 1.968-3.493 1.968-5.618 0-2.485-1.008-4.736-2.636-6.364s-3.879-2.636-6.364-2.636-4.736 1.008-6.364 2.636-2.636 3.879-2.636 6.364 1.008 4.736 2.636 6.364 3.879 2.636 6.364 2.636c2.125 0 4.078-0.737 5.618-1.968l3.675 3.675c0.391 0.391 1.024 0.391 1.414 0s0.391-1.024 0-1.414z"/></svg>
+      <input class="search-shell-input" type="search" placeholder="Search" aria-label="Search" autocomplete="off" spellcheck="false" />
+    </div>
+  </div>
+  <kbd class="search-shortcut" aria-hidden="true" hidden></kbd>
+</div>
+
+<!-- runs before the autocomplete bundle so early clicks, shortcuts, and typing aren't lost -->
+<script is:inline>
+  (() => {
+    const search = (window.fusionSearch = { pending: false, open: null });
+    const platform = navigator.userAgentData?.platform || navigator.platform || '';
+    const isMac = /mac|iphone|ipad/i.test(platform);
+
+    const hint = document.querySelector('.search-shortcut');
+    if (hint) {
+      hint.textContent = isMac ? '⌘K' : 'Ctrl K';
+      hint.hidden = false;
+    }
+
+    const isEditable = (el) => el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+
+    const open = () => {
+      if (search.open) return search.open();
+      const shell = document.querySelector('.search-shell-input');
+      // shell is hidden in the narrow layout; open the overlay once autocomplete loads
+      if (shell && shell.offsetParent !== null) shell.focus();
+      else search.pending = true;
+    };
+
+    document.addEventListener('keydown', (event) => {
+      const combo = event.key.toLowerCase() === 'k' && (isMac ? event.metaKey : event.ctrlKey);
+      const slash = !isMac && event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey && !isEditable(document.activeElement);
+      if (combo || slash) {
+        event.preventDefault();
+        open();
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      if (event.target.closest?.('[data-widget="search-button"]')) {
+        event.preventDefault();
+        open();
+      }
+    });
+  })();
+</script>
+
+<style is:global>
+  /* aa vars are "r, g, b" triples (tailwind slate/indigo), text picked for 4.5:1 incl. selected rows */
+  :root {
+    --aa-font-family: inherit;
+    --aa-font-size: 14px;
+    --aa-search-input-height: 34px;
+    --aa-input-icon-size: 16px;
+    --aa-icon-size: 16px;
+    --aa-panel-max-height: min(36rem, calc(100vh - 6rem));
+    --aa-text-color-rgb: 51, 65, 85;
+    --aa-primary-color-rgb: 79, 70, 229;
+    --aa-primary-color-alpha: 1;
+    --aa-muted-color-rgb: 71, 85, 105;
+    --aa-muted-color-alpha: 1;
+    --aa-icon-color-rgb: 100, 116, 139;
+    --aa-input-border-color-rgb: 203, 213, 225;
+    --aa-input-border-color-alpha: 1;
+    --aa-panel-border-color-rgb: 226, 232, 240;
+    --aa-panel-border-color-alpha: 1;
+    --aa-background-color-rgb: 255, 255, 255;
+    --aa-input-background-color-rgb: 255, 255, 255;
+    --aa-selected-color-rgb: 241, 245, 249;
+    --aa-selected-color-alpha: 1;
+    --aa-overlay-color-rgb: 15, 23, 42;
+    --aa-overlay-color-alpha: 0.5;
+    --aa-panel-shadow: 0 0 0 1px rgba(15, 23, 42, 0.1), 0 8px 24px -4px rgba(15, 23, 42, 0.25);
+    --aa-scrollbar-track-background-color-rgb: 241, 245, 249;
+    --search-ring: #818cf8;
+    --search-placeholder: #64748b;
+    --search-key-bg: #f1f5f9;
+    --search-key-text: #475569;
+  }
+
+  html.dark {
+    --aa-text-color-rgb: 226, 232, 240;
+    --aa-primary-color-rgb: 165, 180, 252;
+    --aa-muted-color-rgb: 148, 163, 184;
+    --aa-icon-color-rgb: 148, 163, 184;
+    --aa-input-border-color-rgb: 71, 85, 105;
+    --aa-panel-border-color-rgb: 51, 65, 85;
+    --aa-background-color-rgb: 15, 23, 42;
+    --aa-input-background-color-rgb: 30, 41, 59;
+    --aa-selected-color-rgb: 30, 41, 59;
+    --aa-overlay-color-alpha: 0.8;
+    --aa-panel-shadow: 0 0 0 1px rgba(71, 85, 105, 0.6), 0 8px 24px -4px rgba(0, 0, 0, 0.6);
+    --aa-scrollbar-track-background-color-rgb: 30, 41, 59;
+    --search-placeholder: #94a3b8;
+    --search-key-bg: #334155;
+    --search-key-text: #cbd5e1;
+  }
+
+  /* place search on the right, just before the Resources dropdown */
+  .nav-search {
+    margin-left: auto;
+  }
+
+  .nav-search + .nav-dropdowns {
+    margin-left: 0.5rem;
+  }
+
+  .search-wrap {
+    position: relative;
+    width: 100%;
+  }
+
+  /* server-rendered stand-in, same box as .aa-Form so nothing shifts when autocomplete takes over */
+  .search-shell {
+    display: flex;
+    align-items: center;
+    height: calc(var(--aa-search-input-height) + 2px);
+    padding-left: 11px;
+    border: 1px solid rgb(var(--aa-input-border-color-rgb));
+    border-radius: 0.375rem;
+    background: rgb(var(--aa-input-background-color-rgb));
+    color: rgb(var(--aa-primary-color-rgb));
+  }
+
+  .search-shell:focus-within {
+    outline: 2px solid var(--search-ring);
+    outline-offset: 2px;
+  }
+
+  .search-shell-input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    margin-left: 16px;
+    padding: 0 3rem 0 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: rgb(var(--aa-text-color-rgb));
+    font: inherit;
+    font-size: var(--aa-font-size);
+    appearance: none;
+  }
+
+  .search-shell-input::placeholder {
+    color: var(--search-placeholder);
+    opacity: 1;
+  }
+
+  .search-shell-input::-webkit-search-cancel-button {
+    display: none;
+  }
+
+  .aa-Form {
+    border-radius: 0.375rem;
+  }
+
+  /* visible focus ring; nav bar is slate-900 in both themes, indigo-400 is 6:1 on it */
+  #search .aa-Form:focus-within {
+    box-shadow: none;
+    outline: 2px solid var(--search-ring);
+    outline-offset: 2px;
+  }
+
+  .aa-DetachedFormContainer .aa-Form:focus-within {
+    box-shadow: none;
+    outline: 2px solid rgb(var(--aa-primary-color-rgb));
+    outline-offset: 1px;
+  }
+
+  .aa-Input::placeholder {
+    color: var(--search-placeholder);
+    opacity: 1;
+  }
+
+  #search .aa-Input {
+    padding-right: 3rem;
+  }
+
+  .search-shortcut {
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    pointer-events: none;
+    padding: 0 0.3rem;
+    border-radius: 0.25rem;
+    background: var(--search-key-bg);
+    color: var(--search-key-text);
+    font-family: inherit;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+  }
+
+  .search-wrap:focus-within .search-shortcut,
+  .search-wrap:has(input:not(:placeholder-shown)) .search-shortcut {
+    display: none;
+  }
+
+  .aa-Panel {
+    width: min(36rem, calc(100vw - 2rem));
+    border-radius: 0.375rem;
+  }
+
+  .aa-SourceHeaderTitle {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .aa-Item {
+    min-height: 0;
+  }
+
+  .aa-ItemLink {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.5rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .aa-ItemTitle {
+    display: block;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .aa-ItemPath {
+    display: block;
+    margin-top: 0.125rem;
+    font-size: 0.75rem;
+    line-height: 1.3;
+    color: rgb(var(--aa-muted-color-rgb));
+  }
+
+  .aa-ItemTitle mark,
+  .aa-ItemPath mark {
+    background: none;
+    color: rgb(var(--aa-primary-color-rgb));
+    font-weight: 600;
+  }
+
+  /* attribution required by the free DocSearch plan; muted but still 4.5:1 */
+  .search-attribution {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid rgb(var(--aa-panel-border-color-rgb));
+  }
+
+  .search-attribution a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--search-placeholder);
+    font-size: 0.6875rem;
+    text-decoration: none;
+  }
+
+  .search-attribution a:hover {
+    color: rgb(var(--aa-text-color-rgb));
+  }
+
+  .search-attribution svg {
+    width: 52px;
+    height: 12px;
+  }
+
+  .aa-NoResults {
+    padding: 0.75rem 0.5rem;
+    color: rgb(var(--aa-muted-color-rgb));
+  }
+</style>
+
+<script>
+  import { autocomplete, getAlgoliaResults } from '@algolia/autocomplete-js';
+  import type { HTMLTemplate } from '@algolia/autocomplete-js';
+  import { liteClient } from 'algoliasearch/lite';
+  import { algoliaConfig } from 'src/config';
+
+  type Level = 'lvl1' | 'lvl2' | 'lvl3' | 'lvl4' | 'lvl5' | 'lvl6';
+
+  // record shape written by the DocSearch crawler
+  type SearchHit = {
+    url: string;
+    type: Level | 'content';
+    content: string | null;
+    hierarchy: Record<'lvl0' | Level, string | null>;
+  };
+
+  declare global {
+    interface Window {
+      fusionSearch?: { pending: boolean; open: (() => void) | null };
+    }
+  }
+
+  const SECTIONS = [
+    { id: 'docs', label: 'Documentation', lvl0: 'Documentation', hits: 10 },
+    { id: 'articles', label: 'Articles', lvl0: 'Articles', hits: 5 },
+    { id: 'blog', label: 'Blog', lvl0: 'Blog', hits: 5 },
+  ];
+
+  const LEVELS: Level[] = ['lvl1', 'lvl2', 'lvl3', 'lvl4', 'lvl5', 'lvl6'];
+
+  // official Algolia wordmark from @docsearch/react, recolored via currentColor like DocSearch does
+  const LOGO_PATHS = ["M1070.38,275.3V5.91c0-3.63-3.24-6.39-6.82-5.83l-50.46,7.94c-2.87,.45-4.99,2.93-4.99,5.84l.17,273.22c0,12.92,0,92.7,95.97,95.49,3.33,.1,6.09-2.58,6.09-5.91v-40.78c0-2.96-2.19-5.51-5.12-5.84-34.85-4.01-34.85-47.57-34.85-54.72Z", "M1851.78,71.38h50.77c3.26,0,5.9-2.64,5.9-5.9V5.9c0-3.62-3.24-6.39-6.82-5.83l-50.77,7.95c-2.87,.45-4.99,2.92-4.99,5.83v51.62c0,3.26,2.64,5.9,5.9,5.9Z", "M1764.03,275.3V5.91c0-3.63-3.24-6.39-6.82-5.83l-50.46,7.94c-2.87,.45-4.99,2.93-4.99,5.84l.17,273.22c0,12.92,0,92.7,95.97,95.49,3.33,.1,6.09-2.58,6.09-5.91v-40.78c0-2.96-2.19-5.51-5.12-5.84-34.85-4.01-34.85-47.57-34.85-54.72Z", "M1631.95,142.72c-11.14-12.25-24.83-21.65-40.78-28.31-15.92-6.53-33.26-9.85-52.07-9.85-18.78,0-36.15,3.17-51.92,9.85-15.59,6.66-29.29,16.05-40.76,28.31-11.47,12.23-20.38,26.87-26.76,44.03-6.38,17.17-9.24,37.37-9.24,58.36,0,20.99,3.19,36.87,9.55,54.21,6.38,17.32,15.14,32.11,26.45,44.36,11.29,12.23,24.83,21.62,40.6,28.46,15.77,6.83,40.12,10.33,52.4,10.48,12.25,0,36.78-3.82,52.7-10.48,15.92-6.68,29.46-16.23,40.78-28.46,11.29-12.25,20.05-27.04,26.25-44.36,6.22-17.34,9.24-33.22,9.24-54.21,0-20.99-3.34-41.19-10.03-58.36-6.38-17.17-15.14-31.8-26.43-44.03Zm-44.43,163.75c-11.47,15.75-27.56,23.7-48.09,23.7-20.55,0-36.63-7.8-48.1-23.7-11.47-15.75-17.21-34.01-17.21-61.2,0-26.89,5.59-49.14,17.06-64.87,11.45-15.75,27.54-23.52,48.07-23.52,20.55,0,36.63,7.78,48.09,23.52,11.47,15.57,17.36,37.98,17.36,64.87,0,27.19-5.72,45.3-17.19,61.2Z", "M894.42,104.73h-49.33c-48.36,0-90.91,25.48-115.75,64.1-14.52,22.58-22.99,49.63-22.99,78.73,0,44.89,20.13,84.92,51.59,111.1,2.93,2.6,6.05,4.98,9.31,7.14,12.86,8.49,28.11,13.47,44.52,13.47,1.23,0,2.46-.03,3.68-.09,.36-.02,.71-.05,1.07-.07,.87-.05,1.75-.11,2.62-.2,.34-.03,.68-.08,1.02-.12,.91-.1,1.82-.21,2.73-.34,.21-.03,.42-.07,.63-.1,32.89-5.07,61.56-30.82,70.9-62.81v57.83c0,3.26,2.64,5.9,5.9,5.9h50.42c3.26,0,5.9-2.64,5.9-5.9V110.63c0-3.26-2.64-5.9-5.9-5.9h-56.32Zm0,206.92c-12.2,10.16-27.97,13.98-44.84,15.12-.16,.01-.33,.03-.49,.04-1.12,.07-2.24,.1-3.36,.1-42.24,0-77.12-35.89-77.12-79.37,0-10.25,1.96-20.01,5.42-28.98,11.22-29.12,38.77-49.74,71.06-49.74h49.33v142.83Z", "M2133.97,104.73h-49.33c-48.36,0-90.91,25.48-115.75,64.1-14.52,22.58-22.99,49.63-22.99,78.73,0,44.89,20.13,84.92,51.59,111.1,2.93,2.6,6.05,4.98,9.31,7.14,12.86,8.49,28.11,13.47,44.52,13.47,1.23,0,2.46-.03,3.68-.09,.36-.02,.71-.05,1.07-.07,.87-.05,1.75-.11,2.62-.2,.34-.03,.68-.08,1.02-.12,.91-.1,1.82-.21,2.73-.34,.21-.03,.42-.07,.63-.1,32.89-5.07,61.56-30.82,70.9-62.81v57.83c0,3.26,2.64,5.9,5.9,5.9h50.42c3.26,0,5.9-2.64,5.9-5.9V110.63c0-3.26-2.64-5.9-5.9-5.9h-56.32Zm0,206.92c-12.2,10.16-27.97,13.98-44.84,15.12-.16,.01-.33,.03-.49,.04-1.12,.07-2.24,.1-3.36,.1-42.24,0-77.12-35.89-77.12-79.37,0-10.25,1.96-20.01,5.42-28.98,11.22-29.12,38.77-49.74,71.06-49.74h49.33v142.83Z", "M1314.05,104.73h-49.33c-48.36,0-90.91,25.48-115.75,64.1-11.79,18.34-19.6,39.64-22.11,62.59-.58,5.3-.88,10.68-.88,16.14s.31,11.15,.93,16.59c4.28,38.09,23.14,71.61,50.66,94.52,2.93,2.6,6.05,4.98,9.31,7.14,12.86,8.49,28.11,13.47,44.52,13.47h0c17.99,0,34.61-5.93,48.16-15.97,16.29-11.58,28.88-28.54,34.48-47.75v50.26h-.11v11.08c0,21.84-5.71,38.27-17.34,49.36-11.61,11.08-31.04,16.63-58.25,16.63-11.12,0-28.79-.59-46.6-2.41-2.83-.29-5.46,1.5-6.27,4.22l-12.78,43.11c-1.02,3.46,1.27,7.02,4.83,7.53,21.52,3.08,42.52,4.68,54.65,4.68,48.91,0,85.16-10.75,108.89-32.21,21.48-19.41,33.15-48.89,35.2-88.52V110.63c0-3.26-2.64-5.9-5.9-5.9h-56.32Zm0,64.1s.65,139.13,0,143.36c-12.08,9.77-27.11,13.59-43.49,14.7-.16,.01-.33,.03-.49,.04-1.12,.07-2.24,.1-3.36,.1-1.32,0-2.63-.03-3.94-.1-40.41-2.11-74.52-37.26-74.52-79.38,0-10.25,1.96-20.01,5.42-28.98,11.22-29.12,38.77-49.74,71.06-49.74h49.33Z"];
+  const LOGO_MARK = "M249.83,0C113.3,0,2,110.09,.03,246.16c-2,138.19,110.12,252.7,248.33,253.5,42.68,.25,83.79-10.19,120.3-30.03,3.56-1.93,4.11-6.83,1.08-9.51l-23.38-20.72c-4.75-4.21-11.51-5.4-17.36-2.92-25.48,10.84-53.17,16.38-81.71,16.03-111.68-1.37-201.91-94.29-200.13-205.96,1.76-110.26,92-199.41,202.67-199.41h202.69V407.41l-115-102.18c-3.72-3.31-9.42-2.66-12.42,1.31-18.46,24.44-48.53,39.64-81.93,37.34-46.33-3.2-83.87-40.5-87.34-86.81-4.15-55.24,39.63-101.52,94-101.52,49.18,0,89.68,37.85,93.91,85.95,.38,4.28,2.31,8.27,5.52,11.12l29.95,26.55c3.4,3.01,8.79,1.17,9.63-3.3,2.16-11.55,2.92-23.58,2.07-35.92-4.82-70.34-61.8-126.93-132.17-131.26-80.68-4.97-148.13,58.14-150.27,137.25-2.09,77.1,61.08,143.56,138.19,145.26,32.19,.71,62.03-9.41,86.14-26.95l150.26,133.2c6.44,5.71,16.61,1.14,16.61-7.47V9.48C499.66,4.25,495.42,0,490.18,0H249.83Z";
+
+  const container = document.getElementById('search');
+
+  if (container) {
+    const searchClient = liteClient(algoliaConfig.appId, algoliaConfig.apiKey);
+
+    // current section's results first, then the rest in default order
+    const path = window.location.pathname;
+    const current = path.startsWith('/articles') ? 'articles' : path.startsWith('/blog') ? 'blog' : 'docs';
+    const ordered = [...SECTIONS].sort((a, b) => Number(b.id === current) - Number(a.id === current));
+
+    const toLocalUrl = (url: string) =>
+      import.meta.env.DEV ? url.replace(/^https?:\/\/[^/]+/, window.location.origin) : url;
+
+    const attributionUrl = `https://www.algolia.com/ref/docsearch/?utm_source=${window.location.hostname}&utm_medium=referral&utm_content=powered_by&utm_campaign=docsearch`;
+
+    const attribution = (html: HTMLTemplate) => html`<div class="search-attribution">
+      <a href=${attributionUrl} target="_blank" rel="noopener noreferrer">
+        <span>Search by</span>
+        <svg viewBox="0 0 2196.2 500" fill="currentColor" role="img" aria-label="Algolia">
+          <g fill-rule="evenodd">${LOGO_PATHS.map((d) => html`<path d=${d} />`)}</g>
+          <rect x="1845.88" y="104.73" width="62.58" height="277.9" rx="5.9" ry="5.9" />
+          <path d=${LOGO_MARK} />
+        </svg>
+      </a>
+    </div>`;
+
+    // hand over anything typed into the server-rendered shell before this bundle loaded
+    const shellInput = container.querySelector<HTMLInputElement>('.search-shell-input');
+    const typed = shellInput?.value ?? '';
+    const hadFocus = shellInput !== null && document.activeElement === shellInput;
+    container.replaceChildren();
+
+    const instance = autocomplete<SearchHit>({
+      container,
+      placeholder: 'Search',
+      initialState: { query: typed },
+      openOnFocus: true,
+      panelPlacement: 'end',
+      detachedMediaQuery: '(max-width: 1023.98px)',
+      translations: {
+        detachedSearchButtonTitle: 'Search',
+        detachedCancelButtonText: 'Cancel',
+        submitButtonTitle: 'Search',
+        clearButtonTitle: 'Clear',
+      },
+      render({ children, html, render, createElement, Fragment }, root) {
+        render(createElement(Fragment, null, children, attribution(html)), root);
+      },
+      getSources({ query }) {
+        if (!query) return [];
+        return ordered.map((section, index) => ({
+          sourceId: section.id,
+          getItemUrl: ({ item }) => item.url,
+          getItems: () =>
+            getAlgoliaResults<SearchHit>({
+              searchClient,
+              queries: [{
+                indexName: algoliaConfig.indexName,
+                params: {
+                  query,
+                  filters: `hierarchy.lvl0:"${section.lvl0}"`,
+                  hitsPerPage: section.hits,
+                  attributesToRetrieve: ['hierarchy', 'content', 'type', 'url'],
+                  attributesToSnippet: ['content:20'],
+                  snippetEllipsisText: '…',
+                },
+              }],
+              transformResponse: ({ hits }) =>
+                hits.map((list) => list.map((hit) => ({ ...hit, url: toLocalUrl(hit.url) }))),
+            }),
+          templates: {
+            header: ({ items, html }) =>
+              items.length ? html`<span class="aa-SourceHeaderTitle">${section.label}</span><div class="aa-SourceHeaderLine"></div>` : '',
+            item: ({ item, components, html }) => {
+              const isContent = item.type === 'content';
+              const depth = isContent ? LEVELS.filter((l) => item.hierarchy[l]).length : LEVELS.indexOf(item.type as Level) + 1;
+              const trail = LEVELS.slice(0, isContent ? depth : depth - 1).map((l) => item.hierarchy[l]).filter(Boolean);
+              const title = isContent
+                ? components.Snippet({ hit: item, attribute: 'content' })
+                : components.Highlight({ hit: item, attribute: ['hierarchy', item.type] });
+              return html`<a class="aa-ItemLink" href=${item.url}>
+                <span class="aa-ItemTitle">${title}</span>
+                ${trail.length ? html`<span class="aa-ItemPath">${trail.join(' › ')}</span>` : null}
+              </a>`;
+            },
+            // only the first source reports "no results", and only when every source is empty
+            noResults: ({ state, html }) =>
+              index === 0 && state.collections.every((c) => c.items.length === 0)
+                ? html`<div class="aa-NoResults">No results for "${state.query}"</div>`
+                : '',
+          },
+        }));
+      },
+    });
+
+    // magnifier is decorative for keyboard users; re-apply when autocomplete rebuilds or opens its overlay
+    const untabMagnifiers = () =>
+      document.querySelectorAll('.aa-SubmitButton').forEach((b) => b.setAttribute('tabindex', '-1'));
+    untabMagnifiers();
+    new MutationObserver(untabMagnifiers).observe(container, { childList: true });
+    new MutationObserver(untabMagnifiers).observe(document.body, { childList: true });
+
+    const open = () => {
+      const input = container.querySelector<HTMLInputElement>('.aa-Input');
+      // inline input only exists outside detached (narrow) mode
+      if (input && input.offsetParent !== null) input.focus();
+      else instance.setIsOpen(true);
+    };
+
+    if (hadFocus) {
+      const input = container.querySelector<HTMLInputElement>('.aa-Input');
+      input?.focus();
+      input?.setSelectionRange(typed.length, typed.length);
+    }
+
+    const state = window.fusionSearch;
+    if (state) {
+      state.open = open;
+      if (state.pending) {
+        state.pending = false;
+        open();
+      }
+    }
+  }
+</script>
