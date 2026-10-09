@@ -1,0 +1,79 @@
+---
+title: OAuth Client Registration
+htmlTitle: OAuth Client Registration | Static and CIMD
+description: Learn how FusionAuth registers OAuth clients, either ahead of time as Applications or just-in-time from a Client ID Metadata Document.
+tags: oauth, client registration, cimd, client id metadata document, dynamic client registration, dcr, mcp
+---
+
+Before an OAuth client can request tokens, the authorization server needs a record of it, including which redirect URLs the client may use. That record is the client's registration.
+
+FusionAuth supports two ways to register a client:
+
+* Static registration, where you create an [Application](/docs/get-started/core-concepts/types/applications) for the client ahead of time.
+* Client ID Metadata Documents (CIMD), where the client describes itself in a document it hosts, and FusionAuth registers it the first time it shows up.
+
+## Static Registration
+
+With static registration, you create an Application in FusionAuth for each client. The Application Id becomes the client's `client_id`. You configure everything else on the Application: redirect URLs, enabled grants, client authentication, roles and scopes.
+
+Use static registration when you know your clients in advance, such as your own apps and services. You control every setting, and any OAuth grant FusionAuth supports is available.
+
+Someone has to create the Application before the client can log in. That doesn't work for software you don't control and can't predict, like an AI chat app connecting to your MCP server on behalf of whichever user set it up.
+
+## Client ID Metadata Documents
+
+<PlanBlurb plan="enterprise" />
+
+<AvailableSince since="1.70.0"/>
+
+With CIMD, the `client_id` is an HTTPS URL, such as `https://chatgpt.com/oauth/client.json`. The client hosts a JSON document at that URL describing itself, including its name and redirect URIs. CIMD is defined in [draft-ietf-oauth-client-id-metadata-document](https://datatracker.ietf.org/doc/draft-ietf-oauth-client-id-metadata-document/), and the [MCP authorization spec](https://modelcontextprotocol.io/specification/draft/basic/authorization) uses it for client registration.
+
+You don't register CIMD clients one at a time. Instead, you tell FusionAuth which origins to trust by creating a [CIMD domain](/docs/get-started/core-concepts/types/cimd-domains) for each one, for example `https://chatgpt.com`. Scopes, consent, resource URIs and lambdas are configured on the domain and apply to every client from that origin.
+
+### How A CIMD Client Gets Registered
+
+1. The client starts the Authorization Code grant, using its document URL as the `client_id`. The request must go to the Tenant's endpoints, under `https://<host>/<tenantId>`, and include exactly one [`resource` parameter](https://datatracker.ietf.org/doc/html/rfc8707), such as the URL of your MCP server.
+2. FusionAuth checks that the URL matches a CIMD domain in the Tenant. If nothing matches, the request fails.
+3. The user logs in.
+4. FusionAuth fetches the document, validates it, and registers the client. If the domain has a registration lambda, the lambda can reject the client or change its registration.
+5. The user consents to the requested scopes. CIMD clients are always treated as third-party clients, so FusionAuth always asks for consent at least once.
+6. FusionAuth redirects back to the client with an authorization code, and the client exchanges it for tokens.
+
+The access token's `aud` claim contains the client's `client_id` URL. When the `resource` is one of the domain's **Authorized resource URIs**, `aud` contains the `resource` too. When the domain has no authorized resource URIs, FusionAuth ignores the `resource`.
+
+{/* TODO: double-check that an empty authorizedResourceUris leaves resource out of aud. code requires exactly one resource either way */}
+
+FusionAuth caches the document. Until the cached copy expires, later logins from the same client reuse the registration without fetching the document again. The domain's cache settings control how long that is.
+
+{/* TODO: double-check how a CIMD request identifies the Tenant. assuming tenant-scoped endpoints under https://<host>/<tenantId>, matching the ChatGPT E2E run */}
+
+### What CIMD Clients Can't Do
+
+CIMD clients are public clients. They authenticate with PKCE instead of a client secret, and they can only use the `authorization_code` and `refresh_token` grants. See [Fixed OAuth Behavior](/docs/get-started/core-concepts/types/cimd-domains#fixed-oauth-behavior) for the full list of restrictions.
+
+FusionAuth reads only `client_id`, `client_name`, `client_uri` and `redirect_uris` from the document, and ignores every other field. A `scope` value in the document has no effect, so a CIMD client can only request the scopes enabled on its domain. FusionAuth also doesn't fetch `logo_uri`.
+
+## Dynamic Client Registration
+
+[Dynamic Client Registration](https://datatracker.ietf.org/doc/html/rfc7591) (DCR) is an older way to solve the same problem. Under DCR, the client calls a registration endpoint on the authorization server, and the server creates and stores a new client record for every caller. FusionAuth doesn't support DCR; you can follow [GitHub issue #1125](https://github.com/FusionAuth/fusionauth-issues/issues/1125) for updates. CIMD covers the MCP use case with less stored state, since the client's metadata stays on the client's own server.
+
+## Choosing An Approach
+
+| | Static registration | CIMD |
+|---|---|---|
+| Who registers the client | You, before the client logs in | FusionAuth, the first time the client logs in |
+| `client_id` | The Application Id | The URL of the client's metadata document |
+| Where the client's metadata lives | The Application | The client's document, cached by FusionAuth |
+| What you configure | One Application per client | One CIMD domain per trusted origin |
+| Client authentication | Client secret or none, with or without PKCE | None. PKCE is required |
+| Grants | Any grant FusionAuth supports | `authorization_code` and `refresh_token` |
+| Consent | Configurable, including skipping it for first-party apps | Always prompts at least once |
+| Removing access | Delete or deactivate the Application | Delete the CIMD domain, or reject the client with a registration lambda |
+
+Use static registration for clients you know about. Use CIMD when clients you don't know in advance need to log in, such as MCP clients like ChatGPT and claude.ai connecting to your MCP server.
+
+## Next Steps
+
+* [Configure a CIMD domain](/docs/get-started/core-concepts/types/cimd-domains) to start accepting CIMD clients.
+* [Host a Client ID Metadata Document](/docs/lifecycle/authenticate-users/oauth/host-cimd-document) for an OAuth client you build.
+* [Connect claude.ai and ChatGPT to an MCP server](/docs/extend/examples/mcp-clients-claude-chatgpt) protected by FusionAuth.
