@@ -12,6 +12,7 @@ import ClientCredentialsScopesSingleEntity from 'src/content/docs/lifecycle/auth
 import ClientCredentialsScopesMultipleEntities from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_scopes_multiple_entities.mdx';
 import ClientCredentialsPermissionsExplanation from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_permissions_explanation.mdx';
 import RepeatedParameterLimit from 'src/content/docs/_shared/_repeated-parameter-limit.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_shared/_standard-get-response-codes.astro';
 
 <span id="token"></span>
 
@@ -553,3 +554,207 @@ _Response Codes_
 </APIBlock>
 
 <JSON src="oauth/client_credentials_example_json_response.json"/>
+
+## Token Exchange Grant Request
+
+<AvailableSince since="1.70.0"/>
+
+This is an implementation of the OAuth 2.0 Token Exchange specification as defined by [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693).
+
+Token Exchange allows clients to obtain a new token by exchanging an existing token. This enables delegation and token type conversion scenarios. See [OAuth Token Exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange) for a comprehensive overview.
+
+<Aside type="note">
+FusionAuth currently supports **delegation** use cases as of version 1.70.0. Impersonation is not currently supported.
+</Aside>
+
+<API method="POST" uri="/oauth2/token"/>
+
+### Request Headers
+
+<APIBlock>
+  <AuthorizationHeader />
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+### Request Body
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+<APIBlock>
+  <APIField name="client_id" type="String" optional>
+    The unique client identifier (the exchanger).
+
+    This parameter is optional when the `Authorization` header is provided.
+    When the `Authorization` header is not provided, this parameter is required.
+  </APIField>
+  <APIField name="client_secret" type="String" optional>
+    The client secret.
+    This parameter is optional when the `Authorization` header is provided.
+    Please see [the Client Secret table](/docs/apis/oauth/client-secret) for more details.
+  </APIField>
+  <APIField name="grant_type" type="String" required>
+    The grant type to be used. This value must be set to `urn:ietf:params:oauth:grant-type:token-exchange`.
+  </APIField>
+  <APIField name="subject_token" type="String" required>
+    The security token representing the identity of the party on behalf of whom the request is being made.
+    This is the token being exchanged.
+  </APIField>
+  <APIField name="subject_token_type" type="String" required>
+    An identifier for the type of the `subject_token`.
+
+    Supported values:
+    - `urn:ietf:params:oauth:token-type:access_token` - OAuth 2.0 access token issued by FusionAuth
+    - `urn:ietf:params:oauth:token-type:jwt` - Generic JWT (may be from external issuers)
+  </APIField>
+  <APIField name="requested_token_type" type="String" optional>
+    An identifier for the type of the requested security token. If not provided, defaults to an access token.
+
+    Supported values:
+    - `urn:ietf:params:oauth:token-type:access_token` - OAuth 2.0 access token (default)
+  </APIField>
+  <APIField name="audience" type="String" optional>
+    The logical name of the target service where the client intends to use the requested security token.
+    Typically the client ID of the target service.
+
+    When specified, the issued token's `aud` claim will contain this value.
+    The policy engine may restrict which audiences the client can request.
+    
+    This parameter can be specified multiple times to request multiple audiences. Maximum of 50 audiences per request.
+    
+    **Note:** Only one of `audience` or `resource` may be used in a single request. If both are provided, the request will fail.
+  </APIField>
+  <APIField name="scope" type="String" optional>
+    A space-delimited list of requested scope values for the issued token.
+
+    The issued token's scope is the intersection of:
+    - The requested scope
+    - The subject token's scope
+    - The policy engine's granted scope
+
+    Scopes can only be reduced, never expanded.
+  </APIField>
+  <APIField name="resource" type="String" optional>
+    The URI of the target resource where the client intends to use the requested token.
+    This parameter can be specified multiple times to indicate multiple target resources. Maximum of 50 resources per request.
+
+    **Note:** Only one of `audience` or `resource` may be used in a single request. If both are provided, the request will fail.
+    
+    Not supported by the Entity policy engine.
+  </APIField>
+  <APIField name="intent" type="String" optional>
+    An optional string describing the purpose or intent of the token exchange request.
+    This value is passed to the policy lambda (if configured) and can be used for authorization decisions.
+    
+    Maximum length: 255 characters.
+    
+    This parameter is not included in the issued token and serves only to provide context during policy evaluation.
+  </APIField>
+  <APIField name="state" type="String" optional>
+    An opaque string provided by the client for contextual information about the exchange request.
+    This value is passed to the policy lambda (if configured) via `tokenExchangeRequest.state` and can be used for making authorization decisions.
+
+    Maximum length: 1024 characters.
+
+    This parameter is not included in the issued token and serves only to provide context during policy evaluation.
+  </APIField>
+</APIBlock>
+
+#### Token Type URIs
+
+FusionAuth supports the following token type identifiers for Token Exchange:
+
+| URI | Description | Usage |
+|-----|-------------|-------|
+| `urn:ietf:params:oauth:token-type:access_token` | OAuth 2.0 access token | `subject_token_type`, `requested_token_type` |
+| `urn:ietf:params:oauth:token-type:jwt` | Generic JWT | `subject_token_type` |
+
+Note: [RFC 8693 § 3](https://datatracker.ietf.org/doc/html/rfc8693#section-3) defines additional token types (refresh_token, id_token, saml1, saml2, actor_token) which are not currently supported by FusionAuth.
+
+```plaintext title="Example HTTP Request"
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 512
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&client_secret=YOUR_CLIENT_SECRET&grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange&subject_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&subject_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aaccess_token&audience=email-service-client-id&scope=email%3Asend
+```
+
+### Response
+
+<StandardGetResponseCodes success_code="200" success_message="The request was successful. The response will contain a JSON body." />
+
+### Response Body
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The issued access token.
+    
+    The decoded JWT will contain:
+    - `act` claim - The actor chain representing delegation (see [Actor Chain](/docs/lifecycle/authenticate-users/oauth/token-exchange#actor-chain-and-the-act-claim))
+    - `gty` claim - An array of grant types used in the token's history. Always contains `["urn:ietf:params:oauth:grant-type:token-exchange"]` for tokens issued via token exchange. If the subject token had a `gty` value, it will be appended to the array.
+    - Standard claims (`aud`, `sub`, `iss`, `exp`, `iat`, etc.)
+  </APIField>
+  <APIField name="issued_token_type" type="String">
+    An identifier for the type of the issued security token.
+    Typically `urn:ietf:params:oauth:token-type:access_token`.
+  </APIField>
+  <APIField name="token_type" type="String">
+    The token type. This value will be `Bearer`.
+  </APIField>
+  <APIField name="expires_in" type="Integer">
+    The time in seconds the access token will expire from the time the response was generated.
+  </APIField>
+  <APIField name="scope" type="String" optional>
+    The scope granted for the issued token. May be less than the requested scope.
+  </APIField>
+  <APIField name="refresh_token" type="String" optional>
+    The refresh token. This value will only be returned if the requested token type was `refresh_token` and the policy permitted it.
+  </APIField>
+</APIBlock>
+
+```json title="Example JSON Response"
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InBEclVSRkhaQmFnSmNOLWt5RVhzSGdkX3ozNDUifQ.eyJhdWQiOiJlbWFpbC1zZXJ2aWNlLWNsaWVudC1pZCIsImV4cCI6MTcyODMyNjQwMCwiaWF0IjoxNzI4MzIyODAwLCJpc3MiOiJodHRwczovL3BpZWRwaXBlci5mdXNpb25hdXRoLmlvIiwic3ViIjoidXNlcjEyMyIsImFjdCI6eyJzdWIiOiJ0b2RvLWFwcC1jbGllbnQtaWQiLCJzdWJfcHJvZmlsZSI6IlRvZG8gQXBwbGljYXRpb24ifSwic2NvcGUiOiJlbWFpbDpzZW5kIiwiZ3R5IjoidXJuOmlldGY6cGFyYW1zOm9hdXRoOmdyYW50LXR5cGU6dG9rZW4tZXhjaGFuZ2UifQ...",
+  "issued_token_type": "urn:ietf:params:oauth:token-type:access_token",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "email:send"
+}
+```
+
+The issued access token decoded:
+
+```json title="Decoded Access Token"
+{
+  "aud": "email-service-client-id",
+  "exp": 1728326400,
+  "iat": 1728322800,
+  "iss": "https://piedpiper.fusionauth.io",
+  "sub": "user123",
+  "act": {
+    "sub": "todo-app-client-id",
+    "sub_profile": "Todo Application"
+  },
+  "scope": "email:send",
+  "gty": ["urn:ietf:params:oauth:grant-type:token-exchange"]
+}
+```
+
+Note the `act` claim which identifies the actor (the client that performed the exchange) and the `gty` claim (an array) indicating the token was issued via token exchange. If the subject token had a prior `gty` value, those grant types would also appear in this array, creating a history of grant types used.
+
+### Error Responses
+
+In addition to standard OAuth 2.0 error responses, token exchange may return:
+
+| Error Code | Description |
+|------------|-------------|
+| `invalid_request` | The request is malformed, missing required parameters, or violates policy |
+| `invalid_client` | Client authentication failed or client not authorized for token exchange |
+| `invalid_grant` | The subject token is invalid, expired, revoked, or validation failed |
+| `unauthorized_client` | The client is not authorized to use this grant type |
+| `invalid_scope` | The requested scope is invalid or exceeds what is permitted |
+| `invalid_target` | The requested audience or resource is not permitted |
+
+See [Token Exchange documentation](/docs/lifecycle/authenticate-users/oauth/token-exchange) for configuration, policy engines, and customization options.
