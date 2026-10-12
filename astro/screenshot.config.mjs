@@ -240,6 +240,45 @@ export default {
     const oauthTenantId = '30663132-6464-6665-3032-326466613934';
     const oauthLoginUrl = `http://localhost:9011/oauth2/authorize?client_id=${oauthAppId}&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid`;
 
+    // migration guide test tenant: only the tenant list after saving should show it, so each
+    // screenshot sets the state it needs, and every other screenshot removes it
+    const apiKey = 'screenshot-dev-key-not-for-production';
+    // matches the example Id in the guide text
+    const importTenantId = '25c9d123-8a79-4edd-9f76-8dd9c806b0f3';
+    const importTenantUrl = `http://localhost:9011/api/tenant/${importTenantId}`;
+    const importTenantApi = async (method, body) => {
+      const r = await fetch(importTenantUrl, {
+        method,
+        headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
+        body: body && JSON.stringify(body),
+      });
+      if (!r.ok && !(method === 'GET' && r.status === 404)) {
+        throw new Error(`test tenant ${method} failed: ${r.status} ${await r.text()}`);
+      }
+      return r.ok;
+    };
+    const importTenantExists = await importTenantApi('GET');
+
+    if (ctx?.name === 'migration-tenant-list') {
+      if (!importTenantExists) {
+        await importTenantApi('POST', { tenant: { name: 'Import test' } });
+        await page.reload({ waitUntil: 'networkidle' });
+      }
+      await page.evaluate(id => {
+        const cell = [...document.querySelectorAll('td')].find(td => td.textContent.trim() === id);
+        if (cell) cell.setAttribute('data-hl', 'import-tenant-id');
+      }, importTenantId);
+    } else if (importTenantExists) {
+      await importTenantApi('DELETE');
+      // the admin UI caches the tenant count for ~2s; while it still sees two tenants,
+      // forms such as application edit show an extra Tenant field
+      await page.waitForTimeout(5000);
+      await page.reload({ waitUntil: 'networkidle' });
+    }
+
+    if (ctx?.name === 'migration-tenant-add') {
+      await page.fill('#tenant_name', 'Import test');
+    }
 
     // bootstrap-button: tag the "Fingerprint, device or key" link for highlighting
     if (ctx?.name === 'passkeys-bootstrap-button') {
