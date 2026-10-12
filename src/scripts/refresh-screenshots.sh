@@ -12,8 +12,8 @@
 #   src/scripts/refresh-screenshots.sh --threshold 0.005    # looser tolerance
 #   src/scripts/refresh-screenshots.sh --compare-only       # skip capture, compare what is there
 #
-# Requires Docker and the screenshot CLI (npm ci in astro/screenshots, plus
-# `npx playwright install webkit`).
+# Requires Docker and the screenshot CLI (npm ci in astro/screenshots). The browser runs in a
+# pinned container (browserContainer in screenshot.config.mjs), so no local browser install is needed.
 #
 # Exit codes:
 #   0  no meaningful change; the working tree is left clean

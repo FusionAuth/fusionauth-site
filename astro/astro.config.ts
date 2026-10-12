@@ -192,6 +192,8 @@ const config = defineConfig({
       },
     },
     cacheDir: '.vite-cache',
+    // example apps here have tsconfigs extending packages this site doesn't install, which breaks the dep scan
+    optimizeDeps: { entries: ['!src/generated-code-snippets/**'] },
     ssr: {
       // svgdom and mermaid are Node-only SSR packages used in remark plugins;
       // externalizing them prevents Vite from bundling them and breaking dynamic imports.
