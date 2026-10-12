@@ -16,6 +16,8 @@ export default {
   outputDir: 'public/img/docs/screenshots',
   window: { width: 1100, height: 800 },
   browser: 'webkit',
+  // render in a pinned linux container so macos and ci produce identical text
+  browserContainer: true,
   chrome: {
     style:    'golden-gate',
     renderIn: 'css',
