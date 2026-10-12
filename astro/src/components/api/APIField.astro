@@ -33,31 +33,43 @@ const {
   readonly
 } = Astro.props;
 
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// wbr after dots and before brackets for segment-boundary wraps; data-field-name keeps the raw name for check-apis.sh
+const nameHtml = escapeHtml(String(name)).replace(/\./g, '.<wbr>').replace(/\[/g, '<wbr>[');
+
 const rawSlotContent = await Astro.slots.render('default');
 let parsedMarkdownHTML = '';
 if (rawSlotContent) {
-  const trimmedContent = rawSlotContent.replace(/^[ \t]+/gm, '');
-  parsedMarkdownHTML = marked.parse(trimmedContent);
+  // stash <pre> blocks so dedent and markdown parsing leave code indentation and blank lines intact
+  const preBlocks: string[] = [];
+  const stashed = rawSlotContent.replace(/<pre[\s>][\s\S]*?<\/pre>/g, (match) => {
+    preBlocks.push(match);
+    return `<!--apifield-pre-${preBlocks.length - 1}-->`;
+  });
+  const trimmedContent = stashed.replace(/^[ \t]+/gm, '');
+  parsedMarkdownHTML = (await marked.parse(trimmedContent))
+    .replace(/<!--apifield-pre-(\d+)-->/g, (_, i) => preBlocks[Number(i)]);
 }
+
+const hasMeta = type || description || required || optional || defaults
+  || (show_since && since) || immutable || deprecated || readonly;
 ---
 {renderif && <div class="api-field">
-  <div class="api-field-row">
-    <code class="api-field-name">{name}</code>{' '}
-
-    {type && <><code class="api-type">{type}</code>{' '}</>}
-    {description && <><span class="px-3">{description}</span>{' '}</>}
-
-    {required && <><span class="api-required">required</span>{' '}</>}
-    {optional && <><span class="api-optional">optional</span>{' '}</>}
-    {defaults && <><span class="api-default">Defaults to <code>{defaults}</code></span>{' '}</>}
-
-    {show_since && since && <AvailableSince since={since} />}
-    {immutable && <><span class="api-immutable">Immutable</span>{' '}</>}
-    {deprecated && <><span class="api-deprecated">Deprecated</span>{' '}</>}
-    {readonly && <ReadOnly />}
+  <div class="api-field-header">
+    <span class="api-field-title"><code class="api-field-name" data-field-name={name} set:html={nameHtml}></code></span>
+    {hasMeta && <ul class="api-field-meta" role="list">
+      {type && <li class="api-type"><span class="api-field-label">Type: </span><code>{type}</code></li>}
+      {description && <li class="api-description">{description}</li>}
+      {required && <li class="api-required">Required</li>}
+      {optional && <li class="api-optional">Optional</li>}
+      {defaults && <li class="api-default">Defaults to <code>{defaults}</code></li>}
+      {show_since && since && <li class="api-since"><AvailableSince since={since} /></li>}
+      {immutable && <li class="api-immutable">Immutable</li>}
+      {deprecated && <li class="api-deprecated">Deprecated</li>}
+      {readonly && <li><ReadOnly /></li>}
+    </ul>}
   </div>
 
-  <div class="api-body">
-    <div class="api-body" set:html={parsedMarkdownHTML}></div>
-  </div>
+  <div class="api-body" set:html={parsedMarkdownHTML}></div>
 </div>}
