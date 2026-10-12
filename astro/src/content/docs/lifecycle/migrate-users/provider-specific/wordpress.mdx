@@ -60,73 +60,42 @@ This works for users, applications, and tenants, among others.
 
 In this section, you create a sample WordPress database in Docker, understand where the user details are kept in the database, and export them with a SQL script.
 
-### Start WordPress
+### Clone the Code
 
-Create a directory for this project. In the directory, create a file called `docker-compose.yaml` and insert the code below.
-
-```yaml
-# Source: https://hub.docker.com/r/bitnami/wordpress-nginx
-version: '2'
-services:
-  mariadb:
-    image: docker.io/bitnami/mariadb:11.2
-    container_name: fawp_db
-    ports:
-      - '3306:3306'
-    volumes:
-      - './db:/bitnami/mariadb'
-    environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      - ALLOW_EMPTY_PASSWORD=yes
-      - MARIADB_USER=wp
-      - MARIADB_DATABASE=wp
-  wordpress:
-    image: docker.io/bitnami/wordpress-nginx:6
-    container_name: fawp
-    ports:
-      - '80:8080'
-      - '443:8443'
-    volumes:
-      - './wp:/bitnami/wordpress'
-    depends_on:
-      - mariadb
-    environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      - ALLOW_EMPTY_PASSWORD=yes
-      - WORDPRESS_DATABASE_HOST=mariadb
-      - WORDPRESS_DATABASE_PORT_NUMBER=3306
-      - WORDPRESS_DATABASE_USER=wp
-      - WORDPRESS_DATABASE_NAME=wp
-volumes:
-  mariadb_data:
-    driver: local
-  wordpress_data:
-    driver: local
-```
-
-Open a terminal in the same directory as the file and run the code below to start a MariaDB and WordPress container.
+First, clone or download the code from the WordPress Quickstart guide repository and change into that directory.
 
 ```shell-session
-mkdir db && mkdir wp && sudo chmod -R 777 ./db ./wp && \
-docker compose up
+git clone https://github.com/FusionAuth/fusionauth-quickstart-wordpress-web.git wordpress && cd wordpress
 ```
 
-This command creates two directories to hold the data for your WordPress and database files, shared with volumes in the Docker containers.
+All shell commands in this guide can be entered in a terminal in this directory. On Windows, you need to replace forward slashes with backslashes in paths.
 
-Browse to http://localhost/wp-login.php. Log in with username `user` and password `bitnami`. This is the default WordPress administrator configured in the Bitnami Docker image we used.
+### Start WordPress and FusionAuth
+
+Run the commands below. The first command starts FusionAuth, WordPress, and their databases. The second command uses the WordPress CLI to configure the instance with basic details.
+
+```shell-session
+docker compose up
+
+docker compose exec cli wp core install --url="http://localhost:3000" --title="WP" --admin_user="admin" --admin_password="password" --admin_email="admin@example.com" --skip-email
+```
+
+Browse to http://localhost:3000/wp-login.php. Log in with username `admin` and password `password`.
 
 ### Add A New User
 
-If you use WordPress as a user management system, you need to allow users to register themselves. To do this, navigate to <Breadcrumb>Settings -> General -> Membership</Breadcrumb>. Enable <Breadcrumb>Anyone can register</Breadcrumb> and click <Breadcrumb>Save Changes</Breadcrumb>.
+Run the command below to create an example user to migrate.
 
-Log out at the top right of the page. Browse to http://localhost/wp-login.php.
-Register a new user. Enter a username and email `richard@example.com`.
+```shell-session
+docker compose exec cli wp user create richard richard@example.com --role=subscriber --user_pass=password
+```
 
 ### Explore The Users In The Database
 
-Browse the database in any database IDE that can connect to MariaDB. [DBeaver](https://dbeaver.io/download) is a free, cross-platform IDE you can use.
+Browse the database in any database IDE that can connect to MySql. [DBeaver](https://dbeaver.io/download) is a free, cross-platform IDE you can use.
 
-Create a new MariaDB connection to `localhost`, port `3306`, database `wp`, username `wp`, with no password needed. Open the connection and expand the database tables.
+TODO
+Create a new MariaDB connection to `localhost`, port `3306`, database `wpDb`, username `admin`, and password `password`. Open the connection and expand the database tables.
 
 WordPress has two tables related to users: `wp_users` and `wp_usermeta`.
 
