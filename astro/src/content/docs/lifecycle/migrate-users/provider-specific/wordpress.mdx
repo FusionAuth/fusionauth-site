@@ -65,22 +65,26 @@ In this section, you create a sample WordPress database in Docker, understand wh
 First, clone or download the code from the WordPress Quickstart guide repository and change into that directory.
 
 ```shell-session
-git clone https://github.com/FusionAuth/fusionauth-quickstart-wordpress-web.git wordpress && cd wordpress
+git clone https://github.com/FusionAuth/fusionauth-import-scripts.git && cd fusionauth-import-scripts/wordpress
 ```
 
 All shell commands in this guide can be entered in a terminal in this directory. On Windows, you need to replace forward slashes with backslashes in paths.
 
 ### Start WordPress and FusionAuth
 
-Run the commands below. The first command starts FusionAuth, WordPress, and their databases. The second command uses the WordPress CLI to configure the instance with basic details.
+Run the command below to start FusionAuth, WordPress, and their databases.
 
 ```shell-session
-docker compose up
+cd docker && docker compose up
+```
 
+After everything has started, run the command below in another terminal to use the WordPress CLI to configure the instance with basic details.
+
+```shell-session
 docker compose exec cli wp core install --url="http://localhost:3000" --title="WP" --admin_user="admin" --admin_password="password" --admin_email="admin@example.com" --skip-email
 ```
 
-Browse to http://localhost:3000/wp-login.php. Log in with username `admin` and password `password`.
+Test that you can log in by browsing to http://localhost:3000/wp-login.php and using username `admin` and password `password`.
 
 ### Add A New User
 
@@ -94,8 +98,8 @@ docker compose exec cli wp user create richard richard@example.com --role=subscr
 
 Browse the database in any database IDE that can connect to MySql. [DBeaver](https://dbeaver.io/download) is a free, cross-platform IDE you can use.
 
-TODO
-Create a new MariaDB connection to `localhost`, port `3306`, database `wpDb`, username `admin`, and password `password`. Open the connection and expand the database tables.
+
+Create a new MariaDB connection to `localhost`, port `3306`, database `mysite`, username `admin`, and password `password`. Open the connection and expand the database tables.
 
 WordPress has two tables related to users: `wp_users` and `wp_usermeta`.
 
@@ -104,10 +108,10 @@ WordPress has two tables related to users: `wp_users` and `wp_usermeta`.
 In `wp_users`, you will have data similar to the example below. This table holds identifiers and a password hash for each user.
 
 ```
-ID |user_login|user_pass                         |user_nicename|user_email            |user_url        |user_registered         |user_activation_key                           |user_status|display_name|
----|----------|----------------------------------|-------------|----------------------|----------------|------------------------|----------------------------------------------|-----------|------------
- 1 |user      |$P$BVrdsW/NUuXDi0Od0uUdk2SnJHHmQ01|user         |user@example.com|     http://127.0.0.1 |2024-02-21 07:09:20.000 |                                              |          0|user    |
- 2 |richard   |$P$B/kCzTMDV7ccClaRShJPz8suWQdKc5/|richard      |richard@example.com   |                |2024-02-21 10:52:53.000 |1708512773:\$P$BYELgLl.oz9lv.YRNp7ppBA1GxzOEY0|          0|a       |
+ID |user_login|user_pass                                                      |user_nicename|user_email            |user_url              |user_registered         |user_activation_key                           |user_status|display_name|
+---|----------|---------------------------------------------------------------|-------------|----------------------|----------------------|------------------------|----------------------------------------------|-----------|------------
+ 1 |user      |$wp$2y$10$hPWFrMm.RS/TWNWIUTNiverdVq7CC7m9MPPlIgRKAxcMKybhqwwxi|user         |user@example.com      |http://localhost:3000 |2024-02-21 07:09:20.000 |                                              |          0|user        |
+ 2 |richard   |$wp$2y$10$nKbAOijm3riXl5blBnA9a.7jo8bWbxYYzLo2CKzkGECz6kpj0qQ8m|richard      |richard@example.com   |                      |2024-02-21 10:52:53.000 |                                              |          0|richard     |
 ```
 
 Unfortunately, neither the [WordPress Codex](https://codex.wordpress.org/Database_Description) nor the [WordPress Developer Handbook](https://developer.wordpress.org) gives definitions of the database fields and their meanings. To be certain of their purpose, you would need to read the WordPress source code, but the column definitions below seem obvious enough to trust.
@@ -195,33 +199,21 @@ Here are some of the `meta_key` types you might find:
 
 ### Export The Users In SQL
 
-FusionAuth provides export and import scripts under a permissive open-source license. To get the scripts, clone the Git repository.
+FusionAuth provides export and import scripts under a permissive open-source license. The `wordpress/src` directory of the repository you downloaded contains all the scripts you need for this tutorial, and `wordpress/exampleData` has sample output of the scripts.
+
+Run the command below in your terminal to install the required npm dependencies.
 
 ```shell-session
-git clone https://github.com/FusionAuth/fusionauth-import-scripts
+cd src && npm install
 ```
 
-The `wordpress` directory contains all the scripts you need for this tutorial, and `wordpress/exampleData` has the output of the scripts.
-
-Navigate to the `wordpress/src` directory.
-
-```shell-session
-cd fusionauth-import-scripts/wordpress/src
-```
-
-Install the required npm dependencies by running the following command.
-
-```shell-session
-npm install
-```
-
-Run the SQL script `1_exportWordpressUsers.sql` in the `fusionauth-import-scripts/wordpress/src` directory against your WordPress database to export all the user data as JSON. View the output as text in DBeaver and save the `json_result` column to a file called `users.txt`.
+Run the SQL script `1_exportWordpressUsers.sql` in the `src` directory against your WordPress database to export all the user data as JSON. View the output as text in DBeaver and save the `json_result` column to a file called `users.txt`.
 
 <Aside type="note">
   If you have the `mysql` CLI installed, you can use a command similar to the one below to export user data from the database to the `users.txt` file. If you use the command to export the data, you will need to remove the column name `json_result` from the first line and any blank lines in the resulting `users.txt` file.
 
   ```shell-session
-  mysql -h 127.0.0.1 -P 3306 -u wp wp --raw < 1_exportWordpressUsers.sql > users.txt
+  mysql -h 127.0.0.1 -P 3306 -u admin -ppassword mysite --raw < 1_exportWordpressUsers.sql > users.txt
   ```
 </Aside>
 
@@ -229,13 +221,13 @@ The script exports the `wp_users` table as JSON with all **wp_usermeta** fields 
 
 Your `users.txt` file should now have user data similar to the one in `fusionauth-import-scripts/exampleData/1_wordpressExport/users.txt`. Each row is JSON, but the file as a whole is not JSON. Each row must end with a comma and the file contents must be wrapped in brackets.
 
-Copy your `users.txt` file into `fusionauth-import-scripts/wordpress/src` and run the code below.
+Copy your `users.txt` file into `src` and run the code below.
 
 ```shell-session
 node 2_convertTextToJson.mjs
 ```
 
-Your output should be valid JSON and look like the file `fusionauth-import-scripts/exampleData/1_wordpressExport/users.json`.
+Your output should be valid JSON and look like the file `exampleData/1_wordpressExport/users.json`.
 
 ## Import Users
 
@@ -243,13 +235,15 @@ Now that the user details have been extracted from WordPress, you need to add a 
 
 ### Use A WordPress Password Hash Plugin For FusionAuth
 
-The WordPress Phpass hashing algorithm is not [natively supported by FusionAuth](/docs/reference/password-hashes). However, FusionAuth allows [custom plugins](/docs/extend/code/password-hashes/custom-password-hashing). There is a WordPress Phpass plugin accompanying this article [in this GitHub repository](https://github.com/FusionAuth/fusionauth-contrib/tree/main/Password%20Hashing%20Plugins).
+The old WordPress Phpass hashing algorithm is not [natively supported by FusionAuth](/docs/reference/password-hashes). This algorithm was used in WordPress versions earlier than 6.8. Newer WordPress versions, like the WordPress example in this guide, use a modified version of the bcrypt algorithm, which also isn't supported natively by FusionAuth.
+
+ However, FusionAuth allows [custom plugins](/docs/extend/code/password-hashes/custom-password-hashing). There is a WordPress Phpass plugin and a bcrypt plugin accompanying this article [in this GitHub repository](https://github.com/FusionAuth/fusionauth-contrib/tree/main/Password%20Hashing%20Plugins).
 
 <Aside type="note">
 The linked repository has multiple plugin projects. You need to build and install only the Password Hashing Plugins project.
 </Aside>
 
-Download and unzip the repository, or use Git in a terminal with the command below.
+Download and unzip the plugins repository, or use Git in a terminal with the command below.
 
 ```shell-session
 git clone https://github.com/fusionauth/fusionauth-contrib.git
@@ -272,8 +266,9 @@ If you make another hash plugin, you will need to make your own test and add you
 <Aside type="note">
 The WordPress Phpass library uses specific prefixes in password hashes to indicate the algorithm and cost parameters.
 
+- **$wp$2y$10$:** This prefix indicates WordPress 6.8+ bcrypt. The hash stores a bcrypt result where the input is a Base64-encoded HMAC-SHA384 prehash of the password (key `wp-sha384`), not the plaintext password. The $2y$ indicates bcrypt, and the number following it is the bcrypt cost. The Java plugin discussed above supports both this format and legacy phpass.
 - **No prefix:** Very old WordPress installations might use MD5 hashes. These hashes are 32 characters long and consist of hexadecimal characters.
-- **$P$ or $P$B:** This prefix indicates phpass library. The $P$ indicates phpass, and the character following this prefix represents the cost parameter of the hash. The actual algorithm is a modified MD5 with multiple iterations to increase security. This is the algorithm the Java plugin discussed above uses and is the default in WordPress in 2024.
+- **$P$ or $P$B:** This prefix indicates phpass library. The $P$ indicates phpass, and the character following this prefix represents the cost parameter of the hash. The actual algorithm is a modified MD5 with multiple iterations to increase security.
 - **$1$:** This prefix indicates an MD5-based crypt hash processed with a Unix `crypt()` function.
 - **$2a$, $2x$, $2y$:** These prefixes are associated with bcrypt.
 - **$5$ and $6$:** These prefixes indicate SHA-256 and SHA-512 hashing respectively.
@@ -414,3 +409,6 @@ WordPress Phpass uses a relatively old and weak hashing algorithm, though not te
 ## Additional Support
 
 <AdditionalSupport />
+
+$wp$2y$10$nKbAOijm3riXl5blBnA9a.7jo8bWbxYYzLo2CKzkGECz6kpj0qQ8m
+$P$B/kCzTMDV7ccClaRShJPz8suWQdKc5/
