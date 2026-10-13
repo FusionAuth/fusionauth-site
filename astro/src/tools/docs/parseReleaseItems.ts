@@ -17,10 +17,12 @@ export function categoryLabel(id: string): string {
 export const FALLBACK_DESCRIPTION = (version: string) =>
   `Release ${version} includes bug fixes and performance updates.`;
 
-const SITE_URL = ((import.meta.env.SITE_URL as string | undefined) ?? 'https://fusionauth.io').replace(/\/$/, '');
-
 export const releaseUrl = (version: string) =>
-  `${SITE_URL}/docs/release-notes#version-${version.replace(/\./g, '-')}`;
+  new URL(`/docs/release-notes#version-${version.replace(/\./g, '-')}`, import.meta.env.SITE).href;
+
+// feeds get read off-site, so make root-relative md links absolute
+const absolutizeLinks = (body: string) =>
+  body.replace(/\]\((\/[^)\s]*)/g, (_, path) => `](${new URL(path, import.meta.env.SITE).href}`);
 
 export function parseReleaseItems(body: string): ReleaseItem[] {
   const items: ReleaseItem[] = [];
@@ -29,7 +31,7 @@ export function parseReleaseItems(body: string): ReleaseItem[] {
   let m: RegExpExecArray | null;
   while ((m = re.exec(body)) !== null) {
     const propsStr = m[1];
-    const rawBody = m[2].trim();
+    const rawBody = absolutizeLinks(m[2].trim());
     const props: Record<string, string> = {};
     const propRe = /(\w+)=(?:"([^"]*)"|'([^']*)')/g;
     let pm: RegExpExecArray | null;
