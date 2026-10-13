@@ -81,7 +81,7 @@ cd docker && docker compose up
 After everything has started, run the command below in another terminal to use the WordPress CLI to configure the instance with basic details.
 
 ```shell-session
-docker compose exec cli wp core install --url="http://localhost:3000" --title="WP" --admin_user="admin" --admin_password="password" --admin_email="admin@example.com" --skip-email
+docker compose exec cli wp core install --url="http://localhost:3000" --title="WP" --admin_user="admin" --admin_password="password" --admin_email="admin@example.org" --skip-email
 ```
 
 Test that you can log in by browsing to http://localhost:3000/wp-login.php and using username `admin` and password `password`.
@@ -91,7 +91,7 @@ Test that you can log in by browsing to http://localhost:3000/wp-login.php and u
 Run the command below to create an example user to migrate.
 
 ```shell-session
-docker compose exec cli wp user create richard richard@example.com --role=subscriber --user_pass=password
+docker compose exec cli wp user create richard richard@example.org --role=subscriber --user_pass=password
 ```
 
 ### Explore The Users In The Database
@@ -110,8 +110,8 @@ In `wp_users`, you will have data similar to the example below. This table holds
 ```
 ID |user_login|user_pass                                                      |user_nicename|user_email            |user_url              |user_registered         |user_activation_key                           |user_status|display_name|
 ---|----------|---------------------------------------------------------------|-------------|----------------------|----------------------|------------------------|----------------------------------------------|-----------|------------
- 1 |user      |$wp$2y$10$hPWFrMm.RS/TWNWIUTNiverdVq7CC7m9MPPlIgRKAxcMKybhqwwxi|user         |user@example.com      |http://localhost:3000 |2024-02-21 07:09:20.000 |                                              |          0|user        |
- 2 |richard   |$wp$2y$10$nKbAOijm3riXl5blBnA9a.7jo8bWbxYYzLo2CKzkGECz6kpj0qQ8m|richard      |richard@example.com   |                      |2024-02-21 10:52:53.000 |                                              |          0|richard     |
+ 1 |user      |$wp$2y$10$hPWFrMm.RS/TWNWIUTNiverdVq7CC7m9MPPlIgRKAxcMKybhqwwxi|user         |user@example.org      |http://localhost:3000 |2024-02-21 07:09:20.000 |                                              |          0|user        |
+ 2 |richard   |$wp$2y$10$nKbAOijm3riXl5blBnA9a.7jo8bWbxYYzLo2CKzkGECz6kpj0qQ8m|richard      |richard@example.org   |                      |2024-02-21 10:52:53.000 |                                              |          0|richard     |
 ```
 
 Unfortunately, neither the [WordPress Codex](https://codex.wordpress.org/Database_Description) nor the [WordPress Developer Handbook](https://developer.wordpress.org) gives definitions of the database fields and their meanings. To be certain of their purpose, you would need to read the WordPress source code, but the column definitions below seem obvious enough to trust.
@@ -305,7 +305,7 @@ If you are not already running FusionAuth or want to test this process on anothe
   cd wordpress/fusionAuthDockerFiles && \
   docker compose up
   ```
-- FusionAuth will now be running and browsable at `http://localhost:9011`. You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and `password`. The container is called **fa**.
+- FusionAuth is browsable at `http://localhost:9011`. You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and `password`. The container is called **fa**.
 - In the `fusionauth-contrib` terminal where you built the plugin, run the commands below to copy the JAR file into the FusionAuth container `plugins` directory.
   ```shell-session
   docker exec fa mkdir /usr/local/fusionauth/plugins && \
@@ -364,11 +364,11 @@ Finally, this script imports users individually. If this is too slow when runnin
 
 ### Verify The Import
 
-If the migration script ran successfully, you should be able to log in to the `WordpressTestImportApp` application with one of the imported users. In the [FusionAuth admin UI](http://localhost:9011/admin), navigate to <Breadcrumb>Applications -> WordpressTestImportApp</Breadcrumb>. Click <IconButton icon="view" /> next to the application and note the **OAuth IdP login URL**.
+If the migration script ran successfully, you should be able to log in to the `Example app` application with one of the imported users. In the [FusionAuth admin UI](http://localhost:9011/admin), navigate to <Breadcrumb>Applications -> Example app</Breadcrumb>. Click <IconButton icon="view" /> next to the application and note the **OAuth IdP login URL**.
 
 ![Application login URL.](/img/docs/lifecycle/migrate-users/provider-specific/wordpress/find-login-url.png)
 
-Copy this URL and open it in a new incognito browser window. (If you don't use an incognito window, the admin user session will interfere with the test.) You should see the login screen. Enter username `user@example.com` and password `bitnami`. Login should work.
+Copy this URL and open it in a new incognito browser window. (If you don't use an incognito window, the admin user session will interfere with the test.) You should see the login screen. Enter username `richard@example.org` and password `password`. Login should work.
 
 <Aside type="note">
   After a successful test login, the user will be redirected to a URL like `https://example.com/?code=FlZF97WIYLNxt4SGD_22qvpRh4fZ6kg_N89ZbBAy1E4&locale=fr&userState=Authenticated`. This occurs because you haven't set up a web application to handle the authorization code redirect yet.
@@ -377,7 +377,7 @@ Copy this URL and open it in a new incognito browser window. (If you don't use a
 </Aside>
 
 
-Next, log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and password `password`. Review the user entries to ensure the data was correctly imported.
+Back in the FusionAuth admin UI, review the user entries to ensure the data was correctly imported.
 
 ![List of imported users.](/img/docs/lifecycle/migrate-users/provider-specific/wordpress/list-users.png)
 
@@ -387,7 +387,7 @@ You can manage a user by clicking on the <Breadcrumb>Manage</Breadcrumb> button 
 
 If you have errors logging in, you can use the FusionAuth database directly to see if your users were imported, and check their hashes manually.
 
-You can use any PostgreSQL browser. DBeaver will work. The connection details are in `fusionauth-import-scripts/wordpress/fusionAuthDockerFiles/docker-compose.yml` and `.env`.
+You can use any PostgreSQL browser. DBeaver will work. The connection details are in `fusionauth-import-scripts/wordpress/docker/docker-compose.yml` and `.env`.
 
 In your database IDE, create a new PostgreSQL connection with the following details:
 
@@ -402,13 +402,8 @@ Log in to the database and browse to `Databases/fusionauth/Schemas/public/Tables
 
 ## What To Do Next
 
-WordPress Phpass uses a relatively old and weak hashing algorithm, though not terrible. You might want to rehash your users' passwords on their next login with a stronger algorithm. To enable this setting, follow these [instructions](/docs/extend/code/password-hashes/custom-password-hashing#rehashing-user-passwords).
-
 <WhatNext />
 
 ## Additional Support
 
 <AdditionalSupport />
-
-$wp$2y$10$nKbAOijm3riXl5blBnA9a.7jo8bWbxYYzLo2CKzkGECz6kpj0qQ8m
-$P$B/kCzTMDV7ccClaRShJPz8suWQdKc5/
