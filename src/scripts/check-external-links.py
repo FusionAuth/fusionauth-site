@@ -203,9 +203,11 @@ _DEFAULT_EXCLUDE_DEST = [
     r"app\.xkit\.co",               # spurious 500
     r"azure\.microsoft\.com",       # returns 503 from CI environments; works in browsers
     r"ftc\.gov",                    # returns 404 to crawlers; works in browsers
+    r"exploit-db.com",              # spurious 502
+    r"^https?://([^/]+\.)?x\.com",  # returns 503 from CI environments; works in browsers
     r"news\.ycombinator\.com",      # returns 404/419 to crawlers; works in browsers
     r"thatconference\.com",         # returns 404 to crawlers; works in browsers
-    r"^https?://([^/]+\.)?that\.us(/|$)",  # THAT Conference site; returns 404 to crawlers
+    r"^https?://([^/]+\.)?that\.us", # THAT Conference site; returns 404 to crawlers
     r"help\.openai\.com",           # returns 403 to crawlers; works in browsers
     # social share/submit endpoints; need a logged-in browser, so crawlers get 4xx
     r"^https?://(www\.)?(reddit\.com/submit|(twitter|x)\.com/intent/|linkedin\.com/sharing/)",
