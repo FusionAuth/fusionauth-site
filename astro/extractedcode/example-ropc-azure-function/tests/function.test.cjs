@@ -76,7 +76,7 @@ test('a valid Azure AD B2C login returns the user in FusionAuth connector format
     username: 'richard@exampletenant.onmicrosoft.com',
     email: 'richard@example.com',
     verified: true,
-    insertInstant: Date.parse('2024-01-02T03:04:05Z') / 1000,
+    insertInstant: Date.parse('2024-01-02T03:04:05Z'),
     data: { azure: { identities: AZURE_USER.identities } },
   });
 });
