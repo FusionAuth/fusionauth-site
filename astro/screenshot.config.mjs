@@ -11,6 +11,8 @@ try {
   });
 } catch {}
 
+let adminLocale;
+
 export default {
   baseUrl: 'http://localhost:9011',
   outputDir: 'public/img/docs/screenshots',
@@ -56,6 +58,7 @@ export default {
     // press Enter to submit -- more reliable than clicking a specific button selector
     await page.keyboard.press('Enter');
     await page.waitForURL(/\/admin/, { timeout: 30000 });
+    adminLocale = (await context.cookies('http://localhost:9011')).find(c => c.name === 'fusionauth.locale')?.value;
     await page.close();
 
     // Configure tenant and set up screenshot infrastructure.
@@ -77,7 +80,7 @@ export default {
         });
         // 409 = already activated, both are fine
         if (!licResp.ok && licResp.status !== 409) {
-          console.error('[screenshot] beforeAll: license activation failed:', licResp.status, await licResp.text());
+          throw new Error(`${licResp.status} ${await licResp.text()}`);
         } else {
           // poll until licensed: true (reactor activates asynchronously)
           const licDeadline = Date.now() + 15_000;
@@ -108,7 +111,7 @@ export default {
           });
         }
       } catch (e) {
-        console.error('[screenshot] beforeAll: license setup failed:', e.message);
+        throw new Error(`beforeAll: license setup failed: ${e.message}`, { cause: e });
       }
     }
 
@@ -130,7 +133,7 @@ export default {
         }
       }
     } catch (e) {
-      console.error('[screenshot] beforeAll: selfServiceFormId patch failed:', e.message);
+      throw new Error(`beforeAll: selfServiceFormId patch failed: ${e.message}`, { cause: e });
     }
 
     // ensure Screenshots Theme exists (used by theme-localization-messages screenshot)
@@ -146,7 +149,7 @@ export default {
         console.log('[screenshot] beforeAll: created Screenshots Theme');
       }
     } catch (e) {
-      console.error('[screenshot] beforeAll: Screenshots Theme creation failed:', e.message);
+      throw new Error(`beforeAll: Screenshots Theme creation failed: ${e.message}`, { cause: e });
     }
 
     // always PUT the canonical email template content (matches the .ftl files referenced in the docs)
@@ -160,7 +163,7 @@ export default {
         body: JSON.stringify({ emailTemplate: { name: 'Pied Piper Passwordless Login', defaultSubject: 'Complete your Pied Piper login', defaultHtmlTemplate: htmlTpl, defaultTextTemplate: txtTpl } }),
       });
     } catch (e) {
-      console.error('[screenshot] beforeAll: email template update failed:', e.message);
+      throw new Error(`beforeAll: email template update failed: ${e.message}`, { cause: e });
     }
 
     // always PUT the canonical message template content
@@ -173,7 +176,7 @@ export default {
         body: JSON.stringify({ messageTemplate: { name: 'Pied Piper Passwordless SMS', type: 'SMS', defaultTemplate: smsTpl } }),
       });
     } catch (e) {
-      console.error('[screenshot] beforeAll: message template update failed:', e.message);
+      throw new Error(`beforeAll: message template update failed: ${e.message}`, { cause: e });
     }
 
     // create Generic HTTP messenger for phone OTP flow (points to sms-mock service in docker-compose)
@@ -188,7 +191,7 @@ export default {
         console.log('[screenshot] beforeAll: created SMS mock messenger');
       }
     } catch (e) {
-      console.error('[screenshot] beforeAll: messenger setup failed:', e.message);
+      throw new Error(`beforeAll: messenger setup failed: ${e.message}`, { cause: e });
     }
 
     // configure tenant email: set passwordless email template (needed for the login button to render)
@@ -198,9 +201,9 @@ export default {
         headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenant: { emailConfiguration: { passwordlessEmailTemplateId: '00000000-0000-0000-0000-400000000001' } } }),
       });
-      if (!r.ok) console.error('[screenshot] beforeAll: email template PATCH failed:', r.status, await r.text());
+      if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
     } catch (e) {
-      console.error('[screenshot] beforeAll: email template PATCH failed:', e.message);
+      throw new Error(`beforeAll: email template PATCH failed: ${e.message}`, { cause: e });
     }
 
     // configure tenant phone: messenger + SMS template (separate PATCH so email config isn't blocked by phone errors)
@@ -210,9 +213,9 @@ export default {
         headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenant: { phoneConfiguration: { messengerId: messengerId, passwordlessTemplateId: '00000000-0000-0000-0000-400000000002' } } }),
       });
-      if (!r.ok) console.error('[screenshot] beforeAll: phone PATCH failed:', r.status, await r.text());
+      if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
     } catch (e) {
-      console.error('[screenshot] beforeAll: phone PATCH failed:', e.message);
+      throw new Error(`beforeAll: phone PATCH failed: ${e.message}`, { cause: e });
     }
 
   },
@@ -222,6 +225,16 @@ export default {
     const url = ctx?.url ?? page.url();
     const { pathname, hash } = new URL(url);
     const fragment = hash.slice(1);
+
+    // opening an /account page resets this to en
+    if (adminLocale && pathname.startsWith('/admin')) {
+      const context = page.context();
+      const locale = (await context.cookies('http://localhost:9011')).find(c => c.name === 'fusionauth.locale');
+      if (locale?.value !== adminLocale) {
+        await context.addCookies([{ name: 'fusionauth.locale', value: adminLocale, url: 'http://localhost:9011' }]);
+        await page.reload({ waitUntil: 'networkidle' });
+      }
+    }
 
     const oauthAppId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
     const oauthTenantId = '30663132-6464-6665-3032-326466613934';
@@ -244,7 +257,7 @@ export default {
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(500);
       } catch (e) {
-        console.error('[screenshot] passkeys-bootstrap-login: click failed:', e.message);
+        throw new Error(`passkeys-bootstrap-login: click failed: ${e.message}`, { cause: e });
       }
     }
 
@@ -259,7 +272,7 @@ export default {
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(500);
       } catch (e) {
-        console.error('[screenshot] passkeys-self-service: login/navigate failed:', e.message);
+        throw new Error(`passkeys-self-service: login/navigate failed: ${e.message}`, { cause: e });
       }
     }
 
@@ -293,7 +306,7 @@ export default {
           await page.waitForTimeout(4000);
         }
       } catch (e) {
-        console.error('[screenshot] passkeys-reauth-enable: setup failed:', e.message);
+        throw new Error(`passkeys-reauth-enable: setup failed: ${e.message}`, { cause: e });
       }
     }
 
@@ -313,7 +326,7 @@ export default {
           );
         });
       } catch (e) {
-        console.error('[screenshot] manage page wait failed:', e.message);
+        throw new Error(`manage page wait failed: ${e.message}`, { cause: e });
       }
     }
 
@@ -347,7 +360,7 @@ export default {
           }
         });
       } catch (e) {
-        console.error('[screenshot] registration setup failed:', e.message);
+        throw new Error(`registration setup failed: ${e.message}`, { cause: e });
       }
     }
 
@@ -359,7 +372,7 @@ export default {
         await page.locator('button').filter({ hasText: appTab }).first().click({ timeout: 3000 });
         await page.waitForTimeout(1000);
       } catch (e) {
-        console.error('[screenshot] application/edit tab failed:', e.message);
+        throw new Error(`application/edit tab failed: ${e.message}`, { cause: e });
       }
     }
 
@@ -379,7 +392,7 @@ export default {
           if (!result.clicked) throw new Error(`tab "${tabLabel}" not found; available: ${JSON.stringify(result.available)}`);
           await page.waitForTimeout(1000);
         } catch (e) {
-          console.error(`[screenshot] tenant/edit ${tabLabel} tab failed:`, e.message);
+          throw new Error(`tenant/edit ${tabLabel} tab failed: ${e.message}`, { cause: e });
         }
       }
 
@@ -394,7 +407,7 @@ export default {
           row.scrollIntoView({ block: 'center', behavior: 'instant' });
           return true;
         });
-        if (!tagged) console.error('[screenshot] send test email control not found');
+        if (!tagged) throw new Error('send test email control not found');
         await page.waitForTimeout(300);
       }
 
@@ -451,7 +464,7 @@ export default {
           await page.locator('button, [role="button"], summary, a').filter({ hasText: /Warning/ }).first().click({ timeout: 5000 });
           await page.waitForTimeout(500);
         } catch (e) {
-          console.error('[screenshot] Warning accordion expand failed:', e.message);
+          throw new Error(`Warning accordion expand failed: ${e.message}`, { cause: e });
         }
       }
     }
@@ -473,7 +486,7 @@ export default {
           if (btn) btn.setAttribute('data-hl', 'add-localization');
         });
       } catch (e) {
-        console.error('[screenshot] email/template/edit localization tab failed:', e.message);
+        throw new Error(`email/template/edit localization tab failed: ${e.message}`, { cause: e });
       }
     }
 
@@ -483,7 +496,7 @@ export default {
         await page.locator('a, button').filter({ hasText: /magic link/i }).first().click({ timeout: 5000 });
         await page.waitForTimeout(1000);
       } catch (e) {
-        console.error('[screenshot] oauth magic link click failed:', e.message);
+        throw new Error(`oauth magic link click failed: ${e.message}`, { cause: e });
       }
     }
 
@@ -500,7 +513,7 @@ export default {
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(500);
       } catch (e) {
-        console.error('[screenshot] phone otp flow failed:', e.message);
+        throw new Error(`phone otp flow failed: ${e.message}`, { cause: e });
       }
     }
 
@@ -546,7 +559,7 @@ export default {
           });
         });
       } catch (e) {
-        console.error('[screenshot] theme/edit setup failed:', e.message);
+        throw new Error(`theme/edit setup failed: ${e.message}`, { cause: e });
       }
     } else {
       // expand the viewport to fit the full inner-scroll content height;
@@ -572,5 +585,17 @@ export default {
       document.querySelectorAll('.alert, [role=alert], .notification').forEach(el => el.remove());
       document.activeElement?.blur();
     });
+
+    // pin run-time dates; a day over 12 shows the dd/mm order
+    if (new URL(page.url()).pathname.startsWith('/admin')) {
+      await page.evaluate(() => {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          node.textContent = node.textContent
+            .replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, '24/09/2026')
+            .replace(/\b\d{2}:\d{2} (AM|PM)\b/g, '09:00 AM');
+        }
+      });
+    }
   },
 };
