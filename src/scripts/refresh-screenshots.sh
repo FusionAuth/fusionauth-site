@@ -45,7 +45,12 @@ fi
 
 BASELINE=$(mktemp -d /tmp/screenshots-baseline.XXXXXX)
 trap 'rm -rf "$BASELINE"' EXIT
-cp "$SHOTS_DIR"/*.png "$BASELINE"/ 2>/dev/null
+if [ "$COMPARE_ONLY" -eq 1 ]; then
+	# the working tree already has the new images
+	git -C "$REPO_ROOT" archive HEAD astro/public/img/docs/screenshots | tar -x -C "$BASELINE" --strip-components=5
+else
+	cp "$SHOTS_DIR"/*.png "$BASELINE"/ 2>/dev/null
+fi
 echo "Baseline: $(ls -1 "$BASELINE" | wc -l | tr -d ' ') committed screenshot(s)"
 
 if [ "$COMPARE_ONLY" -eq 0 ]; then
@@ -53,7 +58,7 @@ if [ "$COMPARE_ONLY" -eq 0 ]; then
 	# Removing first means a screenshot whose declaration is gone does not linger,
 	# and the comparison reports it as removed.
 	rm -f "$SHOTS_DIR"/*.png
-	( cd "$REPO_ROOT/astro" && npm run screenshots ) || {
+	( cd "$REPO_ROOT/astro" && npm run screenshots -- --strict ) || {
 		echo "ERROR: capture failed; restoring the committed screenshots" >&2
 		cp "$BASELINE"/*.png "$SHOTS_DIR"/ 2>/dev/null
 		exit 1
