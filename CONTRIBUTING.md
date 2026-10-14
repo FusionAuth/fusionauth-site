@@ -325,6 +325,14 @@ cd astro/screenshots
 npm install
 ```
 
+The passkey screenshots need a FusionAuth license. Add your key to `astro/.env`, which is gitignored:
+
+```shell-session
+FUSIONAUTH_LICENSE_KEY=<your license key>
+```
+
+Without a license, the passkey screenshots fail or come out without their licensed settings, so don't commit them.
+
 #### Generate Screenshots
 
 From the `astro/` directory:
