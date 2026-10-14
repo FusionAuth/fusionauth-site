@@ -325,6 +325,14 @@ cd astro/screenshots
 npm install
 ```
 
+The passkey screenshots need a FusionAuth license. Add your key to `astro/.env`, which is gitignored:
+
+```shell-session
+FUSIONAUTH_LICENSE_KEY=<your license key>
+```
+
+Without a license, the passkey screenshots fail or come out without their licensed settings, so don't commit them.
+
 #### Generate Screenshots
 
 From the `astro/` directory:
@@ -371,6 +379,8 @@ Available `<Screenshot>` props:
 | `width` | 1100 | Viewport width in px |
 | `height` | 800 | Viewport height in px |
 | `fullPage` | false | Capture full scrollable height |
+| `crop` | — | CSS selector for the part of the page to crop to, such as `main header:has(h1), #tenant_name` to keep the page title and buttons; covers every match and any highlights |
+| `cropPadding` | 16 | Space in px kept around the cropped area |
 
 ### Moving Pictures
 
