@@ -240,8 +240,7 @@ export default {
     const oauthTenantId = '30663132-6464-6665-3032-326466613934';
     const oauthLoginUrl = `http://localhost:9011/oauth2/authorize?client_id=${oauthAppId}&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid`;
 
-    // migration guide test tenant: only the tenant list after saving should show it, so each
-    // screenshot sets the state it needs, and every other screenshot removes it
+    // the migration test tenant should only appear in the tenant list screenshot
     const apiKey = 'screenshot-dev-key-not-for-production';
     // matches the example Id in the guide text
     const importTenantId = '25c9d123-8a79-4edd-9f76-8dd9c806b0f3';
@@ -270,8 +269,7 @@ export default {
       }, importTenantId);
     } else if (importTenantExists) {
       await importTenantApi('DELETE');
-      // the admin UI caches the tenant count for ~2s; while it still sees two tenants,
-      // forms such as application edit show an extra Tenant field
+      // the admin UI caches the tenant count; two tenants adds a Tenant field to some forms
       await page.waitForTimeout(5000);
       await page.reload({ waitUntil: 'networkidle' });
     }
