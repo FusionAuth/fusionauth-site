@@ -46,9 +46,9 @@ Before you start, the FusionAuth Tenant your client logs in to needs a [CIMD dom
    }
    ```
 
-1. Serve the document at the URL. FusionAuth needs a `2xx` response of at most 5KB within 5 seconds, and it doesn't follow redirects. FusionAuth doesn't check the content type, but `application/json` is a good choice.
+1. Serve the document at the URL. FusionAuth needs a `2xx` response of at most 5KB. It waits up to 2 seconds to connect and 5 seconds for the response, and it doesn't follow redirects. FusionAuth doesn't check the content type, but `application/json` is a good choice.
 
-1. Set a `Cache-Control: max-age` header to control how long FusionAuth caches the document. FusionAuth uses the smaller of your `max-age` and the domain's **Maximum cache duration**, and never caches for less than 15 minutes. FusionAuth ignores the `Expires` header.
+1. Set a `Cache-Control: max-age` header to control how long FusionAuth caches the document. FusionAuth uses the smaller of your `max-age` and the domain's **Maximum cache duration**, and never caches for less than 15 minutes. Without a `max-age`, FusionAuth caches the document for 15 minutes. FusionAuth ignores the `Expires` header.
 
 1. Check the response:
 
@@ -63,12 +63,10 @@ Before you start, the FusionAuth Tenant your client logs in to needs a [CIMD dom
 
 Start the Authorization Code grant from your client with the document URL as the `client_id`:
 
-* Use the Tenant's endpoints under `https://<host>/<tenantId>`. You can find them in the Tenant's `https://<host>/<tenantId>/.well-known/openid-configuration` document, which reports `"client_id_metadata_document_supported": true` once CIMD is set up.
+* Use the Tenant's endpoints, which end with the Tenant Id, such as `https://<host>/oauth2/authorize/<tenantId>` and `https://<host>/oauth2/token/<tenantId>`. You can find them in the Tenant's `https://<host>/.well-known/openid-configuration/<tenantId>` document, which reports `"client_id_metadata_document_supported": true` once CIMD is set up.
 * Send a PKCE `code_challenge` with the `S256` method.
-* Send exactly one `resource` parameter. For an MCP client, this is the URL of the MCP server.
+* Send exactly one `resource` parameter on both the authorization request and the token request. For an MCP client, this is the URL of the MCP server. The value must be one of the CIMD domain's **Authorized resource URIs**. A refresh token request can omit `resource`, and FusionAuth uses the one from the original grant.
 * Use a `redirect_uri` that appears in your document's `redirect_uris` exactly.
-
-{/* TODO: double-check how a CIMD request identifies the Tenant. assuming tenant-scoped endpoints under https://<host>/<tenantId>, matching the ChatGPT E2E run */}
 
 ## Update The Document
 
@@ -78,12 +76,11 @@ If that fetch fails, FusionAuth keeps using the old copy for the domain's **Grac
 
 ## Troubleshooting
 
-If FusionAuth rejects your client, ask the FusionAuth administrator to enable **Enable debug logging** on the CIMD domain. FusionAuth then writes an Event Log entry explaining each rejected registration, under <Breadcrumb>System -> Event Log</Breadcrumb>.
-
-The most common causes are:
+FusionAuth doesn't write Event Log entries when it rejects a document, so check the document and the request against the requirements on this page. The most common causes of a rejected client are:
 
 * The `client_id` in the document doesn't exactly match the URL.
 * The URL redirects, for example from a path without a trailing slash to one with it.
 * The document's origin doesn't match a CIMD domain in the Tenant.
 * The `redirect_uri` on the request isn't listed in the document.
 * The request has no `resource` parameter, or more than one.
+* The `resource` isn't one of the CIMD domain's **Authorized resource URIs**.
