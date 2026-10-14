@@ -44,7 +44,7 @@ async function selectTab(page, label) {
 }
 
 // switched on (not saved) so the screenshot shows the settings each one reveals
-const tenantSwitches = {
+const switches = {
   'tenant-identities': ['tenant_emailConfiguration_verifyEmail', 'tenant_phoneConfiguration_verifyPhoneNumber'],
   'tenant-family-settings': ['tenant_familyConfiguration_enabled'],
   'tenant-mfa-email-settings': ['tenant_multiFactorConfiguration_email_enabled'],
@@ -55,6 +55,24 @@ const tenantSwitches = {
   'tenant-scim-settings': ['tenant_scimServerConfiguration_enabled'],
   'tenant-security-acl-captcha': ['tenant_captchaConfiguration_enabled'],
   'tenant-security-client-risk-rate-limit': ['tenant_clientRiskConfiguration_enabled'],
+  'application-jwt-enabled': ['application_jwtConfiguration_enabled'],
+  'application-jwt-refresh-token': ['application_jwtConfiguration_enabled'],
+  'application-registration-verify': ['application_verifyRegistration'],
+  'application-webauthn': ['application_webAuthnConfiguration_enabled'],
+  'application-registration-self-service-advanced': ['application_registrationConfiguration_type-advanced'],
+  'application-saml-enabled': ['application_samlv2Configuration_enabled'],
+  'application-saml-authentication-request': ['application_samlv2Configuration_enabled'],
+  'application-saml-authentication-response': ['application_samlv2Configuration_enabled'],
+  'application-saml-logout-request': ['application_samlv2Configuration_enabled'],
+  'application-saml-logout-response': ['application_samlv2Configuration_enabled'],
+  'application-saml-assertion-encryption': ['application_samlv2Configuration_enabled', 'application_samlv2Configuration_assertionEncryptionConfiguration_enabled'],
+};
+
+// chosen (not saved) before the switches above
+const selects = {
+  'application-registration-self-service': { selfRegistrationType: 'Create' },
+  'application-registration-self-service-basic': { selfRegistrationType: 'Complete' },
+  'application-registration-self-service-advanced': { selfRegistrationType: 'Complete' },
 };
 
 // pages too long to show in full keep the screenshot's height, scrolled to the named section if there is one
@@ -443,13 +461,35 @@ export default {
       if (!selected) throw new Error('example webhook checkbox not found');
     }
 
-    for (const id of tenantSwitches[ctx?.name] ?? []) {
+    for (const [id, value] of Object.entries(selects[ctx?.name] ?? {})) {
+      const selected = await page.evaluate(([i, v]) => {
+        const select = document.getElementById(i);
+        if (!select) return false;
+        select.value = v;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        return select.value === v;
+      }, [id, value]);
+      if (!selected) throw new Error(`select not set: ${id}=${value}`);
+    }
+
+    for (const id of switches[ctx?.name] ?? []) {
       const switched = await page.evaluate(i => {
         const input = document.getElementById(i);
         if (input && !input.checked) input.click();
         return !!input;
       }, id);
       if (!switched) throw new Error(`switch not found: ${id}`);
+    }
+
+    // FusionAuth creates the Tenant manager application with a new random id on each start
+    if (ctx?.name === 'application-list') {
+      const pinned = await page.evaluate(() => {
+        const row = [...document.querySelectorAll('tr')].find(tr => tr.querySelector('td')?.textContent.trim() === 'Tenant manager');
+        const cell = row?.querySelectorAll('td')[1];
+        if (cell) cell.textContent = '00000000-0000-0000-0000-700000000001';
+        return !!cell;
+      });
+      if (!pinned) throw new Error('Tenant manager row not found');
     }
 
     if (ctx?.name === 'tenant-connector-add-policy') {
@@ -512,12 +552,14 @@ export default {
       }
     }
 
-    // application edit: click Security or WebAuthn tab based on URL fragment
+    // application edit: click the tab named by the URL fragment, or Security
     if (pathname.includes('/admin/application/edit')) {
       await page.waitForTimeout(500);
       try {
         await tabsReady(page);
-        const appTab = fragment === 'webauthn' ? 'WebAuthn' : 'Security';
+        const appTab = !fragment ? 'Security'
+          : await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`)?.textContent.trim(), fragment);
+        if (!appTab) throw new Error(`no tab for #${fragment}`);
         await selectTab(page, appTab);
         await page.locator('button').filter({ hasText: appTab }).first().click({ timeout: 3000 });
         await page.waitForTimeout(1000);
