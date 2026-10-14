@@ -379,6 +379,8 @@ Available `<Screenshot>` props:
 | `width` | 1100 | Viewport width in px |
 | `height` | 800 | Viewport height in px |
 | `fullPage` | false | Capture full scrollable height |
+| `crop` | — | CSS selector for the part of the page to crop to, such as `main header:has(h1), #tenant_name` to keep the page title and buttons; covers every match and any highlights |
+| `cropPadding` | 16 | Space in px kept around the cropped area |
 
 ### Moving Pictures
 
