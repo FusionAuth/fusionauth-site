@@ -16,6 +16,17 @@ let adminLocale;
 // the tab bar is set up by a module script after the page loads
 const tabsReady = page => page.waitForFunction(() => customElements.get('el-tab-group') && customElements.get('el-tab-list'), null, { timeout: 10000 });
 
+// scroll the tab bar so it starts on a whole tab and still shows the selected one
+const alignTabBar = page => page.evaluate(() => {
+  const btn = document.querySelector('el-tab-list button[aria-selected="true"]');
+  const bar = btn?.closest('.tab-list-container');
+  if (!bar) return;
+  const x = el => el.getBoundingClientRect().left - bar.getBoundingClientRect().left + bar.scrollLeft;
+  const end = x(btn) + btn.offsetWidth;
+  bar.scrollLeft = end <= bar.clientWidth ? 0
+    : [...bar.querySelectorAll('el-tab-list button')].map(x).find(left => left >= end - bar.clientWidth);
+});
+
 // click until the tab's panel shows
 async function selectTab(page, label) {
   await tabsReady(page);
@@ -26,7 +37,7 @@ async function selectTab(page, label) {
       if (btn && !shown()) btn.click();
       return shown();
     }, label);
-    if (selected) return;
+    if (selected) return alignTabBar(page);
     await page.waitForTimeout(250);
   }
   throw new Error(`tab "${label}" was not selected`);
@@ -34,6 +45,7 @@ async function selectTab(page, label) {
 
 // switched on (not saved) so the screenshot shows the settings each one reveals
 const tenantSwitches = {
+  'tenant-identities': ['tenant_emailConfiguration_verifyEmail', 'tenant_phoneConfiguration_verifyPhoneNumber'],
   'tenant-family-settings': ['tenant_familyConfiguration_enabled'],
   'tenant-mfa-email-settings': ['tenant_multiFactorConfiguration_email_enabled'],
   'tenant-mfa-phone-settings': ['tenant_multiFactorConfiguration_sms_enabled', 'tenant_multiFactorConfiguration_voice_enabled'],
@@ -43,6 +55,36 @@ const tenantSwitches = {
   'tenant-scim-settings': ['tenant_scimServerConfiguration_enabled'],
   'tenant-security-acl-captcha': ['tenant_captchaConfiguration_enabled'],
   'tenant-security-client-risk-rate-limit': ['tenant_clientRiskConfiguration_enabled'],
+};
+
+// pages too long to show in full keep the screenshot's height, scrolled to the named section if there is one
+const fixedHeight = {
+  'tenant-identities': null,
+  'tenant-identities-template-settings': 'Template settings',
+  'tenant-webhooks-settings': null,
+  'tenant-security-acl-captcha': null,
+  'tenant-security-client-risk-rate-limit': 'Client risk configuration',
+  'tenant-advanced-external-identifier-durations': null,
+  'tenant-advanced-external-identifier-generation': 'External identifier generation',
+  'application-saml-enabled': null,
+};
+
+// full-width strips of the window around these parts of the page, so the sidebar stays beside them
+const bands = {
+  'tenant-connectors': "el-tab-list, [data-section='connector-settings']",
+  'tenant-mfa-policy-settings': "[data-section='policies']",
+  'tenant-mfa-authenticator-settings': "[data-section='authenticator-settings']",
+  'tenant-mfa-email-settings': "[data-section='email-settings']",
+  'tenant-mfa-phone-settings': "[data-section='phone-settings']",
+  'tenant-webauthn': "el-tab-list, [data-section='webauthn-settings'], [id^='tenant_webAuthnConfiguration_relyingParty'], #tenant_webAuthnConfiguration_debug-form-row",
+  'tenant-webauthn-bootstrap-settings': "[data-section='bootstrap-passkey-authentication']",
+  'tenant-webauthn-reauthentication-settings': "[data-section='passkey-re-authentication']",
+  'tenant-oauth': "el-tab-list, [data-section='advanced-sso-settings']",
+  'tenant-password-failed-authentication-settings': "el-tab-list, [data-section='failed-authentication-settings']",
+  'tenant-password-breach-detection-settings': "[data-section='breached-password-detection-settings']",
+  'tenant-password-settings': "[data-section='password-settings']",
+  'tenant-password-cryptographic-hash-settings': "[data-section='cryptographic-hash-settings']",
+  'tenant-security-blocked-domains': "[data-section='blocked-domains-settings']",
 };
 
 export default {
@@ -390,6 +432,12 @@ export default {
         if (!r.ok) throw new Error(`webhook POST failed: ${r.status} ${await r.text()}`);
         await page.reload({ waitUntil: 'networkidle' });
       }
+      const selected = await page.evaluate(() => {
+        const box = [...document.querySelectorAll('#webhooks input[type=checkbox]')].find(i => !i.id.startsWith('tenant_eventConfiguration'));
+        if (box && !box.checked) box.click();
+        return !!box;
+      });
+      if (!selected) throw new Error('example webhook checkbox not found');
     }
 
     for (const id of tenantSwitches[ctx?.name] ?? []) {
@@ -687,7 +735,7 @@ export default {
           return max;
         }, document.documentElement.scrollHeight);
       });
-      if (fullHeight > 800) {
+      if (fullHeight > 800 && !(ctx?.name in fixedHeight) && !(ctx?.name in bands)) {
         await page.setViewportSize({ width: 1100, height: Math.min(fullHeight, 2500) });
         await page.waitForTimeout(300);
       }
@@ -709,6 +757,35 @@ export default {
         }
       }
     });
+
+    // marks the strip for crop="#screenshot-band"
+    if (bands[ctx?.name]) {
+      const height = await page.evaluate(sel => {
+        const rects = [...document.querySelectorAll(sel)].filter(el => el.offsetParent).map(el => el.getBoundingClientRect());
+        if (!rects.length) return 0;
+        const top = Math.min(...rects.map(r => r.top)) + window.scrollY - 16;
+        const bottom = Math.max(...rects.map(r => r.bottom)) + window.scrollY + 16;
+        const band = document.createElement('div');
+        band.id = 'screenshot-band';
+        band.style.cssText = `position:absolute;left:0;top:${top}px;width:${document.documentElement.clientWidth}px;height:${bottom - top}px;opacity:0;pointer-events:none`;
+        document.body.append(band);
+        return bottom - top;
+      }, bands[ctx.name]);
+      if (!height) throw new Error(`band selector matched nothing: ${bands[ctx.name]}`);
+      // a window just taller than the strip keeps the sticky sidebar beside it
+      await page.setViewportSize({ width: 1100, height: Math.max(800, Math.ceil(height) + 160) });
+    }
+
+    if (fixedHeight[ctx?.name]) {
+      const scrolled = await page.evaluate(title => {
+        const legend = [...document.querySelectorAll('main legend')].find(l => l.offsetParent && l.textContent.trim().startsWith(title));
+        // leave room for the sticky top bar
+        if (legend) window.scrollTo(0, legend.getBoundingClientRect().top + window.scrollY - 88);
+        return !!legend;
+      }, fixedHeight[ctx.name]);
+      if (!scrolled) throw new Error(`section not found: ${fixedHeight[ctx.name]}`);
+      await page.waitForTimeout(300);
+    }
 
     // pin run-time dates; a day over 12 shows the dd/mm order
     if (new URL(page.url()).pathname.startsWith('/admin')) {
