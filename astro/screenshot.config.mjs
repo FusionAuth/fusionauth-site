@@ -104,6 +104,19 @@ const bands = {
   'tenant-password-settings': "[data-section='password-settings']",
   'tenant-password-cryptographic-hash-settings': "[data-section='cryptographic-hash-settings']",
   'tenant-security-blocked-domains': "[data-section='blocked-domains-settings']",
+  'application-cleanspeak': "el-tab-list, #clean-speak-integration",
+  'application-jwt-enabled': "el-tab-list, #jwt > fieldset:first-child > legend, #application_jwtConfiguration_enabled-form-row, #jwt-settings-body > fieldset:first-child",
+  'application-jwt-refresh-token': "[data-section='refresh-token-settings']",
+  'application-registration-verify': "el-tab-list, [data-section='registration-verification-settings']",
+  'application-registration-self-service': "[data-section='self-service-registration'], #registration-configuration",
+  'application-registration-self-service-basic': "[data-section='self-service-registration'], #registration-configuration",
+  'application-registration-self-service-advanced': "[data-section='self-service-registration'], #registration-configuration",
+  'application-registration-form-settings': "[data-section='form-settings']",
+  'application-saml-authentication-request': "[data-section='authentication-request']",
+  'application-saml-authentication-response': "[data-section='authentication-response']",
+  'application-saml-logout-request': "[data-section='logout-request'], #samlv2-settings-body > .switch-group",
+  'application-saml-logout-response': "[data-section='logout-response']",
+  'application-saml-assertion-encryption': "[data-section='assertion-encryption']",
 };
 
 export default {
