@@ -1,5 +1,5 @@
+import { createHmac, generateKeyPairSync } from 'crypto';
 import { readFileSync } from 'fs';
-import { createHmac } from 'crypto';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -16,6 +16,13 @@ let adminLocale;
 // the OAuth single sign-on cookie, set aside while a screenshot needs a signed-out hosted page
 let savedSso;
 const signedOut = ['lambda-registration-blank', 'lambda-registration-invalid', 'five-minute-login'];
+
+const dineshId = '00000000-0000-0000-0000-100000000004';
+const gilfoyleId = '00000000-0000-0000-0000-100000000005';
+const monicaId = '00000000-0000-0000-0000-100000000006';
+const gavinId = '00000000-0000-0000-0000-100000000007';
+const familyId = '00000000-0000-0000-0000-800000000001';
+const printersTypeId = '00000000-0000-0000-0000-a00000000001';
 
 // the tab bar is set up by a module script after the page loads
 const tabsReady = page => page.waitForFunction(() => customElements.get('el-tab-group') && customElements.get('el-tab-list'), null, { timeout: 10000 });
@@ -70,6 +77,7 @@ const switches = {
   'application-saml-authentication-response': ['application_samlv2Configuration_enabled'],
   'application-saml-logout-request': ['application_samlv2Configuration_enabled'],
   'application-saml-logout-response': ['application_samlv2Configuration_enabled'],
+  'entity-type-add-jwt-tab': ['entityType_jwtConfiguration_enabled'],
   'application-saml-assertion-encryption': ['application_samlv2Configuration_enabled', 'application_samlv2Configuration_assertionEncryptionConfiguration_enabled'],
   'webhook-tenants': ['webhook_global'],
   'webhook-signature': ['webhook_signatureConfiguration_enabled'],
@@ -680,6 +688,82 @@ export default {
       throw new Error(`beforeAll: phone PATCH failed: ${e.message}`, { cause: e });
     }
 
+    // fill in every tab of Dinesh's user page
+    const api = async (method, path, body) => {
+      const r = await fetch(`${baseUrl}${path}`, {
+        method,
+        headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
+        body: body && JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error(`beforeAll: ${method} ${path} failed: ${r.status} ${await r.text()}`);
+      return r.json().catch(() => ({}));
+    };
+    const licensed = !!process.env.FUSIONAUTH_LICENSE_KEY;
+
+    // sessions come from logins with refresh tokens, before MFA would stop them
+    await api('PATCH', `/api/application/${appId}`, { application: { loginConfiguration: { generateRefreshTokens: true } } });
+    // the setting can take a moment to apply, so wait for Monica's logins to get a refresh token
+    for (let i = 0; !(await api('POST', '/api/login', { loginId: 'monica@raviga.com', password: 'password', applicationId: appId })).refreshToken; i++) {
+      if (i === 20) throw new Error('beforeAll: no refresh token');
+      await new Promise(r => setTimeout(r, 500));
+    }
+    await api('DELETE', `/api/jwt/refresh?userId=${monicaId}`);
+    for (const [name, type] of [['macOS Chrome', 'BROWSER'], ['iPhone', 'MOBILE']]) {
+      const login = await api('POST', '/api/login', { loginId: 'dinesh@piedpiper.com', password: 'password', applicationId: appId, ipAddress: '127.0.0.1', metaData: { device: { name, type } } });
+      if (!login.refreshToken) throw new Error(`beforeAll: no ${name} session`);
+    }
+    await api('PATCH', `/api/application/${appId}`, { application: { loginConfiguration: { generateRefreshTokens: false } } });
+
+    await api('PATCH', `/api/user/${dineshId}`, { user: {
+      birthDate: '1988-03-11',
+      mobilePhone: '+15555550123',
+      data: { company: 'Pied Piper', hometown: 'Karachi', occupation: 'Software Engineer' },
+      twoFactor: { methods: [
+        { method: 'authenticator', secret: 'N2YUNLQVJAXECEMGTAQXIXOYQ4AQBIH3' },
+        ...(licensed ? [{ method: 'email', email: 'dinesh@piedpiper.com' }, { method: 'sms', mobilePhone: '+15555550123' }] : []),
+      ] },
+    } });
+
+    await api('PATCH', `/api/tenant/${tenantId}`, { tenant: { familyConfiguration: { enabled: true } } });
+    await api('PATCH', `/api/user/${gilfoyleId}`, { user: { birthDate: '1985-07-02' } });
+    await api('POST', `/api/user/family/${familyId}`, { familyMember: { userId: dineshId, owner: true, role: 'Adult' } });
+    await api('PUT', `/api/user/family/${familyId}`, { familyMember: { userId: gilfoyleId, role: 'Adult' } });
+    await api('PATCH', `/api/tenant/${tenantId}`, { tenant: { familyConfiguration: { enabled: false } } });
+
+    await api('POST', '/api/identity-provider/00000000-0000-0000-0000-900000000001', { identityProvider: {
+      type: 'OpenIDConnect', name: 'Pied Piper IdP', enabled: true,
+      oauth2: { client_id: 'pied-piper', client_secret: 'not-a-secret', authorization_endpoint: 'https://idp.example.com/authorize', token_endpoint: 'https://idp.example.com/token', userinfo_endpoint: 'https://idp.example.com/userinfo', scope: 'openid' },
+    } });
+    await api('POST', '/api/identity-provider/link', { identityProviderId: '00000000-0000-0000-0000-900000000001', userId: dineshId, identityProviderUserId: 'dinesh', displayName: 'dinesh@piedpiper.com' });
+
+    await api('POST', '/api/consent/00000000-0000-0000-0000-c00000000001', { consent: { name: 'Marketing emails', defaultMinimumAgeForSelfConsent: 13 } });
+    await api('POST', '/api/user/consent', { userConsent: { consentId: '00000000-0000-0000-0000-c00000000001', userId: dineshId, giverUserId: dineshId } });
+
+    await api('POST', '/api/user-action/00000000-0000-0000-0000-d00000000001', { userAction: { name: 'Bought subscription', temporal: true } });
+    await api('POST', '/api/user-action/00000000-0000-0000-0000-d00000000002', { userAction: { name: 'Sent welcome pack' } });
+    await api('POST', '/api/user/comment', { userComment: { userId: dineshId, commenterId: richardId, comment: 'Asked to keep his account' } });
+    await api('POST', '/api/user/action', { broadcast: false, action: { actioneeUserId: dineshId, actionerUserId: richardId, comment: 'Hoodie and stickers', userActionId: '00000000-0000-0000-0000-d00000000002' } });
+    await api('POST', '/api/user/action', { broadcast: false, action: { actioneeUserId: dineshId, actionerUserId: richardId, comment: 'Paid by card', expiry: Date.now() + 30 * 864e5, userActionId: '00000000-0000-0000-0000-d00000000001' } });
+
+    if (licensed) {
+      await api('POST', `/api/entity/type/${printersTypeId}`, { entityType: { name: 'Printers', permissions: [
+        { name: 'Print', description: 'Send print jobs', isDefault: true },
+        { name: 'Settings', description: 'Change printer settings' },
+      ] } });
+      for (const [id, name, permissions] of [['00000000-0000-0000-0000-b00000000001', 'Front Office Printer', ['Print', 'Settings']], ['00000000-0000-0000-0000-b00000000002', 'Back Office Printer', ['Print']]]) {
+        await api('POST', `/api/entity/${id}`, { entity: { name, type: { id: printersTypeId }, clientId: id, clientSecret: 'printer-secret-not-for-production' } });
+        await api('POST', `/api/entity/${id}/grant`, { grant: { userId: dineshId, permissions } });
+      }
+      const { publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+      await api('POST', '/api/webauthn/import', { credentials: [{
+        id: '00000000-0000-0000-0000-e00000000001', userId: dineshId, name: 'MacBook Touch ID', displayName: 'dinesh@piedpiper.com',
+        algorithm: -7, attestationType: 'none', credentialId: 'ZGluZXNoLXBhc3NrZXk', publicKey: publicKey.export({ type: 'spki', format: 'pem' }),
+        relyingPartyId: 'localhost', discoverable: true, authenticatorSupportsUserVerification: true, signCount: 0, data: {},
+      }] });
+    }
+
+    // deactivated users show as locked
+    await api('DELETE', `/api/user/${gavinId}`);
   },
 
   beforeScreenshot: async (page, ctx) => {
@@ -1486,6 +1570,57 @@ export default {
       }
     }
 
+    // user and entity type tabs: click the tab named by the URL fragment
+    if (fragment && /^\/admin\/(user\/manage|entity\/type\/add)/.test(pathname)) {
+      await tabsReady(page);
+      const label = await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`)?.textContent.trim(), fragment);
+      if (!label) throw new Error(`no tab for #${fragment}`);
+      await selectTab(page, label);
+      await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`).scrollIntoView({ block: 'nearest', inline: 'nearest' }), fragment);
+      // this tab loads its rows when opened
+      if (fragment === 'entity-grants') await page.locator('#entity-grants td').first().waitFor();
+    }
+
+    // ids FusionAuth generates on each start
+    if (pathname === `/admin/user/manage/${dineshId}`) {
+      const headers = { 'Authorization': apiKey };
+      const { user } = await (await fetch(`http://localhost:9011/api/user/${dineshId}`, { headers })).json();
+      const grants = [];
+      for (const n of [1, 2]) {
+        const r = await fetch(`http://localhost:9011/api/entity/00000000-0000-0000-0000-b0000000000${n}/grant?userId=${dineshId}`, { headers });
+        if (r.ok) grants.push((await r.json()).grant);
+      }
+      const ids = [...user.registrations, ...user.memberships, ...grants].map(x => x.id);
+      const methods = (user.twoFactor?.methods ?? []).map(m => m.id);
+      await page.evaluate(([ids, methods]) => {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          let text = node.textContent;
+          ids.forEach((id, i) => { text = text.replaceAll(id, `00000000-0000-0000-0000-f0000000000${i + 1}`); });
+          methods.forEach((id, i) => { text = text.replaceAll(`"${id}"`, `"M${i + 1}AB"`).replace(new RegExp(`^(\\s*)${id}(\\s*)$`), `$1M${i + 1}AB$2`); });
+          node.textContent = text.replace(/\b1\d{12}\b/g, '1790000000000');
+        }
+      }, [ids, methods]);
+    }
+
+    if (ctx?.name === 'user-search-database') {
+      await page.fill('#user-search-form input[type=search], #user-search-form input[type=text]', 'jian');
+      await page.locator('#user-search-form button').filter({ hasText: /Search/ }).first().click();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+    }
+
+    if (ctx?.name === 'entity-homepage') {
+      await page.locator('main button').filter({ hasText: /Search/ }).first().click();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+    }
+
+    if (ctx?.name === 'manage-permissions') {
+      await page.locator('header a').filter({ hasText: /Add/ }).first().click();
+      await page.locator('.prime-dialog.open').waitFor();
+    }
+
     // add registration screenshot: click Add registration on Erlich's manage page,
     // then select the first available application so the full form loads
     if (url.includes('00000000-0000-0000-0000-100000000003')) {
@@ -1825,6 +1960,22 @@ export default {
             .replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, '24/09/2026')
             .replace(/\b\d{2}:\d{2}(:\d{2}(,\d{3})?)? (AM|PM)\b/g, (m, seconds, millis) => `09:00${seconds ? ':00' : ''}${millis ? ',000' : ''} AM`);
         }
+      });
+    }
+
+    // the menu can close before the capture, so leave a plain copy of it in its place
+    if (ctx?.name === 'user-dropdown') {
+      await page.locator('header el-dropdown button').click();
+      await page.locator('el-menu:has(#add-user-comment)').waitFor();
+      await page.evaluate(() => {
+        const menu = document.querySelector('el-menu:has(#add-user-comment)');
+        const r = menu.getBoundingClientRect();
+        const copy = document.createElement('div');
+        copy.className = menu.className;
+        copy.innerHTML = menu.innerHTML;
+        copy.style.cssText = `position:absolute;margin:0;left:${r.left + scrollX}px;top:${r.top + scrollY}px;width:${r.width}px;z-index:1000`;
+        document.body.append(copy);
+        menu.hidePopover();
       });
     }
   },
