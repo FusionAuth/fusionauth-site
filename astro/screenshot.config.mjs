@@ -98,6 +98,7 @@ export default {
     style:    'golden-gate',
     renderIn: 'css',
     showUrl:  true,
+    url:      'local.fusionauth.io',
     theme:    'light',
   },
 
