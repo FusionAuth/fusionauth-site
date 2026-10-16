@@ -57,7 +57,8 @@ export default {
     await page.fill('#password', 'password');
     // press Enter to submit -- more reliable than clicking a specific button selector
     await page.keyboard.press('Enter');
-    await page.waitForURL(/\/admin/, { timeout: 30000 });
+    // the login page is under /admin too, so wait until it has been left
+    await page.waitForURL(url => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login'), { timeout: 30000 });
     adminLocale = (await context.cookies('http://localhost:9011')).find(c => c.name === 'fusionauth.locale')?.value;
     await page.close();
 
