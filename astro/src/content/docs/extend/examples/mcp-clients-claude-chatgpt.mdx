@@ -1,0 +1,159 @@
+---
+title: Connect Claude And ChatGPT To An MCP Server
+htmlTitle: Connect claude.ai And chatgpt.com To A FusionAuth-Protected MCP Server
+description: Learn how to connect claude.ai and chatgpt.com to an MCP server protected by FusionAuth using Client ID Metadata Documents.
+tags: mcp server, model context protocol, cimd, claude, chatgpt, oauth, ai security
+---
+
+<PlanBlurb plan="enterprise" />
+
+<AvailableSince since="1.70.0"/>
+
+This guide shows how to let users connect claude.ai and ChatGPT to an MCP server that uses FusionAuth for authorization. Both apps identify themselves with a [Client ID Metadata Document](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents) (CIMD), so you don't create an Application for each one. Instead, you create a [CIMD domain](/docs/get-started/core-concepts/types/cimd-domains) for each app's origin, and FusionAuth registers the app the first time a user connects it.
+
+<Aside type="note">
+The claude.ai and ChatGPT steps on this page reflect those apps as of October 2026. Their settings screens change often, so check each vendor's documentation if a menu has moved.
+</Aside>
+
+## Prerequisites
+
+You need:
+
+* FusionAuth `1.70.0` or later, with an Enterprise license.
+* A FusionAuth instance reachable from the public internet over HTTPS, such as `https://auth.example.com`. The user's browser and the vendor's servers both need to reach it.
+* An MCP server reachable from the public internet over HTTPS, such as `https://mcp.example.com/mcp`, that validates FusionAuth access tokens. [Control MCP Server Access](/docs/extend/examples/controlling-access-mcp-server) walks through building one, and its [remote deployment section](/docs/extend/examples/controlling-access-mcp-server#deploying-a-remote-mcp-server) covers hosting it over HTTPS.
+* A FusionAuth user to log in with.
+
+## How The Connection Works
+
+When a user adds your MCP server to claude.ai or ChatGPT, the app:
+
+1. Calls the MCP server, gets a `401`, and reads the server's protected resource metadata to find FusionAuth.
+1. Reads FusionAuth's discovery document and sees that FusionAuth supports CIMD.
+1. Sends the user to FusionAuth to log in, using the URL of its own metadata document as the `client_id` and the MCP server URL as the `resource`.
+1. Receives an access token whose `aud` claim contains the app's `client_id` URL and the MCP server URL, and sends that token on every MCP request.
+
+FusionAuth handles the app's redirect URIs and client authentication on its own, using the app's metadata document. Your job is to tell FusionAuth which origins to trust and which MCP server they may access.
+
+## Configure FusionAuth
+
+<Steps>
+
+1. Find the Id of the Tenant your users log in to. Navigate to <Breadcrumb>Tenants</Breadcrumb> and copy the **Id** of the Tenant. This guide uses `<tenantId>` for that value.
+
+1. Set the Tenant's **Issuer** to the URL MCP clients will use to find FusionAuth. Navigate to <Breadcrumb>Tenants</Breadcrumb>, edit the Tenant, and on the <Breadcrumb>General</Breadcrumb> tab, set **Issuer** to `https://auth.example.com/<tenantId>`. Use the same value for `authorization_servers` when you [configure the MCP server](#configure-the-mcp-server).
+
+   {/* TODO: verify in testing whether claude.ai and ChatGPT require the discovery document's issuer to match the authorization server URL (RFC 8414 section 3.3). if they don't, drop this step */}
+
+   <Aside type="caution">
+   Changing the Issuer changes the `iss` claim of every token the Tenant issues. Applications that validate `iss` against the old value reject new tokens until you update them.
+   </Aside>
+
+1. Create a CIMD domain for claude.ai. Navigate to <Breadcrumb>CIMD Domains</Breadcrumb> and click the <Icon name="plus"/> button. Fill in the form:
+
+   * Set **Name** to `Claude`.
+   * Set **Tenant** to the Tenant from the first step.
+   * On the <Breadcrumb>General</Breadcrumb> tab, set **Domain** to `https://claude.ai`.
+   * Add your MCP server URL to **Authorized resource URIs**, exactly as MCP clients send it, such as `https://mcp.example.com/mcp`. A difference in the path or a trailing slash counts as a mismatch. Without at least one authorized resource URI, no client on this domain can log in.
+
+   <Screenshot url="/admin/cimd-domain/add" alt="The Add CIMD domain form with the Authorized resource URIs field highlighted." >
+     <Highlight selector="div.select:has([name='domain.authorizedResourceUris'])" label="Authorized resource URIs" />
+   </Screenshot>
+
+   {/* TODO: confirm claude.ai's client_id URL is on https://claude.ai. if a login fails with "client_id: <url> is not valid.", the error shows the real URL; use its origin */}
+
+1. On the <Breadcrumb>Scopes</Breadcrumb> tab, choose a **Consent mode**. `Always prompt` asks the user to consent on every login. `Remember decision` asks once, then remembers the choice for the duration the Tenant allows. Under **Provided scopes**, disable any standard scopes your MCP server doesn't need.
+
+1. Click <Breadcrumb>Save</Breadcrumb>.
+
+1. Add the custom scopes your MCP server requires. On the <Breadcrumb>CIMD Domains</Breadcrumb> list, click the <Icon name="code"/> action for the domain, then click the <Icon name="plus"/> button and enter the scope **Name**, such as `get_name`. Repeat for each scope. MCP clients usually request the scopes listed in the server's `scopes_supported` metadata, and FusionAuth rejects a request for any scope that isn't enabled on the domain.
+
+1. Repeat these steps for ChatGPT, with **Name** set to `ChatGPT` and **Domain** set to `https://chatgpt.com`. Use the same authorized resource URIs and scopes.
+
+   {/* TODO: confirm ChatGPT's client_id URL is on https://chatgpt.com */}
+
+1. Check that FusionAuth advertises CIMD support for the Tenant:
+
+   ```shell-session
+   curl https://auth.example.com/.well-known/openid-configuration/<tenantId>
+   ```
+
+   The response should contain `"client_id_metadata_document_supported": true`, and the `authorization_endpoint` and `token_endpoint` values should end with `/<tenantId>`. If the value is `false`, either the license doesn't include CIMD or the Tenant has no CIMD domains.
+
+</Steps>
+
+To accept any MCP client instead of only claude.ai and ChatGPT, create a single CIMD domain with **Domain** set to `*`. Use a [registration lambda](/docs/extend/code/lambdas/cimd-client-registration) to filter which clients may register.
+
+## Configure The MCP Server
+
+<Steps>
+
+1. Set `authorization_servers` in the MCP server's protected resource metadata to `https://auth.example.com/<tenantId>`.
+
+   FusionAuth serves discovery at `/.well-known/openid-configuration/<tenantId>`, which is where MCP clients look for an authorization server URL that has a path. FusionAuth doesn't serve `/.well-known/oauth-authorization-server`, so clients fall back to OpenID Connect discovery. Every CIMD request must identify the Tenant, and the endpoints in the Tenant's discovery document already include the Tenant Id.
+
+   {/* TODO: confirm in testing that claude.ai and ChatGPT fall back to /.well-known/openid-configuration/<tenantId> after the oauth-authorization-server lookup 404s */}
+
+1. Set `resource` in the protected resource metadata to the MCP server URL you added to **Authorized resource URIs**. MCP clients send this value as the `resource` parameter, and FusionAuth rejects it with `invalid_target` unless it matches an authorized resource URI exactly.
+
+1. List the scopes the server requires in `scopes_supported`, matching the custom scopes on the CIMD domains.
+
+1. When validating an access token, check that its `aud` claim contains the MCP server URL. For CIMD clients, `aud` always has two values: the client's `client_id` URL and the `resource`.
+
+</Steps>
+
+## Connect claude.ai
+
+<Steps>
+
+1. In claude.ai, navigate to <Breadcrumb>Settings -> Connectors</Breadcrumb> and click <Breadcrumb>Add custom connector</Breadcrumb>.
+
+1. Enter a name for the connector and your MCP server URL, such as `https://mcp.example.com/mcp`. Leave the OAuth client Id and client secret fields under advanced settings empty, so claude.ai uses its metadata document.
+
+1. Click <Breadcrumb>Add</Breadcrumb>, then click <Breadcrumb>Connect</Breadcrumb>. claude.ai opens the FusionAuth login page.
+
+1. Log in, review the requested scopes on the consent screen, and approve them. The consent screen shows claude.ai's name and home page from its metadata document.
+
+1. Start a new chat, enable the connector, and ask Claude to use one of your MCP server's tools.
+
+</Steps>
+
+{/* TODO: verify claude.ai menu names and button labels against the current UI */}
+
+## Connect ChatGPT
+
+<Steps>
+
+1. In ChatGPT, navigate to <Breadcrumb>Settings -> Apps & Connectors</Breadcrumb>. If you don't see an option to create a connector, enable developer mode under <Breadcrumb>Advanced settings</Breadcrumb>.
+
+1. Click <Breadcrumb>Create</Breadcrumb>. Enter a name for the connector and your MCP server URL, such as `https://mcp.example.com/mcp`, and choose `OAuth` for authentication.
+
+1. Save the connector. ChatGPT opens the FusionAuth login page.
+
+1. Log in, review the requested scopes on the consent screen, and approve them.
+
+1. Start a new chat, add the connector, and ask ChatGPT to use one of your MCP server's tools.
+
+</Steps>
+
+{/* TODO: verify ChatGPT menu names, plan requirements, and button labels against the current UI */}
+
+## Troubleshooting
+
+When FusionAuth rejects a request before it can safely redirect back to the app, it shows an error page with a JSON body. Match the `error_description` to the causes below. FusionAuth doesn't write Event Log entries for rejected CIMD registrations, so the error page and the app's own error message are the main sources of information.
+
+| Error description | Cause and fix |
+|---|---|
+| `client_id: <url> is not valid.` | The app's `client_id` URL doesn't match any CIMD domain in the Tenant. Create a CIMD domain for the origin of the URL in the message. |
+| `The request is missing a required parameter: tenantId` | The app used endpoints without a Tenant Id. Point `authorization_servers` at `https://auth.example.com/<tenantId>`. |
+| `A CIMD client requires exactly one resource parameter.` | The app didn't send a `resource`, or sent more than one. Check that the MCP server's protected resource metadata includes `resource`. |
+| `Invalid resource [<url>]. The requested resource is not on the list of authorized resource URIs for this application.` | The `resource` doesn't exactly match an **Authorized resource URI** on the CIMD domain. Add the URL from the message, including any path and trailing slash. |
+| `Invalid scope. The scopes [<scopes>] are unknown.` | The app requested a scope that isn't enabled on the CIMD domain. Add it as a custom scope, or enable it under **Provided scopes**. |
+| `The CIMD client registration could not be established.` | FusionAuth couldn't fetch or validate the app's metadata document. This is usually a problem on the vendor's side; try again later. |
+| `The CIMD registration lambda denied this resource or revoked the client.` | The domain's registration lambda rejected the app. |
+| `The CIMD client registration request was rate limited.` | The user registered too many new CIMD clients in a short time. See the `CIMD client registration` action in the Tenant's [rate limit settings](/docs/get-started/core-concepts/types/tenants#rate-limit-settings). |
+| `Client ID Metadata Document clients are only supported with a valid license.` | The FusionAuth license doesn't include CIMD. |
+
+If the app reports that the authorization server doesn't support client registration, check the discovery document from the last step of [Configure FusionAuth](#configure-fusionauth). When `client_id_metadata_document_supported` is `false`, the app may try Dynamic Client Registration instead, which FusionAuth doesn't support.
+
+To force an app to log in again, for example after changing scopes, the user can disconnect and reconnect the connector in the app's settings. To cut off an app entirely, see [Removing A CIMD Client](/docs/lifecycle/authenticate-users/oauth/client-registration#removing-a-cimd-client).
