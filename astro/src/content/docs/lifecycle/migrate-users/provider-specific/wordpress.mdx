@@ -60,73 +60,45 @@ This works for users, applications, and tenants, among others.
 
 In this section, you create a sample WordPress database in Docker, understand where the user details are kept in the database, and export them with a SQL script.
 
-### Start WordPress
+### Clone the Code
 
-Create a directory for this project. In the directory, create a file called `docker-compose.yaml` and insert the code below.
-
-```yaml
-# Source: https://hub.docker.com/r/bitnami/wordpress-nginx
-version: '2'
-services:
-  mariadb:
-    image: docker.io/bitnami/mariadb:11.2
-    container_name: fawp_db
-    ports:
-      - '3306:3306'
-    volumes:
-      - './db:/bitnami/mariadb'
-    environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      - ALLOW_EMPTY_PASSWORD=yes
-      - MARIADB_USER=wp
-      - MARIADB_DATABASE=wp
-  wordpress:
-    image: docker.io/bitnami/wordpress-nginx:6
-    container_name: fawp
-    ports:
-      - '80:8080'
-      - '443:8443'
-    volumes:
-      - './wp:/bitnami/wordpress'
-    depends_on:
-      - mariadb
-    environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      - ALLOW_EMPTY_PASSWORD=yes
-      - WORDPRESS_DATABASE_HOST=mariadb
-      - WORDPRESS_DATABASE_PORT_NUMBER=3306
-      - WORDPRESS_DATABASE_USER=wp
-      - WORDPRESS_DATABASE_NAME=wp
-volumes:
-  mariadb_data:
-    driver: local
-  wordpress_data:
-    driver: local
-```
-
-Open a terminal in the same directory as the file and run the code below to start a MariaDB and WordPress container.
+First, clone or download the FusionAuth import scripts repository and change into its `wordpress` directory.
 
 ```shell-session
-mkdir db && mkdir wp && sudo chmod -R 777 ./db ./wp && \
-docker compose up
+git clone https://github.com/FusionAuth/fusionauth-import-scripts.git && cd fusionauth-import-scripts/wordpress
 ```
 
-This command creates two directories to hold the data for your WordPress and database files, shared with volumes in the Docker containers.
+On Windows, you need to replace forward slashes with backslashes in paths.
 
-Browse to http://localhost/wp-login.php. Log in with username `user` and password `bitnami`. This is the default WordPress administrator configured in the Bitnami Docker image we used.
+### Start WordPress and FusionAuth
+
+Run the command below to start FusionAuth, WordPress, and their databases.
+
+```shell-session
+cd docker && docker compose up
+```
+
+After everything has started, open another terminal in the `fusionauth-import-scripts/wordpress/docker` directory and run the command below to use the WordPress CLI to configure the instance with basic details.
+
+```shell-session
+docker compose exec cli wp core install --url="http://localhost:3000" --title="WP" --admin_user="admin" --admin_password="password" --admin_email="admin@example.org" --skip-email
+```
+
+Test that you can log in by browsing to http://localhost:3000/wp-login.php and using username `admin` and password `password`.
 
 ### Add A New User
 
-If you use WordPress as a user management system, you need to allow users to register themselves. To do this, navigate to <Breadcrumb>Settings -> General -> Membership</Breadcrumb>. Enable <Breadcrumb>Anyone can register</Breadcrumb> and click <Breadcrumb>Save Changes</Breadcrumb>.
+In the same terminal, run the command below to create an example user to migrate.
 
-Log out at the top right of the page. Browse to http://localhost/wp-login.php.
-Register a new user. Enter a username and email `richard@example.com`.
+```shell-session
+docker compose exec cli wp user create richard richard@example.org --role=subscriber --user_pass=password
+```
 
 ### Explore The Users In The Database
 
-Browse the database in any database IDE that can connect to MariaDB. [DBeaver](https://dbeaver.io/download) is a free, cross-platform IDE you can use.
+Browse the database in any database IDE that can connect to MySQL. [DBeaver](https://dbeaver.io/download) is a free, cross-platform IDE you can use.
 
-Create a new MariaDB connection to `localhost`, port `3306`, database `wp`, username `wp`, with no password needed. Open the connection and expand the database tables.
+Create a new MySQL connection to `localhost`, port `3306`, database `mysite`, username `admin`, and password `password`. Open the connection and expand the database tables.
 
 WordPress has two tables related to users: `wp_users` and `wp_usermeta`.
 
@@ -135,10 +107,10 @@ WordPress has two tables related to users: `wp_users` and `wp_usermeta`.
 In `wp_users`, you will have data similar to the example below. This table holds identifiers and a password hash for each user.
 
 ```
-ID |user_login|user_pass                         |user_nicename|user_email            |user_url        |user_registered         |user_activation_key                           |user_status|display_name|
----|----------|----------------------------------|-------------|----------------------|----------------|------------------------|----------------------------------------------|-----------|------------
- 1 |user      |$P$BVrdsW/NUuXDi0Od0uUdk2SnJHHmQ01|user         |user@example.com|     http://127.0.0.1 |2024-02-21 07:09:20.000 |                                              |          0|user    |
- 2 |richard   |$P$B/kCzTMDV7ccClaRShJPz8suWQdKc5/|richard      |richard@example.com   |                |2024-02-21 10:52:53.000 |1708512773:\$P$BYELgLl.oz9lv.YRNp7ppBA1GxzOEY0|          0|a       |
+ID |user_login |user_pass                                                       |user_nicename |user_email          |user_url              |user_registered     |user_activation_key |user_status |display_name |
+---|-----------|----------------------------------------------------------------|--------------|--------------------|----------------------|--------------------|--------------------|------------|-------------
+ 1 |admin      |$wp$2y$10$/hohy2X3tj5VXTbGNsgL5.gqWXv9fzjHkTsmqV4vHI4QyK351HyHy |admin         |admin@example.org   |http://localhost:3000 |2026-10-16 12:08:24 |                    |0           |admin        |
+ 2 |richard    |$wp$2y$10$IwsQg/CVVCPO6vUlnr68U.HEEbfAVpzjlITYjjUh7CGI.OkGu/gui |richard       |richard@example.org |                      |2026-10-16 12:08:25 |                    |0           |richard      |
 ```
 
 Unfortunately, neither the [WordPress Codex](https://codex.wordpress.org/Database_Description) nor the [WordPress Developer Handbook](https://developer.wordpress.org) gives definitions of the database fields and their meanings. To be certain of their purpose, you would need to read the WordPress source code, but the column definitions below seem obvious enough to trust.
@@ -158,40 +130,37 @@ Unfortunately, neither the [WordPress Codex](https://codex.wordpress.org/Databas
 
 The `wp_usermeta` table holds all information about a user besides what is kept in the `wp_users` table. WordPress plugins can add their own data, too. Below is the data you should have in `wp_usermeta`.
 
-umeta_id|user_id|meta_key                             |meta_value
---------|-------|-------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-1|      1|nickname                             |user
-2|      1|first_name                           |UserName
-3|      1|last_name                            |LastName
-4|      1|description                          |
-5|      1|rich_editing                         |true
-6|      1|syntax_highlighting                  |true
-7|      1|comment_shortcuts                    |false
-8|      1|admin_color                          |fresh
-9|      1|use_ssl                              |0
-10|      1|show_admin_bar_front                 |true
-11|      1|locale                               |
-12|      1|wp_capabilities                      |`a:1:{s:13:"administrator";b:1;}`
-13|      1|wp_user_level                        |10
-14|      1|dismissed_wp_pointers                |
-15|      1|show_welcome_panel                   |1
-16|      1|session_tokens                       |`a:1:{s:64:"ed6949d03244303edfd56de57f46b77a7300c2c62406ccde3b717b700c4fce4a";a:4:{s:10:"expiration";i:1708684580;s:2:"ip";s:10:"172.25.0.1";s:2:"ua";s:101:"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.`
-17|      1|wp_dashboard_quick_press_last_post_id|4
-18|      1|community-events-location            |`a:1:{s:2:"ip";s:10:"172.25.0.0";}`
-19|      2|nickname                             |richard
-20|      2|first_name                           |
-21|      2|last_name                            |
-22|      2|description                          |
-23|      2|rich_editing                         |true
-24|      2|syntax_highlighting                  |true
-25|      2|comment_shortcuts                    |false
-26|      2|admin_color                          |fresh
-27|      2|use_ssl                              |0
-28|      2|show_admin_bar_front                 |true
-29|      2|locale                               |
-30|      2|wp_capabilities                      |`a:1:{s:10:"subscriber";b:1;}`
-31|      2|wp_user_level                        |0
-32|      2|default_password_nag                 |1
+umeta_id|user_id|meta_key             |meta_value
+--------|-------|---------------------|-------------------------------
+1|      1|nickname             |admin
+2|      1|first_name           |
+3|      1|last_name            |
+4|      1|description          |
+5|      1|rich_editing         |true
+6|      1|syntax_highlighting  |true
+7|      1|comment_shortcuts    |false
+8|      1|admin_color          |modern
+9|      1|use_ssl              |0
+10|      1|show_admin_bar_front |true
+11|      1|locale               |
+12|      1|wp_capabilities      |`a:1:{s:13:"administrator";b:1;}`
+13|      1|wp_user_level        |10
+14|      1|dismissed_wp_pointers|
+15|      1|show_welcome_panel   |1
+16|      2|nickname             |richard
+17|      2|first_name           |
+18|      2|last_name            |
+19|      2|description          |
+20|      2|rich_editing         |true
+21|      2|syntax_highlighting  |true
+22|      2|comment_shortcuts    |false
+23|      2|admin_color          |modern
+24|      2|use_ssl              |0
+25|      2|show_admin_bar_front |true
+26|      2|locale               |
+27|      2|wp_capabilities      |`a:1:{s:10:"subscriber";b:1;}`
+28|      2|wp_user_level        |0
+29|      2|dismissed_wp_pointers|
 
 The column definitions for the table are:
 
@@ -226,61 +195,51 @@ Here are some of the `meta_key` types you might find:
 
 ### Export The Users In SQL
 
-FusionAuth provides export and import scripts under a permissive open-source license. To get the scripts, clone the Git repository.
+FusionAuth provides export and import scripts under a permissive open-source license. The `wordpress/src` directory of the repository you downloaded contains all the scripts you need for this tutorial, and `wordpress/exampleData` has sample output of the scripts.
+
+In the second terminal, which is in the `docker` directory, run the command below to install the required npm dependencies. All remaining commands for the import scripts run in this `src` directory.
 
 ```shell-session
-git clone https://github.com/FusionAuth/fusionauth-import-scripts
+cd ../src && npm install
 ```
 
-The `wordpress` directory contains all the scripts you need for this tutorial, and `wordpress/exampleData` has the output of the scripts.
-
-Navigate to the `wordpress/src` directory.
-
-```shell-session
-cd fusionauth-import-scripts/wordpress/src
-```
-
-Install the required npm dependencies by running the following command.
-
-```shell-session
-npm install
-```
-
-Run the SQL script `1_exportWordpressUsers.sql` in the `fusionauth-import-scripts/wordpress/src` directory against your WordPress database to export all the user data as JSON. View the output as text in DBeaver and save the `json_result` column to a file called `users.txt`.
+Run the SQL script `1_exportWordpressUsers.sql` in the `src` directory against your WordPress database to export all the user data as JSON. View the output as text in DBeaver and save the `json_result` column to a file called `users.txt`.
 
 <Aside type="note">
   If you have the `mysql` CLI installed, you can use a command similar to the one below to export user data from the database to the `users.txt` file. If you use the command to export the data, you will need to remove the column name `json_result` from the first line and any blank lines in the resulting `users.txt` file.
 
   ```shell-session
-  mysql -h 127.0.0.1 -P 3306 -u wp wp --raw < 1_exportWordpressUsers.sql > users.txt
+  mysql -h 127.0.0.1 -P 3306 -u admin -ppassword mysite --raw < 1_exportWordpressUsers.sql > users.txt
   ```
 </Aside>
 
 The script exports the `wp_users` table as JSON with all **wp_usermeta** fields related to each user as an array called `meta`.
 
-Your `users.txt` file should now have user data similar to the one in `fusionauth-import-scripts/exampleData/1_wordpressExport/users.txt`. Each row is JSON, but the file as a whole is not JSON. Each row must end with a comma and the file contents must be wrapped in brackets.
+Your `users.txt` file should now have user data similar to the one in `exampleData/1_wordpressExport/users.txt`. Each row is JSON, but the file as a whole is not JSON. Each row must end with a comma and the file contents must be wrapped in brackets.
 
-Copy your `users.txt` file into `fusionauth-import-scripts/wordpress/src` and run the code below.
+Copy your `users.txt` file into `src` and run the code below.
 
 ```shell-session
 node 2_convertTextToJson.mjs
 ```
 
-Your output should be valid JSON and look like the file `fusionauth-import-scripts/exampleData/1_wordpressExport/users.json`.
+Your output should be valid JSON and look like the file `exampleData/1_wordpressExport/users.json`.
 
 ## Import Users
 
-Now that the user details have been extracted from WordPress, you need to add a password hashing plugin to FusionAuth that supports the phpass hashing algorithm used in WordPress, map the WordPress fields to FusionAuth fields, and then import the users using a script.
+Now that the user details have been extracted from WordPress, you need to add a password hashing plugin to FusionAuth that supports the hashing algorithms used in WordPress, map the WordPress fields to FusionAuth fields, and then import the users using a script.
 
 ### Use A WordPress Password Hash Plugin For FusionAuth
 
-The WordPress Phpass hashing algorithm is not [natively supported by FusionAuth](/docs/reference/password-hashes). However, FusionAuth allows [custom plugins](/docs/extend/code/password-hashes/custom-password-hashing). There is a WordPress Phpass plugin accompanying this article [in this GitHub repository](https://github.com/FusionAuth/fusionauth-contrib/tree/main/Password%20Hashing%20Plugins).
+The old WordPress Phpass hashing algorithm is not [natively supported by FusionAuth](/docs/reference/password-hashes). This algorithm was used in WordPress versions earlier than 6.8. Newer WordPress versions, like the WordPress example in this guide, use a modified version of the bcrypt algorithm, which also isn't supported natively by FusionAuth.
+
+However, FusionAuth allows [custom plugins](/docs/extend/code/password-hashes/custom-password-hashing). There is a WordPress plugin that supports both algorithms accompanying this article [in this GitHub repository](https://github.com/FusionAuth/fusionauth-contrib/tree/main/Password%20Hashing%20Plugins).
 
 <Aside type="note">
 The linked repository has multiple plugin projects. You need to build and install only the Password Hashing Plugins project.
 </Aside>
 
-Download and unzip the repository, or use Git in a terminal with the command below.
+Download and unzip the plugins repository, or use Git in a terminal with the command below.
 
 ```shell-session
 git clone https://github.com/fusionauth/fusionauth-contrib.git
@@ -292,10 +251,12 @@ Open the file `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/myc
 
 Most of the other hashing plugins in this project take a plaintext password and Base64 salt and return a Base64 hash. The phpass plugin is more complicated. The salt is stored inside the hash, as is the hashing algorithm name. Thus the `encrypt` function needs to perform the password hash comparison inside the phpass algorithm to verify the user's password is correct. The WordPress user import script you will use shortly saves the existing hash to the salt field. If the `checkPassword` function succeeds, then the `encrypt` function returns the existing salt. If it fails, the function returns a random number to ensure that the passwords will never match. Only if given a new password with no existing hash will `encrypt` return a new hash.
 
-The `factor` parameter should always be 8.
+WordPress 6.8 and later hashes start with `$wp`. For these, the plugin computes the same HMAC-SHA384 prehash that WordPress uses and checks it against the stored bcrypt hash. It returns the existing hash or a random number in the same way.
+
+The `factor` parameter should always be 8. It's only used when the plugin creates a new phpass hash; imported hashes contain their own cost.
 
 There are two other files linked to this plugin that you shouldn't need to alter:
-- `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleWordPressPhpassPasswordEncryptorTest.java`, which holds unit tests for the hasher.
+- `fusionauth-contrib/Password Hashing Plugins/src/test/java/com/mycompany/fusionauth/plugins/ExampleWordPressPhpassPasswordEncryptorTest.java`, which holds unit tests for the hasher.
 - `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/guice/MyExampleFusionAuthPluginModule.java`, which makes the hasher file known to FusionAuth.
 
 If you make another hash plugin, you will need to make your own test and add your plugin to the Guice file. This might be the case if your WordPress installation has overridden the default hashing algorithm.
@@ -303,8 +264,9 @@ If you make another hash plugin, you will need to make your own test and add you
 <Aside type="note">
 The WordPress Phpass library uses specific prefixes in password hashes to indicate the algorithm and cost parameters.
 
+- **$wp$2y$10$:** This prefix indicates WordPress 6.8+ bcrypt. The hash stores a bcrypt result where the input is a Base64-encoded HMAC-SHA384 prehash of the password (key `wp-sha384`), not the plaintext password. The $2y$ indicates bcrypt, and the number following it is the bcrypt cost. The Java plugin discussed above supports both this format and legacy phpass.
 - **No prefix:** Very old WordPress installations might use MD5 hashes. These hashes are 32 characters long and consist of hexadecimal characters.
-- **$P$ or $P$B:** This prefix indicates phpass library. The $P$ indicates phpass, and the character following this prefix represents the cost parameter of the hash. The actual algorithm is a modified MD5 with multiple iterations to increase security. This is the algorithm the Java plugin discussed above uses and is the default in WordPress in 2024.
+- **$P$ or $P$B:** This prefix indicates phpass library. The $P$ indicates phpass, and the character following this prefix represents the cost parameter of the hash. The actual algorithm is a modified MD5 with multiple iterations to increase security.
 - **$1$:** This prefix indicates an MD5-based crypt hash processed with a Unix `crypt()` function.
 - **$2a$, $2x$, $2y$:** These prefixes are associated with bcrypt.
 - **$5$ and $6$:** These prefixes indicate SHA-256 and SHA-512 hashing respectively.
@@ -335,13 +297,8 @@ All tests should pass, and the plugin file should be available in `Password Hash
 
 Now copy `fusionauth-example-password-encryptor-0.1.0.jar` to your FusionAuth `plugins` directory and restart FusionAuth.
 
-If you are not already running FusionAuth or want to test this process on another instance, you can start FusionAuth in Docker.
-- Open a new terminal in the `fusionauth-import-scripts` directory and run the code below.
-  ```shell-session
-  cd wordpress/fusionAuthDockerFiles && \
-  docker compose up
-  ```
-- FusionAuth will now be running and browsable at `http://localhost:9011`. You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and `password`. The container is called **fa**.
+FusionAuth is already running in Docker from the Docker Compose command you ran earlier.
+- FusionAuth is browsable at `http://localhost:9011`. You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and `password`. The container is called **fa**.
 - In the `fusionauth-contrib` terminal where you built the plugin, run the commands below to copy the JAR file into the FusionAuth container `plugins` directory.
   ```shell-session
   docker exec fa mkdir /usr/local/fusionauth/plugins && \
@@ -357,7 +314,7 @@ The two users you exported have the roles Administrator and Subscriber, as seen 
 node 3_addRoles.mjs
 ```
 
-Now in the [FusionAuth admin interface](http://localhost:9011/admin), if you browse to <Breadcrumb>Applications -> WordpressTestImportApp</Breadcrumb> and click the <Breadcrumb>Manage Roles</Breadcrumb> button, you can see the roles have been added for your sample Application. This Application was created using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `fusionauth-import-scripts/wordpress/fusionAuthDockerFiles/kickstart/kickstart.json`. When FusionAuth comes up for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state.
+Now in the [FusionAuth admin interface](http://localhost:9011/admin), if you browse to <Breadcrumb>Applications -> Example app</Breadcrumb> and click the <Breadcrumb>Manage Roles</Breadcrumb> button, you can see the roles have been added for your sample Application. This Application was created using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `fusionauth-import-scripts/wordpress/docker/kickstart/kickstart.json`. When FusionAuth comes up for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state.
 
 ### Prepare Users For Import To FusionAuth
 
@@ -400,20 +357,20 @@ Finally, this script imports users individually. If this is too slow when runnin
 
 ### Verify The Import
 
-If the migration script ran successfully, you should be able to log in to the `WordpressTestImportApp` application with one of the imported users. In the [FusionAuth admin UI](http://localhost:9011/admin), navigate to <Breadcrumb>Applications -> WordpressTestImportApp</Breadcrumb>. Click <IconButton icon="view" /> next to the application and note the **OAuth IdP login URL**.
+If the migration script ran successfully, you should be able to log in to the `Example app` application with one of the imported users. In the [FusionAuth admin UI](http://localhost:9011/admin), navigate to <Breadcrumb>Applications -> Example app</Breadcrumb>. Click <IconButton icon="view" /> next to the application and note the **OAuth IdP login URL**.
 
 ![Application login URL.](/img/docs/lifecycle/migrate-users/provider-specific/wordpress/find-login-url.png)
 
-Copy this URL and open it in a new incognito browser window. (If you don't use an incognito window, the admin user session will interfere with the test.) You should see the login screen. Enter username `user@example.com` and password `bitnami`. Login should work.
+Copy this URL and open it in a new incognito browser window. (If you don't use an incognito window, the admin user session will interfere with the test.) You should see the login screen. Enter username `richard@example.org` and password `password`. Login should work.
 
 <Aside type="note">
-  After a successful test login, the user will be redirected to a URL like `https://example.com/?code=FlZF97WIYLNxt4SGD_22qvpRh4fZ6kg_N89ZbBAy1E4&locale=fr&userState=Authenticated`. This occurs because you haven't set up a web application to handle the authorization code redirect yet.
+  After a successful test login, the user will be redirected to a URL like `http://localhost:3000/auth/callback?code=FlZF97WIYLNxt4SGD_22qvpRh4fZ6kg_N89ZbBAy1E4&locale=en&userState=AuthenticatedRegistrationNotVerified`, and WordPress shows its home page. This occurs because you haven't set up a web application to handle the authorization code redirect yet.
 
   That is an important next step but is beyond the scope of this document. Consult the [5-minute setup guide](/docs/get-started/start-here/step-1) for an example of how to do this.
 </Aside>
 
 
-Next, log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and password `password`. Review the user entries to ensure the data was correctly imported.
+Back in the FusionAuth admin UI, review the user entries to ensure the data was correctly imported.
 
 ![List of imported users.](/img/docs/lifecycle/migrate-users/provider-specific/wordpress/list-users.png)
 
@@ -423,7 +380,7 @@ You can manage a user by clicking on the <Breadcrumb>Manage</Breadcrumb> button 
 
 If you have errors logging in, you can use the FusionAuth database directly to see if your users were imported, and check their hashes manually.
 
-You can use any PostgreSQL browser. DBeaver will work. The connection details are in `fusionauth-import-scripts/wordpress/fusionAuthDockerFiles/docker-compose.yml` and `.env`.
+You can use any PostgreSQL browser. DBeaver will work. The connection details are in `fusionauth-import-scripts/wordpress/docker/docker-compose.yml` and `.env`.
 
 In your database IDE, create a new PostgreSQL connection with the following details:
 
@@ -438,7 +395,7 @@ Log in to the database and browse to `Databases/fusionauth/Schemas/public/Tables
 
 ## What To Do Next
 
-WordPress Phpass uses a relatively old and weak hashing algorithm, though not terrible. You might want to rehash your users' passwords on their next login with a stronger algorithm. To enable this setting, follow these [instructions](/docs/extend/code/password-hashes/custom-password-hashing#rehashing-user-passwords).
+If you imported phpass hashes from a WordPress version earlier than 6.8, note that phpass is a relatively old and weak hashing algorithm, though not terrible. You might want to rehash your users' passwords on their next login with a stronger algorithm. To enable this setting, follow these [instructions](/docs/extend/code/password-hashes/custom-password-hashing#rehashing-user-passwords).
 
 <WhatNext />
 
