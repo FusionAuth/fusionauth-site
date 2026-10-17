@@ -13,6 +13,38 @@ try {
 
 let adminLocale;
 
+// the tab bar is set up by a module script after the page loads
+const tabsReady = page => page.waitForFunction(() => customElements.get('el-tab-group') && customElements.get('el-tab-list'), null, { timeout: 10000 });
+
+// click until the tab's panel shows
+async function selectTab(page, label) {
+  await tabsReady(page);
+  for (let i = 0; i < 20; i++) {
+    const selected = await page.evaluate(l => {
+      const btn = [...document.querySelectorAll('el-tab-list button')].find(b => b.textContent.trim() === l);
+      const shown = () => btn?.getAttribute('aria-selected') === 'true' && !document.getElementById(btn.getAttribute('aria-controls'))?.hidden;
+      if (btn && !shown()) btn.click();
+      return shown();
+    }, label);
+    if (selected) return;
+    await page.waitForTimeout(250);
+  }
+  throw new Error(`tab "${label}" was not selected`);
+}
+
+// switched on (not saved) so the screenshot shows the settings each one reveals
+const tenantSwitches = {
+  'tenant-family-settings': ['tenant_familyConfiguration_enabled'],
+  'tenant-mfa-email-settings': ['tenant_multiFactorConfiguration_email_enabled'],
+  'tenant-mfa-phone-settings': ['tenant_multiFactorConfiguration_sms_enabled', 'tenant_multiFactorConfiguration_voice_enabled'],
+  'tenant-webauthn-bootstrap-settings': ['tenant_webAuthnConfiguration_bootstrapWorkflow_enabled'],
+  'tenant-webauthn-reauthentication-settings': ['tenant_webAuthnConfiguration_reauthenticationWorkflow_enabled'],
+  'tenant-password-breach-detection-settings': ['tenant_passwordValidationRules_breachDetection_enabled'],
+  'tenant-scim-settings': ['tenant_scimServerConfiguration_enabled'],
+  'tenant-security-acl-captcha': ['tenant_captchaConfiguration_enabled'],
+  'tenant-security-client-risk-rate-limit': ['tenant_clientRiskConfiguration_enabled'],
+};
+
 export default {
   baseUrl: 'http://localhost:9011',
   outputDir: 'public/img/docs/screenshots',
@@ -348,6 +380,34 @@ export default {
       }
     }
 
+    if (ctx?.name === 'tenant-webhooks-settings') {
+      const webhookUrl = 'http://localhost:9011/api/webhook/00000000-0000-0000-0000-600000000001';
+      if (!(await fetch(webhookUrl, { headers: { 'Authorization': apiKey } })).ok) {
+        const r = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ webhook: { url: 'https://example.com/fusionauth-events', description: 'Example webhook', connectTimeout: 1000, readTimeout: 2000 } }),
+        });
+        if (!r.ok) throw new Error(`webhook POST failed: ${r.status} ${await r.text()}`);
+        await page.reload({ waitUntil: 'networkidle' });
+      }
+    }
+
+    for (const id of tenantSwitches[ctx?.name] ?? []) {
+      const switched = await page.evaluate(i => {
+        const input = document.getElementById(i);
+        if (input && !input.checked) input.click();
+        return !!input;
+      }, id);
+      if (!switched) throw new Error(`switch not found: ${id}`);
+    }
+
+    if (ctx?.name === 'tenant-connector-add-policy') {
+      await page.locator('el-tab-list button[aria-controls="connectors"]').click();
+      await page.locator('#add-connector-policy').click();
+      await page.locator('.prime-dialog.open').waitFor();
+    }
+
     // user manage pages for Big Head and Erlich: the Angular SPA may land on the Users
     // list before routing to the specific user -- wait for the Manage User heading.
     if (url.includes('00000000-0000-0000-0000-10000000000')) {
@@ -406,29 +466,44 @@ export default {
     if (pathname.includes('/admin/application/edit')) {
       await page.waitForTimeout(500);
       try {
+        await tabsReady(page);
         const appTab = fragment === 'webauthn' ? 'WebAuthn' : 'Security';
+        await selectTab(page, appTab);
         await page.locator('button').filter({ hasText: appTab }).first().click({ timeout: 3000 });
         await page.waitForTimeout(1000);
+        await selectTab(page, appTab);
       } catch (e) {
         throw new Error(`application/edit tab failed: ${e.message}`, { cause: e });
       }
     }
 
-    // tenant edit: click Email, Passwordless, or WebAuthn tab based on URL fragment
+    // tenant edit: click the tab named by the URL fragment
     if (pathname.includes('/admin/tenant/edit/') && fragment) {
-      const tabLabel = { email: 'Email', 'email-test': 'Email', identities: 'Identities', passwordless: 'Advanced', webauthn: 'WebAuthn' }[fragment];
+      await tabsReady(page);
+      const tabLabel = { email: 'Email', 'email-test': 'Email', identities: 'Identities', passwordless: 'Advanced', webauthn: 'WebAuthn' }[fragment]
+        ?? await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`)?.textContent.trim(), fragment);
       if (tabLabel) {
         try {
+          await selectTab(page, tabLabel);
           // use JS click to handle tabs that are scrolled off the visible tab bar
           const result = await page.evaluate((label) => {
             const btns = [...document.querySelectorAll('el-tab-list button')];
             const allLabels = btns.map(b => b.textContent.trim());
             const btn = btns.find(b => b.textContent.trim() === label);
-            if (btn) { btn.click(); return { clicked: true }; }
+            if (btn) {
+              btn.click();
+              // bring a tab scrolled out of the tab bar into view
+              const bar = btn.closest('.tab-list-container');
+              const b = btn.getBoundingClientRect(), r = bar?.getBoundingClientRect();
+              if (r && b.right > r.right) bar.scrollLeft += b.right - r.right + 16;
+              else if (r && b.left < r.left) bar.scrollLeft -= r.left - b.left + 16;
+              return { clicked: true };
+            }
             return { clicked: false, available: allLabels };
           }, tabLabel);
           if (!result.clicked) throw new Error(`tab "${tabLabel}" not found; available: ${JSON.stringify(result.available)}`);
           await page.waitForTimeout(1000);
+          await selectTab(page, tabLabel);
         } catch (e) {
           throw new Error(`tenant/edit ${tabLabel} tab failed: ${e.message}`, { cause: e });
         }
@@ -622,6 +697,18 @@ export default {
     await page.evaluate(() => {
       document.querySelectorAll('.alert, [role=alert], .notification').forEach(el => el.remove());
       document.activeElement?.blur();
+    });
+
+    // lets selectors name a form section by its heading, e.g. [data-section='email-settings']
+    await page.evaluate(() => {
+      for (const legend of document.querySelectorAll('main legend')) {
+        const title = legend.textContent.trim().split('\n')[0].trim();
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        // a container can hold more than one section, so tag the heading and what follows it
+        for (let el = legend; el && (el === legend || el.tagName !== 'LEGEND'); el = el.nextElementSibling) {
+          el.dataset.section = slug;
+        }
+      }
     });
 
     // pin run-time dates; a day over 12 shows the dd/mm order
