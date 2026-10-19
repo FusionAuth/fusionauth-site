@@ -8,9 +8,9 @@
 # tolerance is reverted to the committed version so it does not churn the repo.
 #
 # Usage:
-#   src/scripts/refresh-screenshots.sh                      # regenerate and compare
-#   src/scripts/refresh-screenshots.sh --threshold 0.005    # looser tolerance
-#   src/scripts/refresh-screenshots.sh --compare-only       # skip capture, compare what is there
+#   scripts/refresh-screenshots.sh                      # regenerate and compare
+#   scripts/refresh-screenshots.sh --threshold 0.005    # looser tolerance
+#   scripts/refresh-screenshots.sh --compare-only       # skip capture, compare what is there
 #
 # Requires Docker and the screenshot CLI (npm ci in astro/screenshots). The browser runs in a
 # pinned container (browserContainer in screenshot.config.mjs), so no local browser install is needed.
@@ -23,7 +23,7 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SHOTS_DIR="$REPO_ROOT/astro/public/img/docs/screenshots"
 DIFF_DIR="$REPO_ROOT/astro/.screenshot-diffs"
 
@@ -67,7 +67,7 @@ fi
 
 echo ""
 rm -rf "$DIFF_DIR"
-node "$REPO_ROOT/src/scripts/compare-screenshots.mjs" \
+node "$REPO_ROOT/scripts/compare-screenshots.mjs" \
 	--baseline "$BASELINE" \
 	--candidate "$SHOTS_DIR" \
 	--threshold "$THRESHOLD" \

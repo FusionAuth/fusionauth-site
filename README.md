@@ -89,7 +89,7 @@ Astro builds automatically generate code snippets before rendering pages.
 Docker, Kubernetes, and Kafka configuration examples remain owned by their external repositories. To refresh only the files displayed in the docs, run this from the repository root (requires Bash, Git, and curl):
 
 ```console
-bash src/scripts/fetch_external_content.sh
+bash scripts/fetch_external_content.sh
 ```
 
 Review the diff and affected guides before committing. Add `--check` to show upstream changes without modifying local files; the weekly **Check external content** workflow runs this check and fails with a diff when the snapshots are stale. It does not commit or push changes.
@@ -116,4 +116,4 @@ The root `fusionauth.io` LLMs.txt file lives in [`astro/public/llms.txt`](astro/
   * For a new top-level folder, update `s3Prefixes` in `/src/redirects.json`.
   * Add a behavior in CloudFront. You'll need to submit a PR in [fusionauth-site-infra](https://github.com/FusionAuth/fusionauth-site-infra/).
 
-For the first two, `src/scripts/check-redirects.mjs` works out what a diff needs and prints the exact entries. It defaults to your working tree; pass `--base origin/main` to check a whole branch, and `--write` to apply what it found. The `Check redirects` GitHub action runs it on every PR that touches content, and fails with the same output.
+For the first two, `scripts/check-redirects.mjs` works out what a diff needs and prints the exact entries. It defaults to your working tree; pass `--base origin/main` to check a whole branch, and `--write` to apply what it found. The `Check redirects` GitHub action runs it on every PR that touches content, and fails with the same output.

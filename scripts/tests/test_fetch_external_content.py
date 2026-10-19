@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 import unittest
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[2]
 SNAPSHOTS = Path("astro/extractedcode/configuration-snippets")
 JSON_GEN = Path("astro/src/content/json/generated")
 THEME_TEMPLATES = Path("astro/src/content/json/themes/templates.json")
@@ -121,9 +121,9 @@ class RefreshTests(unittest.TestCase):
         self.theme_templates.parent.mkdir(parents=True)
         shutil.copy2(ROOT / THEME_TEMPLATES, self.theme_templates)
 
-        self.script = self.root / "src/scripts/fetch_external_content.sh"
+        self.script = self.root / "scripts/fetch_external_content.sh"
         self.script.parent.mkdir(parents=True)
-        shutil.copy2(ROOT / "src/scripts/fetch_external_content.sh", self.script)
+        shutil.copy2(ROOT / "scripts/fetch_external_content.sh", self.script)
         
         self.fixture = {"heads": {}, "files": {}, "json": {}}
         attribution = (self.snapshots / "SOURCES.md").read_text()
@@ -212,7 +212,7 @@ class RefreshTests(unittest.TestCase):
         self.assertEqual(self.contents(), self.before)
         self.assertEqual(self.file_metadata(), metadata)
         summary = (self.root / "summary.md").read_text()
-        self.assertIn("bash src/scripts/fetch_external_content.sh", summary)
+        self.assertIn("bash scripts/fetch_external_content.sh", summary)
         self.assertIn("+# upstream change", summary)
 
     def test_json_drift_is_detected_and_fails_check(self):

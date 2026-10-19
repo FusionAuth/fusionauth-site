@@ -7,7 +7,7 @@ case "${1:-}" in
   '') ;;
   --check) mode=check ;;
   --help)
-    printf 'Usage: bash src/scripts/fetch_external_content.sh [--check]\n'
+    printf 'Usage: bash scripts/fetch_external_content.sh [--check]\n'
     printf 'Refresh configuration snapshots and generated JSON, or report drift without changing files.\n'
     printf 'Set FUSIONAUTH_APP_ZIP to reuse a downloaded release zip, or FUSIONAUTH_VERSION to pin the download.\n'
     exit 0 ;;
@@ -18,7 +18,7 @@ if [[ $# -gt 1 ]]; then
   exit 2
 fi
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 snapshot_dir="$repo_root/astro/extractedcode/configuration-snippets"
 json_dir="$repo_root/astro/src/content/json/generated"
 templates_json="$repo_root/astro/src/content/json/themes/templates.json"
@@ -157,7 +157,7 @@ unzip -p "$lib_dir"/fusionauth-usage-stats-common*.jar \
   > "$staging_dir/json/sample-usage-data.json"
 
 # Annotations JSON
-javac -cp "$cp" -d "$java_classes" "$repo_root/src/scripts/java/GenerateJSONFromAnnotations.java"
+javac -cp "$cp" -d "$java_classes" "$repo_root/scripts/java/GenerateJSONFromAnnotations.java"
 java -cp "$cp:$java_classes" GenerateJSONFromAnnotations \
   "$staging_dir/json" \
   io.fusionauth.api.service.search.client.domain.documents.IndexEntity \
@@ -166,7 +166,7 @@ java -cp "$cp:$java_classes" GenerateJSONFromAnnotations \
   io.fusionauth.api.service.authentication.AuthenticationType
 
 # API Endpoints JSON
-javac -cp "$cp" -d "$java_classes" "$repo_root/src/scripts/java/GenerateEndpointsJSON.java"
+javac -cp "$cp" -d "$java_classes" "$repo_root/scripts/java/GenerateEndpointsJSON.java"
 java -cp "$cp:$java_classes" GenerateEndpointsJSON \
   "$staging_dir/json/api-endpoints.json"
 
@@ -221,7 +221,7 @@ if [[ "$mode" == check ]]; then
     {
       printf '## External content has changed\n\n'
       printf 'Run this from the repo root, review the diff and affected guides, then open a PR:\n\n'
-      printf '```bash\nbash src/scripts/fetch_external_content.sh\n```\n\n'
+      printf '```bash\nbash scripts/fetch_external_content.sh\n```\n\n'
       if [[ "$theme_drift" -eq 1 ]]; then
         printf 'Theme template fields changed. Add (+) or remove (-) entries in `astro/src/content/json/themes/templates.json` by hand.\n\n'
       fi
@@ -231,7 +231,7 @@ if [[ "$mode" == check ]]; then
     } >> "$GITHUB_STEP_SUMMARY"
   fi
   printf '\nExternal content has changed. No local files were modified.\n' >&2
-  printf 'Run bash src/scripts/fetch_external_content.sh, then review the diff and affected guides.\n' >&2
+  printf 'Run bash scripts/fetch_external_content.sh, then review the diff and affected guides.\n' >&2
   exit 1
 fi
 

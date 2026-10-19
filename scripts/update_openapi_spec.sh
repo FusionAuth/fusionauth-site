@@ -7,14 +7,14 @@ case "${1:-}" in
   '') ;;
   --check) mode=check ;;
   --help)
-    printf 'Usage: bash src/scripts/update_openapi_spec.sh [--check]\n'
+    printf 'Usage: bash scripts/update_openapi_spec.sh [--check]\n'
     printf 'Download the latest spec from fusionauth-openapi into astro/public/docs/openapi.yaml.\n'
     printf 'With --check, report whether upstream differs without changing files.\n'
     exit 0 ;;
   *) printf 'Unknown argument: %s\n' "$1" >&2; exit 2 ;;
 esac
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 spec="$repo_root/astro/public/docs/openapi.yaml"
 url='https://raw.githubusercontent.com/FusionAuth/fusionauth-openapi/main/openapi.yaml'
 
@@ -32,9 +32,9 @@ if cmp -s "$download" "$spec"; then
 fi
 
 if [[ "$mode" == check ]]; then
-  printf 'The OpenAPI spec differs from upstream. Run bash src/scripts/update_openapi_spec.sh, review the diff, then open a PR.\n' >&2
+  printf 'The OpenAPI spec differs from upstream. Run bash scripts/update_openapi_spec.sh, review the diff, then open a PR.\n' >&2
   if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
-    printf '## OpenAPI spec is out of date\n\nRun this from the repo root, review the diff, then open a PR:\n\n```bash\nbash src/scripts/update_openapi_spec.sh\n```\n' >> "$GITHUB_STEP_SUMMARY"
+    printf '## OpenAPI spec is out of date\n\nRun this from the repo root, review the diff, then open a PR:\n\n```bash\nbash scripts/update_openapi_spec.sh\n```\n' >> "$GITHUB_STEP_SUMMARY"
   fi
   exit 1
 fi

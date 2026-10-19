@@ -35,7 +35,7 @@ if [[ -n "$issue" ]]; then
   exit 0
 fi
 
-owners="$(awk '$1 == "*" { $1 = ""; print }' "$(dirname "$0")/../../.github/CODEOWNERS" | xargs)"
+owners="$(awk '$1 == "*" { $1 = ""; print }' "$(dirname "$0")/../.github/CODEOWNERS" | xargs)"
 gh label create "$label" --repo "$GITHUB_REPOSITORY" --force \
   --color B60205 --description "A scheduled workflow is failing"
 gh issue create --repo "$GITHUB_REPOSITORY" --label "$label" --title "$title" --body "$owners
