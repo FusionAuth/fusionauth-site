@@ -1,6 +1,6 @@
 # Configuration snippets
 
-These are snapshots of the files displayed in five documentation pages. The external projects remain the source of truth for the complete configurations; this directory intentionally has no `repositoryUrl.txt` and must not be exported over those repositories.
+These are snapshots of the files displayed on a few documentation pages. The external projects remain the source of truth for the complete configurations; this directory intentionally has no `repositoryUrl.txt` and must not be exported over those repositories.
 
 | Local directory | Upstream source | Revision |
 | --- | --- | --- |
