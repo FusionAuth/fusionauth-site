@@ -10,9 +10,9 @@
  * reports images whose differing-pixel ratio exceeds a threshold.
  *
  * Usage:
- *   src/scripts/compare-screenshots.mjs --baseline <dir> [--candidate <dir>]
- *   src/scripts/compare-screenshots.mjs --baseline /tmp/before --threshold 0.005
- *   src/scripts/compare-screenshots.mjs --baseline /tmp/before --revert-within-tolerance
+ *   scripts/compare-screenshots.mjs --baseline <dir> [--candidate <dir>]
+ *   scripts/compare-screenshots.mjs --baseline /tmp/before --threshold 0.005
+ *   scripts/compare-screenshots.mjs --baseline /tmp/before --revert-within-tolerance
  *
  * Options:
  *   --baseline <dir>            Reference images. Required.
@@ -38,7 +38,7 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import { pathToFileURL } from 'url';
 
-const REPO_ROOT = resolve(join(dirname(fileURLToPath(import.meta.url)), '..', '..'));
+const REPO_ROOT = resolve(join(dirname(fileURLToPath(import.meta.url)), '..'));
 
 // pixelmatch, pngjs and sharp are installed for the screenshot CLI rather than the
 // site, so resolve them from there instead of adding duplicate dependencies.

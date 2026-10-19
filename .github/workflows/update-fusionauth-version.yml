@@ -1,0 +1,115 @@
+name: Update FusionAuth version
+
+on:
+  schedule:
+    - cron: '17 9 */2 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # pins the docker install compose file and the screenshot tooling; sets `version` only when it changed something
+      - name: Pin latest FusionAuth release
+        id: bump
+        run: bash scripts/update_fusionauth_version.sh
+
+      # one PR per version; a closed one means someone already decided, so don't reopen it
+      - name: Check for an existing PR
+        id: existing
+        if: steps.bump.outputs.version
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          branch="automation/fusionauth-$VERSION"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          count=$(gh pr list --head "$branch" --state all --json number --jq length)
+          echo "found=$([ "$count" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          if [ "$count" -gt 0 ]; then echo "A PR for FusionAuth $VERSION already exists."; fi
+
+      - uses: actions/setup-node@v7
+        if: steps.existing.outputs.found == 'false'
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            astro/package-lock.json
+            astro/screenshots/package-lock.json
+
+      - name: Install site modules
+        if: steps.existing.outputs.found == 'false'
+        run: npm ci
+        working-directory: ./astro
+
+      - name: Install screenshots CLI
+        if: steps.existing.outputs.found == 'false'
+        run: npm ci
+        working-directory: ./astro/screenshots
+
+      # the Admin UI shows the version, so every release needs new screenshots; exits 0 unchanged, 2 changed
+      - name: Retake screenshots
+        id: refresh
+        if: steps.existing.outputs.found == 'false'
+        run: |
+          set +e
+          scripts/refresh-screenshots.sh
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ] && [ "$status" -ne 2 ]; then exit "$status"; fi
+          echo "changed=$([ "$status" -eq 2 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+        env:
+          FUSIONAUTH_LICENSE_KEY: ${{ secrets.FUSIONAUTH_LICENSE_KEY }}
+
+      - name: Upload diff images
+        if: steps.refresh.outputs.changed == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshot-diffs
+          path: astro/.screenshot-diffs/
+          if-no-files-found: ignore
+
+      - name: Open PR
+        if: steps.existing.outputs.found == 'false'
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+          BRANCH: ${{ steps.existing.outputs.branch }}
+          SCREENSHOTS_CHANGED: ${{ steps.refresh.outputs.changed }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml astro/public/img/docs/screenshots/
+          git commit -m "chore: pin FusionAuth $VERSION"
+          # a branch left by an earlier run that failed before opening its PR is ours to replace
+          git push --force origin "$BRANCH"
+
+          if [ "$SCREENSHOTS_CHANGED" = true ]; then
+            shots="Screenshots retaken against $VERSION. Only images whose pixel diff exceeded the tolerance are included; diff images are in the \`screenshot-diffs\` artifact of [this run]($RUN_URL)."
+          else
+            shots="Screenshots retaken against $VERSION; none changed beyond the tolerance."
+          fi
+          gh pr create --base main --head "$BRANCH" \
+            --title "chore: pin FusionAuth $VERSION" \
+            --body "Pins \`fusionauth/fusionauth-app:$VERSION\` in the Docker install compose file (\`astro/public/docs/docker-compose.yml\`, served at /docs/docker-compose.yml) and the screenshot tooling (\`astro/screenshots/docker-compose.yml\`).
+
+          $shots"
+
+  report:
+    needs: update
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/report-scheduled-run.yml
+    with:
+      result: ${{ needs.update.result }}
+    permissions:
+      contents: read
+      issues: write

@@ -25,10 +25,10 @@
  * Exits 1 when anything is needed, 0 when the diff needs no redirect work.
  *
  * Usage:
- *   src/scripts/check-redirects.mjs                      # working tree vs HEAD
- *   src/scripts/check-redirects.mjs --base origin/main    # branch vs main
- *   src/scripts/check-redirects.mjs --base origin/main --head HEAD
- *   src/scripts/check-redirects.mjs --write               # apply to redirects.json
+ *   scripts/check-redirects.mjs                      # working tree vs HEAD
+ *   scripts/check-redirects.mjs --base origin/main    # branch vs main
+ *   scripts/check-redirects.mjs --base origin/main --head HEAD
+ *   scripts/check-redirects.mjs --write               # apply to redirects.json
  *
  * Environment variables:
  *   BASE_REF — same as --base
@@ -39,7 +39,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname, posix } from 'path';
 import { fileURLToPath } from 'url';
 
-const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REDIRECTS_FILE = 'src/redirects.json';
 
 // ── Arguments ─────────────────────────────────────────────────────────────────

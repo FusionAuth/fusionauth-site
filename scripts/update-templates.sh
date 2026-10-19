@@ -10,10 +10,10 @@
 # It does not commit or open a PR. A non-zero exit means a human needs to look.
 #
 # Usage:
-#   src/scripts/update-templates.sh email
-#   src/scripts/update-templates.sh messengers
-#   src/scripts/update-templates.sh all
-#   src/scripts/update-templates.sh all --dry-run     # leave the repo untouched
+#   scripts/update-templates.sh email
+#   scripts/update-templates.sh messengers
+#   scripts/update-templates.sh all
+#   scripts/update-templates.sh all --dry-run     # leave the repo untouched
 #
 # Environment:
 #   FUSIONAUTH_VERSION    Version to pull. Defaults to the latest from the version API.
@@ -29,7 +29,7 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"
 
 DRY_RUN=0
@@ -215,7 +215,7 @@ for kind in "${KINDS[@]}"; do
 	status=2
 	summary+="## $kind templates have new content"$'\n\n'
 	summary+="Regenerate with:"$'\n\n'
-	summary+='```bash'$'\n'"src/scripts/update-templates.sh $kind"$'\n''```'$'\n\n'
+	summary+='```bash'$'\n'"scripts/update-templates.sh $kind"$'\n''```'$'\n\n'
 	summary+="<details><summary>Diff</summary>"$'\n\n'
 	summary+='```diff'$'\n'"$(git --no-pager diff -- "$dest/")"$'\n''```'$'\n'
 	summary+="</details>"$'\n\n'

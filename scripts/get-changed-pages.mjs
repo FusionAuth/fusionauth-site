@@ -21,7 +21,7 @@ import { readFileSync, existsSync, statSync, readdirSync } from 'fs';
 import { join, dirname, posix } from 'path';
 import { fileURLToPath } from 'url';
 
-const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = 'astro/src';
 
 const BASE_REF = process.env.BASE_REF || 'origin/main';
