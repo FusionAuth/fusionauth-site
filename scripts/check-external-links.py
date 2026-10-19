@@ -211,6 +211,7 @@ _DEFAULT_EXCLUDE_DEST = [
     r"help\.openai\.com",           # returns 403 to crawlers; works in browsers
     r"prereqs\.codemash\.org",      # 520 from github actions IPs
     r"aag-it\.com",                 # 520 from github actions IPs
+    r"documentation\.solarwinds\.com" # spurious timeout
     # social share/submit endpoints; need a logged-in browser, so crawlers get 4xx
     r"^https?://(www\.)?(reddit\.com/submit|(twitter|x)\.com/intent/|linkedin\.com/sharing/)",
 ]
