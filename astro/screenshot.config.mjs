@@ -45,6 +45,7 @@ async function selectTab(page, label) {
 
 // switched on (not saved) so the screenshot shows the settings each one reveals
 const switches = {
+  'theme-kickstart-app-oauth': ['application_oauthConfiguration_requireRegistration'],
   'tenant-identities': ['tenant_emailConfiguration_verifyEmail', 'tenant_phoneConfiguration_verifyPhoneNumber'],
   'tenant-family-settings': ['tenant_familyConfiguration_enabled'],
   'tenant-mfa-email-settings': ['tenant_multiFactorConfiguration_email_enabled'],
@@ -86,6 +87,33 @@ const fixedHeight = {
   'tenant-advanced-external-identifier-durations': null,
   'tenant-advanced-external-identifier-generation': 'External identifier generation',
   'application-saml-enabled': null,
+  'theme-apply-tenant': null,
+  'theme-apply-application': null,
+  'theme-add-advanced': null,
+  'theme-preview-oauth-authorize': null,
+  'theme-preview-oauth-logout': null,
+  'theme-dark-messages': null,
+  'theme-simple-editor-messages': null,
+  'theme-create-api-key': "[data-hl='api-theme-row']",
+};
+
+const defaultThemeId = '75a068fd-e94b-451a-9aeb-3ddb9a3b5987';
+const simpleThemeId = '3c717291-5d83-4014-bd51-97c76475dc86';
+const piedPiperThemeId = '6e1f7a52-3c4d-4b8a-9f0e-2d7c1b9a8e31';
+const darkThemeId = '9c2d4e6f-8a1b-4c3d-9e5f-7a6b5c4d3e21';
+
+// simple theme editor panel opened for each screenshot
+const simpleEditorTabs = {
+  'theme-simple-editor-images': 'Images',
+  'theme-simple-editor-styles': 'Styles',
+  'theme-simple-editor-messages': 'Messages',
+  'theme-simple-editor-preview': 'Pages preview',
+};
+
+// theme chosen (not saved) in the Theme select
+const themeSelects = {
+  'theme-apply-tenant': piedPiperThemeId,
+  'theme-apply-application': piedPiperThemeId,
 };
 
 // full-width strips of the window around these parts of the page, so the sidebar stays beside them
@@ -258,6 +286,35 @@ export default {
       }
     } catch (e) {
       throw new Error(`beforeAll: Screenshots Theme creation failed: ${e.message}`, { cause: e });
+    }
+
+    // the theme preview page loads every template in its own frame, which outlasts the page load timeout;
+    // blank the ones no screenshot shows
+    await context.route('**/admin/theme/preview?*', route => {
+      const template = new URL(route.request().url()).searchParams.get('template');
+      if (['oauth2Authorize', 'oauth2Logout', 'oauth2Register'].includes(template)) return route.continue();
+      return route.fulfill({ contentType: 'text/html', body: '<!doctype html><html><body></body></html>' });
+    });
+
+    // themes for the theme pages: a branded simple theme and the dark theme from the Kickstart tutorial
+    try {
+      const theme = (id, method, body) => fetch(`${baseUrl}/api/theme/${id}`, {
+        method, headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      }).then(async r => { if (!r.ok) throw new Error(`${method} theme ${id}: ${r.status} ${await r.text()}`); });
+      const exists = async id => (await fetch(`${baseUrl}/api/theme/${id}`, { headers: { 'Authorization': apiKey } })).ok;
+
+      if (!(await exists(piedPiperThemeId))) await theme(piedPiperThemeId, 'POST', { sourceThemeId: simpleThemeId, theme: { name: 'Pied Piper' } });
+      await theme(piedPiperThemeId, 'PATCH', { theme: { variables: {
+        primaryButtonColor: '#1f8a4c', primaryButtonFocusColor: '#17703c', linkTextColor: '#1f8a4c', linkTextFocusColor: '#17703c',
+        pageBackgroundColor: '#e7f2eb', iconBackgroundColor: '#1f8a4c',
+      } } });
+
+      if (!(await exists(darkThemeId))) await theme(darkThemeId, 'POST', { sourceThemeId: defaultThemeId, theme: { name: 'Dark Theme' } });
+      const { theme: source } = await (await fetch(`${baseUrl}/api/theme/${defaultThemeId}`, { headers: { 'Authorization': apiKey } })).json();
+      const stylesheet = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'screenshots/themes/dark-theme.css'), 'utf-8');
+      await theme(darkThemeId, 'PATCH', { theme: { stylesheet, defaultMessages: source.defaultMessages } });
+    } catch (e) {
+      throw new Error(`beforeAll: theme setup failed: ${e.message}`, { cause: e });
     }
 
     // always PUT the canonical email template content (matches the .ftl files referenced in the docs)
@@ -505,6 +562,161 @@ export default {
       if (!pinned) throw new Error('Tenant manager row not found');
     }
 
+    if (simpleEditorTabs[ctx?.name] || ['theme-simple-editor-light', 'theme-simple-editor-dark'].includes(ctx?.name)) {
+      await page.waitForFunction(() => customElements.get('el-tab-list'));
+      await page.waitForTimeout(1000);
+      if (simpleEditorTabs[ctx.name]) {
+        await page.locator('main [role=tab]', { hasText: simpleEditorTabs[ctx.name] }).first().click();
+        await page.waitForTimeout(800);
+      } else {
+        // apply the pre-built theme from its card in the Pre-built themes panel
+        const label = ctx.name.endsWith('-dark') ? 'Dark' : 'Light';
+        await page.locator('#prebuilt-themes, main [role=tabpanel]:visible').getByText(label, { exact: true }).first().click();
+        await page.waitForTimeout(500);
+        const confirm = page.locator('.prime-dialog.open button, dialog[open] button').filter({ hasText: /^(Yes|OK|Confirm|Load)/ });
+        if (await confirm.count()) await confirm.first().click();
+        await page.waitForTimeout(1200);
+      }
+      // edits in the editor (not saved) so the preview shows what each panel changes
+      const setFields = fields => page.evaluate(f => f.every(([id, value]) => {
+        const el = document.getElementById(id);
+        if (!el) return false;
+        el.value = value;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        return true;
+      }), fields);
+      if (ctx.name === 'theme-simple-editor-images') {
+        await page.locator('#images button', { hasText: 'Background image' }).first().click();
+        await page.waitForTimeout(300);
+        if (!(await setFields([['backgroundImageURLInput', 'http://localhost:8080/starry-night.jpg']]))) throw new Error('background image field not found');
+        await page.waitForTimeout(2000);
+      }
+      if (ctx.name === 'theme-simple-editor-styles') {
+        const set = await setFields([
+          ['pageBackgroundColor', '#1d2b4f'], ['primaryButtonColor', '#e2672b'], ['linkTextColor', '#e2672b'], ['iconColor', '#e2672b'],
+        ]);
+        if (!set) throw new Error('style color fields not found');
+        await page.evaluate(() => {
+          const font = document.querySelector('#styles select');
+          const serif = [...font.options].find(o => /georgia|serif/i.test(o.textContent) && !/sans/i.test(o.textContent));
+          if (serif) { font.value = serif.value; font.dispatchEvent(new Event('change', { bubbles: true })); }
+        });
+        await page.waitForTimeout(1500);
+      }
+      if (ctx.name === 'theme-simple-editor-messages') {
+        await page.locator('#messages a', { hasText: 'Edit' }).first().click();
+        await page.locator('.prime-dialog.open').waitFor();
+        await page.waitForTimeout(1000);
+        const filled = await page.evaluate(() => {
+          const editors = [...document.querySelectorAll('.prime-dialog.open .CodeMirror')];
+          editors.at(-1)?.CodeMirror?.setValue('oauth2-authorize-page-title=Pied Piper | Log in\noauth2-logout-page-title=Pied Piper | Log out');
+          // show the default messages the custom ones override, like the original
+          const cm = editors[0]?.CodeMirror;
+          const line = cm?.getValue().split('\n').findIndex(l => l.startsWith('oauth2-logout-page-title='));
+          if (!(line >= 0)) return false;
+          cm.setOption('viewportMargin', Infinity);
+          cm.scrollIntoView({ line, ch: 0 }, 80);
+          cm.setSelection({ line, ch: 0 }, { line, ch: cm.getLine(line).length });
+          return editors.length > 1;
+        });
+        if (!filled) throw new Error('custom messages editor not found');
+      }
+      if (ctx.name === 'theme-simple-editor-preview') {
+        await page.locator('#pages a', { hasText: 'OAuth register' }).first().click();
+        await page.waitForTimeout(1500);
+      }
+    }
+
+    if (ctx?.name === 'theme-add-advanced') {
+      await page.locator('input[name="theme.name"]').fill('Tailwind + DaisyUI');
+      await page.evaluate(() => document.activeElement?.blur());
+    }
+
+    if (themeSelects[ctx?.name]) {
+      const tagged = await page.evaluate(id => {
+        const select = [...document.querySelectorAll('select')].find(s => /themeId$/.test(s.id));
+        if (!select) return false;
+        select.value = id;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        (select.closest('[id$="-form-row"]') ?? select.parentElement).dataset.hl = 'theme-select';
+        return select.value === id;
+      }, themeSelects[ctx.name]);
+      if (!tagged) throw new Error('theme select not set');
+      // the highlight is centred in the window, so a window twice its height keeps the page at the top
+      const center = await page.evaluate(() => { const r = document.querySelector("[data-hl='theme-select']").getBoundingClientRect(); return r.top + r.height / 2 + window.scrollY; });
+      await page.setViewportSize({ width: page.viewportSize().width, height: Math.round(center * 2) });
+    }
+
+    if (ctx?.name === 'theme-add') {
+      const tagged = await page.evaluate(name => {
+        const row = [...document.querySelectorAll('tbody tr')].find(tr => tr.querySelector('td')?.textContent.trim() === name);
+        if (row) row.dataset.hl = 'theme-row';
+        return !!row;
+      }, 'Pied Piper');
+      if (!tagged) throw new Error('Pied Piper theme row not found');
+    }
+
+    if (ctx?.name === 'theme-preview-menu') {
+      const opened = await page.evaluate(name => {
+        const row = [...document.querySelectorAll('tbody tr')].find(tr => tr.querySelector('td')?.textContent.trim() === name);
+        // the actions menu is a popover, which a scripted click doesn't open
+        const menu = document.getElementById(row?.querySelector('button[popovertarget]')?.getAttribute('popovertarget'));
+        menu?.showPopover();
+        return !!menu;
+      }, 'Pied Piper');
+      if (!opened) throw new Error('Pied Piper theme row not found');
+      await page.waitForTimeout(500);
+      const tagged = await page.evaluate(() => {
+        // the menu is a fixed-position popover, so test its size rather than offsetParent
+        const item = [...document.querySelectorAll('a[href^="/admin/theme/view/"]')].find(a => a.getBoundingClientRect().width > 0 && a.textContent.trim() === 'Preview');
+        if (item) item.dataset.hl = 'theme-preview';
+        return !!item;
+      });
+      if (!tagged) throw new Error('Preview menu item not shown');
+    }
+
+    // theme preview page: show the template named by the URL fragment
+    if (pathname.startsWith('/admin/theme/view/') && fragment) {
+      const tab = page.locator(`main button[data-tab="${fragment}"]`);
+      await tab.click();
+      await tab.evaluate(el => { el.scrollIntoView({ block: 'center' }); window.scrollTo(0, 0); });
+      await page.waitForTimeout(1500);
+    }
+
+    if (ctx?.name === 'theme-dark-messages') {
+      await page.locator('main [role=tab]', { hasText: 'Messages' }).first().click();
+      await page.waitForTimeout(800);
+      await page.locator('#messages a[href*="isDefault=true"]').click();
+      await page.locator('.prime-dialog.open .CodeMirror').waitFor();
+      await page.waitForTimeout(1000);
+      const tagged = await page.evaluate(() => {
+        const cm = document.querySelector('.prime-dialog.open .CodeMirror')?.CodeMirror;
+        if (!cm) return false;
+        // render every line, so a later scroll can't reuse the tagged line's element for another line
+        cm.setOption('viewportMargin', Infinity);
+        const line = cm.getValue().split('\n').findIndex(l => l.startsWith('forgot-your-password='));
+        if (line < 0) return false;
+        cm.scrollIntoView({ line, ch: 0 }, 120);
+        cm.refresh();
+        const el = [...document.querySelectorAll('.prime-dialog.open .CodeMirror-line')].find(l => l.textContent.startsWith('forgot-your-password='));
+        if (el) el.dataset.hl = 'forgot-message';
+        return !!el;
+      });
+      if (!tagged) throw new Error('forgot-your-password message line not found');
+    }
+
+    if (ctx?.name === 'theme-create-api-key') {
+      const tagged = await page.evaluate(() => {
+        const boxes = [...document.querySelectorAll('input[type=checkbox]')].filter(i => i.name === "apiKey.permissions.endpoints['/api/theme']");
+        for (const box of boxes) if (['GET', 'PATCH'].includes(box.value) && !box.checked) box.click();
+        const row = boxes[0]?.closest('tr');
+        if (row) row.dataset.hl = 'api-theme-row';
+        return !!row;
+      });
+      if (!tagged) throw new Error('/api/theme permission row not found');
+    }
+
     if (ctx?.name === 'tenant-connector-add-policy') {
       await page.locator('el-tab-list button[aria-controls="connectors"]').click();
       await page.locator('#add-connector-policy').click();
@@ -735,7 +947,7 @@ export default {
       }
     }
 
-    if (url.includes('/theme/edit/')) {
+    if (ctx?.name === 'theme-localization-messages') {
       // viewport is already set to spec.height by capture.mjs before this hook runs.
       // scroll down to reach the Add Localization button (below the fold), click it,
       // then scroll back to top -- position:fixed dialog stays centred in the viewport.
@@ -794,7 +1006,7 @@ export default {
         }, document.documentElement.scrollHeight);
       });
       if (fullHeight > 800 && !(ctx?.name in fixedHeight) && !(ctx?.name in bands)) {
-        await page.setViewportSize({ width: 1100, height: Math.min(fullHeight, 2500) });
+        await page.setViewportSize({ width: page.viewportSize().width, height: Math.min(fullHeight, 2500) });
         await page.waitForTimeout(300);
       }
     }
@@ -831,15 +1043,16 @@ export default {
       }, bands[ctx.name]);
       if (!height) throw new Error(`band selector matched nothing: ${bands[ctx.name]}`);
       // a window just taller than the strip keeps the sticky sidebar beside it
-      await page.setViewportSize({ width: 1100, height: Math.max(800, Math.ceil(height) + 160) });
+      await page.setViewportSize({ width: page.viewportSize().width, height: Math.max(800, Math.ceil(height) + 160) });
     }
 
     if (fixedHeight[ctx?.name]) {
-      const scrolled = await page.evaluate(title => {
-        const legend = [...document.querySelectorAll('main legend')].find(l => l.offsetParent && l.textContent.trim().startsWith(title));
+      const scrolled = await page.evaluate(target => {
+        const el = (/^[\[#.]/.test(target) && document.querySelector(target))
+          || [...document.querySelectorAll('main legend')].find(l => l.offsetParent && l.textContent.trim().startsWith(target));
         // leave room for the sticky top bar
-        if (legend) window.scrollTo(0, legend.getBoundingClientRect().top + window.scrollY - 88);
-        return !!legend;
+        if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 88);
+        return !!el;
       }, fixedHeight[ctx.name]);
       if (!scrolled) throw new Error(`section not found: ${fixedHeight[ctx.name]}`);
       await page.waitForTimeout(300);
