@@ -4,7 +4,7 @@ These are snapshots of the files displayed in six documentation pages. The exter
 
 | Local directory | Upstream source | Revision |
 | --- | --- | --- |
-| `containers/` | https://github.com/FusionAuth/fusionauth-containers/tree/bb01f00edb672c3cd3cdd618d39c1674bd3880f7 | `bb01f00edb672c3cd3cdd618d39c1674bd3880f7` |
+| `containers/` | https://github.com/FusionAuth/fusionauth-containers/tree/7675fd076aad8f44265eb372f3fdf5244e539493 | `7675fd076aad8f44265eb372f3fdf5244e539493` |
 | `contrib/` | https://github.com/FusionAuth/fusionauth-contrib/tree/d389f622f4a3e87415e556c60ea5df81e2e689de | `d389f622f4a3e87415e556c60ea5df81e2e689de` |
 | `example-docker-compose/` | https://github.com/FusionAuth/fusionauth-example-docker-compose/tree/7f87c0343ae88e51439b9ee91f753d69872ff872 | `7f87c0343ae88e51439b9ee91f753d69872ff872` |
 
