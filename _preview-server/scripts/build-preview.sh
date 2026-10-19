@@ -320,6 +320,9 @@ echo "URL:${PREVIEW_URL}"
 
 log "Computing changed pages for PR #${PR}…"
 cd "$SLOT_DIR"
+# branches cut before scripts/ moved to the repo root still have it under src/
+CHANGED_PAGES_SCRIPT=scripts/get-changed-pages.mjs
+[[ -f "$CHANGED_PAGES_SCRIPT" ]] || CHANGED_PAGES_SCRIPT=src/scripts/get-changed-pages.mjs
 BASE_REF=origin/main HEAD_REF=HEAD \
-  node src/scripts/get-changed-pages.mjs 2>/dev/null \
+  node "$CHANGED_PAGES_SCRIPT" 2>/dev/null \
   | sed 's/^/PAGE:/' || true

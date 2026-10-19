@@ -11,7 +11,7 @@ The script locates the astro/src root from its own path, so it works from any
 working directory — no need to cd anywhere before running.
 
 Usage:
-    ./src/scripts/check-external-links.py [options] [FILE ...]
+    ./scripts/check-external-links.py [options] [FILE ...]
 
 If FILE arguments are given, only those files are checked (--root scanning
 and --include-source are ignored). Useful for CI checks on changed files only.
@@ -209,6 +209,8 @@ _DEFAULT_EXCLUDE_DEST = [
     r"thatconference\.com",         # returns 404 to crawlers; works in browsers
     r"^https?://([^/]+\.)?that\.us", # THAT Conference site; returns 404 to crawlers
     r"help\.openai\.com",           # returns 403 to crawlers; works in browsers
+    r"prereqs\.codemash\.org",      # 520 from github actions IPs
+    r"aag-it\.com",                 # 520 from github actions IPs
     # social share/submit endpoints; need a logged-in browser, so crawlers get 4xx
     r"^https?://(www\.)?(reddit\.com/submit|(twitter|x)\.com/intent/|linkedin\.com/sharing/)",
 ]
@@ -394,7 +396,7 @@ def run(args) -> int:
         display_root = Path.cwd()
     else:
         root = Path(args.root).resolve() if args.root else (
-            Path(__file__).resolve().parent.parent.parent / "astro" / "src"
+            Path(__file__).resolve().parent.parent / "astro" / "src"
         )
         if not root.is_dir():
             sys.exit(f"error: --root {args.root!r} is not a directory")
@@ -432,7 +434,7 @@ def run(args) -> int:
         return 0
 
     # ── Resolve links into this repo on disk, not over HTTP ───────────────────
-    repo_root = Path(__file__).resolve().parent.parent.parent
+    repo_root = Path(__file__).resolve().parent.parent
     url_status: dict = {}
     self_repo_urls = []
     for url in unique_urls:
@@ -551,20 +553,20 @@ def main():
         epilog="""
 examples:
   # full site scan — works from any directory, root is found from script location
-  ./src/scripts/check-external-links.py
+  ./scripts/check-external-links.py
 
   # check specific files (e.g. from a PR diff) — skips --root scanning
-  ./src/scripts/check-external-links.py \\
+  ./scripts/check-external-links.py \\
       astro/src/content/docs/foo.mdx astro/src/content/blog/bar.md
 
   # only scan files matching a regex pattern
-  ./src/scripts/check-external-links.py --include-source '/blog/'
+  ./scripts/check-external-links.py --include-source '/blog/'
 
   # add an extra exclusion on top of the built-in defaults
-  ./src/scripts/check-external-links.py --exclude-dest 'my-placeholder\\.com'
+  ./scripts/check-external-links.py --exclude-dest 'my-placeholder\\.com'
 
   # faster: more workers, shorter rate-limit window
-  ./src/scripts/check-external-links.py \\
+  ./scripts/check-external-links.py \\
       --workers 40 --concurrency 5 --rate-limit 200
 """,
     )

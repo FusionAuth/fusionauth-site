@@ -5,12 +5,12 @@
 #
 # Usage:
 #   npm run test-extractedcode  (from astro/)
-#   bash src/scripts/test-extractedcode.sh  (from repo root)
+#   bash scripts/test-extractedcode.sh  (from repo root)
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"
 
 # Validate upfront — every extractedcode directory must have tests/test.sh

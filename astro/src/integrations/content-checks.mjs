@@ -5,12 +5,12 @@ import { fileURLToPath } from 'node:url';
 const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 
 const CHECKS = [
-  'src/scripts/check-for-incorrect-categories.sh',
-  'src/scripts/check-for-absolute-urls.sh',
-  'src/scripts/check-for-api-fields-no-name.sh',
+  'scripts/check-for-incorrect-categories.sh',
+  'scripts/check-for-absolute-urls.sh',
+  'scripts/check-for-api-fields-no-name.sh',
 ];
 
-/** Fails every build when content breaks the rules in src/scripts/check-*.sh. */
+/** Fails every build when content breaks the rules in scripts/check-*.sh. */
 export default function contentChecks() {
   return {
     name: 'content-checks',

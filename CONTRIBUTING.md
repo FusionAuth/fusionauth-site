@@ -267,9 +267,13 @@ Docs cards are rendered using [astro-better-cards](https://better-static-sites.g
 
 - The OpenAPI spec lives in `astro/public/docs/openapi.yaml`. The site serves it at `/docs/openapi.yaml`, the [OpenAPI Specification page](https://fusionauth.io/docs/apis/openapi) renders it in full, and the interactive client on each API reference page (`<API>`) uses it. It's a copy of the spec in [fusionauth-openapi](https://github.com/FusionAuth/fusionauth-openapi), so builds don't change when that repository does. After each FusionAuth release, refresh it from the repository root, review the diff, and commit it:
   ```shell
-  bash src/scripts/update_openapi_spec.sh
+  bash scripts/update_openapi_spec.sh
   ```
-  The weekly Check external content workflow runs `bash src/scripts/update_openapi_spec.sh --check` and reports when the copy differs from upstream.
+  The weekly Check external content workflow runs `bash scripts/update_openapi_spec.sh --check` and reports when the copy differs from upstream.
+- The Docker install page and the download widget point readers at `astro/public/docs/docker-compose.yml`, which the site serves at `/docs/docker-compose.yml`. It pins `fusionauth/fusionauth-app` to a release, as does the screenshot tooling in `astro/screenshots/docker-compose.yml`. Every other day, the Update FusionAuth version workflow checks for a newer release on Docker Hub. When it finds one, it updates both pins, retakes the screenshots, and opens a PR, unless a PR for that version already exists. To update the pins by hand, run this from the repository root, then retake the screenshots:
+  ```shell
+  bash scripts/update_fusionauth_version.sh
+  ```
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
 - `Defaults` is always capitalized.
 - If a field is required, but only when another feature is enabled, mark it optional rather than required in the API. Then, add a note in the description saying when it is required, like so:
