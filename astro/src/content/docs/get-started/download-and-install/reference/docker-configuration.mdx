@@ -4,6 +4,38 @@ description: Learn how to configure a Docker image containing FusionAuth to meet
 tags: docker configuration, docker environment variables, fusionauth docker, container configuration, docker-compose
 ---
 
+This page covers the full FusionAuth Docker Compose configuration, building your own FusionAuth image, and running FusionAuth in Docker with Kickstart, plugins, Kafka, and other services.
+
+## Full Docker Compose configuration
+
+The [Docker install guide](/docs/get-started/download-and-install/docker) uses a minimal `docker-compose.yml` that runs FusionAuth, PostgreSQL, and OpenSearch. The [fusionauth-containers repository](https://github.com/FusionAuth/fusionauth-containers/tree/main/docker/fusionauth) has a full configuration that also defines optional services. Docker Compose starts an optional service only when you enable its profile:
+
+| Profile | Services |
+| --- | --- |
+| `caddy` | Caddy reverse proxy |
+| `mailcatcher` | Mailcatcher SMTP server for development and testing |
+| `kafka` | Kafka and Zookeeper, for sending webhook events to Kafka |
+| `cleanspeak` | CleanSpeak profanity filtering (requires a CleanSpeak license) |
+| `opentelemetry` | OpenTelemetry collector |
+| `prometheus` | Prometheus monitoring |
+| `alertmanager` | Prometheus Alertmanager |
+
+To use the full configuration, download `docker-compose.yml` and `.env`, then start FusionAuth with any profiles you need:
+
+```shell-session
+curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/.env
+docker compose --profile mailcatcher --profile kafka up -d
+```
+
+The `caddy`, `opentelemetry`, `prometheus`, and `alertmanager` profiles also read configuration files from the repository, such as `Caddyfile` and the files in `monitoring/`. To use those profiles, clone the repository and run `docker compose` from its `docker/fusionauth` directory.
+
+<ExtractedCode title="docker-compose.yml" src="configuration-snippets/containers/docker/fusionauth/docker-compose.yml" lang="yaml" />
+
+<ExtractedCode title=".env" src="configuration-snippets/containers/docker/fusionauth/sample.env" lang="properties" />
+
+## Build a custom image
+
 If you want to build your own image starting with our base image, start with the `fusionauth/fusionauth-app` image. Just as the FusionAuth Docker image is based on an Ubuntu container image, you can build a Docker file which is based on the `fusionauth/fusionauth-app:latest` image. This can be useful if you want to permanently add a password hashing plugin, configuration file, or other customization to the image.
 
 Here's a Dockerfile which extends the latest FusionAuth image:
