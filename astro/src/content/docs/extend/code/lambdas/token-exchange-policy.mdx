@@ -15,21 +15,26 @@ When you create a new lambda using the FusionAuth UI we will provide you an empt
 If you are using the API to create the lambda you will need to ensure your function has the following signature:
 
 ```javascript
-function policy(tokenExchangeRequest, context) {
+function policy(result, exchange, context) {
   // Lambda code goes here
 }
 ```
 
 This lambda must contain a function named `policy` that accepts the following parameters:
 
-* `tokenExchangeRequest` - the token exchange request object containing information about the exchange. This object is read-only.
+* `result` - the result object that you populate with the authorization decision. This object is mutable and should be modified to return your decision.
+* `exchange` - the token exchange request object containing information about the exchange. This object is read-only.
 * `context` - an object containing the context of the request, including access to [secrets](/docs/extend/code/lambdas#secrets). This object is read-only.
 
-The lambda must return a decision object indicating whether to allow or deny the exchange.
+The lambda should populate the `result` object with a decision indicating whether to allow or deny the exchange.
 
-### `tokenExchangeRequest` object
+### `result` object
 
-The token exchange request object contains the following properties:
+The result object should be populated with one of the following decision structures. See [Return object](#return-object) below for details.
+
+### `exchange` object
+
+The exchange request object contains the following properties:
 
 * `clientId` - <AvailableSince since="1.70.0"/> - the client ID of the exchanger (the entity or application performing the token exchange)
 * `subjectToken` - <AvailableSince since="1.70.0"/> - information about the token being exchanged:
@@ -57,19 +62,17 @@ The context object includes the following:
 
 ### Return object
 
-The lambda must return a decision object with one of the following structures:
+The lambda should populate the `result` object with one of the following decision structures:
 
 #### Allow Decision
 
 ```javascript
-{
-  decision: 'ALLOW',
-  granted: {
-    audience: ['service-client-id'],  // Optional: granted audience (defaults to requested)
-    scope: ['read', 'write'],         // Optional: granted scope (defaults to requested)
-    expires_in: 3600                  // Optional: token lifetime in seconds (defaults to tenant setting)
-  }
-}
+result.decision = 'ALLOW';
+result.granted = {
+  audience: ['service-client-id'],  // Optional: granted audience (defaults to requested)
+  scope: ['read', 'write'],         // Optional: granted scope (defaults to requested)
+  expires_in: 3600                  // Optional: token lifetime in seconds (defaults to tenant setting)
+};
 ```
 
 <Aside type="note">
@@ -84,13 +87,11 @@ If you grant scopes that are not present in the subject token, they will be filt
 #### Deny Decision
 
 ```javascript
-{
-  decision: 'DENY',
-  denial: {
-    error: 'invalid_request',                    // Required: OAuth error code
-    error_description: 'Reason for denial'       // Optional: Human-readable description
-  }
-}
+result.decision = 'DENY';
+result.denial = {
+  error: 'invalid_request',                    // Required: OAuth error code
+  error_description: 'Reason for denial'       // Optional: Human-readable description
+};
 ```
 
 Common OAuth error codes:
@@ -103,13 +104,11 @@ Common OAuth error codes:
 #### Error Decision
 
 ```javascript
-{
-  decision: 'ERROR',
-  denial: {
-    error: 'server_error',                       // Required: OAuth error code
-    error_description: 'Lambda evaluation error' // Optional: Error details
-  }
-}
+result.decision = 'ERROR';
+result.denial = {
+  error: 'server_error',                       // Required: OAuth error code
+  error_description: 'Lambda evaluation error' // Optional: Error details
+};
 ```
 
 Use `ERROR` when the lambda itself encounters an error (e.g., external API failure, unexpected exception).
@@ -124,7 +123,7 @@ If your lambda throws an unhandled exception during execution, FusionAuth automa
 
 **Important**: Exception details are logged for debugging but are **not** exposed to the client via the OAuth error response. This prevents leaking sensitive information about your authorization logic.
 
-To provide meaningful error messages to clients, catch exceptions in your lambda and return explicit `DENY` or `ERROR` decisions with appropriate `error_description` values.
+To provide meaningful error messages to clients, catch exceptions in your lambda and populate the `result` object with explicit `DENY` or `ERROR` decisions with appropriate `error_description` values.
 
 ## Assigning The Lambda
 
@@ -145,26 +144,23 @@ Alternatively, set `tenant.oauthConfiguration.tokenExchangeConfiguration.policyE
 Allow only specific clients to perform token exchange:
 
 ```javascript
-function policy(tokenExchangeRequest, context) {
+function policy(result, exchange, context) {
   // Whitelist of allowed exchanger clients
   const allowedClients = [
     'todo-app-client-id',
     'calendar-app-client-id'
   ];
 
-  if (!allowedClients.includes(tokenExchangeRequest.clientId)) {
-    return {
-      decision: 'DENY',
-      denial: {
-        error: 'unauthorized_client',
-        error_description: 'Client not authorized for token exchange'
-      }
+  if (!allowedClients.includes(exchange.clientId)) {
+    result.decision = 'DENY';
+    result.denial = {
+      error: 'unauthorized_client',
+      error_description: 'Client not authorized for token exchange'
     };
+    return;
   }
 
-  return {
-    decision: 'ALLOW'
-  };
+  result.decision = 'ALLOW';
 }
 ```
 
@@ -173,36 +169,32 @@ function policy(tokenExchangeRequest, context) {
 Restrict token exchange to business hours:
 
 ```javascript
-function policy(tokenExchangeRequest, context) {
+function policy(result, exchange, context) {
   const now = new Date();
   const hour = now.getUTCHours();
   const day = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
 
   // Deny on weekends
   if (day === 0 || day === 6) {
-    return {
-      decision: 'DENY',
-      denial: {
-        error: 'invalid_request',
-        error_description: 'Token exchange not available on weekends'
-      }
+    result.decision = 'DENY';
+    result.denial = {
+      error: 'invalid_request',
+      error_description: 'Token exchange not available on weekends'
     };
+    return;
   }
 
   // Deny outside business hours (8 AM - 5 PM UTC)
   if (hour < 8 || hour >= 17) {
-    return {
-      decision: 'DENY',
-      denial: {
-        error: 'invalid_request',
-        error_description: 'Token exchange only available during business hours (8 AM - 5 PM UTC)'
-      }
+    result.decision = 'DENY';
+    result.denial = {
+      error: 'invalid_request',
+      error_description: 'Token exchange only available during business hours (8 AM - 5 PM UTC)'
     };
+    return;
   }
 
-  return {
-    decision: 'ALLOW'
-  };
+  result.decision = 'ALLOW';
 }
 ```
 
@@ -211,7 +203,7 @@ function policy(tokenExchangeRequest, context) {
 Call an external authorization service:
 
 ```javascript
-function policy(tokenExchangeRequest, context) {
+function policy(result, exchange, context) {
   // Retrieve API key from secrets
   const apiKey = context.services.secrets.get('authorization-api-key');
 
@@ -224,43 +216,38 @@ function policy(tokenExchangeRequest, context) {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        exchanger: tokenExchangeRequest.clientId,
-        subject: tokenExchangeRequest.subjectToken.sub,
-        audience: tokenExchangeRequest.requestedAudience,
-        scope: tokenExchangeRequest.requestedScope
+        exchanger: exchange.clientId,
+        subject: exchange.subjectToken.sub,
+        audience: exchange.requestedAudience,
+        scope: exchange.requestedScope
       })
     });
 
     if (response.status !== 200) {
-      return {
-        decision: 'DENY',
-        denial: {
-          error: 'access_denied',
-          error_description: 'External authorization service denied the request'
-        }
+      result.decision = 'DENY';
+      result.denial = {
+        error: 'access_denied',
+        error_description: 'External authorization service denied the request'
       };
+      return;
     }
 
     const authResult = JSON.parse(response.body);
 
     // Use external service's decision
-    return {
-      decision: 'ALLOW',
-      granted: {
-        audience: authResult.grantedAudience,
-        scope: authResult.grantedScope,
-        expires_in: authResult.tokenLifetime || 3600
-      }
+    result.decision = 'ALLOW';
+    result.granted = {
+      audience: authResult.grantedAudience,
+      scope: authResult.grantedScope,
+      expires_in: authResult.tokenLifetime || 3600
     };
 
   } catch (error) {
     console.error('Authorization API call failed:', error);
-    return {
-      decision: 'ERROR',
-      denial: {
-        error: 'server_error',
-        error_description: 'Unable to contact authorization service'
-      }
+    result.decision = 'ERROR';
+    result.denial = {
+      error: 'server_error',
+      error_description: 'Unable to contact authorization service'
     };
   }
 }
@@ -271,40 +258,36 @@ function policy(tokenExchangeRequest, context) {
 Enforce audience-specific rules:
 
 ```javascript
-function policy(tokenExchangeRequest, context) {
-  const audience = tokenExchangeRequest.requestedAudience[0];
-  const subjectUserId = tokenExchangeRequest.subjectToken.sub;
+function policy(result, exchange, context) {
+  const audience = exchange.requestedAudience[0];
+  const subjectUserId = exchange.subjectToken.sub;
 
   // Production services require elevated permissions
   if (audience === 'production-api-client-id') {
     // Check if subject token has admin scope
-    const subjectJwt = tokenExchangeRequest.subjectToken.jwt;
+    const subjectJwt = exchange.subjectToken.jwt;
     const hasAdminScope = subjectJwt.scope && subjectJwt.scope.includes('admin');
 
     if (!hasAdminScope) {
-      return {
-        decision: 'DENY',
-        denial: {
-          error: 'insufficient_scope',
-          error_description: 'Production access requires admin scope'
-        }
+      result.decision = 'DENY';
+      result.denial = {
+        error: 'insufficient_scope',
+        error_description: 'Production access requires admin scope'
       };
+      return;
     }
 
     // Grant reduced scope for production
-    return {
-      decision: 'ALLOW',
-      granted: {
-        scope: ['read'],
-        expires_in: 900  // 15 minutes only
-      }
+    result.decision = 'ALLOW';
+    result.granted = {
+      scope: ['read'],
+      expires_in: 900  // 15 minutes only
     };
+    return;
   }
 
   // Allow full access to dev/staging
-  return {
-    decision: 'ALLOW'
-  };
+  result.decision = 'ALLOW';
 }
 ```
 
@@ -313,18 +296,17 @@ function policy(tokenExchangeRequest, context) {
 Ensure subject tokens are fully validated:
 
 ```javascript
-function policy(tokenExchangeRequest, context) {
-  const validationStatus = tokenExchangeRequest.subjectToken.validationStatus;
+function policy(result, exchange, context) {
+  const validationStatus = exchange.subjectToken.validationStatus;
 
   // Only allow authoritative tokens (fully validated)
   if (validationStatus !== 'AUTHORITATIVE') {
-    return {
-      decision: 'DENY',
-      denial: {
-        error: 'invalid_request',
-        error_description: 'Subject token validation failed or incomplete'
-      }
+    result.decision = 'DENY';
+    result.denial = {
+      error: 'invalid_request',
+      error_description: 'Subject token validation failed or incomplete'
     };
+    return;
   }
 
   // Check token issuer is trusted
@@ -333,19 +315,16 @@ function policy(tokenExchangeRequest, context) {
     'https://external-idp.example.com'
   ];
 
-  if (!trustedIssuers.includes(tokenExchangeRequest.subjectToken.iss)) {
-    return {
-      decision: 'DENY',
-      denial: {
-        error: 'invalid_request',
-        error_description: 'Subject token from untrusted issuer'
-      }
+  if (!trustedIssuers.includes(exchange.subjectToken.iss)) {
+    result.decision = 'DENY';
+    result.denial = {
+      error: 'invalid_request',
+      error_description: 'Subject token from untrusted issuer'
     };
+    return;
   }
 
-  return {
-    decision: 'ALLOW'
-  };
+  result.decision = 'ALLOW';
 }
 ```
 
