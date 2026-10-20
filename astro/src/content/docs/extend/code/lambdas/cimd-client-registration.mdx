@@ -10,16 +10,17 @@ tags: cimd client registration lambda, client id metadata document, cimd, mcp, o
 
 When a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents) logs in, FusionAuth fetches the client's metadata document and registers the client just-in-time. Using this lambda function, you can allow or reject that registration, change the scopes and token settings the client gets, or revoke a client that is already registered.
 
-A registration lambda is the only way to filter which clients may register when a [CIMD domain](/docs/get-started/core-concepts/types/cimd-domains) uses the `*` wildcard.
+A registration lambda is the only way to filter which clients may register when a [CIMD domain](/docs/get-started/core-concepts/types/cimd-domains) uses the `*` wildcard. Without a lambda that rejects clients you don't recognize, a domain that uses the `*` wildcard accepts every client that publishes a valid metadata document. See [CIMD Security](/docs/operate/secure/cimd-security#limit-who-can-register).
 
 The CIMD client registration lambda has access to the following information:
 
 * the client's metadata document, along with the host and path of its `client_id` and `client_uri` URLs
 * the scope and token settings FusionAuth will apply by default, taken from the CIMD domain
+* the `resource` the client requested
 * metadata about the request, such as the IP address and user agent
 * authentication threats detected for the request, when Advanced Threat Detection is enabled
 
-The lambda doesn't receive the user or the requested `resource`.
+The lambda doesn't receive the user.
 
 You can use Lambda HTTP Connect to access external resources from this lambda, but you should use external resources sparingly. The lambda runs during the user's login, so any additional latency will impact users.
 
@@ -145,7 +146,22 @@ class Scope {
 }
 ```
 
-FusionAuth stores the `scopes` and `providedScopePolicy` decisions separately for each `resource` the client uses. The `ttlInSeconds` and `jwtPopulateLambdaId` decisions apply to the whole registration.
+### How FusionAuth Uses Each Result Property
+
+Some properties apply to a single `resource` and others apply to the client's whole registration. FusionAuth stores the `scopes` and `providedScopePolicy` decisions separately for each `resource` the client uses. The `ttlInSeconds` and `jwtPopulateLambdaId` decisions apply to the whole registration.
+
+| Property | Applies to | When FusionAuth uses it |
+|---|---|---|
+| `allowed` | The current request | Every time the lambda runs. When `false`, FusionAuth rejects the request and leaves any existing registration unchanged. |
+| `revoke` | The whole registration | Every time the lambda runs. When `true`, FusionAuth deletes the registration and its refresh tokens. |
+| `scopes` | The requested `resource` | Every time the lambda runs. FusionAuth saves the result for that `resource`. |
+| `providedScopePolicy` | The requested `resource` | Every time the lambda runs. FusionAuth saves the result for that `resource`. |
+| `ttlInSeconds` | The whole registration | Only when FusionAuth fetches the document. |
+| `jwtPopulateLambdaId` | The whole registration | Only when FusionAuth fetches the document. |
+
+Because of this, the lambda can't change the whole-registration properties when it runs for a new `resource` inside the cache window. In that case, FusionAuth ignores `ttlInSeconds` and `jwtPopulateLambdaId`, and the registration keeps the values it got at the last fetch. The lambda's `scopes` and `providedScopePolicy` still apply to the new `resource`. For more on the cache window, see [CIMD Registration Caching And Lifecycle](/docs/lifecycle/authenticate-users/oauth/cimd-registration-lifecycle#a-new-resource-inside-the-cache-window).
+
+FusionAuth recalculates a `resource`'s `scopes` and `providedScopePolicy` the first time the client uses that `resource` after each fetch of the document, because a fetch clears them. FusionAuth fetches the document at the first login after the cache window ends. See [When A Registration Is Refreshed](/docs/lifecycle/authenticate-users/oauth/cimd-registration-lifecycle#when-a-registration-is-refreshed).
 
 `clientMetadata` is an immutable argument of type `CimdClientMetadata`, with the following structure:
 
@@ -219,6 +235,12 @@ class Context {
      * @type {EventInfo} - See the MFA requirement lambda for details
      */
     eventInfo;
+
+    /**
+     * The resource the client requested, which is the value of the `resource` request parameter.
+     * @type {string}
+     */
+    resource;
 
     /**
      * Provides access to services available to the lambda, including secrets.
