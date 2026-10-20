@@ -61,6 +61,7 @@ const tenantSwitches = {
 const fixedHeight = {
   'tenant-identities': null,
   'tenant-identities-template-settings': 'Template settings',
+  'tenant-jwt': 'JSON web token settings',
   'tenant-webhooks-settings': null,
   'tenant-security-acl-captcha': null,
   'tenant-security-client-risk-rate-limit': 'Client risk configuration',
