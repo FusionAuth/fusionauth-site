@@ -12,6 +12,9 @@ try {
 } catch {}
 
 let adminLocale;
+// the OAuth single sign-on cookie, set aside while a screenshot needs a signed-out hosted page
+let savedSso;
+const signedOut = ['lambda-registration-blank', 'lambda-registration-invalid', 'five-minute-login'];
 
 // the tab bar is set up by a module script after the page loads
 const tabsReady = page => page.waitForFunction(() => customElements.get('el-tab-group') && customElements.get('el-tab-list'), null, { timeout: 10000 });
@@ -67,6 +70,12 @@ const switches = {
   'application-saml-logout-request': ['application_samlv2Configuration_enabled'],
   'application-saml-logout-response': ['application_samlv2Configuration_enabled'],
   'application-saml-assertion-encryption': ['application_samlv2Configuration_enabled', 'application_samlv2Configuration_assertionEncryptionConfiguration_enabled'],
+  'webhook-tenants': ['webhook_global'],
+  'webhook-signature': ['webhook_signatureConfiguration_enabled'],
+  'webhook-event-log-settings': ['systemConfiguration_webhookEventLogConfiguration_enabled'],
+  'kafka': ['integrations_kafka_enabled'],
+  'lambda-edit-application': ['application_jwtConfiguration_enabled'],
+  'multi-tenant-key-manager': ['apiKey_keyManager'],
 };
 
 // chosen (not saved) before the switches above
@@ -74,6 +83,7 @@ const selects = {
   'application-registration-self-service': { selfRegistrationType: 'Create' },
   'application-registration-self-service-basic': { selfRegistrationType: 'Complete' },
   'application-registration-self-service-advanced': { selfRegistrationType: 'Complete' },
+  'multi-tenant-control-plane-registration': { selfRegistrationType: 'Create' },
 };
 
 // pages too long to show in full keep the screenshot's height, scrolled to the named section if there is one
@@ -95,6 +105,15 @@ const fixedHeight = {
   'theme-dark-messages': null,
   'theme-simple-editor-messages': null,
   'theme-create-api-key': "[data-hl='api-theme-row']",
+  'webhook-add': null,
+  'webhook-test': null,
+  'lambda-registration-messages': null,
+  'lambda-edit-application': 'Lambda settings',
+  'multi-tenant-key-manager': null,
+  'five-minute-dashboard': null,
+  'five-minute-application-details': null,
+  'multi-tenant-blueprint-tenant': null,
+  'segment-add-user': null,
 };
 
 const defaultThemeId = '75a068fd-e94b-451a-9aeb-3ddb9a3b5987';
@@ -145,7 +164,134 @@ const bands = {
   'application-saml-logout-request': "[data-section='logout-request'], #samlv2-settings-body > .switch-group",
   'application-saml-logout-response': "[data-section='logout-response']",
   'application-saml-assertion-encryption': "[data-section='assertion-encryption']",
+  'webhook-security': 'el-tab-list, #security',
+  'webhook-tenants': 'el-tab-list, #tenants',
+  'webhook-tenants-selection': 'el-tab-list, #tenants',
+  'webhook-headers': 'el-tab-list, #headers',
+  'lambda-registration-form': 'main h1, main form',
 };
+
+const exampleWebhookId = '00000000-0000-0000-0000-600000000001';
+
+const atestLambdaId = 'f3b3b547-7754-452d-8729-21b50d111505';
+const atestBody = word => `function populate(jwt, user, registration) {\n  jwt.message = '${word} World!';\n  console.info('${word} World!');\n}`;
+const registrationExample = {
+  currentFieldId: '5c1f8e2a-9b3d-4a6e-8f7c-2d1b0a9e8c71',
+  futureFieldId: '7a2e9d4b-1c6f-4e8a-b3d5-6f0c9a8b7e62',
+  formId: 'b4d6f8a1-3e5c-4b7d-9a2f-1c8e6d4b2a93',
+  lambdaId: 'c8e1a3f5-7b9d-4c2e-a6f8-3d5b7e9a1c04',
+  themeId: 'd2f4a6c8-1e3b-4d5f-b7a9-8c0e2f4a6b15',
+  appId: 'e6a8c0e2-4f6b-4a8d-9c1e-5b7d9f1a3c26',
+};
+
+const exampleAppId = 'f1a3c5e7-9b2d-4f6a-8c0e-3b5d7f9a1c37';
+const blueprintTenantId = 'a7c9e1b3-5d2f-4a8c-9e6b-1f3a5c7e9d48';
+const hierarchy = {
+  types: { Company: 'b8d0f2a4-6e3c-4b9d-8f7a-2c4e6a8b0f59', Department: 'c9e1a3b5-7f4d-4c0e-9a8b-3d5f7b9c1a60', Document: 'd0f2b4c6-8a5e-4d1f-a9c0-4e6a8c0d2b71' },
+  entities: {
+    'Change Bank': ['Company', 'e1a3c5d7-9b6f-4e2a-b0d1-5f7b9d1e3c82'],
+    'Change Insurance': ['Company', 'f2b4d6e8-0c7a-4f3b-81e2-6a8c0e2f4d93'],
+    'Change Insurance Operations': ['Department', 'a3c5e7f9-1d8b-4a4c-92f3-7b9d1f3a5ea4'],
+    'Change Bank Operations': ['Department', 'b4d6f8a0-2e9c-4b5d-a3a4-8c0e2a4b6fb5'],
+    'Change Bank Finance': ['Department', 'c5e7a9b1-3f0d-4c6e-b4b5-9d1f3b5c7ac6'],
+    Passwords: ['Document', 'e52925cb-1072-421f-9f64-a64aacd8a7cb'],
+    Statements: ['Document', '832bf368-6adc-4ae0-b838-41feeb01ac47'],
+  },
+  // entity, the entity it is granted on, permissions
+  grants: [
+    ['Change Bank Operations', 'Change Bank', ['IsMember']],
+    ['Change Bank Finance', 'Change Bank', ['IsMember']],
+    ['Change Insurance Operations', 'Change Insurance', ['IsMember']],
+    ['Passwords', 'Change Bank Operations', ['IsMember']],
+    ['Statements', 'Change Bank Finance', ['IsMember']],
+  ],
+};
+
+// created for the screenshots that need them and deleted before any other, so other pages don't list them
+const temporaryResources = [
+  {
+    names: ['five-minute-application-form', 'five-minute-application-details', 'five-minute-user-search', 'five-minute-registration-add', 'five-minute-login', 'five-minute-login-not-registered'],
+    paths: [`/api/application/${exampleAppId}`],
+    create: async api => {
+      await api(`/api/application/${exampleAppId}`, 'POST', { application: { name: 'Example app', oauthConfiguration: {
+        authorizedRedirectURLs: ['http://localhost:3000/oauth-redirect'], logoutURL: 'http://localhost:3000/logout',
+        enabledGrants: ['authorization_code', 'refresh_token'], requireRegistration: true,
+      } } });
+    },
+  },
+  {
+    names: ['multi-tenant-users'],
+    paths: [`/api/tenant/${blueprintTenantId}`],
+    create: async api => {
+      await api(`/api/tenant/${blueprintTenantId}`, 'POST', { sourceTenantId: '30663132-6464-6665-3032-326466613934', tenant: { name: 'ppvctest2' } });
+      await api('/api/user', 'POST', { user: { email: 'jianyang@octhulu.com', password: 'password', firstName: 'Jian', lastName: 'Yang' } }, { 'X-FusionAuth-TenantId': blueprintTenantId });
+    },
+  },
+  {
+    names: ['hierarchy-entity-types', 'hierarchy-entities', 'hierarchy-user-grant'],
+    paths: [
+      ...Object.values(hierarchy.entities).map(([, id]) => `/api/entity/${id}`),
+      ...Object.values(hierarchy.types).map(id => `/api/entity/type/${id}`),
+    ],
+    create: async api => {
+      for (const [name, id] of Object.entries(hierarchy.types)) {
+        const permissions = (name === 'Document' ? ['Read', 'Write'] : ['Read', 'Write', 'IsMember']).map(p => ({ name: p }));
+        await api(`/api/entity/type/${id}`, 'POST', { entityType: { name, permissions } });
+      }
+      for (const [name, [type, id]] of Object.entries(hierarchy.entities)) {
+        await api(`/api/entity/${id}`, 'POST', { entity: { name, type: { id: hierarchy.types[type] } } });
+      }
+      const entityId = name => hierarchy.entities[name][1];
+      for (const [name, parent, permissions] of hierarchy.grants) {
+        await api(`/api/entity/${entityId(parent)}/grant`, 'POST', { grant: { recipientEntityId: entityId(name), permissions } });
+      }
+      await api(`/api/entity/${entityId('Change Bank Operations')}/grant`, 'POST', { grant: { userId: '00000000-0000-0000-0000-100000000001', permissions: ['Read', 'Write', 'IsMember'] } });
+    },
+  },
+  {
+    names: ['lambda-updated', 'lambda-edit-application'],
+    paths: [`/api/lambda/${atestLambdaId}`],
+    create: async api => {
+      await api(`/api/lambda/${atestLambdaId}`, 'POST', { lambda: { name: '[ATest]', type: 'JWTPopulate', engineType: 'GraalJS', debug: true, body: atestBody('Goodbye') } });
+    },
+  },
+  {
+    names: ['lambda-registration-form', 'lambda-registration-messages', 'lambda-registration-blank', 'lambda-registration-invalid'],
+    paths: [
+      `/api/application/${registrationExample.appId}`, `/api/form/${registrationExample.formId}`, `/api/form/field/${registrationExample.currentFieldId}`,
+      `/api/form/field/${registrationExample.futureFieldId}`, `/api/lambda/${registrationExample.lambdaId}`, `/api/theme/${registrationExample.themeId}`,
+    ],
+    create: async api => {
+      const r = registrationExample;
+      await api(`/api/form/field/${r.currentFieldId}`, 'POST', { field: { key: 'user.data.currentAuth', name: 'Current auth provider', control: 'text', type: 'string' } });
+      await api(`/api/form/field/${r.futureFieldId}`, 'POST', { field: { key: 'user.data.futureAuth', name: 'Future auth provider', control: 'text', type: 'string' } });
+      // the built-in Username and Password fields, which get new ids on each install, then the two above
+      const { fields } = await api('/api/form/field');
+      const builtIn = name => fields.find(f => f.name === name).id;
+      await api(`/api/form/${r.formId}`, 'POST', { form: { name: 'Auth Registration', type: 'registration', steps: [
+        { fields: [builtIn('Username'), builtIn('Password')] },
+        { fields: [r.currentFieldId, r.futureFieldId] },
+      ] } });
+      const body = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'src/content/docs/extend/code/lambdas/self-service-registration.mdx'), 'utf-8')
+        .match(/```javascript\n(\/\/ Validate the self-service registration form here[\s\S]*?)```/)[1];
+      await api(`/api/lambda/${r.lambdaId}`, 'POST', { lambda: { name: 'Auth Registration validation', type: 'SelfServiceRegistrationValidation', engineType: 'GraalJS', body } });
+      const { theme: source } = await api(`/api/theme/${defaultThemeId}`);
+      await api(`/api/theme/${r.themeId}`, 'POST', { sourceThemeId: defaultThemeId, theme: { name: 'Auth Registration' } });
+      await api(`/api/theme/${r.themeId}`, 'PATCH', { theme: { defaultMessages: `${registrationMessages}\n\n${source.defaultMessages}` } });
+      await api(`/api/application/${r.appId}`, 'POST', { application: {
+        name: 'Auth Registration', themeId: r.themeId,
+        oauthConfiguration: { authorizedRedirectURLs: ['https://example.com'], enabledGrants: ['authorization_code'] },
+        registrationConfiguration: { enabled: true, type: 'advanced', formId: r.formId },
+        lambdaConfiguration: { selfServiceRegistrationValidationId: r.lambdaId },
+      } });
+    },
+  },
+];
+
+const registrationMessages = `# Theme messages for custom form
+user.data.currentAuth=Who is your current auth provider?
+user.data.futureAuth=Who is your future auth provider?
+[invalid]user.data.futureAuth=You should really give FusionAuth a try.`;
 
 export default {
   baseUrl: 'http://localhost:9011',
@@ -359,6 +505,21 @@ export default {
       throw new Error(`beforeAll: messenger setup failed: ${e.message}`, { cause: e });
     }
 
+    // the example webhook for the tenant Webhooks tab and the webhook pages
+    try {
+      const webhookUrl = `${baseUrl}/api/webhook/${exampleWebhookId}`;
+      if (!(await fetch(webhookUrl, { headers: { 'Authorization': apiKey } })).ok) {
+        const r = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ webhook: { url: 'https://example.com/fusionauth-events', description: 'Example webhook', connectTimeout: 1000, readTimeout: 2000 } }),
+        });
+        if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+      }
+    } catch (e) {
+      throw new Error(`beforeAll: webhook setup failed: ${e.message}`, { cause: e });
+    }
+
     // configure tenant email: set passwordless email template (needed for the login button to render)
     try {
       const r = await fetch(`${baseUrl}/api/tenant/${tenantId}`, {
@@ -390,6 +551,12 @@ export default {
     const url = ctx?.url ?? page.url();
     const { pathname, hash } = new URL(url);
     const fragment = hash.slice(1);
+
+    if (savedSso && !signedOut.includes(ctx?.name)) {
+      await page.context().addCookies([savedSso]);
+      savedSso = undefined;
+      await page.goto(url, { waitUntil: 'networkidle' });
+    }
 
     // opening an /account page resets this to en
     if (adminLocale && pathname.startsWith('/admin')) {
@@ -437,6 +604,41 @@ export default {
       // the admin UI caches the tenant count; two tenants adds a Tenant field to some forms
       await page.waitForTimeout(5000);
       await page.reload({ waitUntil: 'networkidle' });
+    }
+
+    {
+      const api = (path, method = 'GET', body, headers = {}) => fetch(`http://localhost:9011${path}`, {
+        method, headers: { 'Authorization': apiKey, 'Content-Type': 'application/json', ...headers }, body: body && JSON.stringify(body),
+      }).then(async r => {
+        const text = await r.text();
+        if (!r.ok) throw new Error(`${method} ${path}: ${r.status} ${text}`);
+        return text ? JSON.parse(text) : null;
+      });
+      const exists = async path => (await fetch(`http://localhost:9011${path}`, { headers: { 'Authorization': apiKey } })).ok;
+      for (const resources of temporaryResources) {
+        const wanted = resources.names.includes(ctx?.name);
+        if (wanted === await exists(resources.paths[0])) continue;
+        // clears what a failed create left behind too
+        for (const path of resources.paths) {
+          if (!(await exists(path))) continue;
+          for (let i = 0; ; i++) {
+            // without hardDelete an application is only deactivated
+            try { await api(path.startsWith('/api/application/') ? `${path}?hardDelete=true` : path, 'DELETE'); break; } catch (e) {
+              // a form stays in use until its deleted application is gone
+              if (i >= 60 || !e.message.includes('[inUse]')) throw e;
+              await page.waitForTimeout(500);
+            }
+          }
+          // applications and tenants are deleted in the background
+          for (let i = 0; i < 60 && await exists(path); i++) await page.waitForTimeout(500);
+        }
+        if (wanted) await resources.create(api);
+        // the admin UI caches the tenant count; two tenants adds a Tenant field to some forms
+        if (resources.paths[0].startsWith('/api/tenant/')) await page.waitForTimeout(5000);
+        // goto alone keeps the loaded page when only the fragment differs
+        await page.goto(url, { waitUntil: 'networkidle' });
+        await page.reload({ waitUntil: 'networkidle' });
+      }
     }
 
     if (ctx?.name === 'migration-tenant-add') {
@@ -513,16 +715,6 @@ export default {
     }
 
     if (ctx?.name === 'tenant-webhooks-settings') {
-      const webhookUrl = 'http://localhost:9011/api/webhook/00000000-0000-0000-0000-600000000001';
-      if (!(await fetch(webhookUrl, { headers: { 'Authorization': apiKey } })).ok) {
-        const r = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ webhook: { url: 'https://example.com/fusionauth-events', description: 'Example webhook', connectTimeout: 1000, readTimeout: 2000 } }),
-        });
-        if (!r.ok) throw new Error(`webhook POST failed: ${r.status} ${await r.text()}`);
-        await page.reload({ waitUntil: 'networkidle' });
-      }
       const selected = await page.evaluate(() => {
         const box = [...document.querySelectorAll('#webhooks input[type=checkbox]')].find(i => !i.id.startsWith('tenant_eventConfiguration'));
         if (box && !box.checked) box.click();
@@ -552,7 +744,7 @@ export default {
     }
 
     // FusionAuth creates the Tenant manager application with a new random id on each start
-    if (ctx?.name === 'application-list') {
+    if (ctx?.name === 'application-list' || ctx?.name === 'five-minute-application-listing') {
       const pinned = await page.evaluate(() => {
         const row = [...document.querySelectorAll('tr')].find(tr => tr.querySelector('td')?.textContent.trim() === 'Tenant manager');
         const cell = row?.querySelectorAll('td')[1];
@@ -717,6 +909,273 @@ export default {
       if (!tagged) throw new Error('/api/theme permission row not found');
     }
 
+    // webhook and system settings forms: click the tab named by the URL fragment
+    if (/^\/admin\/(webhook\/(add|edit)|system-configuration\/edit)/.test(pathname) && fragment) {
+      const label = await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`)?.textContent.trim(), fragment);
+      if (!label) throw new Error(`no tab for #${fragment}`);
+      await selectTab(page, label);
+    }
+
+    if (ctx?.name === 'webhook-add') {
+      await page.fill('#webhook_url', 'https://example.com/fusionauth-events');
+      await page.fill('#webhook_description', 'Example webhook');
+    }
+
+    if (ctx?.name === 'webhook-headers') {
+      await page.locator('#header-add-button').click();
+      const row = page.locator('#header-table tbody tr').last();
+      await row.locator('input').nth(0).fill('Authorization');
+      await row.locator('input').nth(1).fill('my-api-key');
+    }
+
+    if (ctx?.name === 'webhook-signature') {
+      const chosen = await page.evaluate(() => {
+        const select = document.getElementById('webhook_signatureConfiguration_signingKeyId');
+        const option = [...(select?.options ?? [])].find(o => o.value);
+        if (option) { select.value = option.value; select.dispatchEvent(new Event('change', { bubbles: true })); }
+        return !!option;
+      });
+      if (!chosen) throw new Error('no signing key to choose');
+    }
+
+    if (ctx?.name === 'webhook-key-gen') {
+      const opened = await page.evaluate(() => {
+        const item = document.querySelector('[popover] a[href="/ajax/key/generate/RSA"]');
+        item?.closest('[popover]').showPopover();
+        if (item) item.dataset.hl = 'generate-rsa';
+        return !!item;
+      });
+      if (!opened) throw new Error('Generate RSA key pair menu item not found');
+      await page.waitForTimeout(500);
+    }
+
+    // a webhook event in the log, sent once by pointing the example webhook at the receiver for a moment
+    if (ctx?.name?.startsWith('webhook-event-')) {
+      const api = (path, method = 'GET', body) => fetch(`http://localhost:9011${path}`, {
+        method, headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' }, body: body && JSON.stringify(body),
+      }).then(async r => {
+        const text = await r.text();
+        if (!r.ok) throw new Error(`${method} ${path}: ${r.status} ${text}`);
+        return text ? JSON.parse(text) : null;
+      });
+      const logged = async () => (await api('/api/system/webhook-event-log/search?numberOfResults=1')).total > 0;
+      if (!(await logged())) {
+        const { webhook } = await api(`/api/webhook/${exampleWebhookId}`);
+        await api('/api/system-configuration', 'PATCH', { systemConfiguration: { webhookEventLogConfiguration: { enabled: true } } });
+        await api(`/api/webhook/${exampleWebhookId}`, 'PATCH', { webhook: { url: 'http://api.piedpiper.com/fusionauth/events', global: true, eventsEnabled: { 'audit-log.create': true } } });
+        try {
+          // FusionAuth picks up the webhook change after a delay and drops events sent before then
+          for (let i = 0; i < 60 && !(await logged()); i++) {
+            await api('/api/system/audit-log', 'POST', { auditLog: { insertUser: 'richard@piedpiper.com', message: 'Updated the Pied Piper application' } });
+            for (let j = 0; j < 10 && !(await logged()); j++) await page.waitForTimeout(500);
+          }
+          if (!(await logged())) throw new Error('no webhook event was logged');
+        } finally {
+          await api(`/api/webhook/${exampleWebhookId}`, 'PUT', { webhook });
+          await api('/api/system-configuration', 'PATCH', { systemConfiguration: { webhookEventLogConfiguration: { enabled: false } } });
+        }
+        await page.reload({ waitUntil: 'networkidle' });
+      }
+      if (ctx.name !== 'webhook-event-log-list' && ctx.name !== 'webhook-event-log-settings') {
+        // the Manage link sits in the row's actions menu
+        for (let i = 0; i < 20 && !(await page.locator('main a[href*="/webhook-event-log/manage/"]').count()); i++) {
+          await page.waitForTimeout(1000);
+          await page.reload({ waitUntil: 'networkidle' });
+        }
+        const manage = await page.locator('main a[href*="/webhook-event-log/manage/"]').first().getAttribute('href');
+        await page.goto(new URL(manage, page.url()).href, { waitUntil: 'networkidle' });
+        await tabsReady(page);
+        if (ctx.name === 'webhook-event-source') await selectTab(page, 'Source');
+        if (ctx.name === 'webhook-event-attempt') {
+          // the View link sits in the row's actions menu
+          await page.evaluate(() => {
+            const link = document.querySelector('main a[href*="/webhook-attempt-log/view/"]');
+            link?.closest('[popover]')?.showPopover();
+            link?.click();
+          });
+          await page.locator('.prime-dialog.open, dialog[open]').first().waitFor();
+          await page.waitForTimeout(500);
+        }
+      }
+    }
+
+    if (ctx?.name === 'lambda-populate') {
+      await page.fill('#lambdaId', atestLambdaId);
+      await page.fill('#lambda_name', '[ATest]');
+      await page.selectOption('select[name="lambda.type"]', 'JWTPopulate');
+      await page.waitForTimeout(500);
+      const set = await page.evaluate(body => {
+        const debug = document.getElementById('lambda_debug');
+        if (debug && !debug.checked) debug.click();
+        const cm = document.querySelector('main .CodeMirror')?.CodeMirror;
+        cm?.setValue(body);
+        return !!cm;
+      }, atestBody('Hello'));
+      if (!set) throw new Error('lambda body editor not found');
+    }
+
+    if (ctx?.name === 'lambda-edit-application') {
+      const set = await page.evaluate(id => {
+        const select = document.getElementById('application_lambdaConfiguration_accessTokenPopulateId');
+        if (!select) return false;
+        select.value = id;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        return select.value === id;
+      }, atestLambdaId);
+      if (!set) throw new Error('access token populate lambda not set');
+    }
+
+    if (ctx?.name === 'lambda-registration-messages') {
+      await page.locator('main [role=tab]', { hasText: 'Messages' }).first().click();
+      await page.waitForTimeout(800);
+      await page.locator('#messages a[href*="isDefault=true"]').click();
+      await page.locator('.prime-dialog.open .CodeMirror').waitFor();
+      await page.waitForTimeout(1000);
+      const tagged = await page.evaluate(count => {
+        const lines = [...document.querySelectorAll('.prime-dialog.open .CodeMirror-code > div')].slice(0, count);
+        if (lines.length !== count) return false;
+        const first = lines[0].getBoundingClientRect(), last = lines.at(-1).getBoundingClientRect();
+        const box = document.createElement('div');
+        box.dataset.hl = 'registration-messages';
+        box.style.cssText = `position:fixed;left:${first.left}px;top:${first.top}px;width:${first.width}px;height:${last.bottom - first.top}px;pointer-events:none`;
+        document.body.append(box);
+        return true;
+      }, registrationMessages.split('\n').length);
+      if (!tagged) throw new Error('registration message lines not found');
+    }
+
+    // the registration form's second step, before and after the lambda rejects it
+    if (signedOut.includes(ctx?.name)) {
+      const context = page.context();
+      savedSso ??= (await context.cookies('http://localhost:9011')).find(c => c.name === 'fusionauth.sso');
+      await context.clearCookies({ name: 'fusionauth.sso' });
+      await page.goto(url, { waitUntil: 'networkidle' });
+    }
+
+    if (ctx?.name === 'lambda-registration-blank' || ctx?.name === 'lambda-registration-invalid') {
+      // FusionAuth picks up the new theme's messages after a delay, so start over until the labels show
+      for (let i = 0; ; i++) {
+        await page.fill('#user_username', 'richard.h');
+        await page.fill('#user_password', 'password-123456');
+        await page.locator('form button[type=submit], form button').last().click();
+        await page.waitForLoadState('networkidle');
+        await page.locator('#user_data_currentAuth').waitFor();
+        if (await page.getByText('Who is your current auth provider?').isVisible()) break;
+        if (i === 30) throw new Error('registration theme messages not applied');
+        await page.waitForTimeout(1000);
+        await page.goto(url, { waitUntil: 'networkidle' });
+      }
+      if (ctx.name === 'lambda-registration-invalid') {
+        await page.fill('#user_data_currentAuth', 'BadAuth');
+        await page.fill('#user_data_futureAuth', 'AuthTwo');
+        await page.locator('form button[type=submit], form button').last().click();
+        await page.waitForLoadState('networkidle');
+      }
+    }
+
+    // tags elements that a plain selector can't single out
+    const tag = async (name, find) => {
+      const tagged = await page.evaluate(([n, f]) => {
+        const el = new Function(`return (${f})`)()();
+        if (el) el.dataset.hl = n;
+        return !!el;
+      }, [name, find.toString()]);
+      if (!tagged) throw new Error(`nothing to tag as ${name}`);
+    };
+
+    if (ctx?.name === 'five-minute-dashboard') {
+      await tag('applications-nav', () => [...document.querySelectorAll('nav a[href="/admin/application/"]')].find(a => a.offsetParent));
+    }
+
+    if (ctx?.name === 'five-minute-application-details') {
+      await page.evaluate(id => {
+        const link = document.querySelector(`main a[href="/ajax/application/view/${id}"]`);
+        link?.closest('[popover]')?.showPopover();
+        link?.click();
+      }, exampleAppId);
+      await page.locator('.prime-dialog.open, dialog[open]').first().waitFor();
+      await page.waitForTimeout(800);
+      await tag('client-credentials', () => {
+        const rows = [...document.querySelectorAll('.prime-dialog.open tr, dialog[open] tr, .prime-dialog.open dt, dialog[open] dt')];
+        const id = rows.find(r => /^Client Id/i.test(r.textContent.trim()));
+        const secret = rows.find(r => /^Client secret/i.test(r.textContent.trim()));
+        if (!id || !secret) return null;
+        let scroller = id.parentElement;
+        while (scroller && scroller.scrollHeight <= scroller.clientHeight) scroller = scroller.parentElement;
+        if (scroller) scroller.scrollTop += id.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 120;
+        // one box around both rows
+        const box = document.createElement('div');
+        const a = id.getBoundingClientRect(), b = secret.getBoundingClientRect();
+        box.style.cssText = `position:fixed;left:${a.left}px;top:${a.top}px;width:${a.width}px;height:${b.bottom - a.top}px;pointer-events:none`;
+        document.body.append(box);
+        return box;
+      });
+    }
+
+    if (ctx?.name === 'five-minute-user-search') {
+      await page.fill('#s_queryString', 'dinesh');
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => [...document.querySelectorAll('main tbody tr')].length === 1, null, { timeout: 15000 });
+      await page.waitForLoadState('networkidle');
+      // the Manage link sits in the row's actions menu, so mark the row
+      await tag('manage-user', () => document.querySelector('main a[href^="manage/00000000-0000-0000-0000-100000000004"]')?.closest('tr'));
+    }
+
+    if (ctx?.name === 'five-minute-registration-add') {
+      const add = await page.locator('a[href^="/admin/user/registration/add/"]').first().getAttribute('href');
+      await page.goto(new URL(add, page.url()).href, { waitUntil: 'networkidle' });
+      await page.locator('select').first().selectOption({ label: 'Example app' });
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1500);
+      await page.evaluate(() => document.activeElement?.blur());
+    }
+
+    if (ctx?.name === 'multi-tenant-users') {
+      await page.fill('#s_queryString', 'jian');
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => [...document.querySelectorAll('main tbody tr')].length === 2, null, { timeout: 15000 });
+      await page.waitForLoadState('networkidle');
+      await tag('tenant-column', () => {
+        const table = document.querySelector('main table');
+        const index = [...(table?.querySelectorAll('thead th') ?? [])].findIndex(th => th.textContent.trim() === 'Tenant');
+        if (index < 0) return null;
+        const cells = [...table.querySelectorAll('tr')].map(tr => tr.children[index]).filter(Boolean);
+        const first = cells[0].getBoundingClientRect(), last = cells.at(-1).getBoundingClientRect();
+        const box = document.createElement('div');
+        box.style.cssText = `position:absolute;left:${first.left + scrollX}px;top:${first.top + scrollY}px;width:${first.width}px;height:${last.bottom - first.top}px;pointer-events:none`;
+        document.body.append(box);
+        return box;
+      });
+    }
+
+    if (ctx?.name === 'multi-tenant-control-plane-registration') {
+      await tag('self-service-switch', () => document.getElementById('application_registrationConfiguration_enabled')?.closest('fieldset'));
+    }
+
+    if (ctx?.name === 'multi-tenant-blueprint-tenant') {
+      await page.fill('#tenant_name', 'Blueprint Tenant');
+    }
+
+    // the entities page lists nothing until searched
+    if (ctx?.name === 'hierarchy-entities') {
+      await page.locator('main button', { hasText: 'Search' }).first().click();
+      await page.waitForFunction(() => document.querySelectorAll('main tbody tr').length >= 7, null, { timeout: 15000 });
+      await page.waitForLoadState('networkidle');
+    }
+
+    if (ctx?.name === 'hierarchy-user-grant') {
+      await tabsReady(page);
+      await selectTab(page, 'Entity grants');
+      await page.waitForFunction(() => [...document.querySelectorAll('#entity-grants tbody tr')].some(tr => tr.textContent.includes('Change Bank Operations')), null, { timeout: 15000 });
+      await page.waitForLoadState('networkidle');
+    }
+
+    if (ctx?.name === 'segment-add-user') {
+      await page.fill('#user_email', 'test@example.com');
+      await page.fill('#user_password', 'password');
+      await page.fill('#confirm_user_password', 'password');
+    }
+
     if (ctx?.name === 'tenant-connector-add-policy') {
       await page.locator('el-tab-list button[aria-controls="connectors"]').click();
       await page.locator('#add-connector-policy').click();
@@ -725,7 +1184,7 @@ export default {
 
     // user manage pages for Big Head and Erlich: the Angular SPA may land on the Users
     // list before routing to the specific user -- wait for the Manage User heading.
-    if (url.includes('00000000-0000-0000-0000-10000000000')) {
+    if (url.includes('00000000-0000-0000-0000-10000000000') && ctx?.name !== 'five-minute-registration-add') {
       try {
         await page.waitForFunction(
           () => document.querySelector('h1')?.textContent?.trim() === 'Manage User',
@@ -778,7 +1237,7 @@ export default {
     }
 
     // application edit: click the tab named by the URL fragment, or Security
-    if (pathname.includes('/admin/application/edit')) {
+    if (pathname.includes('/admin/application/edit') || (pathname.includes('/admin/application/add') && fragment)) {
       await page.waitForTimeout(500);
       try {
         await tabsReady(page);
@@ -1065,7 +1524,7 @@ export default {
         for (let node = walker.nextNode(); node; node = walker.nextNode()) {
           node.textContent = node.textContent
             .replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, '24/09/2026')
-            .replace(/\b\d{2}:\d{2} (AM|PM)\b/g, '09:00 AM');
+            .replace(/\b\d{2}:\d{2}(:\d{2}(,\d{3})?)? (AM|PM)\b/g, (m, seconds, millis) => `09:00${seconds ? ':00' : ''}${millis ? ',000' : ''} AM`);
         }
       });
     }
