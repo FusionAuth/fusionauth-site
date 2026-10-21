@@ -1,0 +1,72 @@
+---
+title: CIMD Registration Caching And Lifecycle
+description: Learn how long FusionAuth caches a Client ID Metadata Document, what happens when it expires, and how a CIMD client registration is refreshed or removed.
+tags: cimd, client id metadata document, cache, cache-control, grace period, oauth client registration, mcp client, lambda
+---
+
+<PlanBlurb plan="enterprise" />
+
+<AvailableSince since="1.70.0"/>
+
+When a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents) logs in for the first time, FusionAuth fetches its metadata document and saves a registration. FusionAuth then reuses that registration until its cache window ends. This page explains how FusionAuth calculates that window, and what happens when the window ends.
+
+## How Long FusionAuth Caches A Document
+
+FusionAuth uses the `max-age` value from the response's `Cache-Control` header as the cache duration, and keeps it between two limits:
+
+* The lowest it can be is 15 minutes. You can't change this.
+* The highest it can be is the domain's **Maximum cache duration**, which defaults to 24 hours.
+
+If the response has no `max-age`, FusionAuth uses 15 minutes. FusionAuth ignores the `Expires` header.
+
+| `max-age` | Maximum cache duration | FusionAuth caches the document for |
+|---|---|---|
+| 5 minutes | 24 hours | 15 minutes |
+| 1 hour | 24 hours | 1 hour |
+| 3 days | 24 hours | 24 hours |
+| Not set | 24 hours | 15 minutes |
+| 1 hour | 10 minutes | 15 minutes |
+
+The last row shows that the 15 minute minimum wins if the domain's maximum is lower.
+
+The domain's [registration lambda](/docs/extend/code/lambdas/cimd-client-registration) can set `ttlInSeconds` to change the value. FusionAuth applies the same two limits to it.
+
+FusionAuth doesn't cache a response it rejects. See [CIMD Security](/docs/operate/secure/cimd-security#failures-arent-cached).
+
+## The Grace Period
+
+A cached document expires at the end of its cache window. The next login after that fetches the document again. If that fetch fails, FusionAuth can keep using the old copy for a limited time.
+
+The domain's **Grace period** sets that time. The grace period starts when the cache window ends, so a registration stays usable for the cache duration plus the grace period. The default is `0`, which means FusionAuth stops using an expired copy as soon as the cache window ends.
+
+During the grace period, FusionAuth keeps using the cached document when a fetch fails because of:
+
+* a network error or timeout
+* a response that isn't `2xx`
+* a document it can't parse
+
+FusionAuth retries a failed fetch before it gives up, and it doesn't count that as a rejection.
+
+A fetch failure never removes a registration. A client is removed only when the registration lambda rejects it. See [Removing A CIMD Client](/docs/lifecycle/authenticate-users/oauth/client-registration#removing-a-cimd-client).
+
+## When A Registration Is Refreshed
+
+FusionAuth fetches the document again only when a user logs in after the cache window ends. These don't fetch the document:
+
+* A login while the cached copy is still valid.
+* A refresh token request. A client can keep using a refresh token it already holds after its registration expires.
+* A resource server validating a token issued to the client.
+
+### A Document That Fetches Successfully
+
+A successful fetch replaces the cached document and starts a new cache window. This also works for a registration that has expired but hasn't been cleaned up yet. The same registration becomes usable again, with the new cache and grace times, and FusionAuth doesn't create a second registration for the client.
+
+A new fetch clears the lambda's decisions for every `resource` except the one in the current request. The lambda runs again the first time the client uses each of those resources.
+
+### A New Resource Inside The Cache Window
+
+When a registered client requests a `resource` the lambda hasn't evaluated yet, and the cached document is still valid, FusionAuth runs the lambda for that `resource` only. The lambda's result sets the overrides for that `resource` and nothing else. Settings that apply to the whole registration, such as `ttlInSeconds` and `jwtPopulateLambdaId`, don't change until the next fetch.
+
+## Cleaning Up Expired Registrations
+
+FusionAuth removes a registration automatically when its grace period has ended and the client has no refresh tokens. A scheduled job does this, so removal can happen some time after the grace period ends.
