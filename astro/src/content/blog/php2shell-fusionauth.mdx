@@ -1,0 +1,48 @@
+---
+publish_date: 2026-10-21
+title: "PHP2Shell: How it affects FusionAuth (TLDR: It doesn't)"
+description: FusionAuth does not run on PHP, so the PHP2Shell vulnerabilities disclosed by Wiz Research do not affect the FusionAuth server.
+authors: Dan Moore
+image: /img/blogs/php2shell-fusionauth/php2shell-how-it-affects-fusionauth-tldr-it-doesnt-header-image.png
+categories: Security, News
+tags: security, php, cve, php2shell
+excerpt_separator: "{/* more */}"
+---
+
+[Wiz Research disclosed PHP2Shell](https://www.wiz.io/blog/php2shell-php-rce), a set of critical vulnerabilities in the core PHP engine that can let an unauthenticated attacker achieve remote code execution or read process memory on affected PHP servers. The bugs affect PHP versions going back to 5.4 and are not specific to any one PHP application; they live in the PHP runtime itself.
+
+FusionAuth is not affected by this vulnerability. FusionAuth does not run on PHP; the server is written in Java and does not embed, invoke, or depend on a PHP runtime anywhere in its stack.
+
+{/* more */}
+
+<Aside type="note">
+FusionAuth is not affected by this vulnerability.
+</Aside>
+
+## What PHP2Shell actually does
+
+PHP2Shell is a set of memory-safety bugs in how PHP handles fatal errors, particularly out-of-memory conditions, during request processing. When a request dies partway through, PHP can leave stale internal state behind that a later request reuses, leading to memory disclosure or, chained with other primitives, remote code execution. Wiz demonstrated working pre-authentication RCE chains against WordPress, Drupal, and Joomla, but the underlying flaws are in PHP itself, so any application running on a vulnerable PHP version is theoretically exposed, regardless of what that application's own code does.
+
+PHP shipped [a patch on October 21, 2026](https://www.php.net/archive/2026.php#2026-10-21-5) fixing the issues, tracked as CVE-2026-109618 and CVE-2026-109619.
+
+## Why FusionAuth isn't exposed
+
+FusionAuth is a Java application. It doesn't serve PHP, run a PHP interpreter as part of request handling, or ship any PHP dependencies. There's no PHP process for an attacker to reach in a FusionAuth install, so there's no path for PHP2Shell to execute code against FusionAuth itself.
+
+## Where this could still matter
+
+If you're self-hosting FusionAuth, this vulnerability can still be relevant to your broader environment. If FusionAuth shares infrastructure with an unpatched PHP application, such as a reverse proxy, VM, or Kubernetes node also running WordPress, Drupal, or another PHP app, a successful PHP2Shell exploit could give an attacker root or equivalent access on that host. From there, an attacker with host-level access could tamper with anything running on the box, including a co-located FusionAuth instance.
+
+That risk sits entirely in the PHP application's and host's security boundary, not FusionAuth's. The mitigation is the same as it would be for any unpatched RCE on shared infrastructure: patch PHP to the fixed version, isolate services that don't need to share a host or network segment, and apply the principle of least privilege to whatever runs alongside FusionAuth.
+
+If you're running FusionAuth in [FusionAuth Cloud](/docs/cloud), there's no PHP running anywhere near your instance, so this consideration doesn't apply.
+
+## A bit more about security and FusionAuth
+
+Beyond this specific vulnerability, we want to assure readers that FusionAuth takes security very seriously.
+
+This commitment includes, but is not limited to:
+
+* a [responsible disclosure program](/security)
+* regular penetration tests
+* security disclosures in our extensive [release notes](/docs/release-notes)
