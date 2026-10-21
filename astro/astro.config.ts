@@ -159,11 +159,20 @@ const config = defineConfig({
     format: 'file',
     concurrency: 12,
   },
+  // inter from the npm version pinned in package.json (no build-time download); latin subset, as fontsource served
   fonts: [{
-    provider: fontProviders.fontsource(),
+    provider: fontProviders.local(),
     name: 'Inter',
     cssVariable: '--font-inter-var',
-    weights: ['300 400 500 600 700 800 900'],
+    options: {
+      variants: (['normal', 'italic'] as const).map((style) => ({
+        src: [`@fontsource-variable/inter/files/inter-latin-standard-${style}.woff2`],
+        weight: '100 900',
+        style,
+        display: 'swap',
+        unicodeRange: ['U+0000-00FF', 'U+0131', 'U+0152-0153', 'U+02BB-02BC', 'U+02C6', 'U+02DA', 'U+02DC', 'U+0304', 'U+0308', 'U+0329', 'U+2000-206F', 'U+20AC', 'U+2122', 'U+2191', 'U+2193', 'U+2212', 'U+2215', 'U+FEFF', 'U+FFFD'],
+      })),
+    },
   }],
   vite: {
     plugins: [
@@ -183,6 +192,8 @@ const config = defineConfig({
       },
     },
     cacheDir: '.vite-cache',
+    // example apps here have tsconfigs extending packages this site doesn't install, which breaks the dep scan
+    optimizeDeps: { entries: ['!src/generated-code-snippets/**'] },
     ssr: {
       // svgdom and mermaid are Node-only SSR packages used in remark plugins;
       // externalizing them prevents Vite from bundling them and breaking dynamic imports.
@@ -255,7 +266,7 @@ const config = defineConfig({
       }),
       llmsTxtPath: 'docs/llms.txt',
       llmsTxtTitle: 'FusionAuth Documentation',
-      llmsTxtDescription: 'Comprehensive documentation for FusionAuth CIAM, APIs, QuickStarts, and custom integrations.',
+      llmsTxtDescription: 'Comprehensive documentation for FusionAuth CIAM, APIs, QuickStarts, and custom integrations. The [OpenAPI specification](https://fusionauth.io/docs/openapi.yaml) describes the REST APIs in machine-readable form.',
       trimTitleSuffix: ' | FusionAuth Docs',
       spokesDir: 'docs',
       inlineCategories: ['Overview'],
