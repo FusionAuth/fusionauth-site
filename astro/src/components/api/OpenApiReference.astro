@@ -1,0 +1,26 @@
+---
+// browsable view of the whole OpenAPI spec, in the same Scalar viewer the API pages use per endpoint
+export interface Props {
+  /** URL of the spec to render */
+  specUrl?: string;
+}
+const { specUrl = '/docs/openapi.yaml' } = Astro.props;
+---
+
+<div class="openapi-reference overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700" data-spec-url={specUrl} data-markdown-ignore></div>
+
+<script>
+  import { buildFullSpecSrcdoc } from 'src/tools/docs/scalar';
+
+  for (const mount of document.querySelectorAll<HTMLElement>('.openapi-reference')) {
+    const isDark = document.documentElement.classList.contains('dark') ||
+                   document.documentElement.getAttribute('data-theme') === 'dark';
+    // srcdoc frames resolve relative URLs against about:srcdoc, so pass an absolute one
+    const specUrl = new URL(mount.dataset.specUrl ?? '/docs/openapi.yaml', window.location.href).href;
+    const iframe = document.createElement('iframe');
+    iframe.srcdoc = buildFullSpecSrcdoc(specUrl, isDark);
+    iframe.style.cssText = 'width:100%;height:80vh;min-height:600px;border:none;background:transparent;display:block;';
+    iframe.title = 'FusionAuth OpenAPI specification';
+    mount.appendChild(iframe);
+  }
+</script>

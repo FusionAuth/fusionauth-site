@@ -5,7 +5,7 @@ order: 450
 ---
 <PlanBlurb plan="enterprise" />
 
-<AvailableSince since="1.XX.0"/>
+<AvailableSince since="1.70.0"/>
 
 Client ID Metadata Documents (CIMD) is an OAuth extension, described by [draft-ietf-oauth-client-id-metadata-document](https://datatracker.ietf.org/doc/draft-ietf-oauth-client-id-metadata-document/), in which the `client_id` is itself an HTTPS URL. That URL hosts a JSON document describing the client: its name, its redirect URIs, and the rest of its metadata.
 
@@ -43,7 +43,8 @@ The CIMD standard requires the following security measures:
 * Clients must implement [PKCE](/articles/oauth/modern-guide-to-oauth#authorization-code-grant).
 * Clients can only use the `authorization_code` and `refresh_token` grants.
 * Redirect URLs must exactly match the redirect URIs specified in the client's metadata document.
-* Clients can only use scopes enabled on the domain and agreed to during the user consent screen, or the OAuth request will fail.
+* Clients can only request scopes enabled on the domain, or the OAuth request will fail. Optional scopes the user declines on the consent screen are left out of the grant.
+* Clients must send exactly one `resource` parameter, and it must be one of the domain's **Authorized resource URIs**.
 * CIMD clients cannot use roles, SAML, WebAuthn, and self-service registration.
 * Many CIMD clients are public, so client authentication is not required.
 
@@ -61,7 +62,7 @@ From here you can see each domain's name, origin, and consent mode, search by na
 - **View** a previously created CIMD domain.
 - **Delete** a previously created CIMD domain.
 
-Managing CIMD domains requires the `admin` or `cimd_domain_manager` role. To manage CIMD domains via the API, an API key needs permission for the relevant [CIMD Domain APIs](/docs/apis/cimd-domains) endpoints.
+Managing CIMD domains requires the `admin` or `cimd_domain_manager` role. Deleting a CIMD domain requires the `admin` or `cimd_domain_deleter` role. To manage CIMD domains via the API, an API key needs permission for the relevant [CIMD Domain APIs](/docs/apis/cimd-domains) endpoints.
 
 ### Create and Edit a CIMD Domain
 
@@ -98,13 +99,13 @@ Here is what you can expect when updating an existing CIMD domain:
     The origin CIMD clients register from, including the scheme, hostname, and optional port of the URL where FusionAuth expects to find the CIMD document. FusionAuth uses this to validate each client's `client_id` URL. Use `*` to allow CIMD registrations from any domain. This value cannot be changed after creation.
   </APIField>
   <APIField name="Authorized resource URIs" optional>
-    The resource URIs that clients on this domain may request using the [RFC 8707](https://datatracker.ietf.org/doc/html/rfc8707) `resource` parameter.
+    The resource URIs that clients on this domain may request using the [RFC 8707](https://datatracker.ietf.org/doc/html/rfc8707) `resource` parameter. Every CIMD client must send exactly one `resource`, and FusionAuth rejects the request with `invalid_target` unless it appears in this list. Clients on a domain with no authorized resource URIs cannot log in.
   </APIField>
   <APIField name="Enable debug logging" optional defaults="false">
-    When enabled, FusionAuth creates event log entries to help debug CIMD client registration errors. View them under <Breadcrumb>System > Event Log</Breadcrumb>.
+    When enabled, FusionAuth writes the standard OAuth debug Event Log entries, such as the authorization code exchange, for this domain's clients. View them under <Breadcrumb>System -> Event Log</Breadcrumb>. FusionAuth doesn't log rejected client registrations or failed document fetches.
   </APIField>
   <APIField name="Maximum cache duration" required defaults="86400">
-    How long, in seconds, a client's CIMD document is cached. If the document specifies a smaller value via HTTP headers, the smaller value is used. A hard 15 minute minimum cache duration is always imposed. This value must be greater than `0`.
+    The longest time, in seconds, that a client's CIMD document is cached. When the document's response includes a smaller `Cache-Control: max-age` value, the smaller value is used. When the response has no `max-age`, the document is cached for 15 minutes. A 15 minute minimum always applies. This value must be greater than `0`.
   </APIField>
   <APIField name="Grace period" required defaults="0">
     How long, in seconds, to honor an expired CIMD document when re-fetching it fails.
@@ -130,7 +131,7 @@ Custom scopes beyond the standard ones are managed separately, through the **Man
 
 <APIBlock>
   <APIField name="Registration lambda" optional>
-    A CIMD client registration lambda(TODO: add link) that can override registration decisions and scopes for this domain's clients. This is the only way to filter which clients may register when the **Domain** is `*`. No lambda is selected by default.
+    A [CIMD client registration lambda](/docs/extend/code/lambdas/cimd-client-registration) that can override registration decisions and scopes for this domain's clients. This is the only way to filter which clients may register when the **Domain** is `*`. No lambda is selected by default.
   </APIField>
   <APIField name="JWT populate lambda" optional>
     A [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate) that adds or modifies claims in the tokens issued to this domain's clients. The selected lambda populates both the access token and the Id token. No lambda is selected by default.
@@ -163,7 +164,7 @@ Click the **Add** button to create a new custom scope:
 
 ![The Add scope form.](/img/docs/get-started/core-concepts/cimd-domain-scope-add.png)
 
-Editing a saved scope presents the same form, with the **Id** and **Name** values now read-only:
+Editing a saved scope presents a similar form that also shows the scope's **Id**. The **Id** and **Name** values are read-only:
 
 ![The Edit scope form.](/img/docs/get-started/core-concepts/cimd-domain-scope-edit.png)
 
@@ -172,8 +173,8 @@ A custom scope can also be removed from the same row's action menu; this cannot 
 #### Form Fields
 
 <APIBlock>
-  <APIField name="Id" optional>
-    An optional UUID. When this value is omitted a unique Id will be generated automatically. This value cannot be changed after creation.
+  <APIField name="Id" readonly>
+    The Id of the OAuth scope, generated automatically when the scope is created. This field only appears when editing a scope. To choose your own Id, create the scope with the [CIMD Domain OAuth Scopes API](/docs/apis/cimd-domain-scopes).
   </APIField>
   <APIField name="Name" required>
     The name of the OAuth scope. This is the value that will be used to request the scope. This value cannot be changed after creation.
@@ -198,5 +199,5 @@ A custom scope can also be removed from the same row's action menu; this cannot 
 
 Everything on this page can also be configured through the API:
 
-* [CIMD Domain API](/docs/apis/cimd-domains) — create, retrieve, update, search, and delete CIMD domains.
-* [CIMD Domain OAuth Scopes API](/docs/apis/cimd-domain-scopes) — manage a domain's custom OAuth scopes.
+* Use the [CIMD Domain API](/docs/apis/cimd-domains) to create, retrieve, update, search, and delete CIMD domains.
+* Use the [CIMD Domain OAuth Scopes API](/docs/apis/cimd-domain-scopes) to manage a domain's custom OAuth scopes.
