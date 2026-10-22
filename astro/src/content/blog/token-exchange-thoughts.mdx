@@ -16,37 +16,40 @@ Say a user logs in and your frontend gets an access token for your main API. Tha
 
 You could pass the original token all the way down. And plenty of people do, which is how you end up with one stolen token that works everywhere. Or you could have each service trade the token it received for a narrower one useful for the next service. The user’s identity travels with the request but the blast radius doesn't. This trade is not cost-free since it adds latency and a dependency on the component performing it, but it also increases security and lessens system cohesion.
 
-That trade is what the token exchange is for. Token exchange is a [standard OAuth grant](/articles/oauth/complete-list-oauth-grants#oauth-20-token-exchange-grant) that lets you provide a token to an authorization server and have that authorization server issue a new token. The token exchange standardizes a set of parameters which define, among other things, the type of token presented, the desired resource or audience and the resulting token's claims. The latter includes standard claims such as the `client_id`, the identifier of the client making the exchange and `act`, a compound claim containing the party to which delegation has occurred.
+That trade is what the token exchange is for. Token exchange is a [standard OAuth grant](/articles/oauth/complete-list-oauth-grants#oauth-20-token-exchange-grant) that lets you provide a token to an authorization server and have that authorization server issue a new token. The token exchange standardizes a set of parameters which define, among other things, the type of token presented, the desired resource or audience and the resulting token's claims. The latter includes standard claims such as the `client_id`, the identifier of the client making the exchange, and `act`, a compound claim containing the party to which delegation has occurred.
 
-Token exchange is a feature most teams don't require until they need it, and then they need it badly. If you have a monolith and a few APIs, ignore this grant; it's extra complexity. Once you have services calling services on behalf of users, you’re making a choice whether you realize it or not. Either you’re exchanging tokens deliberately, or you’re forwarding whatever you were handed and hoping nobody downstream is compromised or buggy. When your reporting service gets a request, do you actually know whether the token it receives was meant for it?
+So how do you know if you should implement token exchange in your stack?
+
+* If you have a monolith and a few APIs, you won't benefit much from token exchange.
+* If your services call other services on their own or on behalf of users, token exchange tightens security and makes it easier to understand request flows.
 
 ## Multiple use cases, one RFC
 
-If you look at [RFC 8693](https://www.rfc-editor.org/rfc/rfc8693), you'll see multiple use cases outlined. 
+[RFC 8693](https://www.rfc-editor.org/rfc/rfc8693) outlines multiple use cases.
 
-The first is impersonation. Impersonation is where you are acting as somebody else and the token you hold looks like that person's. The canonical use case is a customer service rep who says to the authorization server "I have permission to act as Dan Moore in this application, please give me a token that lets me do that." The identity system records the impersonation exchange, but the issued token is indistinguishable from one obtained by the original user. Making this request requires an elevated set of permissions.
+* **Impersonation**: you act as somebody else, so the token looks like one obtained by that person. Imagine a customer service rep who says to the authorization server "I have permission to act as Dan Moore in this application, please give me a token that lets me do that."
+* **Delegation**: you have a second, separate entity that is explicitly delegated by the user to go do things. Imagine an AI agent that does things _on behalf of_ Dan Moore. This case might have downscoped access and an `act` claim for delegation history.
 
-The second use case in the RFC is delegation. In that case, there is a second entity explicitly delegated by the user to take action. It has a separate identity recorded in the token. An example of this is an AI agent that makes requests on behalf of Dan Moore, but isn't acting *as* Dan Moore. In the delegation case you also might have downscoped access and capture delegation history in the token.
-
-There's also a third use case mentioned less prominently in the RFC, cross-domain token translation. This is when you get a token from one trust domain, say a partner’s identity provider or a different cloud’s issuer, and trade it for one your own system will accept. You’re translating credentials across a trust boundary, which sounds neat. But then you've also got to decide how much you trust the party on the other side to have vouched for that user.
+**Cross-domain token translation** is mentioned less prominently in the RFC. Here, you trade a token from one trust domain (e.g. a partner’s identity provider) for one your own system accepts. This translates credentials across a trust boundary. But you need to decide how much you trust the party on the other side to have vouched for that user in the first place. Because that trust is complicated, this use case is less prominent in the RFC.
 
 ## AI AI AI
 
 How does token exchange matter for AI? Many AI use cases I see right now come down to an agent doing something on a user’s behalf in a system where the user has an identity but the agent does not: read my calendar, file a ticket, pull a record from my CRM. 
 
-MCP is the plumbing for those interactions, and it’s useful (I’m a little bit cynical about the hype, but the problem is real). But MCP specifies that you shouldn't pass the token from the MCP server to downstream services. You want to [avoid token passthrough](https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices#token-passthrough).
+MCP is the plumbing for those interactions, and it's useful (I’m a little cynical about the hype around MCP, but the problem of letting AI agents securely access data is real). The MCP site specifies that you shouldn't pass the token from the MCP server to downstream services. You want to [avoid token passthrough](https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices#token-passthrough).
 
 So, every MCP tool call is an authorization decision. Whose identity is the agent using, and does its token grant access to one calendar or everything that particular user can touch? 
 
 My guess is a lot of MCP servers are handing the agent a broad token based on the user's authority because it was the fastest way to get the demo working. 
 
-If your agent got talked into doing something it shouldn’t have, what’s the worst thing its token lets it do? This is where token exchange comes in. Even if you aren't using MCP and are using direct API calls, having auditable, policy-driven token exchange can decrease the blast radius of any credential leakage.
+If your agent got talked into doing something it shouldn’t have, what’s the worst thing its token lets it do? If you don't delegate, the blast radius is exactly as large as the worst thing _you_ could do. This is where token exchange comes in. Even if you aren't using MCP and are using direct API calls, having auditable, policy-driven token exchange decreases the blast radius of credential leakage.
 
 ## Delegation is the interesting part
 
 I want to spend more time talking about the delegation use case. Here's an example token exchange showing delegation and downscoping.
 
 ```mermaid
+TODO
 sequenceDiagram
     autonumber
     actor User
@@ -103,27 +106,33 @@ sequenceDiagram
     end
 ```
 
-With respect to RFC 8693, there are a few interesting holes in the specification that need to be filled out to deliver a useful service. Aside: I think this is true of RFCs in general. They're fantastic for defining interfaces and for interoperability, but there's implementation detail that's necessarily left out of an RFC. But the implementation details are really important. It's like the [authentication part of OAuth](/articles/oauth/why-no-authentication-in-oauth); critical but undefined.
-
-Here are three holes in the RFC:
+With respect to RFC 8693, there are a few interesting holes in the specification that need to be filled out to deliver a useful service: 
 
 * the trust policy between the exchanger, the subject and the actor
 * the policy engine that makes the delegation decision
 * the audit trail that tracks decisions
 
+Aside: I think this is true of RFCs in general. They're fantastic for defining interfaces and for interoperability, but there's implementation detail that's necessarily left out of an RFC. But the implementation details are really important. It's like the [authentication part of OAuth](/articles/oauth/why-no-authentication-in-oauth); critical but undefined.
+
 ### The trust policy
 
-If you implement everything in the RFC for delegation, the authorization server has to reason about the exchanger making the request to the authorization server, the subject whose authority is being used, and the actor named in the token who is going to present it to other systems. There are three trust relationships to enforce and three questions to answer:
+If you implement everything in the RFC for delegation, there are three parties as well as the authorization server involved in getting a new token. If you think about Dan delegating access to an AI agent to make a request of an API, they are:
 
-* Can this client exchange this subject’s token?
-* Can this client present this actor?
-* Can this actor act for this subject?
+* the subject: Dan, who is granting authority
+* the actor: the AI agent, seeking the delegated authority
+* the exchanger: the software that actually makes the request for the new token
 
-Each one is a place for the policy to be wrong. It's also more complexity to model, and another thing for an implementor to configure and audit.
+The authorization server has to reason about three trust relationships to enforce. There are three questions to answer:
 
-One option to simplify things is to use the client as the actor. This is spec compliant because the `actor_token` is optional. This simplifies the trust policy. Now you have two parties and one question: is this client allowed to act on behalf of this subject, for this audience and resource? This works for many situations, such as an MCP server calling an API on behalf of a user.
+* Can this exchanger exchange this subject's token (Dan)? 
+* Can this exchanger present this actor (the AI agent)?
+* Can this actor (the AI agent) act for this subject (Dan)?
 
-The downside is that the actor now must always be a client. Anything that needs to show up in `act` needs its own client identity rather than riding on a shared service's credentials. An MCP gateway is an example of such a shared service.
+Each one is a opportunity for policy to be wrong, more complexity to model, and another thing for an implementor to configure and audit.
+
+One option to simplify the exchange is to collapse client and actor. This is spec compliant because the `actor_token` is optional and simplifies the trust policy. Now you have two parties and one question: is this client allowed to act on behalf of this subject?  This works for many situations.
+
+The downside is that the actor now must always be a client. Anything that needs to show up in `act` needs its own client identity. In other cases, you may want the actor to ride on a shared service's credentials. One example is an MCP gateway proxying requests from multiple AI agents. Each agent would be an actor, but the exchanger would be the MCP gateway.
 
 ### The policy engine
 
@@ -139,7 +148,9 @@ There are three possible answers from a policy engine:
 2. **Yes.** Here is the token with what you asked for.
 3. **Yes, but.** You'll get a token, but some of the attributes will change. Maybe it expires sooner, or the permissions in the token get downscoped.
 
-Supporting this logic in a way that scales, is easy to administer, and that's flexible is critical to the token exchange being actually useful. But this behavior is not covered by the RFC. At FusionAuth we've approached this in two different ways, with both code and a network graph. RFC 8693 implementers must figure out how the authorization server determines one of those three outcomes whenever a client asks for a token exchange.
+It's critical to support this logic in a way that makes sense, that's easy to administer, and that's flexible. But the RFC doesn't explain how to do that. At FusionAuth we've approached this in two different ways, with both code and a network graph.
+
+RFC 8693 implementers must figure out how the authorization server determines one of those three outcomes whenever a client asks for a token exchange.
 
 ### The audit trail
 
@@ -149,8 +160,8 @@ You also need to capture the exchange details, including the audience, token det
 
 ## What RFC implementations need
 
-The trust decisions, policy engine and audit trail are all needed to make the exchange mechanism safe and useful. The RFC acknowledges the trust decision and the policy decision, but specifies neither in detail.
+You need understandable trust decisions, a policy engine, and an audit trail to make token exchange safe and useful. The RFC acknowledges the trust decision and the policy decision, but specifies none of these mechanisms in detail.
 
-As I mentioned at the beginning, not every system needs the token exchange. Here's a hypothetical to help you decide. If your reporting service were compromised today, what could the attacker do with the token it’s holding? Token exchange doesn’t make that question disappear, but it does mean the answer is "read some reports" instead of "anything the user could do."
+As I mentioned at the beginning, not every system needs token exchange. Here’s the test. If your reporting service were compromised today, what could the attacker do with the token it’s holding? Token exchange doesn’t make that question disappear, but it does mean the answer is “read some reports” instead of “anything the user could do.”
 
 And if someone did try for more, who would find out?
