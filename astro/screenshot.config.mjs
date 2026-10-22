@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs';
+import { createHmac } from 'crypto';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -84,6 +85,7 @@ const selects = {
   'application-registration-self-service-basic': { selfRegistrationType: 'Complete' },
   'application-registration-self-service-advanced': { selfRegistrationType: 'Complete' },
   'multi-tenant-control-plane-registration': { selfRegistrationType: 'Create' },
+  'account-application-self-service-form': { application_formConfiguration_selfServiceFormId: '' },
 };
 
 // pages too long to show in full keep the screenshot's height, scrolled to the named section if there is one
@@ -114,6 +116,12 @@ const fixedHeight = {
   'five-minute-application-details': null,
   'multi-tenant-blueprint-tenant': null,
   'segment-add-user': null,
+  'account-application-self-service-form': null,
+  'account-application-details': null,
+  'account-theme-templates': null,
+  'account-tenant-webauthn': null,
+  'account-tenant-mfa-email': null,
+  'account-tenant-mfa-phone': null,
 };
 
 const defaultThemeId = '75a068fd-e94b-451a-9aeb-3ddb9a3b5987';
@@ -288,6 +296,143 @@ const temporaryResources = [
   },
 ];
 
+const piedPiperAppId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
+const defaultTenantId = '30663132-6464-6665-3032-326466613934';
+const richardId = '00000000-0000-0000-0000-100000000001';
+
+const apiRequest = (path, method = 'GET', body) => fetch(`http://localhost:9011${path}`, {
+  method, headers: { 'Authorization': 'screenshot-dev-key-not-for-production', 'Content-Type': 'application/json' }, body: body && JSON.stringify(body),
+}).then(async r => {
+  const text = await r.text();
+  if (!r.ok) throw new Error(`${method} ${path}: ${r.status} ${text}`);
+  return text ? JSON.parse(text) : null;
+});
+
+// the built-in form gets a new id on each install
+const selfServiceFormId = async () => (await apiRequest('/api/form')).forms.find(f => f.name === 'Default User Self Service provided by FusionAuth').id;
+
+// a fixed authenticator secret, so the QR code and the codes it makes are the same on every run
+const totpSecret = Buffer.from('PiedPiperRocks!');
+const totpSecretBase32 = [...totpSecret].map(b => b.toString(2).padStart(8, '0')).join('').match(/.{5}/g)
+  .map(bits => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'[parseInt(bits, 2)]).join('');
+const totpCode = () => {
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30000)));
+  const digest = createHmac('sha1', totpSecret).update(counter).digest();
+  const offset = digest.at(-1) & 0xf;
+  return String((digest.readUInt32BE(offset) & 0x7fffffff) % 1_000_000).padStart(6, '0');
+};
+
+// a recovery code is accepted in place of a method's code and removes every method
+async function removeTwoFactor() {
+  const { user } = await apiRequest(`/api/user/${richardId}`);
+  const method = user.twoFactor?.methods?.[0];
+  if (!method) return;
+  const { recoveryCodes } = await apiRequest(`/api/user/two-factor/recovery-code/${richardId}`, 'POST');
+  await apiRequest(`/api/user/two-factor/${richardId}`, 'DELETE', { methodId: method.id, code: recoveryCodes[0] });
+}
+
+const accountThemeId = '00000000-0000-0000-0000-300000000002';
+const twoFactorTemplateIds = { email: '00000000-0000-0000-0000-400000000003', sms: '00000000-0000-0000-0000-400000000004' };
+
+// changed for the screenshots that need it and changed back before any other; apply returns the undo
+const temporaryState = [
+  {
+    names: ['account-not-registered'],
+    apply: async () => {
+      const { registration } = await apiRequest(`/api/user/registration/${richardId}/${piedPiperAppId}`);
+      await apiRequest(`/api/user/registration/${richardId}/${piedPiperAppId}`, 'DELETE');
+      return () => apiRequest(`/api/user/registration/${richardId}`, 'POST', { registration });
+    },
+  },
+  {
+    names: ['account-configuration-incomplete'],
+    apply: async () => {
+      const { application } = await apiRequest(`/api/application/${piedPiperAppId}`);
+      const formId = application.formConfiguration.selfServiceFormId;
+      delete application.formConfiguration.selfServiceFormId;
+      await apiRequest(`/api/application/${piedPiperAppId}`, 'PUT', { application });
+      return () => apiRequest(`/api/application/${piedPiperAppId}`, 'PATCH', { application: { formConfiguration: { selfServiceFormId: formId } } });
+    },
+  },
+  {
+    names: ['account-tenant-mfa-email', 'account-tenant-mfa-phone', 'account-two-factor-email', 'account-two-factor-phone'],
+    apply: async () => {
+      const emailTemplate = `/api/email/template/${twoFactorTemplateIds.email}`, messageTemplate = `/api/message/template/${twoFactorTemplateIds.sms}`;
+      await apiRequest(emailTemplate, 'POST', { emailTemplate: {
+        name: 'Two Factor Authentication', defaultFromName: 'Pied Piper', defaultSubject: 'Your second factor code',
+        defaultHtmlTemplate: '<p>Your verification code is ${code}</p>', defaultTextTemplate: 'Your verification code is ${code}',
+      } });
+      await apiRequest(messageTemplate, 'POST', { messageTemplate: { name: 'Default Two Factor Request', type: 'SMS', defaultTemplate: 'Your verification code is ${code}' } });
+      const { tenant } = await apiRequest(`/api/tenant/${defaultTenantId}`);
+      await apiRequest(`/api/tenant/${defaultTenantId}`, 'PATCH', { tenant: { multiFactorConfiguration: {
+        email: { enabled: true, templateId: twoFactorTemplateIds.email },
+        sms: { enabled: true, messengerId: '00000000-0000-0000-0000-500000000001', templateId: twoFactorTemplateIds.sms },
+      } } });
+      return async () => {
+        // a PUT clears the template ids, so the templates can be deleted
+        await apiRequest(`/api/tenant/${defaultTenantId}`, 'PUT', { tenant });
+        await apiRequest(emailTemplate, 'DELETE');
+        await apiRequest(messageTemplate, 'DELETE');
+      };
+    },
+  },
+  {
+    names: ['account-edit-birthdate', 'account-home-birthdate'],
+    apply: async () => {
+      const formId = await selfServiceFormId();
+      const { form } = await apiRequest(`/api/form/${formId}`);
+      const { fields } = await apiRequest('/api/form/field');
+      const birthdate = fields.find(f => f.name === 'Birthdate').id;
+      await apiRequest(`/api/form/${formId}`, 'PUT', { form: { ...form, steps: [{ fields: [...form.steps[0].fields, birthdate] }, ...form.steps.slice(1)] } });
+      await apiRequest(`/api/user/${richardId}`, 'PATCH', { user: { birthDate: '1981-06-04' } });
+      return async () => {
+        await apiRequest(`/api/form/${formId}`, 'PUT', { form });
+        await apiRequest(`/api/user/${richardId}`, 'PATCH', { user: { birthDate: null } });
+      };
+    },
+  },
+  {
+    // the Account index template with the change from the guide
+    names: ['account-home-birthdate'],
+    apply: async () => {
+      const change = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'src/content/docs/lifecycle/manage-users/account-management/customizing-account-management.mdx'), 'utf-8')
+        .match(/```ftl\n(<p>This is now modified[\s\S]*?)```/)[1];
+      const { theme: source } = await apiRequest(`/api/theme/${defaultThemeId}`);
+      const accountIndex = source.templates.accountIndex.replace(/(\n\s*<\/div>\n\n\s*\[#-- Edit button)/, `\n${change}$1`);
+      await apiRequest(`/api/theme/${accountThemeId}`, 'POST', { sourceThemeId: defaultThemeId, theme: { name: 'Account' } });
+      await apiRequest(`/api/theme/${accountThemeId}`, 'PATCH', { theme: { templates: { accountIndex } } });
+      await apiRequest(`/api/tenant/${defaultTenantId}`, 'PATCH', { tenant: { themeId: accountThemeId } });
+      return async () => {
+        await apiRequest(`/api/tenant/${defaultTenantId}`, 'PATCH', { tenant: { themeId: defaultThemeId } });
+        await apiRequest(`/api/theme/${accountThemeId}`, 'DELETE');
+      };
+    },
+  },
+  {
+    // enabled in the screenshot itself
+    names: ['account-recovery-codes'],
+    apply: async () => removeTwoFactor,
+  },
+  {
+    names: ['account-two-factor-challenge'],
+    apply: async () => {
+      await apiRequest(`/api/user/two-factor/${richardId}`, 'POST', { method: 'authenticator', secret: totpSecret.toString('base64'), code: totpCode() });
+      return removeTwoFactor;
+    },
+  },
+];
+
+// alerts that are what the screenshot shows
+const keepAlerts = ['account-not-registered', 'account-configuration-incomplete', 'account-recovery-codes'];
+
+// one box around a whole form section, named as in [data-section]
+const sectionBoxes = {
+  'account-tenant-webauthn': 'bootstrap-passkey-authentication',
+  'account-tenant-mfa-email': 'email-settings',
+  'account-tenant-mfa-phone': 'phone-settings',
+};
+
 const registrationMessages = `# Theme messages for custom form
 user.data.currentAuth=Who is your current auth provider?
 user.data.futureAuth=Who is your future auth provider?
@@ -397,23 +542,14 @@ export default {
       }
     }
 
-    // ensure self-service form is configured on Pied Piper app for account management
-    // selfServiceEnabled is not a real API field; the correct field is formConfiguration.selfServiceFormId
+    // the self-service form for the Pied Piper account pages
     try {
-      const appResp = await fetch(`${baseUrl}/api/application/${appId}`, { headers: { 'Authorization': apiKey } });
-      if (appResp.ok) {
-        const { application } = await appResp.json();
-        if (!application.formConfiguration?.selfServiceFormId) {
-          await fetch(`${baseUrl}/api/application/${appId}`, {
-            method: 'PATCH',
-            headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ application: { formConfiguration: {
-              // '94dfe967-6fdd-499d-b2de-788ea86d151a' is the built-in "Default User Self Service" form
-              selfServiceFormId: '94dfe967-6fdd-499d-b2de-788ea86d151a',
-            } } }),
-          });
-        }
-      }
+      const r = await fetch(`${baseUrl}/api/application/${appId}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ application: { formConfiguration: { selfServiceFormId: await selfServiceFormId() } } }),
+      });
+      if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
     } catch (e) {
       throw new Error(`beforeAll: selfServiceFormId patch failed: ${e.message}`, { cause: e });
     }
@@ -497,7 +633,7 @@ export default {
         await fetch(`${baseUrl}/api/messenger/${messengerId}`, {
           method: 'POST',
           headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messenger: { id: messengerId, type: 'Generic', name: 'SMS Mock (screenshots)', url: 'http://sms-mock:8081/', connectTimeout: 2000, readTimeout: 2000, debug: false } }),
+          body: JSON.stringify({ messenger: { id: messengerId, type: 'Generic', name: 'Pied Piper SMS', url: 'http://sms-mock:8081/', connectTimeout: 2000, readTimeout: 2000, debug: false } }),
         });
         console.log('[screenshot] beforeAll: created SMS mock messenger');
       }
@@ -643,16 +779,50 @@ export default {
       }
     }
 
+    for (const state of temporaryState) {
+      const wanted = state.names.includes(ctx?.name);
+      if (wanted === !!state.undo) continue;
+      if (wanted) state.undo = await state.apply();
+      else {
+        await state.undo();
+        state.undo = undefined;
+      }
+      await page.goto(url, { waitUntil: 'networkidle' });
+      await page.reload({ waitUntil: 'networkidle' });
+    }
+
+    // FusionAuth picks up a theme change after a delay
+    if (pathname.startsWith('/account')) {
+      const modified = ctx?.name === 'account-home-birthdate';
+      for (let i = 0; i < 60 && modified !== await page.getByText('This is now modified').isVisible(); i++) {
+        await page.waitForTimeout(500);
+        await page.reload({ waitUntil: 'networkidle' });
+      }
+    }
+
     if (ctx?.name === 'migration-tenant-add') {
       await page.fill('#tenant_name', 'Import test');
     }
 
     // bootstrap-button: tag the "Fingerprint, device or key" link for highlighting
     if (ctx?.name === 'passkeys-bootstrap-button') {
+      // FusionAuth shows the magic link button once it picks up the tenant's passwordless template
+      for (let i = 0; i < 60 && !await page.getByText(/magic link/i).isVisible(); i++) {
+        await page.waitForTimeout(500);
+        await page.reload({ waitUntil: 'networkidle' });
+      }
       await page.evaluate(() => {
         const btns = [...document.querySelectorAll('a, button')];
-        const btn = btns.find(el => /fingerprint|device or key/i.test(el.textContent.trim()));
-        if (btn) btn.setAttribute('data-hl', 'webauthn-bootstrap-btn');
+        let btn = btns.find(el => /fingerprint|device or key/i.test(el.textContent.trim()));
+        if (!btn) return;
+        // the link is inline; the bordered button is inside it
+        btn = btn.querySelector('button') ?? btn;
+        // a padded box, so the highlight sits outside the button's own border
+        const r = btn.getBoundingClientRect();
+        const box = document.createElement('div');
+        box.dataset.hl = 'webauthn-bootstrap-btn';
+        box.style.cssText = `position:absolute;left:${r.left + scrollX - 6}px;top:${r.top + scrollY - 6}px;width:${r.width + 12}px;height:${r.height + 12}px;pointer-events:none`;
+        document.body.append(box);
       });
     }
 
@@ -1178,6 +1348,118 @@ export default {
       await page.fill('#confirm_user_password', 'password');
     }
 
+    if (ctx?.name === 'account-application-details') {
+      await page.evaluate(id => {
+        const link = document.querySelector(`main a[href="/ajax/application/view/${id}"]`);
+        link?.closest('[popover]')?.showPopover();
+        link?.click();
+      }, piedPiperAppId);
+      await page.locator('.prime-dialog.open').waitFor();
+      await page.waitForTimeout(800);
+      // match the address bar the frame shows, and start the dialog at the Created row like the original
+      await page.evaluate(() => {
+        const created = [...document.querySelectorAll('.prime-dialog.open tr')].find(r => /^Created/.test(r.textContent.trim()));
+        let scroller = created?.parentElement;
+        while (scroller && scroller.scrollHeight <= scroller.clientHeight) scroller = scroller.parentElement;
+        if (scroller) scroller.scrollTop += created.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+        const walker = document.createTreeWalker(document.querySelector('.prime-dialog.open'), NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) node.textContent = node.textContent.replaceAll('http://localhost:9011', 'https://local.fusionauth.io');
+      });
+    }
+
+    if (['account-form-edit', 'account-form-add-field'].includes(ctx?.name)) {
+      await page.goto(`http://localhost:9011/admin/form/edit/${await selfServiceFormId()}`, { waitUntil: 'networkidle' });
+      if (ctx.name === 'account-form-add-field') {
+        await page.locator('a[href="/ajax/form/field/add"]').click();
+        await page.locator('.prime-dialog.open #fieldId').selectOption({ label: 'Birthdate' });
+        await tag('add-field-dialog', () => {
+          // the dimmed page shows through the rounded corners of the crop
+          const dialog = document.querySelector('.prime-dialog.open > div');
+          for (const el of [dialog, dialog?.parentElement]) el?.style.setProperty('border-radius', '0');
+          return dialog;
+        });
+      }
+    }
+
+    if (ctx?.name === 'account-forms-list') {
+      await tag('self-service-form', () => [...document.querySelectorAll('main tbody tr')].find(tr => tr.textContent.includes('Default User Self Service')));
+    }
+
+    if (ctx?.name === 'account-theme-templates') {
+      await tabsReady(page);
+      // each label is followed by its tooltip text
+      await page.locator('.tab-list-container button', { hasText: /^\s*Account edit\b/ }).click();
+      await page.waitForTimeout(500);
+      await tag('account-templates', () => {
+        const buttons = [...document.querySelectorAll('.tab-list-container button')];
+        const first = buttons.find(b => b.textContent.trim().startsWith('Account edit'));
+        const last = buttons.find(b => b.textContent.trim().startsWith('Account WebAuthn index'));
+        if (!first || !last) return null;
+        // the template list scrolls on its own
+        first.scrollIntoView({ block: 'start' });
+        window.scrollTo(0, 0);
+        const a = first.getBoundingClientRect(), b = last.getBoundingClientRect();
+        const box = document.createElement('div');
+        box.style.cssText = `position:absolute;left:${a.left + scrollX}px;top:${a.top + scrollY}px;width:${a.width}px;height:${b.bottom - a.top}px;pointer-events:none`;
+        document.body.append(box);
+        return box;
+      });
+    }
+
+    if (ctx?.name === 'account-passkey-add') {
+      await page.getByLabel('Display name').fill('Safari Touch ID');
+    }
+
+    if (ctx?.name === 'account-edit-password') {
+      await page.getByText('Change password').click();
+      await page.locator('input[type=password]').first().waitFor();
+    }
+
+    // the secret in the page is swapped for the fixed one
+    if (ctx?.name === 'account-two-factor-authenticator' || ctx?.name === 'account-recovery-codes') {
+      await page.route('**/account/two-factor/enable*', async route => {
+        const response = await route.fetch();
+        let body = await response.text();
+        const value = name => body.match(new RegExp(`<input[^>]*name="${name}"[^>]*>`))?.[0].match(/value="([^"]+)"/)?.[1];
+        const [secret, base32] = [value('secret'), value('secretBase32Encoded')];
+        if (secret) body = body.replaceAll(secret, totpSecret.toString('base64')).replaceAll(base32, totpSecretBase32);
+        await route.fulfill({ response, body });
+      });
+      await page.reload({ waitUntil: 'networkidle' });
+      if (ctx.name === 'account-recovery-codes') {
+        await page.fill('input[name=code]', totpCode());
+        await page.getByRole('button', { name: 'Enable', exact: true }).click();
+        await page.waitForLoadState('networkidle');
+        // the codes are new on each run
+        const pinned = await page.evaluate(() => {
+          const fixed = ['8SHN5-KXPC9', 'LG4TV-8BRZ3', 'HN5B3-XDTFX', 'NYY6P-DHHL7', 'W6QX9-LDV6L', 'TK265-Z8YNH', 'BX2KZ-N7LHQ', 'LS833-8ST38', 'W8Y5H-SS8KW', '9FDST-S3TFF'];
+          let i = 0;
+          const walker = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            node.textContent = node.textContent.replace(/\b[A-Z0-9]{5}-[A-Z0-9]{5}\b/g, () => fixed[i++ % fixed.length]);
+          }
+          return i;
+        });
+        if (!pinned) throw new Error('recovery codes not shown');
+      }
+      await page.unrouteAll();
+    }
+
+    if (ctx?.name === 'account-two-factor-email' || ctx?.name === 'account-two-factor-phone') {
+      const method = ctx.name.endsWith('-email') ? 'email' : 'sms';
+      await page.locator('#select-method').selectOption(method);
+      await page.waitForTimeout(500);
+      if (method === 'email') await page.locator('input[name=email]:visible').fill('example@email.com');
+    }
+
+    if (ctx?.name === 'account-two-factor-challenge') {
+      await page.fill('#loginId', 'richard@piedpiper.com');
+      await page.fill('#password', 'password');
+      await page.locator('#submit-button').click();
+      await page.waitForURL(/\/oauth2\/two-factor/);
+      await page.waitForLoadState('networkidle');
+    }
+
     if (ctx?.name === 'tenant-connector-add-policy') {
       await page.locator('el-tab-list button[aria-controls="connectors"]').click();
       await page.locator('#add-connector-policy').click();
@@ -1472,10 +1754,10 @@ export default {
       }
     }
 
-    await page.evaluate(() => {
-      document.querySelectorAll('.alert, [role=alert], .notification').forEach(el => el.remove());
+    await page.evaluate(keep => {
+      if (!keep) document.querySelectorAll('.alert, [role=alert], .notification').forEach(el => el.remove());
       document.activeElement?.blur();
-    });
+    }, keepAlerts.includes(ctx?.name));
 
     // lets selectors name a form section by its heading, e.g. [data-section='email-settings']
     await page.evaluate(() => {
@@ -1488,6 +1770,21 @@ export default {
         }
       }
     });
+
+    if (sectionBoxes[ctx?.name]) {
+      const boxed = await page.evaluate(section => {
+        const rects = [...document.querySelectorAll(`[data-section='${section}']`)].filter(el => el.offsetParent).map(el => el.getBoundingClientRect());
+        if (!rects.length) return false;
+        const top = Math.min(...rects.map(r => r.top)), bottom = Math.max(...rects.map(r => r.bottom));
+        const left = Math.min(...rects.map(r => r.left)), right = Math.max(...rects.map(r => r.right));
+        const box = document.createElement('div');
+        box.dataset.hl = 'section-box';
+        box.style.cssText = `position:absolute;left:${left + scrollX - 12}px;top:${top + scrollY - 12}px;width:${right - left + 24}px;height:${bottom - top + 24}px;pointer-events:none`;
+        document.body.append(box);
+        return true;
+      }, sectionBoxes[ctx.name]);
+      if (!boxed) throw new Error(`section not found: ${sectionBoxes[ctx.name]}`);
+    }
 
     // marks the strip for crop="#screenshot-band"
     if (bands[ctx?.name]) {
