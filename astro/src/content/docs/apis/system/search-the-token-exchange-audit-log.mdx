@@ -1,0 +1,119 @@
+---
+title: Search the Token Exchange Audit Log
+htmlTitle: Search the Token Exchange Audit Log API
+description: API documentation for the FusionAuth Search the Token Exchange Audit Log API.
+tags: token exchange, audit log, rfc 8693, fusionauth api, rest api, http api
+---
+import StandardGetResponseCodes from 'src/content/docs/apis/_shared/_standard-get-response-codes.astro';
+import TokenExchangeAuditLogResponseBody from 'src/content/docs/apis/system/_token-exchange-audit-log-response-body.mdx';
+
+<PlanBlurbApi plan="enterprise" feature="Token Exchange" />
+
+<AvailableSince since="1.70.0"/>
+
+FusionAuth writes a Token Exchange audit log entry for every [token exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange) attempt, successful or not. This API searches and paginates through those entries. To retrieve the chain of exchanges behind a single issued token, use the [Retrieve a Token Exchange Chain](/docs/apis/system/retrieve-a-token-exchange-chain) API.
+
+FusionAuth deletes entries after the number of days set in **`systemConfiguration.tokenExchangeAuditLogConfiguration.numberOfDaysToRetain`** in the [System Configuration](/docs/apis/system/update-the-system-configuration). The default is 7 days.
+
+## Request
+
+<API method="GET" uri="/api/system/token-exchange-audit-log/search?exchangerClientId={exchangerClientId}&outcome={outcome}&start={start}&end={end}" authentication={["api-key"]} title="Searches the Token Exchange audit log using the given search criteria"/>
+
+When calling the API using a `GET` request, send the search criteria as query parameters. The example URL doesn't show every parameter, but any of the documented query parameters can be added to the URL.
+
+Use a `POST` request to send the search criteria in a JSON request body instead.
+
+<API method="POST" uri="/api/system/token-exchange-audit-log/search" authentication={["api-key"]} title="Searches the Token Exchange audit log using the given search criteria"/>
+
+### Query Parameters
+
+<APIBlock>
+  <APIField name="end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="exchangerClientId" type="UUID" optional>
+    The Id of the exchanger Entity. Despite the name, this value is the Entity's Id, not its OAuth client Id.
+  </APIField>
+  <APIField name="numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="orderBy" type="String" optional defaults="insertInstant DESC, eventId DESC">
+    The column to order the search results on plus the order direction. The possible columns are `eventId` and `insertInstant`. For example, `insertInstant ASC` returns the oldest entries first.
+  </APIField>
+  <APIField name="outcome" type="String" optional>
+    The outcome of the exchange attempt. See **`tokenExchangeAuditLogs[x].outcome`** in the [response body](#response-body) for the possible values.
+  </APIField>
+  <APIField name="start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="startRow" type="Integer" optional defaults="0">
+    The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+  </APIField>
+  <APIField name="tenantId" type="UUID" optional>
+    Restricts the results to entries belonging to the given Tenant. This parameter is overridden if the request contains an `X-FusionAuth-TenantId` header, or if the API key is scoped to a specific Tenant.
+  </APIField>
+</APIBlock>
+
+### Request Body
+
+The request body accepts the same fields as the query parameters, nested in a **`search`** object. For example, **`search.outcome`** corresponds to the **outcome** query parameter.
+
+```json title="Example JSON Request"
+{
+  "search": {
+    "exchangerClientId": "4b8f3b1a-6c2d-4f0e-9a7b-2d1c3e4f5a6b",
+    "outcome": "POLICY_DENIED",
+    "start": 1792592000000,
+    "end": 1792678400000,
+    "numberOfResults": 50
+  }
+}
+```
+
+## Response
+
+The response for this API contains the entries matching the search criteria in reverse chronological order.
+
+<StandardGetResponseCodes never_missing />
+
+### Response Body
+
+<APIBlock>
+  <APIField name="tokenExchangeAuditLogs" type="Array">
+    The entries matching the search criteria.
+  </APIField>
+  <TokenExchangeAuditLogResponseBody base_field_name="tokenExchangeAuditLogs[x]" />
+  <APIField name="total" type="Long">
+    The total number of entries matching the search criteria. Use this value with **numberOfResults** and **startRow** to paginate.
+  </APIField>
+</APIBlock>
+
+```json title="Example JSON Response"
+{
+  "tokenExchangeAuditLogs": [
+    {
+      "actChain": "{\"sub\":\"todo-service\",\"sub_profile\":\"fusionauth:API Service\"}",
+      "delegationSemantics": "DELEGATION",
+      "eventId": "e7d9b3f0-8c2a-4d1b-9e6f-1a2b3c4d5e6f",
+      "exchangerClientId": "4b8f3b1a-6c2d-4f0e-9a7b-2d1c3e4f5a6b",
+      "grantedAudience": "email-service",
+      "grantedScope": "openid offline_access",
+      "insertInstant": 1792680000000,
+      "issuedTokenJti": "6b3a7d1e-4c8f-4b2a-9e55-0f1c2d3e4a5b",
+      "outcome": "SUCCESS",
+      "policyDecision": "ALLOW",
+      "policyDecisionDurationMs": 4,
+      "policyEngine": "ENTITY",
+      "requestedAudience": "email-service",
+      "subjectTokenIss": "https://piedpiper.fusionauth.io",
+      "subjectTokenJti": "a1b2c3d4-e5f6-4890-abcd-ef1234567890",
+      "subjectTokenSub": "c0a6ae6c-6d38-4bb5-a7c2-4d2b4e3a1f2d",
+      "subjectTokenType": "urn:ietf:params:oauth:token-type:access_token",
+      "subjectTokenValidationStatus": "AUTHORITATIVE",
+      "tenantId": "30663132-6464-6665-3032-326466613934"
+    }
+  ],
+  "total": 1
+}
+```
+
