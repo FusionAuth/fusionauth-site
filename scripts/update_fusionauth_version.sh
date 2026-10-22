@@ -17,6 +17,7 @@ case "${1:-}" in
 esac
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$repo_root/scripts/lib/run-locally.sh"
 files=(astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml)
 
 version="${FUSIONAUTH_VERSION:-$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')}"
@@ -24,6 +25,7 @@ if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   printf 'Unexpected FusionAuth version "%s". Nothing was changed.\n' "$version" >&2
   exit 1
 fi
+trap 'run_locally "FUSIONAUTH_VERSION=$version bash scripts/update_fusionauth_version.sh"' EXIT
 
 stale=()
 for file in "${files[@]}"; do
@@ -46,10 +48,17 @@ if ! curl -f --silent --output /dev/null "https://hub.docker.com/v2/repositories
   exit 0
 fi
 
+printf '\nProposed changes:\n'
+for file in "${files[@]}"; do
+  sed "s#^\( *image: fusionauth/fusionauth-app:\).*#\1$version#" "$repo_root/$file" |
+    diff -u --label "$file" --label "$file" "$repo_root/$file" - || true
+done
+printf '\n'
+
 if [[ "$mode" == check ]]; then
   printf 'FusionAuth %s is out but these files pin an older version:\n' "$version" >&2
   printf '  %s\n' "${stale[@]}" >&2
-  printf 'Run bash scripts/update_fusionauth_version.sh, retake screenshots, then open a PR.\n' >&2
+  printf 'Run the command below, then open a PR.\n' >&2
   exit 1
 fi
 

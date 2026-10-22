@@ -42,4 +42,4 @@ gh issue create --repo "$GITHUB_REPOSITORY" --label "$label" --title "$title" --
 
 \`$workflow\` failed: $run_url
 
-The run summary has the details and how to fix it. Later failures add a comment here, and the next passing run closes this issue."
+The job log lists every change the run found and ends with the command that reproduces the run locally; the run summary repeats that command. Later failures add a comment here, and the next passing run closes this issue."

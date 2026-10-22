@@ -1,0 +1,119 @@
+---
+title: Update a Production Instance
+htmlTitle: Update a Production Instance of FusionAuth
+description: Learn how to plan, perform, and verify an update of a FusionAuth instance in a production environment.
+order: 400
+tags: upgrade fusionauth, version upgrade, update fusionauth, version update, update production, production, rolling update, blue-green deployment, deployment, docker upgrade, docker update
+---
+
+Updating a production instance of FusionAuth is similar to updating a library your application depends on: read what changed, test the new version, then roll it out in a way that fits how much downtime your users can tolerate. A production update has four stages:
+
+1. [Prepare](#prepare-for-the-update): read the release notes, test the update in a staging environment, and back up your database.
+1. [Choose an update strategy](#choose-an-update-strategy) that balances downtime, risk, and effort.
+1. [Apply the database migrations](#apply-database-migrations), if the new version includes any.
+1. [Verify the update](#verify-the-update), and [roll back](/docs/update/rollback) if something goes wrong.
+
+To update a non-production instance, see [Update a Development Instance](/docs/update/dev-instance). To update a FusionAuth Cloud deployment, see [Update a Deployment](/docs/cloud/update-a-deployment).
+
+## Prepare for the Update
+
+### Read the Release Notes
+
+The [release notes](/docs/release-notes) describe every change in every version, including database migrations, new configuration options and their defaults, deprecated features, and changes that require theme or client library updates. Read the notes for every version between your current version and the version you're updating to.
+
+### Decide How Far to Jump
+
+You can update across several minor versions at once. For example, you might update from `1.43.0` to `1.45.0`. FusionAuth runs every database migration needed to reach the new version, or you can [run them yourself](/docs/update/database-migrations#run-migrations-out-of-band). Jumping across patch versions, for example from `1.43.0` to `1.43.3`, is usually safe.
+
+If the releases you're skipping focus on bug fixes and small improvements, a version jump is probably safe. The alternative is to update and test one version at a time. That takes longer, but if something breaks, you know exactly which version caused it. It works best when you have automated tests that exercise your FusionAuth integrations.
+
+### Test in a Staging Environment
+
+Test the update in a staging environment before you update production. Make staging as close to production as you can, including the same data, or at least the same data volume, so you can test both behavior and how long the database migration takes. Testing matters most when you jump across several minor versions, or when you've customized FusionAuth with [advanced themes](/docs/theme/advanced-themes/update), plugins, or lambdas.
+
+While you test, check the other parts of your integration that a new version can affect:
+
+* **Configuration**: review new configuration options and defaults in the release notes. To promote configuration changes between environments, script them with a client library, Terraform, or Pulumi, or apply them in the Admin UI. See the [Configuration Management guide](/docs/operate/deploy).
+* **Themes**: advanced themes may need template and message updates. See [Update an Advanced Theme](/docs/theme/advanced-themes/update). [Simple themes](/docs/theme/simple-theme-editor), available in version `1.51.0` and later, never need a theme update.
+* **Client libraries**: update your client libraries to match the new version. See [Update a Client Library](/docs/update#update-a-client-library).
+
+### Back Up Your Database
+
+Back up your database immediately before you update production. A backup is the only way to [roll back](/docs/update/rollback) an update that included a database migration.
+
+## Choose an Update Strategy
+
+Every strategy below updates the FusionAuth nodes and applies any database migrations. They differ in how much downtime they cause, how much infrastructure they need, and how easily you can roll back.
+
+| Strategy | Downtime | Requirements | Rollback |
+|----------|----------|--------------|----------|
+| [Stop and update all nodes](#stop-and-update-all-nodes) | Full, for the length of the update | None | Restore the backup and redeploy the previous version |
+| [Rolling update](#rolling-update) | Limited to the database migration | Multiple nodes behind a load balancer | Harder with in-place updates, easier when you replace nodes |
+| [Blue-green deployment](#blue-green-deployment) | Limited to the database migration | A second set of nodes and a load balancer | Point the load balancer back at the old nodes, then restore the backup if the schema changed |
+
+### Stop and Update All Nodes
+
+The simplest strategy is to stop everything, update, and start again. It suits systems that can tolerate downtime, for example during a period of near-zero user activity or scheduled maintenance for other parts of your system.
+
+1. Stop all FusionAuth nodes.
+1. Update FusionAuth on each node. The steps depend on how you installed FusionAuth, and match the steps for a [development instance](/docs/update/dev-instance).
+1. Start the nodes. If silent mode is enabled, the first node to connect applies any database migrations.
+
+### Rolling Update
+
+If you run multiple FusionAuth nodes behind a load balancer, you can update them one at a time while the load balancer sends traffic to the nodes that are available. Capacity drops while nodes are offline, but the system stays available for most of the update.
+
+You can update each node **in place**, or **replace** each node with a new one running the new version:
+
+* In-place updates are simpler and faster, because you don't create new servers. If something goes wrong, rolling back is more complex.
+* Replacing nodes is slower, but you can roll back by pointing the load balancer at the old nodes.
+
+An in-place rolling update of a three-node cluster looks like this:
+
+1. Remove the first node from the load balancer and stop it.
+1. Update FusionAuth on the first node and start it. If silent mode is enabled, it applies any database migrations and locks the database while it does.
+1. Add the first node back to the load balancer.
+1. Remove the second and third nodes from the load balancer and stop them.
+1. Update the second and third nodes and start them.
+1. Add the second and third nodes back to the load balancer.
+
+Until every node runs the new version, the older nodes serve requests against the migrated schema and may produce errors. See [Downtime and Locking](/docs/update/database-migrations#downtime-and-locking).
+
+![Diagram of a rolling update showing a load balancer between users and FusionAuth nodes moving traffic to each node when ready.](/img/docs/operate/deploy/upgrade-fusionauth-rolling-upgrade-nodes.png)
+
+### Blue-Green Deployment
+
+A blue-green deployment runs a second, identical set of nodes alongside your current ones. A load balancer sends traffic to one set at a time. Because the new nodes are separate from the production nodes, the update carries less risk than a rolling update.
+
+A blue-green update of a three-node cluster looks like this:
+
+1. Create three new nodes running the new version of FusionAuth, configured for the same database.
+1. Start one of the new nodes. If silent mode is enabled, it applies any database migrations and locks the database while it does.
+1. Start the other new nodes.
+1. Add the new nodes to the load balancer.
+1. Remove the old nodes from the load balancer.
+1. After you [verify the update](#verify-the-update), shut down the old nodes.
+
+The old nodes keep serving requests against the migrated schema until you remove them from the load balancer, so they may produce errors. See [Downtime and Locking](/docs/update/database-migrations#downtime-and-locking).
+
+![Diagram of a Blue-Green Deployment with a load balancer between two deployment versions.](/img/docs/operate/deploy/upgrade-fusionauth-blue-green-deployment-nodes.png)
+
+## Apply Database Migrations
+
+Your production instance should always use the **production** runtime mode. In that mode, FusionAuth applies database migrations in one of two ways:
+
+* **Automatically**, when silent mode is enabled. The first updated node to start applies the migrations. Every strategy above assumes this.
+* **Out of band**, when silent mode is disabled. You run the migration SQL scripts yourself before you start the updated nodes, which gives you control over when the migration runs and how long the database is locked.
+
+For how each option works, which scripts to run, and how migrations affect downtime, see [Database Migrations](/docs/update/database-migrations).
+
+## Verify the Update
+
+After the update, confirm that your instance works before you consider it done:
+
+1. Check that every node reports the new version with the [System Version API](/docs/apis/system/retrieve-system-version) and a healthy status with the [System Status API](/docs/apis/system/retrieve-system-status).
+1. Check the system logs on each node for errors.
+1. Log in through your applications and run your integration tests.
+1. If you used a blue-green deployment, shut down the old nodes.
+
+If something goes wrong, see [Roll Back an Update](/docs/update/rollback).

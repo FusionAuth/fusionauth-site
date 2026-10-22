@@ -1,0 +1,277 @@
+---
+title: Update a Development Instance
+htmlTitle: Update a Development Instance of FusionAuth
+description: Learn how to update an instance of FusionAuth that isn't used for production purposes.
+order: 100
+tags: upgrade fusionauth, version upgrade, migration, system update, deployment, rpm, deb package, docker upgrade, update fusionauth, version update, docker update
+---
+
+This page explains how to update FusionAuth to a newer version.
+
+## Update
+
+<Tabs>
+  <TabItem label="Docker">
+   <Steps>
+   To update an instance of FusionAuth configured with a container management tool such as Docker Desktop, OrbStack, or Podman:
+
+   1. Stop the instance:
+
+      ```shell-session
+      docker compose down
+      ```
+
+   1. Modify the `docker-compose.yml` file to point to the version of FusionAuth you want. The following command will update you to the latest version:
+
+      ```shell-session
+      docker pull fusionauth/fusionauth-app:latest
+      ```
+
+      For a full list of available tags, see [`fusionauth-app` on Docker Hub](https://hub.docker.com/r/fusionauth/fusionauth-app).
+
+   1. Start your instance:
+
+      ```shell-session
+      docker compose up -d
+      ```
+
+   1. Open the [<Breadcrumb>System -> About</Breadcrumb> page in the Admin UI](http://localhost:9011/admin/system/about/) to check your instance's version of FusionAuth.
+   </Steps>
+  </TabItem>
+  <TabItem label="`fusionauth-app` on macOS and Linux">
+   <Steps>
+   1. Configure a `FUSIONAUTH_HOME` environment variable (typically `/usr/local/fusionauth`).
+
+   1. Navigate to `FUSIONAUTH_HOME`. You should see the following contents:
+
+      ```tree
+      $FUSIONAUTH_HOME
+      ├── bin
+      ├── config
+      │   ├── fusionauth.properties
+      │   └── keystore
+      ├── data
+      ├── fusionauth-app
+      ├── fusionauth-search
+      └── java
+      ```
+
+   1. Shut down the FusionAuth services. During an update, most everything is saved in the database, so it is safe to delete these directories.
+
+      ```shell-session
+      "$FUSIONAUTH_HOME/bin/shutdown.sh"
+      ```
+
+   1. Delete or move the existing install:
+
+      ```shell-session
+      rm -rf "$FUSIONAUTH_HOME/fusionauth-app" "$FUSIONAUTH_HOME/fusionauth-search" "$FUSIONAUTH_HOME/bin"
+      ```
+
+      <Aside type="tip">
+      To preserve your configuration and Elasticsearch index, preserve the following directories:
+
+      ```tree
+      $FUSIONAUTH_HOME
+      ├── config
+      ├── data
+      ├── java
+      └── logs
+      ```
+      </Aside>
+
+   1. Extract the new ZIP files and place them in `FUSIONAUTH_HOME` (the `-n` flag prevents accidental overwrites):
+
+      ```shell-session title="Unzip the new packages with a no-overwrite flag"
+      unzip -nq new-fusionauth-app.zip -d "$FUSIONAUTH_HOME" && unzip -nq new-fusionauth-search.zip -d "$FUSIONAUTH_HOME"
+      ```
+
+   1. Restart FusionAuth:
+
+      ```shell-session
+      "$FUSIONAUTH_HOME/bin/startup.sh"
+      ```
+   </Steps>
+  </TabItem>
+  <TabItem label="Homebrew install on macOS">
+   If you initially installed FusionAuth using Homebrew, you can also use Homebrew to update to the latest version of FusionAuth.
+
+   To update FusionAuth using `brew`, follow the steps below:
+
+   <Steps>
+   1. Stop `fusionauth-app` using Homebrew services:
+
+      ```shell-session
+      brew services stop fusionauth-app
+      ```
+
+   1. Update the version of `fusionauth-app`:
+
+      ```shell-session
+      brew upgrade fusionauth-app
+      ```
+
+   1. Start `fusionauth-app` with Homebrew services:
+
+      ```shell-session
+      brew services start fusionauth-app
+      ```
+   </Steps>
+  </TabItem>
+  <TabItem label="`fusionauth-app` on Windows">
+   <Steps>
+   1. Configure a `$env:FUSIONAUTH_HOME` environment variable (typically `\fusionauth`).
+
+   1. Navigate to `$env:FUSIONAUTH_HOME`. You should see the following contents:
+
+      ```tree
+      $env:FUSIONAUTH_HOME (\fusionauth)
+      ├── bin
+      ├── config
+      │   ├── fusionauth.properties
+      │   └── keystore
+      ├── data
+      ├── fusionauth-app
+      ├── fusionauth-search
+      └── java
+      ```
+
+   1. Shut down the FusionAuth services. During an update, most everything is saved in the database, so it is safe to delete these directories.
+
+      ```powershell
+      Stop-Service -Name FusionAuthApp
+      ```
+
+      ```powershell
+      Stop-Service -Name FusionAuthSearch
+      ```
+
+   1. Delete or move the existing install:
+
+      ```powershell
+      & "$env:FUSIONAUTH_HOME\fusionauth-app\bin\FusionAuthApp.exe" /uninstall
+      ```
+      <Aside type="note">
+      Prior to version `1.37.0`, you can find `FusionAuthApp.exe` at:
+
+      `& "\$env:FUSIONAUTH_HOME\fusionauth-app\apache-tomcat\bin\FusionAuthApp.exe"`
+
+      Versions `1.37.0` through `1.39.0` do not support native Windows installation.
+      </Aside>
+
+      ```powershell
+      & "$env:FUSIONAUTH_HOME\fusionauth-search\elasticsearch\bin\FusionAuthSearch.exe" /uninstall
+      ```
+
+      <Aside type="tip">
+      To preserve your configuration and Elasticsearch index, preserve the following directories:
+
+      ```tree
+      $env:FUSIONAUTH_HOME
+      ├── config
+      ├── data
+      ├── java
+      └── logs
+      ```
+      </Aside>
+
+
+   1. Extract the new ZIP files and place them in `$env:FUSIONAUTH_HOME`. You may do this using Windows File Explorer or PowerShell's `Expand-Archive` cmdlet. Ensure you delete or move the existing directories to prevent unzipping the new version on top of the existing version. If the new version is unzipped on top of the existing version, you will end up with duplicate libraries in the classpath that will lead to runtime errors.
+
+   1. Reinstall the Windows services:
+
+      ```powershell
+      & "$env:FUSIONAUTH_HOME\fusionauth-app\bin\FusionAuthApp.exe" /install
+      ```
+      
+      ```powershell
+      & "$env:FUSIONAUTH_HOME\fusionauth-search\elasticsearch\bin\FusionAuthSearch.exe" /install
+      ```
+
+   1. Start the Windows services:
+
+      ```powershell
+      Start-Service -Name FusionAuthSearch
+      Start-Service -Name FusionAuthApp
+      ```
+   </Steps>
+  </TabItem>
+  <TabItem label="Linux Packages">
+   If you installed using the RPM or Debian packages, issue an update command to `dpkg` or your RPM program and specify the new package file:
+
+   <Steps>
+   1. Shut down FusionAuth:
+
+      ```shell-session
+      sudo service fusionauth-app stop && sudo service fusionauth-search stop
+      ```
+
+   2. Update FusionAuth to a specific version, replacing the `<version>` placeholder with your version number:
+
+      <Tabs>
+         <TabItem label="dpkg">
+         ```shell-session
+         sudo dpkg -i fusionauth-search-<version>.deb && sudo dpkg -i fusionauth-app-<version>.deb
+         ```
+         </TabItem>
+         <TabItem label="rpm">
+         ```shell-session
+         sudo rpm -U fusionauth-search-<version>.rpm && sudo rpm -U fusionauth-app-<version>.rpm
+         ```
+         </TabItem>
+      </Tabs>
+
+   1. Start FusionAuth:
+
+      ```shell-session
+      sudo systemctl start fusionauth-search && sudo systemctl start fusionauth-app
+      ```
+   </Steps>
+  </TabItem>
+</Tabs>
+
+## Troubleshoot RPM installs
+
+Please review the procedure outlined below if attempting to perform a clean install or update using RPM's and have experienced a failure that you have been unable to resolve. Please only consider these steps after other attempts have been unsuccessful.
+
+<Aside type="caution">
+This will completely remove FusionAuth App and FusionAuth Search from your server. Proceed with caution.
+
+It is always recommended you back up the database before performing an update or troubleshooting steps outlined here.
+</Aside>
+
+The following steps will produce a clean installation preserving:
+
+- The FusionAuth config file found in `/usr/local/fusionauth/config/fusionauth.properties`
+- The Elasticsearch index found in `/usr/local/fusionauth/data`
+
+Below assumes both `fusionauth-app` and `fusionauth-search` will be uninstalled and reinstalled together. If you are not using `fusionauth-search`, you may ignore the steps related to this service.
+
+### Manual Removal Steps
+
+1. Remove the RPM package for `fusionauth-search` and `fusionauth-app`:
+
+   ```shell-session
+   sudo rpm -e fusionauth-search && sudo rpm -e fusionauth-app
+   ```
+
+1. Manually delete anything leftover from RPM:
+
+   ```shell-session
+   sudo rm -rf /usr/local/fusionauth/fusionauth-search/ /usr/local/fusionauth/fusionauth-app/ /usr/local/fusionauth/bin/
+   ```
+
+1. After removal, the following directories will remain:
+   * `/usr/local/fusionauth/config/`
+   * `/usr/local/fusionauth/data/` (does not always exist)
+   * `/usr/local/fusionauth/java/` (safe to delete)
+
+1. Download your desired version of `fusionauth-app` and `fusionauth-search` from our [direct download page](/direct-download).
+
+1. Reinstall `fusionauth-app` and `fusionauth-search`:
+
+   ```shell-session
+   sudo rpm -i <file_to_be_installed>.rpm
+   ```
+
+

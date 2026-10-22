@@ -1,5 +1,5 @@
 export const releaseCategories = [
-  { id: 'theme-upgrade',       label: 'Theme Upgrade',       color: '#e11d48' },
+  { id: 'theme-update',        label: 'Theme Update',        color: '#e11d48' },
   { id: 'new-feature',         label: 'New Feature',         color: '#16a34a' },
   { id: 'enhancement',         label: 'Enhancement',         color: '#2563eb' },
   { id: 'known-issue',         label: 'Known Issue',         color: '#bb4448' },

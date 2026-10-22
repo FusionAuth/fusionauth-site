@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Reports the src/redirects.json changes needed by a git diff that renames,
+ * Reports the redirects.json changes needed by a git diff that renames,
  * moves, or deletes content pages.
  *
  * Content pages live in astro/src/content/{docs,articles,blog} and map to URLs
@@ -12,9 +12,10 @@
  * Reports:
  *   - `redirects` entries to add, for URLs that moved or went away
  *   - existing `redirects` entries whose target moved, with the new value
- *   - `indexPaths` entries to add, for newly routable folder index pages
- *   - `indexPaths` entries that now point at a folder with no index page
+ *   - `indexPaths` entries to add, for any routable folder index page that lacks one
+ *   - `indexPaths` entries that point at a folder with no index page
  *   - removed pages it could not find a new home for, to fill in by hand
+ *   - existing `redirects` entries whose target no page serves (deleted or never existed)
  *
  * Pairing a deletion with its new location relies on git's rename detection,
  * which needs the move staged or committed. An unstaged move is a deletion plus
@@ -40,7 +41,7 @@ import { join, dirname, posix } from 'path';
 import { fileURLToPath } from 'url';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const REDIRECTS_FILE = 'src/redirects.json';
+const REDIRECTS_FILE = 'redirects.json';
 
 // ── Arguments ─────────────────────────────────────────────────────────────────
 
@@ -103,8 +104,6 @@ function urlFor(path) {
   if (slug.endsWith('/index')) return `${entry.prefix}/${slug.slice(0, -'/index'.length)}`;
   return `${entry.prefix}/${slug}`;
 }
-
-const isIndexFile = path => /(^|\/)index\.mdx$/.test(path);
 
 /**
  * Whether some page still serves this URL after the change. Moving
@@ -278,11 +277,6 @@ const redirectAdds = [];    // { key, value, note }
 const redirectUpdates = []; // { key, from, to, note }
 const shadowed = [];        // { key, url }
 
-/** Old index-page URLs need both forms: /foo 404s on S3, /foo/ 404s via indexPaths. */
-function sourceKeys(oldPath, oldUrl) {
-  return isIndexFile(oldPath) ? [oldUrl, `${oldUrl}/`] : [oldUrl];
-}
-
 // Only ever fills a gap. A key that already has a value is not a 404, and its
 // target is either still live or picked up by the "target moved" pass below --
 // either way a human chose it, so it is left alone.
@@ -293,7 +287,7 @@ function planRedirect(key, value, note) {
 
 for (const move of moves) {
   const note = move.inferred ? 'inferred from the filename' : null;
-  for (const key of sourceKeys(move.from, move.oldUrl)) planRedirect(key, move.newUrl, note);
+  planRedirect(move.oldUrl, move.newUrl, note);
 }
 
 for (const item of unresolved) {
@@ -301,7 +295,7 @@ for (const item of unresolved) {
   const note = item.alternatives.length
     ? `suggestion, confirm -- also plausible: ${item.alternatives.join(', ')}`
     : 'suggestion -- confirm this is the right landing page';
-  for (const key of sourceKeys(item.from, item.oldUrl)) planRedirect(key, item.suggestion, note);
+  planRedirect(item.oldUrl, item.suggestion, note);
 }
 
 // Existing redirects pointing at a URL that moved would land on a 404.
@@ -314,6 +308,43 @@ for (const [key, value] of Object.entries(redirects)) {
   redirectUpdates.push({ key, from: value, to: next, note: 'target moved' });
 }
 
+// Existing redirects pointing at a URL nothing serves (deleted, or never existed) also land on a 404.
+const prefixRules = (config.redirectsByPrefix || []).map(([prefix]) => prefix);
+// routes in src/pages; the collection [...slug] pages are what stillServed already checks
+const pageRoutes = git('ls-files', 'astro/src/pages').split('\n')
+  .filter(p => p && !/\/(docs|articles|blog)\/\[\.\.\.slug\]\.astro$/.test(p))
+  .map(p => p.replace(/^astro\/src\/pages/, '').replace(/\.(astro|mdx?|js|ts)$/, '').replace(/\/index$/, '') || '/')
+  .map(r => new RegExp(`^${r.replace(/\[\.\.\.[^\]]+\]/g, '.*').replace(/\[[^\]]+\]/g, '[^/]+')}$`));
+const updated = new Set(redirectUpdates.map(u => u.key));
+const deadTargets = [];  // { key, value }
+for (const [key, value] of Object.entries(redirects)) {
+  if (updated.has(key)) continue;
+  const bare = value.split(/[?#]/)[0].replace(/(.)\/$/, '$1');
+  if (!COLLECTIONS.some(([, prefix]) => bare === prefix || bare.startsWith(`${prefix}/`))) continue;
+  if (stillServed(bare) || redirects[bare] !== undefined || redirects[`${bare}/`] !== undefined) continue;
+  if (prefixRules.some(p => bare.startsWith(p)) || pageRoutes.some(r => r.test(bare))) continue;
+  // generated files (llms.txt, feeds) have no source page to check
+  if (/\.[a-z0-9]+$/i.test(bare)) continue;
+  deadTargets.push({ key, value });
+}
+
+// The Lambda 301s /foo/ to /foo before it looks up a redirect (unless /foo/ is in indexPaths),
+// so a trailing-slash key is never matched: keep only the bare form.
+const slashKeys = [];  // { key, value, fix: 'drop' | 'rename' | null, why }
+// mirrors removeSlash() in the site-origin-request-handler Lambda (fusionauth-site-infra)
+const lambdaStripsSlash = uri => indexPaths[uri] !== true
+  && (!uri.startsWith('/blog') || (/^\/blog\/[\w\d-]*\/$/.test(uri) && uri !== '/blog/latest/'))
+  && !prefixRules.some(p => uri.startsWith(p));
+for (const [key, value] of Object.entries(redirects)) {
+  if (key === '/' || !key.endsWith('/') || !lambdaStripsSlash(key)) continue;
+  const bare = key.slice(0, -1);
+  const same = v => (v || '').replace(/(.)\/$/, '$1') === value.replace(/(.)\/$/, '$1');
+  if (value.replace(/(.)\/$/, '$1') === bare) slashKeys.push({ key, value, fix: 'drop', why: 'the Lambda already strips the slash' });
+  else if (redirects[bare] === undefined) slashKeys.push({ key, value, fix: 'rename', why: `use ${JSON.stringify(bare)}` });
+  else if (same(redirects[bare])) slashKeys.push({ key, value, fix: 'drop', why: `duplicates ${JSON.stringify(bare)}` });
+  else slashKeys.push({ key, value, fix: null, why: `conflicts with ${JSON.stringify(bare)} -> ${JSON.stringify(redirects[bare])}` });
+}
+
 // A redirect on a live page's own URL hides that page.
 for (const move of moves) {
   if (redirects[move.newUrl] !== undefined) shadowed.push({ key: move.newUrl, url: move.newUrl });
@@ -324,26 +355,24 @@ for (const move of moves) {
 const indexAdds = [];    // key
 const indexRemovals = []; // key
 
-// Any folder the diff touched can change shape: a new index page, an index page
-// that flipped `route`, or the first or last of the sibling pages around it.
-const touchedFolders = new Set(
-  [...added, ...modified, ...deleted, ...renames.map(r => r.from), ...renames.map(r => r.to)]
-    .filter(p => collectionEntry(p))
-    .map(p => posix.dirname(p)),
-);
+// The whole tree, not only the diff, so an entry that went stale or never got added still shows up.
+const newFiles = workingTree
+  ? git('ls-files', '--cached', '--others', '--exclude-standard').split('\n').filter(p => p && newExists(p))
+  : git('ls-tree', '-r', '--name-only', HEAD_REF || 'HEAD').split('\n').filter(Boolean);
+const wantedIndexKeys = new Set(newFiles
+  .filter(p => /(^|\/)index\.mdx$/.test(p) && urlFor(p) && needsIndexPath(p))
+  .map(p => `${urlFor(p)}/`));
 
-for (const dir of touchedFolders) {
-  const indexPath = `${dir}/index.mdx`;
-  const url = urlFor(indexPath);
-  if (!url) continue;
-  const key = `${url}/`;
-  const want = needsIndexPath(indexPath);
-  if (want && indexPaths[key] !== true) indexAdds.push(key);
-  // Only speak about an entry whose index page is ours. Some paths, /blog/ among
-  // them, are served by a route in src/pages and have no collection index page.
-  if (!want && indexPaths[key] !== undefined && readOld(indexPath) !== null) {
-    indexRemovals.push(key);
-  }
+for (const key of [...wantedIndexKeys].sort()) {
+  if (indexPaths[key] !== true) indexAdds.push(key);
+}
+// only entries inside a collection are ours; some, /blog/ among them, are served by src/pages routes
+for (const key of Object.keys(indexPaths)) {
+  if (wantedIndexKeys.has(key)) continue;
+  const bare = key.replace(/(.)\/$/, '$1');
+  if (!COLLECTIONS.some(([, prefix]) => bare === prefix || bare.startsWith(`${prefix}/`))) continue;
+  if (pageRoutes.some(r => r.test(bare))) continue;
+  indexRemovals.push(key);
 }
 
 // ── Report ────────────────────────────────────────────────────────────────────
@@ -358,9 +387,11 @@ const comparison = workingTree
 out(`Comparing ${comparison}`);
 out(`${moves.length} page move(s), ${unresolved.length} removal(s) without an obvious new home`);
 
-const stillUnresolved = unresolved.filter(u => !u.suggestion);
+// a hand-written entry resolves a removal the script couldn't place
+const stillUnresolved = unresolved.filter(u => !u.suggestion
+  && redirects[u.oldUrl] === undefined);
 const needed = redirectAdds.length + redirectUpdates.length + indexAdds.length
-  + indexRemovals.length + stillUnresolved.length;
+  + indexRemovals.length + stillUnresolved.length + deadTargets.length + slashKeys.length;
 
 if (!needed && !shadowed.length) {
   out('');
@@ -411,6 +442,22 @@ if (stillUnresolved.length) {
   }
 }
 
+if (slashKeys.length) {
+  out('');
+  out(`List redirects by their URL without a trailing slash (${slashKeys.length}):`);
+  out('');
+  for (const { key, value, fix, why } of slashKeys) {
+    out(`${entryLine(key, value)}    // ${fix ? `${fix}: ` : 'fix by hand: '}${why}`);
+  }
+}
+
+if (deadTargets.length) {
+  out('');
+  out(`These ${deadTargets.length} redirect(s) point at a URL no page serves. Pick a live target for each by hand:`);
+  out('');
+  for (const { key, value } of deadTargets.sort((a, b) => a.key.localeCompare(b.key))) out(entryLine(key, value));
+}
+
 if (shadowed.length) {
   out('');
   out('These live pages also have a "redirects" entry on their own URL, which hides them:');
@@ -439,12 +486,25 @@ if (WRITE) {
   for (const { key, to } of redirectUpdates) redirects[key] = to;
   for (const key of indexAdds) insert(indexPaths, key, true);
   for (const key of indexRemovals) delete indexPaths[key];
+  // rename in place so the key keeps its position in the file
+  const slashFixes = new Map(slashKeys.filter(k => k.fix).map(k => [k.key, k.fix]));
+  if (slashFixes.size) {
+    const rebuilt = {};
+    for (const [key, value] of Object.entries(redirects)) {
+      const fix = slashFixes.get(key);
+      if (fix === 'drop') continue;
+      rebuilt[fix === 'rename' ? key.slice(0, -1) : key] = value;
+    }
+    for (const k of Object.keys(redirects)) delete redirects[k];
+    Object.assign(redirects, rebuilt);
+  }
 
   writeFileSync(redirectsPath, `${JSON.stringify(config, null, 2)}\n`);
   out('');
   out(`Wrote ${REDIRECTS_FILE}.`);
-  if (stillUnresolved.length) out('The unresolved removals above still need entries by hand.');
-  process.exit(stillUnresolved.length ? 1 : 0);
+  const byHand = stillUnresolved.length + deadTargets.length + slashKeys.filter(k => !k.fix).length;
+  if (byHand) out('The entries flagged above still need fixing by hand.');
+  process.exit(byHand ? 1 : 0);
 }
 
 process.exit(1);

@@ -4,7 +4,7 @@ import path from "path";
 // Astro's `build.format: 'file'` writes every page as `<slug>.html`, so a folder
 // index page lands at `<folder>.html` rather than inside the folder. This moves
 // it to `<folder>/index.html`, which makes the trailing-slash URL the one that
-// serves the file and is what `indexPaths` in src/redirects.json describes.
+// serves the file and is what `indexPaths` in redirects.json describes.
 //
 // Pass one handles any `X.html` sitting next to an `X/` directory. Pass two
 // covers folder index pages whose folder holds no other page, where there is no
