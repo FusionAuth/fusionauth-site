@@ -1,18 +1,18 @@
 ---
 title: Token Exchange Populate Lambda
-description: An overview of the Token Exchange Populate lambda for customizing claims in exchanged tokens.
+description: Reference for the Token Exchange Populate lambda, which adds or narrows claims in tokens issued through token exchange.
 tags: token exchange populate lambda, custom claims, token customization, rfc 8693
 ---
 
+<PlanBlurb plan="enterprise" />
+
 <AvailableSince since="1.70.0"/>
 
-If you would like to augment the claims in a token issued via Token Exchange before it is signed, you can specify a lambda in the tenant OAuth configuration. This lambda will be invoked after policy authorization succeeds and before the token is signed and issued.
-
-When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+A Token Exchange Populate lambda modifies the claims of an access token issued through [token exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange). FusionAuth runs this lambda after the policy engine allows an exchange and before it signs the token. The lambda is optional.
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+The lambda must contain a function named `populate` with the following signature:
 
 ```javascript
 function populate(jwt, exchange, context) {
@@ -20,322 +20,136 @@ function populate(jwt, exchange, context) {
 }
 ```
 
-This lambda must contain a function named `populate` that accepts the following parameters:
+The function accepts the following parameters:
 
-* `jwt` - the claims object to be signed and returned as the JWT payload. You can modify this object.
-* `exchange` - an object containing information about the token exchange request. This object is read-only.
-* `context` - an object containing the context of the request, including access to [secrets](/docs/extend/code/lambdas#secrets). This object is read-only.
+* `jwt`: the claims of the token FusionAuth is about to sign. This object is mutable.
+* `exchange`: information about the exchange. This object is read-only.
+* `context`: access to [secrets](/docs/extend/code/lambdas#secrets). This object is read-only.
 
-### `jwt` object
+### The `jwt` Object
 
-You may add or modify claims in the `jwt` object. However, you may not modify certain reserved claims. When adding custom claims to the JWT, always use a namespace to avoid clashes with future standard or FusionAuth-specific claims.
+Before the lambda runs, the `jwt` object contains the claims FusionAuth built from the policy decision and the subject token, including `sub`, `aud`, `scope`, `act`, `client_id`, `exp`, and `tid`. The lambda can add claims, change claims, and remove claims by setting them to `null`, with the following restrictions.
 
-import TokenExchangeReservedClaims from './_token-exchange-reserved-claims.mdx';
+FusionAuth discards any changes to the following reserved claims:
 
-<TokenExchangeReservedClaims />
+* `act`
+* `amr`
+* `applicationId`
+* `auth_time`
+* `authenticationType`
+* `client_id`
+* `cnf`
+* `gty`
+* `iat`
+* `iss`
+* `jti`
+* `may_act`
+* `sid`
+* `sub`
+* `tid`
+* `tty`
 
-### Namespacing Custom Claims
+The lambda can only narrow the following claims:
 
-When adding custom claims to the JWT in your populate lambda, **always use a namespace** to avoid conflicts with future standard or FusionAuth-specific claims. Use a URL-based namespace that you control:
+* `aud`: FusionAuth keeps only the values that the policy engine granted. If no granted values remain, or the lambda removes the claim, FusionAuth restores the granted audiences.
+* `scope`: FusionAuth keeps only the scopes that the policy engine granted. If no granted scopes remain, or the lambda removes the claim, FusionAuth restores the granted scopes.
+* `exp`: FusionAuth ignores a value later than the original expiration.
 
-```javascript
-// Good - namespaced claims
-jwt['https://myapp.com/dept'] = 'engineering';
-jwt['https://myapp.com/permissions'] = ['read', 'write'];
+FusionAuth copies the `amr`, `applicationId`, `auth_time`, `authenticationType`, and `sid` claims from the subject token when they are present. FusionAuth doesn't copy any other claims from the subject token. To carry over another claim, copy it from **`exchange.subjectToken`**.
 
-// Bad - unprefixed claims risk future conflicts
-jwt.dept = 'engineering';
-jwt.permissions = ['read', 'write'];
-```
+To avoid conflicts with registered claims and claims FusionAuth adds in the future, give custom claims a namespaced name, such as `https://example.com/department`.
 
-Namespacing ensures that:
-- Your claims won't conflict with future JWT standards or FusionAuth claims
-- Resource servers can distinguish between standard claims and your custom claims
-- Multiple systems can add their own claims without collision
+### The `exchange` Object
 
-All examples in this documentation use namespaced custom claims as a best practice.
+<APIBlock>
+  <APIField name="subjectToken" type="Object">
+    The claims of the validated subject token.
+  </APIField>
+  <APIField name="entity" type="Object">
+    The exchanger Entity, without its client secret. See the [Entity API](/docs/apis/entities/entities) for the fields of this object.
+  </APIField>
+  <APIField name="audiences" type="Array<String>">
+    The audiences the policy engine granted.
+  </APIField>
+  <APIField name="scopes" type="Array<String>">
+    The scopes the policy engine granted.
+  </APIField>
+  <APIField name="intent" type="String">
+    The value of the `intent` request parameter. Undefined when the request doesn't include `intent`.
+  </APIField>
+  <APIField name="state" type="String">
+    The value of the `state` request parameter. Undefined when the request doesn't include `state`.
+  </APIField>
+</APIBlock>
 
-### Passthrough Claims
+### The `context` Object
 
-The following claims are automatically copied from the subject token (if present) and cannot be modified in the populate lambda. They preserve the original authentication context:
+<APIBlock>
+  <APIField name="services.secrets" type="Object">
+    Provides access to [secrets](/docs/extend/code/lambdas#secrets) through `context.services.secrets.get('<secret-name>')`.
+  </APIField>
+</APIBlock>
 
-- `amr` (Authentication Methods References) - Array of identifiers for authentication methods used (e.g., `["pwd"]` for password, `["mfa"]` for multi-factor)
-- `applicationId` - FusionAuth application UUID that the original token was issued for
-- `auth_time` - Unix timestamp of when the end-user authentication occurred
-- `authenticationType` - FusionAuth-specific authentication method (e.g., `PASSWORD`, `REFRESH_TOKEN`, `PASSWORDLESS`)
-- `sid` (Session ID) - Identifier for the user's SSO session, enabling session tracking across token exchanges
+### Errors
 
-These claims ensure that the exchanged token maintains full traceability to the original authentication event, even after multiple exchanges. If the subject token is from an external issuer that doesn't include these claims, they will be absent from the issued token.
+If the lambda throws an exception, FusionAuth rejects the exchange with a `422` status code and a `server_error` error, and records the attempt in the audit log with the `POPULATE_LAMBDA_ERROR` outcome. To keep an exchange from failing because of an optional step, such as a call to an external service, catch exceptions in the lambda.
 
-<Aside type="note">
-Claims from the subject token are **not** automatically carried over to the issued token unless they are in the passthrough list above. If you need to preserve custom claims from the subject token, you must explicitly copy them in your populate lambda using `exchange.subjectToken`.
-</Aside>
+## Assigning the Lambda
 
-### `exchange` object
+To assign the lambda in the Admin UI:
 
-The exchange object contains information about the token exchange request:
+1. Navigate to <Breadcrumb>Tenants</Breadcrumb> and click <IconButton icon="edit" /> on the Tenant.
+1. Select the <Breadcrumb>OAuth</Breadcrumb> tab.
+1. In the <Breadcrumb>Token exchange settings</Breadcrumb> section, select the lambda in **Token exchange populate lambda**.
+1. Click <IconButton icon="save" />.
 
-* `subjectToken` - <AvailableSince since="1.70.0"/> - the subject token JWT claims as a plain JavaScript object. Access claims using standard property access (e.g., `exchange.subjectToken.sub`, `exchange.subjectToken.custom_claim`)
-* `entity` - <AvailableSince since="1.70.0"/> - the exchanger entity object containing:
-  * `id` - entity UUID
-  * `clientId` - the client ID performing the exchange
-  * `name` - entity name
-  * `type` - entity type object with `name` and other properties
-  * `data` - custom data object
-  * `tenantId` - tenant UUID
-  * Other entity properties (see [Entity API](/docs/apis/entities) for full structure)
-* `audiences` - <AvailableSince since="1.70.0"/> - array of granted audience values (may be `undefined` if no audience was granted)
-* `intent` - <AvailableSince since="1.70.0"/> - optional intent string describing the purpose of the exchange (may be `undefined`)
-* `scopes` - <AvailableSince since="1.70.0"/> - array of granted scope values (may be `undefined` if no scopes were granted)
-* `state` - <AvailableSince since="1.70.0"/> - optional opaque string provided by the client for contextual information (may be `undefined`, max 1024 characters)
+To assign the lambda with the [Tenant API](/docs/apis/tenants), set **`tenant.tokenExchangeConfiguration.populateLambdaId`** to the lambda's Id.
 
-### `context` object
+## Examples
 
-The context object includes:
+### Add Claims From the Exchanger Entity
 
-* `services.secrets` - <AvailableSince since="1.64.0"/> - provides access to [secrets](/docs/extend/code/lambdas#secrets). Useful for storing API keys or credentials needed for external data enrichment.
-
-## Assigning The Lambda
-
-Once a lambda is created, you must assign it to your tenant:
-
-1. Navigate to <Breadcrumb>Tenants -> [Your Tenant] -> OAuth</Breadcrumb>
-2. Scroll to the **Token Exchange** section
-3. Select your lambda in the **Token exchange populate lambda** dropdown
-4. Click **Save**
-
-Alternatively, set `tenant.oauthConfiguration.tokenExchangeConfiguration.populateLambdaId` to your lambda's ID via the API.
-
-This lambda is optional. If not assigned, tokens are issued with standard claims based on the subject token and policy decisions.
-
-## Example Lambdas
-
-### Add Custom Claims from Entity Data
-
-Add custom claims from the exchanger entity:
+This lambda copies values from the exchanger Entity's `data` into the token:
 
 ```javascript
 function populate(jwt, exchange, context) {
-  // Add department and cost center from entity data
-  if (exchange.entity.data.department) {
-    jwt['https://myapp.com/dept'] = exchange.entity.data.department;
+  const data = exchange.entity.data || {};
+  if (data.department) {
+    jwt['https://example.com/department'] = data.department;
   }
-  
-  if (exchange.entity.data.costCenter) {
-    jwt['https://myapp.com/cost_center'] = exchange.entity.data.costCenter;
+  if (exchange.intent) {
+    jwt['https://example.com/intent'] = exchange.intent;
   }
-  
-  // Add delegation timestamp
-  jwt['https://myapp.com/delegated_at'] = Math.floor(Date.now() / 1000);
-  
-  console.info('Added custom claims for entity:', exchange.entity.clientId);
 }
 ```
 
-### Reduce Scope Based on Context
+### Copy a Claim From the Subject Token
 
-Reduce token scope for external tokens or specific scenarios:
+This lambda carries a custom claim from the subject token into the issued token:
 
 ```javascript
 function populate(jwt, exchange, context) {
-  // If subject token is from external issuer, reduce scope
-  if (exchange.subjectToken.iss !== 'https://fusionauth.example.com') {
-    // Only grant read access for external tokens
-    jwt.scope = 'read';
-    
-    // Reduce token lifetime
-    jwt.exp = jwt.iat + 900; // 15 minutes instead of default
-    
-    console.info('Reduced scope for external token');
-  }
-
-  // If exchanging during off-hours, limit scope
-  const hour = new Date().getUTCHours();
-  if (hour < 6 || hour > 20) {
-    // Remove write scopes during off-hours
-    if (jwt.scope && jwt.scope.includes('write')) {
-      jwt.scope = jwt.scope.replace(/\bwrite\b/g, '').trim();
-    }
+  const orgId = exchange.subjectToken['https://example.com/org_id'];
+  if (orgId) {
+    jwt['https://example.com/org_id'] = orgId;
   }
 }
 ```
 
-### Add Delegation Metadata
+### Narrow the Scope and Lifetime
 
-Add claims describing the delegation scenario:
+This lambda removes write access and shortens the lifetime of tokens exchanged for a reporting service:
 
 ```javascript
 function populate(jwt, exchange, context) {
-  // Add delegation context
-  jwt['https://myapp.com/delegation'] = {
-    intent: exchange.intent || 'unspecified',
-    exchanger: exchange.entity.clientId,
-    original_token_id: exchange.subjectToken.jti,
-    exchange_timestamp: Math.floor(Date.now() / 1000)
-  };
-
-  // Add entity type information
-  if (exchange.entity.type) {
-    jwt['https://myapp.com/exchanger_type'] = exchange.entity.type.name;
+  if ((exchange.audiences || []).indexOf('reporting-service') === -1) {
+    return;
   }
 
-  // Track exchange depth by examining existing act claim
-  const currentDepth = jwt.act && jwt.act.act ? countActDepth(jwt.act) : 0;
-  jwt['https://myapp.com/exchange_depth'] = currentDepth + 1;
-}
-
-// Helper function to count delegation depth
-function countActDepth(act) {
-  let depth = 1;
-  let current = act;
-  while (current.act) {
-    depth++;
-    current = current.act;
+  const readOnly = (exchange.scopes || []).filter(scope => scope.indexOf(':write') === -1);
+  if (readOnly.length > 0) {
+    jwt.scope = readOnly.join(' ');
   }
-  return depth;
+  jwt.exp = Math.min(jwt.exp, jwt.iat + 300);
 }
 ```
-
-### Enrich with External Data
-
-Call external services to enrich token claims using secrets:
-
-```javascript
-function populate(jwt, exchange, context) {
-  // Get API key from secrets
-  const apiKey = context.services.secrets.get('user-profile-api-key');
-
-  try {
-    // Fetch additional user profile data
-    const response = fetch(`https://api.example.com/users/${exchange.subjectToken.sub}/profile`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`
-      }
-    });
-
-    if (response.status === 200) {
-      const profile = JSON.parse(response.body);
-      
-      // Add profile data to token
-      jwt['https://myapp.com/profile'] = {
-        department: profile.department,
-        location: profile.location,
-        tier: profile.tier
-      };
-
-      // Add entitlements
-      if (profile.entitlements) {
-        jwt['https://myapp.com/entitlements'] = profile.entitlements;
-      }
-
-      console.info('Enriched token with external profile data');
-    } else {
-      console.warn('Profile API returned', response.status);
-    }
-  } catch (error) {
-    // Don't fail the exchange on external API errors
-    console.error('Failed to enrich token:', error);
-  }
-}
-```
-
-### Copy Claims from Subject Token
-
-Selectively copy additional claims from the subject token:
-
-```javascript
-function populate(jwt, exchange, context) {
-  // Copy custom claims from subject token
-  const subjectToken = exchange.subjectToken;
-  
-  // Copy organization claims
-  if (subjectToken['https://myapp.com/org_id']) {
-    jwt['https://myapp.com/org_id'] = subjectToken['https://myapp.com/org_id'];
-  }
-  
-  if (subjectToken['https://myapp.com/org_role']) {
-    jwt['https://myapp.com/org_role'] = subjectToken['https://myapp.com/org_role'];
-  }
-
-  // Copy permission claims filtered by audience
-  if (subjectToken['permissions'] && jwt.aud) {
-    const audiences = Array.isArray(jwt.aud) ? jwt.aud : [jwt.aud];
-    jwt['permissions'] = subjectToken['permissions'].filter(p => 
-      audiences.includes(p.resource) || p.resource === '*'
-    );
-  }
-
-  console.info('Copied selective claims from subject token');
-}
-```
-
-### Add Trace ID for Debugging
-
-Add correlation IDs for tracing token chains:
-
-```javascript
-function populate(jwt, exchange, context) {
-  // Generate unique trace ID for this exchange
-  const traceId = generateUUID();
-  
-  jwt['https://myapp.com/trace_id'] = traceId;
-  
-  // Copy parent trace ID if present
-  if (exchange.subjectToken['https://myapp.com/trace_id']) {
-    jwt['https://myapp.com/parent_trace_id'] = exchange.subjectToken['https://myapp.com/trace_id'];
-  }
-
-  // Add exchange metadata for debugging
-  jwt['https://myapp.com/debug'] = {
-    exchanger: exchange.entity.clientId,
-    exchanger_name: exchange.entity.name,
-    subject_issuer: exchange.subjectToken.iss,
-    subject_sub: exchange.subjectToken.sub,
-    intent: exchange.intent || 'none'
-  };
-  
-  // Add granted values for observability
-  if (exchange.audiences) {
-    jwt['https://myapp.com/debug'].granted_audiences = exchange.audiences;
-  }
-  if (exchange.scopes) {
-    jwt['https://myapp.com/debug'].granted_scopes = exchange.scopes;
-  }
-}
-
-// Helper function
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-```
-
-## Testing
-
-When testing your Token Exchange Populate lambda:
-
-1. Create test tokens with known claims
-2. Perform token exchanges and decode the issued tokens
-3. Verify custom claims are present and have expected values
-4. Verify reserved claims cannot be modified
-5. Test that scope and exp can only be reduced
-6. Test error handling for external API calls
-7. Enable debug logging to see lambda execution
-8. Check [Token Exchange Audit Logs](/docs/apis/system/token-exchange-audit-log-search) for issued tokens
-
-Use `console.info()`, `console.debug()`, and `console.error()` for logging. Debug logs appear in FusionAuth logs when debug mode is enabled in tenant Token Exchange configuration.
-
-Decode issued tokens using [jwt.io](https://jwt.io) or similar tools to inspect claims.
-
-## Related Documentation
-
-- [OAuth Token Exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange) - High-level overview
-- [Token Exchange Policy Lambda](/docs/extend/code/lambdas/token-exchange-policy) - Authorization logic
-- [JWT Populate Lambda](/docs/extend/code/lambdas/jwt-populate) - Similar pattern for standard JWTs
-- [Lambda Secrets](/docs/extend/code/lambdas#secrets) - Store API keys securely
-- [Token Exchange Audit Logs](/docs/apis/system/token-exchange-audit-log-search) - Query exchange attempts
-- [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) - OAuth 2.0 Token Exchange specification

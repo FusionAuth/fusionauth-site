@@ -1,18 +1,18 @@
 ---
 title: Token Exchange Policy Lambda
-description: An overview of the Token Exchange Policy lambda for authorizing token exchange requests.
+description: Reference for the Token Exchange Policy lambda, which decides whether FusionAuth allows a token exchange request.
 tags: token exchange policy lambda, token exchange authorization, rfc 8693, delegation authorization
 ---
 
+<PlanBlurb plan="enterprise" />
+
 <AvailableSince since="1.70.0"/>
 
-The Token Exchange Policy lambda is executed during OAuth 2.0 Token Exchange requests to authorize whether a client is permitted to exchange a given token. This lambda provides complete control over token exchange authorization logic using custom JavaScript code.
-
-When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+A Token Exchange Policy lambda decides whether FusionAuth allows a [token exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange) request, and which audiences, scopes, and lifetime the issued token receives. FusionAuth runs this lambda for every exchange in a Tenant that uses the Lambda policy engine. It runs after FusionAuth authenticates the exchanger and validates the subject token.
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+The lambda must contain a function named `policy` with the following signature:
 
 ```javascript
 function policy(result, exchange, context) {
@@ -20,332 +20,231 @@ function policy(result, exchange, context) {
 }
 ```
 
-This lambda must contain a function named `policy` that accepts the following parameters:
+The function must declare all three parameters, even if it doesn't use them:
 
-* `result` - the result object that you populate with the authorization decision. This object is mutable and should be modified to return your decision.
-* `exchange` - the token exchange request object containing information about the exchange. This object is read-only.
-* `context` - an object containing the context of the request, including access to [secrets](/docs/extend/code/lambdas#secrets). This object is read-only.
+* `result`: the object the lambda populates with its decision. This object is mutable.
+* `exchange`: information about the exchange request. This object is read-only.
+* `context`: information about the Tenant, plus access to [secrets](/docs/extend/code/lambdas#secrets). This object is read-only.
 
-The lambda should populate the `result` object with a decision indicating whether to allow or deny the exchange.
+The Admin UI fills a new lambda of this type with an example implementation.
 
-### `result` object
+### The `exchange` Object
 
-The result object should be populated with one of the following decision structures. See [Return object](#return-object) below for details.
+<APIBlock>
+  <APIField name="clientId" type="String">
+    The client Id of the exchanger Entity.
+  </APIField>
+  <APIField name="requestedAudiencesAndResources" type="Array<String>">
+    The values of the `audience` and `resource` request parameters, in that order. Empty when the request includes neither.
+  </APIField>
+  <APIField name="requestedScopes" type="Array<String>">
+    The scopes from the `scope` request parameter. Empty when the request doesn't include `scope`.
+  </APIField>
+  <APIField name="subjectTokenClaims" type="Object">
+    The claims of the validated subject token, such as `sub`, `iss`, `aud`, `scope`, and `act`. Claim values keep the types they have in the token. For example, `scope` is a space-delimited string.
+  </APIField>
+  <APIField name="subjectTokenValidationStatus" type="String">
+    How FusionAuth validated the subject token. The possible values are:
 
-### `exchange` object
+    * `AUTHORITATIVE`: the subject token is an access token that this Tenant issued, verified with FusionAuth's own keys. FusionAuth uses this value when `subject_token_type` is `urn:ietf:params:oauth:token-type:access_token`.
+    * `BEST_EFFORT`: the subject token is a JWT from an issuer in the Tenant's **Allowed issuers**, verified with keys from the issuer's OpenID Connect discovery document. FusionAuth uses this value when `subject_token_type` is `urn:ietf:params:oauth:token-type:jwt`.
+  </APIField>
+</APIBlock>
 
-The exchange request object contains the following properties:
+### The `context` Object
 
-* `clientId` - <AvailableSince since="1.70.0"/> - the client ID of the exchanger (the entity or application performing the token exchange)
-* `subjectToken` - <AvailableSince since="1.70.0"/> - information about the token being exchanged:
-  * `jwt` - the parsed JWT object (if the subject token is a JWT)
-  * `jti` - the token ID (from the `jti` claim)
-  * `sub` - the subject (user or entity ID)
-  * `iss` - the token issuer
-  * `type` - the token type (`urn:ietf:params:oauth:token-type:access_token` or `urn:ietf:params:oauth:token-type:jwt`)
-  * `validationStatus` - validation status indicating how the token was verified:
-    * `AUTHORITATIVE` - Token issued by this FusionAuth instance and fully validated against internal state
-    * `BEST_EFFORT` - External token validated through signature/claims only (issuer in allowed list)
-    * `FAILED` - Token validation failed (expired, invalid signature, etc.)
-* `actorToken` - <AvailableSince since="1.70.0"/> - information about the actor token (optional, only present if provided in the request)
-  * Same structure as `subjectToken`
-* `requestedAudience` - <AvailableSince since="1.70.0"/> - array of requested audience values
-* `requestedScopes` - <AvailableSince since="1.70.0"/> - array of requested scope values
-* `intent` - <AvailableSince since="1.70.0"/> - optional intent string describing the purpose of the exchange
-* `state` - <AvailableSince since="1.70.0"/> - optional opaque string provided by the client for contextual information (max 1024 characters)
+<APIBlock>
+  <APIField name="tenantId" type="UUID">
+    The Id of the Tenant processing the exchange.
+  </APIField>
+  <APIField name="services.secrets" type="Object">
+    Provides access to [secrets](/docs/extend/code/lambdas#secrets) through `context.services.secrets.get('<secret-name>')`.
+  </APIField>
+</APIBlock>
 
-### `context` object
+### The `result` Object
 
-The context object includes the following:
+The lambda sets **`result.decision`** to `ALLOW` or `DENY`, then populates **`result.granted`** or **`result.denial`**.
 
-* `services.secrets` - <AvailableSince since="1.64.0"/> - provides access to [secrets](/docs/extend/code/lambdas#secrets). Useful for storing API keys or credentials needed for external authorization checks.
+To allow an exchange, set all three fields of **`result.granted`**:
 
-### Return object
+<APIBlock>
+  <APIField name="granted.aud" type="String or Array<String>" required>
+    The audiences of the issued token.
+  </APIField>
+  <APIField name="granted.scope" type="String or Array<String>" required>
+    The scopes of the issued token, as a space-delimited string or an array. To grant no scopes, use an empty array.
+  </APIField>
+  <APIField name="granted.expires_in" type="Integer" required>
+    The lifetime of the issued token, in seconds.
+  </APIField>
+</APIBlock>
 
-The lambda should populate the `result` object with one of the following decision structures:
-
-#### Allow Decision
-
-```javascript
+```javascript title="Allow an exchange"
 result.decision = 'ALLOW';
 result.granted = {
-  audience: ['service-client-id'],  // Optional: granted audience (defaults to requested)
-  scope: ['read', 'write'],         // Optional: granted scope (defaults to requested)
-  expires_in: 3600                  // Optional: token lifetime in seconds (defaults to tenant setting)
+  aud: ['email-service'],
+  scope: ['email:send'],
+  expires_in: 300
 };
 ```
 
-<Aside type="note">
-Scopes from the subject token can only be **reduced**, never expanded. The final granted scope is the intersection of:
-- The requested scope
-- The subject token's scope
-- The policy-granted scope
+To deny an exchange, set both fields of **`result.denial`**:
 
-If you grant scopes that are not present in the subject token, they will be filtered out. This prevents privilege escalation through token exchange.
-</Aside>
+<APIBlock>
+  <APIField name="denial.error_code" type="String" required>
+    The OAuth error code to return to the client. The possible values are `invalid_request`, `invalid_target`, and `unauthorized_client`.
+  </APIField>
+  <APIField name="denial.error_description" type="String" required>
+    A description of the denial to return to the client.
+  </APIField>
+</APIBlock>
 
-#### Deny Decision
-
-```javascript
+```javascript title="Deny an exchange"
 result.decision = 'DENY';
 result.denial = {
-  error: 'invalid_request',                    // Required: OAuth error code
-  error_description: 'Reason for denial'       // Optional: Human-readable description
+  error_code: 'unauthorized_client',
+  error_description: 'This client may not exchange tokens for the requested audience.'
 };
 ```
 
-Common OAuth error codes:
-- `invalid_request` - The request is malformed or violates policy
-- `invalid_client` - The client is not authorized to perform token exchange
-- `invalid_scope` - The requested scope is not permitted
-- `unauthorized_client` - The client is not authorized for this grant type
-- `access_denied` - The resource owner or authorization server denied the request
+FusionAuth responds to a denied exchange with a `403` status code. The response contains the **`error_code`** value in **`error`**, the **`error_description`** value, and an **`error_reason`** of `lambda_denied`.
 
-#### Error Decision
+### Limits on the Grant
 
-```javascript
-result.decision = 'ERROR';
-result.denial = {
-  error: 'server_error',                       // Required: OAuth error code
-  error_description: 'Lambda evaluation error' // Optional: Error details
-};
-```
+FusionAuth applies the following rules to an `ALLOW` decision before it builds the token:
 
-Use `ERROR` when the lambda itself encounters an error (e.g., external API failure, unexpected exception).
+* FusionAuth drops any value in **`granted.aud`** that isn't in **`exchange.requestedAudiencesAndResources`**. If no values remain, FusionAuth denies the exchange with an `invalid_target` error.
+* When the subject token has a `scope` claim, FusionAuth drops any value in **`granted.scope`** that the subject token's `scope` claim doesn't contain. If the request included `scope` and no granted scopes remain, FusionAuth denies the exchange with an `invalid_scope` error.
+* FusionAuth sets the token lifetime to **`granted.expires_in`** or the default lifetime, whichever is shorter. The default lifetime is the exchanger's Entity Type JWT duration when the Entity Type has JWT configuration enabled, and the Tenant's JWT duration otherwise.
 
-### Exception Handling
+FusionAuth writes an Information entry to the [Event Log](/docs/operate/troubleshooting#event-log) listing any audiences and scopes it dropped.
 
-If your lambda throws an unhandled exception during execution, FusionAuth automatically:
-1. Catches the exception and logs the details internally
-2. Returns an `ERROR` decision to the caller
-3. Responds with an OAuth error: `invalid_request` with description "The Token Exchange Policy Lambda failed."
-4. Creates an audit log entry with outcome `POLICY_LAMBDA_ERROR`
+### Errors
 
-**Important**: Exception details are logged for debugging but are **not** exposed to the client via the OAuth error response. This prevents leaking sensitive information about your authorization logic.
+FusionAuth treats the following as a lambda error and rejects the exchange:
 
-To provide meaningful error messages to clients, catch exceptions in your lambda and populate the `result` object with explicit `DENY` or `ERROR` decisions with appropriate `error_description` values.
+* The lambda throws an exception.
+* **`result.decision`** is neither `ALLOW` nor `DENY`.
+* An `ALLOW` decision is missing **`granted`** or any of its fields.
+* A `DENY` decision is missing **`denial`** or either of its fields, or uses an unsupported **`error_code`**.
 
-## Assigning The Lambda
+FusionAuth responds to a lambda error with a `400` status code and an `invalid_request` error, and records the attempt in the audit log with the `POLICY_LAMBDA_ERROR` outcome. The response doesn't include exception details. To see them, enable debugging on the lambda.
 
-Once a lambda is created, you must assign it to your tenant:
+## Assigning the Lambda
 
-1. Navigate to <Breadcrumb>Tenants -> [Your Tenant] -> OAuth</Breadcrumb>
-2. Scroll to the **Token Exchange** section
-3. Set **Policy engine** to `Lambda`
-4. Select your lambda in the **Token exchange policy lambda** dropdown
-5. Click **Save**
+To assign the lambda in the Admin UI:
 
-Alternatively, set `tenant.oauthConfiguration.tokenExchangeConfiguration.policyEngine` to `LAMBDA` and `tenant.oauthConfiguration.tokenExchangeConfiguration.policyEngineLambdaId` to your lambda's ID via the API.
+1. Navigate to <Breadcrumb>Tenants</Breadcrumb> and click <IconButton icon="edit" /> on the Tenant.
+1. Select the <Breadcrumb>OAuth</Breadcrumb> tab.
+1. In the <Breadcrumb>Token exchange settings</Breadcrumb> section, set **Token exchange policy engine** to `Lambda`.
+1. Select the lambda in **Token exchange policy lambda**.
+1. Click <IconButton icon="save" />.
 
-## Example Lambdas
+To assign the lambda with the [Tenant API](/docs/apis/tenants), set **`tenant.tokenExchangeConfiguration.policyEngine`** to `LAMBDA` and **`tenant.tokenExchangeConfiguration.policyEngineLambdaId`** to the lambda's Id.
 
-### Simple Allow/Deny Based on Client
+## Examples
 
-Allow only specific clients to perform token exchange:
+### Allow Specific Exchangers for Each Audience
+
+This lambda maps each exchanger to the one audience it may call and the scopes it may receive. It grants the intersection of the requested scopes and the allowed scopes:
 
 ```javascript
 function policy(result, exchange, context) {
-  // Whitelist of allowed exchanger clients
-  const allowedClients = [
-    'todo-app-client-id',
-    'calendar-app-client-id'
-  ];
+  const rules = {
+    'todo-service': { audience: 'email-service', scopes: ['email:send'] },
+    'billing-service': { audience: 'invoice-service', scopes: ['invoice:read', 'invoice:write'] }
+  };
 
-  if (!allowedClients.includes(exchange.clientId)) {
+  const rule = rules[exchange.clientId];
+  if (!rule) {
     result.decision = 'DENY';
     result.denial = {
-      error: 'unauthorized_client',
-      error_description: 'Client not authorized for token exchange'
+      error_code: 'unauthorized_client',
+      error_description: 'This client may not exchange tokens.'
+    };
+    return;
+  }
+
+  if (exchange.requestedAudiencesAndResources.indexOf(rule.audience) === -1) {
+    result.decision = 'DENY';
+    result.denial = {
+      error_code: 'invalid_target',
+      error_description: 'The requested audience is not permitted for this client.'
     };
     return;
   }
 
   result.decision = 'ALLOW';
+  result.granted = {
+    aud: [rule.audience],
+    scope: exchange.requestedScopes.filter(scope => rule.scopes.indexOf(scope) !== -1),
+    expires_in: 300
+  };
 }
 ```
 
-### Time-Based Restrictions
+### Limit Tokens From External Issuers
 
-Restrict token exchange to business hours:
+This lambda accepts JWTs from external issuers, but only issues short-lived, read-only tokens for them:
 
 ```javascript
 function policy(result, exchange, context) {
-  const now = new Date();
-  const hour = now.getUTCHours();
-  const day = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
-
-  // Deny on weekends
-  if (day === 0 || day === 6) {
-    result.decision = 'DENY';
-    result.denial = {
-      error: 'invalid_request',
-      error_description: 'Token exchange not available on weekends'
-    };
-    return;
-  }
-
-  // Deny outside business hours (8 AM - 5 PM UTC)
-  if (hour < 8 || hour >= 17) {
-    result.decision = 'DENY';
-    result.denial = {
-      error: 'invalid_request',
-      error_description: 'Token exchange only available during business hours (8 AM - 5 PM UTC)'
-    };
-    return;
-  }
+  const external = exchange.subjectTokenValidationStatus !== 'AUTHORITATIVE';
 
   result.decision = 'ALLOW';
+  result.granted = {
+    aud: exchange.requestedAudiencesAndResources,
+    scope: external ? ['read'] : exchange.requestedScopes,
+    expires_in: external ? 60 : 900
+  };
 }
 ```
 
-### External API Authorization Check
+### Call an External Authorization Service
 
-Call an external authorization service:
-
-```javascript
-function policy(result, exchange, context) {
-  // Retrieve API key from secrets
-  const apiKey = context.services.secrets.get('authorization-api-key');
-
-  try {
-    // Call external authorization API
-    const response = fetch('https://auth.example.com/api/authorize', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        exchanger: exchange.clientId,
-        subject: exchange.subjectToken.sub,
-        audience: exchange.requestedAudience,
-        scope: exchange.requestedScope
-      })
-    });
-
-    if (response.status !== 200) {
-      result.decision = 'DENY';
-      result.denial = {
-        error: 'access_denied',
-        error_description: 'External authorization service denied the request'
-      };
-      return;
-    }
-
-    const authResult = JSON.parse(response.body);
-
-    // Use external service's decision
-    result.decision = 'ALLOW';
-    result.granted = {
-      audience: authResult.grantedAudience,
-      scope: authResult.grantedScope,
-      expires_in: authResult.tokenLifetime || 3600
-    };
-
-  } catch (error) {
-    console.error('Authorization API call failed:', error);
-    result.decision = 'ERROR';
-    result.denial = {
-      error: 'server_error',
-      error_description: 'Unable to contact authorization service'
-    };
-  }
-}
-```
-
-### Audience-Based Authorization
-
-Enforce audience-specific rules:
+This lambda asks an external service whether to allow the exchange. It reads the service's API key from a [secret](/docs/extend/code/lambdas#secrets) and calls the service with [Lambda HTTP Connect](/docs/extend/code/lambdas/lambda-remote-api-calls):
 
 ```javascript
 function policy(result, exchange, context) {
-  const audience = exchange.requestedAudience[0];
-  const subjectUserId = exchange.subjectToken.sub;
+  const response = fetch('https://authz.example.com/api/exchange', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + context.services.secrets.get('authz-api-key'),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      exchanger: exchange.clientId,
+      subject: exchange.subjectTokenClaims.sub,
+      audiences: exchange.requestedAudiencesAndResources,
+      scopes: exchange.requestedScopes
+    })
+  });
 
-  // Production services require elevated permissions
-  if (audience === 'production-api-client-id') {
-    // Check if subject token has admin scope
-    const subjectJwt = exchange.subjectToken.jwt;
-    const hasAdminScope = subjectJwt.scope && subjectJwt.scope.includes('admin');
-
-    if (!hasAdminScope) {
-      result.decision = 'DENY';
-      result.denial = {
-        error: 'insufficient_scope',
-        error_description: 'Production access requires admin scope'
-      };
-      return;
-    }
-
-    // Grant reduced scope for production
-    result.decision = 'ALLOW';
-    result.granted = {
-      scope: ['read'],
-      expires_in: 900  // 15 minutes only
-    };
-    return;
-  }
-
-  // Allow full access to dev/staging
-  result.decision = 'ALLOW';
-}
-```
-
-### Check Subject Token Validation Status
-
-Ensure subject tokens are fully validated:
-
-```javascript
-function policy(result, exchange, context) {
-  const validationStatus = exchange.subjectToken.validationStatus;
-
-  // Only allow authoritative tokens (fully validated)
-  if (validationStatus !== 'AUTHORITATIVE') {
+  if (response.status !== 200) {
     result.decision = 'DENY';
     result.denial = {
-      error: 'invalid_request',
-      error_description: 'Subject token validation failed or incomplete'
+      error_code: 'invalid_request',
+      error_description: 'The authorization service denied the exchange.'
     };
     return;
   }
 
-  // Check token issuer is trusted
-  const trustedIssuers = [
-    'https://fusionauth.example.com',
-    'https://external-idp.example.com'
-  ];
-
-  if (!trustedIssuers.includes(exchange.subjectToken.iss)) {
-    result.decision = 'DENY';
-    result.denial = {
-      error: 'invalid_request',
-      error_description: 'Subject token from untrusted issuer'
-    };
-    return;
-  }
-
+  // assumes a response like {"aud": [...], "scope": [...], "expires_in": 300}
+  const decision = JSON.parse(response.body);
   result.decision = 'ALLOW';
+  result.granted = {
+    aud: decision.aud,
+    scope: decision.scope,
+    expires_in: decision.expires_in
+  };
 }
 ```
 
-## Testing
+## Debugging
 
-When testing your Token Exchange Policy lambda:
+To troubleshoot a policy lambda:
 
-1. Create test entities or applications with known client IDs
-2. Generate test tokens with various claims and scopes
-3. Test both ALLOW and DENY paths
-4. Verify granted audience, scope, and expiration match expectations
-5. Test error handling (external API failures, invalid tokens)
-6. Enable debug logging in tenant configuration to see lambda execution details
-7. Check [Token Exchange Audit Logs](/docs/apis/system/token-exchange-audit-log-search) for detailed exchange attempts
-
-Use `console.info()`, `console.debug()`, and `console.error()` for logging. Debug logs appear in FusionAuth logs when debug mode is enabled in tenant Token Exchange configuration.
-
-## Related Documentation
-
-- [OAuth Token Exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange) - High-level overview
-- [Token Exchange Populate Lambda](/docs/extend/code/lambdas/token-exchange-populate) - Customize issued token claims
-- [Token Exchange Audit Logs](/docs/apis/system/token-exchange-audit-log-search) - Query exchange attempts
-- [Lambda Secrets](/docs/extend/code/lambdas#secrets) - Store API keys securely
-- [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) - OAuth 2.0 Token Exchange specification
+* Enable debugging on the lambda to write `console.debug()` output and exception details to the [Event Log](/docs/operate/troubleshooting#event-log). See [Console](/docs/extend/code/lambdas#console).
+* Enable **Enable debug logging** in the Tenant's token exchange settings to write the reason for each failed exchange to the Event Log.
+* Review the outcome and policy decision for each attempt in the Admin UI under <Breadcrumb>System -> Token Exchange Log</Breadcrumb>, or with the [Search the Token Exchange Audit Log](/docs/apis/system/search-the-token-exchange-audit-log) API.
