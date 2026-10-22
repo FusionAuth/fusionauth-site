@@ -19,7 +19,7 @@ This repository contains a Flutter app that works with a public accessible Fusio
 
 The root of this project directory (next to this README) are two files [a Docker compose file](./docker-compose.yml) and an [environment variables configuration file](./.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth on your machine with:
 
-```
+```shell-session
 docker compose up -d
 ```
 
@@ -41,7 +41,7 @@ You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look
 
 The command below makes use of [ngrok](https://ngrok.com/download). You may need to install the tool if you do not have it available on your machine ( learn more [here](https://fusionauth.io/docs/v1/tech/developer-guide/exposing-instance))
 
-```
+```shell-session
 ngrok http 9011
 ```
 
@@ -53,7 +53,7 @@ To run the application:
 * Ensure the FusionAuth server is running as noted above or update the variable `FUSIONAUTH_DOMAIN` in `main.dart` to reflect the FusionAuth server you are using.
 * Open iOS simulator or an Android emulator.
 
-```
+```shell-session
 cd complete-application
 flutter pub get
 flutter run -d all
@@ -77,6 +77,6 @@ Ensure FusionAuth is running on a publicly accessible URL and that the `FUSIONAU
 
 Ensure the dart version is greater than 3.0.0 by running 
 
-```
+```shell-session
 flutter upgrade
 ```

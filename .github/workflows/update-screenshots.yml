@@ -3,6 +3,12 @@ name: Update screenshots
 on:
   schedule:
     - cron: '0 8 * * 1'
+  # the Admin UI shows the FusionAuth version, so a new pin needs new screenshots
+  push:
+    branches:
+      - main
+    paths:
+      - 'astro/screenshots/docker-compose.yml'
   workflow_dispatch:
     inputs:
       threshold:
@@ -43,8 +49,8 @@ jobs:
         id: refresh
         run: |
           set +e
-          scripts/refresh-screenshots.sh --threshold "${{ inputs.threshold || '0.002' }}"
-          status=$?
+          scripts/refresh-screenshots.sh --threshold "${{ inputs.threshold || '0.002' }}" 2>&1 | tee "$RUNNER_TEMP/refresh.log"
+          status=${PIPESTATUS[0]}
           set -e
           if [ "$status" -gt 2 ]; then exit "$status"; fi
           if [ "$status" -eq 1 ]; then exit 1; fi
@@ -64,6 +70,7 @@ jobs:
         if: steps.refresh.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           BRANCH="screenshots/auto-update-$(date +%Y-%m-%d)"
           git config user.name  "github-actions[bot]"
@@ -71,20 +78,31 @@ jobs:
           git checkout -b "$BRANCH"
           git add astro/public/img/docs/screenshots/
           git commit -m "chore: update screenshots $(date +%Y-%m-%d)"
-          git push origin "$BRANCH"
 
-          FILES=$(git diff --name-only HEAD~1 HEAD | sed 's|.*/||' | sed 's/^/- /')
-          gh pr create \
-            --title "chore: update screenshots $(date +%Y-%m-%d)" \
-            --body "Weekly screenshot refresh. Only images whose pixel diff exceeded the tolerance are included; anything within tolerance was reverted to the committed version.
+          # a rerun on the same day refreshes that day's open PR rather than opening a second one
+          if [ "$(gh pr list --head "$BRANCH" --state open --json number --jq length)" -gt 0 ]; then
+            git push --force origin "$BRANCH"
+            echo "Updated the open PR for $BRANCH."
+            exit 0
+          fi
+          git push --force origin "$BRANCH"
 
-          ### Changed
+          {
+            printf 'Screenshot refresh. Only images whose pixel diff exceeded the tolerance are included; anything within tolerance was reverted to the committed version. Diff images are in the `screenshot-diffs` artifact of [this run](%s).\n\n' "$RUN_URL"
+            printf '### Changed files\n\n'
+            git diff --name-only HEAD~1 HEAD | sed 's/^/- /'
+            printf '\n### Comparison\n\n```\n'
+            sed -n '/^Comparing /,$p' "$RUNNER_TEMP/refresh.log"
+            printf '```\n'
+          } > "$RUNNER_TEMP/pr-body.md"
+          cat "$RUNNER_TEMP/pr-body.md"
 
-          ${FILES}
-
-          Diff images are attached to this workflow run as the \`screenshot-diffs\` artifact." \
-            --label "screenshots" \
-            --base main
+          # a branch without its PR would leave the failure issue pointing at an orphan
+          if ! gh pr create --base main --head "$BRANCH" --label "screenshots" \
+            --title "chore: update screenshots $(date +%Y-%m-%d)" --body-file "$RUNNER_TEMP/pr-body.md"; then
+            git push origin --delete "$BRANCH"
+            exit 1
+          fi
 
       - name: No changes
         if: steps.refresh.outputs.changed == 'false'

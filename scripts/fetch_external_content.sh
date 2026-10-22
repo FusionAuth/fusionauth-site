@@ -10,6 +10,7 @@ case "${1:-}" in
     printf 'Usage: bash scripts/fetch_external_content.sh [--check]\n'
     printf 'Refresh configuration snapshots and generated JSON, or report drift without changing files.\n'
     printf 'Set FUSIONAUTH_APP_ZIP to reuse a downloaded release zip, or FUSIONAUTH_VERSION to pin the download.\n'
+    printf 'Set UPSTREAM_REVISIONS to "repo=sha repo=sha" to fetch those commits instead of each main branch.\n'
     exit 0 ;;
   *) printf 'Unknown argument: %s\n' "$1" >&2; exit 2 ;;
 esac
@@ -19,6 +20,7 @@ if [[ $# -gt 1 ]]; then
 fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$repo_root/scripts/lib/run-locally.sh"
 snapshot_dir="$repo_root/astro/extractedcode/configuration-snippets"
 json_dir="$repo_root/astro/src/content/json/generated"
 templates_json="$repo_root/astro/src/content/json/themes/templates.json"
@@ -66,16 +68,21 @@ drift="$staging_dir/drift.diff"
 changed=0
 changed_json=()
 theme_drift=0
+pins=()
 
 # fetch snapshots
 for repository in "${repositories[@]}"; do
   IFS='|' read -r local_dir upstream_repo upstream_branch <<< "$repository"
-  if ! revision="$(git -C "$staging_dir" -c http.lowSpeedLimit=1 -c http.lowSpeedTime=30 ls-remote \
-    --exit-code "https://github.com/FusionAuth/$upstream_repo.git" "refs/heads/$upstream_branch" | awk '{print $1}')" ||
-    [[ ! "$revision" =~ ^[0-9a-f]{40}$ ]]; then
+  revision="$(tr ' ' '\n' <<< "${UPSTREAM_REVISIONS:-}" | sed -n "s/^$upstream_repo=//p")"
+  if [[ -z "$revision" ]] && ! revision="$(git -C "$staging_dir" -c http.lowSpeedLimit=1 -c http.lowSpeedTime=30 ls-remote \
+    --exit-code "https://github.com/FusionAuth/$upstream_repo.git" "refs/heads/$upstream_branch" | awk '{print $1}')"; then
+    revision=""
+  fi
+  if [[ ! "$revision" =~ ^[0-9a-f]{40}$ ]]; then
     printf 'Could not resolve %s/%s. No snapshots were modified.\n' "$upstream_repo" "$upstream_branch" >&2
     exit 1
   fi
+  pins+=("$upstream_repo=$revision")
   recorded_revision="$(awk -F '|' -v dir="$local_dir/" \
     '$2 == " `" dir "` " {gsub(/[ `]/, "", $4); print $4}' "$snapshot_dir/SOURCES.md")"
   if [[ ! "$recorded_revision" =~ ^[0-9a-f]{40}$ ]]; then
@@ -135,8 +142,9 @@ done
 # generate json content
 printf '\nFetching fusionauth-app for JSON generation...\n'
 app_zip="${FUSIONAUTH_APP_ZIP:-}"
+version="${FUSIONAUTH_VERSION:-}"
 if [[ -z "$app_zip" ]]; then
-  version="${FUSIONAUTH_VERSION:-$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')}"
+  version="${version:-$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')}"
   app_zip="$staging_dir/app.zip"
   printf 'Downloading version %s\n' "$version"
   curl -f -L -s "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" -o "$app_zip"
@@ -210,9 +218,14 @@ if [[ -n "$missing$stale" ]]; then
   } | tee -a "$drift"
 fi
 
+# applies exactly what this run found; the version is unknown only when a zip was passed without one
+reproduce="UPSTREAM_REVISIONS='${pins[*]}' bash scripts/fetch_external_content.sh"
+[[ -z "$version" ]] || reproduce="FUSIONAUTH_VERSION=$version $reproduce"
+
 # resolve updates
 if [[ "$changed" -eq 0 ]]; then
   printf '\nAll configuration snapshots and generated JSON files match upstream.\n'
+  run_locally "$reproduce"
   exit 0
 fi
 
@@ -221,7 +234,7 @@ if [[ "$mode" == check ]]; then
     {
       printf '## External content has changed\n\n'
       printf 'Run this from the repo root, review the diff and affected guides, then open a PR:\n\n'
-      printf '```bash\nbash scripts/fetch_external_content.sh\n```\n\n'
+      printf '```bash\n%s\n```\n\n' "$reproduce"
       if [[ "$theme_drift" -eq 1 ]]; then
         printf 'Theme template fields changed. Add (+) or remove (-) entries in `astro/src/content/json/themes/templates.json` by hand.\n\n'
       fi
@@ -231,7 +244,8 @@ if [[ "$mode" == check ]]; then
     } >> "$GITHUB_STEP_SUMMARY"
   fi
   printf '\nExternal content has changed. No local files were modified.\n' >&2
-  printf 'Run bash scripts/fetch_external_content.sh, then review the diff and affected guides.\n' >&2
+  printf 'Run the command below, then review the diff and affected guides.\n' >&2
+  run_locally "$reproduce"
   exit 1
 fi
 
@@ -254,6 +268,7 @@ if [[ "${#changed_json[@]}" -gt 0 ]]; then
 fi
 
 printf '\nContent refreshed. Review the diff and affected guides before committing.\n'
+run_locally "$reproduce"
 if [[ "$theme_drift" -eq 1 ]]; then
   printf 'Theme template fields changed. Update astro/src/content/json/themes/templates.json by hand.\n' >&2
   exit 1
