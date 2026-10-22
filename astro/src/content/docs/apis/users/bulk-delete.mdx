@@ -14,7 +14,7 @@ import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_sha
 This API is used to deactivate or delete multiple users in a single request.
 
 <Aside type="note">
-This API has some limitations when FusionAuth is configured to use the database as the user search engine, noted on the impacted request parameters below.
+This API has some limitations when FusionAuth is configured to use the database as the user search engine, noted on the impacted query parameters and request body fields below.
 </Aside>
 
 ## Request
@@ -33,9 +33,9 @@ This API has some limitations when FusionAuth is configured to use the database 
 
 For even larger bulk requests, pass your parameters in the request body.
 
-<API method="DELETE" uri="/api/user/bulk" authentication={["api-key"]} title="Bulk delete using the request body. This allows for larger requests than are possible using request parameters."/>
+<API method="DELETE" uri="/api/user/bulk" authentication={["api-key"]} title="Bulk delete using the request body. This allows for larger requests than are possible using query parameters."/>
 
-### Request Parameters
+### Query Parameters
 
 <APIBlock>
   <APIField name="dryRun" type="Boolean" optional defaults="false">
@@ -58,31 +58,28 @@ For even larger bulk requests, pass your parameters in the request body.
       This parameter is not compatible with the database search engine, it may only be used when Elasticsearch is configured as the user search engine.
     </Aside>
   </APIField>
+  <APIField name="queryString" type="String" optional since="1.13.0">
+    The Elasticsearch query string that is used to search for Users to be deleted. The **userId**, **query**, and **queryString**  parameters are mutually exclusive, they are listed here in order of precedence.
+
+    <SearchPreprocessingWarning/>
+
+    <Aside type="note" title="Database search engine">
+      The Elasticsearch query string DSL is not supported for the database search engine.  Database search limits effective queries to single search terms that may match the following fields on the User:
+      * `firstName`
+      * `lastName`
+      * `fullName`
+      * `email`
+      * `username`
+
+      The following is an example bulk delete request with a `queryString` value that is compatible with the database search engine:
+
+      `DELETE /api/user/bulk?queryString=jared%40fusionauth.io`
+    </Aside>
+  </APIField>
+  <APIField name="userId" type="UUID" optional>
+    The Id of the User to delete. Repeat this parameter for each user to be deleted. The **userId**, **query**, and **queryString**  parameters are mutually exclusive, they are listed here in order of precedence.
+  </APIField>
 </APIBlock>
-
-<APIField name="queryString" type="String" optional since="1.13.0">
-  The Elasticsearch query string that is used to search for Users to be deleted. The **userId**, **query**, and **queryString**  parameters are mutually exclusive, they are listed here in order of precedence.
-
-  <SearchPreprocessingWarning/>
-
-  <Aside type="note" title="Database search engine">
-    The Elasticsearch query string DSL is not supported for the database search engine.  Database search limits effective queries to single search terms that may match the following fields on the User:
-    * `firstName`
-    * `lastName`
-    * `fullName`
-    * `email`
-    * `username`
-
-    The following is an example bulk delete request with a `queryString` value that is compatible with the database search engine:
-
-    `DELETE /api/user/bulk?queryString=jared%40fusionauth.io`
-  </Aside>
-</APIField>
-
-
-<APIField name="userId" type="UUID" optional>
-  The Id of the User to delete. Repeat this parameter for each user to be deleted. The **userId**, **query**, and **queryString**  parameters are mutually exclusive, they are listed here in order of precedence.
-</APIField>
 
 ### Request Headers
 

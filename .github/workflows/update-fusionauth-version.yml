@@ -36,73 +36,34 @@ jobs:
           echo "found=$([ "$count" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
           if [ "$count" -gt 0 ]; then echo "A PR for FusionAuth $VERSION already exists."; fi
 
-      - uses: actions/setup-node@v7
-        if: steps.existing.outputs.found == 'false'
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: |
-            astro/package-lock.json
-            astro/screenshots/package-lock.json
-
-      - name: Install site modules
-        if: steps.existing.outputs.found == 'false'
-        run: npm ci
-        working-directory: ./astro
-
-      - name: Install screenshots CLI
-        if: steps.existing.outputs.found == 'false'
-        run: npm ci
-        working-directory: ./astro/screenshots
-
-      # the Admin UI shows the version, so every release needs new screenshots; exits 0 unchanged, 2 changed
-      - name: Retake screenshots
-        id: refresh
-        if: steps.existing.outputs.found == 'false'
-        run: |
-          set +e
-          scripts/refresh-screenshots.sh
-          status=$?
-          set -e
-          if [ "$status" -ne 0 ] && [ "$status" -ne 2 ]; then exit "$status"; fi
-          echo "changed=$([ "$status" -eq 2 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-        env:
-          FUSIONAUTH_LICENSE_KEY: ${{ secrets.FUSIONAUTH_LICENSE_KEY }}
-
-      - name: Upload diff images
-        if: steps.refresh.outputs.changed == 'true'
-        uses: actions/upload-artifact@v7
-        with:
-          name: screenshot-diffs
-          path: astro/.screenshot-diffs/
-          if-no-files-found: ignore
-
       - name: Open PR
         if: steps.existing.outputs.found == 'false'
         env:
           VERSION: ${{ steps.bump.outputs.version }}
           BRANCH: ${{ steps.existing.outputs.branch }}
-          SCREENSHOTS_CHANGED: ${{ steps.refresh.outputs.changed }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml astro/public/img/docs/screenshots/
+          git add astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml
           git commit -m "chore: pin FusionAuth $VERSION"
-          # a branch left by an earlier run that failed before opening its PR is ours to replace
           git push --force origin "$BRANCH"
 
-          if [ "$SCREENSHOTS_CHANGED" = true ]; then
-            shots="Screenshots retaken against $VERSION. Only images whose pixel diff exceeded the tolerance are included; diff images are in the \`screenshot-diffs\` artifact of [this run]($RUN_URL)."
-          else
-            shots="Screenshots retaken against $VERSION; none changed beyond the tolerance."
-          fi
-          gh pr create --base main --head "$BRANCH" \
-            --title "chore: pin FusionAuth $VERSION" \
-            --body "Pins \`fusionauth/fusionauth-app:$VERSION\` in the Docker install compose file (\`astro/public/docs/docker-compose.yml\`, served at /docs/docker-compose.yml) and the screenshot tooling (\`astro/screenshots/docker-compose.yml\`).
+          {
+            printf 'Pins `fusionauth/fusionauth-app:%s` in the Docker install compose file (`astro/public/docs/docker-compose.yml`, served at /docs/docker-compose.yml) and the screenshot tooling (`astro/screenshots/docker-compose.yml`).\n\n' "$VERSION"
+            printf '### Changes\n\n```diff\n'
+            git diff HEAD~1 HEAD -- astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml
+            printf '```\n\nMerging this PR triggers the Update screenshots workflow, which retakes the screenshots against the new version and opens its own PR.\n\n'
+            printf '### Reproduce locally\n\nRun this from the repo root:\n\n```bash\nFUSIONAUTH_VERSION=%s bash scripts/update_fusionauth_version.sh\n```\n' "$VERSION"
+          } > "$RUNNER_TEMP/pr-body.md"
+          cat "$RUNNER_TEMP/pr-body.md"
 
-          $shots"
+          # a branch without its PR would leave the failure issue pointing at an orphan
+          if ! gh pr create --base main --head "$BRANCH" \
+            --title "chore: pin FusionAuth $VERSION" --body-file "$RUNNER_TEMP/pr-body.md"; then
+            git push origin --delete "$BRANCH"
+            exit 1
+          fi
 
   report:
     needs: update
