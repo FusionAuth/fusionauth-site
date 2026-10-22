@@ -615,7 +615,9 @@ export default {
         return text ? JSON.parse(text) : null;
       });
       const exists = async path => (await fetch(`http://localhost:9011${path}`, { headers: { 'Authorization': apiKey } })).ok;
-      for (const resources of temporaryResources) {
+      // deletes come first, since a second tenant makes creating an application need a tenant Id
+      const unwantedFirst = [...temporaryResources].sort((a, b) => a.names.includes(ctx?.name) - b.names.includes(ctx?.name));
+      for (const resources of unwantedFirst) {
         const wanted = resources.names.includes(ctx?.name);
         if (wanted === await exists(resources.paths[0])) continue;
         // clears what a failed create left behind too
