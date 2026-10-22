@@ -29,7 +29,7 @@ Follow these guidelines when writing documentation (everything under [docs](astr
   - `tip` for fun facts
   - `note` for low-priority knowledge (e.g. a summary of some kickstart variables)
   - `important` for medium-priority knowledge that could impede the user's ability to complete a task (e.g. the server won't start unless you set the `BAZ` environment variable)
-  - `warn` for high-priority knowledge that could lead to data loss (e.g. back up your data before a version upgrade)
+  - `warn` for high-priority knowledge that could lead to data loss (e.g. back up your data before a version update)
 - When linking to `fusionauth.io` URLs, omit the domain name (e.g. don't use `https://fusionauth.io/docs/get-started`, use `/docs/get-started`)
 - Use the following syntax to reference UI elements:
 - **Field names (keys)**: Use **bold** for the name or label of a field, checkbox, toggle, etc. in a form. Use it for writable and read-only fields. Example: `Set the **Issuer** field to...`
