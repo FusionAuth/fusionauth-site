@@ -31,6 +31,7 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"
+source "$SCRIPT_DIR/lib/run-locally.sh"
 
 DRY_RUN=0
 KINDS=()
@@ -148,6 +149,15 @@ for kind in "${KINDS[@]}"; do
 	[ "${#added[@]}" -ne 0 ] && printf '  new in release: %s\n' "${added[@]}"
 	[ "${#removed[@]}" -ne 0 ] && printf '  no longer in release: %s\n' "${removed[@]}"
 
+	# full proposed change, built from the files so new (untracked) templates show up too
+	kind_diff=""
+	for filename in ${added[@]+"${added[@]}"}; do
+		kind_diff+="$(diff -u --label "/dev/null" --label "$dest/$filename" /dev/null "$src/$filename")"$'\n'
+	done
+	for filename in ${removed[@]+"${removed[@]}"}; do
+		kind_diff+="$(diff -u --label "$dest/$filename" --label "/dev/null" "$dest/$filename" /dev/null)"$'\n'
+	done
+
 	# Compare the release against the repo before copying anything. Detection is done
 	# on the files rather than with `git diff`, which reports nothing for an untracked
 	# file -- and a template that is new in a release is exactly that in a fresh
@@ -164,6 +174,7 @@ for kind in "${KINDS[@]}"; do
 		if ! diff -q "$dest/$filename" "$f" > /dev/null 2>&1; then
 			changed=1
 			echo "  content differs: $filename"
+			kind_diff+="$(diff -u --label "$dest/$filename" --label "$dest/$filename" "$dest/$filename" "$f")"$'\n'
 			if ! diff -qw "$dest/$filename" "$f" > /dev/null 2>&1; then
 				whitespace_only=0
 			fi
@@ -179,6 +190,9 @@ for kind in "${KINDS[@]}"; do
 		echo "  whitespace-only changes, skipping"
 		continue
 	fi
+
+	echo ""
+	printf '%s' "$kind_diff"
 
 	if [ "$DRY_RUN" -eq 1 ]; then
 		status=2
@@ -214,10 +228,8 @@ for kind in "${KINDS[@]}"; do
 	git --no-pager diff --stat -- "$dest/" 2>/dev/null || true
 	status=2
 	summary+="## $kind templates have new content"$'\n\n'
-	summary+="Regenerate with:"$'\n\n'
-	summary+='```bash'$'\n'"scripts/update-templates.sh $kind"$'\n''```'$'\n\n'
 	summary+="<details><summary>Diff</summary>"$'\n\n'
-	summary+='```diff'$'\n'"$(git --no-pager diff -- "$dest/")"$'\n''```'$'\n'
+	summary+='```diff'$'\n'"$kind_diff"'```'$'\n'
 	summary+="</details>"$'\n\n'
 done
 
@@ -231,4 +243,9 @@ case "$status" in
 	2) echo "Templates changed. Commit the result and open a PR." ;;
 	*) echo "Failed. See the errors above." >&2 ;;
 esac
+
+# applies the changes, so --dry-run is left out
+kinds_arg="${KINDS[*]}"
+[ "${#KINDS[@]}" -eq 2 ] && kinds_arg=all
+run_locally "FUSIONAUTH_VERSION=$VERSION scripts/update-templates.sh $kinds_arg"
 exit "$status"

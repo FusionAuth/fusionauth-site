@@ -38,13 +38,23 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
+source "$SCRIPT_DIR/lib/run-locally.sh"
+REPRODUCE="scripts/refresh-screenshots.sh --threshold $THRESHOLD"
+[ "$COMPARE_ONLY" -eq 0 ] || REPRODUCE+=" --compare-only"
+# licensed-feature screenshots read the key from the environment, so it never goes in the printed command
+report() {
+	run_locally "$REPRODUCE"
+	[ -z "${FUSIONAUTH_LICENSE_KEY:-}" ] || echo "Export FUSIONAUTH_LICENSE_KEY first to capture the licensed-feature screenshots too."
+}
+trap report EXIT
+
 if [ ! -d "$SHOTS_DIR" ]; then
 	echo "ERROR: $SHOTS_DIR does not exist" >&2
 	exit 1
 fi
 
 BASELINE=$(mktemp -d /tmp/screenshots-baseline.XXXXXX)
-trap 'rm -rf "$BASELINE"' EXIT
+trap 'rm -rf "$BASELINE"; report' EXIT
 if [ "$COMPARE_ONLY" -eq 1 ]; then
 	# the working tree already has the new images
 	git -C "$REPO_ROOT" archive HEAD astro/public/img/docs/screenshots | tar -x -C "$BASELINE" --strip-components=5

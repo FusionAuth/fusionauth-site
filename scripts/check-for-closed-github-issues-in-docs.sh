@@ -10,6 +10,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SEARCH_DIR="$SCRIPT_DIR/../astro/src/content"
+source "$SCRIPT_DIR/lib/run-locally.sh"
+# issue states are live, so the same command can report different results later
+trap 'run_locally "GH_TOKEN=\$(gh auth token) bash scripts/check-for-closed-github-issues-in-docs.sh"' EXIT
 
 # Files to search: all .md/.mdx excluding release notes and blog posts
 search_files() {

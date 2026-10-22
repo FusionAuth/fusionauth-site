@@ -1,0 +1,85 @@
+---
+title: Database Migrations
+htmlTitle: FusionAuth Database Migrations
+description: Learn how FusionAuth migrates your database schema during an update, and how to run the migrations yourself.
+order: 450
+tags: database migration, schema migration, update fusionauth, upgrade fusionauth, version update, runtime mode, silent mode, maintenance mode, out-of-band migration, sql scripts
+---
+
+Some FusionAuth releases change the database schema. When you update to one of these versions, the database must be migrated to the new schema before FusionAuth can use it. The [release notes](/docs/release-notes) say which versions include a database migration.
+
+<Aside type="caution">
+Always back up your database before you update, so you can [roll back](/docs/update/rollback) in an emergency.
+</Aside>
+
+## When FusionAuth Applies Migrations
+
+Two settings decide what happens when FusionAuth starts against a database that needs a migration: the **runtime mode** and **silent mode**. See the **fusionauth.runtime-mode** property and the **`FUSIONAUTH_RUNTIME_MODE`** environment variable in the [Configuration](/docs/reference/configuration) reference, and the [Silent Mode guide](/docs/get-started/download-and-install/reference/silent-mode).
+
+| Runtime Mode  | Silent Mode | Migration Behavior                                                 |
+|---------------|-------------|--------------------------------------------------------------------|
+| `development` | `true`      | Migration applied automatically                                    |
+| `development` | `false`     | Maintenance Mode UI displayed, user prompted to run migrations     |
+| `production`  | `true`      | Migration applied automatically                                    |
+| `production`  | `false`     | Migration never applied by FusionAuth, must be applied out of band |
+
+<Aside type="caution">
+All FusionAuth nodes in a multi-node cluster must use the **same** runtime mode.
+
+Changing the runtime mode of an existing deployment requires stopping all running nodes before starting new nodes with a different runtime mode. Plan for brief downtime during this process.
+</Aside>
+
+### Development
+
+In the development runtime mode, FusionAuth enters an interactive [Maintenance Mode](#maintenance-mode) when you install or update it. Maintenance Mode helps you configure the database and search engine, and applies database migrations.
+
+### Production
+
+Always use the production runtime mode in a production environment. In this mode, Maintenance Mode never runs, so end users never land on a database setup page instead of the login page. Maintenance Mode also can't coordinate migrations across the nodes of a cluster, which can corrupt the database schema.
+
+In the production runtime mode, enable silent mode to apply migrations automatically, or [run the migrations out of band](#run-migrations-out-of-band).
+
+To use the production runtime mode, configure all database and (optional) search engine properties in the [Configuration Reference](/docs/reference/configuration). The database and search engine must be running and ready to accept connections when FusionAuth starts.
+
+## Downtime and Locking
+
+A database migration can cause downtime that affects end users, depending on the amount of data in your system, the speed of your database, and the schema changes in the release. An update without a schema change may not require any downtime from an end-user perspective.
+
+When silent mode applies a migration, the first updated node to connect _immediately locks the database_ until the migration completes. While the database is locked, it is unavailable to the other nodes in the cluster.
+
+During a [rolling update or blue-green deployment](/docs/update/prod-instance#choose-an-update-strategy), nodes still running the previous version keep serving requests against the migrated schema. They may produce errors once the migration begins. The nature of these errors depends on the code paths that changed and how users interact with the system. Errors should be minimal for core login functionality.
+
+Testing the update in a non-production environment with production-like data is the surest way to learn how long a migration takes.
+
+## Run Migrations Out of Band
+
+In production, you may want to run the database migration yourself instead of letting FusionAuth do it, for example to control timing or to fit the migration into a larger automated release. This is called an out-of-band migration.
+
+The migrations are SQL scripts in the `migrations` folder of the Database Schema ZIP, which you can download from the [Direct Downloads](/direct-download) page.
+
+<Aside type="caution">
+Only run the scripts in the `migrations` folder. The base files `mysql.sql` and `postgresql.sql` are only for a clean installation when no database schema is present.
+</Aside>
+
+Run the scripts in order, starting with the first migration newer than your current FusionAuth version and ending with the newest migration that is less than or equal to the version you're updating to. For example, to update from version `1.19.1` to `1.22.0`, run:
+
+1. `1.20.0.sql`
+1. `1.21.0.sql`
+1. `1.22.0.sql`
+
+To run the migration:
+
+1. Remove all FusionAuth nodes from your load balancer or proxy.
+1. Stop all FusionAuth nodes.
+1. Back up your database.
+1. Run the migration scripts.
+1. Update and start each node with the new version of FusionAuth.
+1. Add the nodes back to your load balancer or proxy.
+
+## Maintenance Mode
+
+<Aside type="note">
+Maintenance Mode is only available in the development runtime mode. Never use Maintenance Mode in production.
+</Aside>
+
+Maintenance Mode is an interactive setup page that configures the database and search engine and applies database migrations. To open it, visit FusionAuth in your browser. For a local installation, open `http://localhost:9011`. For a remote server, replace `localhost` with your server's name.

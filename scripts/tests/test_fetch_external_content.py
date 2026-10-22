@@ -124,6 +124,7 @@ class RefreshTests(unittest.TestCase):
         self.script = self.root / "scripts/fetch_external_content.sh"
         self.script.parent.mkdir(parents=True)
         shutil.copy2(ROOT / "scripts/fetch_external_content.sh", self.script)
+        shutil.copytree(ROOT / "scripts/lib", self.root / "scripts/lib")
         
         self.fixture = {"heads": {}, "files": {}, "json": {}}
         attribution = (self.snapshots / "SOURCES.md").read_text()
@@ -159,7 +160,7 @@ class RefreshTests(unittest.TestCase):
         self.environment = dict(os.environ, PATH=f"{fake_bin}:{os.environ['PATH']}",
                                 FETCH_FIXTURE=str(self.fixture_path), FETCH_REQUESTS=str(self.requests),
                                 GITHUB_STEP_SUMMARY=str(self.root / "summary.md"))
-        for name in ("FUSIONAUTH_VERSION", "FUSIONAUTH_APP_ZIP"):
+        for name in ("FUSIONAUTH_VERSION", "FUSIONAUTH_APP_ZIP", "UPSTREAM_REVISIONS"):
             self.environment.pop(name, None)
         self.before = self.contents()
 
@@ -195,6 +196,23 @@ class RefreshTests(unittest.TestCase):
         self.assertEqual(sum(command == "unzip" for command, _ in requests), 2)
         self.assertEqual(sum(command == "javac" for command, _ in requests), 2)
         self.assertEqual(sum(command == "java" for command, _ in requests), 2)
+
+    def test_reproduce_command_pins_resolved_revisions_and_version(self):
+        result = self.run_script("--check")
+        pins = " ".join(f"{repo}={sha}" for repo, sha in self.fixture["heads"].items())
+        self.assertIn(f"FUSIONAUTH_VERSION=1.99.0 UPSTREAM_REVISIONS='{pins}' bash scripts/fetch_external_content.sh", result.stdout)
+
+    def test_pinned_revisions_are_fetched_without_resolving_branches(self):
+        pins = {repo: "c" * 40 for repo in self.fixture["heads"]}
+        self.fixture["heads"] = pins
+        self.environment["UPSTREAM_REVISIONS"] = " ".join(f"{repo}={sha}" for repo, sha in pins.items())
+        result = self.run_script("--check")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        requests = [json.loads(line) for line in self.requests.read_text().splitlines()]
+        self.assertEqual(sum(command == "git" for command, _ in requests), 0)
+        github = [args[-1] for command, args in requests if command == "curl" and "raw.githubusercontent.com" in args[-1]]
+        self.assertTrue(github and all(f"/{'c' * 40}/" in url for url in github), github)
+        self.assertIn(f"UPSTREAM_REVISIONS='{self.environment['UPSTREAM_REVISIONS']}'", result.stdout)
 
     def test_unrelated_upstream_commits_do_not_create_false_drift(self):
         self.fixture["heads"] = dict.fromkeys(self.fixture["heads"], "b" * 40)

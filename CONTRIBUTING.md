@@ -29,7 +29,7 @@ Follow these guidelines when writing documentation (everything under [docs](astr
   - `tip` for fun facts
   - `note` for low-priority knowledge (e.g. a summary of some kickstart variables)
   - `important` for medium-priority knowledge that could impede the user's ability to complete a task (e.g. the server won't start unless you set the `BAZ` environment variable)
-  - `warn` for high-priority knowledge that could lead to data loss (e.g. back up your data before a version upgrade)
+  - `warn` for high-priority knowledge that could lead to data loss (e.g. back up your data before a version update)
 - When linking to `fusionauth.io` URLs, omit the domain name (e.g. don't use `https://fusionauth.io/docs/get-started`, use `/docs/get-started`)
 - Use the following syntax to reference UI elements:
 - **Field names (keys)**: Use **bold** for the name or label of a field, checkbox, toggle, etc. in a form. Use it for writable and read-only fields. Example: `Set the **Issuer** field to...`
@@ -270,7 +270,7 @@ Docs cards are rendered using [astro-better-cards](https://better-static-sites.g
   bash scripts/update_openapi_spec.sh
   ```
   The weekly Check external content workflow runs `bash scripts/update_openapi_spec.sh --check` and reports when the copy differs from upstream.
-- The Docker install page and the download widget point readers at `astro/public/docs/docker-compose.yml`, which the site serves at `/docs/docker-compose.yml`. It pins `fusionauth/fusionauth-app` to a release, as does the screenshot tooling in `astro/screenshots/docker-compose.yml`. Every other day, the Update FusionAuth version workflow checks for a newer release on Docker Hub. When it finds one, it updates both pins, retakes the screenshots, and opens a PR, unless a PR for that version already exists. To update the pins by hand, run this from the repository root, then retake the screenshots:
+- The Docker install page and the download widget point readers at `astro/public/docs/docker-compose.yml`, which the site serves at `/docs/docker-compose.yml`. It pins `fusionauth/fusionauth-app` to a release, as does the screenshot tooling in `astro/screenshots/docker-compose.yml`. Every other day, the Update FusionAuth version workflow checks for a newer release on Docker Hub. When it finds one, it opens a PR that updates both pins, unless a PR for that version already exists. Merging that PR triggers the Update screenshots workflow, which retakes the screenshots against the new version. To update the pins by hand, run this from the repository root, then retake the screenshots:
   ```shell
   bash scripts/update_fusionauth_version.sh
   ```

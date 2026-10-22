@@ -96,6 +96,14 @@ Review the diff and affected guides before committing. Add `--check` to show ups
 
 Run the offline refresh regression tests with `bash astro/extractedcode/configuration-snippets/tests/test.sh` (requires Python 3.9 or newer). The extractedcode CI workflow also runs them when the snapshots, refresh tooling, or related workflows change.
 
+## Scheduled jobs
+
+Every scheduled docs workflow follows the same rules:
+
+1. A run ends in exactly one of: a PR (it found changes it can make), an issue (it failed or found problems a person has to fix, filed by `report-scheduled-run.yml`), or nothing. A PR job that can't open its PR deletes the branch it pushed before it fails, so a run never leaves a branch and an issue behind.
+1. The job log shows the full set of changes the run proposes, such as a diff or a list of broken links, not only a count or a "differs" message.
+1. All the work happens in a script under `scripts/` that runs locally, and the script ends by printing the exact command that reproduces the run, pinned to the versions and upstream commits it used. `scripts/lib/run-locally.sh` prints that command to the log and the run summary. PR jobs also put the command in the PR body.
+
 ## Sitemap
 
 We automatically generate a single `sitemap.xml` file that we use for the entire `fusionauth.io` domain. All of the docs, blog, dev-tools, articles, and isolated pages involved in the Astro build get automatically included during the build itself. For `fusionauth.io` content managed externally, we manually add entries to [`astro/public/sitemap-io.xml`](astro/public/sitemap-io.xml).
@@ -106,14 +114,15 @@ The root `fusionauth.io` LLMs.txt file lives in [`astro/public/llms.txt`](astro/
 
 ## Redirects
 
-[src/redirects.json](src/redirects.json) specifies our redirect rules. This file is published to s3 and read by a Lambda function that processes redirects for the site. When modifying the file:
+[redirects.json](redirects.json) specifies our redirect rules. This file is published to s3 and read by a Lambda function that processes redirects for the site. When modifying the file:
 
 * Keep items in alphabetical order!
-* Move a page? Update `/src/redirects.json`.
-* Add a new index page? Update `indexPaths` in `/src/redirects.json`. Every routable `<folder>/index.mdx` needs exactly one entry, written with a trailing slash, because [astro-index-pages](astro/src/integrations/astro-index-pages/index.js) deploys all of them as `<folder>/index.html`.
+* Move a page? Update `/redirects.json`.
+* Write each `redirects` key without a trailing slash (`/docs/foo`, not `/docs/foo/`), even for a former folder index page. One entry covers both forms: the Lambda 301s `/docs/foo/` to `/docs/foo` before it looks up a redirect. The exceptions are URLs the Lambda never strips: paths in `indexPaths`, paths under a `redirectsByPrefix` rule, and blog paths deeper than `/blog/<slug>/`.
+* Add a new index page? Update `indexPaths` in `/redirects.json`. Every routable `<folder>/index.mdx` needs exactly one entry, written with a trailing slash, because [astro-index-pages](astro/src/integrations/astro-index-pages/index.js) deploys all of them as `<folder>/index.html`.
 * Add a new top-level file or folder adjacent to `/docs/` (e.g. `fusionauth.io/mycoolpagethatisntinthedocsfolder`)?
-  * For a new file, update `s3Paths` in `/src/redirects.json`.
-  * For a new top-level folder, update `s3Prefixes` in `/src/redirects.json`.
+  * For a new file, update `s3Paths` in `/redirects.json`.
+  * For a new top-level folder, update `s3Prefixes` in `/redirects.json`.
   * Add a behavior in CloudFront. You'll need to submit a PR in [fusionauth-site-infra](https://github.com/FusionAuth/fusionauth-site-infra/).
 
-For the first two, `scripts/check-redirects.mjs` works out what a diff needs and prints the exact entries. It defaults to your working tree; pass `--base origin/main` to check a whole branch, and `--write` to apply what it found. The `Check redirects` GitHub action runs it on every PR that touches content, and fails with the same output.
+For the first two, `scripts/check-redirects.mjs` works out what a diff needs and prints the exact entries. It also flags trailing-slash keys, redirects whose target no page serves, and missing or stale `indexPaths` entries anywhere in the tree, not only in the diff. It defaults to your working tree; pass `--base origin/main` to check a whole branch, and `--write` to apply what it found. The `Check redirects` GitHub action runs it on every PR that touches content, and fails with the same output.

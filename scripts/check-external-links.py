@@ -30,7 +30,9 @@ Run with --help for the full option list.
 
 import argparse
 import http.client
+import os
 import re
+import shlex
 import ssl
 import sys
 import threading
@@ -647,7 +649,19 @@ examples:
     )
 
     args = p.parse_args()
-    sys.exit(run(args))
+    status = run(args)
+    print_local_command()
+    sys.exit(status)
+
+
+def print_local_command():
+    """Prints the command that reproduces this run, to the log and the step summary."""
+    command = shlex.join(["scripts/check-external-links.py", *sys.argv[1:]])
+    print(f"\nTo reproduce this run locally, run this from the repo root:\n\n  {command}")
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a", encoding="utf-8") as f:
+            f.write(f"### Reproduce locally\n\nRun this from the repo root:\n\n```bash\n{command}\n```\n\n")
 
 
 if __name__ == "__main__":
