@@ -47,6 +47,25 @@ FusionAuth doesn't treat a failed fetch as a rejection.
 
 A fetch failure never removes a registration. The registration lambda can remove one by revoking it, and FusionAuth removes registrations after the grace period, as described in [Cleaning Up Expired Registrations](#cleaning-up-expired-registrations). See also [Removing A CIMD Client](/docs/lifecycle/authenticate-users/oauth/client-registration#removing-a-cimd-client).
 
+## Registration States
+
+A registration is in one of three states. FusionAuth calculates the state from the registration's cache and grace times each time it needs it, so no background process moves a registration between states.
+
+| State | What it means | New logins | Refresh tokens |
+|---|---|---|---|
+| Active | The cache window hasn't ended. | Allowed. | Work. |
+| Grace | The cache window has ended, and the grace period hasn't. | Allowed if FusionAuth can fetch the document again, or if the fetch fails and the old copy is still within the grace period. | Work. |
+| Expired | Both the cache window and the grace period have ended. | Allowed only if FusionAuth fetches the document again successfully. | Work until they expire. |
+
+A registration moves back to Active when a user logs in, FusionAuth fetches the document successfully, and the domain's registration lambda, if it has one, allows the client. This works from Grace or Expired. The new cache window follows the rules in [How Long FusionAuth Caches A Document](#how-long-fusionauth-caches-a-document).
+
+The [registration lambda](/docs/extend/code/lambdas/cimd-client-registration) can end a registration at any state:
+
+* A `decision` of `DENY` rejects the current request and leaves the registration and its refresh tokens as they are.
+* A `decision` of `REVOKE` deletes the registration and its refresh tokens immediately, without waiting for the grace period.
+
+When a registered client requests a new `resource` during the grace period and the fetch fails, the lambda evaluates the cached metadata for that `resource`.
+
 ## When A Registration Is Refreshed
 
 FusionAuth fetches the document again only when a user logs in after the cache window ends. These don't fetch the document:
@@ -65,6 +84,19 @@ A new fetch clears the lambda's decisions for every `resource` except the one in
 
 When a registered client requests a `resource` the lambda hasn't evaluated yet, and the cached document is still valid, FusionAuth runs the lambda for that `resource` only. Apart from allowing, rejecting or revoking the client, the lambda's result only sets the overrides for that `resource`. Settings that apply to the whole registration, such as `ttlInSeconds` and `jwtPopulateLambdaId`, don't change until the next fetch.
 
+## Refresh Tokens
+
+Each refresh token FusionAuth issues to a CIMD client is tied to the registration that issued it and to one `resource`:
+
+* The [Refresh Token API](/docs/apis/jwt/retrieve-refresh-tokens) returns the registration's Id in `cimdClientRegistrationId`.
+* A CIMD refresh token holds exactly one `resource`, the one from the original authorization, in `metaData.resources`.
+* A refresh token request must use that same `resource`, or omit it so FusionAuth uses the stored one. A client can't change the `resource` on refresh. See the [Refresh Token grant](/docs/apis/oauth/token#refresh-token-grant-request) for the request parameters.
+* Deleting the registration deletes its refresh tokens, so a client can no longer refresh them. See [Removing A CIMD Client](/docs/lifecycle/authenticate-users/oauth/client-registration#removing-a-cimd-client).
+
+Because a refresh token never triggers a fetch, an expired registration doesn't stop a client from refreshing tokens it already holds.
+
 ## Cleaning Up Expired Registrations
 
-FusionAuth removes a registration automatically when its grace period has ended and the client has no refresh tokens. A scheduled job does this, so removal can happen some time after the grace period ends.
+FusionAuth removes a registration automatically when its grace period has ended and no refresh tokens refer to it. A scheduled job does this, so removal can happen some time after the grace period ends. A registration with outstanding refresh tokens stays until those refresh tokens have expired and FusionAuth has removed them.
+
+FusionAuth never removes a CIMD domain this way. Only registrations are cleaned up.
