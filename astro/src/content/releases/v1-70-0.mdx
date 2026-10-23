@@ -1,0 +1,130 @@
+---
+version: "1.70.0"
+date: 2026-10-27
+description: "FusionAuth <code>1.70.0</code> adds <a href='https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/token-exchange'>OAuth 2.0 Token Exchange</a> and support for <a href='https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents'>Client ID Metadata Documents (CIMD)</a>, which lets clients such as AI agents register themselves the first time they connect. This release also fixes a large number of security issues, and we recommend that all customers update as soon as possible. Self-hosted operators should note that this version includes a <a href='https://fusionauth.io/docs/update/database-migrations'>database migration</a> and new default values for <a href='https://fusionauth.io/docs/reference/configuration'>database connection pool settings</a>."
+---
+import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
+import ReleaseNotesDBMigrate from 'src/components/docs/release-notes/ReleaseNotesDBMigrate.mdx';
+
+<ReleaseNotesDBMigrate>
+This migration adds a primary key to every FusionAuth table that did not already have one. This lets you use PostgreSQL logical replication, for example during a blue-green database migration.
+</ReleaseNotesDBMigrate>
+
+<Item category="new-feature">
+Added support for [OAuth 2.0 Token Exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange) ([RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693)). A service can exchange a token it received for a new access token that targets a different service, while preserving the original user as the subject and recording the calling service as the actor. To set up an exchange, see [Delegate Access With Token Exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange-delegation).
+</Item>
+
+<Item category="new-feature">
+Added support for [Client ID Metadata Documents (CIMD)](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents). A client can describe itself in a JSON document hosted at its `client_id` URL, and FusionAuth registers it the first time it connects. This lets clients such as AI chat apps connect to your MCP server without manual Application setup.
+</Item>
+
+<Item category="new-feature">
+Added support for [JSON-formatted log output](/docs/operate/troubleshooting#json-log-output) on `stdout`.
+</Item>
+
+<Item category="enhancement">
+The [OpenID Configuration](/docs/apis/oauth/openid-configuration) endpoint now adds the Tenant Id to the end of the **authorization_endpoint**, **device_authorization_endpoint**, **end_session_endpoint**, and **token_endpoint** values, even when the request doesn't specify a Tenant. These endpoints now accept the Tenant Id as an optional URL segment. If a proxy or firewall in front of FusionAuth only allows exact paths such as `/oauth2/token`, update it to allow the Tenant Id segment.
+
+The response also includes a new **client_id_metadata_document_supported** value.
+</Item>
+
+<Item category="enhancement">
+Increased the default values for the following [database configuration](/docs/reference/configuration) settings:
+
+* `database.maximum-pool-size` from `20` to `40`
+* `database.connection-timeout` from `2,000` milliseconds to `30,000` milliseconds
+
+If you set these values explicitly, FusionAuth continues to use your values.
+</Item>
+
+<Item category="enhancement">
+Improved the help text, tooltips, and empty states throughout [Entity Management](/docs/get-started/core-concepts/types/entity-management) in the Admin UI, and added links to the relevant documentation.
+</Item>
+
+<Item category="enhancement" issue="3537">
+Improved the empty state and help text on the Manage Roles page for [Applications](/docs/get-started/core-concepts/types/applications#roles) in the Admin UI.
+</Item>
+
+<Item category="fix" issue="3569" since="1.69.0">
+Fixed an issue where some dropdowns and radio buttons in the Admin UI stopped responding to mouse input after a single use.
+</Item>
+
+<Item category="fix" since="1.69.2">
+Fixed an issue where [passwordless](/docs/apis/passwordless) login links with an absolute `redirect_url` that was not URL encoded returned a `403` status code.
+</Item>
+
+<Item category="fix" since="1.69.0">
+Fixed an issue where FusionAuth did not validate `verificationKeyIds` on [IdP-initiated SAML v2 identity providers](/docs/lifecycle/authenticate-users/identity-providers/enterprise/samlv2-idp-initiated).
+</Item>
+
+<Item category="fix" issue="3530" since="1.68.0">
+Fixed an issue where the theme editor sidebar disappeared and the CSS editor took up the full page width when editing an [advanced theme](/docs/theme/advanced-themes) with large CSS content.
+</Item>
+
+<Item category="fix" since="1.68.0">
+Fixed an issue where every [tenant rate limiting](/docs/get-started/core-concepts/types/tenants#rate-limit-settings) tooltip in the Admin UI displayed the description for the Untrusted device risk signal.
+</Item>
+
+<Item category="fix" since="1.64.0">
+Fixed an issue where FusionAuth did not respect the `instanceId` [configuration](/docs/reference/configuration) value, which could leave a FusionAuth Cloud deployment marked as incomplete after successful activation.
+</Item>
+
+<Item category="fix" since="1.58.0">
+Fixed an issue where [`POST /api/passwordless/send`](/docs/apis/passwordless/send-passwordless-login) failed with an error for users identified by username with an email address stored in `user.data.email`.
+</Item>
+
+<Item category="fix" issue="3564" since="1.36.0">
+Fixed an issue where a [SCIM User](/docs/apis/scim/scim-user) `PATCH` request that targeted an array element, such as `emails[type eq "work"].value`, did not update the corresponding user data.
+</Item>
+
+<Item category="fix" issue="1756">
+Fixed an issue where FusionAuth created users as verified even when a [Connector](/docs/lifecycle/migrate-users/connectors/) response set `user.verified` to `false`, while the [Login API](/docs/apis/login) returned a `212` status code indicating the user was not verified.
+</Item>
+
+<Item category="fix" issue="3127">
+Fixed an issue where the MFA ["Trust this computer"](/docs/lifecycle/authenticate-users/multi-factor-authentication#trust-tokens-and-trust-challenges) cookie only applied to the first user who logged in on a device, so later users of the same device in the same tenant were always prompted for MFA.
+</Item>
+
+<Item category="fix" issue="3526">
+Fixed an issue where the `authenticationType` claim in JWTs issued by the [Device Authorization Grant](/docs/lifecycle/authenticate-users/oauth/#example-device-authorization-grant) was always `PASSWORD`, regardless of the authentication method the user chose.
+</Item>
+
+<Item category="fix">
+Fixed an issue where the [`jwt.refresh-token.revoke`](/docs/extend/events-and-webhooks/events/jwt/jwt-refresh-token-revoke) webhook did not fire when FusionAuth revoked a refresh token because of reuse under the One-time use policy.
+</Item>
+
+<Item category="fix">
+Fixed an issue where the two-factor login page failed to render for users with the Turkish (`tr`) [locale](/docs/theme/localization).
+</Item>
+
+<Item category="fix" issue="3560">
+Fixed an issue where the [.NET client library](/docs/sdks/netcore) required values for enum fields in search criteria. These fields are now optional.
+</Item>
+
+<Item category="security">
+Fixed multiple issues in SAML v2 response handling.
+</Item>
+
+<Item category="security">
+Fixed multiple issues with tenant isolation for tenant-scoped API keys and the Tenant Manager.
+</Item>
+
+<Item category="security">
+Fixed multiple issues in MFA and passkey enrollment.
+</Item>
+
+<Item category="security">
+Fixed multiple issues in identity provider login and linking.
+</Item>
+
+<Item category="security">
+Fixed multiple issues in Prime MVC and java-http request handling.
+</Item>
+
+<Item category="security">
+Fixed multiple issues in theme and Admin UI rendering.
+</Item>
+
+<Item category="internal">
+Updated Guava and related dependencies to remove deprecation warnings that appeared in the logs on Java 25.
+</Item>

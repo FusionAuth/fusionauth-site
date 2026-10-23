@@ -14,6 +14,105 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 For an explanation of how to update a custom theme, see [Update an Advanced Theme](/docs/theme/advanced-themes/update).
 </Aside>
 
+## `1.70.0`
+
+### CIMD client details on the consent prompt
+
+<Aside type="tip">
+Version `1.70.0` updates the `OAuth consent prompt` template to show details about a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents): its name, its `client_uri`, and the host of its metadata document. See [Consent Prompt](/docs/lifecycle/authenticate-users/oauth/scopes#cimd-clients) for more information.
+
+You only need to apply the updates below if your FusionAuth instance meets all of the following criteria:
+
+* You use an advanced theme for FusionAuth-hosted pages.
+* You use [CIMD domains](/docs/get-started/core-concepts/types/cimd-domains).
+
+Without these updates, CIMD clients can still complete the consent prompt, but the page doesn't show the client details.
+</Aside>
+
+#### Helpers template
+
+##### Macro cimdClientDetails
+
+Add the new `cimdClientDetails` macro:
+
+```ftl
+[#macro cimdClientDetails clientName="" clientUri="" clientHost=""]
+  [#if clientName?has_content && clientHost?has_content]
+    <div id="cimd-client-details" class="mb-4 rounded-theme border border-slate-200 bg-slate-50 p-4">
+      <div class="text-base font-semibold text-text">${clientName?esc?markup_string}</div>
+      [#if clientUri?has_content]
+        <div class="mt-1 text-xs text-text/80 break-all">${clientUri?esc?markup_string}</div>
+      [/#if]
+      <div class="mt-2 flex items-center gap-1.5 text-xs text-text/70">
+        <span>${theme.message('consent-hosted-at')} <b>${clientHost?esc?markup_string}</b></span>
+        [@cssTooltip text=theme.message('{tooltip}consent-hosted-at') id="cimd-hosted-at-tooltip" /]
+      </div>
+    </div>
+  [/#if]
+[/#macro]
+```
+
+#### OAuth consent prompt template
+
+Add the new variables to the variable declarations at the top of the template:
+
+```ftl diff
+ [#-- @ftlvariable name="application" type="io.fusionauth.domain.Application" --]
++[#-- @ftlvariable name="cimdClientName" type="java.lang.String" --]
++[#-- @ftlvariable name="cimdClientUri" type="java.lang.String" --]
++[#-- @ftlvariable name="cimdHost" type="java.lang.String" --]
+```
+
+Call the `cimdClientDetails` macro before the consent intro:
+
+```ftl diff
+     [@helpers.main title=theme.message('consent-required')]
++      [@helpers.cimdClientDetails clientName=cimdClientName clientUri=cimdClientUri clientHost=cimdHost /]
++
+       <p class="mb-4">${theme.message('consent-required-intro', application.name?esc?markup_string)?no_esc}${theme.message("propertySeparator")}</p>
+```
+
+#### Messages
+
+To support these template changes, add the following messages, replacing the values with your own:
+
+```plaintext
+consent-hosted-at=Hosted at
+{tooltip}consent-hosted-at=This application's registration information is hosted at this domain.
+```
+
+### Twitter login for CIMD clients
+
+<Aside type="tip">
+Version `1.70.0` updates the `alternativeLoginsScript` helper macro and the `OAuth authorize` and `OAuth register` templates to pass the Application Id to the Twitter login script. A [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents) has a URL as its `client_id`, so the Twitter login can't use the `client_id` to identify the application.
+
+You only need to apply the updates below if your FusionAuth instance meets all of the following criteria:
+
+* You use an advanced theme for FusionAuth-hosted pages.
+* You have enabled a [Twitter identity provider](/docs/lifecycle/authenticate-users/identity-providers/social/twitter) for a [CIMD domain](/docs/get-started/core-concepts/types/cimd-domains).
+
+Without these updates, Twitter login continues to work for other applications, but not for CIMD clients.
+</Aside>
+
+#### Helpers template
+
+##### Macro alternativeLoginsScript
+
+Add an optional `applicationId` parameter:
+
+```ftl diff
+- [#macro alternativeLoginsScript clientId identityProviders]
++ [#macro alternativeLoginsScript clientId identityProviders applicationId=""]
+
+#### OAuth authorize template
+
+Pass the Application Id to the `alternativeLoginsScript` macro:
+
+```ftl diff
+- [@helpers.alternativeLoginsScript clientId=client_id identityProviders=identityProviders/]
++ [@helpers.alternativeLoginsScript clientId=client_id applicationId=application.id identityProviders=identityProviders/]
+```
+
 ## `1.69.0`
 
 ### Custom form field labels on account and OAuth2 pages
