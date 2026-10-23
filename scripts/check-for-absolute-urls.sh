@@ -7,6 +7,8 @@
 HITS=$(find astro/src/content/ -type f -name "*.md*" -print0 \
   | xargs -0 awk '
       FNR == 1 { fence = 0 }
+      # release descriptions feed rss/email, so they need absolute urls
+      FILENAME ~ /\/releases\// && /^description:/ { next }
       /^[[:space:]]*(```|~~~)/ { fence = !fence; next }
       !fence { print FILENAME ":" FNR ": " $0 }
     ' \
