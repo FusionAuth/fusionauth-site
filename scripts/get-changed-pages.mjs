@@ -135,17 +135,31 @@ function routeCollections(f) {
 
 /** @type {Map<string, 'edited'|'shared'>} page -> kind */
 const affected = new Map();
+/** @type {Map<string, Set<string>>} page -> set of changed source files that contributed */
+const pageContributors = new Map();
 const mark = (page, kind) => { if (affected.get(page) !== 'edited') affected.set(page, kind); };
+const addContributor = (page, src) => {
+  if (!pageContributors.has(page)) pageContributors.set(page, new Set());
+  pageContributors.get(page).add(src);
+};
 
-function walkFrom(start, kind) {
+function walkFrom(start, kind, originalChangedFile) {
   const seen = new Set();
   const queue = [start];
   while (queue.length) {
     const cur = queue.shift();
     if (seen.has(cur)) continue;
     seen.add(cur);
-    if (isPage(cur)) mark(cur, kind);
-    for (const c of routeCollections(cur)) for (const page of collectionPages.get(c)) mark(page, 'shared');
+    if (isPage(cur)) {
+      mark(cur, kind);
+      addContributor(cur, originalChangedFile);
+    }
+    for (const c of routeCollections(cur)) {
+      for (const page of collectionPages.get(c)) {
+        mark(page, 'shared');
+        addContributor(page, originalChangedFile);
+      }
+    }
     for (const dep of dependents.get(cur) || []) queue.push(dep);
   }
 }
@@ -163,11 +177,11 @@ function filesShowingExtractedCode(changed) {
 
 for (const f of changedFiles) {
   if (f.startsWith('astro/extractedcode/')) {
-    for (const user of filesShowingExtractedCode(f)) walkFrom(user, 'shared');
+    for (const user of filesShowingExtractedCode(f)) walkFrom(user, 'shared', f);
   } else if (f.startsWith(`${SRC}/`)) {
     // a page or a content fragment changing is an edit to the pages that include it
     const contentChange = collectionOf(f) || (f.startsWith(`${SRC}/pages/`) && !f.includes('['));
-    walkFrom(f, contentChange ? 'edited' : 'shared');
+    walkFrom(f, contentChange ? 'edited' : 'shared', f);
   }
 }
 
@@ -195,11 +209,50 @@ function getUrl(f) {
   return (p ? `${prefix}/${p}` : prefix) || '/';
 }
 
+// ── Change statistics ─────────────────────────────────────────────────────────
+
+const numstat = new Map();
+{
+  const raw = execSync(
+    `git -C "${REPO_ROOT}" diff --numstat "${BASE_REF}...${HEAD_REF}"`,
+    { encoding: 'utf-8' },
+  ).trim();
+  for (const line of raw.split('\n').filter(Boolean)) {
+    const [a, d, file] = line.split('\t');
+    if (a === '-') continue;                       // binary file
+    numstat.set(file, { added: +a, removed: +d });
+  }
+}
+
+const lineCount = (f) => {
+  const text = read(f);
+  return text ? text.split('\n').length : 1;
+};
+
+function getChangePercent(page, kind) {
+  if (kind === 'edited') {
+    const stat = numstat.get(page);
+    if (!stat) return 100;                          // new file
+    const total = lineCount(page);
+    return Math.min(100, Math.round(((stat.added + stat.removed) / total) * 100));
+  }
+  // shared: sum changes from the dependency files that led here
+  const contributors = pageContributors.get(page);
+  if (!contributors || contributors.size === 0) return 1;
+  let chg = 0;
+  for (const src of contributors) {
+    const s = numstat.get(src);
+    if (s) chg += s.added + s.removed;
+  }
+  const total = lineCount(page);
+  return Math.max(1, Math.min(100, Math.round((chg / total) * 100)));
+}
+
 // ── Output ────────────────────────────────────────────────────────────────────
 
 const rows = [...affected]
   .filter(([page]) => isDeployed(page))
-  .map(([page, kind]) => ({ url: getUrl(page), title: getTitle(page), kind }))
+  .map(([page, kind]) => ({ url: getUrl(page), title: getTitle(page), kind, pct: getChangePercent(page, kind) }))
   .sort((a, b) => (a.kind === b.kind ? a.url.localeCompare(b.url) : a.kind === 'edited' ? -1 : 1));
 
-for (const { url, title, kind } of rows) process.stdout.write(`${url}\t${title}\t${kind}\n`);
+for (const { url, title, kind, pct } of rows) process.stdout.write(`${url}\t${title}\t${kind}\t${pct}\n`);
