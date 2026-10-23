@@ -56,12 +56,14 @@ The `evaluate` function must accept the following parameters:
 ```javascript
 class CimdClientRegistrationLambdaResult {
     /**
-     * Whether the client may register for this request. Defaults to true.
-     * Set this to false to reject the request. FusionAuth stores nothing, and an existing
-     * registration and its refresh tokens are left unchanged.
-     * @type {boolean}
+     * The decision, must be one of 'ALLOW', 'DENY', or 'REVOKE'.
+     * 'ALLOW' permits the registration to be created and/or allows access to the specified resource.
+     * 'DENY' denies access to the specified resource and does not allow the registration to be created if it does not already exist.
+     * 'REVOKE' denies access to the specified resource and deletes the registration if it already exists.
+     * Defaults to `ALLOW`. If set to an unrecognized value the resulting behavior matches 'DENY'.
+     * @type {string}
      */
-    allowed;
+    decision;
 
     /**
      * The Id of the JWT populate lambda that populates the access token and Id token issued to this client.
@@ -76,13 +78,6 @@ class CimdClientRegistrationLambdaResult {
      * @type {ProvidedScopePolicy}
      */
     providedScopePolicy;
-
-    /**
-     * Set this to true to delete the client's registration and its refresh tokens. Defaults to false.
-     * When the client is registering for the first time, this rejects the request.
-     * @type {boolean}
-     */
-    revoke;
 
     /**
      * The custom OAuth scopes this client may request. Defaults to the domain's custom scopes.
@@ -152,8 +147,7 @@ Some properties apply to a single `resource` and others apply to the client's wh
 
 | Property | Applies to | When FusionAuth uses it |
 |---|---|---|
-| `allowed` | The current request | Every time the lambda runs. When `false`, FusionAuth rejects the request and leaves any existing registration unchanged. |
-| `revoke` | The whole registration | Every time the lambda runs. When `true`, FusionAuth deletes the registration and its refresh tokens. |
+| `decision` | The current request, and the whole registration for `REVOKE` | Every time the lambda runs. `DENY` rejects the request and leaves any existing registration unchanged. `REVOKE` rejects the request and deletes the registration and its refresh tokens. |
 | `scopes` | The requested `resource` | Every time the lambda runs. FusionAuth saves the result for that `resource`. |
 | `providedScopePolicy` | The requested `resource` | Every time the lambda runs. FusionAuth saves the result for that `resource`. |
 | `ttlInSeconds` | The whole registration | Only when FusionAuth fetches the document. |
@@ -276,9 +270,8 @@ The following example allows only clients hosted on `claude.ai` or `chatgpt.com`
 ```javascript
 function evaluate(result, clientMetadata, context) {
   var allowedHosts = ['claude.ai', 'chatgpt.com'];
-  result.allowed = allowedHosts.includes(clientMetadata.clientIdHost);
-
-  if (!result.allowed) {
+  if (!allowedHosts.includes(clientMetadata.clientIdHost)) {
+    result.decision = 'DENY';
     console.info('Rejected CIMD client ' + clientMetadata.clientId);
   }
 }
@@ -303,7 +296,7 @@ The following example revokes a specific client. FusionAuth deletes the client's
 function evaluate(result, clientMetadata, context) {
   var revokedClientIds = ['https://app.example.com/oauth/client.json'];
   if (revokedClientIds.includes(clientMetadata.clientId)) {
-    result.revoke = true;
+    result.decision = 'REVOKE';
   }
 }
 ```
@@ -313,7 +306,7 @@ The following example rejects registrations from requests that look automated. T
 ```javascript
 function evaluate(result, clientMetadata, context) {
   if (context.authenticationThreats && context.authenticationThreats.includes('BotDetected')) {
-    result.allowed = false;
+    result.decision = 'DENY';
   }
 }
 ```
