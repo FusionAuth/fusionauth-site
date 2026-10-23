@@ -29,7 +29,7 @@ Before you start, the FusionAuth Tenant your client logs in to needs a [CIMD dom
    |---|---|---|
    | `client_id` | Yes | The document's own URL, exactly as your client sends it. |
    | `client_name` | Yes | The name users see on the consent screen. |
-   | `redirect_uris` | Yes | At least one absolute redirect URI. Wildcards aren't allowed. Custom schemes, such as `com.example.app:/callback`, are allowed. |
+   | `redirect_uris` | Yes | At least one absolute redirect URI. Every entry must be valid, or FusionAuth rejects the whole document. Wildcards aren't allowed. Custom schemes, such as `com.example.app:/callback`, are allowed. For an `http` URI on a loopback IP address (`127.0.0.1` or `[::1]`), FusionAuth accepts any port at login, as described in [RFC 8252 Section 7.3](https://datatracker.ietf.org/doc/html/rfc8252#section-7.3). A `localhost` URI only works when the CIMD domain enables **Allow localhost redirect URIs**. |
    | `client_uri` | No | A URL for your client's home page, shown on the consent screen. |
 
    FusionAuth ignores every other field. Your client's scopes come from the CIMD domain, so a `scope` value in the document has no effect. FusionAuth treats every CIMD client as a public client that uses PKCE, regardless of `token_endpoint_auth_method`.
@@ -41,7 +41,7 @@ Before you start, the FusionAuth Tenant your client logs in to needs a [CIMD dom
      "client_uri": "https://app.example.com",
      "redirect_uris": [
        "https://app.example.com/oauth/callback",
-       "http://localhost:3334/callback"
+       "http://127.0.0.1:3334/callback"
      ]
    }
    ```
@@ -76,7 +76,9 @@ If that fetch fails, FusionAuth keeps using the old copy for the domain's **Grac
 
 ## Troubleshooting
 
-FusionAuth doesn't write Event Log entries when it rejects a document, so check the document and the request against the requirements on this page. The most common causes of a rejected client are:
+When FusionAuth rejects a client, the user sees an `invalid_client` error page, and FusionAuth writes an Error entry to the Event Log under <Breadcrumb>System -> Event Log</Breadcrumb>. The entry includes the client's `client_id` URL, the requested `resource`, and a reason code: `metadataRetrievalFailed` when FusionAuth couldn't fetch or validate the document, `lambdaRejected` when the domain's registration lambda rejected the client, and `rateLimited` when the user registered too many new clients. FusionAuth also sends a [CIMD Registration Failed](/docs/extend/events-and-webhooks/events/cimd/cimd-registration-failed) event.
+
+The entry doesn't say which requirement the document failed, so check the document and the request against the requirements on this page. The most common causes of a rejected client are:
 
 * The `client_id` in the document doesn't exactly match the URL.
 * The URL redirects, for example from a path without a trailing slash to one with it.

@@ -42,11 +42,22 @@ The CIMD standard requires the following security measures:
 
 * Clients must implement [PKCE](/articles/oauth/modern-guide-to-oauth#authorization-code-grant).
 * Clients can only use the `authorization_code` and `refresh_token` grants.
-* Redirect URLs must exactly match the redirect URIs specified in the client's metadata document.
+* Redirect URLs must exactly match the redirect URIs specified in the client's metadata document. The only exception is the port of an `http` loopback redirect URI, which can differ, as described in [RFC 8252](https://datatracker.ietf.org/doc/html/rfc8252#section-7.3).
 * Clients can only request scopes enabled on the domain, or the OAuth request will fail. Optional scopes the user declines on the consent screen are left out of the grant.
 * Clients must send exactly one `resource` parameter, and it must be one of the domain's **Authorized resource URIs**.
 * CIMD clients cannot use roles, SAML, WebAuthn, and self-service registration.
+* A client's MFA trust only comes from logins through the same CIMD domain.
 * Many CIMD clients are public, so client authentication is not required.
+* The CIMD domain's Id isn't a valid `client_id`. FusionAuth rejects it with an `invalid_client` error. An Application can't use the same Id as a CIMD domain.
+
+### Identity Providers
+
+Users can log in to CIMD clients with an [identity provider](/docs/lifecycle/authenticate-users/identity-providers/), such as Google or a SAML v2 provider. Each CIMD domain appears in the identity provider's application list as `CIMD: <domain>`, such as `CIMD: https://claude.ai`. Enable the identity provider for that entry to offer it to the domain's clients. When using the API, use the CIMD domain's Id as the application Id in the identity provider's **applicationConfiguration**.
+
+The following restrictions apply:
+
+* An identity provider can't create user registrations for a CIMD domain. FusionAuth ignores **createRegistration** for a CIMD domain, and the admin UI disables it.
+* A SAML v2 identity provider with IdP-initiated login enabled can't be enabled for a CIMD domain. FusionAuth rejects the configuration with a validation error. The [SAML v2 IdP Initiated](/docs/lifecycle/authenticate-users/identity-providers/enterprise/samlv2-idp-initiated) identity provider doesn't list CIMD domains.
 
 ### Hosted Login Pages
 
@@ -64,9 +75,9 @@ CIMD clients log in through the FusionAuth [hosted login pages](/docs/get-starte
 
 Click <Breadcrumb>CIMD Domains</Breadcrumb> in the left navigation to see every CIMD domain in the tenants you can administer.
 
-![The CIMD Domains list page.](/img/docs/get-started/core-concepts/cimd-domain-list.png)
+<Screenshot id="cimd-domain-list" url="/admin/cimd-domain/" alt="The CIMD Domains list page." />
 
-From here you can see each domain's name, origin, and consent mode, search by name or Id, and filter by Tenant. You can also:
+From here you can see each domain's name, origin, and consent mode, search by name or Id, and filter by Tenant. When you have more than one Tenant, the list also shows each domain's Tenant. You can also:
 
 - **Create** a new CIMD domain.
 - **Edit** a previously created CIMD domain.
@@ -82,13 +93,13 @@ Click <Breadcrumb>CIMD Domains</Breadcrumb> in the left navigation, then click t
 
 When creating a new CIMD domain, you will see the following form:
 
-![The Add CIMD domain form.](/img/docs/get-started/core-concepts/cimd-domain-add.png)
+<Screenshot id="cimd-domain-add" url="/admin/cimd-domain/add" alt="The Add CIMD domain form." />
 
 Editing a saved CIMD domain presents the same form, with two differences: the **Domain** and **Tenant** values are read-only, and custom scopes can now be added through the **Manage scopes** action.
 
 Here is what you can expect when updating an existing CIMD domain:
 
-![The Edit CIMD domain form.](/img/docs/get-started/core-concepts/cimd-domain-edit.png)
+<Screenshot id="cimd-domain-edit" url="/admin/cimd-domain/edit?domainId=7d3c9a2e-41f6-4b8e-9c05-2e6f1a8b3d47" alt="The Edit CIMD domain form." />
 
 #### Form Fields
 
@@ -113,11 +124,17 @@ Here is what you can expect when updating an existing CIMD domain:
   <APIField name="Authorized resource URIs" optional>
     The resource URIs that clients on this domain may request using the [RFC 8707](https://datatracker.ietf.org/doc/html/rfc8707) `resource` parameter. Every CIMD client must send exactly one `resource`, and FusionAuth rejects the request with `invalid_target` unless it appears in this list. Clients on a domain with no authorized resource URIs cannot log in.
   </APIField>
+  <APIField name="Allow localhost redirect URIs" optional defaults="false">
+    When enabled, CIMD clients on this domain may use a `localhost` redirect URI that appears in their metadata document. Loopback IP addresses such as `127.0.0.1` are always allowed. [RFC 8252](https://datatracker.ietf.org/doc/html/rfc8252#section-7.3) recommends loopback IP addresses over `localhost`, so enable this only for CIMD clients that require it.
+  </APIField>
   <APIField name="Enable debug logging" optional defaults="false">
-    When enabled, FusionAuth writes the standard OAuth debug Event Log entries, such as the authorization code exchange, for this domain's clients. View them under <Breadcrumb>System -> Event Log</Breadcrumb>. FusionAuth doesn't log rejected client registrations or failed document fetches.
+    When enabled, FusionAuth writes the standard OAuth debug Event Log entries, such as the authorization code exchange, for this domain's clients. View them under <Breadcrumb>System -> Event Log</Breadcrumb>. FusionAuth also writes a Debug entry for each successful client registration. FusionAuth always writes an Error entry for a failed client registration, whether or not this is enabled.
+  </APIField>
+  <APIField name="Minimum cache duration" readonly defaults="900">
+    The shortest time, in seconds, that a client's CIMD document is cached. This value is always 15 minutes and can't be changed.
   </APIField>
   <APIField name="Maximum cache duration" required defaults="86400">
-    The longest time, in seconds, that a client's CIMD document is cached. When the document's response includes a smaller `Cache-Control: max-age` value, the smaller value is used. When the response has no `max-age`, the document is cached for 15 minutes. A 15 minute minimum always applies. This value must be greater than `0`. See [CIMD Registration Caching And Lifecycle](/docs/lifecycle/authenticate-users/oauth/cimd-registration-lifecycle#how-long-fusionauth-caches-a-document).
+    The longest time, in seconds, that a client's CIMD document is cached. When the document's response includes a smaller `Cache-Control: max-age` value, the smaller value is used. When the response has no `max-age`, the document is cached for 15 minutes. This value must be at least `900`. See [CIMD Registration Caching And Lifecycle](/docs/lifecycle/authenticate-users/oauth/cimd-registration-lifecycle#how-long-fusionauth-caches-a-document).
   </APIField>
   <APIField name="Grace period" required defaults="0">
     How long, in seconds, to honor an expired CIMD document when re-fetching it fails. See [CIMD Registration Caching And Lifecycle](/docs/lifecycle/authenticate-users/oauth/cimd-registration-lifecycle#the-grace-period).
@@ -128,7 +145,7 @@ Here is what you can expect when updating an existing CIMD domain:
 
 <APIBlock>
   <APIField name="Consent mode" required defaults="Always prompt">
-    Whether users must grant consent each time scopes are requested, or whether FusionAuth remembers their decision. The available values are `Always prompt` and `Remember decision`. A CIMD domain cannot skip the consent prompt entirely.
+    Whether users must grant consent each time scopes are requested, or whether FusionAuth remembers their decision. The available values are `Always prompt` and `Remember decision`. A CIMD domain cannot skip the consent prompt entirely. FusionAuth remembers a decision separately for each client and `resource`. Changing this to `Always prompt` deletes every remembered decision for the domain's clients.
   </APIField>
   <APIField name="Provided scopes" optional>
     Controls how FusionAuth handles the standard OpenID Connect scopes (`address`, `email`, `phone`, and `profile`) for clients on this domain. Marking a scope **Enabled** allows clients to request it; a disabled scope is treated as unknown and will fail the request. Marking a scope **Required** means users must consent to it before they can complete authorization. Each scope is enabled and not required by default.
@@ -154,33 +171,37 @@ Custom scopes beyond the standard ones are managed separately, through the **Man
 
 Additional details about a particular CIMD domain, including its scopes, can be viewed by clicking the <Icon name="fa-search"/> action:
 
-![The View CIMD domain modal.](/img/docs/get-started/core-concepts/cimd-domain-view.png)
+<Screenshot id="cimd-domain-view" url="/admin/cimd-domain/" alt="The View CIMD domain modal." />
 
 ### Remove a CIMD Domain
 
 When a CIMD domain is no longer needed, it can be removed by clicking the <Icon name="trash"/> action:
 
-![The Remove CIMD domain confirmation.](/img/docs/get-started/core-concepts/cimd-domain-delete.png)
+<Screenshot id="cimd-domain-delete" url="/admin/cimd-domain/delete/7d3c9a2e-41f6-4b8e-9c05-2e6f1a8b3d47" alt="The Remove CIMD domain confirmation." />
 
 <Aside type="caution">
 Deleting a CIMD domain is permanent and cannot be reversed. It removes every client registered through the domain and revokes those clients' refresh tokens. Clients from the domain can no longer register or authenticate.
 </Aside>
 
+When you delete a CIMD domain in the admin UI, FusionAuth records the deletion in the [Audit Log](/docs/apis/audit-logs).
+
 ### Manage CIMD Domain Scopes
 
 Click the <Icon name="code"/> action on a CIMD domain to add and manage its custom OAuth scopes. These scopes are available to every client that registers through the domain, in addition to the standard OpenID Connect scopes enabled on the <Breadcrumb>Scopes</Breadcrumb> tab.
 
-![The Manage Scopes page for a CIMD domain.](/img/docs/get-started/core-concepts/cimd-domain-scope-list.png)
+<Screenshot id="cimd-domain-scope-list" url="/admin/cimd-domain/manage-scopes?domainId=7d3c9a2e-41f6-4b8e-9c05-2e6f1a8b3d47" alt="The Manage Scopes page for a CIMD domain." />
 
 Click the **Add** button to create a new custom scope:
 
-![The Add scope form.](/img/docs/get-started/core-concepts/cimd-domain-scope-add.png)
+<Screenshot id="cimd-domain-scope-add" url="/admin/cimd-domain/manage-scopes?domainId=7d3c9a2e-41f6-4b8e-9c05-2e6f1a8b3d47" alt="The Add scope form." />
 
 Editing a saved scope presents a similar form that also shows the scope's **Id**. The **Id** and **Name** values are read-only:
 
-![The Edit scope form.](/img/docs/get-started/core-concepts/cimd-domain-scope-edit.png)
+<Screenshot id="cimd-domain-scope-edit" url="/admin/cimd-domain/manage-scopes?domainId=7d3c9a2e-41f6-4b8e-9c05-2e6f1a8b3d47" alt="The Edit scope form." />
 
-A custom scope can also be removed from the same row's action menu; this cannot be reversed, and any client that continues to request the removed scope will fail, because a CIMD domain always rejects unknown scopes.
+A custom scope can also be removed from the same row's action menu. This cannot be reversed. A client that registers after the removal fails if it requests the removed scope, because a CIMD domain always rejects unknown scopes.
+
+FusionAuth saves a copy of the domain's scope settings in each client's registration, so changes to scopes, provided scopes, or authorized resource URIs don't apply to an already-registered client until FusionAuth fetches its document again. See [CIMD Registration Caching And Lifecycle](/docs/lifecycle/authenticate-users/oauth/cimd-registration-lifecycle) for when that happens.
 
 #### Form Fields
 
@@ -213,3 +234,4 @@ Everything on this page can also be configured through the API:
 
 * Use the [CIMD Domain API](/docs/apis/cimd-domains) to create, retrieve, update, search, and delete CIMD domains.
 * Use the [CIMD Domain OAuth Scopes API](/docs/apis/cimd-domain-scopes) to manage a domain's custom OAuth scopes.
+* Use the [CIMD Client Registration API](/docs/apis/cimd-client-registrations) to retrieve, search for, and delete the clients registered through a domain. The admin UI doesn't show these registrations.

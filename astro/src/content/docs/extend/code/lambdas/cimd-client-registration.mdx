@@ -51,16 +51,16 @@ The `evaluate` function must accept the following parameters:
 * `clientMetadata` - the read-only metadata from the client's document.
 * `context` - a read-only object containing context for the current request.
 
-`result` is of type `CimdClientRegistrationLambdaResult`, with the following structure:
+`result` is of type `ClientRegistrationLambdaResult`, with the following structure:
 
 ```javascript
-class CimdClientRegistrationLambdaResult {
+class ClientRegistrationLambdaResult {
     /**
-     * The decision, must be one of 'ALLOW', 'DENY', or 'REVOKE'.
-     * 'ALLOW' permits the registration to be created and/or allows access to the specified resource.
-     * 'DENY' denies access to the specified resource and does not allow the registration to be created if it does not already exist.
-     * 'REVOKE' denies access to the specified resource and deletes the registration if it already exists.
-     * Defaults to `ALLOW`. If set to an unrecognized value the resulting behavior matches 'DENY'.
+     * The registration decision. One of ALLOW, DENY, or REVOKE. Defaults to ALLOW.
+     * DENY rejects the request. FusionAuth stores nothing, and an existing
+     * registration and its refresh tokens are left unchanged.
+     * REVOKE deletes the client's registration and its refresh tokens.
+     * When the client is registering for the first time, REVOKE rejects the request.
      * @type {string}
      */
     decision;
@@ -147,7 +147,7 @@ Some properties apply to a single `resource` and others apply to the client's wh
 
 | Property | Applies to | When FusionAuth uses it |
 |---|---|---|
-| `decision` | The current request, and the whole registration for `REVOKE` | Every time the lambda runs. `DENY` rejects the request and leaves any existing registration unchanged. `REVOKE` rejects the request and deletes the registration and its refresh tokens. |
+| `decision` | The current request, or the whole registration for `REVOKE` | Every time the lambda runs. `DENY` rejects the request and leaves any existing registration unchanged. `REVOKE` deletes the registration and its refresh tokens. |
 | `scopes` | The requested `resource` | Every time the lambda runs. FusionAuth saves the result for that `resource`. |
 | `providedScopePolicy` | The requested `resource` | Every time the lambda runs. FusionAuth saves the result for that `resource`. |
 | `ttlInSeconds` | The whole registration | Only when FusionAuth fetches the document. |
@@ -157,10 +157,10 @@ Because of this, the lambda can't change `ttlInSeconds` or `jwtPopulateLambdaId`
 
 FusionAuth recalculates a `resource`'s `scopes` and `providedScopePolicy` the first time the client uses that `resource` after each fetch of the document, because a fetch clears them. FusionAuth fetches the document at the first login after the cache window ends. See [When A Registration Is Refreshed](/docs/lifecycle/authenticate-users/oauth/cimd-registration-lifecycle#when-a-registration-is-refreshed).
 
-`clientMetadata` is an immutable argument of type `CimdClientMetadata`, with the following structure:
+`clientMetadata` is an immutable argument of type `ClientMetadata`, with the following structure:
 
 ```javascript
-class CimdClientMetadata {
+class ClientMetadata {
     /**
      * The client's client_id, which is the URL of its metadata document.
      * @type {string}
@@ -252,10 +252,12 @@ For the fields of `eventInfo`, see the `EventInfo` class on the [MFA requirement
 The lambda fails closed. FusionAuth rejects the client when any of the following happens:
 
 * The lambda throws an error. FusionAuth writes the error to the Event Log.
+* The lambda sets `decision` to a value other than `ALLOW`, `DENY`, or `REVOKE`. Matching is case-sensitive, but FusionAuth ignores surrounding whitespace.
+* The lambda sets `decision` to `null` or deletes it.
 * The lambda sets `scopes` or `providedScopePolicy` to `null`. To remove every custom scope, set `scopes` to an empty array instead.
 * The lambda sets `jwtPopulateLambdaId` to an Id that doesn't belong to a JWT populate lambda.
 
-FusionAuth doesn't write an Event Log entry when the lambda rejects a client on purpose. To record why a client was rejected, call `console.info` from the lambda, which writes an Event Log entry of type Information.
+Whenever the lambda rejects a client, on purpose or because it failed, FusionAuth writes an Error entry to the Event Log and sends a [CIMD Registration Failed](/docs/extend/events-and-webhooks/events/cimd/cimd-registration-failed) event with the reason `lambdaRejected`. Neither one says why the lambda rejected the client. To record the reason, call `console.info` from the lambda, which writes an Event Log entry of type Information.
 
 ## Assigning The Lambda
 
