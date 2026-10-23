@@ -4,26 +4,31 @@ description: This is a guide to using silent mode during FusionAuth install and 
 tags: silent install, unattended install, automated install, headless setup, silent mode
 ---
 
-Silent mode has been available in FusionAuth since version `1.0.0`. This feature was previously called Silent Configuration and allowed you to configure the database for FusionAuth without the need to manually run the SQL scripts or to interactively use maintenance mode in the UI. Prior to version `1.19.0`, silent mode was not available if the runtime mode was set to anything except `development`. This prevented production systems from accidentally being modified by silent mode. Since version `1.19.0`, silent mode is now fully configurable and can be enabled even when the runtime mode is set to `production`.
+Silent Mode automatically:
 
-Silent mode serves two purposes that we will cover in the following sections: installation and update. Keep in mind that both of these processes might fail so you should always be ready to intervene and you should always make backups of existing databases.
+* performs database migrations when updating FusionAuth
+* configures schemas for new databases when installing FusionAuth
+
+## Activate Silent Mode
 
 To put an instance into Silent Mode, complete the following steps:
 
-```bash
-# Add linebreak to the end of the fusionauth.properties file
-echo "" >> $(brew --prefix)/etc/fusionauth/fusionauth.properties
-# Add your kickstart file path
-echo "fusionauth-app.kickstart.file=/path/to/your/kickstart/kickstart.json" >> $(brew --prefix)/etc/fusionauth/fusionauth.properties
-# Add the silent mode property
-echo "fusionauth-app.silent-mode=true" >> $(brew --prefix)/etc/fusionauth/fusionauth.properties
-# Change the search.type=database to search.type=elasticsearch
-sed -i '' 's/search.type=database/search.type=elasticsearch/g' $(brew --prefix)/etc/fusionauth/fusionauth.properties
-# Add the open search URL
-echo "search.servers=http://localhost:9200" >> $(brew --prefix)/etc/fusionauth/fusionauth.properties
-# Check the full configuration
-cat $(brew --prefix)/etc/fusionauth/fusionauth.properties
-```
+<Steps>
+1. Open your FusionAuth configuration file, located at `\$(brew --prefix)/etc/fusionauth/fusionauth.properties`.
+1. Find the existing `search.type` property and change it from `database` to `elasticsearch`:
+
+   ```properties title="fusionauth.properties"
+   search.type=elasticsearch
+   ```
+
+1. Append the following lines for the Kickstart, Silent Mode, and Search Server configurations (be sure to replace `/path/to/your/kickstart/kickstart.json` with your actual file path):
+
+   ```properties title="fusionauth.properties"
+   fusionauth-app.kickstart.file=/path/to/your/kickstart/kickstart.json
+   fusionauth-app.silent-mode=true
+   search.servers=http://localhost:9200
+   ```
+</Steps>
 
 ## Behavior
 
@@ -89,6 +94,6 @@ fusionauth-app.silent-mode=true
 
 ## Updates
 
-You can use silent mode to update a FusionAuth deployment using the configuration files above. Always back up your FusionAuth database before performing a silent mode update.
+You can use Silent Mode to update a FusionAuth deployment using the configuration files above. Always back up your FusionAuth database before performing a Silent Mode update.
 
-The only additional step that you need to take is to update the version of FusionAuth itself. When the new version of FusionAuth starts up, it checks the database to determine if there are any database migrations that need to be run. If there are, FusionAuth will run the migrations in order and then resume the startup process.
+The only additional step that you need to take is to [update the version of FusionAuth itself](/docs/update/). When the new version of FusionAuth starts up, it checks the database to determine if there are any database migrations that need to be run. If there are, FusionAuth will run the migrations in order and then resume the startup process.
