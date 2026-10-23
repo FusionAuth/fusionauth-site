@@ -14,6 +14,57 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 For an explanation of how to update a custom theme, see [Update an Advanced Theme](/docs/theme/advanced-themes/update).
 </Aside>
 
+## `1.70.0`
+
+### Client details on the OAuth consent page
+
+<Aside type="tip">
+Version `1.70.0` updates the `OAuth consent prompt` template to show details about a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents) that requests consent: the client's name, its `client_uri`, and the host its metadata document is served from. This helps users recognize the client before they grant access.
+
+You only need to apply the updates below if you use an advanced theme with a customized `OAuth consent prompt` template, and you use [CIMD domains](/docs/get-started/core-concepts/types/cimd-domains). Without these updates, the consent page still works, but doesn't show the client details.
+</Aside>
+
+#### Helpers template
+
+Add the `cimdClientDetails` macro:
+
+```ftl
+[#macro cimdClientDetails clientName="" clientUri="" clientHost=""]
+  [#if clientName?has_content && clientHost?has_content]
+    <div id="cimd-client-details" class="mb-4 rounded-theme border border-slate-200 bg-slate-50 p-4">
+      <div class="text-base font-semibold text-text">${clientName?esc?markup_string}</div>
+      [#if clientUri?has_content]
+        <div class="mt-1 text-xs text-text/80 break-all">${clientUri?esc?markup_string}</div>
+      [/#if]
+      <div class="mt-2 flex items-center gap-1.5 text-xs text-text/70">
+        <span>${theme.message('consent-hosted-at')} <b>${clientHost?esc?markup_string}</b></span>
+        [@cssTooltip text=theme.message('{tooltip}consent-hosted-at') id="cimd-hosted-at-tooltip" /]
+      </div>
+    </div>
+  [/#if]
+[/#macro]
+```
+
+#### OAuth consent prompt template
+
+Call the macro at the start of the `helpers.main` block:
+
+```ftl diff
+  [@helpers.main title=theme.message('consent-required')]
++   [@helpers.cimdClientDetails clientName=cimdClientName clientUri=cimdClientUri clientHost=cimdHost /]
++
+    <p class="mb-4">${theme.message('consent-required-intro', application.name?esc?markup_string)?no_esc}${theme.message("propertySeparator")}</p>
+```
+
+#### Messages
+
+If you customized your theme's messages, add the following keys:
+
+```properties
+consent-hosted-at=Hosted at
+{tooltip}consent-hosted-at=This application's registration information is hosted at this domain.
+```
+
 ## `1.69.0`
 
 ### Custom form field labels on account and OAuth2 pages

@@ -39,26 +39,37 @@ You don't register CIMD clients one at a time. Instead, you tell FusionAuth whic
 1. The user consents to the requested scopes. CIMD clients are always treated as third-party clients, so FusionAuth always asks for consent at least once.
 1. FusionAuth redirects back to the client with an authorization code, and the client exchanges it for tokens.
 
-If the domain's **Consent mode** is `Remember decision`, FusionAuth remembers the user's consent for that client and that `resource`. The same user is asked again when the same client requests a different `resource`, or when a different client on the same domain requests access.
-
 The `resource` must be one of the domain's **Authorized resource URIs**, or FusionAuth rejects the request with `invalid_target`. The `aud` claim of both the access token and the Id token contains two values: the client's `client_id` URL and the `resource`.
 
 FusionAuth caches the document. Until the cached copy expires, later logins from the same client reuse the registration without fetching the document again. The domain's cache settings control how long that is, as described in [CIMD Registration Caching And Lifecycle](/docs/lifecycle/authenticate-users/oauth/cimd-registration-lifecycle). After the cached copy expires, the next login fetches the document again. Access and refresh tokens the client already holds keep working after the cached copy expires.
 
 ### Removing A CIMD Client
 
-You can remove a single CIMD client by deleting its registration with the API. FusionAuth also deletes the client's refresh tokens. There are two other ways to remove access:
+FusionAuth has no admin UI for removing a single CIMD client. There are three ways to remove access:
 
-* Set `revoke` to `true` in the domain's registration lambda. FusionAuth deletes the client's registration and refresh tokens the next time the lambda runs for that client. The lambda runs when a user logs in after the client's cached document expires, or when the client requests a `resource` it hasn't used before.
+* Delete the client's registration with the [Delete a CIMD Client Registration API](/docs/apis/cimd-client-registrations/delete-a-cimd-client-registration). FusionAuth deletes the registration and its refresh tokens immediately. To find the registration Id, [search for the registration](/docs/apis/cimd-client-registrations/search-for-cimd-client-registrations) by its `client_id` URL.
+* Set `decision` to `REVOKE` in the domain's registration lambda. FusionAuth deletes the client's registration and refresh tokens the next time the lambda runs for that client. The lambda runs when a user logs in after the client's cached document expires, or when the client requests a `resource` it hasn't used before.
 * Delete the CIMD domain. This removes every client registered through the domain, along with their refresh tokens.
 
-Setting `allowed` to `false` in the lambda blocks new logins but leaves existing refresh tokens working.
+Deleting a registration doesn't block the client. The next time a user logs in with that client, FusionAuth registers it again. To keep a client out, also set `decision` to `DENY` for it in the registration lambda. A `DENY` decision on its own blocks new logins but leaves existing refresh tokens working.
+
+### Monitoring CIMD Clients
+
+To see which clients have registered, use the [Search for CIMD Client Registrations API](/docs/apis/cimd-client-registrations/search-for-cimd-client-registrations). Each registration shows the client's metadata, the scope decisions for each `resource` it has used, and whether its cached document is `Active`, in its `Grace` period, or `Expired`.
+
+FusionAuth sends a [CIMD Registration Success](/docs/extend/events-and-webhooks/events/cimd/cimd-registration-success) event when it registers a client or updates a registration, and a [CIMD Registration Failed](/docs/extend/events-and-webhooks/events/cimd/cimd-registration-failed) event when it can't. Every failure also writes an Error entry to the Event Log. With **Enable debug logging** on the CIMD domain, successes write a Debug entry as well.
+
+Logins through a CIMD client appear in login records and login reports under the CIMD domain's Id as the `applicationId`, even though the user has no registration for an Application with that Id. The [User Login Success](/docs/extend/events-and-webhooks/events/user/login/user-login-success) and [User Login Failed](/docs/extend/events-and-webhooks/events/user/login/user-login-failed) events work differently: they leave out `applicationId` and include the CIMD domain's Id as `cimdDomainId`.
 
 ### What CIMD Clients Can't Do
 
 CIMD clients are public clients. They authenticate with PKCE instead of a client secret, and they can only use the `authorization_code` and `refresh_token` grants. See [Fixed OAuth Behavior](/docs/get-started/core-concepts/types/cimd-domains#fixed-oauth-behavior) for the full list of restrictions.
 
 FusionAuth reads only `client_id`, `client_name`, `client_uri`, and `redirect_uris` from the document, and ignores every other field. A `scope` value in the document has no effect, so a CIMD client can only request the scopes enabled on its domain. FusionAuth also doesn't fetch `logo_uri`.
+
+A CIMD client's access token can't authenticate the FusionAuth APIs that accept a user's JWT in place of an API key, such as the [Login API](/docs/apis/login), the [JWT](/docs/apis/jwt/issue-a-jwt) issue and refresh APIs, the [Change Password API](/docs/apis/users/change-password), and the two-factor APIs. Use the token with your own resource server, the [Userinfo](/docs/apis/oauth/userinfo) endpoint, or the [Introspect](/docs/apis/oauth/introspect) endpoint instead.
+
+FusionAuth recognizes a CIMD client's token by its `aud` claim, which is always exactly `["<client_id URL>", "<resource>"]`. Don't change `aud` in a JWT populate lambda for a CIMD domain, because FusionAuth won't recognize the token as a CIMD token.
 
 ### Limitations
 
