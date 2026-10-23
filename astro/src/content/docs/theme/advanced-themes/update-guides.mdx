@@ -16,17 +16,24 @@ For an explanation of how to update a custom theme, see [Update an Advanced Them
 
 ## `1.70.0`
 
-### Client details on the OAuth consent page
+### CIMD client details on the consent prompt
 
 <Aside type="tip">
-Version `1.70.0` updates the `OAuth consent prompt` template to show details about a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents) that requests consent: the client's name, its `client_uri`, and the host its metadata document is served from. This helps users recognize the client before they grant access.
+Version `1.70.0` updates the `OAuth consent prompt` template to show details about a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents): its name, its `client_uri`, and the host of its metadata document. See [Consent Prompt](/docs/lifecycle/authenticate-users/oauth/scopes#cimd-clients) for more information.
 
-You only need to apply the updates below if you use an advanced theme with a customized `OAuth consent prompt` template, and you use [CIMD domains](/docs/get-started/core-concepts/types/cimd-domains). Without these updates, the consent page still works, but doesn't show the client details.
+You only need to apply the updates below if your FusionAuth instance meets all of the following criteria:
+
+* You use an advanced theme for FusionAuth-hosted pages.
+* You use [CIMD domains](/docs/get-started/core-concepts/types/cimd-domains).
+
+Without these updates, CIMD clients can still complete the consent prompt, but the page doesn't show the client details.
 </Aside>
 
 #### Helpers template
 
-Add the `cimdClientDetails` macro:
+##### Macro cimdClientDetails
+
+Add the new `cimdClientDetails` macro:
 
 ```ftl
 [#macro cimdClientDetails clientName="" clientUri="" clientHost=""]
@@ -47,22 +54,63 @@ Add the `cimdClientDetails` macro:
 
 #### OAuth consent prompt template
 
-Call the macro at the start of the `helpers.main` block:
+Add the new variables to the variable declarations at the top of the template:
 
 ```ftl diff
-  [@helpers.main title=theme.message('consent-required')]
-+   [@helpers.cimdClientDetails clientName=cimdClientName clientUri=cimdClientUri clientHost=cimdHost /]
+ [#-- @ftlvariable name="application" type="io.fusionauth.domain.Application" --]
++[#-- @ftlvariable name="cimdClientName" type="java.lang.String" --]
++[#-- @ftlvariable name="cimdClientUri" type="java.lang.String" --]
++[#-- @ftlvariable name="cimdHost" type="java.lang.String" --]
+```
+
+Call the `cimdClientDetails` macro before the consent intro:
+
+```ftl diff
+     [@helpers.main title=theme.message('consent-required')]
++      [@helpers.cimdClientDetails clientName=cimdClientName clientUri=cimdClientUri clientHost=cimdHost /]
 +
-    <p class="mb-4">${theme.message('consent-required-intro', application.name?esc?markup_string)?no_esc}${theme.message("propertySeparator")}</p>
+       <p class="mb-4">${theme.message('consent-required-intro', application.name?esc?markup_string)?no_esc}${theme.message("propertySeparator")}</p>
 ```
 
 #### Messages
 
-If you customized your theme's messages, add the following keys:
+To support these template changes, add the following messages, replacing the values with your own:
 
-```properties
+```plaintext
 consent-hosted-at=Hosted at
 {tooltip}consent-hosted-at=This application's registration information is hosted at this domain.
+```
+
+### Twitter login for CIMD clients
+
+<Aside type="tip">
+Version `1.70.0` updates the `alternativeLoginsScript` helper macro and the `OAuth authorize` and `OAuth register` templates to pass the Application Id to the Twitter login script. A [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents) has a URL as its `client_id`, so the Twitter login can't use the `client_id` to identify the application.
+
+You only need to apply the updates below if your FusionAuth instance meets all of the following criteria:
+
+* You use an advanced theme for FusionAuth-hosted pages.
+* You have enabled a [Twitter identity provider](/docs/lifecycle/authenticate-users/identity-providers/social/twitter) for a [CIMD domain](/docs/get-started/core-concepts/types/cimd-domains).
+
+Without these updates, Twitter login continues to work for other applications, but not for CIMD clients.
+</Aside>
+
+#### Helpers template
+
+##### Macro alternativeLoginsScript
+
+Add an optional `applicationId` parameter:
+
+```ftl diff
+- [#macro alternativeLoginsScript clientId identityProviders]
++ [#macro alternativeLoginsScript clientId identityProviders applicationId=""]
+
+#### OAuth authorize template
+
+Pass the Application Id to the `alternativeLoginsScript` macro:
+
+```ftl diff
+- [@helpers.alternativeLoginsScript clientId=client_id identityProviders=identityProviders/]
++ [@helpers.alternativeLoginsScript clientId=client_id applicationId=application.id identityProviders=identityProviders/]
 ```
 
 ## `1.69.0`
