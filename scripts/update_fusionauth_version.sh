@@ -29,7 +29,8 @@ trap 'run_locally "FUSIONAUTH_VERSION=$version bash scripts/update_fusionauth_ve
 
 stale=()
 for file in "${files[@]}"; do
-  current="$(sed -n 's#^ *image: fusionauth/fusionauth-app:\(.*\)$#\1#p' "$repo_root/$file")"
+  # the screenshot pin is wrapped in ${FUSIONAUTH_IMAGE:-...} so it can be overridden locally
+  current="$(sed -n 's#^ *image: \(\${FUSIONAUTH_IMAGE:-\)\{0,1\}fusionauth/fusionauth-app:\([^}]*\)}\{0,1\}$#\2#p' "$repo_root/$file")"
   if [[ -z "$current" ]]; then
     printf 'No fusionauth/fusionauth-app image line found in %s.\n' "$file" >&2
     exit 1
@@ -50,7 +51,7 @@ fi
 
 printf '\nProposed changes:\n'
 for file in "${files[@]}"; do
-  sed "s#^\( *image: fusionauth/fusionauth-app:\).*#\1$version#" "$repo_root/$file" |
+  sed "s#^\( *image: \(\${FUSIONAUTH_IMAGE:-\)\{0,1\}fusionauth/fusionauth-app:\)[^}]*#\1$version#" "$repo_root/$file" |
     diff -u --label "$file" --label "$file" "$repo_root/$file" - || true
 done
 printf '\n'
@@ -63,7 +64,7 @@ if [[ "$mode" == check ]]; then
 fi
 
 for file in "${files[@]}"; do
-  sed -i.bak "s#^\( *image: fusionauth/fusionauth-app:\).*#\1$version#" "$repo_root/$file"
+  sed -i.bak "s#^\( *image: \(\${FUSIONAUTH_IMAGE:-\)\{0,1\}fusionauth/fusionauth-app:\)[^}]*#\1$version#" "$repo_root/$file"
   rm -f "$repo_root/$file.bak"
 done
 printf 'Pinned FusionAuth %s in:\n' "$version"
