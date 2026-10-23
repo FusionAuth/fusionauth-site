@@ -47,7 +47,7 @@ FusionAuth caches the document. Until the cached copy expires, later logins from
 
 ### Removing A CIMD Client
 
-FusionAuth has no admin UI or API for removing a single CIMD client. There are two ways to remove access:
+You can remove a single CIMD client by deleting its registration with the API. FusionAuth also deletes the client's refresh tokens. There are two other ways to remove access:
 
 * Set `revoke` to `true` in the domain's registration lambda. FusionAuth deletes the client's registration and refresh tokens the next time the lambda runs for that client. The lambda runs when a user logs in after the client's cached document expires, or when the client requests a `resource` it hasn't used before.
 * Delete the CIMD domain. This removes every client registered through the domain, along with their refresh tokens.
@@ -60,6 +60,11 @@ CIMD clients are public clients. They authenticate with PKCE instead of a client
 
 FusionAuth reads only `client_id`, `client_name`, `client_uri`, and `redirect_uris` from the document, and ignores every other field. A `scope` value in the document has no effect, so a CIMD client can only request the scopes enabled on its domain. FusionAuth also doesn't fetch `logo_uri`.
 
+### Limitations
+
+* CIMD works with every identity provider type except SAML v2 IdP initiated login. You can't enable an IdP-initiated SAML identity provider for a CIMD domain, so IdP-initiated SAML login doesn't work with CIMD clients.
+* A CIMD domain can't create a user registration when a user logs in through an identity provider. FusionAuth always saves **createRegistration** as `false` for the domain's identity provider configurations, even if a request sets it to `true`.
+* The hosted OAuth pages reject a CIMD domain's Id as a `client_id`. A CIMD client must use the URL of its metadata document.
 ## Dynamic Client Registration
 
 [Dynamic Client Registration](https://datatracker.ietf.org/doc/html/rfc7591) (DCR) is an older way to solve the same problem. Under DCR, the client calls a registration endpoint on the authorization server, and the server creates and stores a new client record for every caller. FusionAuth doesn't support DCR; you can follow [GitHub issue #1125](https://github.com/FusionAuth/fusionauth-issues/issues/1125) for updates. CIMD covers the MCP use case with less stored state, since the client's metadata stays on the client's own server.
