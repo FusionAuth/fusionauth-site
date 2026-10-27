@@ -230,22 +230,30 @@ const lineCount = (f) => {
 };
 
 function getChangePercent(page, kind) {
-  if (kind === 'edited') {
-    const stat = numstat.get(page);
-    if (!stat) return 100;                          // new file
-    const total = lineCount(page);
-    return Math.min(100, Math.round(((stat.added + stat.removed) / total) * 100));
-  }
-  // shared: sum changes from the dependency files that led here
-  const contributors = pageContributors.get(page);
-  if (!contributors || contributors.size === 0) return 1;
+  const contributors = pageContributors.get(page) || new Set();
+
   let chg = 0;
-  for (const src of contributors) {
-    const s = numstat.get(src);
-    if (s) chg += s.added + s.removed;
+  let totalLines = 0;
+
+  // Calculate changes across the page and all changed dependencies
+  const toCheck = new Set(contributors);
+  toCheck.add(page); // Always include the page itself in the denominator
+
+  for (const f of toCheck) {
+    const s = numstat.get(f);
+    if (s) {
+      chg += s.added + s.removed;
+    }
+    totalLines += lineCount(f);
   }
-  const total = lineCount(page);
-  return Math.max(1, Math.min(100, Math.round((chg / total) * 100)));
+
+  // Fallback for new uncommitted files or git diff anomalies
+  if (chg === 0 && kind === 'edited') return 100;
+
+  const pct = Math.round((chg / totalLines) * 100);
+  
+  // Guarantee at least 1% for shared changes, capped at 100%
+  return Math.max(kind === 'shared' ? 1 : 0, Math.min(100, pct));
 }
 
 // ── Output ────────────────────────────────────────────────────────────────────
