@@ -19,7 +19,7 @@ For an explanation of how to update a custom theme, see [Update an Advanced Them
 ### CIMD client details on the consent prompt
 
 <Aside type="tip">
-Version `1.70.0` updates the `OAuth consent prompt` template to show details about a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents): its name, its `client_uri`, and the host of its metadata document. See [Consent Prompt](/docs/lifecycle/authenticate-users/oauth/scopes#cimd-clients) for more information.
+Version `1.70.0` updates the `OAuth consent prompt` template to show details about a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents): its name, the host of its metadata document, its `client_uri`, the host of the resource it wants to access, and the host it redirects to after the user responds. The prompt also shows a warning when the redirect host is a loopback address. See [Consent Prompt](/docs/lifecycle/authenticate-users/oauth/scopes#cimd-clients) for more information.
 
 You only need to apply the updates below if your FusionAuth instance meets all of the following criteria:
 
@@ -36,17 +36,55 @@ Without these updates, CIMD clients can still complete the consent prompt, but t
 Add the new `cimdClientDetails` macro:
 
 ```ftl
-[#macro cimdClientDetails clientName="" clientUri="" clientHost=""]
-  [#if clientName?has_content && clientHost?has_content]
-    <div id="cimd-client-details" class="mb-4 rounded-theme border border-slate-200 bg-slate-50 p-4">
-      <div class="text-base font-semibold text-text">${clientName?esc?markup_string}</div>
-      [#if clientUri?has_content]
-        <div class="mt-1 text-xs text-text/80 break-all">${clientUri?esc?markup_string}</div>
+[#macro cimdClientDetails clientName="" clientUri="" clientHost="" redirectHost="" redirectIsLoopback=false resourceHost=""]
+  [#-- Gate on the authoritative host, not the client-supplied name, so an empty client_name cannot hide the redirect and resource context --]
+  [#if clientHost?has_content]
+    <div id="cimd-client-details" class="mb-4">
+      <div class="mb-1 text-sm text-text/70">${theme.message('consent-details')}</div>
+      <dl class="rounded-theme border border-slate-200 bg-slate-50 divide-y divide-slate-200 text-xs">
+        [#if clientName?has_content]
+          <div id="cimd-client-name" class="px-3 py-1.5">
+            <dt class="font-medium text-input-text">${theme.message('consent-client-name')}</dt>
+            <dd class="text-text break-all">${clientName}</dd>
+          </div>
+        [/#if]
+        <div id="cimd-hosted-at" class="px-3 py-1.5">
+          <dt class="flex items-center gap-1 font-medium text-input-text">
+            <span class="whitespace-nowrap">${theme.message('consent-hosted-at')}</span>
+            [@cssTooltip text=theme.message('{tooltip}consent-hosted-at') id="cimd-hosted-at-tooltip" /]
+          </dt>
+          <dd class="text-text break-all">${clientHost}</dd>
+        </div>
+        [#if clientUri?has_content]
+          <div id="cimd-client-website" class="px-3 py-1.5">
+            <dt class="font-medium text-input-text">${theme.message('consent-client-website')}</dt>
+            <dd class="text-text/60 break-all">${clientUri}</dd>
+          </div>
+        [/#if]
+        [#if resourceHost?has_content]
+          <div id="cimd-resource" class="px-3 py-1.5">
+            <dt class="flex items-center gap-1 font-medium text-input-text">
+              <span class="whitespace-nowrap">${theme.message('consent-resource')}</span>
+              [@cssTooltip text=theme.message('{tooltip}consent-resource') id="cimd-resource-tooltip" /]
+            </dt>
+            <dd class="text-text break-all">${resourceHost}</dd>
+          </div>
+        [/#if]
+        [#if redirectHost?has_content]
+          <div id="cimd-redirect" class="px-3 py-1.5">
+            <dt class="flex items-center gap-1 font-medium text-input-text">
+              <span class="whitespace-nowrap">${theme.message('consent-redirect')}</span>
+              [@cssTooltip text=theme.message('{tooltip}consent-redirect') id="cimd-redirect-tooltip" /]
+            </dt>
+            <dd class="text-text break-all">${redirectHost}</dd>
+          </div>
+        [/#if]
+      </dl>
+      [#if redirectIsLoopback]
+        <div id="cimd-redirect-loopback-warning" class="mt-3">
+          [@alert message=theme.message('consent-redirect-loopback-warning') type="error" icon="exclamation-circle" includeDismissButton=false/]
+        </div>
       [/#if]
-      <div class="mt-2 flex items-center gap-1.5 text-xs text-text/70">
-        <span>${theme.message('consent-hosted-at')} <b>${clientHost?esc?markup_string}</b></span>
-        [@cssTooltip text=theme.message('{tooltip}consent-hosted-at') id="cimd-hosted-at-tooltip" /]
-      </div>
     </div>
   [/#if]
 [/#macro]
@@ -58,16 +96,20 @@ Add the new variables to the variable declarations at the top of the template:
 
 ```ftl diff
  [#-- @ftlvariable name="application" type="io.fusionauth.domain.Application" --]
++[#-- @ftlvariable name="cimdClientHost" type="java.lang.String" --]
 +[#-- @ftlvariable name="cimdClientName" type="java.lang.String" --]
 +[#-- @ftlvariable name="cimdClientUri" type="java.lang.String" --]
-+[#-- @ftlvariable name="cimdHost" type="java.lang.String" --]
++[#-- @ftlvariable name="cimdRedirectHost" type="java.lang.String" --]
++[#-- @ftlvariable name="cimdRedirectIsLoopback" type="boolean" --]
++[#-- @ftlvariable name="cimdResourceHost" type="java.lang.String" --]
 ```
 
 Call the `cimdClientDetails` macro before the consent intro:
 
 ```ftl diff
      [@helpers.main title=theme.message('consent-required')]
-+      [@helpers.cimdClientDetails clientName=cimdClientName clientUri=cimdClientUri clientHost=cimdHost /]
++      [@helpers.cimdClientDetails clientName=cimdClientName clientUri=cimdClientUri clientHost=cimdClientHost
++                                  redirectHost=cimdRedirectHost redirectIsLoopback=cimdRedirectIsLoopback resourceHost=cimdResourceHost /]
 +
        <p class="mb-4">${theme.message('consent-required-intro', application.name?esc?markup_string)?no_esc}${theme.message("propertySeparator")}</p>
 ```
@@ -77,8 +119,16 @@ Call the `cimdClientDetails` macro before the consent intro:
 To support these template changes, add the following messages, replacing the values with your own:
 
 ```plaintext
-consent-hosted-at=Hosted at
+consent-client-name=Name:
+consent-client-website=Website:
+consent-details=Details
+consent-hosted-at=Hosted at:
 {tooltip}consent-hosted-at=This application's registration information is hosted at this domain.
+consent-redirect=Redirects to:
+{tooltip}consent-redirect=After you respond, your browser is sent to this host.
+consent-redirect-loopback-warning=This application returns you to an address on this device. Any program running on this device could receive the response. Continue only if you started this request from an application you trust.
+consent-resource=Access to:
+{tooltip}consent-resource=The service this application can access on your behalf if you allow this request.
 ```
 
 ### Twitter login for CIMD clients
@@ -103,8 +153,25 @@ Add an optional `applicationId` parameter:
 ```ftl diff
 - [#macro alternativeLoginsScript clientId identityProviders]
 + [#macro alternativeLoginsScript clientId identityProviders applicationId=""]
+```
+
+Pass the Application Id to the Twitter script:
+
+```ftl diff
+- <script src="${request.contextPath}/js/identityProvider/Twitter.js?version=${version}"></script>
++ <script src="${request.contextPath}/js/identityProvider/Twitter.js?version=${version}" [#if applicationId?has_content]data-application-id="${applicationId}"[/#if]></script>
+```
 
 #### OAuth authorize template
+
+Pass the Application Id to the `alternativeLoginsScript` macro:
+
+```ftl diff
+- [@helpers.alternativeLoginsScript clientId=client_id identityProviders=identityProviders/]
++ [@helpers.alternativeLoginsScript clientId=client_id applicationId=application.id identityProviders=identityProviders/]
+```
+
+#### OAuth register template
 
 Pass the Application Id to the `alternativeLoginsScript` macro:
 
