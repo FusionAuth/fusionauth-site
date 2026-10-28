@@ -55,9 +55,9 @@ CIMD-Registered Public Client (Enforces PKCE + Resource-Scoped Tokens)
 
 Platform teams maintain complete control over ingress. Each approved domain carries its own defined scopes and executes an isolated registration lambda—a custom script running within FusionAuth whenever a client registers or re-fetches its metadata. The lambda evaluates the incoming document and programmatically allows, denies, or revokes access.
 
-Crucially, granted scopes are dictated entirely by your server-side policy, not by what the client requests. Every CIMD-registered client operates as a public client requiring PKCE, explicit user consent is required for every client, and refresh tokens remain strictly locked to that specific client application and target resource.
+Crucially, granted scopes are dictated entirely by your server-side policy, not by what the MCP server or client requests. Every CIMD-registered client operates as a public client requiring PKCE, explicit user consent is required for every client, and refresh tokens remain strictly locked to that specific client application and target resource.
 
-Teams have three ways to cut off a client application. They can delete its registration through the FusionAuth API, have the registration lambda revoke it the next time the client registers or its document is re-fetched, or delete the domain to remove every client on that origin. Access tokens already issued are JWTs your APIs validate on their own, so they stay valid until they expire. Keep their lifetimes short.
+Teams have three ways to cut off an MCP client. They can delete its registration through the FusionAuth API, have the registration lambda revoke it the next time the client's document is re-fetched, or delete the domain to disallow every client from that origin. Access tokens already issued are JWTs your APIs validate on their own, so they stay valid until they expire. Keep their lifetimes short.
 
 > _Our customers now build digital experiences inside AI tools like Claude, Lovable, VS Code and Figma, so that’s where Siteimprove.ai needs to be,"_ said [Sree Pisharody](https://www.linkedin.com/in/sreekumarpisharody/), Senior Principal Product Manager at [Siteimprove](https://www.siteimprove.com/). _"The Siteimprove.ai MCP Server brings our Accessibility Agent straight into those environments, so issues are caught and fixed at the moment of creation, with Search and Analytics agents coming next. Every AI tool that connects to Siteimprove.ai has to be registered and authorized before it can access a customer’s account. As a design partner on FusionAuth 1.70, we’ve seen how it handles that for us, so we don’t have to build it ourselves._
 
@@ -112,7 +112,7 @@ Neither engine relies on probabilistic ML models or heuristics. Authorization lo
 
 ### Forensic Verification with Recorded Intent
 
-FusionAuth expands on RFC 8693 by introducing **Recorded Intent**. When an MCP server initiates an exchange request, it can append an optional free-text statement declaring what business task the agent is attempting to complete (for example: `reschedule_appointment_id_4492`).
+FusionAuth expands on RFC 8693 by introducing **Recorded Intent**. When an MCP server initiates an exchange request, it can append an optional free-text statement declaring what business task the agent is attempting to complete (for example: `I was asked to reschedule an appointment. I need to see the calendar for andrew@example.com`).
 
 A client might _intend_ to do the right thing and still overreach. An AI simply passing a magic string—"I am doing this for good reasons"—is not access control. FusionAuth records the intent string in the exchange log as an audit record. It doesn't interpret or verify the string, and it doesn't use it to decide access. Your policy does that.
 
@@ -133,7 +133,7 @@ Because identity architecture must adapt to regulatory and data sovereignty mand
 - Air-gapped environments
 - Managed single-tenant cloud (FusionAuth Cloud)
 
-Policy evaluation runs inside your own FusionAuth deployment, whether you host it yourself or we run it for you as a dedicated single-tenant instance in FusionAuth Cloud. Token exchange, policy execution, and delegation auditing all happen there. A few things reach outside it: CIMD fetches client metadata documents from approved origins, FusionAuth fetches the published signing keys of any external token issuer you allow, and a policy lambda can call external APIs if you write it to.
+Policy evaluation runs inside your own FusionAuth instance, whether you host it yourself or we run it for you as a dedicated single-tenant deployment in FusionAuth Cloud. Token exchange, policy execution, and delegation auditing all happen there. A few things reach outside it: CIMD fetches client metadata documents from approved origins, FusionAuth fetches the published signing keys of any external token issuer you allow, and a policy lambda can call external APIs if you write it to.
 
 FusionAuth prices by monthly active users, the people who sign in to your applications. Agents, MCP servers, and other machine identities aren't billed per agent, per entity, or per token. CIMD and token exchange are on the Enterprise plan, which has no entity limit, so your MCP server can make 10,000 token exchanges a day or 100,000 at the same price without impacting your MAU. Whether a customer uses your product manually or with 15 agents, they only count once toward your monthly active users.
 
@@ -141,10 +141,10 @@ FusionAuth prices by monthly active users, the people who sign in to your applic
 
 Securing agentic workflows requires evaluating the boundary between autonomous client execution and backend API authorization before shipping production MCP endpoints:
 
-- **Review the Architecture:** Walk through the end-to-end delegation flow in the [RFC 8693 Token Exchange Documentation](https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/token-exchange) and [CIMD Configuration Guide](https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/cimd-registration-lifecycle).
+- **Review the Architecture:** Walk through the end-to-end delegation flow in the [RFC 8693 Token Exchange Documentation](/docs/lifecycle/authenticate-users/oauth/token-exchange) and [CIMD Configuration Guide](/docs/lifecycle/authenticate-users/oauth/cimd-registration-lifecycle).
 
 - **Audit Current MCP Endpoints:** Determine whether your existing agent tooling relies on shared API keys or static OAuth credentials that lack actor attribution.
 
-- **Schedule an Architecture Review:** If you are designing agent integrations for complex multi-tenant environments, [schedule a session with our identity architecture team](https://fusionauth.io/contact) to review your threat model, policy lambdas, and token exchange patterns.
+- **Schedule an Architecture Review:** If you are designing agent integrations for complex multi-tenant environments, [schedule a session with our identity architecture team](/contact) to review your threat model, policy lambdas, and token exchange patterns.
 
 **AI can assist. Identity decides.**
