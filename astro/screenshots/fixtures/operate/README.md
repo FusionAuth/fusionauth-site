@@ -1,0 +1,1 @@
+These sample keys and the self-signed certificate were generated solely for the Key Master documentation screenshots. They contain no production credentials. Fixed fixtures keep the import dialogs reproducible.

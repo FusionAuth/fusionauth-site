@@ -13,6 +13,7 @@ try {
 } catch {}
 
 let adminLocale;
+let operateMetricsKeyExists = false;
 // the OAuth single sign-on cookie, set aside while a screenshot needs a signed-out hosted page
 let savedSso;
 const signedOut = ['lambda-registration-blank', 'lambda-registration-invalid', 'five-minute-login', 'migration-user-login', 'authenticate-mfa-code-sent', 'authenticate-mfa-challenge-methods', 'authenticate-mfa-self-service-methods', 'authenticate-account-lock-user-view', 'manage-user-actions-locked-account', 'manage-verification-email-gate-link', 'manage-verification-email-gate-code', 'manage-verification-phone-gate', 'manage-verification-registration-gate-link', 'manage-verification-registration-gate-code'];
@@ -113,6 +114,10 @@ const switches = {
   'authenticate-tableau-cloud-cors': ['systemConfiguration_corsConfiguration_enabled'],
   'authenticate-tableau-cloud-application-saml': ['application_samlv2Configuration_enabled'],
   'authenticate-sendgrid-application-saml': ['application_samlv2Configuration_enabled'],
+  'operate-cors-settings': ['systemConfiguration_corsConfiguration_enabled'],
+  'operate-enter-captcha-details': ['tenant_captchaConfiguration_enabled'],
+  'operate-turn-on-detection': ['tenant_passwordValidationRules_breachDetection_enabled'],
+  'operate-breached-password-configuration-options': ['tenant_passwordValidationRules_breachDetection_enabled'],
 };
 
 // chosen (not saved) before the switches above
@@ -361,6 +366,38 @@ const fixedHeight = {
   'register-write-comment': null,
   'register-remove-user-action': null,
   'register-confirm-action-cancellation': null,
+  'operate-system-logs-single-node': null,
+  'operate-generic-connector-debug-enabled': null,
+  'operate-create-api-key-fusionauth': null,
+  'operate-login-record-api-key-fusionauth': null,
+  'operate-cloudwatch-fusionauth-applications-id': null,
+  'operate-datadog-fusionauth-enableapikey-prometheus-endpoint': null,
+  'operate-datadog-enableget-prometheus-endpoint': null,
+  'operate-datadog-fusionauth-apikey': null,
+  'operate-default-tenant-id': null,
+  'operate-networking-settings': null,
+  'operate-enter-captcha-details': 'CAPTCHA',
+  'operate-ip-acl-list': null,
+  'operate-ip-acl-application': null,
+  'operate-ip-acl-api-key': null,
+  'operate-block-domains': 'Blocked domains settings',
+  'operate-security-emails-list': 'Template settings',
+  'operate-cors-settings': null,
+  'operate-turn-on-detection': 'Breached password detection settings',
+  'operate-breached-password-configuration-options': 'Breached password detection settings',
+  'operate-import-rsa-key-pair': null,
+  'operate-import-rsa-private-key': null,
+  'operate-import-elliptic-curve-key-pair': null,
+  'operate-import-ecc-private-key': null,
+  'operate-import-eddsa-key-pair': null,
+  'operate-import-eddsa-private-key': null,
+  'operate-import-hmac-secret': null,
+  'operate-import-public-key': null,
+  'operate-import-certificate': null,
+  'operate-generate-rsa-key-pair': null,
+  'operate-generate-ecc-key-pair': null,
+  'operate-generate-eddsa-key-pair': null,
+  'operate-generate-hmac-secret': null,
 };
 
 const defaultThemeId = '75a068fd-e94b-451a-9aeb-3ddb9a3b5987';
@@ -445,6 +482,7 @@ const bands = {
   'manage-verification-application-self-service': '#manage-self-service-strip',
   'manage-verification-application-self-service-phone': '#manage-self-service-strip',
   'manage-search-about-engine': "[data-hl='system-panel']",
+  'operate-rate-limit-settings': "[data-section='rate-limit-settings']",
 };
 
 const exampleWebhookId = '00000000-0000-0000-0000-600000000001';
@@ -1626,6 +1664,26 @@ user.data.notes=User notes` } });
         registration: { applicationId: '3c219e58-ed0e-4b18-ad48-f4f92793ae32', roles: ['user_manager'] } });
     },
   },
+  {
+    names: ['operate-ip-acl-list', 'operate-ip-acl-application', 'operate-ip-acl-api-key'],
+    paths: ['/api/ip-acl/00000000-0000-0000-0000-f60000000001'],
+    create: async api => {
+      await api('/api/ip-acl/00000000-0000-0000-0000-f60000000001', 'POST', { ipAccessControlList: {
+        name: 'Internal network', entries: [{ startIPAddress: '*', action: 'Block' }, { startIPAddress: '10.1.0.0', endIPAddress: '10.2.0.0', action: 'Allow' }],
+      } });
+    },
+  },
+
+  {
+    names: ['operate-generic-connector-debug-enabled'],
+    paths: ['/api/connector/00000000-0000-0000-0000-f60000000004'],
+    create: async api => {
+      await api('/api/connector/00000000-0000-0000-0000-f60000000004', 'POST', { connector: {
+        type: 'Generic', name: 'Pied Piper API', authenticationURL: 'https://api.piedpiper.com/login', connectTimeout: 1000, readTimeout: 2000, debug: true,
+      } });
+    },
+  },
+
 ];
 
 
@@ -1960,6 +2018,20 @@ const temporaryState = [
       return () => apiRequest(`/api/theme/${registerIds.theme}`, 'PATCH', { theme: { templates: { helpers: theme.templates.helpers } } });
     },
   },
+
+  {
+    names: ['operate-cors-settings'],
+    apply: async () => {
+      const { systemConfiguration } = await apiRequest('/api/system-configuration');
+      await apiRequest('/api/system-configuration', 'PATCH', { systemConfiguration: { corsConfiguration: {
+        enabled: true, allowCredentials: false,
+        allowedHeaders: ['Accept', 'Access-Control-Request-Headers', 'Access-Control-Request-Method', 'Authorization', 'Content-Type', 'Last-Modified', 'Origin', 'X-FusionAuth-TenantId', 'X-Requested-With'],
+        allowedMethods: ['GET', 'OPTIONS'], allowedOrigins: [], exposedHeaders: ['Access-Control-Allow-Origin', 'Access-Control-Allow-Credentials'], preflightMaxAgeInSeconds: 1800,
+      } } });
+      return () => apiRequest('/api/system-configuration', 'PUT', { systemConfiguration });
+    },
+  },
+
 ];
 
 
@@ -1979,6 +2051,9 @@ const sectionBoxes = {
   'authenticate-account-lock-tenant-settings': 'failed-authentication-settings',
   'register-associate-admin-user-form': 'form-settings',
   'register-associate-admin-registration-form': 'form-settings',
+  'operate-block-domains': 'blocked-domains-settings',
+  'operate-breached-password-configuration-options': 'breached-password-detection-settings',
+  'operate-ip-acl-application': 'access-control-lists-settings',
 };
 
 const registrationMessages = `# Theme messages for custom form
@@ -2315,6 +2390,22 @@ export default {
     if (savedSso && !signedOut.includes(ctx?.name)) {
       await page.context().addCookies([savedSso]);
       savedSso = undefined;
+      await page.goto(url, { waitUntil: 'networkidle' });
+    }
+
+    if (operateMetricsKeyExists && ctx?.name !== 'operate-datadog-fusionauth-apikey') {
+      await page.goto('http://localhost:9011/admin/api-key/', { waitUntil: 'networkidle' });
+      await page.evaluate(() => {
+        const a = document.querySelector('a[href*="/ajax/api-key/delete/00000000-0000-0000-0000-f60000000002"]');
+        if (!a) throw new Error('Operate metrics key delete link not found');
+        a.closest('[popover]')?.showPopover(); a.click();
+      });
+      await page.locator('.prime-dialog.open').waitFor();
+      await page.locator('.prime-dialog.open #apiKeyId').evaluate(el => { el.value = '00000000-0000-0000-0000-f60000000002'; });
+      await page.locator('.prime-dialog.open button[type=submit]').click({ timeout: 10000 });
+      await page.locator('.prime-dialog.open').waitFor({ state: 'hidden', timeout: 10000 });
+      await page.waitForLoadState('networkidle');
+      operateMetricsKeyExists = false;
       await page.goto(url, { waitUntil: 'networkidle' });
     }
 
@@ -4342,6 +4433,151 @@ export default {
         }, name === 'hidden-field' ? 'user-data-key' : 'user_password');
       }
       await page.evaluate(() => window.scrollTo(0, 0));
+    }
+
+    // Operate
+    if (ctx?.name?.startsWith('operate-')) {
+      const name = ctx.name;
+      const fixture = file => readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'screenshots/fixtures/operate', file), 'utf-8');
+      const openDialog = async href => {
+        const opened = await page.evaluate(h => {
+          const a = document.querySelector(`a[href="${h}"]`);
+          a?.closest('[popover]')?.showPopover();
+          a?.click();
+          return !!a;
+        }, href);
+        if (!opened) throw new Error(`Operate dialog link not found: ${href}`);
+        await page.locator('.prime-dialog.open').waitFor();
+        await page.waitForTimeout(500);
+      };
+      const fill = async (id, value) => {
+        const done = await page.evaluate(([id, value]) => {
+          const el = document.getElementById(id);
+          if (!el) return false;
+          const cm = el.nextElementSibling?.CodeMirror;
+          if (cm) cm.setValue(value);
+          else { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }
+          return true;
+        }, [id, value]);
+        if (!done) throw new Error(`Operate field not found: ${id}`);
+      };
+      const imports = {
+        'import-rsa-key-pair': ['rsa-pair', 'rsa'], 'import-rsa-private-key': ['rsa-private', 'rsa'],
+        'import-elliptic-curve-key-pair': ['ec-pair', 'ec'], 'import-ecc-private-key': ['ec-private', 'ec'],
+        'import-eddsa-key-pair': ['eddsa-pair', 'eddsa'], 'import-eddsa-private-key': ['eddsa-private', 'eddsa'],
+        'import-hmac-secret': ['hmac', 'hmac'], 'import-public-key': ['public', 'rsa'], 'import-certificate': ['certificate', 'rsa'],
+      };
+      if (name === 'operate-cors-settings') {
+        const toggle = page.locator('#systemConfiguration_corsConfiguration_enabled');
+        if (!await toggle.isChecked()) await toggle.check();
+        await page.locator('#cors-configuration').waitFor({ state: 'visible' });
+        await page.evaluate(() => window.scrollTo(0, 0));
+      }
+      if (name === 'operate-breached-password-configuration-options') await fill('tenant_passwordValidationRules_breachDetection_onLogin', 'RequireChange');
+      const kind = name.replace(/^operate-/, '');
+      const generated = { 'generate-rsa-key-pair': 'RSA', 'generate-ecc-key-pair': 'EC', 'generate-eddsa-key-pair': 'OKP', 'generate-hmac-secret': 'HMAC' }[kind];
+      if (imports[kind] || generated) {
+        const [type, material] = imports[kind] ?? [];
+        await openDialog(generated ? `/ajax/key/generate/${generated}` : `/ajax/key/import?t=${type}`);
+        await fill('keyId', '00000000-0000-0000-0000-f60000000010');
+        await fill('key_name', `Pied Piper ${generated ?? material.toUpperCase()} key`);
+        if (await page.locator('#key_kid').count()) await fill('key_kid', 'pied-piper-signing-key');
+        if (await page.locator('#key_issuer').count()) await fill('key_issuer', 'local.fusionauth.io');
+        for (const part of ['public', 'private']) {
+          if (await page.locator(`#key_${part}Key`).count()) await fill(`key_${part}Key`, fixture(`${material}-${part}.pem`));
+        }
+        if (type === 'certificate') await fill('key_certificate', fixture('certificate.pem'));
+        if (type === 'hmac') await fill('key_secret', 'pied-piper-documentation-secret-not-for-production');
+      }
+      if (name === 'operate-default-tenant-id') {
+        await openDialog(`/ajax/tenant/view/${defaultTenantId}`);
+        await page.evaluate(() => {
+          const walker = document.createTreeWalker(document.querySelector('.prime-dialog.open'), NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            if (/^[0-9a-f-]{36}$/.test(node.textContent.trim()) && !['30663132-6464-6665-3032-326466613934', '75a068fd-e94b-451a-9aeb-3ddb9a3b5987'].includes(node.textContent.trim())) node.textContent = '00000000-0000-0000-0000-f60000000020';
+          }
+        });
+      }
+      if (name === 'operate-system-logs-single-node') {
+        await page.locator('pre').first().waitFor();
+        await page.locator('pre').evaluateAll(logs => logs.forEach(log => {
+          log.textContent = log.textContent.split('\n').slice(0, 20).join('\n')
+            .replace(/\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} (AM|PM)\b/g, '2026-09-24 09:00:00.000 AM')
+            .replace(/\b\d+ ms\b/g, '10 ms');
+        }));
+      }
+      if (name === 'operate-networking-settings') await fill('systemConfiguration_trustedProxyConfiguration_trustPolicy', 'OnlyConfigured');
+      if (name === 'operate-generic-connector-debug-enabled') {
+        await fill('connector_name', 'Pied Piper API');
+        await fill('connector_authenticationURL', 'https://api.piedpiper.com/login');
+        await page.evaluate(() => {
+          window.scrollTo(0, 0);
+          const el = document.getElementById('connector_debug');
+          if (!el.checked) el.click();
+          const r = el.closest('.form-row').getBoundingClientRect();
+          const box = document.createElement('div'); box.dataset.hl = 'operate-debug';
+          box.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;pointer-events:none`;
+          document.body.append(box);
+        });
+      }
+      if (name === 'operate-enter-captcha-details') {
+        await fill('tenant_captchaConfiguration_siteKey', 'pied-piper-recaptcha-site-key');
+        await fill('tenant_captchaConfiguration_secretKey', 'pied-piper-recaptcha-secret-key');
+        await fill('tenant_captchaConfiguration_threshold', '0.5');
+        await page.evaluate(() => { document.getElementById('threat-detection-captcha').dataset.hl = 'operate-captcha'; });
+      }
+      if (name === 'operate-block-domains') await fill('blockedDomains', 'gmail.com\nyahoo.com\nhotmail.com');
+      if (name === 'operate-ip-acl-list') {
+        await page.goto('http://localhost:9011/admin/ip-acl/edit/00000000-0000-0000-0000-f60000000001', { waitUntil: 'networkidle' });
+        await fill('ipAccessControlListId', '00000000-0000-0000-0000-f60000000001');
+      }
+      if (name === 'operate-ip-acl-application') await fill('application_accessControlConfiguration_uiIPAccessControlListId', '00000000-0000-0000-0000-f60000000001');
+      if (name === 'operate-ip-acl-api-key') {
+        await fill('apiKey_key', 'pied-piper-internal-documentation-only');
+        await fill('apiKey_ipAccessControlListId', '00000000-0000-0000-0000-f60000000001');
+        await page.evaluate(() => { document.getElementById('apiKey_ipAccessControlListId').closest('.form-row').dataset.hl = 'operate-acl'; });
+      }
+      const endpoint = { 'operate-login-record-api-key-fusionauth': '/api/system/login-record/export', 'operate-datadog-enableget-prometheus-endpoint': '/api/prometheus/metrics' }[name];
+      if (endpoint) {
+        await fill('apiKey_key', 'pied-piper-metrics-documentation-only');
+        await page.evaluate(endpoint => {
+          const box = [...document.querySelectorAll('input[type=checkbox]')].find(i => i.name === `apiKey.permissions.endpoints['${endpoint}']` && i.value === 'GET');
+          if (!box) throw new Error(`Permission not found: ${endpoint}`);
+          if (!box.checked) box.click();
+          box.closest('tr').dataset.hl = 'operate-permission';
+          box.closest('tr').scrollIntoView({ block: 'center' });
+        }, endpoint);
+      }
+      if (name === 'operate-datadog-fusionauth-apikey') {
+        await page.goto('http://localhost:9011/admin/api-key/add', { waitUntil: 'networkidle' });
+        await fill('apiKeyId', '00000000-0000-0000-0000-f60000000002');
+        await fill('apiKey_key', 'pied-piper-metrics-documentation-only');
+        const description = page.locator("[id=\"apiKey_metaData_attributes['description']\"]");
+        await description.fill('Prometheus metrics');
+        await page.evaluate(() => {
+          const box = [...document.querySelectorAll('input[type=checkbox]')].find(i => i.name === "apiKey.permissions.endpoints['/api/prometheus/metrics']" && i.value === 'GET');
+          if (!box.checked) box.click();
+        });
+        await page.locator('button[type=submit]').click();
+        await page.waitForURL(u => u.pathname === '/admin/api-key/');
+        operateMetricsKeyExists = true;
+        await page.evaluate(() => {
+          const row = [...document.querySelectorAll('main tr')].find(tr => tr.textContent.includes('Prometheus metrics'));
+          if (!row) throw new Error('Prometheus API key row not found');
+          row.querySelector('td').dataset.hl = 'operate-key';
+          row.querySelector('td a[href="#"]')?.click();
+        });
+        await page.waitForTimeout(500);
+      }
+      // Built-in keys and the tenant-manager application receive random ids on a fresh install.
+      if (['operate-key-master-list', 'operate-cloudwatch-fusionauth-applications-id'].includes(name) || imports[kind] || generated) {
+        await page.evaluate(() => {
+          let i = 32;
+          for (const cell of document.querySelectorAll('main td')) {
+            if (/^[0-9a-f-]{36}$/.test(cell.textContent.trim()) && (location.pathname === '/admin/key/' || cell.closest('tr').textContent.includes('Tenant manager'))) cell.textContent = `00000000-0000-0000-0000-f6${String(i++).padStart(10, '0')}`;
+          }
+        });
+      }
     }
 
     if (ctx?.name === 'theme-localization-messages') {
