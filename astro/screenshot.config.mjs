@@ -15,7 +15,7 @@ try {
 let adminLocale;
 // the OAuth single sign-on cookie, set aside while a screenshot needs a signed-out hosted page
 let savedSso;
-const signedOut = ['lambda-registration-blank', 'lambda-registration-invalid', 'five-minute-login', 'migration-user-login'];
+const signedOut = ['lambda-registration-blank', 'lambda-registration-invalid', 'five-minute-login', 'migration-user-login', 'authenticate-mfa-code-sent', 'authenticate-mfa-challenge-methods', 'authenticate-mfa-self-service-methods', 'authenticate-account-lock-user-view'];
 
 const dineshId = '00000000-0000-0000-0000-100000000004';
 const gilfoyleId = '00000000-0000-0000-0000-100000000005';
@@ -94,6 +94,24 @@ const switches = {
   'idp-hypr-add': ['identityProvider_applicationConfiguration[00000000-0000-0000-0000-f20000000001]_enabled'],
   'idp-samlv2-add-options': ['identityProvider_loginHintConfiguration_enabled'],
   'idp-cors-settings': ['systemConfiguration_corsConfiguration_enabled', 'systemConfiguration_corsConfiguration_debug'],
+  // Authenticate users.
+  'authenticate-tenant-oauth-access-token-bootstrap': ['tenant_ssoConfiguration_allowAccessTokenBootstrap'],
+  'authenticate-tenant-mfa-methods': ['tenant_multiFactorConfiguration_email_enabled', 'tenant_multiFactorConfiguration_sms_enabled', 'tenant_multiFactorConfiguration_voice_enabled'],
+  'authenticate-tenant-security-client-risk-signals': ['tenant_clientRiskConfiguration_enabled'],
+  'authenticate-application-oauth-refresh-grant': ['application_oauthConfiguration_generateRefreshTokens'],
+  'authenticate-application-security-login-api-refresh': ['application_loginConfiguration_generateRefreshTokens', 'application_loginConfiguration_allowTokenRefresh'],
+  'authenticate-application-saml-enabled': ['application_samlv2Configuration_enabled'],
+  'authenticate-application-saml-authentication': ['application_samlv2Configuration_enabled', 'application_samlv2Configuration_requireSignedRequests', 'application_samlv2Configuration_initiatedLogin_enabled'],
+  'authenticate-application-saml-logout': ['application_samlv2Configuration_enabled', 'application_samlv2Configuration_logout_requireSignedRequests', 'application_samlv2Configuration_logout_singleLogout_enabled'],
+  'authenticate-application-saml-encryption': ['application_samlv2Configuration_enabled', 'application_samlv2Configuration_assertionEncryptionConfiguration_enabled'],
+  'authenticate-application-security-authentication-tokens': ['application_authenticationTokenConfiguration_enabled'],
+  'authenticate-cockroachdb-application-jwt': ['application_jwtConfiguration_enabled'],
+  'authenticate-tableau-cors': ['systemConfiguration_corsConfiguration_enabled'],
+  'authenticate-tableau-application-jwt': ['application_jwtConfiguration_enabled'],
+  'authenticate-zendesk-application-saml': ['application_samlv2Configuration_enabled'],
+  'authenticate-tableau-cloud-cors': ['systemConfiguration_corsConfiguration_enabled'],
+  'authenticate-tableau-cloud-application-saml': ['application_samlv2Configuration_enabled'],
+  'authenticate-sendgrid-application-saml': ['application_samlv2Configuration_enabled'],
 };
 
 // chosen (not saved) before the switches above
@@ -103,6 +121,29 @@ const selects = {
   'application-registration-self-service-advanced': { selfRegistrationType: 'Complete' },
   'multi-tenant-control-plane-registration': { selfRegistrationType: 'Create' },
   'account-application-self-service-form': { application_formConfiguration_selfServiceFormId: '' },
+  // Authenticate users.
+  'authenticate-tenant-oauth-session-timeout': { tenant_httpSessionMaxInactiveInterval: '60' },
+  'authenticate-account-lock-tenant-settings': {
+    tenant_failedAuthenticationConfiguration_userActionId: '00000000-0000-0000-0000-f30000000001', tenant_failedAuthenticationConfiguration_tooManyAttempts: '5',
+    tenant_failedAuthenticationConfiguration_resetCountInSeconds: '60', tenant_failedAuthenticationConfiguration_actionDuration: '3', tenant_failedAuthenticationConfiguration_actionDurationUnit: 'MINUTES',
+  },
+  'authenticate-tenant-mfa-methods': { tenant_multiFactorConfiguration_voice_messengerId: '00000000-0000-0000-0000-f30000000012', tenant_multiFactorConfiguration_voice_templateId: '00000000-0000-0000-0000-f30000000014' },
+  'authenticate-application-oauth-logout-behavior': { application_oauthConfiguration_logoutBehavior: 'RedirectOnly' },
+  'authenticate-application-add-pied-piper-oauth': { application_name: 'Pied Piper', application_oauthConfiguration_logoutURL: 'http://piedpiper.local:3000/endsession' },
+  'authenticate-cockroachdb-tenant-issuer': { tenant_issuer: 'https://your.fusionauth.app.domain' },
+  'authenticate-cockroachdb-application-jwt': { application_name: 'CockroachDB' },
+  'authenticate-tableau-application-add': { application_name: 'Tableau Cloud OIDC' },
+  'authenticate-tableau-application-oauth': { application_name: 'Tableau Cloud OIDC' },
+  'authenticate-tableau-application-jwt': { application_name: 'Tableau Cloud OIDC' },
+  'authenticate-salesforce-application-add': { application_name: 'Salesforce' },
+  'authenticate-zendesk-application-roles': { application_name: 'Zendesk' },
+  'authenticate-zendesk-application-saml': {
+    application_name: 'Zendesk', application_samlv2Configuration_issuer: 'https://fusionauth-example.zendesk.com',
+    application_samlv2Configuration_logoutURL: 'https://piedpiper.com', application_lambdaConfiguration_samlv2PopulateId: '00000000-0000-0000-0000-f3000000000c',
+  },
+  'authenticate-tableau-cloud-application-add': { application_name: 'Tableau' },
+  'authenticate-tableau-cloud-application-saml': { application_name: 'Tableau', application_samlv2Configuration_issuer: 'https://placeholder.example.com' },
+  'authenticate-sendgrid-application-saml': { application_name: 'SendGrid' },
 };
 
 // pages too long to show in full keep the screenshot's height, scrolled to the named section if there is one
@@ -175,6 +216,54 @@ const fixedHeight = {
   'idp-apple-import-key': null,
   'idp-app-oauth': '[data-idp-scroll]',
   'idp-app-login-url': null,
+  // Authenticate users.
+  'authenticate-tenant-oauth-session-timeout': null,
+  'authenticate-tenant-jwt': 'JSON web token settings',
+  'authenticate-tenant-oauth-access-token-bootstrap': null,
+  'authenticate-account-lock-user-action': null,
+  'authenticate-account-lock-tenant-settings': null,
+  'authenticate-account-lock-admin-view': null,
+  'authenticate-tenant-mfa-methods': 'Authenticator settings',
+  'authenticate-mfa-admin-add-method': null,
+  'authenticate-mfa-admin-one-method': null,
+  'authenticate-mfa-admin-two-methods': null,
+  'authenticate-mfa-admin-disable-method': null,
+  'authenticate-application-oauth-refresh-grant': '#application_oauthConfiguration_clientAuthenticationPolicy-form-row',
+  'authenticate-application-saml-enabled': null,
+  'authenticate-application-saml-authentication': 'Authentication request',
+  'authenticate-application-saml-logout': 'Logout request',
+  'authenticate-application-saml-encryption': 'Assertion encryption',
+  'authenticate-application-add-pied-piper-oauth': '#application_oauthConfiguration_clientId-form-row',
+  'authenticate-user-registrations-sso': null,
+  'authenticate-application-security-authentication-tokens': 'Login API settings',
+  'authenticate-entity-add-email-api': null,
+  'authenticate-cockroachdb-tenant-issuer': null,
+  'authenticate-cockroachdb-application-jwt': null,
+  'authenticate-tableau-cors': 'Cross-origin requests',
+  'authenticate-tableau-application-add': null,
+  'authenticate-tableau-application-oauth': '#application_oauthConfiguration_authorizedURLValidationPolicy-form-row',
+  'authenticate-tableau-application-jwt': null,
+  'authenticate-salesforce-application-add': null,
+  'authenticate-salesforce-application-oauth': '#application_oauthConfiguration_clientId-form-row',
+  'authenticate-aiven-api-key-add': "[data-scroll='api-key-endpoints']",
+  'authenticate-aiven-user-add': null,
+  'authenticate-aiven-user-registrations': null,
+  'authenticate-zendesk-application-roles': null,
+  'authenticate-zendesk-lambda-add': null,
+  'authenticate-tableau-cloud-cors': 'Cross-origin requests',
+  'authenticate-tableau-cloud-application-add': null,
+  'authenticate-tableau-cloud-application-saml': null,
+  'authenticate-sendgrid-application-saml': null,
+  'authenticate-tableau-key-generate-menu': null,
+  'authenticate-tableau-key-generate-dialog': null,
+  'authenticate-application-saml-view-dialog': null,
+  'authenticate-tableau-cloud-metadata-url': null,
+  'authenticate-sendgrid-saml-details': null,
+  'authenticate-zendesk-key-fingerprint': null,
+  'authenticate-tableau-application-details': null,
+  'authenticate-application-view-client-credentials': null,
+  'authenticate-aiven-api-keys': null,
+  'authenticate-sendgrid-metadata': null,
 };
 
 const defaultThemeId = '75a068fd-e94b-451a-9aeb-3ddb9a3b5987';
@@ -250,6 +339,11 @@ const bands = {
   'idp-oidc-add-domains': 'el-tab-list, #domains',
   'idp-oidc-add-options': 'el-tab-list, #options',
   'idp-samlv2-add-domains': 'el-tab-list, #managed-domains',
+  // Authenticate users.
+  'authenticate-tenant-security-client-risk-signals': "[data-section='client-risk-configuration']",
+  'authenticate-application-security-login-api-refresh': "[data-section='login-api-settings']",
+  'authenticate-application-oauth-logout-behavior': 'el-tab-list, #application_oauthConfiguration_logoutBehavior-form-row',
+  'authenticate-zendesk-application-saml': 'el-tab-list, #application_lambdaConfiguration_samlv2PopulateId-form-row',
 };
 
 const exampleWebhookId = '00000000-0000-0000-0000-600000000001';
@@ -879,6 +973,27 @@ const idpShots = {
   'idp-external-jwt-configuration': {},
 };
 
+// resources for the authenticate users pages
+const auth = {
+  lockActionId: '00000000-0000-0000-0000-f30000000001',
+  jaredId: '00000000-0000-0000-0000-f30000000002',
+  laurieId: '00000000-0000-0000-0000-f30000000003',
+  hooliAppId: '00000000-0000-0000-0000-f30000000004',
+  tableauKeyId: '00000000-0000-0000-0000-f30000000005',
+  apiKeyId: '00000000-0000-0000-0000-f30000000006',
+  apiTypeId: '00000000-0000-0000-0000-f30000000007',
+  salesforceAppId: '00000000-0000-0000-0000-f3000000000b',
+  zendeskLambdaId: '00000000-0000-0000-0000-f3000000000c',
+  zendeskKeyId: '00000000-0000-0000-0000-f3000000000d',
+  emailTemplateId: '00000000-0000-0000-0000-f3000000000e',
+  messageTemplateId: '00000000-0000-0000-0000-f3000000000f',
+  samlAppId: '00000000-0000-0000-0000-f30000000010',
+  samlKeyId: '00000000-0000-0000-0000-f30000000011',
+  voiceMessengerId: '00000000-0000-0000-0000-f30000000012',
+  tableauAppId: '00000000-0000-0000-0000-f30000000013',
+  voiceTemplateId: '00000000-0000-0000-0000-f30000000014',
+};
+
 // created for the screenshots that need them and deleted before any other, so other pages don't list them
 const temporaryResources = [
   {
@@ -1077,6 +1192,98 @@ const temporaryResources = [
       }
     },
   },
+  {
+    names: ['authenticate-account-lock-user-action', 'authenticate-account-lock-tenant-settings', 'authenticate-account-lock-user-view', 'authenticate-account-lock-admin-view'],
+    // without hardDelete a user or user action is only deactivated
+    paths: [`/api/user/${auth.jaredId}?hardDelete=true`, `/api/user-action/${auth.lockActionId}?hardDelete=true`],
+    create: async api => {
+      await api(`/api/user-action/${auth.lockActionId}`, 'POST', { userAction: { name: 'Account Lock', temporal: true, preventLogin: true, sendEndEvent: true } });
+      await api(`/api/user/${auth.jaredId}`, 'POST', { user: { email: 'jared@piedpiper.com', password: 'password', firstName: 'Jared', lastName: 'Dunn' } });
+      await api('/api/user/action', 'POST', { broadcast: false, action: {
+        actioneeUserId: auth.jaredId, actionerUserId: '00000000-0000-0000-0000-100000000001', userActionId: auth.lockActionId,
+        comment: 'Failed login attempts exceeded', expiry: Date.now() + 3 * 60000,
+      } });
+    },
+  },
+  {
+    names: ['authenticate-aiven-user-registrations'],
+    paths: [`/api/user/${auth.laurieId}?hardDelete=true`],
+    create: async api => {
+      await api(`/api/user/${auth.laurieId}`, 'POST', { user: { email: 'laurie@raviga.com', username: 'laurie', password: 'password', firstName: 'Laurie', lastName: 'Bream' } });
+    },
+  },
+  {
+    names: ['authenticate-user-registrations-sso'],
+    paths: [`/api/application/${auth.hooliAppId}`],
+    create: async api => {
+      await api(`/api/application/${auth.hooliAppId}`, 'POST', { application: { name: 'Hooli', oauthConfiguration: {
+        authorizedRedirectURLs: ['http://hooli.local:3001/oauth-redirect'], logoutURL: 'http://hooli.local:3001/endsession', enabledGrants: ['authorization_code', 'refresh_token'],
+      } } });
+      await api('/api/user/registration/00000000-0000-0000-0000-100000000004', 'POST', { registration: { applicationId: auth.hooliAppId } });
+    },
+  },
+  {
+    names: ['authenticate-tableau-application-jwt', 'authenticate-cockroachdb-application-jwt'],
+    paths: [`/api/key/${auth.tableauKeyId}`],
+    create: async (api, name) => {
+      await api(`/api/key/generate/${auth.tableauKeyId}`, 'POST', { key: { algorithm: 'RS256', name: name.includes('cockroachdb') ? 'CockroachDB RS256 Key' : 'Tableau RS256 Key', length: 2048 } });
+    },
+  },
+  {
+    names: ['authenticate-entity-add-email-api'],
+    paths: [`/api/entity/type/${auth.apiTypeId}`],
+    create: async api => {
+      await api(`/api/entity/type/${auth.apiTypeId}`, 'POST', { entityType: { name: 'API', permissions: [{ name: 'read' }, { name: 'write' }] } });
+    },
+  },
+  {
+    names: ['authenticate-salesforce-application-oauth'],
+    paths: [`/api/application/${auth.salesforceAppId}`],
+    create: async api => {
+      await api(`/api/application/${auth.salesforceAppId}`, 'POST', { application: { name: 'Salesforce', oauthConfiguration: {
+        clientSecret: 'salesforce-secret-not-for-production', enabledGrants: ['authorization_code', 'refresh_token'],
+        authorizedRedirectURLs: ['https://your-application.my.salesforce.com/services/authcallback/FusionAuth'],
+        logoutURL: 'https://your-application.my.salesforce.com/services/auth/rp/oidc/logout',
+      } } });
+    },
+  },
+  {
+    names: ['authenticate-zendesk-application-saml'],
+    paths: [`/api/lambda/${auth.zendeskLambdaId}`],
+    create: async api => {
+      const body = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'src/content/docs/lifecycle/authenticate-users/integrations/saml/zendesk.mdx'), 'utf-8')
+        .match(/```javascript\n(function populate[\s\S]*?)```/)[1];
+      await api(`/api/lambda/${auth.zendeskLambdaId}`, 'POST', { lambda: { name: 'Populate Zendesk roles', type: 'SAMLv2Populate', engineType: 'GraalJS', body } });
+    },
+  },
+  {
+    // an imported certificate, so the fingerprints are the same on every run
+    names: ['authenticate-zendesk-key-fingerprint'],
+    paths: [`/api/key/${auth.zendeskKeyId}`],
+    create: async api => {
+      const certificate = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'screenshots/keys/zendesk-signing.crt'), 'utf-8');
+      await api(`/api/key/import/${auth.zendeskKeyId}`, 'POST', { key: { name: 'SAML key generated for application Zendesk', certificate } });
+    },
+  },
+  {
+    names: ['authenticate-application-saml-view-dialog', 'authenticate-tableau-cloud-metadata-url', 'authenticate-sendgrid-saml-details', 'authenticate-sendgrid-metadata'],
+    paths: [`/api/application/${auth.samlAppId}`, `/api/key/${auth.samlKeyId}`],
+    create: async (api, name) => {
+      const asset = file => readFileSync(join(dirname(fileURLToPath(import.meta.url)), `screenshots/keys/${file}`), 'utf-8');
+      await api(`/api/key/import/${auth.samlKeyId}`, 'POST', { key: { name: 'Pied Piper demonstration SAML key', algorithm: 'RS256', privateKey: asset('saml-demo.key'), certificate: asset('saml-demo.crt') } });
+      await api(`/api/application/${auth.samlAppId}`, 'POST', { application: {
+        name: name.includes('sendgrid') ? 'SendGrid' : name.includes('tableau') ? 'Tableau' : 'Pied Piper SAML',
+        samlv2Configuration: { enabled: true, issuer: 'https://piedpiper.com', keyId: auth.samlKeyId, authorizedRedirectURLs: ['https://piedpiper.com/saml/acs'] },
+      } });
+    },
+  },
+  {
+    names: ['authenticate-tableau-application-details'],
+    paths: [`/api/application/${auth.tableauAppId}`],
+    create: async api => {
+      await api(`/api/application/${auth.tableauAppId}`, 'POST', { application: { name: 'Tableau Cloud OIDC', oauthConfiguration: { clientSecret: 'tableau-secret-not-for-production', enabledGrants: ['authorization_code', 'refresh_token'] } } });
+    },
+  },
 ];
 
 const piedPiperAppId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
@@ -1230,10 +1437,102 @@ const temporaryState = [
       await page.close();
     },
   },
+  {
+    names: ['authenticate-tenant-mfa-methods', 'authenticate-mfa-admin-add-method', 'authenticate-mfa-admin-one-method', 'authenticate-mfa-admin-two-methods', 'authenticate-mfa-admin-disable-method', 'authenticate-mfa-self-service-methods', 'authenticate-mfa-code-sent', 'authenticate-mfa-challenge-methods'],
+    apply: async () => {
+      const emailTemplate = `/api/email/template/${auth.emailTemplateId}`, messageTemplate = `/api/message/template/${auth.messageTemplateId}`;
+      await apiRequest(emailTemplate, 'POST', { emailTemplate: {
+        name: 'Two Factor Authentication', defaultFromName: 'Pied Piper', defaultSubject: 'Your second factor code',
+        defaultHtmlTemplate: '<p>Your verification code is ${code}</p>', defaultTextTemplate: 'Your verification code is ${code}',
+      } });
+      await apiRequest(messageTemplate, 'POST', { messageTemplate: { name: 'Default Two Factor Request', type: 'SMS', defaultTemplate: 'Your verification code is ${code}' } });
+      await apiRequest(`/api/message/template/${auth.voiceTemplateId}`, 'POST', { messageTemplate: { name: 'Pied Piper Voice MFA', type: 'Voice', defaultTemplate: 'Your verification code is ${code}' } });
+      await apiRequest(`/api/messenger/${auth.voiceMessengerId}`, 'POST', { messenger: { name: 'Pied Piper voice', type: 'Generic', messageTypes: ['Voice'], url: 'http://sms-mock:8081/', connectTimeout: 2000, readTimeout: 2000 } });
+      const { tenant } = await apiRequest(`/api/tenant/${defaultTenantId}`);
+      await apiRequest(`/api/tenant/${defaultTenantId}`, 'PATCH', { tenant: { multiFactorConfiguration: {
+        email: { enabled: true, templateId: auth.emailTemplateId },
+        sms: { enabled: true, messengerId: '00000000-0000-0000-0000-500000000001', templateId: auth.messageTemplateId },
+      } } });
+      return async () => {
+        await removeTwoFactor();
+        await apiRequest(`/api/tenant/${defaultTenantId}`, 'PUT', { tenant });
+        await apiRequest(emailTemplate, 'DELETE');
+        await apiRequest(messageTemplate, 'DELETE');
+        await apiRequest(`/api/messenger/${auth.voiceMessengerId}`, 'DELETE');
+        await apiRequest(`/api/message/template/${auth.voiceTemplateId}`, 'DELETE');
+      };
+    },
+  },
+  ...[
+    [['authenticate-mfa-admin-one-method'], ['email']],
+    [['authenticate-mfa-code-sent'], ['sms']],
+    [['authenticate-mfa-admin-two-methods', 'authenticate-mfa-admin-disable-method', 'authenticate-mfa-self-service-methods', 'authenticate-mfa-challenge-methods'], ['email', 'authenticator']],
+  ].map(([names, methods]) => ({
+    names,
+    apply: async () => {
+      await removeTwoFactor();
+      await apiRequest(`/api/user/${richardId}`, 'PATCH', { user: { twoFactor: { methods: methods.map(method => method === 'email'
+        ? { method, email: 'richard@piedpiper.com' } : method === 'sms' ? { method, mobilePhone: '+15555550123' } : { method, secret: totpSecret.toString('base64') }) } } });
+      const { user } = await apiRequest(`/api/user/${richardId}`);
+      const ids = user.twoFactor.methods.map(m => m.id);
+      // another of these states may have replaced the methods already
+      return async () => {
+        const { user } = await apiRequest(`/api/user/${richardId}`);
+        if (user.twoFactor?.methods?.some(m => ids.includes(m.id))) await removeTwoFactor();
+      };
+    },
+  })),
+  {
+    names: ['authenticate-aiven-api-keys'],
+    apply: async page => {
+      await page.goto('http://localhost:9011/admin/api-key/add', { waitUntil: 'networkidle' });
+      await page.fill('#apiKeyId', auth.apiKeyId);
+      await page.fill('#apiKey_name', 'Certificate generator');
+      await page.fill("[id=\"apiKey_metaData_attributes['description']\"]", 'Certificate generator');
+      await page.fill('#apiKey_key', 'certificate-generator-key-not-for-production-NKU5Ypg');
+      await page.locator('#endpoints tr').filter({ hasText: /^\s*\/api\/key\/import\s/ }).locator('input[value=POST]').check();
+      await page.locator('#save-button').click();
+      await page.waitForURL(u => u.pathname === '/admin/api-key/');
+      for (let i = 0; ; i++) {
+        if (await page.locator('main tbody tr').filter({ hasText: 'Certificate generator' }).count()) break;
+        if (i === 60) throw new Error('Certificate generator key did not appear');
+        await page.waitForTimeout(500);
+        await page.reload({ waitUntil: 'networkidle' });
+      }
+      return async () => {
+        const cleanup = await page.context().newPage();
+        try {
+          await cleanup.goto('http://localhost:9011/admin/api-key/', { waitUntil: 'networkidle' });
+          await cleanup.locator(`main a[href="/ajax/api-key/delete/${auth.apiKeyId}"]`).waitFor({ state: 'attached' });
+          await cleanup.evaluate(id => {
+            const link = [...document.querySelectorAll('a')].find(a => a.href.includes('/delete/') && a.href.includes(id));
+            if (!link) throw new Error('API key delete link not found');
+            link.closest('[popover]')?.showPopover();
+            link.click();
+          }, auth.apiKeyId);
+          await cleanup.locator('.prime-dialog.open').waitFor();
+          await cleanup.locator('.prime-dialog.open button').filter({ hasText: /Delete|Confirm/ }).first().click();
+          await cleanup.locator('.prime-dialog.open').waitFor({ state: 'hidden' });
+          await cleanup.waitForLoadState('networkidle');
+        } finally { await cleanup.close(); }
+      };
+    },
+  },
+  ...[
+    [['authenticate-oauth-consent'], { relationship: 'ThirdParty', consentMode: 'AlwaysPrompt', providedScopePolicy: { email: { enabled: true, required: true }, phone: { enabled: true, required: false } } }],
+    [['authenticate-oauth-device-user-code'], { enabledGrants: ['authorization_code', 'refresh_token', 'urn:ietf:params:oauth:grant-type:device_code'], deviceVerificationURL: 'https://piedpiper.com/device' }],
+  ].map(([names, oauthConfiguration]) => ({
+    names,
+    apply: async () => {
+      const { application } = await apiRequest(`/api/application/${piedPiperAppId}`);
+      await apiRequest(`/api/application/${piedPiperAppId}`, 'PATCH', { application: { oauthConfiguration } });
+      return () => apiRequest(`/api/application/${piedPiperAppId}`, 'PUT', { application });
+    },
+  })),
 ];
 
 // alerts that are what the screenshot shows
-const keepAlerts = ['account-not-registered', 'account-configuration-incomplete', 'account-recovery-codes'];
+const keepAlerts = ['account-not-registered', 'account-configuration-incomplete', 'account-recovery-codes', 'authenticate-account-lock-user-view', 'authenticate-mfa-code-sent'];
 
 // one box around a whole form section, named as in [data-section]
 const sectionBoxes = {
@@ -1243,6 +1542,8 @@ const sectionBoxes = {
   'idp-cors-warning-okta': 'okta-saml',
   'idp-cors-warning-samlv2': 'pied-piper-saml',
   'idp-cors-warning-apple': 'apple',
+  // Authenticate users.
+  'authenticate-account-lock-tenant-settings': 'failed-authentication-settings',
 };
 
 const registrationMessages = `# Theme messages for custom form
@@ -1626,7 +1927,7 @@ export default {
           // applications and tenants are deleted in the background
           for (let i = 0; i < 60 && await exists(path); i++) await page.waitForTimeout(500);
         }
-        if (wanted) await resources.create(api);
+        if (wanted) await resources.create(api, ctx?.name);
         // the admin UI caches the tenant count; two tenants adds a Tenant field to some forms
         if (resources.paths[0].startsWith('/api/tenant/')) await page.waitForTimeout(5000);
         // goto alone keeps the loaded page when only the fragment differs
@@ -1638,7 +1939,7 @@ export default {
     for (const state of temporaryState) {
       const wanted = state.names.includes(ctx?.name);
       if (wanted === !!state.undo) continue;
-      if (wanted) state.undo = await state.apply();
+      if (wanted) state.undo = await state.apply(page);
       else {
         await state.undo();
         state.undo = undefined;
@@ -2320,6 +2621,354 @@ export default {
       await page.locator('el-tab-list button[aria-controls="connectors"]').click();
       await page.locator('#add-connector-policy').click();
       await page.locator('.prime-dialog.open').waitFor();
+    }
+
+    // authenticate users section
+    {
+      const name = ctx?.name ?? '';
+      const host = 'http://localhost:9011';
+      if (name.startsWith('authenticate-') && pathname === '/admin/application/') {
+        await page.evaluate(() => {
+          const row = [...document.querySelectorAll('tr')].find(tr => tr.querySelector('td')?.textContent.trim() === 'Tenant manager');
+          const cell = row?.querySelectorAll('td')[1];
+          if (cell) cell.textContent = '00000000-0000-0000-0000-f300000001ff';
+        });
+      }
+      // one box around the elements from the first selector to the last, marked [data-hl=name]
+      const box = (hl, selectors, pad = 0) => page.evaluate(([hl, selectors, pad]) => {
+        const els = selectors.map(s => typeof s === 'string' ? document.querySelector(s) : null);
+        if (els.some(e => !e)) return false;
+        const rects = els.map(e => e.getBoundingClientRect());
+        const scroller = els[0].closest('.prime-dialog')?.querySelector('main');
+        const origin = scroller?.getBoundingClientRect();
+        if (scroller) scroller.style.position = 'relative';
+        const [x, y] = scroller ? [scroller.scrollLeft - origin.left, scroller.scrollTop - origin.top] : [scrollX, scrollY];
+        const top = Math.min(...rects.map(r => r.top)), bottom = Math.max(...rects.map(r => r.bottom));
+        const left = Math.min(...rects.map(r => r.left)), right = Math.max(...rects.map(r => r.right));
+        const div = document.createElement('div');
+        div.dataset.hl = hl;
+        div.style.cssText = `position:absolute;left:${left + x - pad}px;top:${top + y - pad}px;width:${right - left + 2 * pad}px;height:${bottom - top + 2 * pad}px;pointer-events:none`;
+        (scroller ?? document.body).append(div);
+        return true;
+      }, [hl, selectors, pad]).then(ok => { if (!ok) throw new Error(`nothing to box as ${hl}`); });
+      // marks an element found by its text so a selector can name it
+      const mark = (attr, value, selector, text) => page.evaluate(([attr, value, selector, text]) => {
+        const el = [...document.querySelectorAll(selector)].find(e => e.textContent.replace(/\s+/g, ' ').trim().startsWith(text));
+        if (el) el.setAttribute(attr, value);
+        return !!el;
+      }, [attr, value, selector, text]).then(ok => { if (!ok) throw new Error(`${selector} "${text}" not found`); });
+      const showTab = async () => {
+        const label = await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`)?.textContent.trim(), fragment);
+        await selectTab(page, label);
+      };
+      const addTokens = async (display, values) => {
+        for (const value of values) {
+          await page.locator(`#${display} input`).fill(value);
+          await page.locator(`#${display} input`).press('Enter');
+        }
+        await page.evaluate(() => document.activeElement?.blur());
+      };
+      // The secret has a disabled display field and a hidden form input.
+      const setClientSecret = value => page.locator('input[name="application.oauthConfiguration.clientSecret"]').evaluateAll((fields, value) => fields.forEach(field => { field.value = value; }), value);
+      const freezeMenu = async selector => page.evaluate(selector => {
+        const menu = document.querySelector(selector);
+        Object.assign(menu.style, { transition: 'none', animation: 'none', transform: 'none', scale: '1', opacity: '1' });
+        const r = menu.getBoundingClientRect();
+        const copy = document.createElement('div');
+        copy.className = menu.className;
+        copy.innerHTML = menu.innerHTML;
+        copy.style.cssText = `position:absolute;margin:0;left:${r.left + scrollX}px;top:${r.top + scrollY}px;width:${r.width}px;z-index:1000`;
+        document.body.append(copy);
+        menu.querySelectorAll('[data-hl]').forEach(el => el.removeAttribute('data-hl'));
+        menu.hidePopover();
+      }, selector);
+      // the view dialog from an application or key row's action menu, with the address bar's host in its URLs
+      const openView = async (href, firstRow) => {
+        await page.evaluate(h => {
+          const link = document.querySelector(`main a[href="${h}"]`);
+          link?.closest('[popover]')?.showPopover();
+          link?.click();
+        }, href);
+        await page.locator('.prime-dialog.open').waitFor();
+        await page.waitForTimeout(800);
+        await page.evaluate(([host, first]) => {
+          const dialog = document.querySelector('.prime-dialog.open');
+          const walker = document.createTreeWalker(dialog, NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) node.textContent = node.textContent.replaceAll(host, 'https://local.fusionauth.io');
+          for (const tr of dialog.querySelectorAll('tr')) {
+            if (tr.textContent.trim().startsWith('Admin registration form Id:')) tr.querySelectorAll('td')[1].textContent = '00000000-0000-0000-0000-f30000000015';
+          }
+          const row = [...dialog.querySelectorAll('h3, tr')].find(e => e.textContent.replace(/\s+/g, ' ').trim().startsWith(first));
+          const scroller = dialog.querySelector('main');
+          if (row && scroller) scroller.scrollTop += row.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 8;
+        }, [host, firstRow]);
+      };
+      const row = (n, text) => mark('data-row', n, '.prime-dialog.open tr', text).then(() => `.prime-dialog.open tr[data-row='${n}']`);
+      const hostedLogin = async (email) => {
+        await page.fill('#loginId', email);
+        await page.fill('#password', 'password');
+        await page.locator('#submit-button').click();
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(500);
+      };
+
+      if (name === 'authenticate-mfa-self-service-methods') {
+        savedSso ??= (await page.context().cookies(host)).find(c => c.name === 'fusionauth.sso');
+        await page.goto(oauthLoginUrl + '&prompt=login', { waitUntil: 'networkidle' });
+        await hostedLogin('richard@piedpiper.com');
+        const { user } = await apiRequest(`/api/user/${richardId}`);
+        const method = user.twoFactor.methods.find(m => m.method === 'authenticator');
+        await page.locator(`input[type=radio][value="${method.id}"]`).check();
+        if (!await page.locator('input[name=code]').isVisible()) await page.getByRole('button', { name: 'Continue', exact: true }).click();
+        await page.locator('input[name=code]').fill(totpCode());
+        await page.getByRole('button', { name: 'Verify', exact: true }).click();
+        await page.waitForURL(/example\.com/);
+        await page.goto(url, { waitUntil: 'networkidle' });
+        if (new URL(page.url()).pathname.startsWith('/oauth2/two-factor')) {
+          const option = page.locator(`input[type=radio][value="${method.id}"]`);
+          if (await option.isVisible()) await option.check();
+          if (!await page.locator('input[name=code]').isVisible()) await page.getByRole('button', { name: 'Continue', exact: true }).click();
+          // A second MFA challenge cannot reuse the code just accepted for OAuth login.
+          await page.waitForTimeout(30_000 - Date.now() % 30_000 + 1000);
+          await page.locator('input[name=code]').fill(totpCode());
+          await page.getByRole('button', { name: 'Verify', exact: true }).click();
+          await page.waitForURL(u => !u.pathname.startsWith('/oauth2/two-factor'));
+        }
+        await page.getByText('Two-factor authentication', { exact: true }).waitFor({ timeout: 5000 }).catch(async () => {
+          throw new Error(`MFA self-service landed on ${new URL(page.url()).pathname}: ${(await page.locator('body').innerText()).slice(0, 600)}`);
+        });
+      }
+
+      if (name === 'authenticate-account-lock-user-view') await hostedLogin('jared@piedpiper.com');
+
+      if (name === 'authenticate-mfa-code-sent' || name === 'authenticate-mfa-challenge-methods') {
+        await hostedLogin('richard@piedpiper.com');
+        await page.waitForURL(/\/oauth2\/two-factor/);
+      }
+
+      if (name === 'authenticate-account-lock-admin-view') {
+        await tabsReady(page);
+        await page.addStyleTag({ content: '#current-actions table { table-layout: fixed; width: 100%; } #current-actions th, #current-actions td { white-space: normal; overflow-wrap: anywhere; }' });
+      }
+
+      // ids FusionAuth gives the methods on each run
+      if (name.startsWith('authenticate-mfa-admin-')) {
+        await selectTab(page, 'Multi-Factor');
+        const { user } = await apiRequest(`/api/user/${richardId}`);
+        await page.evaluate(ids => {
+          const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            ids.forEach((id, i) => { node.textContent = node.textContent.replace(new RegExp(`^(\\s*)${id}(\\s*)$`), `$1${['3N92', 'R97L'][i]}$2`); });
+          }
+        }, (user.twoFactor?.methods ?? []).map(m => m.id));
+      }
+
+      if (name === 'authenticate-mfa-admin-disable-method') {
+        await mark('data-row', 'authenticator', '#multi-factor tbody tr', 'Authenticator');
+        await box('disable-authenticator', ["#multi-factor tr[data-row='authenticator'] td:last-child a, #multi-factor tr[data-row='authenticator'] td:last-child button"], 4);
+      }
+
+      if (name === 'authenticate-application-oauth-refresh-grant') {
+        await showTab();
+        await page.evaluate(() => {
+          const grant = document.querySelector('#enabled-grants input[value=refresh_token]');
+          if (!grant.checked) grant.click();
+          grant.closest('.checkbox').dataset.hl = 'refresh-grant';
+        });
+      }
+
+      if (name === 'authenticate-application-list-view-menu') {
+        await page.evaluate(id => {
+          const link = document.querySelector(`main a[href="/ajax/application/view/${id}"]`);
+          link?.closest('[popover]')?.showPopover();
+          if (link) link.dataset.hl = 'view';
+        }, piedPiperAppId);
+        await page.waitForTimeout(500);
+        await freezeMenu("[popover]:has([data-hl='view'])");
+      }
+
+      if (name === 'authenticate-application-add-pied-piper-oauth') {
+        await showTab();
+        await page.locator('#application_oauthConfiguration_clientId').evaluateAll((fields, id) => fields.forEach(field => { field.value = id; }), piedPiperAppId);
+        await setClientSecret('this-is-not-a-secret-its-for-screenshots');
+        await addTokens('redirectURLs-display', ['http://piedpiper.local:3000/oauth-redirect']);
+      }
+
+      if (name === 'authenticate-application-view-client-credentials') {
+        await openView(`/ajax/application/view/${piedPiperAppId}`, 'OAuth configuration');
+        await box('client-credentials', [await row('id', 'Client Id:'), await row('secret', 'Client secret:')]);
+      }
+
+      if (name === 'authenticate-tableau-application-details') {
+        await openView(`/ajax/application/view/${auth.tableauAppId}`, 'OpenID Connect Discovery:');
+        await row('discovery', 'OpenID Connect Discovery:');
+        await box('client-credentials', [await row('id', 'Client Id:'), await row('auth', 'Client authentication:')]);
+      }
+
+      if (['authenticate-application-saml-view-dialog', 'authenticate-tableau-cloud-metadata-url', 'authenticate-sendgrid-saml-details'].includes(name)) {
+        await openView(`/ajax/application/view/${auth.samlAppId}`, 'SAML v2 Integration details');
+        await mark('data-row', 'saml', '.prime-dialog.open h3', 'SAML v2 Integration details');
+        await box('saml-details', [".prime-dialog.open h3[data-row='saml']", await row('initiate', 'Initiate login URL:')], 4);
+        await box('entity-login', [await row('entity', 'Entity Id:'), await row('login', 'Login URL:')]);
+        await row('metadata', 'Metadata URL:');
+      }
+
+      if (name === 'authenticate-zendesk-key-fingerprint') {
+        await openView(`/ajax/key/view/${auth.zendeskKeyId}`, 'Fingerprint (MD5):');
+        await row('sha256', 'Fingerprint (SHA-256):');
+      }
+
+      if (name === 'authenticate-user-registrations-sso' || name === 'authenticate-account-lock-admin-view') await page.waitForTimeout(500);
+
+      if (name === 'authenticate-entity-add-email-api') {
+        await page.fill('#entity_name', 'Email API');
+        await page.selectOption('#entity_type_id', auth.apiTypeId);
+      }
+
+      if (name === 'authenticate-oauth-device-user-code') {
+        await page.locator('main input:visible, form input[type=text]:visible').first().pressSequentially('PYYS37');
+      }
+
+      if (name === 'authenticate-cockroachdb-application-jwt' || name === 'authenticate-tableau-application-jwt') {
+        await showTab();
+        await page.evaluate(([id, label]) => {
+          for (const key of ['accessTokenKeyId', 'idTokenKeyId']) {
+            document.getElementById(`${key}-input`).value = `${label} RS256 Key (RS256)`;
+            document.querySelector(`#${key} input[type=hidden]`).value = id;
+          }
+        }, [auth.tableauKeyId, name.includes('cockroachdb') ? 'CockroachDB' : 'Tableau']);
+        await box('signing-keys', ['#accessTokenKeyId', '#idTokenKeyId'], 8);
+      }
+
+      if (name === 'authenticate-tableau-cors' || name === 'authenticate-tableau-cloud-cors') {
+        await showTab();
+        await page.evaluate(() => {
+          for (const box of document.querySelectorAll('#corsConfiguration_allowedMethods input')) if (['GET', 'POST'].includes(box.value) && !box.checked) box.click();
+        });
+        const methods = await page.evaluate(() => [...document.querySelectorAll('#corsConfiguration_allowedMethods input')].filter(i => ['GET', 'POST'].includes(i.value)).map(i => `#${CSS.escape(i.id)}`));
+        await page.evaluate(sels => sels.forEach((s, i) => { document.querySelector(s).closest('.checkbox, div').dataset.method = i; }), methods);
+        await box('methods', ["#corsConfiguration_allowedMethods [data-method='0']", "#corsConfiguration_allowedMethods [data-method='1']"], 4);
+        await addTokens('cors-allowed-origins-display', name === 'authenticate-tableau-cors'
+          ? ['https://sso.online.tableau.com', 'https://prod-ch-a.online.tableau.com'] : ['https://sso.online.tableau.com']);
+      }
+
+      if (name === 'authenticate-tableau-key-generate-menu' || name === 'authenticate-tableau-key-generate-dialog') {
+        await page.evaluate(() => {
+          document.querySelectorAll('main tbody tr').forEach((tr, i) => {
+            const cell = tr.querySelector('td');
+            if (cell) cell.textContent = `00000000-0000-0000-0000-f300000001${String(i).padStart(2, '0')}`;
+          });
+        });
+        await page.evaluate(() => {
+          const item = document.getElementById('generate-rsa');
+          item?.closest('[popover]').showPopover();
+          if (item) item.dataset.hl = 'generate-rsa-item';
+          const nav = [...document.querySelectorAll('nav a[href="/admin/key/"]')].find(a => a.offsetParent);
+          if (nav) nav.dataset.hl = 'key-master-nav';
+          document.getElementById('key-actions-primary').parentElement.dataset.hl = 'key-actions';
+        });
+        await page.waitForTimeout(500);
+        if (name === 'authenticate-tableau-key-generate-menu') await freezeMenu('[popover]:has(#generate-rsa)');
+        if (name === 'authenticate-tableau-key-generate-dialog') {
+          await page.locator('#generate-rsa').click();
+          await page.locator('.prime-dialog.open').waitFor();
+          await page.waitForTimeout(500);
+          await page.locator('.prime-dialog.open input[name="key.name"]').fill('Tableau RS256 Key');
+          await page.evaluate(() => document.activeElement?.blur());
+        }
+      }
+
+      if (name === 'authenticate-tableau-application-oauth') {
+        await showTab();
+        await setClientSecret('tableau-secret-not-for-production');
+        await page.evaluate(() => {
+          const grant = document.querySelector('#enabled-grants input[value=refresh_token]');
+          if (!grant.checked) grant.click();
+        });
+      }
+
+      if (name === 'authenticate-aiven-api-key-add') {
+        await page.fill('#apiKey_name', 'Certificate generator');
+        await page.fill('#apiKey_key', 'certificate-generator-key-not-for-production-NKU5Ypg');
+        await page.fill("[id=\"apiKey_metaData_attributes['description']\"]", 'Certificate generator');
+        await page.evaluate(() => {
+          const rows = [...document.querySelectorAll('#endpoints tr')];
+          const i = rows.findIndex(tr => tr.firstElementChild?.textContent.trim() === '/api/key/import');
+          rows[i].querySelector('input[value=POST]').click();
+          rows[i - 2].dataset.scroll = 'api-key-endpoints';
+        });
+        await page.evaluate(() => document.activeElement?.blur());
+      }
+
+      if (name === 'authenticate-aiven-api-keys') {
+        await page.locator('main tbody tr').filter({ hasText: 'Certificate generator' }).waitFor();
+        await page.evaluate(() => {
+          const row = [...document.querySelectorAll('main tbody tr')].find(tr => tr.textContent.includes('Certificate generator'));
+          if (row) row.firstElementChild.dataset.hl = 'certificate-key';
+        });
+      }
+
+      if (name === 'authenticate-aiven-user-add') {
+        await page.fill('#user_email', 'laurie@raviga.com');
+        await page.fill('#user_username', 'laurie');
+        await page.check('#sendSetPasswordIdentityType-doNotSend');
+        await page.fill('#user_password', 'password');
+        await page.fill('#confirm_user_password', 'password');
+        await page.evaluate(() => document.activeElement?.blur());
+        await box('email-username', ['#user_email-form-row', '#user_username-form-row'], 8);
+        await box('send-email', ['#sendSetPasswordIdentityType-form-row'], 8);
+        await box('passwords', ['#user_password-form-row', '#confirm_user_password-form-row'], 8);
+      }
+
+      if (name === 'authenticate-zendesk-application-roles') {
+        await showTab();
+        for (const [role, description] of [['agent', 'Zendesk agent'], ['admin', 'Zendesk admin']]) {
+          await page.locator('#role-add-button').click();
+          const added = page.locator('#role-table tbody tr').last();
+          await added.locator('input[type=text]').first().fill(role);
+          await added.locator('input[type=text]').last().fill(description);
+        }
+        await page.evaluate(() => document.activeElement?.blur());
+      }
+
+      if (name === 'authenticate-zendesk-lambda-add') {
+        await page.fill('#lambda_name', 'Populate Zendesk roles');
+        await page.selectOption('select[name="lambda.type"]', 'SAMLv2Populate');
+        await page.waitForTimeout(500);
+        const body = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'src/content/docs/lifecycle/authenticate-users/integrations/saml/zendesk.mdx'), 'utf-8')
+          .match(/```javascript\n(function populate[\s\S]*?)```/)[1];
+        const set = await page.evaluate(body => {
+          const cm = document.querySelector('main .CodeMirror')?.CodeMirror;
+          cm?.setValue(body);
+          return !!cm;
+        }, body.trimEnd());
+        if (!set) throw new Error('lambda body editor not found');
+      }
+
+      if (name === 'authenticate-zendesk-application-saml' || name === 'authenticate-tableau-cloud-application-saml') {
+        await showTab();
+        await addTokens('application_samlv2Configuration_authorizedRedirectURLs-display', [name === 'authenticate-zendesk-application-saml'
+          ? 'https://fusionauth-example.zendesk.com/access/saml/' : 'https://placeholder.example.com/acs']);
+      }
+
+      if (name === 'authenticate-sendgrid-metadata') {
+        await page.evaluate(host => {
+          const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) node.textContent = node.textContent.replaceAll(host, 'https://local.fusionauth.io');
+        }, host);
+        await page.evaluate(() => {
+          const cert = [...document.querySelectorAll('*')].find(e => e.children.length === 0 && /^MII/.test(e.textContent.trim()));
+          if (cert) {
+            window.scrollTo(0, 0);
+            const r = cert.getBoundingClientRect(), left = Math.max(0, r.left);
+            const box = document.createElement('div');
+            box.dataset.hl = 'certificate';
+            box.style.cssText = `position:absolute;left:${left}px;top:${r.top + scrollY}px;width:${Math.min(r.width, innerWidth - left - 8)}px;height:${r.height}px;pointer-events:none`;
+            document.body.append(box);
+          }
+        });
+      }
+      if (name.startsWith('authenticate-') && name in fixedHeight && fixedHeight[name] === null) await page.evaluate(() => window.scrollTo(0, 0));
     }
 
     // user manage pages for Big Head and Erlich: the Angular SPA may land on the Users
