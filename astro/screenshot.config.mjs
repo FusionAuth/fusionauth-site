@@ -15,7 +15,7 @@ try {
 let adminLocale;
 // the OAuth single sign-on cookie, set aside while a screenshot needs a signed-out hosted page
 let savedSso;
-const signedOut = ['lambda-registration-blank', 'lambda-registration-invalid', 'five-minute-login'];
+const signedOut = ['lambda-registration-blank', 'lambda-registration-invalid', 'five-minute-login', 'migration-user-login'];
 
 const dineshId = '00000000-0000-0000-0000-100000000004';
 const gilfoyleId = '00000000-0000-0000-0000-100000000005';
@@ -85,6 +85,8 @@ const switches = {
   'kafka': ['integrations_kafka_enabled'],
   'lambda-edit-application': ['application_jwtConfiguration_enabled'],
   'multi-tenant-key-manager': ['apiKey_keyManager'],
+  'migration-rehash-on-login': ['tenant_passwordEncryptionConfiguration_modifyEncryptionSchemeOnLogin'],
+  'scim-sdk-tenant-settings': ['tenant_scimServerConfiguration_enabled'],
 };
 
 // chosen (not saved) before the switches above
@@ -185,6 +187,11 @@ const bands = {
   'webhook-tenants-selection': 'el-tab-list, #tenants',
   'webhook-headers': 'el-tab-list, #headers',
   'lambda-registration-form': 'main h1, main form',
+  'migration-rehash-on-login': "[data-section='cryptographic-hash-settings']",
+  'migration-tenant-connector-policies': "el-tab-list, [data-section='connector-settings']",
+  'migration-generic-connector-security': 'el-tab-list, #security',
+  'migration-generic-connector-headers': 'el-tab-list, #headers',
+  'migration-ldap-connector-directory': 'el-tab-list, #directory-configuration',
 };
 
 const exampleWebhookId = '00000000-0000-0000-0000-600000000001';
@@ -222,6 +229,447 @@ const hierarchy = {
     ['Statements', 'Change Bank Finance', ['IsMember']],
   ],
 };
+
+// migrate users section
+const migration = {
+  // matches the example tenant Id in the migration guides
+  importTenantId: '25c9d123-8a79-4edd-9f76-8dd9c806b0f3',
+  importAppId: '00000000-0000-0000-0000-f10000000001',
+  importUsers: [
+    ['00000000-0000-0000-0000-f10000000011', 'jared@example.com', 'Jared', 'Dunn'],
+    ['00000000-0000-0000-0000-f10000000012', 'laurie@example.com', 'Laurie', 'Bream'],
+  ],
+  apiKeyId: '00000000-0000-0000-0000-f10000000021',
+  connectorTenantId: '00000000-0000-0000-0000-f10000000031',
+  ldapConnectorId: '00000000-0000-0000-0000-f10000000032',
+  genericConnectorId: '00000000-0000-0000-0000-f10000000033',
+  reconcileLambdaId: '00000000-0000-0000-0000-f10000000034',
+  policyTenantId: '00000000-0000-0000-0000-f10000000035',
+  googleIdpId: '82339786-3dff-42a6-aac6-1f1ceecb6c46',
+  exampleUsers: [
+    ['00000000-0000-0000-0000-f10000000061', 'janesmith@example.com', 'Jane', 'Smith'],
+    ['00000000-0000-0000-0000-f10000000062', 'johndoe@example.com', 'John', 'Doe'],
+  ],
+  scim: {
+    serverTypeId: '00000000-0000-0000-0000-f10000000071',
+    clientTypeId: '00000000-0000-0000-0000-f10000000072',
+    serverId: '00000000-0000-0000-0000-f10000000073',
+    clientId: '00000000-0000-0000-0000-f10000000074',
+    userId: '00000000-0000-0000-0000-f10000000075',
+  },
+  // the generic connector each guide sets up, and the tenant its policy goes on
+  providers: {
+    akamai: { name: 'AkamaiConnector', authenticationURL: 'http://app', timeout: 5000, debug: true },
+    frontegg: { name: 'FronteggConnector', authenticationURL: 'http://host.docker.internal:6252', timeout: 3000, debug: true },
+    passportjs: { name: 'My App Connector', authenticationURL: 'https://piedpiper.ngrok-free.app/fusionauth/connector', timeout: 5000, debug: true },
+    rails: { name: 'My App Connector', authenticationURL: 'https://piedpiper.ngrok-free.app/fusionauth/connector', timeout: 5000, debug: true },
+    pingone: { name: 'PingIdentityConnector', authenticationURL: 'https://piedpiper.ngrok-free.app/api/RopcProxy?code=s0ndU863xdbXsFO4dLZAJQXLzyTU789iaUJ43uLAtIkXm_AzFuFWP1zg==', importTenant: true },
+    azureadb2c: { name: 'Azure AD B2C migration', authenticationURL: 'https://piedpiper.azurewebsites.net/api/RopcProxy?code=s0ndU863xdbXsFO4dLZAJQXLzyTU789iaUJ43uLAtIkXm_AzFuFWP1zg==', importTenant: true },
+    cognito: { name: 'Cognito migration', authenticationURL: 'https://k12hcvhgk.execute-api.us-east-2.amazonaws.com/call', importTenant: true, header: ['Authorization', '2687EE95-AF19-4CE6-A8BD-963139DED32E'] },
+  },
+};
+Object.values(migration.providers).forEach((provider, index) => {
+  provider.connectorId = `00000000-0000-0000-0000-f1000000008${index}`;
+  provider.tenantId = provider.importTenant ? migration.importTenantId : `00000000-0000-0000-0000-f1000000009${index}`;
+});
+
+// screenshots that show the migration test tenant
+const migrationTenantShots = [
+  'migration-tenant-list', 'migration-tenant-delete', 'migration-api-key-add', 'migration-api-key-permissions', 'migration-application-add',
+  'migration-application-login-url', 'migration-role-add', 'migration-users-list', 'migration-user-login', 'migration-import-tenant-add-policy',
+  ...Object.entries(migration.providers).filter(([, p]) => p.importTenant).flatMap(([key]) => [`migration-${key}-connector-policy`, `migration-${key}-connector-added`]),
+];
+const migrationConnectorShots = ['migration-add-connector', 'migration-add-connector-policy', 'migration-delete-connector-policy', 'migration-connectors-list', 'migration-tenant-connector-policies'];
+const migrationScimShots = [
+  'scim-sdk-server-type-details', 'scim-sdk-client-type-details', 'scim-sdk-server-entity-add', 'scim-sdk-server-entity-details', 'scim-sdk-client-entity-add', 'scim-sdk-client-entity-details',
+  'scim-sdk-entities-manage', 'scim-sdk-client-grants', 'scim-sdk-grant-search', 'scim-sdk-grant-permissions', 'scim-sdk-entities-ids', 'scim-sdk-client-secret', 'scim-sdk-tenant-settings', 'scim-sdk-user-added',
+];
+// windows kept at the screenshot's height, like the originals
+Object.assign(fixedHeight, Object.fromEntries([
+  'migration-add-tenant', 'migration-add-application', 'migration-api-key-details', 'migration-add-connector', 'migration-add-connector-policy',
+  'migration-delete-connector-policy', 'migration-reset-user-password', 'migration-generic-connector-add', 'migration-ldap-connector-add',
+  'migration-api-key-add', 'migration-application-add', 'migration-application-login-url', 'migration-role-add', 'migration-users-list',
+  'migration-tenant-delete', 'migration-connector-add-menu', 'migration-example-app-login-url', 'migration-example-app-roles',
+  'migration-example-users', 'migration-import-tenant-add-policy', 'migration-passportjs-idp',
+  ...Object.keys(migration.providers).flatMap(key => [`migration-${key}-connector`, `migration-${key}-connector-policy`, `migration-${key}-connector-added`]),
+  ...migrationScimShots.filter(name => name !== 'scim-sdk-tenant-settings'), 'scim-sdk-server-type-add', 'scim-sdk-client-type-add', 'scim-sdk-lambdas', 'scim-sdk-user-request-lambda',
+].map(name => [name, null])));
+fixedHeight['migration-api-key-permissions'] = "[data-hl='migration-scroll']";
+fixedHeight['migration-example-app-redirect'] = "[data-hl='migration-scroll']";
+fixedHeight['scim-sdk-tenant-settings'] = 'SCIM server settings';
+
+// opens a dropdown menu and leaves a plain copy of it, since the menu can close before the capture
+async function migrationOpenMenu(page, button) {
+  await button.click();
+  const menu = page.locator('el-menu:popover-open').first();
+  await menu.waitFor();
+  // let the menu finish opening and take its place
+  await page.waitForTimeout(500);
+  await page.evaluate(() => {
+    const menu = document.querySelector('el-menu:popover-open');
+    // Measure the open menu rather than an intermediate animation scale.
+    Object.assign(menu.style, { transition: 'none', animation: 'none', transform: 'none', scale: '1', opacity: '1' });
+    const r = menu.getBoundingClientRect();
+    const copy = document.createElement('div');
+    copy.className = menu.className;
+    copy.innerHTML = menu.innerHTML;
+    copy.dataset.menuCopy = '';
+    copy.style.cssText = `position:absolute;margin:0;left:${r.left + scrollX}px;top:${r.top + scrollY}px;width:${r.width}px;z-index:1000`;
+    document.body.append(copy);
+    menu.hidePopover();
+  });
+}
+
+// opens the details dialog of a list row and marks the row with the given label
+async function migrationDetails(page, href, label, tagName) {
+  await page.evaluate(h => {
+    const link = document.querySelector(`main a[href="${h}"]`);
+    link?.closest('[popover]')?.showPopover();
+    link?.click();
+  }, href);
+  await page.locator('.prime-dialog.open').waitFor();
+  await page.waitForTimeout(800);
+  const found = await page.evaluate(([l, t]) => {
+    const dialog = document.querySelector('.prime-dialog.open');
+    for (const walker = document.createTreeWalker(dialog, NodeFilter.SHOW_TEXT); walker.nextNode();) {
+      walker.currentNode.textContent = walker.currentNode.textContent.replaceAll('http://localhost:9011', 'https://local.fusionauth.io');
+    }
+    if (!l) return true;
+    const row = [...dialog.querySelectorAll('tr')].find(r => new RegExp(`^(${l})`).test(r.textContent.trim()));
+    if (!row) return false;
+    let scroller = row.parentElement;
+    while (scroller && scroller.scrollHeight <= scroller.clientHeight) scroller = scroller.parentElement;
+    if (scroller) scroller.scrollTop += row.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 160;
+    row.dataset.hl = t;
+    return true;
+  }, [label, tagName]);
+  if (!found) throw new Error(`no ${label} row`);
+}
+
+async function migrationAddPolicy(page, connector, submit) {
+  await page.locator('#add-connector-policy').click();
+  await page.locator('.prime-dialog.open').waitFor();
+  await page.locator('.prime-dialog.open #connectorId').selectOption({ label: connector });
+  await page.evaluate(() => { const m = document.querySelector('.prime-dialog.open #connectorMigrate'); if (!m.checked) m.click(); });
+  await page.waitForTimeout(500);
+  if (!submit) return;
+  await page.locator('.prime-dialog.open button[type=submit]').click();
+  await page.locator('.prime-dialog.open').waitFor({ state: 'detached' });
+  await page.waitForTimeout(500);
+  // move the new policy above the default one
+  await page.evaluate(name => {
+    const row = [...document.querySelectorAll('#connectors tbody tr')].find(r => r.textContent.includes(name));
+    row.querySelector('.updown.up').click();
+  }, connector);
+  await page.waitForTimeout(300);
+}
+
+async function migrationFillConnector(page, provider) {
+  await page.fill('#connector_name', provider.name);
+  await page.fill('#connector_authenticationURL', provider.authenticationURL);
+  if (provider.timeout) {
+    await page.fill('#connector_connectTimeout', String(provider.timeout));
+    await page.fill('#connector_readTimeout', String(provider.timeout));
+  }
+  if (provider.debug) await page.evaluate(() => { const d = document.getElementById('connector_debug'); if (!d.checked) d.click(); });
+  await page.waitForTimeout(500);
+  if (provider.header) {
+    await selectTab(page, 'Headers');
+    await page.locator('#header-add-button').click();
+    await page.waitForTimeout(300);
+    const inputs = page.locator('#headers tbody input[type=text]');
+    await inputs.nth(0).fill(provider.header[0]);
+    await inputs.nth(1).fill(provider.header[1]);
+    await page.evaluate(() => window.scrollTo(0, 0));
+  }
+}
+
+// runs after the page's own tab handling, before the window is sized
+async function migrationBeforeSizing(page, name, tag) {
+  const providerMatch = name.match(/^migration-(\w+)-connector(-policy|-added)?$/);
+  const provider = providerMatch && migration.providers[providerMatch[1]];
+  if (provider && !providerMatch[2]) await migrationFillConnector(page, provider);
+  if (provider && providerMatch[2]) await migrationAddPolicy(page, provider.name, providerMatch[2] === '-added');
+
+  if (name === 'migration-tenant-list') {
+    await tag('import-tenant-id', new Function(`return () => [...document.querySelectorAll('td')].find(td => td.textContent.trim() === '${migration.importTenantId}')`)());
+  }
+  if (name === 'migration-add-tenant') await page.fill('#tenant_name', 'Pied Piper');
+  if (name === 'migration-add-application') {
+    await page.fill('#application_name', 'Pied Piper');
+    for (const [role, column] of [['user', 'isDefault'], ['admin', 'isSuperRole']]) {
+      await page.locator('#role-add-button').click();
+      await page.waitForTimeout(300);
+      const row = page.locator('#roles tbody tr').last();
+      await row.locator('input[type=text]').first().fill(role);
+      await row.locator(`input[type=checkbox][name*='${column}']`).check();
+    }
+  }
+  if (name === 'migration-add-connector-policy') await migrationAddPolicy(page, 'Legacy User API', false);
+  if (name === 'migration-delete-connector-policy') await migrationAddPolicy(page, 'Legacy User API', true);
+  if (name === 'migration-import-tenant-add-policy') await tag('migration-add-policy', () => document.getElementById('add-connector-policy'));
+  if (name === 'migration-rehash-on-login') await tag('migration-rehash', () => document.getElementById('tenant_passwordEncryptionConfiguration_modifyEncryptionSchemeOnLogin-form-row'));
+  if (name === 'migration-generic-connector-security' || name === 'migration-generic-connector-headers') {
+    await selectTab(page, name.endsWith('security') ? 'Security' : 'Headers');
+  }
+
+  if (name === 'migration-ldap-connector-directory') await selectTab(page, 'Directory');
+
+  if (['migration-passportjs-connector', 'migration-rails-connector', 'migration-akamai-connector', 'migration-frontegg-connector'].includes(name)) {
+    await tag('migration-connector-fields', () => {
+      const ids = ['connector_name', 'connector_authenticationURL', 'connector_connectTimeout', 'connector_readTimeout'];
+      const rects = ids.map(id => document.getElementById(id + '-form-row').getBoundingClientRect());
+      const box = document.createElement('div');
+      box.style.cssText = `position:absolute;left:${rects[0].left + scrollX}px;top:${rects[0].top + scrollY}px;width:${rects[0].width}px;height:${rects.at(-1).bottom - rects[0].top}px;pointer-events:none`;
+      document.body.append(box);
+      return box;
+    });
+  }
+
+  if (name === 'migration-api-key-add' || name === 'migration-api-key-permissions') {
+    await page.fill('#apiKey_name', 'Import key');
+    await page.fill("[id=\"apiKey_metaData_attributes['description']\"]", 'For user import');
+    await page.fill('#apiKey_key', 'r8Uj2qR4cKzWm7XvNp3tYb6dFh9LsGa1EwQo5Ti0MnPx_Kc');
+    await page.locator('#tenantId').selectOption(migration.importTenantId);
+  }
+  if (name === 'migration-api-key-permissions') {
+    await page.evaluate(() => {
+      const rows = ['/api/user/forgot-password', '/api/user/import', '/api/user/search'].map(endpoint => {
+        const row = [...document.querySelectorAll('main tr')].find(r => r.querySelector('td')?.textContent.trim() === endpoint);
+        // the columns are GET, POST, PUT, PATCH, DELETE
+        const post = row.querySelectorAll('input[type=checkbox]')[1];
+        if (!post.checked) post.click();
+        row.dataset.hl = 'migration-permission-' + endpoint.split('/').at(-1);
+        return row;
+      });
+      let above = rows[0];
+      for (let i = 0; i < 6; i++) above = above.previousElementSibling;
+      above.dataset.hl = 'migration-scroll';
+    });
+  }
+  if (name === 'migration-application-add') {
+    await page.fill('#application_name', 'Import test application');
+    await page.locator('#tenantId').selectOption(migration.importTenantId);
+    await selectTab(page, 'OAuth');
+    await page.getByLabel('Client secret', { exact: true }).evaluate(el => { el.value = 'import-test-secret-not-for-production'; });
+    await page.locator('#redirectURLs-display input').fill('https://example.com');
+    await page.locator('#redirectURLs-display input').press('Enter');
+    await page.evaluate(() => document.getElementById('redirectURLs-form-row').dataset.hl = 'migration-redirect');
+    await page.evaluate(() => window.scrollTo(0, 0));
+  }
+  if (name === 'migration-example-app-redirect') {
+    await page.locator('#redirectURLs-display input').fill('http://localhost:7771/callback');
+    await page.locator('#redirectURLs-display input').press('Enter');
+    await page.evaluate(() => document.getElementById('redirectURLs-form-row').dataset.hl = 'migration-redirect');
+    await page.evaluate(() => document.getElementById('application_oauthConfiguration_clientId-form-row').dataset.hl = 'migration-scroll');
+  }
+  if (name === 'migration-role-add') {
+    await page.locator('main a[href^="/ajax/application/add-role"]').click();
+    await page.locator('.prime-dialog.open #role_name').waitFor();
+    await page.waitForTimeout(500);
+    await page.fill('.prime-dialog.open #role_name', 'user');
+    await page.evaluate(() => { const d = document.querySelector('.prime-dialog.open #role_isDefault'); if (!d.checked) d.click(); });
+    await page.waitForTimeout(500);
+  }
+  if (name === 'migration-application-login-url') await migrationDetails(page, `/ajax/application/view/${migration.importAppId}`, 'OAuth IdP login URL|Login URLs?:', 'migration-login-url');
+  if (name === 'migration-example-app-login-url') await migrationDetails(page, `/ajax/application/view/${piedPiperAppId}`, 'OAuth IdP login URL|Login URLs?:', 'migration-login-url');
+  if (name === 'migration-api-key-details') {
+    migration.context = page.context();
+    if (!(await page.locator(`main a[href="/ajax/api-key/view/${migration.apiKeyId}"]`).count())) {
+      await page.goto('http://localhost:9011/admin/api-key/add', { waitUntil: 'networkidle' });
+      await page.fill('#apiKeyId', migration.apiKeyId);
+      await page.fill('#apiKey_name', 'Import key');
+      await page.fill("[id=\"apiKey_metaData_attributes['description']\"]", 'For user import');
+      await page.fill('#apiKey_key', 'r8Uj2qR4cKzWm7XvNp3tYb6dFh9LsGa1EwQo5Ti0MnPx_Kc');
+      await page.evaluate(() => document.querySelector("input[type=checkbox][name=\"apiKey.permissions.endpoints['/api/user/import']\"][value=POST]").click());
+      await page.evaluate(() => document.getElementById('api-key-form').requestSubmit());
+      await page.waitForURL(u => /\/admin\/api-key\/?$/.test(u.pathname));
+      await page.waitForLoadState('networkidle');
+    }
+    await migrationDetails(page, `/ajax/api-key/view/${migration.apiKeyId}`);
+  }
+  if (name === 'migration-example-app-roles') await tag('migration-roles', () => document.querySelector('main tbody'));
+  if (name === 'migration-users-list' || name === 'migration-example-users') {
+    const ids = (name === 'migration-users-list' ? migration.importUsers : migration.exampleUsers).map(([id]) => id);
+    await page.fill('#s_queryString', 'example.com');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(n => document.querySelectorAll('main tbody tr').length === n, ids.length, { timeout: 15000 });
+    await page.waitForLoadState('networkidle');
+    await tag('migration-users', new Function(`return () => {
+      const rows = ${JSON.stringify(ids)}.map(id => document.querySelector(\`main a[href*="\${id}"]\`)?.closest('tr'));
+      if (rows.some(r => !r)) return null;
+      const a = rows[0].getBoundingClientRect(), b = rows.at(-1).getBoundingClientRect();
+      const box = document.createElement('div');
+      box.style.cssText = \`position:absolute;left:\${a.left + scrollX}px;top:\${Math.min(a.top, b.top) + scrollY}px;width:\${a.width}px;height:\${Math.abs(b.top - a.top) + a.height}px;pointer-events:none\`;
+      document.body.append(box);
+      return box;
+    }`)());
+  }
+  if (name === 'migration-user-login') {
+    await page.fill('#loginId', migration.importUsers[0][1]);
+    await page.fill('#password', 'password');
+  }
+
+  // SCIM guide
+  const scim = migration.scim;
+  if (name === 'scim-sdk-server-type-details') await page.fill('#entityType_name', 'SCIM Server');
+  if (name === 'scim-sdk-client-type-details') await page.fill('#entityType_name', 'SCIM Client');
+  if (name === 'scim-sdk-server-entity-add' || name === 'scim-sdk-client-entity-add') {
+    await page.locator('main a[href="add"]').waitFor();
+    await tag('scim-add', () => document.querySelector('main a[href="add"]'));
+  }
+  if (name === 'scim-sdk-server-entity-details' || name === 'scim-sdk-client-entity-details') {
+    const server = name === 'scim-sdk-server-entity-details';
+    await page.fill('#entity_name', server ? 'SCIM Server for Default Tenant' : 'SCIM Client for SCIM-SDK Client App');
+    await page.locator('#entity_type_id').selectOption(server ? scim.serverTypeId : scim.clientTypeId);
+    await page.evaluate(() => document.getElementById('entity_type_id-form-row').dataset.hl = 'scim-type');
+  }
+  if (['scim-sdk-entities-manage', 'scim-sdk-entities-ids', 'scim-sdk-client-secret'].includes(name)) {
+    await page.locator('main input[type=text]').first().fill('SCIM');
+    await page.locator('main button', { hasText: 'Search' }).first().click();
+    await page.waitForFunction(id => document.querySelector(`main tbody a[href*="${id}"]`), scim.clientId, { timeout: 15000 });
+    await page.waitForLoadState('networkidle');
+  }
+  if (name === 'scim-sdk-client-entity-add') {
+    await page.locator('main input[type=text]').first().fill('SCIM Server');
+    await page.locator('main button', { hasText: 'Search' }).first().click();
+    await page.waitForFunction(id => document.querySelector(`main tbody a[href*="${id}"]`), scim.serverId);
+  }
+  if (name === 'scim-sdk-entities-ids') {
+    await tag('scim-ids', new Function(`return () => {
+      const cells = ${JSON.stringify([scim.clientId, scim.serverId])}.map(id => [...document.querySelectorAll('main td')].find(td => td.textContent.trim() === id));
+      if (cells.some(c => !c)) return null;
+      const a = cells[0].getBoundingClientRect(), b = cells[1].getBoundingClientRect();
+      const box = document.createElement('div');
+      box.style.cssText = \`position:absolute;left:\${a.left + scrollX}px;top:\${a.top + scrollY}px;width:\${a.width}px;height:\${b.bottom - a.top}px;pointer-events:none\`;
+      document.body.append(box);
+      return box;
+    }`)());
+  }
+  if (name === 'scim-sdk-client-secret') await migrationDetails(page, `/ajax/entity/view/${scim.clientId}?tenantId=${defaultTenantId}`, 'Client secret', 'scim-secret');
+  if (name === 'scim-sdk-client-grants') await tag('scim-add', () => document.querySelector('main a[href^="/admin/entity/grant/upsert"]'));
+  if (name === 'scim-sdk-grant-search') {
+    await page.locator('#entity').pressSequentially('SCIM Server', { delay: 50 });
+    await page.getByText('SCIM Server for Default Tenant').first().waitFor();
+    await page.waitForTimeout(500);
+  }
+  if (name === 'scim-sdk-grant-permissions') {
+    await page.evaluate(() => {
+      for (const box of document.querySelectorAll('main input[name="grant.permissions"]')) {
+        if (['scim:user:create', 'scim:user:read'].includes(box.value) && !box.checked) box.click();
+      }
+    });
+  }
+  if (name === 'scim-sdk-lambdas') {
+    await page.locator('main input[type=text]').first().fill('SCIM');
+    await page.locator('main button', { hasText: 'Search' }).first().click();
+    await page.waitForFunction(() => document.querySelectorAll('main tbody tr').length === 4);
+    await tag('scim-lambdas', () => {
+      const rows = [...document.querySelectorAll('main tbody tr')].filter(r => /SCIM/.test(r.querySelector('td')?.textContent));
+      if (rows.length !== 4) return null;
+      const a = rows[0].getBoundingClientRect(), b = rows[3].getBoundingClientRect();
+      const box = document.createElement('div');
+      box.style.cssText = `position:absolute;left:${a.left + scrollX}px;top:${a.top + scrollY}px;width:${a.width}px;height:${b.bottom - a.top}px;pointer-events:none`;
+      document.body.append(box);
+      return box;
+    });
+  }
+  if (name === 'scim-sdk-user-request-lambda') {
+    const href = await page.evaluate(() => [...document.querySelectorAll('main tbody tr')].find(r => r.textContent.includes('SCIM User Request Converter')).querySelector('a[href^="edit/"]').getAttribute('href'));
+    await page.goto(new URL(href, page.url()).href, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(1000);
+  }
+  if (name === 'scim-sdk-tenant-settings') {
+    const selects = {
+      tenant_scimServerConfiguration_clientEntityTypeId: 'SCIM Client', tenant_scimServerConfiguration_serverEntityTypeId: 'SCIM Server',
+      tenant_lambdaConfiguration_scimUserRequestConverterId: '[FusionAuth Default] SCIM User Request Converter',
+      tenant_lambdaConfiguration_scimUserResponseConverterId: '[FusionAuth Default] SCIM User Response Converter',
+      tenant_lambdaConfiguration_scimEnterpriseUserRequestConverterId: '[FusionAuth Default] SCIM User Request Converter',
+      tenant_lambdaConfiguration_scimEnterpriseUserResponseConverterId: '[FusionAuth Default] SCIM User Response Converter',
+      tenant_lambdaConfiguration_scimGroupRequestConverterId: '[FusionAuth Default] SCIM Group Request Converter',
+      tenant_lambdaConfiguration_scimGroupResponseConverterId: '[FusionAuth Default] SCIM Group Response Converter',
+    };
+    for (const [id, label] of Object.entries(selects)) await page.locator(`#${id}`).selectOption({ label });
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
+  if (name === 'scim-sdk-user-added') {
+    await tag('scim-user', new Function(`return () => document.querySelector('main a[href*="${scim.userId}"]')?.closest('tr')`)());
+  }
+}
+
+// menus open last, after the window is sized
+async function migrationAfterSizing(page, name, tag, highlights) {
+  if (name === 'scim-sdk-client-grants') {
+    await page.evaluate(() => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) node.textContent = node.textContent.replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/g, '2026-10-28T09:07:06.468Z');
+    });
+  }
+  if (name === 'scim-sdk-entities-ids') {
+    await page.evaluate(ids => {
+      const cells = ids.map(id => [...document.querySelectorAll('main td')].find(td => td.textContent.trim() === id));
+      const a = cells[0].getBoundingClientRect(), b = cells[1].getBoundingClientRect();
+      const box = document.querySelector('[data-hl="scim-ids"]');
+      box.style.cssText = `position:absolute;left:${a.left + scrollX}px;top:${a.top + scrollY}px;width:${a.width}px;height:${b.bottom - a.top}px;pointer-events:none`;
+    }, [migration.scim.clientId, migration.scim.serverId]);
+  }
+  if (name === 'migration-example-app-roles') {
+    await page.evaluate(() => [...document.querySelectorAll('main tbody tr')].forEach((row, index) => {
+      const cell = row.querySelectorAll('td')[1];
+      if (cell) cell.textContent = `00000000-0000-0000-0000-f100000000b${index}`;
+    }));
+  }
+  if (name === 'scim-sdk-lambdas') {
+    await page.evaluate(() => [...document.querySelectorAll('main tbody tr')].filter(row => /SCIM/.test(row.querySelector('td')?.textContent)).forEach((row, index) => {
+      row.querySelectorAll('td')[1].textContent = `00000000-0000-0000-0000-f100000000a${index}`;
+    }));
+  }
+  if (name === 'scim-sdk-user-request-lambda') {
+    await page.evaluate(() => { const id = document.querySelector('#lambdaId, #lambda_id'); if (id) id.value = '00000000-0000-0000-0000-f100000000a2'; });
+  }
+
+  if (name === 'scim-sdk-server-type-add' || name === 'scim-sdk-client-type-add') {
+    await migrationOpenMenu(page, page.locator('main el-dropdown button').first());
+    await tag('scim-add', new Function(`return () => document.querySelector('[data-menu-copy] #add-scim-${name.includes('server') ? 'server' : 'client'}')`)());
+  }
+  if (name === 'scim-sdk-entities-manage') {
+    await migrationOpenMenu(page, page.locator('main tbody tr', { hasText: migration.scim.clientId }).locator('el-dropdown button'));
+    await tag('scim-manage', () => [...document.querySelectorAll('[data-menu-copy] a')].find(a => a.textContent.trim() === 'Manage'));
+  }
+  if (name === 'migration-reset-user-password') {
+    await migrationOpenMenu(page, page.locator('header el-dropdown button'));
+    await tag('migration-reset', () => document.querySelector('[data-menu-copy] #send-password-reset'));
+  }
+  if (name === 'migration-add-connector' || name === 'migration-connector-add-menu') {
+    await migrationOpenMenu(page, page.locator('main el-dropdown button').first());
+    if (name === 'migration-connector-add-menu') await tag('migration-add-generic', () => document.querySelector('[data-menu-copy] #add-generic'));
+  }
+  if (name === 'migration-tenant-delete') {
+    await migrationOpenMenu(page, page.locator('main tbody tr', { hasText: migration.importTenantId }).locator('el-dropdown button'));
+    await tag('migration-delete', () => [...document.querySelectorAll('[data-menu-copy] a')].find(a => a.textContent.trim() === 'Delete'));
+  }
+  if (name === 'migration-delete-connector-policy') {
+    await migrationOpenMenu(page, page.locator('#connectors tbody tr', { hasText: 'Legacy User API' }).locator('el-dropdown button'));
+    await tag('migration-delete', () => [...document.querySelectorAll('[data-menu-copy] a')].find(a => a.textContent.trim() === 'Delete'));
+  }
+  if (!(name in bands)) {
+    // A viewport crop preserves the framing when highlights would otherwise scroll to the centre.
+    await page.evaluate(() => {
+      const frame = document.createElement('div');
+      frame.dataset.migrationWindow = '';
+      frame.style.cssText = `position:absolute;left:0;top:${scrollY}px;width:${innerWidth}px;height:${innerHeight}px;pointer-events:none`;
+      document.body.append(frame);
+    });
+    const clipped = await page.evaluate(specs => specs.filter(({ selector }) => {
+      const el = document.querySelector(selector);
+      if (!el) return true;
+      const r = el.getBoundingClientRect();
+      return r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth;
+    }).map(({ selector }) => selector), highlights);
+    if (clipped.length) throw new Error(`migration highlight outside frame: ${clipped.join(', ')}`);
+  }
+
+}
 
 // created for the screenshots that need them and deleted before any other, so other pages don't list them
 const temporaryResources = [
@@ -300,6 +748,100 @@ const temporaryResources = [
         registrationConfiguration: { enabled: true, type: 'advanced', formId: r.formId },
         lambdaConfiguration: { selfServiceRegistrationValidationId: r.lambdaId },
       } });
+    },
+  },
+  // migrate users section
+  {
+    names: migrationTenantShots,
+    paths: [`/api/tenant/${migration.importTenantId}`, `/api/application/${migration.importAppId}`],
+    create: async api => {
+      const headers = { 'X-FusionAuth-TenantId': migration.importTenantId };
+      await api(`/api/tenant/${migration.importTenantId}`, 'POST', { sourceTenantId: defaultTenantId, tenant: { name: 'Import test' } });
+      await api(`/api/application/${migration.importAppId}`, 'POST', { application: { name: 'Import test application', oauthConfiguration: {
+        authorizedRedirectURLs: ['https://example.com'], enabledGrants: ['authorization_code', 'refresh_token'], clientSecret: 'import-test-secret-not-for-production',
+      } } }, headers);
+      for (const [id, email, firstName, lastName] of migration.importUsers) {
+        await api(`/api/user/${id}`, 'POST', { user: { email, firstName, lastName, password: 'password' }, skipVerification: true }, headers);
+        await api(`/api/user/registration/${id}`, 'POST', { registration: { applicationId: migration.importAppId } }, headers);
+      }
+    },
+  },
+  {
+    names: ['migration-add-connector-policy', 'migration-delete-connector-policy'],
+    paths: [`/api/tenant/${migration.policyTenantId}`],
+    create: async api => {
+      await api(`/api/tenant/${migration.policyTenantId}`, 'POST', { sourceTenantId: defaultTenantId, tenant: { name: 'Pied Piper migration' } });
+    },
+  },
+  {
+    names: migrationConnectorShots,
+    paths: [`/api/tenant/${migration.connectorTenantId}`, `/api/connector/${migration.ldapConnectorId}`, `/api/connector/${migration.genericConnectorId}`, `/api/lambda/${migration.reconcileLambdaId}`],
+    create: async api => {
+      await api(`/api/lambda/${migration.reconcileLambdaId}`, 'POST', { lambda: { name: 'Active Directory reconcile', type: 'LDAPConnectorReconcile', engineType: 'GraalJS',
+        body: 'function reconcile(user, userAttributes) {\n  user.email = userAttributes.mail;\n}' } });
+      await api(`/api/connector/${migration.ldapConnectorId}`, 'POST', { connector: {
+        type: 'LDAP', name: 'Active Directory', authenticationURL: 'ldaps://ldap.piedpiper.com:636', securityMethod: 'LDAPS', connectTimeout: 1000, readTimeout: 2000,
+        baseStructure: 'dc=piedpiper,dc=com', systemAccountDN: 'cn=fusionauth,ou=system,dc=piedpiper,dc=com', systemAccountPassword: 'not-a-secret',
+        loginIdAttribute: 'mail', identifyingAttribute: 'uid', requestedAttributes: ['cn', 'givenName', 'sn', 'mail', 'uid'],
+        lambdaConfiguration: { reconcileId: migration.reconcileLambdaId },
+      } });
+      await api(`/api/connector/${migration.genericConnectorId}`, 'POST', { connector: {
+        type: 'Generic', name: 'Legacy User API', authenticationURL: 'https://api.piedpiper.com/legacy/login', connectTimeout: 1000, readTimeout: 2000,
+      } });
+      await api(`/api/tenant/${migration.connectorTenantId}`, 'POST', { sourceTenantId: defaultTenantId, tenant: { name: 'Pied Piper' } });
+      const { tenant } = await api(`/api/tenant/${migration.connectorTenantId}`);
+      await api(`/api/tenant/${migration.connectorTenantId}`, 'PUT', { tenant: { ...tenant, connectorPolicies: [
+        { connectorId: migration.ldapConnectorId, domains: ['example.com'], migrate: false },
+        { connectorId: migration.genericConnectorId, domains: ['*'], migrate: true },
+        { connectorId: 'e3306678-a53a-4964-9040-1c96f36dda72', domains: ['*'], migrate: false },
+      ] } });
+    },
+  },
+  ...Object.entries(migration.providers).map(([key, provider]) => ({
+    names: [`migration-${key}-connector-policy`, `migration-${key}-connector-added`],
+    paths: [...(!provider.importTenant ? [`/api/tenant/${provider.tenantId}`] : []), `/api/connector/${provider.connectorId}`],
+    create: async api => {
+      await api(`/api/connector/${provider.connectorId}`, 'POST', { connector: {
+        type: 'Generic', name: provider.name, authenticationURL: provider.authenticationURL, connectTimeout: provider.timeout ?? 1000, readTimeout: provider.timeout ?? 2000,
+        debug: !!provider.debug, headers: provider.header && { [provider.header[0]]: provider.header[1] },
+      } });
+      if (!provider.importTenant) await api(`/api/tenant/${provider.tenantId}`, 'POST', { sourceTenantId: defaultTenantId, tenant: { name: 'Pied Piper migration' } });
+    },
+  })),
+  {
+    names: ['migration-passportjs-idp'],
+    paths: [`/api/identity-provider/${migration.googleIdpId}`],
+    create: async api => {
+      await api(`/api/identity-provider/${migration.googleIdpId}`, 'POST', { identityProvider: {
+        type: 'Google', name: 'Google', enabled: true, client_id: 'piedpiper.apps.googleusercontent.com', client_secret: 'not-a-secret', buttonText: 'Login with Google', scope: 'profile email',
+      } });
+    },
+  },
+  {
+    names: ['migration-example-users'],
+    paths: migration.exampleUsers.map(([id]) => `/api/user/${id}?hardDelete=true`),
+    create: async api => {
+      for (const [id, email, firstName, lastName] of migration.exampleUsers) {
+        await api(`/api/user/${id}`, 'POST', { user: { email, firstName, lastName, password: 'password' }, skipVerification: true });
+      }
+    },
+  },
+  {
+    names: migrationScimShots,
+    paths: [
+      `/api/entity/${migration.scim.clientId}`, `/api/entity/${migration.scim.serverId}`, `/api/user/${migration.scim.userId}?hardDelete=true`,
+      `/api/entity/type/${migration.scim.clientTypeId}`, `/api/entity/type/${migration.scim.serverTypeId}`,
+    ],
+    create: async api => {
+      const permissions = ['enterprise:user:create', 'enterprise:user:delete', 'enterprise:user:read', 'enterprise:user:update', 'group:create', 'group:delete', 'group:read',
+        'group:update', 'resource-types:read', 'schemas:read', 'service-provider-config:read', 'user:create', 'user:delete', 'user:read', 'user:update'];
+      await api(`/api/entity/type/${migration.scim.serverTypeId}`, 'POST', { entityType: { name: 'SCIM Server', permissions: permissions.map(p => ({ name: `scim:${p}` })) } });
+      await api(`/api/entity/type/${migration.scim.clientTypeId}`, 'POST', { entityType: { name: 'SCIM Client' } });
+      await api(`/api/entity/${migration.scim.serverId}`, 'POST', { entity: { name: 'SCIM Server for Default Tenant', type: { id: migration.scim.serverTypeId },
+        clientId: migration.scim.serverId, clientSecret: 'scim-server-secret-not-for-production' } });
+      await api(`/api/entity/${migration.scim.clientId}`, 'POST', { entity: { name: 'SCIM Client for SCIM-SDK Client App', type: { id: migration.scim.clientTypeId },
+        clientId: migration.scim.clientId, clientSecret: 'i2kNQKFBPKKJ3FsnFiPYDOrvBUslrz5l-270kQRYQMI' } });
+      await api(`/api/user/${migration.scim.userId}`, 'POST', { user: { username: 'test@example.com', email: 'test@example.com', password: 'password' }, skipVerification: true });
     },
   },
 ];
@@ -427,6 +969,32 @@ const temporaryState = [
     apply: async () => {
       await apiRequest(`/api/user/two-factor/${richardId}`, 'POST', { method: 'authenticator', secret: totpSecret.toString('base64'), code: totpCode() });
       return removeTwoFactor;
+    },
+  },
+  // migrate users section
+  {
+    names: ['migration-reset-user-password'],
+    apply: async () => {
+      const { tenant } = await apiRequest(`/api/tenant/${defaultTenantId}`);
+      const originalTemplateId = tenant.emailConfiguration.forgotPasswordEmailTemplateId;
+      await apiRequest(`/api/tenant/${defaultTenantId}`, 'PATCH', { tenant: { emailConfiguration: { forgotPasswordEmailTemplateId: '00000000-0000-0000-0000-400000000001' } } });
+      return () => apiRequest(`/api/tenant/${defaultTenantId}`, 'PATCH', { tenant: { emailConfiguration: { forgotPasswordEmailTemplateId: originalTemplateId ?? null } } });
+    },
+  },
+  {
+    // the API can't add keys with the screenshot key, so the screenshot adds this one in the admin UI
+    names: ['migration-api-key-details'],
+    apply: async () => async () => {
+      const page = await migration.context.newPage();
+      await page.goto('http://localhost:9011/admin/api-key/', { waitUntil: 'networkidle' });
+      await page.evaluate(id => {
+        const link = document.querySelector(`main a[href="/ajax/api-key/delete/${id}"]`);
+        link.closest('[popover]')?.showPopover();
+        link.click();
+      }, migration.apiKeyId);
+      await page.locator('.prime-dialog.open button[type=submit]').click();
+      await page.waitForLoadState('networkidle');
+      await page.close();
     },
   },
 ];
@@ -792,39 +1360,7 @@ export default {
     const oauthTenantId = '30663132-6464-6665-3032-326466613934';
     const oauthLoginUrl = `http://localhost:9011/oauth2/authorize?client_id=${oauthAppId}&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid`;
 
-    // the migration test tenant should only appear in the tenant list screenshot
     const apiKey = 'screenshot-dev-key-not-for-production';
-    // matches the example Id in the guide text
-    const importTenantId = '25c9d123-8a79-4edd-9f76-8dd9c806b0f3';
-    const importTenantUrl = `http://localhost:9011/api/tenant/${importTenantId}`;
-    const importTenantApi = async (method, body) => {
-      const r = await fetch(importTenantUrl, {
-        method,
-        headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-        body: body && JSON.stringify(body),
-      });
-      if (!r.ok && !(method === 'GET' && r.status === 404)) {
-        throw new Error(`test tenant ${method} failed: ${r.status} ${await r.text()}`);
-      }
-      return r.ok;
-    };
-    const importTenantExists = await importTenantApi('GET');
-
-    if (ctx?.name === 'migration-tenant-list') {
-      if (!importTenantExists) {
-        await importTenantApi('POST', { tenant: { name: 'Import test' } });
-        await page.reload({ waitUntil: 'networkidle' });
-      }
-      await page.evaluate(id => {
-        const cell = [...document.querySelectorAll('td')].find(td => td.textContent.trim() === id);
-        if (cell) cell.setAttribute('data-hl', 'import-tenant-id');
-      }, importTenantId);
-    } else if (importTenantExists) {
-      await importTenantApi('DELETE');
-      // the admin UI caches the tenant count; two tenants adds a Tenant field to some forms
-      await page.waitForTimeout(5000);
-      await page.reload({ waitUntil: 'networkidle' });
-    }
 
     {
       const api = (path, method = 'GET', body, headers = {}) => fetch(`http://localhost:9011${path}`, {
@@ -1825,6 +2361,9 @@ export default {
       }
     }
 
+    // migrate users section
+    if (ctx?.name?.startsWith('migration-') || ctx?.name?.startsWith('scim-sdk-')) await migrationBeforeSizing(page, ctx.name, tag);
+
     if (ctx?.name === 'theme-localization-messages') {
       // viewport is already set to spec.height by capture.mjs before this hook runs.
       // scroll down to reach the Add Localization button (below the fold), click it,
@@ -1978,5 +2517,8 @@ export default {
         menu.hidePopover();
       });
     }
+
+    // migrate users section
+    if (ctx?.name?.startsWith('migration-') || ctx?.name?.startsWith('scim-sdk-')) await migrationAfterSizing(page, ctx.name, tag, ctx.highlights);
   },
 };
