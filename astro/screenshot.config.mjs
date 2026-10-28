@@ -312,6 +312,55 @@ const fixedHeight = {
   'manage-admin-forms-user-form': null,
   'manage-admin-forms-registration-form': null,
   'manage-cleanspeak-integration': null,
+  // Register users and user support.
+  'register-built-out-advanced-form': null,
+  'register-basic-registration': '.tab-list-container',
+  'register-minimum-price-form-field': null,
+  'register-geographic-area-form-field': null,
+  'register-new-form': null,
+  'register-first-step-form-editor': null,
+  'register-second-step-form-editor': null,
+  'register-find-registration-url': null,
+  'register-first-step-no-placeholder': null,
+  'register-new-user-data-display': null,
+  'register-update-theme-for-tenant': null,
+  'register-first-step-with-placeholder': null,
+  'register-first-step-with-placeholder-and-labels': null,
+  'register-add-custom-field': null,
+  'register-add-admin-user-form': null,
+  'register-add-admin-registration-form': null,
+  'register-associate-admin-user-form': null,
+  'register-associate-admin-registration-form': null,
+  'register-set-user-role-user-manager': null,
+  'register-limited-menu': null,
+  'register-user-edit-screen': null,
+  'register-registration-edit-screen': null,
+  'register-setup-locale-selection': null,
+  'register-hidden-field': null,
+  'register-register-new-user': null,
+  'register-login-page': null,
+  'register-complete-registration-settings': '.tab-list-container',
+  'register-basic-registration-settings': '.tab-list-container',
+  'register-registration-url': null,
+  'register-new-user-listing': null,
+  'register-users-tab': null,
+  'register-new-user-form': null,
+  'register-require-password-change': null,
+  'register-confirm-change': null,
+  'register-verify': null,
+  'register-edit-user': null,
+  'register-sessions': null,
+  'register-lock-account': null,
+  'register-confirm-lock': null,
+  'register-unlock-account': null,
+  'register-confirm-unlock': null,
+  'register-add-registration': null,
+  'register-select-application': null,
+  'register-roles': null,
+  'register-add-comment': null,
+  'register-write-comment': null,
+  'register-remove-user-action': null,
+  'register-confirm-action-cancellation': null,
 };
 
 const defaultThemeId = '75a068fd-e94b-451a-9aeb-3ddb9a3b5987';
@@ -1123,6 +1172,29 @@ const manageLogins = {
   'manage-verification-registration-gate-link': 'carla@piedpiper.com', 'manage-verification-registration-gate-code': 'ed@piedpiper.com', 'manage-user-actions-locked-account': 'gavin@hooli.com',
 };
 const extractedCode = file => readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'extractedcode', file), 'utf-8');
+// Register users and user support.
+const registerIds = {
+  app: '00000000-0000-0000-0000-f50000000001',
+  basic: '00000000-0000-0000-0000-f50000000002',
+  form: '00000000-0000-0000-0000-f50000000003',
+  first: '00000000-0000-0000-0000-f50000000004',
+  adminUser: '00000000-0000-0000-0000-f50000000005',
+  adminRegistration: '00000000-0000-0000-0000-f50000000006',
+  locale: '00000000-0000-0000-0000-f50000000007',
+  theme: '00000000-0000-0000-0000-f50000000008',
+  user: '00000000-0000-0000-0000-f50000000009',
+  manager: '00000000-0000-0000-0000-f5000000000a',
+};
+const registerNames = Object.keys(fixedHeight).filter(name => name.startsWith('register-'));
+const registerFields = [
+  '00000000-0000-0000-0000-f5000000000b',
+  '00000000-0000-0000-0000-f5000000000c',
+  '00000000-0000-0000-0000-f5000000000d',
+  '00000000-0000-0000-0000-f5000000000e',
+  '00000000-0000-0000-0000-f5000000000f',
+  '00000000-0000-0000-0000-f50000000010',
+];
+let registerCookies;
 
 // created for the screenshots that need them and deleted before any other, so other pages don't list them
 const temporaryResources = [
@@ -1494,7 +1566,68 @@ const temporaryResources = [
       await api(`/api/email/template/${u.goodbyeTemplateId}`, 'POST', { emailTemplate: { name: 'Goodbye', defaultSubject: 'Goodbye', ...body('Your subscription has expired and you may no longer read the news. Goodbye.') } });
     },
   },
+  // Register users and user support.
+  {
+    names: registerNames,
+    paths: [
+      `/api/application/${registerIds.app}`, `/api/application/${registerIds.basic}`,
+      `/api/user/${registerIds.user}?hardDelete=true`, `/api/user/${registerIds.manager}?hardDelete=true`,
+      ...['form', 'first', 'adminUser', 'adminRegistration', 'locale'].map(k => `/api/form/${registerIds[k]}`),
+      ...registerFields.map(id => `/api/form/field/${id}`), `/api/theme/${registerIds.theme}`,
+    ],
+    create: async api => {
+      const r = registerIds;
+      const definitions = [
+        { name: 'Minimum Price', key: 'registration.data.minprice', control: 'number', type: 'number', required: true },
+        { name: 'Maximum Price', key: 'registration.data.maxprice', control: 'number', type: 'number', required: true },
+        { name: 'Geographic Area', key: 'registration.data.geographicarea', control: 'text', type: 'string' },
+        { name: 'User notes', key: 'user.data.notes', control: 'textarea', type: 'string' },
+        { name: 'My hidden field', key: 'user.data.answer', control: 'text', type: 'string' },
+        { name: 'Preferred languages', key: 'user.preferredLanguages', control: 'select', type: 'string', options: ['en', 'fr', 'es'] },
+      ];
+      for (const [i, field] of definitions.entries()) await api(`/api/form/field/${registerFields[i]}`, 'POST', { field });
+      const { fields } = await api('/api/form/field');
+      const builtin = name => {
+        const field = fields.find(f => f.name === name);
+        if (!field) throw new Error(`Missing built-in field: ${name}`);
+        return field.id;
+      };
+      const identity = ['First name', 'Email', 'Password', 'Mobile phone'].map(builtin);
+      const custom = [registerFields[2], registerFields[0], registerFields[1]];
+      const forms = [
+        ['form', 'Real estate search registration form', 'registration', [{ fields: identity }, { fields: custom }]],
+        ['first', 'Real estate search first step', 'registration', [{ fields: identity }]],
+        ['adminUser', 'Real estate admin user form', 'adminUser', [{ fields: ['[Admin User] email', '[Admin User] first name', '[Admin User] mobile phone'].map(builtin).concat(registerFields[3]) }]],
+        ['adminRegistration', 'Real estate admin registration form', 'adminRegistration', [{ fields: custom }]],
+        ['locale', 'Capture preferred languages', 'registration', [{ fields: ['Email', 'Password'].map(builtin).concat(registerFields[5]) }]],
+      ];
+      for (const [key, name, type, steps] of forms) await api(`/api/form/${r[key]}`, 'POST', { form: { name, type, steps } });
+      const { theme } = await api(`/api/theme/${defaultThemeId}`);
+      await api(`/api/theme/${r.theme}`, 'POST', { sourceThemeId: defaultThemeId, theme: { name: 'Real Estate Registration' } });
+      await api(`/api/theme/${r.theme}`, 'PATCH', { theme: { defaultMessages: `${theme.defaultMessages}
+user.firstName=Your first name
+user.email=Email
+user.password=Password
+user.mobilePhone=Your mobile phone number
+registration.data.minprice=Minimum price
+registration.data.maxprice=Maximum price
+registration.data.geographicarea=Geographic area
+user.data.notes=User notes` } });
+      const oauthConfiguration = { authorizedRedirectURLs: ['https://local.fusionauth.io/callback'], enabledGrants: ['authorization_code'] };
+      await api(`/api/application/${r.app}`, 'POST', { application: { name: 'Pied Piper Real Estate', themeId: r.theme, oauthConfiguration,
+        registrationConfiguration: { enabled: true, type: 'advanced', formId: r.form }, formConfiguration: { adminRegistrationFormId: r.adminRegistration } } });
+      await api(`/api/application/${r.basic}`, 'POST', { application: { name: 'Pied Piper Registration', oauthConfiguration,
+        registrationConfiguration: { enabled: true, type: 'basic', loginIdType: 'email', confirmPassword: true,
+          firstName: { enabled: true, required: true }, lastName: { enabled: true, required: false } } } });
+      await api(`/api/user/registration/${r.user}`, 'POST', { user: { email: 'carla@piedpiper.com', firstName: 'Carla', lastName: 'Walton', password: 'password', mobilePhone: '+15555550112', data: { notes: 'Interested in a family home.' } },
+        registration: { applicationId: r.app, data: { minprice: 500000, maxprice: 1000000, geographicarea: 'Near University' } } });
+      await api(`/api/user/registration/${r.user}`, 'POST', { registration: { applicationId: '3c219e58-ed0e-4b18-ad48-f4f92793ae32', roles: ['user_manager'] } });
+      await api(`/api/user/registration/${r.manager}`, 'POST', { user: { email: 'jared@piedpiper.com', firstName: 'Jared', lastName: 'Dunn', password: 'password' },
+        registration: { applicationId: '3c219e58-ed0e-4b18-ad48-f4f92793ae32', roles: ['user_manager'] } });
+    },
+  },
 ];
+
 
 
 const piedPiperAppId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
@@ -1807,7 +1940,28 @@ const temporaryState = [
       };
     },
   },
+  // Register users and user support.
+  {
+    section: 'register',
+    names: ['register-user-edit-screen', 'register-associate-admin-user-form', 'register-registration-edit-screen'],
+    apply: async () => {
+      const { tenant } = await apiRequest(`/api/tenant/${defaultTenantId}`);
+      await apiRequest(`/api/tenant/${defaultTenantId}`, 'PATCH', { tenant: { themeId: registerIds.theme, formConfiguration: { adminUserFormId: registerIds.adminUser } } });
+      return () => apiRequest(`/api/tenant/${defaultTenantId}`, 'PUT', { tenant });
+    },
+  },
+  {
+    section: 'register',
+    names: ['register-first-step-no-placeholder', 'register-first-step-with-placeholder'],
+    apply: async () => {
+      const { theme } = await apiRequest(`/api/theme/${registerIds.theme}`);
+      const helpers = theme.templates.helpers.replace(/(\[#macro _input_text[\s\S]*?)\[#compress\][\s\S]*?\[\/#compress\]/, '$1');
+      await apiRequest(`/api/theme/${registerIds.theme}`, 'PATCH', { theme: { templates: { helpers } } });
+      return () => apiRequest(`/api/theme/${registerIds.theme}`, 'PATCH', { theme: { templates: { helpers: theme.templates.helpers } } });
+    },
+  },
 ];
+
 
 
 // alerts that are what the screenshot shows
@@ -1823,6 +1977,8 @@ const sectionBoxes = {
   'idp-cors-warning-apple': 'apple',
   // Authenticate users.
   'authenticate-account-lock-tenant-settings': 'failed-authentication-settings',
+  'register-associate-admin-user-form': 'form-settings',
+  'register-associate-admin-registration-form': 'form-settings',
 };
 
 const registrationMessages = `# Theme messages for custom form
@@ -2085,7 +2241,7 @@ export default {
     const licensed = !!process.env.FUSIONAUTH_LICENSE_KEY;
 
     // sessions come from logins with refresh tokens, before MFA would stop them
-    await api('PATCH', `/api/application/${appId}`, { application: { loginConfiguration: { generateRefreshTokens: true } } });
+    await api('PATCH', `/api/application/${appId}`, { application: { loginConfiguration: { allowTokenRefresh: true, generateRefreshTokens: true } } });
     // the setting can take a moment to apply, so wait for Monica's logins to get a refresh token
     for (let i = 0; !(await api('POST', '/api/login', { loginId: 'monica@raviga.com', password: 'password', applicationId: appId })).refreshToken; i++) {
       if (i === 20) throw new Error('beforeAll: no refresh token');
@@ -2096,7 +2252,7 @@ export default {
       const login = await api('POST', '/api/login', { loginId: 'dinesh@piedpiper.com', password: 'password', applicationId: appId, ipAddress: '127.0.0.1', metaData: { device: { name, type } } });
       if (!login.refreshToken) throw new Error(`beforeAll: no ${name} session`);
     }
-    await api('PATCH', `/api/application/${appId}`, { application: { loginConfiguration: { generateRefreshTokens: false } } });
+    await api('PATCH', `/api/application/${appId}`, { application: { loginConfiguration: { allowTokenRefresh: false, generateRefreshTokens: false } } });
 
     await api('PATCH', `/api/user/${dineshId}`, { user: {
       birthDate: '1988-03-11',
@@ -2172,11 +2328,25 @@ export default {
       }
     }
 
+    if (registerCookies) {
+      await page.context().clearCookies();
+      await page.context().addCookies(registerCookies);
+      registerCookies = undefined;
+      await page.goto(url, { waitUntil: 'networkidle' });
+    }
+
     const oauthAppId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
     const oauthTenantId = '30663132-6464-6665-3032-326466613934';
     const oauthLoginUrl = `http://localhost:9011/oauth2/authorize?client_id=${oauthAppId}&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid`;
 
     const apiKey = 'screenshot-dev-key-not-for-production';
+
+    for (const state of temporaryState) {
+      if (state.section === 'register' && state.undo && !state.names.includes(ctx?.name)) {
+        await state.undo();
+        state.undo = undefined;
+      }
+    }
 
     {
       const api = (path, method = 'GET', body, headers = {}) => fetch(`http://localhost:9011${path}`, {
@@ -2225,6 +2395,19 @@ export default {
       }
       await page.goto(url, { waitUntil: 'networkidle' });
       await page.reload({ waitUntil: 'networkidle' });
+    }
+
+    // Normalize action dates before the table performs its initial layout.
+    if (ctx?.name === 'register-remove-user-action') {
+      await page.route(`**/admin/user/manage/${dineshId}*`, async route => {
+        const response = await route.fetch();
+        const body = (await response.text())
+          .replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, '24/09/2026')
+          .replace(/\b\d{2}:\d{2}(:\d{2}(,\d{3})?)? (AM|PM)\b/g, '09:00 AM');
+        await route.fulfill({ response, body });
+      });
+      await page.reload({ waitUntil: 'networkidle' });
+      await page.evaluate(() => document.fonts.ready);
     }
 
     // FusionAuth picks up a theme change after a delay
@@ -3995,6 +4178,172 @@ export default {
       }
     }
 
+    // Register users and user support.
+    if (registerNames.includes(ctx?.name)) {
+      const name = ctx.name.slice('register-'.length);
+      if (['new-user-listing', 'users-tab'].includes(name)) {
+        await page.fill('#s_queryString', name === 'new-user-listing' ? 'carla' : 'dinesh');
+        await page.locator('#user-search-form button').filter({ hasText: /Search/ }).first().click();
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(500);
+      }
+      const fieldExample = { 'minimum-price-form-field': 0, 'geographic-area-form-field': 2, 'add-custom-field': 3, 'hidden-field': 4 }[name];
+      if (fieldExample !== undefined) {
+        const { field } = await apiRequest(`/api/form/field/${registerFields[fieldExample]}`);
+        await page.fill('#field_name', field.name);
+        const registration = field.key.startsWith('registration.');
+        await page.selectOption('#field_key', { label: registration ? 'Custom registration data (registration.data.*)' : 'Custom user data (user.data.*)' });
+        await page.fill(registration ? '#registration-data-key' : '#user-data-key', field.key.split('.').slice(2).join('.'));
+        await page.selectOption('select#field_control', field.control);
+        await page.selectOption('select#field_type', field.type);
+        if (field.required) await page.locator('label[for=field_required]').click();
+      }
+      if (name === 'new-form') await page.fill('#form_name', 'Real estate search registration form');
+      if (['find-registration-url', 'registration-url'].includes(name)) {
+        const id = name === 'registration-url' ? registerIds.basic : registerIds.app;
+        await page.evaluate(id => {
+          const link = document.querySelector(`main a[href="/ajax/application/view/${id}"]`);
+          link?.closest('[popover]')?.showPopover();
+          link?.click();
+        }, id);
+        await page.locator('.prime-dialog.open').waitFor();
+        await page.waitForTimeout(500);
+        await tag('register-url', () => {
+          const row = [...document.querySelectorAll('.prime-dialog.open tr')].find(r => /^Registration URL/.test(r.textContent.trim()));
+          row?.scrollIntoView({ block: 'center' });
+          return row;
+        });
+        await page.evaluate(() => {
+          const walker = document.createTreeWalker(document.querySelector('.prime-dialog.open'), NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) node.textContent = node.textContent.replaceAll('http://localhost:9011', 'https://local.fusionauth.io');
+        });
+      }
+      if (name === 'update-theme-for-tenant') await page.selectOption('#tenant_themeId', registerIds.theme);
+      if (name === 'complete-registration-settings') {
+        await page.selectOption('#selfRegistrationType', 'Complete');
+      }
+      if (name === 'new-user-data-display') {
+        await tag('register-data', () => document.querySelector('#user-data fieldset:last-child > div'));
+      }
+      if (name === 'setup-locale-selection') {
+        await tag('register-locale', () => [...document.querySelectorAll('main tr')].reverse().find(r => r.textContent.includes('Preferred languages')));
+      }
+      if (['first-step-no-placeholder', 'first-step-with-placeholder', 'first-step-with-placeholder-and-labels', 'register-new-user', 'login-page'].includes(name)) {
+        const context = page.context();
+        savedSso ??= (await context.cookies('http://localhost:9011')).find(c => c.name === 'fusionauth.sso');
+        await context.clearCookies({ name: 'fusionauth.sso' });
+        await page.goto(url, { waitUntil: 'networkidle' });
+        await page.locator('form input:not([type=hidden])').first().waitFor();
+        if (name.startsWith('first-step-')) {
+          const labels = name === 'first-step-with-placeholder-and-labels';
+          for (let i = 0; labels !== await page.locator('label[for="user_email"]').isVisible(); i++) {
+            if (i === 60) throw new Error('Registration theme labels did not update');
+            await page.waitForTimeout(500);
+            await page.reload({ waitUntil: 'networkidle' });
+          }
+        }
+        if (name === 'first-step-no-placeholder') {
+          await page.evaluate(() => {
+            for (const input of document.querySelectorAll('form input[placeholder]')) input.placeholder = input.name;
+          });
+        }
+
+      }
+      if (name === 'new-user-form') {
+        await page.locator('label[for=sendSetPasswordIdentityType-doNotSend]').click();
+        await page.fill('#user_username', 'carla');
+        await page.fill('#user_email', 'carla@piedpiper.com');
+        await page.fill('#user_password', 'password');
+        await page.fill('#confirm_user_password', 'password');
+      }
+      if (['limited-menu', 'user-edit-screen', 'registration-edit-screen'].includes(name)) {
+        registerCookies = await page.context().cookies();
+        await page.context().clearCookies();
+        await page.goto('http://localhost:9011/admin/login', { waitUntil: 'networkidle' });
+        await page.fill('#loginId', 'jared@piedpiper.com');
+        await page.fill('#password', 'password');
+        await page.keyboard.press('Enter');
+        await page.waitForURL(u => u.pathname.startsWith('/admin') && !u.pathname.includes('/admin/login'));
+        await page.goto(url, { waitUntil: 'networkidle' });
+      }
+      if (['require-password-change', 'lock-account', 'unlock-account', 'add-comment', 'confirm-change', 'confirm-lock', 'confirm-unlock', 'write-comment'].includes(name)) {
+        const text = {
+          'require-password-change': 'Require password change', 'confirm-change': 'Require password change',
+          'lock-account': 'Lock account', 'confirm-lock': 'Lock account',
+          'unlock-account': 'Unlock account', 'confirm-unlock': 'Unlock account',
+          'add-comment': 'Add a comment', 'write-comment': 'Add a comment',
+        }[name];
+        await page.locator('header el-dropdown button').click();
+        const target = page.locator('el-menu a, el-menu button').filter({ hasText: new RegExp(`^\\s*${text}\\s*$`, 'i') }).first();
+        await target.waitFor({ state: 'visible' });
+        if (['confirm-change', 'confirm-lock', 'confirm-unlock', 'write-comment'].includes(name)) {
+          await target.click();
+          await page.locator('.prime-dialog.open').waitFor();
+          if (name === 'write-comment') await page.locator('.prime-dialog.open textarea').fill('Customer requested help updating their profile.');
+        } else {
+          await target.evaluate(el => el.dataset.hl = 'register-menu-target');
+          await page.evaluate(() => {
+            const menu = document.querySelector('el-menu:has([data-hl="register-menu-target"])');
+            const r = menu.getBoundingClientRect();
+            const copy = document.createElement('div');
+            copy.className = menu.className;
+            copy.innerHTML = menu.innerHTML;
+            copy.style.cssText = `position:absolute;margin:0;left:${r.left + scrollX}px;top:${r.top + scrollY}px;width:${r.width}px;z-index:1000`;
+            document.body.append(copy);
+            menu.hidePopover();
+            menu.querySelector('[data-hl]').removeAttribute('data-hl');
+          });
+        }
+      }
+      if (['select-application', 'roles'].includes(name)) {
+        await page.locator('select').first().waitFor();
+        if (name === 'roles') {
+          await page.locator('select').first().selectOption({ label: 'FusionAuth' });
+          await page.waitForLoadState('networkidle');
+          await page.waitForTimeout(800);
+          const role = page.locator('input[value=user_support_manager]');
+          await role.check();
+          await role.evaluate(el => el.parentElement.dataset.hl = 'register-support-role');
+        }
+      }
+      if (name === 'remove-user-action') {
+        await page.locator('#current-actions el-dropdown button').first().click();
+        await page.locator('#current-actions a[href^="/ajax/user/cancel-action/"]').first().waitFor({ state: 'visible' });
+      }
+      if (name === 'confirm-action-cancellation') {
+        await page.locator('main img').evaluateAll(async images => {
+          await Promise.all(images.map(async image => { image.loading = 'eager'; await image.decode().catch(() => {}); }));
+        });
+        await page.locator('#current-actions a[href^="/ajax/user/cancel-action/"]').first().evaluate(el => { el.closest('[popover]')?.showPopover(); el.click(); });
+        await page.locator('.prime-dialog.open').waitFor();
+      }
+      if (pathname.includes(registerIds.user)) {
+        const { user } = await apiRequest(`/api/user/${registerIds.user}`);
+        await page.evaluate(ids => {
+          const stable = id => `00000000-0000-0000-0000-f5000000002${ids.indexOf(id)}`;
+          const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            for (const id of ids) node.textContent = node.textContent.replaceAll(id, stable(id));
+          }
+          for (const input of document.querySelectorAll('input')) if (ids.includes(input.value)) input.value = stable(input.value);
+        }, user.registrations.map(r => r.id));
+      }
+      if (name === 'hidden-field' || name === 'new-user-form') {
+        await page.waitForTimeout(300);
+        await page.evaluate(id => {
+          for (let panel = document.getElementById(id); panel && panel.tagName !== 'FORM'; panel = panel.parentElement) {
+            if (!panel.classList.contains('slide-open')) continue;
+            panel.classList.remove('hidden');
+            panel.classList.add('open');
+            panel.style.removeProperty('display');
+            panel.style.setProperty('height', 'auto', 'important');
+            panel.style.setProperty('max-height', 'none', 'important');
+          }
+        }, name === 'hidden-field' ? 'user-data-key' : 'user_password');
+      }
+      await page.evaluate(() => window.scrollTo(0, 0));
+    }
+
     if (ctx?.name === 'theme-localization-messages') {
       // viewport is already set to spec.height by capture.mjs before this hook runs.
       // scroll down to reach the Add Localization button (below the fold), click it,
@@ -4191,6 +4540,21 @@ export default {
         const a = label.getBoundingClientRect(), b = input.getBoundingClientRect();
         box.style.top = `${a.top + scrollY - 6}px`;
         box.style.height = `${b.bottom - a.top + 12}px`;
+      });
+    }
+
+    if (ctx?.name === 'register-remove-user-action') {
+      await page.evaluate(() => {
+        const menu = document.querySelector('#current-actions [popover]');
+        menu.showPopover();
+        Object.assign(menu.style, { transition: 'none', animation: 'none', transform: 'none', scale: '1', opacity: '1' });
+        const r = menu.getBoundingClientRect();
+        const copy = document.createElement('div');
+        copy.className = menu.className;
+        copy.innerHTML = menu.innerHTML;
+        copy.style.cssText = `position:absolute;margin:0;left:${r.left + scrollX}px;top:${r.top + scrollY}px;width:${r.width}px;z-index:1000`;
+        document.body.append(copy);
+        menu.hidePopover();
       });
     }
 
