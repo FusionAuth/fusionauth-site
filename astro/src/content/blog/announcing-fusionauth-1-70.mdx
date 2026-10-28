@@ -85,18 +85,18 @@ In identity architecture, the distinction between impersonation and delegation i
 
 Historically, legacy software often took the easy route—letting a background job or support engineer behave as a user because it was simplest to build. But masking an automated service as a human user destroys non-repudiation. If your logs cannot distinguish between a user clicking a button and an AI agent acting on their behalf, you do not have an audit chain; you have a liability.
 
-Token exchange in FusionAuth strictly implements delegation. Every exchanged token injects the standard RFC 8693 `act` (actor) claim, permanently encoding the identity of the specific service executing the request alongside the user's identity. When the user's token carries scopes, the exchange process can create a token with narrowed scopes but can't produce a token with widened scopes.
+Token exchange in FusionAuth strictly implements delegation. Every exchanged token injects the standard RFC 8693 `act` (actor) claim, permanently encoding the identity of the specific service executing the request alongside the user's identity. When the user's token carries scopes, the exchanged token can narrow them but can't exceed them.
 
 ```json
 {
-  "sub": "user_8f49a21b",
-  "iss": "https://auth.yourdomain.com",
-  "aud": "https://api.yourdomain.com/appointments",
-  "scope": "appointments:reschedule",
+  "aud": ["9bf97e3e-19d0-40ec-9fce-48f89811c64e"],
+  "iss": "https://auth.example.com",
+  "sub": "81f39eb8-49f7-42c4-aa85-948d9b019af0",
+  "scope": "offline_access openid profile user:billable_items:read user:clients:read user:profile:read user:projects:read user:time_entries:read user:time_entries:write",
   "act": {
-    "sub": "entity_mcp_scheduling_service"
-  },
-  "exp": 1730196000
+    "sub": "e2a63f39-4c53-4ca8-bd0d-8129de464f64",
+    "sub_profile": "fusionauth:TokenExchangeClient"
+  }
 }
 ```
 
@@ -114,7 +114,7 @@ Neither engine relies on probabilistic ML models or heuristics. Authorization lo
 
 FusionAuth expands on RFC 8693 by introducing **Recorded Intent**. When an MCP server initiates an exchange request, it can append an optional free-text statement declaring what business task the agent is attempting to complete (for example: `I was asked to reschedule an appointment. I need to see the calendar for andrew@example.com`).
 
-A client might _intend_ to do the right thing and still overreach. An AI simply passing a magic string—"I am doing this for good reasons"—is not access control. FusionAuth records the intent string in the exchange log as an audit record and optionally in the generated access token. It doesn't interpret or verify the string, and it doesn't use it to decide access. Your policy does that. 
+A client might _intend_ to do the right thing and still overreach. An AI simply passing a magic string—"I am doing this for good reasons"—is not access control. FusionAuth records the intent string in the exchange log as an audit record. It doesn't interpret or verify the string, and it doesn't use it to decide access. Your policy does that.
 
 During integration testing, evals, and security profiling, platform teams can run MCP servers with zero initial permissions, analyze the captured intent statements attached to rejected exchange calls, and grant precisely the required scopes.
 
