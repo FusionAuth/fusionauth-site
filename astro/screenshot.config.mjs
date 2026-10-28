@@ -1,4 +1,4 @@
-import { createHmac, generateKeyPairSync } from 'crypto';
+import { createHmac, createPublicKey, generateKeyPairSync } from 'crypto';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -14,10 +14,93 @@ try {
 
 let adminLocale;
 let operateMetricsKeyExists = false;
-// the OAuth single sign-on cookie, set aside while a screenshot needs a signed-out hosted page
+let leftoversContext;
 let savedSso;
-const signedOut = ['lambda-registration-blank', 'lambda-registration-invalid', 'five-minute-login', 'migration-user-login', 'authenticate-mfa-code-sent', 'authenticate-mfa-challenge-methods', 'authenticate-mfa-self-service-methods', 'authenticate-account-lock-user-view', 'manage-user-actions-locked-account', 'manage-verification-email-gate-link', 'manage-verification-email-gate-code', 'manage-verification-phone-gate', 'manage-verification-registration-gate-link', 'manage-verification-registration-gate-code'];
+const signedOut = ['lambda-registration-blank', 'lambda-registration-invalid', 'five-minute-login', 'migration-user-login', 'authenticate-mfa-code-sent', 'authenticate-mfa-challenge-methods', 'authenticate-mfa-self-service-methods', 'authenticate-account-lock-user-view', 'manage-user-actions-locked-account', 'manage-verification-email-gate-link', 'manage-verification-email-gate-code', 'manage-verification-phone-gate', 'manage-verification-registration-gate-link', 'manage-verification-registration-gate-code', 'leftovers-gateway-login'];
 
+// Preserve the footer in references captured before the container version update.
+const legacyVersionShots = new Set([
+  "account-application-self-service-form",
+  "account-tenant-mfa-email",
+  "account-tenant-mfa-phone",
+  "account-tenant-webauthn",
+  "add-group-form",
+  "application-identities",
+  "application-jwt-disabled",
+  "application-list",
+  "application-mfa",
+  "application-oauth",
+  "application-saml-disabled",
+  "application-saml-enabled",
+  "application-scopes",
+  "application-security",
+  "application-webauthn",
+  "email-template-localization",
+  "five-minute-application-details",
+  "five-minute-application-form",
+  "five-minute-application-listing",
+  "five-minute-dashboard",
+  "five-minute-registration-add",
+  "five-minute-user-search",
+  "hierarchy-entities",
+  "hierarchy-entity-types",
+  "hierarchy-user-grant",
+  "lambda-edit-application",
+  "multi-tenant-blueprint-tenant",
+  "multi-tenant-control-plane-registration",
+  "multi-tenant-users",
+  "passkeys-application-webauthn",
+  "passkeys-challenge-settings",
+  "passkeys-tenant-enable-webauthn",
+  "passkeys-tenant-enable-workflows",
+  "passkeys-tenant-webauthn-general",
+  "passkeys-tenant-webauthn-workflow",
+  "passwordless-application-enable",
+  "passwordless-application-security",
+  "passwordless-email-template-edit",
+  "passwordless-message-template-edit",
+  "passwordless-tenant-duration",
+  "passwordless-tenant-email-config",
+  "passwordless-tenant-generation",
+  "passwordless-tenant-message-config",
+  "segment-add-user",
+  "tenant-add",
+  "tenant-advanced-external-identifier-durations",
+  "tenant-advanced-external-identifier-generation",
+  "tenant-email-settings",
+  "tenant-family-settings",
+  "tenant-general",
+  "tenant-identities",
+  "tenant-identities-template-settings",
+  "tenant-jwt",
+  "tenant-list",
+  "tenant-scim-settings",
+  "tenant-security-acl-captcha",
+  "tenant-security-client-risk-rate-limit",
+  "tenant-send-test-email",
+  "tenant-smtp-settings",
+  "tenant-webhooks-settings",
+  "theme-add",
+  "theme-apply-application",
+  "theme-apply-tenant",
+  "theme-kickstart-app-oauth",
+  "theme-kickstart-manage-user",
+  "theme-localization-messages",
+  "theme-preview-menu",
+  "theme-preview-oauth-authorize",
+  "theme-preview-oauth-logout",
+  "theme-simple-editor-dark",
+  "theme-simple-editor-images",
+  "theme-simple-editor-light",
+  "theme-simple-editor-preview",
+  "theme-simple-editor-styles",
+  "theme-simple-editor-index",
+  "user-admin-role",
+  "user-locale-date-format",
+  "user-registration-preferred-languages",
+  "webhook-event-source",
+  "webhook-signature"
+]);
 
 const dineshId = '00000000-0000-0000-0000-100000000004';
 const gilfoyleId = '00000000-0000-0000-0000-100000000005';
@@ -118,6 +201,12 @@ const switches = {
   'operate-enter-captcha-details': ['tenant_captchaConfiguration_enabled'],
   'operate-turn-on-detection': ['tenant_passwordValidationRules_breachDetection_enabled'],
   'operate-breached-password-configuration-options': ['tenant_passwordValidationRules_breachDetection_enabled'],
+  // Leftovers
+  'leftovers-gateway-application-create-jwt': ["application_jwtConfiguration_enabled"],
+  'leftovers-api-key-manager': ["apiKey_keyManager"],
+  'leftovers-m2m-entity-type-jwt': ['entityType_jwtConfiguration_enabled'],
+  'leftovers-usage-data-collection': ['systemConfiguration_usageDataConfiguration_enabled'],
+
 };
 
 // chosen (not saved) before the switches above
@@ -398,6 +487,26 @@ const fixedHeight = {
   'operate-generate-ecc-key-pair': null,
   'operate-generate-eddsa-key-pair': null,
   'operate-generate-hmac-secret': null,
+  // Leftovers
+  'leftovers-gateway-create-user': null,
+  'leftovers-gateway-api-key-permissions': null,
+  'leftovers-gateway-application-create-jwt': null,
+  'leftovers-gateway-application-id': null,
+  'leftovers-gateway-public-key': null,
+  'leftovers-api-key-create': null,
+  'leftovers-api-key-manager': null,
+  'leftovers-api-key-tenant': null,
+  'leftovers-tenant-mailcatcher': null,
+  'leftovers-usage-data-collection': null,
+  'leftovers-scope-create': null,
+  'leftovers-scope-edit': null,
+  'leftovers-scope-view': null,
+  'leftovers-scope-delete': null,
+
+  'leftovers-gateway-application-oauth': null,
+  'leftovers-gateway-application-jwt': null,
+  'leftovers-gateway-redirect-urls': null,
+
 };
 
 const defaultThemeId = '75a068fd-e94b-451a-9aeb-3ddb9a3b5987';
@@ -483,6 +592,9 @@ const bands = {
   'manage-verification-application-self-service-phone': '#manage-self-service-strip',
   'manage-search-about-engine': "[data-hl='system-panel']",
   'operate-rate-limit-settings': "[data-section='rate-limit-settings']",
+  // Leftovers
+  'leftovers-api-key-endpoint-permissions': "[data-hl='leftovers-endpoints']",
+
 };
 
 const exampleWebhookId = '00000000-0000-0000-0000-600000000001';
@@ -1241,6 +1353,7 @@ const temporaryResources = [
     paths: [`/api/application/${exampleAppId}`],
     create: async api => {
       await api(`/api/application/${exampleAppId}`, 'POST', { application: { name: 'Example app', oauthConfiguration: {
+        clientSecret: 'iPSWDLcZJ9QsX1WOKcNquACA5Nk2KlFzYx5hpuyXsuA',
         authorizedRedirectURLs: ['http://localhost:3000/oauth-redirect'], logoutURL: 'http://localhost:3000/logout',
         enabledGrants: ['authorization_code', 'refresh_token'], requireRegistration: true,
       } } });
@@ -1687,6 +1800,83 @@ user.data.notes=User notes` } });
 ];
 
 
+// Leftovers
+const leftoversAppId = '00000000-0000-0000-0000-f70000000001';
+const leftoversScopeId = '00000000-0000-0000-0000-f70000000002';
+const leftoversTypeId = '00000000-0000-0000-0000-f70000000003';
+const leftoversKeyId = '00000000-0000-0000-0000-f70000000004';
+// Fixed demo material keeps the public-key screenshot stable between runs.
+const leftoversPrivateKey = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'screenshots/fixtures/leftovers-example-rsa.pem'), 'utf-8');
+const leftoversCertificate = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'screenshots/fixtures/leftovers-example-rsa.crt'), 'utf-8');
+const leftoversSigningKey = (name, kid) => ({
+  name, kid, type: 'RSA', algorithm: 'RS256', privateKey: leftoversPrivateKey, certificate: leftoversCertificate,
+  publicKey: createPublicKey(leftoversPrivateKey).export({ type: 'spki', format: 'pem' }),
+});
+// Hosted captures enter through admin until their temporary app and scopes exist.
+const leftoversHostedUrls = {
+  "banking-consent": "http://localhost:9011/oauth2/authorize?client_id=00000000-0000-0000-0000-f7000000000b&redirect_uri=https%3A%2F%2Flocal.fusionauth.io%2Fcallback&response_type=code&scope=openid%20profile%20accounts.read%20profile.read%20transactions.read%20transfers.write%20payments.write%20investments.read%20investments.trade%20creditScore.read&prompt=login&locale=en",
+  "scope-consent": "http://localhost:9011/oauth2/authorize?client_id=00000000-0000-0000-0000-f70000000001&redirect_uri=https%3A%2F%2Flocal.fusionauth.io%2Fcallback&response_type=code&scope=openid%20email%20phone%20data%3Aread&prompt=login&locale=en",
+  "gateway-login": "http://localhost:9011/oauth2/authorize?client_id=00000000-0000-0000-0000-f70000000001&redirect_uri=https%3A%2F%2Flocal.fusionauth.io%2Fcallback&response_type=code&scope=openid&prompt=login&locale=en",
+  "mcp-consent": "http://localhost:9011/oauth2/authorize?client_id=00000000-0000-0000-0000-f7000000000c&redirect_uri=https%3A%2F%2Flocal.fusionauth.io%2Fcallback&response_type=code&scope=openid%20profile%20get_name&prompt=login&locale=en"
+};
+const leftoversNames = [
+  'leftovers-gateway-api-key',
+  'leftovers-gateway-api-key-permissions',
+  'leftovers-gateway-application-create-jwt',
+  'leftovers-gateway-application-id',
+  'leftovers-gateway-application-jwt',
+  'leftovers-gateway-application-oauth',
+  'leftovers-gateway-create-user',
+  'leftovers-gateway-login',
+  'leftovers-gateway-public-key',
+  'leftovers-gateway-redirect-urls',
+  'leftovers-gateway-tenant-issuer',
+  'leftovers-gateway-user-registration',
+  'leftovers-scope-consent',
+  'leftovers-scope-create',
+  'leftovers-scope-delete',
+  'leftovers-scope-edit',
+  'leftovers-scope-view',
+  'leftovers-scopes'
+];
+temporaryResources.push({
+  names: leftoversNames,
+  paths: [`/api/application/${leftoversAppId}`, `/api/key/${leftoversKeyId}`],
+  create: async api => {
+    await api(`/api/key/import/${leftoversKeyId}`, 'POST', { key: leftoversSigningKey('Pied Piper Gateway signing key', 'pied-piper-gateway') });
+    const signingKey = { id: leftoversKeyId };
+    await api(`/api/application/${leftoversAppId}`, 'POST', { application: {
+      name: 'Pied Piper Gateway', jwtConfiguration: { enabled: true, accessTokenKeyId: signingKey.id, idTokenKeyId: signingKey.id },
+      oauthConfiguration: { clientSecret: 'pied-piper-gateway-example-secret', authorizedRedirectURLs: ['https://local.fusionauth.io/callback'], enabledGrants: ['authorization_code', 'refresh_token'], relationship: 'ThirdParty', consentMode: 'AlwaysPrompt', providedScopePolicy: { email: { enabled: true, required: true }, phone: { enabled: true, required: false } } },
+    } });
+    await api(`/api/application/${leftoversAppId}/scope/${leftoversScopeId}`, 'POST', { scope: { name: 'data:read', description: "Provides an application read-only access to a user's data", defaultConsentMessage: 'View your data', defaultConsentDetail: 'This will provide the requesting application read-only access to your data.', required: true } });
+  },
+});
+temporaryResources.push({
+  names: ['leftovers-m2m-entity-types', 'leftovers-m2m-entity-type-jwt'],
+  paths: [`/api/entity/type/${leftoversTypeId}`, '/api/key/00000000-0000-0000-0000-f70000000008'],
+  create: async api => {
+    await api('/api/key/import/00000000-0000-0000-0000-f70000000008', 'POST', { key: leftoversSigningKey('Pied Piper Microservice signing key', 'pied-piper-microservice') });
+    await api(`/api/entity/type/${leftoversTypeId}`, 'POST', { entityType: { name: 'Microservice', jwtConfiguration: { enabled: true, accessTokenKeyId: '00000000-0000-0000-0000-f70000000008', timeToLiveInSeconds: 3600 } } });
+  },
+});
+
+// Leftovers
+for (const [appId, name, names, scopes] of [
+  ['00000000-0000-0000-0000-f7000000000b', 'MoneyScope', ['leftovers-banking-scopes', 'leftovers-banking-consent'], [
+    ['accounts.read', 'Basic account information and balances'], ['profile.read', 'User profile and contact information'],
+    ['transactions.read', 'Transaction history and details'], ['transfers.write', 'Initiate money transfers between accounts'],
+    ['payments.write', 'Make bill payments'], ['investments.read', 'Investment portfolio information'],
+    ['investments.trade', 'Execute investment trades'], ['creditScore.read', 'Access credit score information'],
+  ]],
+  ['00000000-0000-0000-0000-f7000000000c', 'Pied Piper MCP', ['leftovers-mcp-consent'], [['get_name', 'Allow this application to read your name']]],
+]) temporaryResources.push({
+  names, paths: [`/api/application/${appId}`],
+  create: async api => {
+    await api(`/api/application/${appId}`, 'POST', { application: { name, oauthConfiguration: { authorizedRedirectURLs: ['https://local.fusionauth.io/callback'], enabledGrants: ['authorization_code'], relationship: 'ThirdParty', consentMode: 'AlwaysPrompt', providedScopePolicy: { profile: { enabled: true, required: name === 'MoneyScope' } } } } });
+    for (const [i, [name, message]] of scopes.entries()) await api(`/api/application/${appId}/scope/00000000-0000-0000-0000-f70000000${appId.slice(-1)}${String(i).padStart(2, '0')}`, 'POST', { scope: { name, description: message, defaultConsentMessage: message, required: ['accounts.read', 'profile.read', 'transactions.read', 'get_name'].includes(name) } });
+  },
+});
 
 const piedPiperAppId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
 const defaultTenantId = '30663132-6464-6665-3032-326466613934';
@@ -2035,6 +2225,34 @@ const temporaryState = [
 ];
 
 
+// Leftovers
+temporaryState.push({
+  names: ['leftovers-gateway-api-key'],
+  apply: async () => {
+    const page = await leftoversContext.newPage();
+    const managerId = '00000000-0000-0000-0000-f70000000009';
+    const managerKey = 'leftovers-temporary-key-manager';
+    const keyId = '00000000-0000-0000-0000-f7000000000a';
+    const api = async (path, method, body) => {
+      const r = await fetch(`http://localhost:9011${path}`, { method, headers: { Authorization: managerKey, 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) });
+      if (!r.ok) throw new Error(`Leftovers API key ${method}: ${r.status} ${await r.text()}`);
+    };
+    try {
+      await page.goto('http://localhost:9011/admin/api-key/add', { waitUntil: 'networkidle' });
+      await page.fill('#apiKeyId', managerId);
+      await page.fill('#apiKey_name', 'Leftovers temporary manager');
+      await page.fill('#apiKey_key', managerKey);
+      await page.locator('#apiKey_keyManager').check({ force: true });
+      await page.locator('main button[type=submit]').click();
+      await page.waitForURL(u => u.pathname === '/admin/api-key/');
+      await api(`/api/api-key/${keyId}`, 'POST', { apiKey: { name: 'Pied Piper Gateway', key: 'pied-piper-gateway-example-api-key', tenantId: defaultTenantId, permissions: { endpoints: { '/api/login': ['POST'] } } } });
+    } finally { await page.close(); }
+    return async () => {
+      await api(`/api/api-key/${keyId}`, 'DELETE');
+      await api(`/api/api-key/${managerId}`, 'DELETE');
+    };
+  },
+});
 
 // alerts that are what the screenshot shows
 const keepAlerts = ['account-not-registered', 'account-configuration-incomplete', 'account-recovery-codes', 'authenticate-account-lock-user-view', 'authenticate-mfa-code-sent', 'manage-user-actions-locked-account'];
@@ -2087,6 +2305,7 @@ export default {
   },
 
   beforeAll: async (context) => {
+    leftoversContext = context;
     const page = await context.newPage();
 
     // FusionAuth's API healthcheck passes before the kickstart finishes and the
@@ -2625,6 +2844,21 @@ export default {
       if (!switched) throw new Error(`switch not found: ${id}`);
     }
 
+    if (ctx?.name === 'webhook-event-log-settings') {
+      await selectTab(page, 'Advanced');
+      await page.evaluate(() => {
+        const remove = document.getElementById('systemConfiguration_webhookEventLogConfiguration_delete_enabled');
+        if (!remove.checked) remove.click();
+        for (const id of ['webhook-event-log-settings', 'webhook-event-log-delete-settings']) {
+          const panel = document.getElementById(id);
+          panel.classList.remove('hidden');
+          panel.classList.add('open');
+          panel.style.cssText = 'display:block!important;height:auto!important;max-height:none!important';
+        }
+      });
+      await page.locator('#systemConfiguration_webhookEventLogConfiguration_delete_numberOfDaysToRetain').waitFor({ state: 'visible' });
+    }
+
     // FusionAuth creates the Tenant manager application with a new random id on each start
     if (ctx?.name === 'application-list' || ctx?.name === 'five-minute-application-listing') {
       const pinned = await page.evaluate(() => {
@@ -3045,6 +3279,16 @@ export default {
       await page.waitForLoadState('networkidle');
     }
 
+    if (ctx?.name === 'hierarchy-entity-types' || ctx?.name === 'hierarchy-entities') {
+      await page.evaluate(name => {
+        for (const row of document.querySelectorAll('main tbody tr')) {
+          if (/Printers|Office Printer/.test(row.textContent)) row.remove();
+        }
+        const count = name === 'hierarchy-entities' ? 7 : 3;
+        const walker = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) node.textContent = node.textContent.replace(/1[–-]\d+ of \d+ results/, `1–${count} of ${count} results`);
+      }, ctx.name);
+    }
     if (ctx?.name === 'hierarchy-user-grant') {
       await tabsReady(page);
       await selectTab(page, 'Entity grants');
@@ -3091,7 +3335,18 @@ export default {
       }
     }
 
+    if (ctx?.name === 'account-form-edit') {
+      await page.locator('#formId').evaluate(el => { el.value = 'e8270120-1ee6-49d8-805d-78de4f9e97b5'; });
+    }
+
     if (ctx?.name === 'account-forms-list') {
+      await page.evaluate(() => {
+        const ids = { 'Default User Self Service': 'cd2e5189-af39-4898-b3f3-78dcf4e4c6e8', 'Default Admin User': 'ba708008-432a-43d0-bdee-dac4cacc57d1', 'Default Admin Registration': '0b1faa30-0ff9-4922-b0b9-6517dd9ee7c8' };
+        for (const row of document.querySelectorAll('main tbody tr')) {
+          const name = Object.keys(ids).find(name => row.textContent.includes(name));
+          if (name) row.querySelectorAll('td')[1].textContent = ids[name];
+        }
+      });
       await tag('self-service-form', () => [...document.querySelectorAll('main tbody tr')].find(tr => tr.textContent.includes('Default User Self Service')));
     }
 
@@ -4580,6 +4835,157 @@ export default {
       }
     }
 
+    // Leftovers
+    if (ctx?.name?.startsWith('leftovers-')) {
+      const name = ctx.name.slice('leftovers-'.length);
+      if (['gateway-login', 'mcp-consent', 'banking-consent', 'scope-consent'].includes(name)) {
+        for (let i = 0; ; i++) {
+          await page.context().clearCookies({ name: /^fusionauth\.oauth2/ });
+          await page.goto(leftoversHostedUrls[name], { waitUntil: 'networkidle' }).catch(() => {});
+          const login = page.locator('#loginId');
+          if (name === 'gateway-login' && await login.isVisible()) break;
+          if (name !== 'gateway-login' && await login.isVisible()) {
+            await login.fill('richard@piedpiper.com');
+            await page.fill('#password', 'password');
+            await Promise.all([
+              page.waitForURL(u => u.pathname.includes('/oauth2/consent') || u.pathname === '/callback', { timeout: 15000 }),
+              page.keyboard.press('Enter'),
+            ]);
+            await page.waitForLoadState('networkidle');
+          }
+          if (name !== 'gateway-login' && new URL(page.url()).pathname.includes('/oauth2/consent')) break;
+          if (i === 60) throw new Error(`Leftovers hosted flow did not reach ${name}: ${new URL(page.url()).pathname}`);
+          await page.waitForTimeout(500);
+        }
+      }
+      const mark = async (selector, label) => page.locator(selector).first().evaluate((el, value) => { el.dataset.hl = value; }, label);
+      if (name === 'api-key-manager') await page.fill('#apiKey_key', 'pied-piper-example-key-manager');
+      if (name === 'm2m-entity-type-jwt') {
+        await selectTab(page, 'JWT');
+        await page.locator('#entityTypeId').evaluate(el => { el.value = '00000000-0000-0000-0000-f70000000003'; });
+      }
+      if (name === 'gateway-tenant-issuer') await page.fill('#tenant_issuer', 'https://local.fusionauth.io');
+      if (name === 'gateway-application-create-jwt') {
+        await page.fill('#application_name', 'Pied Piper Gateway');
+        await page.locator('#accessTokenKeyId button').click();
+        await page.locator('#accessTokenKeyId [role=option]').filter({ hasText: 'Pied Piper Gateway signing key (RS256)' }).click();
+      }
+      if (['gateway-application-jwt', 'gateway-application-create-jwt'].includes(name)) {
+        await page.locator('#accessTokenKeyId-input').evaluate(el => { el.closest('fieldset').dataset.hl = 'leftovers-access-signing-key'; });
+        if (name === 'gateway-application-jwt') await page.locator('#idTokenKeyId-input').evaluate(el => { el.closest('fieldset').dataset.hl = 'leftovers-id-signing-key'; });
+      }
+      if (name === 'gateway-create-user') {
+        await page.fill('#user_email', 'developer@piedpiper.com');
+        await page.locator('#sendSetPasswordIdentityType-doNotSend').check({ force: true });
+        await page.fill('#user_password', 'pied-piper-password');
+        await page.fill('#confirm_user_password', 'pied-piper-password');
+      }
+      if (name === 'gateway-user-registration') {
+        await selectTab(page, 'Registrations');
+        await mark('a:has-text("Add registration"), button:has-text("Add registration")', 'leftovers-add-registration');
+      }
+      if (['gateway-api-key-permissions', 'api-key-create', 'api-key-tenant', 'api-key-endpoint-permissions'].includes(name)) {
+        await page.locator('[name="apiKey.metaData.attributes[\'description\']"]').fill('Pied Piper Gateway');
+        await page.fill('#apiKey_key', 'pied-piper-gateway-example-api-key');
+        await page.fill('#apiKey_name', 'Pied Piper Gateway');
+        if (name === 'api-key-tenant') await page.selectOption('#tenantId', defaultTenantId);
+        const row = page.locator('tr').filter({ has: page.locator('input[name="apiKey.permissions.endpoints[\'/api/login\']"]') });
+        if (name === 'gateway-api-key-permissions') {
+          await row.locator('input[value="POST"]').check({ force: true });
+          await row.evaluate(el => { el.dataset.hl = 'leftovers-login-permission'; });
+          await row.scrollIntoViewIfNeeded();
+        }
+        if (name === 'api-key-endpoint-permissions') {
+          await page.locator('fieldset:has(input[name="apiKey.permissions.endpoints[\'/api/login\']"])').evaluate(el => {
+            const top = el.getBoundingClientRect();
+            const rows = [...el.querySelectorAll('tbody tr')];
+            const bottom = rows[4].getBoundingClientRect().bottom;
+            const box = document.createElement('div');
+            box.dataset.hl = 'leftovers-endpoints';
+            box.style.cssText = `position:absolute;left:${top.left + scrollX}px;top:${top.top + scrollY}px;width:${top.width}px;height:${bottom - top.top}px;pointer-events:none`;
+            document.body.append(box);
+          });
+        }
+      }
+      if (name === 'gateway-api-key') {
+        await page.fill('#s_nameOrDescription', 'Pied Piper Gateway');
+        await page.locator('#s_nameOrDescription').evaluate(el => el.form.requestSubmit());
+        await page.waitForLoadState('networkidle');
+        await mark('tbody tr', 'leftovers-key');
+        await page.locator('tbody tr a').filter({ hasText: /…/ }).first().click();
+      }
+      if (name === 'gateway-application-id') {
+        const row = page.locator('tr').filter({ hasText: 'Pied Piper Gateway' });
+        await row.locator('a[href*="/ajax/application/view/"]').evaluate(el => el.click());
+        await page.locator('.prime-dialog.open').waitFor();
+        await tag('leftovers-application-id', () => [...document.querySelectorAll('.prime-dialog.open tr')].find(tr => tr.firstElementChild?.textContent.trim() === 'Id:'));
+        await page.evaluate(() => { const row = [...document.querySelectorAll('tr')].find(tr => tr.textContent.includes('Tenant manager')); if (row?.querySelectorAll('td')[1]) row.querySelectorAll('td')[1].textContent = '00000000-0000-0000-0000-f70000000005'; });
+      }
+      if (name === 'gateway-public-key') {
+        const row = page.locator('tr').filter({ hasText: 'Pied Piper Gateway signing key' }).first();
+        await row.locator('a[href*="/ajax/key/view/"]').evaluate(el => el.click());
+        await page.locator('.prime-dialog.open').waitFor();
+        await tag('leftovers-public-key', () => [...document.querySelectorAll('.prime-dialog.open pre')].find(pre => pre.textContent.includes('BEGIN PUBLIC KEY'))?.closest('tr'));
+        await tag('leftovers-public-heading', () => {
+          const heading = [...document.querySelectorAll('.prime-dialog.open h3')].find(el => el.textContent.trim() === 'Public Key');
+          if (!heading) return null;
+          const span = document.createElement('span');
+          span.textContent = heading.textContent.trim();
+          heading.replaceChildren(span);
+          return span;
+        });
+        await page.locator('[data-hl="leftovers-public-key"]').evaluate(el => {
+          const main = el.closest('main');
+          main.scrollTop = el.offsetTop - 80;
+        });
+        await page.evaluate(() => {
+          const dialog = document.querySelector('.prime-dialog.open');
+          const text = [...dialog.querySelectorAll('h3')].find(el => el.textContent.trim() === 'Public Key');
+          text?.scrollIntoView({ block: 'start' });
+        });
+      }
+      if (['scope-create', 'scope-edit', 'scope-view', 'scope-delete'].includes(name)) {
+        const action = name.slice(6);
+        const href = action === 'create' ? '/ajax/application/scope/add' : `/ajax/application/scope/${action}`;
+        await page.locator(`a[href*="${href}"]`).first().evaluate(el => el.click());
+        await page.locator('.prime-dialog.open').waitFor();
+        if (action === 'edit') {
+          await page.fill('#scope_description', "Provides an application read-only access to a user's data");
+          await page.locator('#scope_required').check({ force: true });
+        }
+        await page.locator('.prime-dialog.open input[id="scopeId"]').evaluateAll(els => els.forEach(el => { if (el.type !== 'hidden') el.value = '00000000-0000-0000-0000-f70000000002'; }));
+      }
+      if (name === 'tenant-mailcatcher') {
+        await page.fill('#tenant_emailConfiguration_host', 'mailcatcher');
+        await page.fill('#tenant_emailConfiguration_port', '1025');
+        await page.fill('#tenant_emailConfiguration_defaultFromEmail', 'support@piedpiper.com');
+      }
+      await page.evaluate(([name, appId]) => {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) node.textContent = node.textContent.replace(/http:\/\/localhost:\d+/g, 'https://local.fusionauth.io');
+        for (const el of document.querySelectorAll('input:not([type=hidden]), textarea')) el.value = el.value.replace(/http:\/\/localhost:\d+/g, 'https://local.fusionauth.io');
+        const id = document.querySelector('#_applicationId');
+        if (id) id.value = appId;
+        if (name === 'gateway-public-key') {
+          let n = 0;
+          for (const cell of document.querySelectorAll('main td')) {
+            if (/^[a-f0-9-]{36}$/.test(cell.textContent.trim()) && !cell.textContent.includes('f700')) cell.textContent = `00000000-0000-0000-0000-f700000003${String(n++).padStart(2, '0')}`;
+          }
+        }
+      }, [name, leftoversAppId]);
+      if (name !== 'api-key-endpoint-permissions') {
+        if (name !== 'gateway-api-key-permissions') await page.evaluate(() => window.scrollTo(0, 0));
+        // The generator centers the first highlight; these shots keep their window framing.
+        if (ctx.highlights?.[0]?.selector) await page.locator(ctx.highlights[0].selector).first().evaluate(el => { el.scrollIntoView = () => {}; });
+      }
+      if (name === 'application-list') {
+        await page.evaluate(() => {
+          const row = [...document.querySelectorAll('tr')].find(tr => tr.textContent.includes('Tenant manager'));
+          if (row?.querySelectorAll('td')[1]) row.querySelectorAll('td')[1].textContent = '00000000-0000-0000-0000-f70000000005';
+        });
+      }
+    }
+
     if (ctx?.name === 'theme-localization-messages') {
       // viewport is already set to spec.height by capture.mjs before this hook runs.
       // scroll down to reach the Add Localization button (below the fold), click it,
@@ -4735,15 +5141,92 @@ export default {
       await page.waitForTimeout(300);
     }
 
-    // pin run-time dates; a day over 12 shows the dd/mm order
-    if (new URL(page.url()).pathname.startsWith('/admin')) {
+    if (ctx?.name === 'multi-tenant-key-manager') {
+      await page.fill('#apiKey_key', 'Lah5sI9ZScU5QEngQlpS9G7VnE1JMmpJpR9-BbvNLgC9V56itzizT1f_');
+      await page.evaluate(() => document.activeElement?.blur());
+    }
+    if (ctx?.name === 'hierarchy-user-grant') {
+      await page.evaluate(() => {
+        for (const row of document.querySelectorAll('#entity-grants tbody tr')) {
+          if (row.textContent.includes('Change Bank Operations')) row.querySelector('td').textContent = '20990ee5-5a68-4345-afd0-0fbed9e5c8ee';
+        }
+      });
+    }
+
+    // Pin generated values in the older overview and webhook captures.
+    if (ctx?.name === 'five-minute-dashboard') {
+      await page.evaluate(() => {
+        const users = ['richard@piedpiper.com', 'jianyang@octhulu.com', 'gavin@hooli.com', 'monica@raviga.com', 'gilfoyle@piedpiper.com', 'dinesh@piedpiper.com', 'erlich@bachmanity.com', 'bighead@piedpiper.com', 'richard@piedpiper.com', 'richard@piedpiper.com'];
+        document.querySelectorAll('main tbody tr').forEach((row, i) => {
+          const cells = row.querySelectorAll('td');
+          if (cells.length < 4 || !users[i]) return;
+          cells[0].textContent = users[i];
+          cells[1].textContent = i === 0 || i === 9 ? 'FusionAuth' : 'Pied Piper';
+          cells[3].textContent = i === 0 ? '192.168.65.1' : '127.0.0.1';
+        });
+      });
+    }
+    if (ctx?.name === 'webhook-key-gen') {
+      await page.evaluate(() => {
+        for (const row of document.querySelectorAll('main tbody tr')) {
+          const cells = row.querySelectorAll('td');
+          if (cells[1]?.textContent.trim() === 'Default signing key') cells[0].textContent = '00cc3b11-eb11-4b4d-bbc5-45c5c0787c98';
+          if (cells[1]?.textContent.trim() === 'Tenant manager signing key') cells[0].textContent = '1f8e8340-4ffc-40ac-ae26-3085d39f4035';
+        }
+      });
+    }
+    if (ctx?.name === 'webhook-test' || ctx?.name?.startsWith('webhook-event-')) {
+      await page.evaluate(name => {
+        const targets = name === 'webhook-test' ? ['1792498058318', '1792498038823', '1792498041959'] : ['1792501135648', '1792501135651'];
+        const instants = new Map();
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          node.textContent = node.textContent.replace(/\b\d{13}\b/g, value => {
+            if (!instants.has(value)) instants.set(value, targets[instants.size] ?? targets.at(-1));
+            return instants.get(value);
+          });
+          if (name === 'webhook-event-source') node.textContent = node.textContent.replace(/("id"\s*:\s*)\d+/g, (_, prefix) => prefix + '2');
+          if (name !== 'webhook-test') {
+            node.textContent = node.textContent.replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g, id => id === '00000000-0000-0000-0000-600000000001' ? id : '11cd546c-55fa-464c-b498-2f52021b4828').replace(/\b\d+ ms\b/g, '35 ms');
+            if (node.parentElement?.closest('.cm-line, .CodeMirror-line')?.textContent.match(/"id"\s*:/) && /^\d+$/.test(node.textContent)) node.textContent = '2';
+          }
+        }
+      }, ctx.name);
+    }
+    if (legacyVersionShots.has(ctx?.name)) {
       await page.evaluate(() => {
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-          node.textContent = node.textContent
-            .replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, '24/09/2026')
-            .replace(/\b\d{2}:\d{2}(:\d{2}(,\d{3})?)? (AM|PM)\b/g, (m, seconds, millis) => `09:00${seconds ? ':00' : ''}${millis ? ',000' : ''} AM`);
+          node.textContent = node.textContent.replace(/FusionAuth version 1\.69\.4/g, 'FusionAuth version 1.69.1');
         }
+      });
+    }
+
+    // pin run-time dates; a day over 12 shows the dd/mm order
+    if (new URL(page.url()).pathname.startsWith('/admin')) {
+      await page.evaluate(name => {
+        const legacyDate = ['user-locale-date-format', 'user-admin-role'].includes(name);
+        let lastLogin = false, seenLogin = false;
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          if (name === 'user-admin-role' && node.textContent.trim() === 'français') node.textContent = node.textContent.replace('français', 'French');
+          if (name === 'user-admin-role' && !seenLogin && node.textContent.trim() === 'Last login') { lastLogin = true; seenLogin = true; }
+          node.textContent = node.textContent
+            .replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, name === 'user-admin-role' ? '10/12/2026' : legacyDate ? '12/10/2026' : '24/09/2026')
+            .replace(/\b\d{2}:\d{2}(:\d{2}(,\d{3})?)? (AM|PM)\b/g, (m, seconds, millis) => { if (lastLogin) { lastLogin = false; return '05:50 PM'; } return legacyDate ? '05:49 PM' : ['user-session', 'user-recent-logins'].includes(name) ? '09:00 AM' : `09:00${seconds ? ':00' : ''}${millis ? ',000' : ''} AM`; });
+        }
+      }, ctx?.name);
+    }
+
+    // Normalize dates before measuring the table column highlight.
+    if (ctx?.name === 'multi-tenant-users') {
+      await page.evaluate(() => {
+        const table = document.querySelector('main table');
+        const index = [...table.querySelectorAll('thead th')].findIndex(th => th.textContent.trim() === 'Tenant');
+        const cells = [...table.querySelectorAll('tr')].map(tr => tr.children[index]).filter(Boolean);
+        const a = cells[0].getBoundingClientRect(), b = cells.at(-1).getBoundingClientRect();
+        const box = document.querySelector('[data-hl="tenant-column"]');
+        box.style.cssText = `position:absolute;left:${a.left + scrollX}px;top:${a.top + scrollY}px;width:${a.width}px;height:${b.bottom - a.top}px;pointer-events:none`;
       });
     }
 
