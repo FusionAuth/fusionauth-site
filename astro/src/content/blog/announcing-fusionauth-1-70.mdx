@@ -55,7 +55,7 @@ CIMD-Registered Public Client (Enforces PKCE + Resource-Scoped Tokens)
 
 Platform teams maintain complete control over ingress. Each approved domain carries its own defined scopes and executes an isolated registration lambda—a custom script running within FusionAuth whenever a client registers or re-fetches its metadata. The lambda evaluates the incoming document and programmatically allows, denies, or revokes access.
 
-Crucially, granted scopes are dictated entirely by your server-side policy, not by what the client requests. Every CIMD-registered client operates as a public client requiring PKCE, explicit user consent is required for every client, and refresh tokens remain strictly locked to that specific client application and target resource.
+Crucially, granted scopes are dictated entirely by your server-side policy, not by what the MCP server or client requests. Every CIMD-registered client operates as a public client requiring PKCE, explicit user consent is required for every client, and refresh tokens remain strictly locked to that specific client application and target resource.
 
 Teams have three ways to cut off a client application. They can delete its registration through the FusionAuth API, have the registration lambda revoke it the next time the client registers or its document is re-fetched, or delete the domain to remove every client on that origin. Access tokens already issued are JWTs your APIs validate on their own, so they stay valid until they expire. Keep their lifetimes short.
 
@@ -81,9 +81,9 @@ In identity architecture, the distinction between impersonation and delegation i
 
 - **Delegation** explicitly preserves identity context. The token clearly asserts that an intermediate service is acting _on behalf of_ a principal, without inheriting unchecked authority.
 
-[Dave Hayes](https://www.linkedin.com/in/daveeurica/), our VP of Product, strongly believes: _"Impersonation is a crime. Delegation is something that happens in every company a hundred times a minute."_
+[Dave Hayes](https://www.linkedin.com/in/daveeurica/), our VP of Product, strongly believes: _"Impersonation is malicious. Delegation is something that happens in every company a hundred times a minute."_
 
-Historically, legacy software often took the easy route—letting a background job or support engineer log in exactly as the user because it was simplest to build. But masking an automated service as a human user destroys non-repudiation. If your logs cannot distinguish between a user clicking a button and an AI agent acting on their behalf, you do not have an audit chain; you have a liability.
+Historically, legacy software often took the easy route—letting a background job or support engineer behave as the user because it was simplest to build. But masking an automated service as a human user destroys non-repudiation. If your logs cannot distinguish between a user clicking a button and an AI agent acting on their behalf, you do not have an audit chain; you have a liability.
 
 Token exchange in FusionAuth strictly implements delegation. Every exchanged token injects the standard RFC 8693 `act` (actor) claim, permanently encoding the identity of the specific service executing the request alongside the user's identity. When the user's token carries scopes, the exchanged token can narrow them but can't exceed them.
 
