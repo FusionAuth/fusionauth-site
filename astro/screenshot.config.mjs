@@ -15,7 +15,8 @@ try {
 let adminLocale;
 // the OAuth single sign-on cookie, set aside while a screenshot needs a signed-out hosted page
 let savedSso;
-const signedOut = ['lambda-registration-blank', 'lambda-registration-invalid', 'five-minute-login', 'migration-user-login', 'authenticate-mfa-code-sent', 'authenticate-mfa-challenge-methods', 'authenticate-mfa-self-service-methods', 'authenticate-account-lock-user-view'];
+const signedOut = ['lambda-registration-blank', 'lambda-registration-invalid', 'five-minute-login', 'migration-user-login', 'authenticate-mfa-code-sent', 'authenticate-mfa-challenge-methods', 'authenticate-mfa-self-service-methods', 'authenticate-account-lock-user-view', 'manage-user-actions-locked-account', 'manage-verification-email-gate-link', 'manage-verification-email-gate-code', 'manage-verification-phone-gate', 'manage-verification-registration-gate-link', 'manage-verification-registration-gate-code'];
+
 
 const dineshId = '00000000-0000-0000-0000-100000000004';
 const gilfoyleId = '00000000-0000-0000-0000-100000000005';
@@ -264,6 +265,53 @@ const fixedHeight = {
   'authenticate-application-view-client-credentials': null,
   'authenticate-aiven-api-keys': null,
   'authenticate-sendgrid-metadata': null,
+  // Manage users and verification
+  'manage-verification-tenant-email-settings': 'Messaging settings',
+  'manage-verification-email-template-right': 'Messaging settings',
+  'manage-verification-email-template-wrong': 'Messaging settings',
+  'manage-pre-verification-tenant-email': 'Messaging settings',
+  'manage-pre-verification-tenant-phone': 'Messaging settings',
+  'manage-verification-application-registration-delete': 'Registration verification settings',
+  'manage-verification-tenant-phone-timeout': 'External identifier durations',
+  'manage-verification-tenant-email-timeouts': 'External identifier durations',
+  'manage-verification-email-template': null,
+  'manage-verification-application-details': null,
+  'manage-verification-email-gate-link': null,
+  'manage-verification-email-gate-code': null,
+  'manage-verification-registration-gate-link': null,
+  'manage-verification-registration-gate-code': null,
+  'manage-verification-tenant-messenger': null,
+  'manage-verification-tenant-phone-settings': null,
+  'manage-verification-phone-template': null,
+  'manage-verification-application-registration-settings': null,
+  'manage-verification-registration-template': null,
+  'manage-verification-registration-template-right': null,
+  'manage-verification-registration-template-wrong': null,
+  'manage-pre-verification-field-email': null,
+  'manage-pre-verification-field-phone': null,
+  'manage-pre-verification-form-email': null,
+  'manage-pre-verification-form-phone': null,
+  'manage-pre-verification-application-email-form': null,
+  'manage-pre-verification-application-phone-form': null,
+  'manage-pre-verification-application-details': null,
+  'manage-pre-verification-user-email-verified': null,
+  'manage-pre-verification-user-phone-verified': null,
+  'manage-pre-verification-user-email-phone-verified': null,
+  'manage-pre-verification-twilio-messenger': null,
+  'manage-user-actions-tenant-smtp': null,
+  'manage-user-actions-application-add': null,
+  'manage-user-actions-application-oauth': null,
+  'manage-user-actions-api-key': null,
+  'manage-user-actions-welcome-template': null,
+  'manage-user-actions-reasons-button': null,
+  'manage-user-actions-reasons': null,
+  'manage-user-actions-webhook-add': null,
+  'manage-user-actions-subscribe-action': null,
+  'manage-user-actions-survey-action': null,
+  'manage-user-actions-locked-account': null,
+  'manage-admin-forms-user-form': null,
+  'manage-admin-forms-registration-form': null,
+  'manage-cleanspeak-integration': null,
 };
 
 const defaultThemeId = '75a068fd-e94b-451a-9aeb-3ddb9a3b5987';
@@ -344,6 +392,10 @@ const bands = {
   'authenticate-application-security-login-api-refresh': "[data-section='login-api-settings']",
   'authenticate-application-oauth-logout-behavior': 'el-tab-list, #application_oauthConfiguration_logoutBehavior-form-row',
   'authenticate-zendesk-application-saml': 'el-tab-list, #application_lambdaConfiguration_samlv2PopulateId-form-row',
+  // Manage users and verification
+  'manage-verification-application-self-service': '#manage-self-service-strip',
+  'manage-verification-application-self-service-phone': '#manage-self-service-strip',
+  'manage-search-about-engine': "[data-hl='system-panel']",
 };
 
 const exampleWebhookId = '00000000-0000-0000-0000-600000000001';
@@ -993,6 +1045,84 @@ const auth = {
   tableauAppId: '00000000-0000-0000-0000-f30000000013',
   voiceTemplateId: '00000000-0000-0000-0000-f30000000014',
 };
+// Manage users and verification: a tenant with email, phone and registration verification gated, and its users
+const manageId = n => `00000000-0000-0000-0000-f4${String(n).padStart(10, '0')}`;
+const verification = {
+  tenantId: manageId(1), appId: manageId(2), codeAppId: manageId(3),
+  emailTemplateId: manageId(11), registrationTemplateId: manageId(12), phoneTemplateId: manageId(13),
+  emailFieldId: manageId(21), phoneFieldId: manageId(22), emailFormId: manageId(31), phoneFormId: manageId(32),
+  // email unverified, phone unverified, registration unverified, verified email, verified phone, both verified, email code, registration code
+  users: {
+    jared: [manageId(41), { email: 'jared@piedpiper.com', firstName: 'Jared', lastName: 'Dunn' }, { skipRegistrationVerification: true }],
+    laurie: [manageId(42), { phoneNumber: '+15555552223', firstName: 'Laurie', lastName: 'Bream' }, { skipRegistrationVerification: true }],
+    carla: [manageId(43), { email: 'carla@piedpiper.com', firstName: 'Carla', lastName: 'Walton' }, { skipVerification: true }],
+    jack: [manageId(44), { email: 'jack@piedpiper.com', firstName: 'Jack', lastName: 'Barker' }, { skipVerification: true, skipRegistrationVerification: true }],
+    ron: [manageId(45), { phoneNumber: '+15555550142', firstName: 'Ron', lastName: 'LaFlamme' }, { skipVerification: true, skipRegistrationVerification: true }],
+    russ: [manageId(46), { email: 'russ@piedpiper.com', phoneNumber: '+15555550199', firstName: 'Russ', lastName: 'Hanneman' }, { skipVerification: true, skipRegistrationVerification: true }],
+    peter: [manageId(47), { email: 'peter@piedpiper.com', firstName: 'Peter', lastName: 'Gregory' }, { skipRegistrationVerification: true }],
+    ed: [manageId(48), { email: 'ed@piedpiper.com', firstName: 'Ed', lastName: 'Chen' }, { skipVerification: true }],
+  },
+};
+const userActionsExample = {
+  welcomeTemplateId: manageId(51), goodbyeTemplateId: manageId(52), paidReasonId: manageId(61), expiredReasonId: manageId(62), surveyActionId: manageId(72),
+};
+const adminFormsExample = { colorFieldId: manageId(81), backgroundFieldId: manageId(82), userFormId: manageId(83), registrationFormId: manageId(84) };
+// form values set (not saved) for each screenshot: true/false for switches and radios, text for inputs and selects
+const manageFields = {
+  'manage-verification-tenant-email-settings': { tenant_phoneConfiguration_verifyPhoneNumber: false, tenant_emailConfiguration_verificationStrategy: 'FormField' },
+  'manage-verification-tenant-phone-settings': { tenant_emailConfiguration_verifyEmail: false },
+  'manage-verification-email-template-right': { tenant_phoneConfiguration_verifyPhoneNumber: false, tenant_emailConfiguration_unverified_behavior: 'Allow' },
+  'manage-verification-email-template-wrong': {
+    tenant_phoneConfiguration_verifyPhoneNumber: false, tenant_emailConfiguration_unverified_behavior: 'Allow', tenant_emailConfiguration_verificationEmailTemplateId: verification.registrationTemplateId,
+  },
+  'manage-verification-registration-template-right': { application_unverified_behavior: 'Allow' },
+  'manage-verification-registration-template-wrong': { application_unverified_behavior: 'Allow', application_verificationEmailTemplateId: verification.emailTemplateId },
+  'manage-verification-application-registration-delete': {
+    application_unverified_behavior: 'Allow', application_registrationDeletePolicy_unverified_enabled: true, application_registrationDeletePolicy_unverified_numberOfDaysToRetain: '2',
+    'application_registrationConfiguration_loginIdType-phoneNumber': true, application_registrationConfiguration_confirmPassword: true,
+  },
+  'manage-verification-application-self-service-phone': { 'application_registrationConfiguration_loginIdType-phoneNumber': true },
+  'manage-pre-verification-tenant-email': { tenant_phoneConfiguration_verifyPhoneNumber: false, tenant_emailConfiguration_unverified_allowEmailChangeWhenGated: true },
+  'manage-pre-verification-tenant-phone': {
+    tenant_emailConfiguration_verifyEmail: false, tenant_phoneConfiguration_verificationStrategy: 'ClickableLink', tenant_phoneConfiguration_unverified_allowPhoneNumberChangeWhenGated: true,
+  },
+  'manage-pre-verification-application-email-form': {
+    application_verifyRegistration: false, 'application_registrationConfiguration_type-advanced': true, application_registrationConfiguration_formId: verification.emailFormId,
+  },
+  'manage-pre-verification-application-phone-form': {
+    application_verifyRegistration: false, 'application_registrationConfiguration_type-advanced': true, application_registrationConfiguration_formId: verification.phoneFormId,
+  },
+  'manage-pre-verification-field-email': { field_name: 'Email address', field_key: 'user.email', field_required: true },
+  'manage-pre-verification-field-phone': { field_name: 'Phone number', field_key: 'user.phoneNumber', field_required: true },
+  'manage-pre-verification-twilio-messenger': {
+    messenger_name: 'Twilio Example', messenger_url: 'https://api.twilio.com', messenger_accountSID: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    messenger_authToken: '2dacc9b0317671b0b9dacc9b0317671b', messenger_fromPhoneNumber: '+18559728742',
+  },
+  'manage-user-actions-tenant-smtp': { tenant_emailConfiguration_host: 'host.docker.internal', tenant_emailConfiguration_port: '1025' },
+  'manage-user-actions-application-add': { applicationId: manageId(101), application_name: 'PiedPiper' },
+  'manage-user-actions-application-oauth': {
+    applicationId: manageId(101), application_name: 'PiedPiper', application_oauthConfiguration_logoutURL: 'http://localhost:3000/logout',
+  },
+  'manage-user-actions-api-key': { apiKeyId: manageId(102), apiKey_key: 'FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh' },
+  'manage-user-actions-welcome-template': { emailTemplateId: manageId(103), emailTemplate_name: 'Welcome', emailTemplate_defaultSubject: 'Welcome' },
+  'manage-user-actions-webhook-add': { webhookId: manageId(104), webhook_url: 'http://host.docker.internal:3000/intercom', "webhook_eventsEnabled['UserAction']": true },
+  'manage-user-actions-subscribe-action': {
+    userAction_id: manageId(105), userAction_name: 'Subscribe', userAction_temporal: true, userAction_sendEndEvent: true,
+    userAction_userEmailingEnabled: true, userAction_includeEmailInEventJSON: true, userAction_startEmailTemplateId: userActionsExample.welcomeTemplateId,
+    userAction_modifyEmailTemplateId: userActionsExample.goodbyeTemplateId, userAction_cancelEmailTemplateId: userActionsExample.goodbyeTemplateId,
+    userAction_endEmailTemplateId: userActionsExample.goodbyeTemplateId,
+  },
+  'manage-cleanspeak-integration': {
+    integrations_cleanspeak_enabled: true, integrations_cleanspeak_url: 'http://localhost:8001', integrations_cleanspeak_apiKey: 'b44395a7-e5a8-4a41-b73a-364576277c0d',
+    integrations_cleanspeak_usernameModeration_enabled: true,
+  },
+};
+// hosted login pages, signed in as these users
+const manageLogins = {
+  'manage-verification-email-gate-link': 'jared@piedpiper.com', 'manage-verification-email-gate-code': 'peter@piedpiper.com', 'manage-verification-phone-gate': '+15555552223',
+  'manage-verification-registration-gate-link': 'carla@piedpiper.com', 'manage-verification-registration-gate-code': 'ed@piedpiper.com', 'manage-user-actions-locked-account': 'gavin@hooli.com',
+};
+const extractedCode = file => readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'extractedcode', file), 'utf-8');
 
 // created for the screenshots that need them and deleted before any other, so other pages don't list them
 const temporaryResources = [
@@ -1284,7 +1414,88 @@ const temporaryResources = [
       await api(`/api/application/${auth.tableauAppId}`, 'POST', { application: { name: 'Tableau Cloud OIDC', oauthConfiguration: { clientSecret: 'tableau-secret-not-for-production', enabledGrants: ['authorization_code', 'refresh_token'] } } });
     },
   },
+  // Manage users and verification
+  {
+    names: [
+      'manage-verification-tenant-email-settings', 'manage-verification-email-template', 'manage-verification-application-self-service', 'manage-verification-application-details',
+      'manage-verification-email-gate-link', 'manage-verification-email-unverified-user', 'manage-verification-email-gate-code', 'manage-verification-tenant-messenger',
+      'manage-verification-tenant-phone-settings', 'manage-verification-phone-template', 'manage-verification-application-self-service-phone', 'manage-verification-phone-gate',
+      'manage-verification-phone-unverified-user', 'manage-verification-application-registration-settings', 'manage-verification-registration-template',
+      'manage-verification-registration-gate-link', 'manage-verification-registration-unverified-user', 'manage-verification-registration-gate-code',
+      'manage-verification-application-registration-delete', 'manage-verification-verified-user', 'manage-verification-email-template-right', 'manage-verification-email-template-wrong',
+      'manage-verification-registration-template-right', 'manage-verification-registration-template-wrong', 'manage-pre-verification-tenant-email', 'manage-pre-verification-form-email',
+      'manage-pre-verification-application-email-form', 'manage-pre-verification-application-details', 'manage-pre-verification-user-email-verified', 'manage-pre-verification-tenant-phone',
+      'manage-pre-verification-form-phone', 'manage-pre-verification-application-phone-form', 'manage-pre-verification-user-phone-verified', 'manage-pre-verification-user-email-phone-verified',
+    ],
+    // deleting the tenant deletes its applications and users
+    paths: [
+      `/api/tenant/${verification.tenantId}`, `/api/form/${verification.emailFormId}`, `/api/form/${verification.phoneFormId}`,
+      `/api/form/field/${verification.emailFieldId}`, `/api/form/field/${verification.phoneFieldId}`, `/api/email/template/${verification.emailTemplateId}`,
+      `/api/email/template/${verification.registrationTemplateId}`, `/api/message/template/${verification.phoneTemplateId}`,
+    ],
+    create: async api => {
+      const v = verification;
+      const template = (name, subject, file) => ({ emailTemplate: { name, defaultSubject: subject, defaultFromName: 'Pied Piper', fromEmail: 'jared@piedpiper.com',
+        defaultHtmlTemplate: extractedCode(`templates-email/${file}.html.ftl`), defaultTextTemplate: extractedCode(`templates-email/${file}.txt.ftl`) } });
+      await api(`/api/email/template/${v.emailTemplateId}`, 'POST', template('Email Verification', 'Verify your Pied Piper email address', 'email-verification'));
+      await api(`/api/email/template/${v.registrationTemplateId}`, 'POST', template('Registration Verification', 'Verify your PiperChat registration', 'registration-verification'));
+      await api(`/api/message/template/${v.phoneTemplateId}`, 'POST', { messageTemplate: { name: 'Phone Verification', type: 'SMS', defaultTemplate: extractedCode('templates-messengers/phone-verification.txt.ftl') } });
+      await api(`/api/tenant/${v.tenantId}`, 'POST', { sourceTenantId: defaultTenantId, tenant: { name: 'Pied Piper' } });
+      // a copied tenant ignores the rest of the body
+      await api(`/api/tenant/${v.tenantId}`, 'PATCH', { tenant: {
+        emailConfiguration: { verifyEmail: true, verificationEmailTemplateId: v.emailTemplateId, verificationStrategy: 'ClickableLink', unverified: { behavior: 'Gated' } },
+        phoneConfiguration: { messengerId: '00000000-0000-0000-0000-500000000001', verifyPhoneNumber: true, verificationTemplateId: v.phoneTemplateId, verificationStrategy: 'FormField', unverified: { behavior: 'Gated' } },
+      } });
+      const inTenant = { 'X-FusionAuth-TenantId': v.tenantId };
+      const app = (name, strategy) => ({ application: { name,
+        oauthConfiguration: { authorizedRedirectURLs: ['https://example.com'], enabledGrants: ['authorization_code', 'refresh_token'] },
+        registrationConfiguration: { enabled: true, type: 'basic', loginIdType: 'email' },
+        verifyRegistration: true, verificationEmailTemplateId: v.registrationTemplateId, verificationStrategy: strategy, unverified: { behavior: 'Gated' },
+      } });
+      await api(`/api/application/${v.appId}`, 'POST', app('PiperChat', 'ClickableLink'), inTenant);
+      await api(`/api/application/${v.codeAppId}`, 'POST', app('Not-Hotdog', 'FormField'), inTenant);
+      await api(`/api/form/field/${v.emailFieldId}`, 'POST', { field: { key: 'user.email', name: 'Email address', control: 'text', type: 'email', required: true } });
+      await api(`/api/form/field/${v.phoneFieldId}`, 'POST', { field: { key: 'user.phoneNumber', name: 'Phone number', control: 'text', type: 'phoneNumber', required: true } });
+      // the built-in Password field gets a new id on each install
+      const password = (await api('/api/form/field')).fields.find(f => f.name === 'Password').id;
+      for (const [formId, name, fieldId, type] of [[v.emailFormId, 'Email verification', v.emailFieldId, 'verifyEmail'], [v.phoneFormId, 'Phone verification', v.phoneFieldId, 'verifyPhoneNumber']]) {
+        await api(`/api/form/${formId}`, 'POST', { form: { name, type: 'registration', steps: [{ fields: [fieldId] }, { type, fields: [] }, { fields: [password] }] } });
+      }
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      for (const [name, [userId, user, options]] of Object.entries(v.users)) {
+        await api(`/api/user/registration/${userId}`, 'POST', {
+          user: { password: 'password', ...user }, registration: { applicationId: name === 'ed' ? v.codeAppId : v.appId }, sendSetPasswordEmail: false, ...options,
+        }, inTenant);
+      }
+      // Skipping exempts an identity from gating; completing it supplies the verified indicator.
+      for (const [, user, options] of Object.values(v.users)) {
+        if (!options.skipVerification) continue;
+        for (const [loginIdType, loginId] of [['email', user.email], ['phoneNumber', user.phoneNumber]]) {
+          if (!loginId) continue;
+          const { verificationId } = await api('/api/identity/verify/start', 'POST', { loginId, loginIdType, verificationStrategy: 'ClickableLink' }, inTenant);
+          await api('/api/identity/verify/complete', 'POST', { verificationId }, inTenant);
+        }
+      }
+    },
+  },
+  {
+    names: ['manage-user-actions-subscribe-action', 'manage-user-actions-reasons', 'manage-user-actions-survey-action'],
+    paths: [
+      `/api/user-action/${userActionsExample.surveyActionId}`, `/api/user-action-reason/${userActionsExample.paidReasonId}`, `/api/user-action-reason/${userActionsExample.expiredReasonId}`,
+      `/api/email/template/${userActionsExample.welcomeTemplateId}`, `/api/email/template/${userActionsExample.goodbyeTemplateId}`,
+    ],
+    create: async api => {
+      const u = userActionsExample;
+      await api(`/api/user-action/${u.surveyActionId}`, 'POST', { userAction: { name: 'Survey', options: [['Good', 'Bona'], ['Neutral', 'Meza'], ['Bad', 'Malbona']].map(([name, eo]) => ({ name, localizedNames: { eo } })) } });
+      await api(`/api/user-action-reason/${u.paidReasonId}`, 'POST', { userActionReason: { text: 'Paid Subscription', code: 'PS' } });
+      await api(`/api/user-action-reason/${u.expiredReasonId}`, 'POST', { userActionReason: { text: 'Expired Subscription', code: 'ES' } });
+      const body = text => ({ defaultHtmlTemplate: text, defaultTextTemplate: text });
+      await api(`/api/email/template/${u.welcomeTemplateId}`, 'POST', { emailTemplate: { name: 'Welcome', defaultSubject: 'Welcome', ...body('Welcome to PiedPiper. Your subscription is valid for one month of reading.') } });
+      await api(`/api/email/template/${u.goodbyeTemplateId}`, 'POST', { emailTemplate: { name: 'Goodbye', defaultSubject: 'Goodbye', ...body('Your subscription has expired and you may no longer read the news. Goodbye.') } });
+    },
+  },
 ];
+
 
 const piedPiperAppId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
 const defaultTenantId = '30663132-6464-6665-3032-326466613934';
@@ -1529,10 +1740,78 @@ const temporaryState = [
       return () => apiRequest(`/api/application/${piedPiperAppId}`, 'PUT', { application });
     },
   })),
+  // Manage users and verification
+  {
+    names: ['manage-user-actions-subscriber'],
+    apply: async () => {
+      const userId = '00000000-0000-0000-0000-100000000002';
+      const roleId = manageId(106);
+      const { registration } = await apiRequest(`/api/user/registration/${userId}/${piedPiperAppId}`);
+      await apiRequest(`/api/application/${piedPiperAppId}/role/${roleId}`, 'POST', { role: { name: 'customer' } });
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      await apiRequest(`/api/user/registration/${userId}/${piedPiperAppId}`, 'PUT', { registration: { ...registration, roles: ['customer'] }, skipRegistrationVerification: true });
+      return async () => {
+        await apiRequest(`/api/user/registration/${userId}/${piedPiperAppId}`, 'PUT', { registration, skipRegistrationVerification: true });
+        await apiRequest(`/api/application/${piedPiperAppId}/role/${roleId}`, 'DELETE');
+      };
+    },
+  },
+  {
+    // the email strategy is set for the whole tenant, which the verification resources above create
+    names: ['manage-verification-email-gate-code'],
+    apply: async () => {
+      const tenant = `/api/tenant/${verification.tenantId}`, inTenant = { 'X-FusionAuth-TenantId': verification.tenantId };
+      const strategy = verificationStrategy => apiRequest(tenant, 'PATCH', { tenant: { emailConfiguration: { verificationStrategy } } });
+      await strategy('FormField');
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      await fetch(`http://localhost:9011/api/identity/verify/start`, {
+        method: 'POST', headers: { 'Authorization': 'screenshot-dev-key-not-for-production', 'Content-Type': 'application/json', ...inTenant },
+        body: JSON.stringify({ loginId: 'peter@piedpiper.com', loginIdType: 'email', verificationStrategy: 'FormField' }),
+      }).then(async r => { if (!r.ok) throw new Error(`verify start: ${r.status} ${await r.text()}`); });
+      return async () => {
+        if ((await fetch(`http://localhost:9011${tenant}`, { headers: { 'Authorization': 'screenshot-dev-key-not-for-production' } })).ok) await strategy('ClickableLink');
+      };
+    },
+  },
+  {
+    // custom admin user and registration forms with one custom field each, and Monica's values for them
+    names: ['manage-admin-forms-user-form', 'manage-admin-forms-registration-form', 'manage-admin-forms-user-data'],
+    apply: async () => {
+      const f = adminFormsExample;
+      await apiRequest(`/api/form/field/${f.colorFieldId}`, 'POST', { field: { key: 'user.data.favoriteColor', name: 'Favorite Color', control: 'text', type: 'string' } });
+      await apiRequest(`/api/form/field/${f.backgroundFieldId}`, 'POST', { field: { key: 'registration.data.backgroundColor', name: 'Desired Background Color', control: 'text', type: 'string' } });
+      const { forms } = await apiRequest('/api/form');
+      const withField = (type, fieldId) => {
+        const steps = structuredClone(forms.find(form => form.type === type && form.name.startsWith('Default')).steps);
+        steps[0].fields.push(fieldId);
+        return steps;
+      };
+      await apiRequest(`/api/form/${f.userFormId}`, 'POST', { form: { name: 'Custom Admin User', type: 'adminUser', steps: withField('adminUser', f.colorFieldId) } });
+      await apiRequest(`/api/form/${f.registrationFormId}`, 'POST', { form: { name: 'Custom Admin Registration', type: 'adminRegistration', steps: withField('adminRegistration', f.backgroundFieldId) } });
+      const { tenant } = await apiRequest(`/api/tenant/${defaultTenantId}`);
+      const { application } = await apiRequest(`/api/application/${piedPiperAppId}`);
+      const { user } = await apiRequest(`/api/user/${monicaId}`);
+      const { registration } = await apiRequest(`/api/user/registration/${monicaId}/${piedPiperAppId}`);
+      await apiRequest(`/api/tenant/${defaultTenantId}`, 'PATCH', { tenant: { formConfiguration: { adminUserFormId: f.userFormId } } });
+      await apiRequest(`/api/application/${piedPiperAppId}`, 'PATCH', { application: { formConfiguration: { adminRegistrationFormId: f.registrationFormId } } });
+      await apiRequest(`/api/user/${monicaId}`, 'PATCH', { user: { data: { company: 'PiedPiper', favoriteColor: 'red' } } });
+      await apiRequest(`/api/user/registration/${monicaId}/${piedPiperAppId}`, 'PATCH', { registration: { data: { backgroundColor: 'blue' } } });
+      return async () => {
+        await apiRequest(`/api/tenant/${defaultTenantId}`, 'PUT', { tenant });
+        await apiRequest(`/api/application/${piedPiperAppId}`, 'PUT', { application });
+        await apiRequest(`/api/user/${monicaId}`, 'PUT', { user, skipVerification: true });
+        await apiRequest(`/api/user/registration/${monicaId}/${piedPiperAppId}`, 'PUT', { registration, skipRegistrationVerification: true });
+        for (const path of [`/api/form/${f.userFormId}`, `/api/form/${f.registrationFormId}`, `/api/form/field/${f.colorFieldId}`, `/api/form/field/${f.backgroundFieldId}`]) {
+          await apiRequest(path, 'DELETE');
+        }
+      };
+    },
+  },
 ];
 
+
 // alerts that are what the screenshot shows
-const keepAlerts = ['account-not-registered', 'account-configuration-incomplete', 'account-recovery-codes', 'authenticate-account-lock-user-view', 'authenticate-mfa-code-sent'];
+const keepAlerts = ['account-not-registered', 'account-configuration-incomplete', 'account-recovery-codes', 'authenticate-account-lock-user-view', 'authenticate-mfa-code-sent', 'manage-user-actions-locked-account'];
 
 // one box around a whole form section, named as in [data-section]
 const sectionBoxes = {
@@ -1917,8 +2196,8 @@ export default {
         for (const path of resources.paths) {
           if (!(await exists(path))) continue;
           for (let i = 0; ; i++) {
-            // without hardDelete an application is only deactivated
-            try { await api(path.startsWith('/api/application/') ? `${path}?hardDelete=true` : path, 'DELETE'); break; } catch (e) {
+            // applications and user actions otherwise remain deactivated
+            try { await api((path.startsWith('/api/application/') || path.startsWith('/api/user-action/')) && !path.includes('hardDelete=') ? `${path}${path.includes('?') ? '&' : '?'}hardDelete=true` : path, 'DELETE'); break; } catch (e) {
               // a form stays in use until its deleted application is gone
               if (i >= 60 || !e.message.includes('[inUse]')) throw e;
               await page.waitForTimeout(500);
@@ -2971,9 +3250,230 @@ export default {
       if (name.startsWith('authenticate-') && name in fixedHeight && fixedHeight[name] === null) await page.evaluate(() => window.scrollTo(0, 0));
     }
 
+    // Manage users and verification
+    {
+      const name = ctx?.name ?? '';
+      const fields = manageFields[name];
+      if (fields) {
+        for (let i = 0; ; i++) {
+          if (await page.evaluate(ids => ids.every(id => document.getElementById(id)), Object.keys(fields))) break;
+          if (i === 20) throw new Error(`form fields not rendered: ${Object.keys(fields).join(', ')}`);
+          await page.waitForTimeout(500);
+          if (i === 10) await page.goto(url, { waitUntil: 'networkidle' });
+        }
+        const missing = await page.evaluate(values => Object.entries(values).filter(([id, value]) => {
+          const el = document.getElementById(id);
+          if (!el) return true;
+          if (typeof value === 'boolean') {
+            if (el.checked !== value) el.click();
+          } else {
+            el.value = value;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          return false;
+        }).map(([id]) => id), fields);
+        if (missing.length) throw new Error(`fields not found: ${missing.join(', ')}`);
+        await page.waitForTimeout(300);
+      }
+
+      if (manageLogins[name]) {
+        await page.fill('#loginId', manageLogins[name]);
+        await page.fill('#password', 'password');
+        await page.locator('#submit-button').click();
+        await page.waitForLoadState('networkidle');
+        if (name !== 'manage-user-actions-locked-account') await page.waitForURL(/verification-required/);
+        if (name.includes('registration-gate')) {
+          const text = await page.locator('main').first().innerText();
+          if (!/verify your registration/i.test(text)) throw new Error(`expected registration gate: ${text}`);
+        }
+        if (name.endsWith('-gate-code') || name === 'manage-verification-phone-gate') {
+          await page.getByLabel('One-time code', { exact: true }).waitFor({ timeout: 10000 }).catch(async error => {
+            throw new Error(`expected code entry: ${await page.locator('main').first().innerText()}`, { cause: error });
+          });
+        }
+        await page.evaluate(() => document.activeElement?.blur());
+      }
+
+      // the user's email or phone, with its verified icon
+      const identity = { 'manage-verification-email-unverified-user': 'Email', 'manage-verification-verified-user': 'Email', 'manage-verification-phone-unverified-user': 'Phone' }[name];
+      if (identity) {
+        await tag('identity', new Function(`return () => [...document.querySelectorAll('.id-detail-label')].find(l => l.textContent.trim().startsWith('${identity}'))?.parentElement`)());
+      }
+
+      if (name === 'manage-verification-registration-unverified-user') {
+        await selectTab(page, 'Source');
+        const [userId] = verification.users.carla;
+        const { user } = await apiRequest(`/api/user/${userId}`);
+        await page.evaluate(([ids]) => {
+          const pre = document.querySelector('#raw-user pre');
+          const walker = document.createTreeWalker(pre, NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            let text = node.textContent;
+            ids.forEach((id, i) => { text = text.replaceAll(id, `00000000-0000-0000-0000-f4000000009${i + 1}`); });
+            node.textContent = text.replace(/\b1\d{12}\b/g, '1790000000000');
+          }
+        }, [user.registrations.map(r => r.id)]);
+        await tag('registration-verified', () => {
+          const pre = document.querySelector('#raw-user pre');
+          const text = pre.textContent;
+          const registrations = text.indexOf('"registrations"');
+          const match = registrations < 0 ? null : /"verified"\s*:\s*false/.exec(text.slice(registrations));
+          if (!match) return null;
+          const start = registrations + match.index, end = start + match[0].length;
+          const range = document.createRange();
+          const walker = document.createTreeWalker(pre, NodeFilter.SHOW_TEXT);
+          let offset = 0;
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            const next = offset + node.textContent.length;
+            if (start >= offset && start < next) range.setStart(node, start - offset);
+            if (end > offset && end <= next) {
+              range.setEnd(node, end - offset);
+              const marker = document.createElement('span');
+              marker.append(range.extractContents());
+              range.insertNode(marker);
+              return marker;
+            }
+            offset = next;
+          }
+          return null;
+        });
+      }
+
+      if (name === 'manage-verification-application-details' || name === 'manage-pre-verification-application-details') {
+        await page.evaluate(() => {
+          const row = [...document.querySelectorAll('tr')].find(tr => tr.querySelector('td')?.textContent.trim() === 'Tenant manager');
+          const cell = row?.querySelectorAll('td')[1];
+          if (cell) cell.textContent = '00000000-0000-0000-0000-700000000001';
+        });
+        await page.evaluate(id => {
+          const link = document.querySelector(`main a[href="/ajax/application/view/${id}"]`);
+          link?.closest('[popover]')?.showPopover();
+          link?.click();
+        }, verification.appId);
+        await page.locator('.prime-dialog.open').waitFor();
+        await page.waitForTimeout(800);
+        await page.evaluate(() => {
+          const walker = document.createTreeWalker(document.querySelector('.prime-dialog.open'), NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) node.textContent = node.textContent.replaceAll('http://localhost:9011', 'https://local.fusionauth.io');
+          // generated on each run
+          const secret = [...document.querySelectorAll('.prime-dialog.open tr')].find(r => /^Client secret/.test(r.textContent.trim()))?.querySelectorAll('td')[1];
+          if (secret) secret.textContent = 'pBjyQdXr1T0Hc9vWmA2sKf8LZnE4uYoG6Ri3MxJ7l5Q';
+        });
+        if (name === 'manage-verification-application-details') {
+          await tag('verification-urls', () => {
+            const rows = [...document.querySelectorAll('.prime-dialog.open tr')];
+            const login = rows.find(r => /^OAuth IdP login URL/i.test(r.textContent.trim()));
+            const register = rows.find(r => /^Registration URL/i.test(r.textContent.trim()));
+            if (!login || !register) return null;
+            const a = login.getBoundingClientRect(), b = register.getBoundingClientRect();
+            const box = document.createElement('div');
+            box.style.cssText = `position:fixed;left:${a.left}px;top:${a.top}px;width:${a.width}px;height:${b.bottom - a.top}px;pointer-events:none`;
+            document.body.append(box);
+            return box;
+          });
+        }
+      }
+
+      if (name.startsWith('manage-verification-email-template-')) {
+        await tag('verification-template', () => document.getElementById('tenant_emailConfiguration_verificationEmailTemplateId')?.closest('label')?.parentElement);
+      }
+
+      if (name === 'manage-verification-application-self-service-phone') {
+        await tag('login-type-phone', () => document.querySelector('label[for="application_registrationConfiguration_loginIdType-phoneNumber"]') ?? document.getElementById('application_registrationConfiguration_loginIdType-phoneNumber')?.parentElement);
+      }
+
+      if (name === 'manage-user-actions-application-add') {
+        await page.locator('#role-add-button').click();
+        await page.locator('#role-add-button').click();
+        await page.locator('input[name="application.roles[0].name"]').fill('admin');
+        await page.locator('input[name="application.roles[1].name"]').fill('customer');
+        await page.locator('input[name="application.roles[0].isSuperRole"][type=checkbox]').check();
+      }
+
+      if (name === 'manage-user-actions-application-oauth') {
+        await selectTab(page, 'OAuth');
+        await page.locator('#client-secret-input').evaluate(el => { el.value = 'pied-piper-example-client-secret'; });
+        const input = page.locator('#redirectURLs-display input');
+        await input.fill('http://localhost:3000/oauth-redirect');
+        await input.press('Enter');
+        await page.waitForTimeout(300);
+      }
+
+      if (name === 'manage-user-actions-welcome-template') {
+        const set = await page.evaluate(text => {
+          const editors = [...document.querySelectorAll('main .CodeMirror')].map(e => e.CodeMirror);
+          editors.forEach(cm => cm.setValue(text));
+          return editors.length;
+        }, 'Welcome to PiedPiper. Your subscription is valid for one month of reading.');
+        if (!set) throw new Error('email template editors not found');
+      }
+
+      if (name === 'manage-user-actions-subscribe-action') await selectTab(page, 'Email');
+
+      if (name === 'manage-user-actions-survey-action') await page.locator('#userAction_name').waitFor();
+
+      if (name === 'manage-user-actions-reasons-button') {
+        await tag('reasons-button', () => [...document.querySelectorAll('main header a')].find(a => a.textContent.trim() === 'Reasons'));
+      }
+
+      if (name === 'manage-user-actions-action-user') {
+        await page.locator('header el-dropdown button').click();
+        await page.locator('el-menu:has(#add-user-comment)').waitFor();
+        await page.evaluate(() => {
+          const menu = document.querySelector('el-menu:has(#add-user-comment)');
+          const r = menu.getBoundingClientRect();
+          const copy = document.createElement('div');
+          copy.className = menu.className;
+          copy.innerHTML = menu.innerHTML;
+          copy.style.cssText = `position:absolute;margin:0;left:${r.left + scrollX}px;top:${r.top + scrollY}px;width:${r.width}px;z-index:1000`;
+          document.body.append(copy);
+          menu.hidePopover();
+          const item = [...copy.querySelectorAll('a, button')].find(a => /^Action user$/i.test(a.textContent.trim()));
+          if (item) item.dataset.hl = 'action-user';
+        });
+      }
+
+      if (name === 'manage-admin-forms-registration-form') {
+        await page.locator('#registration-form #id').evaluate(el => { el.value = '41b154f9-f2ff-40c6-9dc6-c9c4e8ffa02e'; });
+      }
+
+      if (name === 'manage-admin-forms-user-form' || name === 'manage-admin-forms-registration-form') {
+        const key = name === 'manage-admin-forms-user-form' ? 'user.data.favoriteColor' : 'registration.data.backgroundColor';
+        const field = page.locator(`main [name="${key}"]`);
+        for (let i = 0; !(await field.count()); i++) {
+          if (i === 30) throw new Error(`custom field not rendered: ${key}`);
+          await page.waitForTimeout(500);
+          await page.reload({ waitUntil: 'networkidle' });
+        }
+        await tag('custom-field', new Function(`return () => document.querySelector('main [name="${key}"]')?.closest('[id$=-form-row], .form-row, label, .input-addon-group') ?? document.querySelector('main [name="${key}"]')?.parentElement`)());
+      }
+
+      if (name === 'manage-admin-forms-user-form') {
+        await page.evaluate(() => {
+          const field = document.querySelector('[data-hl=custom-field]');
+          const frame = document.createElement('div');
+          frame.id = 'manage-admin-user-frame';
+          frame.style.cssText = `position:absolute;left:0;top:0;width:${innerWidth}px;height:${field.getBoundingClientRect().bottom + scrollY + 24}px;pointer-events:none`;
+          document.body.append(frame);
+        });
+      }
+
+      if (name === 'manage-admin-forms-user-data') {
+        await selectTab(page, 'User data');
+        for (const key of ['favoriteColor', 'backgroundColor']) {
+          await tag(key, new Function(`return () => [...document.querySelectorAll('#user-data *')].filter(e => e.textContent.trim().startsWith('${key}') && e.textContent.trim().length < 40).pop()`)());
+        }
+      }
+
+      if (name === 'manage-search-about-engine') {
+        await tag('system-panel', () => [...document.querySelectorAll('main h2')].find(h => h.textContent.trim() === 'System')?.closest('section, .panel, div.rounded-lg, div.bg-white'));
+      }
+    }
+
     // user manage pages for Big Head and Erlich: the Angular SPA may land on the Users
     // list before routing to the specific user -- wait for the Manage User heading.
-    if (url.includes('00000000-0000-0000-0000-10000000000') && ctx?.name !== 'five-minute-registration-add') {
+    if (url.includes('00000000-0000-0000-0000-10000000000') && pathname.startsWith('/admin/user/manage/') && ctx?.name !== 'five-minute-registration-add') {
       try {
         await page.waitForFunction(
           () => document.querySelector('h1')?.textContent?.trim() === 'Manage User',
@@ -3591,6 +4091,26 @@ export default {
       if (!boxed) throw new Error(`section not found: ${sectionBoxes[ctx.name]}`);
     }
 
+    // Manage users: measure the registration strip after tab selection has finished.
+    {
+      const name = ctx?.name;
+      if (name === 'manage-verification-application-self-service' || name === 'manage-verification-application-self-service-phone') {
+        await selectTab(page, 'Registration');
+        await page.evaluate(() => {
+          const heading = [...document.querySelectorAll('main legend')].find(el => el.textContent.trim().startsWith('Self-service registration'));
+          const row = document.querySelector('#registration-configuration tbody tr:has(td)');
+          if (!heading || !row) throw new Error('self-service registration section not found');
+          const top = heading.getBoundingClientRect().top + scrollY;
+          const bottom = row.getBoundingClientRect().bottom + scrollY;
+          const strip = document.createElement('div');
+          strip.id = 'manage-self-service-strip';
+          strip.style.cssText = `position:absolute;left:0;top:${top}px;width:${innerWidth}px;height:${bottom - top}px;pointer-events:none`;
+          document.body.append(strip);
+        });
+      }
+
+    }
+
     // marks the strip for crop="#screenshot-band"
     if (bands[ctx?.name]) {
       const height = await page.evaluate(sel => {
@@ -3618,6 +4138,15 @@ export default {
         return !!el;
       }, fixedHeight[ctx.name]);
       if (!scrolled) throw new Error(`section not found: ${fixedHeight[ctx.name]}`);
+      await page.waitForTimeout(300);
+    }
+
+    // Manage users: user tabs can scroll the identity above the viewport during initialization.
+    if (ctx?.name?.startsWith('manage-pre-verification-user-')) {
+      await page.evaluate(() => {
+        window.scrollTo(0, 0);
+        document.querySelectorAll('*').forEach(el => { if (el.scrollTop) el.scrollTop = 0; });
+      });
       await page.waitForTimeout(300);
     }
 
