@@ -636,7 +636,7 @@ elsif options[:configfile]
   files = []
   filenames = config["files"]
   filenames.each do |f|
-    matching_files = domain_glob(options[:clientlibdir]+"/src/main/domain/*"+f+".json")
+    matching_files = domain_glob(options[:clientlibdir]+"/src/main/domain/*."+f+".json")
     matching_files.each do |mf|
       files.append(mf)
     end
