@@ -1,0 +1,1 @@
+These fixed demonstration certificates and private key are public screenshot fixtures, used only in the disposable FusionAuth screenshot instance to keep SAML metadata and fingerprints stable. Never use them for a deployed application.
