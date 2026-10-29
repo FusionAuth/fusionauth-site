@@ -1,0 +1,102 @@
+---
+title: CIMD Registration Caching And Lifecycle
+description: Learn how long FusionAuth caches a Client ID Metadata Document, what happens when it expires, and how a CIMD client registration is refreshed or removed.
+tags: cimd, client id metadata document, cache, cache-control, grace period, oauth client registration, mcp client, lambda
+---
+
+<PlanBlurb plan="enterprise" />
+
+<AvailableSince since="1.70.0"/>
+
+When a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents) logs in for the first time, FusionAuth fetches its metadata document and saves a registration. FusionAuth then reuses that registration until its cache window ends. This page explains how FusionAuth calculates that window, and what happens when the window ends.
+
+## How Long FusionAuth Caches A Document
+
+FusionAuth uses the `max-age` value from the response's `Cache-Control` header as the cache duration, and keeps it between two limits:
+
+* The lowest it can be is 15 minutes. You can't change this.
+* The highest it can be is the domain's **Maximum cache duration**, which defaults to 24 hours and can't be set below 15 minutes.
+
+If the response has no `max-age`, FusionAuth uses 15 minutes. FusionAuth ignores the `Expires` header.
+
+| `max-age` | Maximum cache duration | FusionAuth caches the document for |
+|---|---|---|
+| 5 minutes | 24 hours | 15 minutes |
+| 1 hour | 24 hours | 1 hour |
+| 3 days | 24 hours | 24 hours |
+| Not set | 24 hours | 15 minutes |
+| 1 hour | 30 minutes | 30 minutes |
+
+The domain's [registration lambda](/docs/extend/code/lambdas/cimd-client-registration) can set `ttlInSeconds` to change the value. FusionAuth applies the same two limits to it.
+
+FusionAuth doesn't cache a response it rejects. See [CIMD Security](/docs/operate/secure/cimd-security#failures-arent-cached).
+
+## The Grace Period
+
+A cached document expires at the end of its cache window. The next login after that fetches the document again. If that fetch fails, FusionAuth can keep using the old copy for a limited time.
+
+The domain's **Grace period** sets that time. The grace period starts when the cache window ends, so a registration stays usable for the cache duration plus the grace period. The default is `0`, which means FusionAuth stops using an expired copy as soon as the cache window ends.
+
+During the grace period, FusionAuth keeps using the cached document when a fetch fails because of:
+
+* a network error or timeout
+* a response that isn't `2xx`
+* a document it can't parse
+
+FusionAuth doesn't treat a failed fetch as a rejection.
+
+A fetch failure never removes a registration. The registration lambda can remove one by revoking it, and FusionAuth removes registrations after the grace period, as described in [Cleaning Up Expired Registrations](#cleaning-up-expired-registrations). See also [Removing A CIMD Client](/docs/lifecycle/authenticate-users/oauth/client-registration#removing-a-cimd-client).
+
+## Registration States
+
+A registration is in one of three states. FusionAuth calculates the state from the registration's cache and grace times each time it needs it, so no background process moves a registration between states.
+
+| State | What it means | New logins | Refresh tokens |
+|---|---|---|---|
+| Active | The cache window hasn't ended. | Allowed. | Work. |
+| Grace | The cache window has ended, and the grace period hasn't. | Allowed if FusionAuth can fetch the document again, or if the fetch fails and the old copy is still within the grace period. | Work. |
+| Expired | Both the cache window and the grace period have ended. | Allowed only if FusionAuth fetches the document again successfully. | Work until they expire. |
+
+A registration moves back to Active when a user logs in, FusionAuth fetches the document successfully, and the domain's registration lambda, if it has one, allows the client. This works from Grace or Expired. The new cache window follows the rules in [How Long FusionAuth Caches A Document](#how-long-fusionauth-caches-a-document).
+
+The [registration lambda](/docs/extend/code/lambdas/cimd-client-registration) can end a registration at any state:
+
+* A `decision` of `DENY` rejects the current request and leaves the registration and its refresh tokens as they are.
+* A `decision` of `REVOKE` deletes the registration and its refresh tokens immediately, without waiting for the grace period.
+
+When a registered client requests a new `resource` during the grace period and the fetch fails, the lambda evaluates the cached metadata for that `resource`.
+
+## When A Registration Is Refreshed
+
+FusionAuth fetches the document again only when a user logs in after the cache window ends. These don't fetch the document:
+
+* A login while the cached copy is still valid.
+* A refresh token request. A client can keep using a refresh token it already holds after its registration expires.
+* A resource server validating a token issued to the client.
+
+### A Document That Fetches Successfully
+
+A successful fetch replaces the cached document and starts a new cache window. This also works for a registration that has expired but hasn't been cleaned up yet. The same registration becomes usable again, with the new cache and grace times, and FusionAuth doesn't create a second registration for the client.
+
+A new fetch clears the lambda's decisions for every `resource` except the one in the current request. The lambda runs again the first time the client uses each of those resources.
+
+### A New Resource Inside The Cache Window
+
+When a registered client requests a `resource` the lambda hasn't evaluated yet, and the cached document is still valid, FusionAuth runs the lambda for that `resource` only. Apart from allowing, rejecting or revoking the client, the lambda's result only sets the overrides for that `resource`. Settings that apply to the whole registration, such as `ttlInSeconds` and `jwtPopulateLambdaId`, don't change until the next fetch.
+
+## Refresh Tokens
+
+Each refresh token FusionAuth issues to a CIMD client is tied to the registration that issued it and to one `resource`:
+
+* The [Refresh Token API](/docs/apis/jwt/retrieve-refresh-tokens) returns the registration's Id in `cimdClientRegistrationId`.
+* A CIMD refresh token holds exactly one `resource`, the one from the original authorization, in `metaData.resources`.
+* A refresh token request must use that same `resource`, or omit it so FusionAuth uses the stored one. A client can't change the `resource` on refresh. See the [Refresh Token grant](/docs/apis/oauth/token#refresh-token-grant-request) for the request parameters.
+* Deleting the registration deletes its refresh tokens, so a client can no longer refresh them. See [Removing A CIMD Client](/docs/lifecycle/authenticate-users/oauth/client-registration#removing-a-cimd-client).
+
+Because a refresh token never triggers a fetch of the CIMD document, an expired registration doesn't stop a client from refreshing tokens it already holds.
+
+## Cleaning Up Expired Registrations
+
+FusionAuth removes a registration automatically when its grace period has ended and no refresh tokens refer to it. A scheduled job does this, so removal can happen some time after the grace period ends. A registration with outstanding refresh tokens stays until those refresh tokens have expired and FusionAuth has removed them.
+
+FusionAuth only cleans up registrations this way, so CIMD domains are not impacted.

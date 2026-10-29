@@ -23,6 +23,8 @@ IGNORED_FIELD_REGEXPS = [
   /^theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
   /^event\.info\.location\.displayString/, # this is a derived field
   /^event\.ipAddress/, # this is a deprecated field
+  /^event\.cimdDomainId/, # TODO: investigate if we docs for this
+  /^event\.resources/, # TODO: investigate if we need docs for this
   /^identityProvider\.issuer/, # this is a deprecated field
   /^identityProvider\.data/, # this is non-exposed field: https://github.com/FusionAuth/fusionauth-java-client/blob/main/src/main/java/io/fusionauth/domain/provider/BaseIdentityProvider.java#L29
   /^user\.legacyIdentifier/, # non-exposed field
@@ -636,7 +638,7 @@ elsif options[:configfile]
   files = []
   filenames = config["files"]
   filenames.each do |f|
-    matching_files = domain_glob(options[:clientlibdir]+"/src/main/domain/*"+f+".json")
+    matching_files = domain_glob(options[:clientlibdir]+"/src/main/domain/*."+f+".json")
     matching_files.each do |mf|
       files.append(mf)
     end

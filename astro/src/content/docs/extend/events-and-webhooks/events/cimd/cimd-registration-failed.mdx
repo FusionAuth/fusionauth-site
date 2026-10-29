@@ -1,0 +1,64 @@
+---
+title: Registration Failed
+htmlTitle: CIMD Registration Failed Event
+description: Learn about the CIMD Registration Failed event.
+tags: cimd event, cimd webhook, client id metadata document, webhook event
+---
+import Event from 'src/content/docs/extend/events-and-webhooks/events/_event.astro';
+import EventBody from 'src/content/docs/extend/events-and-webhooks/events/_event-body.astro';
+import ReferenceLink from 'src/content/docs/_shared/_reference-link.mdx';
+
+export const eventType = 'cimd.registration.failed';
+
+<Event name="CIMD Registration Failed"
+       eventType={eventType}
+       version="1.70.0"
+       plan="enterprise"
+       description="This event is generated when FusionAuth can't register a CIMD client or update its registration. FusionAuth also writes an Error entry to the Event Log for each failure."
+       scope="tenant"
+       transactional="false" />
+
+See [OAuth Client Registration](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents) for how FusionAuth registers CIMD clients.
+
+A failed fetch doesn't always fail the login. During the CIMD domain's [grace period](/docs/lifecycle/authenticate-users/oauth/cimd-registration-lifecycle#the-grace-period), FusionAuth keeps using the expired registration, but still sends this event with the reason `metadataRetrievalFailed`.
+
+<EventBody eventType={eventType}
+           jsonFile="cimd-registration-failed.json">
+
+  <APIField slot="leading-fields" name="event.cimdDomainId" type="UUID">
+    The unique Id of the [CIMD domain](/docs/get-started/core-concepts/types/cimd-domains) that matched the client's `client_id` URL. Absent when no CIMD domain matched.
+  </APIField>
+
+  <APIField slot="leading-fields" name="event.clientId" type="String">
+    The client's `client_id` URL.
+  </APIField>
+
+  <APIField slot="leading-fields" name="event.createInstant" type="Long">
+    The <ReferenceLink file="data-types#instants" label="instant" /> that the event was generated.
+  </APIField>
+
+  <APIField slot="leading-fields" name="event.id" type="UUID">
+    The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.reason.code" type="String">
+    Why the registration failed. The possible values are:
+
+    * `lambdaRejected` - The [CIMD client registration lambda](/docs/extend/code/lambdas/cimd-client-registration) returned a `DENY` or `REVOKE` decision, or failed.
+    * `metadataRetrievalFailed` - FusionAuth couldn't fetch or validate the client's metadata document.
+    * `rateLimited` - The user exceeded the Tenant's rate limit for registering new CIMD clients.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.resource" type="String">
+    The `resource` the client requested.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.tenantId" type="UUID">
+    The unique Id of the Tenant.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.type" type="String">
+    The event type. This value is always <code>{eventType}</code>.
+  </APIField>
+
+</EventBody>

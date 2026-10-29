@@ -1,0 +1,61 @@
+---
+title: CIMD Security
+description: Learn how FusionAuth protects itself when it fetches a Client ID Metadata Document from a URL a third party controls.
+tags: cimd, client id metadata document, security, ssrf, mcp client, oauth client registration, lambda
+---
+
+<PlanBlurb plan="enterprise" />
+
+<AvailableSince since="1.70.0"/>
+
+A [Client ID Metadata Document](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents) (CIMD) client uses a URL as its `client_id`. The first time that client logs in, FusionAuth fetches the document from that URL. The client, and so the URL, is controlled by a third party, so FusionAuth treats every fetch as untrusted input. This page describes the protections FusionAuth applies and the ones you configure.
+
+## Protections On The Fetch
+
+### The `client_id` URL
+
+FusionAuth checks the `client_id` URL before it sends any request. The URL must meet all of these requirements:
+
+* The scheme is `https`.
+* The path is more than `/`, such as `/oauth/client.json`.
+* There is no fragment and no user info.
+* The URL is at most 2048 characters long.
+
+FusionAuth rejects any other URL without fetching it.
+
+### Where FusionAuth Will Connect
+
+Because the URL comes from an outside party, an attacker could point it at a system inside your network. FusionAuth guards against this server-side request forgery (SSRF) by refusing to fetch from private, loopback, link-local and cloud-metadata addresses. FusionAuth also blocks other addresses that aren't publicly routable, including carrier-grade NAT (`100.64.0.0/10`), the IETF documentation and benchmarking ranges, multicast, and IPv6 addresses that embed a blocked IPv4 address.
+
+FusionAuth resolves the host once and checks every address it returns. If any address is blocked, FusionAuth doesn't fetch the document. Otherwise, it connects to the first address and doesn't look up the host again for that fetch, so a DNS record that changes between the check and the connection can't redirect the request. When FusionAuth is configured with an outbound proxy, it sends the fetch through the proxy to the same checked address.
+
+### The Request And Response
+
+* FusionAuth doesn't follow redirects, so a document can't send FusionAuth somewhere the URL checks didn't cover.
+* FusionAuth waits up to 2 seconds to connect and 5 seconds for the response.
+* FusionAuth accepts a `2xx` response of at most 5KB.
+* The `client_id` in the document must match the requested URL exactly. A document that names a different `client_id` is rejected.
+
+### Failures Aren't Cached
+
+FusionAuth caches only a document it accepted. An invalid document, an error response, or a failed fetch isn't cached, so fixing the document takes effect on the next login attempt instead of after a cache window.
+
+## Protections You Configure
+
+### Limit Who Can Register
+
+A CIMD domain controls which clients can register. A domain that matches a specific origin accepts only clients whose `client_id` is on that origin. The `*` domain, or open mode, accepts any client that publishes a valid document.
+
+In open mode, the [registration lambda](/docs/extend/code/lambdas/cimd-client-registration) is the only thing that decides which clients FusionAuth accepts. Write a lambda that rejects any client you don't recognize, for example by checking `clientMetadata.clientId` against an allowlist, before you enable the `*` domain.
+
+### Limit Registration Volume
+
+Each new registration triggers an outbound fetch. Use [rate limiting](/docs/operate/secure/advanced-threat-detection#customizable-rate-limiting) to cap how many new registrations a user can start in a time window.
+
+### Limit Cache Lifetime
+
+A shorter **Maximum cache duration** on the CIMD domain makes changes to a client, or a revocation through the lambda, take effect sooner, although FusionAuth never caches a document for less than 15 minutes. See [CIMD Registration Caching And Lifecycle](/docs/lifecycle/authenticate-users/oauth/cimd-registration-lifecycle) for how FusionAuth calculates the cache window.
+
+## Troubleshooting
+
+If FusionAuth rejects your client, see [Host A Client ID Metadata Document](/docs/lifecycle/authenticate-users/oauth/host-cimd-document#troubleshooting) to check your document and request against these requirements.

@@ -89,7 +89,16 @@ const fixedHeight = {
 };
 
 // full-width strips of the window around these parts of the page, so the sidebar stays beside them
+// screenshots of a dialog: the link that opens it
+const dialogs = {
+  'cimd-domain-view': 'a[href*="/ajax/cimd-domain/view/"]',
+  'cimd-domain-scope-add': 'a[href*="/ajax/cimd-domain/scope/add"]',
+  'cimd-domain-scope-edit': 'a[href*="/ajax/cimd-domain/scope/edit"]',
+};
+
 const bands = {
+  'tenant-token-exchange': "[data-section='token-exchange-settings']",
+  'tenant-token-exchange-enable': "[data-section='token-exchange-settings']",
   'tenant-connectors': "el-tab-list, [data-section='connector-settings']",
   'tenant-mfa-policy-settings': "[data-section='policies']",
   'tenant-mfa-authenticator-settings': "[data-section='authenticator-settings']",
@@ -221,6 +230,73 @@ export default {
       } catch (e) {
         throw new Error(`beforeAll: license setup failed: ${e.message}`, { cause: e });
       }
+    }
+
+    // CIMD and token exchange demo data; needs 1.70.0+ and a license with both features
+    try {
+      const { status } = await (await fetch(`${baseUrl}/api/reactor`, { headers: { 'Authorization': apiKey } })).json();
+      if (status?.cimd === 'ACTIVE' && status?.tokenExchange === 'ACTIVE') {
+        const call = async (method, path, body, tenantScoped = true) => {
+          const headers = { 'Authorization': apiKey, 'Content-Type': 'application/json' };
+          if (tenantScoped) headers['X-FusionAuth-TenantId'] = tenantId;
+          const r = await fetch(`${baseUrl}${path}`, { method, headers, body: body && JSON.stringify(body) });
+          if (!r.ok && !(method === 'GET' && r.status === 404)) throw new Error(`${method} ${path}: ${r.status} ${await r.text()}`);
+          return r;
+        };
+        // create once, keyed by a fixed id
+        const ensure = async (path, body, tenantScoped) => {
+          if ((await call('GET', path, undefined, tenantScoped)).status === 404) await call('POST', path, body, tenantScoped);
+        };
+
+        const cimdDomainId = '7d3c9a2e-41f6-4b8e-9c05-2e6f1a8b3d47';
+        await ensure(`/api/cimd/domain/${cimdDomainId}`, { domain: {
+          name: 'Claude', domain: 'https://claude.ai', authorizedResourceUris: ['https://mcp.piedpiper.com/mcp'],
+          consentMode: 'AlwaysPrompt', gracePeriodInSeconds: 600,
+          providedScopePolicy: { address: { enabled: false, required: false }, email: { enabled: true, required: false }, phone: { enabled: false, required: false }, profile: { enabled: true, required: false } },
+        } });
+        await ensure(`/api/cimd/domain/${cimdDomainId}/scope/b2e4f6a8-1c3d-4e5f-8a9b-0c1d2e3f4a5b`, { scope: {
+          name: 'files:read', description: 'Read access to Pied Piper files.',
+          defaultConsentMessage: 'View your files', defaultConsentDetail: 'Lets the app list and download your Pied Piper files.',
+        } });
+
+        // matches the services in the token exchange delegation guide
+        await call('PATCH', `/api/tenant/${tenantId}`, { tenant: { tokenExchangeConfiguration: { enabled: true, policyEngine: 'ENTITY' } } });
+        const entityTypeId = '5f1d3b7a-9c2e-4d6f-8a1b-3e5c7a9d1f2b';
+        const emailEntityId = '8e2a4c6b-1d3f-4a5e-9b7c-2d4f6a8c0e1b';
+        const todoEntityId = '3c5e7a9b-2d4f-4b6a-8c1e-5f7a9b2d4c6e';
+        const todoAppId = '9a1c3e5b-7d2f-4e6a-8b0c-1d3f5a7c9e2b';
+        await ensure(`/api/entity/type/${entityTypeId}`, { entityType: { name: 'API Service' } }, false);
+        await ensure(`/api/entity/${emailEntityId}`, { entity: { name: 'Email Service', clientId: 'email-service', type: { id: entityTypeId } } });
+        const todoIsNew = (await call('GET', `/api/entity/${todoEntityId}`)).status === 404;
+        if (todoIsNew) {
+          await call('POST', `/api/entity/${todoEntityId}`, { entity: { name: 'To-do Service', clientId: 'todo-service', clientSecret: 'change-this-secret', actAsTokenExchangeClient: true, type: { id: entityTypeId } } });
+          await call('POST', `/api/entity/${emailEntityId}/grant`, { grant: { recipientEntityId: todoEntityId } });
+        }
+        // one exchange gives the token exchange log an entry
+        if (todoIsNew) {
+          // a throwaway app mints the subject token; deleted after so it stays out of the application list
+          await ensure(`/api/application/${todoAppId}`, { application: { name: 'To-do App', oauthConfiguration: { clientSecret: 'todo-app-secret', enabledGrants: ['password'], requireClientAuthentication: true } } });
+          const basic = (id, secret) => 'Basic ' + Buffer.from(`${id}:${secret}`).toString('base64');
+          const form = { 'Content-Type': 'application/x-www-form-urlencoded' };
+          let accessToken;
+          // a new application can take a few seconds to reach the OAuth cache
+          for (let i = 0; i < 10 && !accessToken; i++) {
+            const r = await fetch(`${baseUrl}/oauth2/token`, { method: 'POST', headers: { ...form, Authorization: basic(todoAppId, 'todo-app-secret') },
+              body: new URLSearchParams({ grant_type: 'password', username: 'richard@piedpiper.com', password: 'password', scope: 'openid offline_access' }) });
+            accessToken = (await r.json()).access_token;
+            if (!accessToken) await new Promise(res => setTimeout(res, 2000));
+          }
+          if (!accessToken) throw new Error('password grant for the token exchange subject token failed');
+          const r = await fetch(`${baseUrl}/oauth2/token`, { method: 'POST', headers: { ...form, Authorization: basic('todo-service', 'change-this-secret') },
+            body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange', subject_token: accessToken,
+              subject_token_type: 'urn:ietf:params:oauth:token-type:access_token', audience: 'email-service', intent: 'send-reminder-email' }) });
+          if (!r.ok) throw new Error(`token exchange failed: ${r.status} ${await r.text()}`);
+          await call('DELETE', `/api/application/${todoAppId}?hardDelete=true`);
+        }
+        console.log('[screenshot] beforeAll: CIMD and token exchange data ready');
+      }
+    } catch (e) {
+      throw new Error(`beforeAll: CIMD and token exchange setup failed: ${e.message}`, { cause: e });
     }
 
     // ensure self-service form is configured on Pied Piper app for account management
@@ -503,6 +579,18 @@ export default {
         return !!cell;
       });
       if (!pinned) throw new Error('Tenant manager row not found');
+    }
+
+    if (dialogs[ctx?.name]) {
+      // the opening link sits in a closed action menu, so click it from script
+      const opened = await page.evaluate(sel => {
+        const link = document.querySelector(sel);
+        link?.click();
+        return !!link;
+      }, dialogs[ctx.name]);
+      if (!opened) throw new Error(`dialog link not found: ${dialogs[ctx.name]}`);
+      await page.locator('.prime-dialog.open').waitFor();
+      await page.waitForLoadState('networkidle');
     }
 
     if (ctx?.name === 'tenant-connector-add-policy') {
@@ -799,8 +887,23 @@ export default {
       }
     }
 
+    // a dialog scrolls inside itself, so grow the window until nothing in it is hidden
+    if (dialogs[ctx?.name]) {
+      for (let i = 0; i < 3; i++) {
+        const hidden = await page.evaluate(() => Math.max(0, ...[...document.querySelectorAll('.prime-dialog.open, .prime-dialog.open *')]
+          .filter(el => ['auto', 'scroll'].includes(getComputedStyle(el).overflowY))
+          .map(el => el.scrollHeight - el.clientHeight)));
+        if (hidden <= 0) break;
+        const { width, height } = page.viewportSize();
+        await page.setViewportSize({ width, height: Math.min(height + hidden + 16, 2500) });
+        await page.waitForTimeout(300);
+      }
+    }
+
     await page.evaluate(() => {
       document.querySelectorAll('.alert, [role=alert], .notification').forEach(el => el.remove());
+      // prerelease images show their build in the header
+      document.querySelectorAll('.runtime-mode-notice').forEach(el => { if (/Early Access/.test(el.textContent)) el.remove(); });
       document.activeElement?.blur();
     });
 
@@ -852,7 +955,7 @@ export default {
         for (let node = walker.nextNode(); node; node = walker.nextNode()) {
           node.textContent = node.textContent
             .replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, '24/09/2026')
-            .replace(/\b\d{2}:\d{2} (AM|PM)\b/g, '09:00 AM');
+            .replace(/\b\d{2}:\d{2}(:\d{2})? (AM|PM)\b/g, (t, s) => s ? '09:00:00 AM' : '09:00 AM');
         }
       });
     }

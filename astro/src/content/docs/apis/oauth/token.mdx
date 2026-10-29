@@ -5,6 +5,7 @@ description: API documentation for the FusionAuth Token OAuth2 endpoint.
 tags: fusionauth api, rest api, http api, oauth, oauth 2.0, token endpoint, authorization code, client credentials, pkce, refresh token
 order: 300
 ---
+import TenantIdUrlSegment from 'src/content/docs/apis/oauth/_tenant-id-url-segment.mdx';
 import AuthorizationHeader from 'src/content/docs/lifecycle/authenticate-users/oauth/_authorization-header.mdx';
 import DeviceTypeList from 'src/content/docs/_shared/_device-type-list.mdx';
 import ClientCredentialsScopesOmitted from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_scopes_omitted.mdx';
@@ -17,6 +18,8 @@ import RepeatedParameterLimit from 'src/content/docs/_shared/_repeated-parameter
 
 This is an implementation of the Token endpoint as defined by the [IETF RFC 6749 Section 3.2](https://tools.ietf.org/html/rfc6749#section-3.2).
 
+<TenantIdUrlSegment endpoint="/oauth2/token" />
+
 ## Complete the Authorization Code Grant Request
 
 Authorization Code Grant : Exchange the Authorization Code for a Token
@@ -24,6 +27,8 @@ Authorization Code Grant : Exchange the Authorization Code for a Token
 If you will be using the Authorization Code grant, you will make a request to the Token endpoint to exchange the authorization code returned from the Authorize endpoint for an access token.
 
 <API method="POST" uri="/oauth2/token"/>
+
+<API method="POST" uri="/oauth2/token/{tenantId}" title="Provide the Tenant Id as a URL segment"/>
 
 ### Request Headers
 
@@ -49,6 +54,8 @@ Send these fields in the request body as form-encoded data (`application/x-www-f
     This parameter is optional when the `Authorization` header is provided.
     When the `Authorization` header is not provided, this parameter is then required.
     Prior to version `1.3.1` this parameter was always required.
+
+    <AvailableSince since="1.70.0"/> For a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents), the client Id is the HTTPS URL of the client's metadata document, and the **tenantId** is required.
   </APIField>
   <APIField name="client_secret" type="String" optional since="1.5.0">
     The client secret.
@@ -86,10 +93,16 @@ Send these fields in the request body as form-encoded data (`application/x-www-f
 
     The validated resource URIs are also stored in the refresh token's `metaData.resources` field for use in subsequent refresh token grants.
 
+    A [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents) must send exactly one `resource`, and it must be one of the CIMD domain's **authorizedResourceUris**, or FusionAuth returns `invalid_target`. The `aud` claim is always `["client_id", "resource"]`.
+
     <RepeatedParameterLimit />
   </APIField>
   <APIField name="tenantId" type="UUID" optional since="1.58.0">
-    The Tenant to which this token belongs. When working with a token for a [universal application](/docs/get-started/core-concepts/types/applications#universal-applications), you must specify a Tenant ID using either this body parameter or the `X-FusionAuth-TenantId` header.
+    The Tenant to which this token belongs. When working with a token for a [universal application](/docs/get-started/core-concepts/types/applications#universal-applications), you must specify a Tenant ID using either this body parameter or the `X-FusionAuth-TenantId` header. If both are provided, the header is used.
+
+    <AvailableSince since="1.70.0">
+    A Tenant Id is also required for a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents). The Tenant Id can also be provided as a URL segment, such as `/oauth2/token/{tenantId}`.
+    </AvailableSince>
   </APIField>
 </APIBlock>
 
@@ -333,6 +346,8 @@ If you will be using the Refresh Token Grant, you will make a request to the Tok
 
 <API method="POST" uri="/oauth2/token"/>
 
+<API method="POST" uri="/oauth2/token/{tenantId}" title="Provide the Tenant Id as a URL segment"/>
+
 ### Request Cookies
 
 <APIBlock>
@@ -371,6 +386,8 @@ Send these fields in the request body as form-encoded data (`application/x-www-f
     This parameter is optional when the `Authorization` header is provided.
     When the `Authorization` header is not provided, this parameter is then required.
     Prior to version `1.3.1` this parameter was always required.
+
+    <AvailableSince since="1.70.0"/> For a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents), the client Id is the HTTPS URL of the client's metadata document, and the **tenantId** is required.
   </APIField>
   <APIField name="client_secret" type="String" optional since="1.5.0">
     The client secret.
@@ -400,6 +417,8 @@ Send these fields in the request body as form-encoded data (`application/x-www-f
 
     The `aud` claim follows the same rules as the authorization code exchange: an array `["client_id", "https://resource1.example.com", ...]` when resources are active, or a plain string `client_id` when they are not.
 
+    A [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents) can omit this parameter, and FusionAuth uses the single resource stored on the refresh token. When provided, it must be exactly one value, and it must match the resource from the original authorization. A CIMD client can't use a refresh token to get an access token for a different resource. For CIMD clients, an empty **authorizedResourceUris** list is never ignored. The resource must still be in the CIMD domain's **authorizedResourceUris**, so removing a URI from the domain makes refresh requests for that resource fail with `invalid_target`, even for refresh tokens issued before the change.
+
     <RepeatedParameterLimit />
   </APIField>
   <APIField name="scope" type="String" optional>
@@ -410,7 +429,11 @@ Send these fields in the request body as form-encoded data (`application/x-www-f
     Prior to version `1.50.0` the scopes must match those requested during the initial authorization request if provided.
   </APIField>
   <APIField name="tenantId" type="UUID" optional since="1.58.0">
-    The Tenant to which this token belongs. When working with a token for a [universal application](/docs/get-started/core-concepts/types/applications#universal-applications), you must specify a Tenant ID using either this body parameter or the `X-FusionAuth-TenantId` header.
+    The Tenant to which this token belongs. When working with a token for a [universal application](/docs/get-started/core-concepts/types/applications#universal-applications), you must specify a Tenant ID using either this body parameter or the `X-FusionAuth-TenantId` header. If both are provided, the header is used.
+
+    <AvailableSince since="1.70.0">
+    A Tenant Id is also required for a [CIMD client](/docs/lifecycle/authenticate-users/oauth/client-registration#client-id-metadata-documents). The Tenant Id can also be provided as a URL segment, such as `/oauth2/token/{tenantId}`.
+    </AvailableSince>
   </APIField>
   <APIField name="user_code" type="String" optional since="1.11.0">
     The end-user verification code.
@@ -582,3 +605,138 @@ _Response Codes_
 </APIBlock>
 
 <JSON src="oauth/client_credentials_example_json_response.json"/>
+
+
+## Token Exchange Grant Request
+
+<PlanBlurb plan="enterprise" />
+
+<AvailableSince since="1.70.0"/>
+
+The token exchange grant, defined in [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693), exchanges a subject token for a new access token. An Entity with **Act as token exchange client** enabled makes this request with its client credentials. For an overview of how FusionAuth evaluates the request, see [OAuth Token Exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange).
+
+<API method="POST" uri="/oauth2/token"/>
+
+### Request Headers
+
+<APIBlock>
+  <AuthorizationHeader />
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+### Request Body
+
+Send these fields in the request body as form-encoded data (`application/x-www-form-urlencoded`).
+Do not send them in a query string or as JSON.
+
+<APIBlock>
+  <APIField name="audience" type="String" optional>
+    The client Id of a service the issued token is for. Repeat this parameter to request more than one audience, up to 50.
+
+    A request can't include both **audience** and **resource**. Whether this parameter is required depends on the Tenant's policy engine. See [Policy Engines](/docs/lifecycle/authenticate-users/oauth/token-exchange#policy-engines).
+  </APIField>
+  <APIField name="client_id" type="String" optional>
+    The client Id of the exchanger Entity.
+
+    This parameter is optional when the `Authorization` header is provided.
+    When the `Authorization` header is not provided, this parameter is required.
+  </APIField>
+  <APIField name="client_secret" type="String" optional>
+    The client secret of the exchanger Entity.
+    This parameter is optional when the `Authorization` header is provided.
+  </APIField>
+  <APIField name="grant_type" type="String" required>
+    The grant type to be used.
+    This value must be set to `urn:ietf:params:oauth:grant-type:token-exchange`.
+  </APIField>
+  <APIField name="intent" type="String" optional>
+    A description of the purpose of the exchange, up to 255 characters. FusionAuth records this value in the Token Exchange audit log and passes it to the [Token Exchange Populate lambda](/docs/extend/code/lambdas/token-exchange-populate). It doesn't appear in the issued token by default, but may be added to the token by the Token Exchange Populate lambda.
+  </APIField>
+  <APIField name="requested_token_type" type="String" optional defaults="urn:ietf:params:oauth:token-type:access_token">
+    The type of token to issue. The only supported value is `urn:ietf:params:oauth:token-type:access_token`.
+  </APIField>
+  <APIField name="resource" type="String" optional>
+    The absolute URI of a resource the issued token is for, without a fragment. Repeat this parameter to request more than one resource, up to 50.
+
+    A request can't include both **audience** and **resource**. Not every policy engine supports this parameter. See [Policy Engines](/docs/lifecycle/authenticate-users/oauth/token-exchange#policy-engines).
+  </APIField>
+  <APIField name="scope" type="String" optional>
+    A space-delimited list of scopes to request, up to 1,024 characters.
+
+    How FusionAuth uses this parameter depends on the Tenant's policy engine. See [Policy Engines](/docs/lifecycle/authenticate-users/oauth/token-exchange#policy-engines).
+  </APIField>
+  <APIField name="state" type="String" optional>
+    An opaque value, up to 1,024 characters, that FusionAuth passes to the [Token Exchange Populate lambda](/docs/extend/code/lambdas/token-exchange-populate). It doesn't appear in the issued token.
+  </APIField>
+  <APIField name="subject_token" type="String" required>
+    The token to exchange. It identifies the User or other subject the issued token represents.
+  </APIField>
+  <APIField name="subject_token_type" type="String" required>
+    The type of the **subject_token**. The possible values are:
+
+    * `urn:ietf:params:oauth:token-type:access_token`: an access token that FusionAuth issued for the exchanger's Tenant.
+    * `urn:ietf:params:oauth:token-type:jwt`: a JWT from an issuer listed in the Tenant's **Allowed issuers**.
+
+    See [Subject Tokens](/docs/lifecycle/authenticate-users/oauth/token-exchange#subject-tokens) for the validation rules for each type.
+  </APIField>
+</APIBlock>
+
+FusionAuth doesn't support the `actor_token` and `actor_token_type` parameters, and rejects a request that includes either. In FusionAuth's implementation, the authenticated exchanger is always the `actor`.
+
+```plaintext options="wrap" title="Example HTTP Request"
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Authorization: Basic dG9kby1zZXJ2aWNlOmNoYW5nZS10aGlzLXNlY3JldA==
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+
+grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
+    &subject_token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+    &subject_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aaccess_token
+    &audience=email-service
+```
+
+### Response
+
+_Response Codes_
+
+| Code | Description |
+|------|-------------|
+| 200  | The request was successful. |
+| 400  | The request was invalid, the subject token failed validation, the policy engine denied the exchange, a policy lambda failed, or a webhook failed to accept the `token.exchange` event. The response contains a JSON body described in the [<Breadcrumb>OAuth Error</Breadcrumb> section](/docs/apis/oauth/oauth-error) of the API documentation. |
+| 401  | FusionAuth could not verify the exchanger's `client_id` and `client_secret`. |
+| 403  | The Token Exchange Policy lambda denied the exchange. The **`error_reason`** value is `lambda_denied`. |
+| 422  | The Token Exchange Populate lambda failed. |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files. |
+
+### Response Body
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The issued access token. See [OAuth Token Exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange#how-fusionauth-processes-an-exchange) for the claims it contains.
+  </APIField>
+  <APIField name="expires_in" type="Integer">
+    The time in seconds the token will expire from the time the response was generated.
+  </APIField>
+  <APIField name="issued_token_type" type="String">
+    The type of the issued token. This value is always `urn:ietf:params:oauth:token-type:access_token`.
+  </APIField>
+  <APIField name="scope" type="String">
+    The space-delimited scopes of the issued token. This value is an empty string when the issued token has no scopes.
+  </APIField>
+  <APIField name="token_type" type="String">
+    The token type. This value is always `Bearer`.
+  </APIField>
+</APIBlock>
+
+```json title="Example JSON Response"
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjFlNTZhOWRlMyJ9...",
+  "expires_in": 3599,
+  "issued_token_type": "urn:ietf:params:oauth:token-type:access_token",
+  "scope": "openid offline_access",
+  "token_type": "Bearer"
+}
+```

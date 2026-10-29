@@ -1,0 +1,158 @@
+---
+title: Token Exchange Populate Lambda
+description: Reference for the Token Exchange Populate lambda, which adds or narrows claims in tokens issued through token exchange.
+tags: token exchange populate lambda, custom claims, token customization, rfc 8693
+---
+
+<PlanBlurb plan="enterprise" />
+
+<AvailableSince since="1.70.0"/>
+
+A Token Exchange Populate lambda modifies the claims of an access token issued through [token exchange](/docs/lifecycle/authenticate-users/oauth/token-exchange). FusionAuth runs this lambda after the policy engine allows an exchange and before it signs the token. The lambda is optional.
+
+## Lambda Structure
+
+The lambda must contain a function named `populate` with the following signature:
+
+```javascript
+function populate(jwt, exchange, context) {
+  // Lambda code goes here
+}
+```
+
+The function accepts the following parameters:
+
+* `jwt`: the claims of the token FusionAuth is about to sign. This object is mutable.
+* `exchange`: information about the exchange. This object is read-only.
+* `context`: access to [secrets](/docs/extend/code/lambdas#secrets). This object is read-only.
+
+### The `jwt` Object
+
+Before the lambda runs, the `jwt` object contains the claims FusionAuth built from the policy decision and the subject token, including `sub`, `aud`, `scope`, `act`, `client_id`, `exp`, and `tid`. The lambda can add claims, change claims, and remove claims by setting them to `null`, with the following restrictions.
+
+FusionAuth discards any changes to the following reserved claims:
+
+* `act`
+* `amr`
+* `applicationId`
+* `auth_time`
+* `authenticationType`
+* `client_id`
+* `cnf`
+* `gty`
+* `iat`
+* `iss`
+* `jti`
+* `may_act`
+* `sid`
+* `sub`
+* `tid`
+* `tty`
+
+The lambda can only narrow the following claims:
+
+* `aud`: FusionAuth keeps only the values that the policy engine granted. If no granted values remain, or the lambda removes the claim, FusionAuth restores the granted audiences.
+* `scope`: FusionAuth keeps only the scopes that the policy engine granted. If no granted scopes remain, or the lambda removes the claim, FusionAuth restores the granted scopes.
+* `exp`: FusionAuth ignores a value later than the original expiration.
+
+FusionAuth copies the `amr`, `applicationId`, `auth_time`, `authenticationType`, and `sid` claims from the subject token when they are present. FusionAuth doesn't copy any other claims from the subject token. To carry over another claim, copy it from **`exchange.subjectToken`**.
+
+To avoid conflicts with registered claims and claims FusionAuth adds in the future, give custom claims a namespaced name, such as `https://example.com/department`.
+
+### The `exchange` Object
+
+<APIBlock>
+  <APIField name="subjectToken" type="Object">
+    The claims of the validated subject token.
+  </APIField>
+  <APIField name="entity" type="Object">
+    The exchanger Entity, without its client secret. See the [Entity API](/docs/apis/entities/entities) for the fields of this object.
+  </APIField>
+  <APIField name="audiences" type="Array<String>">
+    The audiences the policy engine granted.
+  </APIField>
+  <APIField name="scopes" type="Array<String>">
+    The scopes the policy engine granted.
+  </APIField>
+  <APIField name="intent" type="String">
+    The value of the `intent` request parameter. Undefined when the request doesn't include `intent`.
+  </APIField>
+  <APIField name="state" type="String">
+    The value of the `state` request parameter. Undefined when the request doesn't include `state`.
+  </APIField>
+</APIBlock>
+
+### The `context` Object
+
+<APIBlock>
+  <APIField name="services.secrets" type="Object">
+    Provides access to [secrets](/docs/extend/code/lambdas#secrets) through `context.services.secrets.get('<secret-name>')`.
+  </APIField>
+</APIBlock>
+
+### Errors
+
+If the lambda throws an exception, FusionAuth rejects the exchange with a `422` status code and a `server_error` error, and records the attempt in the audit log with the `POPULATE_LAMBDA_ERROR` outcome. To keep an exchange from failing because of an optional step, such as a call to an external service, catch exceptions in the lambda.
+
+## Assigning the Lambda
+
+To assign the lambda in the Admin UI:
+
+1. Navigate to <Breadcrumb>Tenants</Breadcrumb> and click <IconButton icon="edit" /> on the Tenant.
+1. Select the <Breadcrumb>OAuth</Breadcrumb> tab.
+1. In the <Breadcrumb>Token exchange settings</Breadcrumb> section, select the lambda in **Token exchange populate lambda**.
+1. Click <IconButton icon="save" />.
+
+To assign the lambda with the [Tenant API](/docs/apis/tenants), set **`tenant.tokenExchangeConfiguration.populateLambdaId`** to the lambda's Id.
+
+## Examples
+
+### Add Claims From the Exchanger Entity
+
+This lambda copies values from the exchanger Entity's `data` into the token:
+
+```javascript
+function populate(jwt, exchange, context) {
+  const data = exchange.entity.data || {};
+  if (data.department) {
+    jwt['https://example.com/department'] = data.department;
+  }
+  if (exchange.intent) {
+    jwt['https://example.com/intent'] = exchange.intent;
+  }
+}
+```
+
+### Copy a Claim From the Subject Token
+
+This lambda carries a custom claim from the subject token into the issued token:
+
+```javascript
+function populate(jwt, exchange, context) {
+  const orgId = exchange.subjectToken['https://example.com/org_id'];
+  if (orgId) {
+    jwt['https://example.com/org_id'] = orgId;
+  }
+}
+```
+
+### Narrow the Scope and Lifetime
+
+This lambda removes write access and shortens the lifetime of tokens exchanged for a reporting service:
+
+```javascript
+function populate(jwt, exchange, context) {
+  if ((exchange.audiences || []).indexOf('reporting-service') === -1) {
+    return;
+  }
+
+  const readOnly = (exchange.scopes || []).filter(scope => scope.indexOf(':write') === -1);
+  if (readOnly.length > 0) {
+    jwt.scope = readOnly.join(' ');
+  }
+  var maxExp = jwt.iat + 300;
+  if (jwt.exp > maxExp) {
+    jwt.exp = maxExp;
+  }
+}
+```
