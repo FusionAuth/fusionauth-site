@@ -207,8 +207,9 @@ async function prepareIdp(page, ctx, { url, pathname, fragment, tag, idpShot }) 
       for (const body of document.querySelectorAll('.prime-dialog.open tbody')) {
         const rows = [...body.children].filter(row => row.tagName === 'TR');
         const name = row => row.querySelector('td')?.textContent.trim();
-        if (!rows.some(row => name(row) === 'PiperChat') || !rows.every(row => order.includes(name(row)))) continue;
-        rows.sort((a, b) => order.indexOf(name(a)) - order.indexOf(name(b))).forEach(row => body.append(row));
+        if (!rows.some(row => name(row) === 'PiperChat')) continue;
+        const rank = row => (order.includes(name(row)) ? order.indexOf(name(row)) : order.length);
+        rows.sort((a, b) => rank(a) - rank(b) || name(a).localeCompare(name(b))).forEach(row => body.append(row));
       }
     });
   }

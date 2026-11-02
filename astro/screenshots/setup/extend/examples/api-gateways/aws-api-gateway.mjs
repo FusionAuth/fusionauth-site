@@ -12,8 +12,13 @@ const gatewayApiKey = {
     const managerKey = 'leftovers-temporary-key-manager';
     const keyId = '00000000-0000-0000-0000-f7000000000a';
     const api = async (path, method, body) => {
-      const r = await fetch(`${baseUrl}${path}`, { method, headers: { Authorization: managerKey, 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) });
-      if (!r.ok) throw new Error(`Leftovers API key ${method}: ${r.status} ${await r.text()}`);
+      // a manager key recreated right after it was deleted can take a moment to be accepted
+      for (let i = 0; ; i++) {
+        const r = await fetch(`${baseUrl}${path}`, { method, headers: { Authorization: managerKey, 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) });
+        if (r.ok) return;
+        if (r.status !== 401 || i === 20) throw new Error(`Leftovers API key ${method}: ${r.status} ${await r.text()}`);
+        await new Promise(res => setTimeout(res, 500));
+      }
     };
     try {
       await page.goto(`${baseUrl}/admin/api-key/add`, { waitUntil: 'networkidle' });
