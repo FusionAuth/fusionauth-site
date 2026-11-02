@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Called by GitHub Actions via SSH.
-# Args: <pr-number> <sha>
+# Args: <pr-number> <sha> [<base-branch>, default main]
 #
 # Stdout: exactly two lines consumed by the Actions workflow:
 #   PORT:<number>
@@ -17,6 +17,11 @@ fi
 
 PR="$1"
 SHA="$2"
+BASE="${3:-main}"
+if [[ ! "$BASE" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+  echo "Unexpected base branch name: $BASE" >&2
+  exit 1
+fi
 
 PREVIEW_DIR=/opt/preview
 REPO_DIR="$PREVIEW_DIR/repo"
@@ -123,10 +128,12 @@ log "Using slot $PADDED (port $PORT) for PR #$PR @ $SHA"
 # ── Fetch the PR ref and main ────────────────────────────────────────────────
 # refs/pull/N/head is created by GitHub for every PR, including forks.
 # Fetch main alongside the PR ref so origin/main:astro/package.json is current
-# when the deps step below picks main's node_modules tree.
-log "Fetching refs/pull/$PR/head and main …"
-git -C "$REPO_DIR" fetch origin \
-  "refs/pull/${PR}/head:refs/preview/pr-${PR}" main --force >&2
+# when the deps step below picks main's node_modules tree, and the PR's base
+# branch so the changed-pages list diffs against what the PR merges into.
+refspecs=("refs/pull/${PR}/head:refs/preview/pr-${PR}" "+refs/heads/main:refs/remotes/origin/main")
+[[ "$BASE" == main ]] || refspecs+=("+refs/heads/${BASE}:refs/remotes/origin/${BASE}")
+log "Fetching refs/pull/$PR/head, main, and ${BASE} …"
+git -C "$REPO_DIR" fetch origin "${refspecs[@]}" --force >&2
 
 # ── Set up (or refresh) the worktree ─────────────────────────────────────────
 if git -C "$REPO_DIR" worktree list --porcelain | grep -qF "worktree $SLOT_DIR"; then
@@ -320,6 +327,6 @@ echo "URL:${PREVIEW_URL}"
 
 log "Computing changed pages for PR #${PR}…"
 cd "$SLOT_DIR"
-BASE_REF=origin/main HEAD_REF=HEAD \
+BASE_REF="origin/${BASE}" HEAD_REF=HEAD \
   node scripts/get-changed-pages.mjs 2>/dev/null \
   | sed 's/^/PAGE:/' || true
