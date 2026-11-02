@@ -96,6 +96,43 @@ Review the diff and affected guides before committing. Add `--check` to show ups
 
 Run the offline refresh regression tests with `bash astro/extractedcode/configuration-snippets/tests/test.sh` (requires Python 3.9 or newer). The extractedcode CI workflow also runs them when the snapshots, refresh tooling, or related workflows change.
 
+## Update the docs for a new FusionAuth release
+
+The [`fusionauth-version`](fusionauth-version) file at the repository root names the FusionAuth release the docs currently document. Builds and checks only move to a new release when that file changes, so a release can ship before its docs without breaking anyone's PR.
+
+These scripts read the pin, and `FUSIONAUTH_VERSION` overrides it for a single run:
+
+- `scripts/check-apis.sh` compares the API docs against the client builder for the pinned release. The Shakedown build runs it on every PR, and the weekly **Check API docs against client libraries** workflow runs it against production.
+- `scripts/fetch_external_content.sh` and `scripts/update-templates.sh` generate JSON and templates from the pinned release. The weekly **Check external content** workflow runs both.
+
+Two files need a literal version, so they hold copies of the pin: the Docker install compose file at `astro/public/docs/docker-compose.yml`, which readers download as-is, and the screenshot tooling at `astro/screenshots/docker-compose.yml`. Don't edit those versions by hand. The Shakedown build runs `bash scripts/update_fusionauth_version.sh --check` and fails when a copy differs from the pin. The download page doesn't use the pin, because it has to list a new release right away.
+
+When a release ships:
+
+1. Merge the docs for the release into `main`. To find undocumented API fields before then, build the site from your branch with `npm run start` in `astro`, then run this from the repository root:
+
+   ```console
+   FUSIONAUTH_VERSION=<new version> bash scripts/check-apis.sh --pr
+   ```
+
+1. Bump the pin. Every other day, the **Update FusionAuth version** workflow checks for a release whose Docker image is public, opens a "chore: pin FusionAuth <version>" PR that updates the pin and its copies, and starts the Shakedown build on it. To bump the pin by hand instead, run this from the repository root and commit the result:
+
+   ```console
+   bash scripts/update_fusionauth_version.sh
+   ```
+
+1. Wait for the Shakedown build on the pin PR to pass before you merge it. That build checks the API docs against the new release, so a failure lists the fields the docs still need. Merging the pin before the docs moves the weekly checks onto the new release and fails them until the docs land.
+
+1. After the pin merges, refresh the content generated from the release. Run each of these from the repository root, review the diff, and open a PR:
+
+   ```console
+   bash scripts/fetch_external_content.sh
+   scripts/update-templates.sh all
+   bash scripts/update_openapi_spec.sh
+   ```
+
+1. Retake the screenshots against the new release. The weekly **Update screenshots** workflow does this on its own, or you can start it by hand from the Actions tab. See [`astro/screenshots/README.md`](astro/screenshots/README.md) for details.
+
 ## Scheduled jobs
 
 Every scheduled docs workflow follows the same rules:

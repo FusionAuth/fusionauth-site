@@ -270,10 +270,7 @@ Docs cards are rendered using [astro-better-cards](https://better-static-sites.g
   bash scripts/update_openapi_spec.sh
   ```
   The weekly Check external content workflow runs `bash scripts/update_openapi_spec.sh --check` and reports when the copy differs from upstream.
-- The Docker install page and the download widget point readers at `astro/public/docs/docker-compose.yml`, which the site serves at `/docs/docker-compose.yml`. It pins `fusionauth/fusionauth-app` to a release, as does the screenshot tooling in `astro/screenshots/docker-compose.yml`. Every other day, the Update FusionAuth version workflow checks for a newer release on Docker Hub. When it finds one, it opens a PR that updates both pins, unless a PR for that version already exists. Merging that PR triggers the Update screenshots workflow, which retakes the screenshots against the new version. To update the pins by hand, run this from the repository root, then retake the screenshots:
-  ```shell
-  bash scripts/update_fusionauth_version.sh
-  ```
+- The Docker install page and the download widget point readers at `astro/public/docs/docker-compose.yml`, which the site serves at `/docs/docker-compose.yml`. It pins `fusionauth/fusionauth-app` to the release in `fusionauth-version`, as does the screenshot tooling in `astro/screenshots/docker-compose.yml`. Don't edit either version by hand. See "Update the docs for a new FusionAuth release" in the [README](README.md) for how the pin moves.
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
 - `Defaults` is always capitalized.
 - If a field is required, but only when another feature is enabled, mark it optional rather than required in the API. Then, add a note in the description saying when it is required, like so:

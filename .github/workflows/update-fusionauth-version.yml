@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -18,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # pins the docker install compose file and the screenshot tooling; sets `version` only when it changed something
+      # pins fusionauth-version and its copies; sets `version` only when it changed something
       - name: Pin latest FusionAuth release
         id: bump
         run: bash scripts/update_fusionauth_version.sh
@@ -45,15 +46,15 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml
+          git add fusionauth-version astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml
           git commit -m "chore: pin FusionAuth $VERSION"
           git push --force origin "$BRANCH"
 
           {
-            printf 'Pins `fusionauth/fusionauth-app:%s` in the Docker install compose file (`astro/public/docs/docker-compose.yml`, served at /docs/docker-compose.yml) and the screenshot tooling (`astro/screenshots/docker-compose.yml`).\n\n' "$VERSION"
+            printf 'Pins FusionAuth %s in `fusionauth-version`, which the API, template, and external content checks read, and in its copies: the Docker install compose file (`astro/public/docs/docker-compose.yml`, served at /docs/docker-compose.yml) and the screenshot tooling (`astro/screenshots/docker-compose.yml`).\n\n' "$VERSION"
             printf '### Changes\n\n```diff\n'
-            git diff HEAD~1 HEAD -- astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml
-            printf '```\n\nMerging this PR triggers the Update screenshots workflow, which retakes the screenshots against the new version and opens its own PR.\n\n'
+            git diff HEAD~1 HEAD
+            printf '```\n\nMerge this PR after the docs for %s are on `main`. The API docs check in the Shakedown build runs against %s on this PR, so it fails until they are. See "Update the docs for a new FusionAuth release" in the README.\n\n' "$VERSION" "$VERSION"
             printf '### Reproduce locally\n\nRun this from the repo root:\n\n```bash\nFUSIONAUTH_VERSION=%s bash scripts/update_fusionauth_version.sh\n```\n' "$VERSION"
           } > "$RUNNER_TEMP/pr-body.md"
           cat "$RUNNER_TEMP/pr-body.md"
@@ -64,6 +65,9 @@ jobs:
             git push origin --delete "$BRANCH"
             exit 1
           fi
+
+          # PRs opened with GITHUB_TOKEN don't trigger pull_request workflows, but a dispatch does
+          gh workflow run test-build.yml --ref "$BRANCH"
 
   report:
     needs: update

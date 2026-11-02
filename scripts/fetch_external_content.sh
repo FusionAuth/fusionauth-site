@@ -144,7 +144,7 @@ printf '\nFetching fusionauth-app for JSON generation...\n'
 app_zip="${FUSIONAUTH_APP_ZIP:-}"
 version="${FUSIONAUTH_VERSION:-}"
 if [[ -z "$app_zip" ]]; then
-  version="${version:-$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')}"
+  version="${version:-$(<"$repo_root/fusionauth-version")}"
   app_zip="$staging_dir/app.zip"
   printf 'Downloading version %s\n' "$version"
   curl -f -L -s "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" -o "$app_zip"

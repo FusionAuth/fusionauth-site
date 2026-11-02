@@ -80,9 +80,7 @@ elif command == "unzip":
         (out / "fusionauth-app/lib").mkdir(parents=True)
         (out / "fusionauth-app/lib/dummy.jar").touch()
 elif command == "curl":
-    if any("account.fusionauth.io" in a for a in args):
-        print('{"versions": ["1.99.0"]}')
-    elif any("files.fusionauth.io" in a for a in args):
+    if any("files.fusionauth.io" in a for a in args):
         pathlib.Path(args[args.index("-o") + 1]).write_text("mock zip")
     else:
         assert args[-1].startswith("https://raw.githubusercontent.com/FusionAuth/")
@@ -125,6 +123,7 @@ class RefreshTests(unittest.TestCase):
         self.script.parent.mkdir(parents=True)
         shutil.copy2(ROOT / "scripts/fetch_external_content.sh", self.script)
         shutil.copytree(ROOT / "scripts/lib", self.root / "scripts/lib")
+        (self.root / "fusionauth-version").write_text("1.99.0\n")
         
         self.fixture = {"heads": {}, "files": {}, "json": {}}
         attribution = (self.snapshots / "SOURCES.md").read_text()
@@ -192,7 +191,7 @@ class RefreshTests(unittest.TestCase):
         requests = [json.loads(line) for line in self.requests.read_text().splitlines()]
         
         self.assertEqual(sum(command == "git" for command, _ in requests), 3)
-        self.assertEqual(sum(command == "curl" for command, _ in requests), 15) # 13 github + 1 API + 1 zip
+        self.assertEqual(sum(command == "curl" for command, _ in requests), 14) # 13 github + 1 zip
         self.assertEqual(sum(command == "unzip" for command, _ in requests), 2)
         self.assertEqual(sum(command == "javac" for command, _ in requests), 2)
         self.assertEqual(sum(command == "java" for command, _ in requests), 2)

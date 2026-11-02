@@ -23,8 +23,6 @@ IGNORED_FIELD_REGEXPS = [
   /^theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
   /^event\.info\.location\.displayString/, # this is a derived field
   /^event\.ipAddress/, # this is a deprecated field
-  /^event\.cimdDomainId/, # TODO: investigate if we docs for this
-  /^event\.resources/, # TODO: investigate if we need docs for this
   /^identityProvider\.issuer/, # this is a deprecated field
   /^identityProvider\.data/, # this is non-exposed field: https://github.com/FusionAuth/fusionauth-java-client/blob/main/src/main/java/io/fusionauth/domain/provider/BaseIdentityProvider.java#L29
   /^user\.legacyIdentifier/, # non-exposed field
@@ -101,6 +99,12 @@ def make_api_path(type)
     end
     if type.start_with?("group-")
       return base +  "group/" + type
+    end
+    if type.start_with?("cimd-")
+      return base + "cimd/" + type
+    end
+    if type.start_with?("token-exchange")
+      return base + "token/" + type
     end
 
     # user sub-directory handling (specific -> general)
@@ -304,6 +308,33 @@ def make_api_path(type)
     ]
   end
 
+  if type == "token-exchange-audit-log"
+    return [
+      base + "system/search-the-token-exchange-audit-log",
+      base + "system/retrieve-a-token-exchange-chain"
+    ]
+  end
+
+  if type == "cimd-domain"
+    return [
+      base + "cimd-domains/create-a-cimd-domain",
+      base + "cimd-domains/retrieve-a-cimd-domain",
+      base + "cimd-domains/update-a-cimd-domain",
+      base + "cimd-domains/search-for-cimd-domains"
+    ]
+  end
+
+  if type == "cimd-client-registration"
+    return [
+      base + "cimd-client-registrations/retrieve-a-cimd-client-registration",
+      base + "cimd-client-registrations/search-for-cimd-client-registrations"
+    ]
+  end
+
+  if type == "cimd-domain-o-auth-scope"
+    return base + "cimd-domain-scopes"
+  end
+
   if type == "form"
     return base + "custom-forms/forms"
   end
@@ -323,6 +354,18 @@ def make_on_page_field_name(type)
   end
   if type == "entityGrant"
     return "grant"
+  end
+  if type == "cimdDomain"
+    return "domain"
+  end
+  if type == "cimdClientRegistration"
+    return "registration"
+  end
+  if type == "cimdDomainOAuthScope"
+    return "scope"
+  end
+  if type == "tokenExchangeAuditLog"
+    return "tokenExchangeAuditLogs[x]"
   end
 
   if type.end_with? "IdentityProvider"
