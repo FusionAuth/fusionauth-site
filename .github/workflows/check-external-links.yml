@@ -1,8 +1,9 @@
 name: Check external links
 
 on:
+  # Monday and Thursday: runs at most 4 days apart keep the failure cache inside GitHub's 7-day eviction window
   schedule:
-    - cron: '0 8 * * 1'
+    - cron: '0 8 * * 1,4'
   workflow_dispatch:
 
 jobs:
@@ -18,6 +19,14 @@ jobs:
         with:
           python-version: '3.12'
 
+      # last run's broken links; a link only fails this check if it's broken two runs in a row
+      - name: Restore previous failures
+        uses: actions/cache/restore@v6
+        with:
+          path: .link-failures.json
+          key: external-link-failures-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: external-link-failures-
+
       - name: Check external links
         run: |
           scripts/check-external-links.py \
@@ -26,7 +35,17 @@ jobs:
             --workers 25 \
             --concurrency 3 \
             --rate-limit 500 \
-            --timeout 20
+            --timeout 20 \
+            --previous-failures .link-failures.json \
+            --save-failures .link-failures.json
+
+      # saved even when the check fails, since that's when next run needs the list
+      - name: Save failures for the next run
+        if: ${{ !cancelled() && hashFiles('.link-failures.json') != '' }}
+        uses: actions/cache/save@v6
+        with:
+          path: .link-failures.json
+          key: external-link-failures-${{ github.run_id }}-${{ github.run_attempt }}
 
   report:
     needs: check

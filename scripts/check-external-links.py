@@ -25,11 +25,20 @@ are resolved against the working tree instead of over HTTP (see resolve_self_rep
 A branch that adds the path would otherwise fail against main until it merged, and a link
 to a path the branch deletes would wrongly pass because main still has it.
 
+One run from a CI machine sees spurious failures from bot protection and flaky servers, so:
+
+- a HEAD request that fails is retried with GET
+- every URL that still fails is rechecked once, a minute later and one at a time
+- only a 404, a 410, or a domain that doesn't exist counts as broken; any other failure is an
+  unverified warning unless --timeout-is-error is passed
+- with --previous-failures, a broken link only fails the check if it was also broken last run
+
 Run with --help for the full option list.
 """
 
 import argparse
 import http.client
+import json
 import os
 import re
 import shlex
@@ -228,21 +237,22 @@ def _is_local_url(url: str) -> bool:
     return host in _LOCAL_HOSTS
 
 
-# Connection-level failure messages that are inherently noisy in CI environments
-# (bot protection, transient DNS, slow servers).  They become warnings, not errors,
-# unless --timeout-is-error is passed.
-_TRANSIENT_MARKERS = (
-    "timeout",
-    "connection closed by server",
-    "Temporary failure in name resolution",
-    "Network is unreachable",
-    "Connection reset by peer",
+# Results that mean the link is really broken. Anything else (5xx, 418, 402, 52x, odd 4xx) is
+# usually bot protection or a server hiccup, so it's a warning unless --timeout-is-error is passed.
+_DEFINITE_MARKERS = (
+    "HTTP 404",
+    "HTTP 410",
+    "not found in this repo",
+    "suspicious repo path",
+    "Name or service not known",            # the domain doesn't exist (Linux)
+    "nodename nor servname provided",       # the domain doesn't exist (macOS)
+    "No address associated with hostname",
 )
 
 
-def _is_transient_error(error: str) -> bool:
-    """True for connection-level failures that are CI-noise candidates."""
-    return any(m in error for m in _TRANSIENT_MARKERS)
+def _is_definite_error(error: str) -> bool:
+    """True for results that mean the destination is gone, not that it refused a crawler."""
+    return any(m in error for m in _DEFINITE_MARKERS)
 
 
 def _fetch(url: str, timeout: int, ok_statuses: frozenset,
@@ -265,7 +275,8 @@ def _fetch(url: str, timeout: int, ok_statuses: frozenset,
             wait = min(int(exc.headers.get("Retry-After", "5")), 30)
             time.sleep(wait)
             return _fetch(url, timeout, ok_statuses, method, retries - 1)
-        if status == 405 and method == "HEAD":
+        # many servers answer HEAD with 404 or 5xx but serve GET fine, so any HEAD error gets a GET
+        if status >= 400 and status not in ok_statuses and method == "HEAD":
             return _fetch(url, timeout, ok_statuses, "GET", retries)
         # Python's HTTPRedirectHandler handles 301-303 and 307 but not 308.
         # Follow 308 (and any unhandled 3xx) manually so we reach the final URL.
@@ -486,24 +497,53 @@ def run(args) -> int:
     if n:
         print(f"  {n}/{n} (100%) — done in {elapsed:.1f}s{' ' * 20}")
 
-    # ── Collate broken links by file, split errors vs warnings ───────────────
+    # ── Recheck failures once, later and one at a time ────────────────────────
+    # a flaky server or a burst of rate limiting rarely fails the same URL twice a minute apart
+    failed = [u for u in unique_urls if url_status[u][1] is not None]
+    if failed and args.recheck_delay > 0:
+        print(f"Rechecking {len(failed)} failed URL(s) in {args.recheck_delay}s …")
+        time.sleep(args.recheck_delay)
+        recovered = 0
+        for url in failed:
+            result = _fetch(url, args.timeout, ok_statuses, "GET")
+            if result[1] is None:
+                recovered += 1
+            url_status[url] = result
+            time.sleep(rate_limit_s)
+        print(f"  {recovered} of {len(failed)} passed on recheck.")
+
+    # ── Collate broken links by file: errors, new failures, and warnings ─────
+    # with --previous-failures, a definite failure only counts once it also failed last run
+    previous = None
+    if args.previous_failures:
+        try:
+            previous = set(json.loads(Path(args.previous_failures).read_text(encoding="utf-8")))
+        except (OSError, ValueError):
+            previous = set()
+            print(f"No previous failures in {args.previous_failures}; every broken link this run is new.")
+    definite = {u for u, (_s, e) in url_status.items() if e is not None and _is_definite_error(e)}
+    if args.save_failures:
+        Path(args.save_failures).write_text(json.dumps(sorted(definite), indent=2) + "\n", encoding="utf-8")
+
     errors_by_file: dict = defaultdict(list)
+    new_by_file: dict = defaultdict(list)
     warnings_by_file: dict = defaultdict(list)
     for path, url, lineno in occurrences:
         _status, error = url_status.get(url, (0, "not checked"))
         if error is None:
             continue
-        if _is_transient_error(error) and not args.timeout_is_error:
-            warnings_by_file[path].append((lineno, url, error))
+        if url in definite:
+            target = errors_by_file if previous is None or url in previous else new_by_file
         else:
-            errors_by_file[path].append((lineno, url, error))
+            target = errors_by_file if args.timeout_is_error else warnings_by_file
+        target[path].append((lineno, url, error))
 
     for d in (errors_by_file, warnings_by_file):
         for path in d:
             d[path].sort()
 
     # ── Report ────────────────────────────────────────────────────────────────
-    if not errors_by_file and not warnings_by_file:
+    if not errors_by_file and not new_by_file and not warnings_by_file:
         print("\n✓  No broken external links found.")
         return 0
 
@@ -522,27 +562,39 @@ def run(args) -> int:
                 print(f"  line {lineno:<5}  {error:<35}  {url}")
             print()
 
+    if new_by_file:
+        total_new = sum(len(v) for v in new_by_file.values())
+        print(f"\n⚠  {total_new} newly broken link(s) in {len(new_by_file)} file(s)."
+              f" They fail the check if they're still broken next run:\n")
+        for path in sorted(new_by_file):
+            print(f"{_display(path)}")
+            for lineno, url, error in new_by_file[path]:
+                print(f"  line {lineno:<5}  {error:<35}  {url}")
+            print()
+
     if warnings_by_file:
         total_warnings = sum(len(v) for v in warnings_by_file.values())
         print(f"\n⚠  {total_warnings} unverified link(s) in {len(warnings_by_file)} file(s)"
-              f" (timeout/connection — may be bot protection or a flaky network):\n")
+              f" (server errors, timeouts, or bot protection; usually not broken):\n")
         for path in sorted(warnings_by_file):
             print(f"{_display(path)}")
             for lineno, url, error in warnings_by_file[path]:
                 print(f"  line {lineno:<5}  {error:<35}  {url}")
             print()
 
-    write_summary(errors_by_file, warnings_by_file)
+    write_summary(errors_by_file, new_by_file, warnings_by_file)
 
     print("─" * 76)
     parts = []
     if errors_by_file:
         parts.append(f"{sum(len(v) for v in errors_by_file.values())} error(s)")
+    if new_by_file:
+        parts.append(f"{sum(len(v) for v in new_by_file.values())} new failure(s)")
     if warnings_by_file:
         parts.append(f"{sum(len(v) for v in warnings_by_file.values())} warning(s)")
     print("  ".join(parts))
     if warnings_by_file and not errors_by_file:
-        print("Pass --timeout-is-error to treat warnings as failures.")
+        print("Pass --timeout-is-error to treat unverified links as failures.")
 
     return 1 if errors_by_file else 0
 
@@ -645,9 +697,28 @@ examples:
         "--timeout-is-error",
         action="store_true",
         help=(
-            "Treat timeouts and connection errors as failures (exit 1). "
-            "By default they are reported as warnings only."
+            "Treat unverified links (server errors, timeouts, connection errors, and other "
+            "non-404 statuses) as failures (exit 1). By default they are reported as warnings only."
         ),
+    )
+    p.add_argument(
+        "--recheck-delay", metavar="S", type=int, default=60,
+        help=(
+            "Seconds to wait before rechecking every failed URL once with GET, one at a time "
+            "(default: %(default)s). 0 skips the recheck."
+        ),
+    )
+    p.add_argument(
+        "--previous-failures", metavar="FILE", default=None,
+        help=(
+            "JSON list of URLs that were broken last run. A broken link only fails the check "
+            "if it's in this list; new ones are reported for the next run to confirm. "
+            "A missing file counts as an empty list."
+        ),
+    )
+    p.add_argument(
+        "--save-failures", metavar="FILE", default=None,
+        help="Write the URLs that are broken this run, as a JSON list, for the next run's --previous-failures.",
     )
 
     args = p.parse_args()
@@ -656,7 +727,7 @@ examples:
     sys.exit(status)
 
 
-def write_summary(errors_by_file, warnings_by_file):
+def write_summary(errors_by_file, new_by_file, warnings_by_file):
     """Lists the files to fix, with each broken link, in the step summary."""
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if not summary:
@@ -682,15 +753,28 @@ def write_summary(errors_by_file, warnings_by_file):
             links, files = count(errors_by_file)
             f.write(f"## Broken external links\n\n{links} broken link(s) in {files} file(s). "
                     "Fix or remove each link below:\n\n" + table(errors_by_file))
+        if new_by_file:
+            links, files = count(new_by_file)
+            f.write(f"## Newly broken external links\n\n{links} link(s) in {files} file(s) broke since the last run. "
+                    "They fail the check if they're still broken next run:\n\n" + table(new_by_file))
         if warnings_by_file:
             links, files = count(warnings_by_file)
             f.write(f"<details><summary>{links} unverified link(s) in {files} file(s), "
-                    "from timeouts or connection errors</summary>\n\n" + table(warnings_by_file) + "</details>\n\n")
+                    "from server errors, timeouts, or bot protection</summary>\n\n" + table(warnings_by_file) + "</details>\n\n")
 
 
 def print_local_command():
     """Prints the command that reproduces this run, to the log and the step summary."""
-    command = shlex.join(["scripts/check-external-links.py", *sys.argv[1:]])
+    # the failure history only exists in CI; without it, a broken link fails right away
+    args, skip = [], False
+    for arg in sys.argv[1:]:
+        if skip:
+            skip = False
+        elif arg in ("--previous-failures", "--save-failures"):
+            skip = True
+        elif not arg.startswith(("--previous-failures=", "--save-failures=")):
+            args.append(arg)
+    command = shlex.join(["scripts/check-external-links.py", *args])
     print(f"\nTo reproduce this run locally, run this from the repo root:\n\n  {command}")
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
