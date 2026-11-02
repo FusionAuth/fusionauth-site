@@ -10,6 +10,8 @@ permissions:
 
 jobs:
   agentic-review:
+    # a fork PR gets a read-only token, so minimizing would fail; its Copilot note stays visible
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Wait for Copilot to finish processing
@@ -46,12 +48,15 @@ jobs:
             echo "Minimizing review $NODE_ID..."
             
             # shellcheck disable=SC2016 # $subjectId is a GraphQL variable, not shell
-            gh api graphql -f query='
+            if gh api graphql -f query='
               mutation($subjectId: ID!) {
                 minimizeComment(input: {subjectId: $subjectId, classifier: SPAM}) {
                   minimizedComment { isMinimized }
                 }
-              }' -F subjectId="$NODE_ID" --silent
-              
-            echo "✅ Review $NODE_ID minimized."
+              }' -F subjectId="$NODE_ID" --silent; then
+              echo "Review $NODE_ID minimized."
+            else
+              # cosmetic cleanup, so a permission change shouldn't turn the PR check red
+              echo "::warning::Couldn't minimize Copilot review $NODE_ID; it stays visible on the PR."
+            fi
           done
