@@ -2,7 +2,7 @@ name: Update FusionAuth version
 
 on:
   schedule:
-    - cron: '17 9 */2 * *'
+    - cron: '17 9 * * *'
   workflow_dispatch:
 
 permissions:
@@ -13,11 +13,19 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
+    outputs:
+      details: ${{ steps.behind.outputs.details }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v7
+
+      # before the bump rewrites the pin; the last step fails the job if this did
+      - name: Compare the pin to the latest release
+        id: behind
+        continue-on-error: true
+        run: bash scripts/update_fusionauth_version.sh --check-latest
 
       # pins fusionauth-version and its copies; sets `version` only when it changed something
       - name: Pin latest FusionAuth release
@@ -69,12 +77,22 @@ jobs:
           # PRs opened with GITHUB_TOKEN don't trigger pull_request workflows, but a dispatch does
           gh workflow run test-build.yml --ref "$BRANCH"
 
+      # keeps the issue open until the pin PR merges
+      - name: Fail while the pin trails the latest release
+        if: ${{ !cancelled() && steps.behind.outcome == 'failure' }}
+        env:
+          DETAILS: ${{ steps.behind.outputs.details }}
+        run: |
+          printf '%s\n' "${DETAILS:-The pin check failed before it could compare versions. See the first step's log.}"
+          exit 1
+
   report:
     needs: update
     if: ${{ !cancelled() }}
     uses: ./.github/workflows/report-scheduled-run.yml
     with:
       result: ${{ needs.update.result }}
+      details: ${{ needs.update.outputs.details }}
     permissions:
       contents: read
       issues: write

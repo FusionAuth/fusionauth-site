@@ -1,7 +1,8 @@
 # FusionAuth Documentation
 
 [![Check external links](https://github.com/FusionAuth/fusionauth-site/actions/workflows/check-external-links.yml/badge.svg)](https://github.com/FusionAuth/fusionauth-site/actions/workflows/check-external-links.yml)
-[![check-closed-github-issues](https://github.com/FusionAuth/fusionauth-site/actions/workflows/check-closed-github-issues.yml/badge.svg)](https://github.com/FusionAuth/fusionauth-site/actions/workflows/check-closed-github-issues.yml)
+[![Check for closed GitHub issues in docs](https://github.com/FusionAuth/fusionauth-site/actions/workflows/check-closed-github-issues.yml/badge.svg)](https://github.com/FusionAuth/fusionauth-site/actions/workflows/check-closed-github-issues.yml)
+[![Update FusionAuth version](https://github.com/FusionAuth/fusionauth-site/actions/workflows/update-fusionauth-version.yml/badge.svg)](https://github.com/FusionAuth/fusionauth-site/actions/workflows/update-fusionauth-version.yml)
 
 Despite the name, this repo only contains the FusionAuth documentation, articles, developer tools, and blog. We manage the root `fusionauth.io` site via Webflow CRM.
 
@@ -107,6 +108,8 @@ These scripts read the pin, and `FUSIONAUTH_VERSION` overrides it for a single r
 
 Two files need a literal version, so they hold copies of the pin: the Docker install compose file at `astro/public/docs/docker-compose.yml`, which readers download as-is, and the screenshot tooling at `astro/screenshots/docker-compose.yml`. Don't edit those versions by hand. The Shakedown build runs `bash scripts/update_fusionauth_version.sh --check` and fails when a copy differs from the pin. The download page doesn't use the pin, because it has to list a new release right away.
 
+The daily **Update FusionAuth version** workflow also runs `bash scripts/update_fusionauth_version.sh --check-latest`, and fails while the pin trails the latest release. It keeps one issue open that names both versions, and the first run after the pin catches up closes that issue. If the pin PR has to wait on something other than docs, say so in a comment on that issue.
+
 When a release ships:
 
 1. Merge the docs for the release into `main`. To find undocumented API fields before then, build the site from your branch with `npm run start` in `astro`, then run this from the repository root:
@@ -115,7 +118,7 @@ When a release ships:
    FUSIONAUTH_VERSION=<new version> bash scripts/check-apis.sh --pr
    ```
 
-1. Bump the pin. Every other day, the **Update FusionAuth version** workflow checks for a release whose Docker image is public, opens a "chore: pin FusionAuth <version>" PR that updates the pin and its copies, and starts the Shakedown build on it. To bump the pin by hand instead, run this from the repository root and commit the result:
+1. Bump the pin. Every day, the **Update FusionAuth version** workflow checks for a release whose Docker image is public, opens a "chore: pin FusionAuth <version>" PR that updates the pin and its copies, and starts the Shakedown build on it. To bump the pin by hand instead, run this from the repository root and commit the result:
 
    ```console
    bash scripts/update_fusionauth_version.sh

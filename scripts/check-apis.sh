@@ -14,11 +14,12 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$repo_root/scripts/lib/run-locally.sh"
+source "$repo_root/scripts/lib/fusionauth-version.sh"
 builder_url=https://github.com/fusionauth/fusionauth-client-builder
 builder_dir="$(mktemp -d)"
 trap 'rm -rf "$builder_dir"' EXIT
 
-version="${FUSIONAUTH_VERSION:-$(<"$repo_root/fusionauth-version")}"
+version="${FUSIONAUTH_VERSION:-$(pinned_fusionauth_version)}"
 ref="${CLIENT_BUILDER_REF:-}"
 if [[ -z "$ref" ]]; then
   ref="$version"

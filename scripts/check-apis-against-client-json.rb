@@ -537,19 +537,12 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
 
       tmp_page_content = fetch_doc(api_url, options)
       
-      if tmp_page_content
-        page_content = tmp_page_content + page_content
-      else
-        puts "Error: Could not retrieve content from: #{api_url}"
-        # skip this URL:
-        # exit(false) 
+      unless tmp_page_content
+        puts "Error: Could not retrieve content from #{api_url} while checking #{t}."
+        puts "If the page moved, update its path in make_api_path."
+        exit(false)
       end
-    end
-
-    # Double check that we actually got SOMETHING after checking all URLs
-    if page_content.empty?
-      puts "Could not retrieve any content for: " + t
-      exit(false)
+      page_content = tmp_page_content + page_content
     end
   end
 

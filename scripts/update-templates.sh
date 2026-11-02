@@ -83,7 +83,8 @@ reference_page_for() {
 
 VERSION="${FUSIONAUTH_VERSION:-}"
 if [ -z "$VERSION" ]; then
-	VERSION=$(<"$REPO_ROOT/fusionauth-version")
+	source "$REPO_ROOT/scripts/lib/fusionauth-version.sh"
+	VERSION=$(pinned_fusionauth_version) || exit 1
 fi
 echo "FusionAuth version: $VERSION"
 

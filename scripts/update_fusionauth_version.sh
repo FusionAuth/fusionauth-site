@@ -6,21 +6,48 @@ mode=update
 case "${1:-}" in
   '') ;;
   --check) mode=check ;;
+  --check-latest) mode=check-latest ;;
   --help)
-    printf 'Usage: bash scripts/update_fusionauth_version.sh [--check]\n'
+    printf 'Usage: bash scripts/update_fusionauth_version.sh [--check | --check-latest]\n'
     printf 'Pin the latest FusionAuth release in fusionauth-version, and copy it into:\n'
     printf '  astro/public/docs/docker-compose.yml (served at /docs/docker-compose.yml)\n'
     printf '  astro/screenshots/docker-compose.yml (retake screenshots after changing it)\n'
     printf 'Set FUSIONAUTH_VERSION to pin a specific version. With --check, report copies that differ from fusionauth-version without changing files.\n'
+    printf 'With --check-latest, fail when fusionauth-version pins a release other than the latest one.\n'
     exit 0 ;;
   *) printf 'Unknown argument: %s\n' "$1" >&2; exit 2 ;;
 esac
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$repo_root/scripts/lib/run-locally.sh"
+source "$repo_root/scripts/lib/fusionauth-version.sh"
 pin_file=fusionauth-version
 copies=(astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml)
-pinned="$(<"$repo_root/$pin_file")"
+pinned="$(pinned_fusionauth_version)"
+
+latest_release() {
+  local latest
+  if ! latest="$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')"; then
+    printf 'Error: could not read the latest FusionAuth release from https://account.fusionauth.io/api/version.\n' >&2
+    return 1
+  fi
+  printf '%s\n' "$latest"
+}
+
+if [[ "$mode" == check-latest ]]; then
+  trap 'run_locally "bash scripts/update_fusionauth_version.sh --check-latest"' EXIT
+  latest="$(latest_release)"
+  if [[ "$latest" == "$pinned" ]]; then
+    printf '%s pins FusionAuth %s, the latest release.\n' "$pin_file" "$pinned"
+    exit 0
+  fi
+  details="Version mismatch: $pin_file pins FusionAuth $pinned, but the latest release is FusionAuth $latest. Once the docs for $latest are on main, merge the \"chore: pin FusionAuth $latest\" PR, or run \"FUSIONAUTH_VERSION=$latest bash scripts/update_fusionauth_version.sh\" and open a PR. See \"Update the docs for a new FusionAuth release\" in the README."
+  printf '%s\n' "$details" >&2
+  if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    printf 'details=%s\n' "$details" >> "$GITHUB_OUTPUT"
+  fi
+  exit 1
+fi
 
 # the screenshot pin is wrapped in ${FUSIONAUTH_IMAGE:-...} so it can be overridden locally
 pin_copy() {
@@ -50,7 +77,7 @@ if [[ "$mode" == check ]]; then
   exit 0
 fi
 
-version="${FUSIONAUTH_VERSION:-$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')}"
+version="${FUSIONAUTH_VERSION:-$(latest_release)}"
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   printf 'Unexpected FusionAuth version "%s". Nothing was changed.\n' "$version" >&2
   exit 1
