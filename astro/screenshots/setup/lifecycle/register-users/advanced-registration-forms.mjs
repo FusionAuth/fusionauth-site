@@ -63,6 +63,15 @@ async function openHiddenFieldPanels(page) {
   }, 'user-data-key');
 }
 
+// a theme created just before can take a moment to show up in the tenant form
+async function selectRegisterTheme(page) {
+  for (let i = 0; i < 30 && !(await page.locator(`#tenant_themeId option[value="${registerIds.theme}"]`).count()); i++) {
+    await page.waitForTimeout(1000);
+    await page.reload({ waitUntil: 'networkidle' });
+  }
+  await page.selectOption('#tenant_themeId', registerIds.theme);
+}
+
 export const shots = {
   'register-built-out-advanced-form': registerShot(),
   'register-basic-registration': registerShot({ fixedHeight: '.tab-list-container' }),
@@ -77,7 +86,7 @@ export const shots = {
     textPadding: 6,
     before: (page, { tag }) => tag('register-data', () => document.querySelector('#user-data fieldset:last-child > div')),
   }),
-  'register-update-theme-for-tenant': registerShot({ before: page => page.selectOption('#tenant_themeId', registerIds.theme) }),
+  'register-update-theme-for-tenant': registerShot({ before: selectRegisterTheme }),
   'register-first-step-with-placeholder': registerShot({ before: firstStep(false), temporaryState: [uncompressedTextInputs] }),
   'register-first-step-with-placeholder-and-labels': registerShot({ before: firstStep(true) }),
   'register-add-custom-field': registerShot({ before: fillField(registerFields[3]) }),

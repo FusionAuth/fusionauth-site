@@ -48,6 +48,8 @@ export default {
   },
 
   beforeAll: async context => {
+    // 1.70 scrolls smoothly, so the capture's scroll to the crop area hasn't moved yet when it shoots
+    await context.addInitScript(() => document.addEventListener('DOMContentLoaded', () => document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important')));
     runtime.leftoversContext = context;
     const seed = JSON.parse(readFileSync(join(projectRoot, 'screenshots/kickstart/kickstart.json'), 'utf-8'));
     const seedHeaders = { Authorization: seed.variables.apiKey, 'Content-Type': 'application/json' };
@@ -527,6 +529,12 @@ export default {
     await shot.prepare?.(page, ctx, info, 'afterDates');
 
     await shot.prepare?.(page, ctx, info, 'finish');
+
+    // dialogs can focus a field a moment after opening, which draws a focus ring in some runs only
+    await page.evaluate(() => {
+      document.activeElement?.blur();
+      document.addEventListener('focusin', event => event.target.blur?.(), true);
+    });
   },
 };
 
