@@ -532,6 +532,8 @@ def run(args) -> int:
                 print(f"  line {lineno:<5}  {error:<35}  {url}")
             print()
 
+    write_summary(errors_by_file, warnings_by_file)
+
     print("─" * 76)
     parts = []
     if errors_by_file:
@@ -652,6 +654,38 @@ examples:
     status = run(args)
     print_local_command()
     sys.exit(status)
+
+
+def write_summary(errors_by_file, warnings_by_file):
+    """Lists the files to fix, with each broken link, in the step summary."""
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not summary:
+        return
+    repo_root = Path(__file__).resolve().parent.parent
+
+    def table(by_file):
+        rows = ["| File | Line | Error | URL |", "|------|------|-------|-----|"]
+        for path in sorted(by_file):
+            try:
+                shown = path.resolve().relative_to(repo_root)
+            except ValueError:
+                shown = path
+            for lineno, url, error in by_file[path]:
+                rows.append(f"| `{shown}` | {lineno} | {error.replace('|', '/')} | {url.replace('|', '%7C')} |")
+        return "\n".join(rows) + "\n\n"
+
+    def count(by_file):
+        return sum(len(v) for v in by_file.values()), len(by_file)
+
+    with open(summary, "a", encoding="utf-8") as f:
+        if errors_by_file:
+            links, files = count(errors_by_file)
+            f.write(f"## Broken external links\n\n{links} broken link(s) in {files} file(s). "
+                    "Fix or remove each link below:\n\n" + table(errors_by_file))
+        if warnings_by_file:
+            links, files = count(warnings_by_file)
+            f.write(f"<details><summary>{links} unverified link(s) in {files} file(s), "
+                    "from timeouts or connection errors</summary>\n\n" + table(warnings_by_file) + "</details>\n\n")
 
 
 def print_local_command():

@@ -33,7 +33,7 @@
  *   2  bad usage
  */
 import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync } from 'fs';
-import { join, dirname, resolve } from 'path';
+import { join, dirname, resolve, relative } from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import { pathToFileURL } from 'url';
@@ -176,4 +176,38 @@ if (JSON_OUT) {
   if (OUT && changed.length) console.log(`\n  diff images written to ${OUT}`);
 }
 
+if (process.env.GITHUB_STEP_SUMMARY && (changed.length || added.length || removed.length)) writeSummary();
+
 process.exit(changed.length || added.length || removed.length ? 1 : 0);
+
+/** Lists each changed, added, or removed screenshot and the pages that show it, in the step summary. */
+function writeSummary() {
+  // pages refer to a screenshot by its file name without .png: <Screenshot id="add-group-form" ...>
+  const shownOn = new Map();
+  const contentDir = join(REPO_ROOT, 'astro', 'src', 'content');
+  for (const rel of readdirSync(contentDir, { recursive: true })) {
+    if (!/\.mdx?$/.test(rel)) continue;
+    const text = readFileSync(join(contentDir, rel), 'utf-8');
+    for (const [, id] of text.matchAll(/<Screenshot\b[^>]*\bid=["']([^"']+)["']/g)) {
+      if (!shownOn.has(id)) shownOn.set(id, new Set());
+      shownOn.get(id).add(`astro/src/content/${rel.replaceAll('\\', '/')}`);
+    }
+  }
+  const image = (name) => '`' + relative(REPO_ROOT, join(CANDIDATE, name)).replaceAll('\\', '/') + '`';
+  const pages = (name) => [...(shownOn.get(name.replace(/\.png$/, '')) || [])].sort().map(p => '`' + p + '`').join('<br>') || 'none found';
+
+  const lines = ['## Screenshots changed', ''];
+  if (changed.length) {
+    lines.push(`${changed.length} screenshot(s) changed by more than ${(THRESHOLD * 100).toFixed(3)}% of pixels. Review each one on the pages that show it:`, '',
+      '| Screenshot | Changed pixels | Shown on |', '|------------|----------------|----------|',
+      ...changed.map(r => `| ${image(r.name)} | ${(r.ratio * 100).toFixed(4)}%${r.resized ? `, resized ${r.baselineSize} to ${r.candidateSize}` : ''} | ${pages(r.name)} |`), '');
+  }
+  if (added.length) {
+    lines.push('New screenshots:', '', ...added.map(n => `- ${image(n)}, shown on ${pages(n)}`), '');
+  }
+  if (removed.length) {
+    lines.push('Removed screenshots, whose declarations are gone:', '',
+      ...removed.map(n => `- ${image(n)}${shownOn.has(n.replace(/\.png$/, '')) ? `, but still referenced on ${pages(n)}` : ''}`), '');
+  }
+  writeFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n') + '\n', { flag: 'a' });
+}
