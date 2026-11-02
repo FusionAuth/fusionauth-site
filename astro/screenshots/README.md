@@ -15,13 +15,13 @@ This boots FusionAuth, waits for it to be healthy, then captures all screenshots
 To re-take a single screenshot:
 
 ```sh
-npx take-screenshots --filter admin-group-add
+npm run screenshots -- --filter admin-group-add
 ```
 
 To check whether screenshots have drifted from the committed references (CI use):
 
 ```sh
-npx check-screenshots
+npm run check-screenshots
 ```
 
 ## Login credentials

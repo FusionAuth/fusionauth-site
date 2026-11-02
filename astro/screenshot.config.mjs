@@ -900,6 +900,9 @@ export default {
       }
     }
 
+    // the admin footer shows the build's version, which would date every screenshot; hidden keeps the layout
+    await page.addStyleTag({ content: '.footer-version { visibility: hidden !important; }' });
+
     await page.evaluate(() => {
       document.querySelectorAll('.alert, [role=alert], .notification').forEach(el => el.remove());
       // prerelease images show their build in the header
