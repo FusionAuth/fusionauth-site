@@ -91,7 +91,7 @@ async function selectSupportRole(page, ctx, info) {
 async function pinActionDates(page) {
   await page.route(`**/admin/user/manage/${dineshId}*`, async route => {
     const response = await route.fetch();
-    const body = (await response.text()).replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, '24/09/2026').replace(/\b\d{2}:\d{2}(:\d{2}(,\d{3})?)? (AM|PM)\b/g, '09:00 AM');
+    const body = (await response.text()).replace(/\b\d{1,2}\/\d{1,2}\/\d{4}\b/g, '24/09/2026').replace(/\b\d{2}:\d{2}(:\d{2}(,\d{3})?)? (AM|PM)\b/g, '09:00 AM');
     await route.fulfill({ response, body });
   });
   await page.reload({ waitUntil: 'networkidle' });

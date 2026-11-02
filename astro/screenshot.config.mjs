@@ -510,7 +510,7 @@ export default {
               seenLogin = true;
             }
             node.textContent = node.textContent
-              .replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, adminRole ? '10/12/2026' : legacyDate ? '12/10/2026' : '24/09/2026')
+              .replace(/\b\d{1,2}\/\d{1,2}\/\d{4}\b/g, adminRole ? '10/12/2026' : legacyDate ? '12/10/2026' : '24/09/2026')
               .replace(/\b\d{2}:\d{2}(:\d{2}(,\d{3})?)? (AM|PM)\b/g, (m, seconds, millis) => {
                 if (lastLogin) {
                   lastLogin = false;
