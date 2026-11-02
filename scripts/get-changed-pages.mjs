@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Outputs "url<TAB>title<TAB>kind" lines for every deployed page affected by the current PR.
+ * Outputs "url<TAB>title<TAB>kind<TAB>pct" lines for every deployed page affected by the current PR.
  *
  * Builds a dependency graph of astro/src (imports, `layout:` frontmatter, and the components
  * astro.config.ts auto-imports into MDX) and walks it backward from each changed file to the
@@ -8,12 +8,15 @@
  * expands to every page in that collection. A changed file under astro/extractedcode maps to
  * the pages whose <ExtractedCode> renders it.
  *
- * kind is "edited" when the page's own content changed (the page file, or a content fragment it
- * includes) and "shared" when it was reached through a component, layout, route, or code sample.
- * Edited pages come first.
+ * kind is "edited" when the page's own content changed: the page file, a content fragment it
+ * includes, or a JSON example it shows. It's "shared" when the change reached the page through a
+ * component, layout, route, or code sample. Edited pages come first.
+ *
+ * pct is the share of an edited page's content that changed, or "<1" for any change under 1%.
+ * Shared pages get no pct, since a component's diff says nothing about how much the page changed.
  *
  * Environment variables:
- *   BASE_REF  - git ref to diff from (default: origin/main)
+ *   BASE_REF  - git ref to diff from, normally the PR's base branch (default: origin/main)
  *   HEAD_REF  - git ref to diff to   (default: HEAD)
  */
 import { execSync } from 'child_process';
@@ -135,32 +138,33 @@ function routeCollections(f) {
 
 /** @type {Map<string, 'edited'|'shared'>} page -> kind */
 const affected = new Map();
-/** @type {Map<string, Set<string>>} page -> set of changed source files that contributed */
-const pageContributors = new Map();
-const mark = (page, kind) => { if (affected.get(page) !== 'edited') affected.set(page, kind); };
-const addContributor = (page, src) => {
-  if (!pageContributors.has(page)) pageContributors.set(page, new Set());
-  pageContributors.get(page).add(src);
+/** @type {Map<string, Set<string>>} edited page -> changed content files it includes, for its change percentage */
+const editedBy = new Map();
+const mark = (page, kind, changed) => {
+  if (affected.get(page) !== 'edited') affected.set(page, kind);
+  if (kind !== 'edited') return;
+  if (!editedBy.has(page)) editedBy.set(page, new Set());
+  editedBy.get(page).add(changed);
 };
 
-function walkFrom(start, kind, originalChangedFile) {
-  const seen = new Set();
-  const queue = [start];
+// a page or a content fragment; anything else (components, layouts, routes) renders content rather than being it
+const isContent = (f) => !!collectionOf(f) || (f.startsWith(`${SRC}/pages/`) && !f.includes('['));
+
+// a change stays an edit only while it travels through content files; past a component it's shared
+function walkFrom(start, startKind, changed) {
+  const seen = new Map();
+  const queue = [[start, startKind]];
   while (queue.length) {
-    const cur = queue.shift();
-    if (seen.has(cur)) continue;
-    seen.add(cur);
-    if (isPage(cur)) {
-      mark(cur, kind);
-      addContributor(cur, originalChangedFile);
-    }
+    const [cur, kind] = queue.shift();
+    if (seen.get(cur) === 'edited' || seen.get(cur) === kind) continue;
+    seen.set(cur, kind);
+    if (isPage(cur)) mark(cur, kind, changed);
     for (const c of routeCollections(cur)) {
-      for (const page of collectionPages.get(c)) {
-        mark(page, 'shared');
-        addContributor(page, originalChangedFile);
-      }
+      for (const page of collectionPages.get(c)) mark(page, 'shared', changed);
     }
-    for (const dep of dependents.get(cur) || []) queue.push(dep);
+    for (const dep of dependents.get(cur) || []) {
+      queue.push([dep, kind === 'edited' && isContent(dep) ? 'edited' : 'shared']);
+    }
   }
 }
 
@@ -175,13 +179,34 @@ function filesShowingExtractedCode(changed) {
   return sourceFiles.filter(f => ref.test(read(f)));
 }
 
+// <JSON src="dir/file.json"> reads from astro/src/content/json; only literal paths can be matched
+function filesShowingJson(changed) {
+  const rel = changed.slice(`${SRC}/content/json/`.length);
+  const ref = new RegExp(`<JSON\\b[^>]*\\bsrc=["']${rel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`);
+  return sourceFiles.filter(f => ref.test(read(f)));
+}
+
+// <ExtractedCode sourceRoot="public/docs" src="file"> shows a file served from astro/public
+function filesShowingPublicFile(changed) {
+  const rel = changed.slice('astro/'.length);
+  return sourceFiles.filter(f => [...read(f).matchAll(/<ExtractedCode\b[^>]*>/g)].some(([tag]) => {
+    const root = /\bsourceRoot=["']([^"']+)["']/.exec(tag)?.[1];
+    const src = /\bsrc=["']([^"']+)["']/.exec(tag)?.[1];
+    return root && src && posix.join(root, src) === rel;
+  }));
+}
+
 for (const f of changedFiles) {
   if (f.startsWith('astro/extractedcode/')) {
     for (const user of filesShowingExtractedCode(f)) walkFrom(user, 'shared', f);
+  } else if (f.startsWith('astro/public/')) {
+    for (const user of filesShowingPublicFile(f)) walkFrom(user, 'shared', f);
+  } else if (f.startsWith(`${SRC}/content/json/`)) {
+    // an example a page shows is part of that page's content
+    for (const user of filesShowingJson(f)) walkFrom(user, isContent(user) ? 'edited' : 'shared', f);
   } else if (f.startsWith(`${SRC}/`)) {
     // a page or a content fragment changing is an edit to the pages that include it
-    const contentChange = collectionOf(f) || (f.startsWith(`${SRC}/pages/`) && !f.includes('['));
-    walkFrom(f, contentChange ? 'edited' : 'shared', f);
+    walkFrom(f, isContent(f) ? 'edited' : 'shared', f);
   }
 }
 
@@ -211,56 +236,45 @@ function getUrl(f) {
 
 // ── Change statistics ─────────────────────────────────────────────────────────
 
+// -z keeps a renamed file's new path whole; without it git prints "dir/{old => new}.mdx", which matches nothing
 const numstat = new Map();
 {
-  const raw = execSync(
-    `git -C "${REPO_ROOT}" diff --numstat "${BASE_REF}...${HEAD_REF}"`,
+  const fields = execSync(
+    `git -C "${REPO_ROOT}" diff --numstat -z "${BASE_REF}...${HEAD_REF}"`,
     { encoding: 'utf-8' },
-  ).trim();
-  for (const line of raw.split('\n').filter(Boolean)) {
-    const [a, d, file] = line.split('\t');
-    if (a === '-') continue;                       // binary file
-    numstat.set(file, { added: +a, removed: +d });
+  ).split('\0');
+  for (let i = 0; i < fields.length - 1; i++) {
+    const [a, d, file] = fields[i].split('\t');
+    // a rename leaves the path empty and puts the old and new paths in the next two fields
+    const path = file || fields[(i += 2)];
+    if (a !== '-') numstat.set(path, { added: +a, removed: +d });   // '-' is a binary file
   }
 }
 
 const lineCount = (f) => {
   const text = read(f);
-  return text ? text.split('\n').length : 1;
+  return text ? text.split('\n').length : 0;
 };
 
-function getChangePercent(page, kind) {
-  const contributors = pageContributors.get(page) || new Set();
-
-  let chg = 0;
-  let totalLines = 0;
-
-  // Calculate changes across the page and all changed dependencies
-  const toCheck = new Set(contributors);
-  toCheck.add(page); // Always include the page itself in the denominator
-
-  for (const f of toCheck) {
-    const s = numstat.get(f);
-    if (s) {
-      chg += s.added + s.removed;
-    }
-    totalLines += lineCount(f);
+// share of the page's own content that changed: the page file plus the changed fragments it includes
+function getChangePercent(page) {
+  let changed = 0;
+  let total = 0;
+  for (const f of new Set([page, ...(editedBy.get(page) || [])])) {
+    const { added = 0, removed = 0 } = numstat.get(f) || {};
+    const now = lineCount(f);
+    changed += added + removed;
+    total += Math.max(now, now - added + removed);   // larger of the old and new length, so a rewrite caps at 100
   }
-
-  // Fallback for new uncommitted files or git diff anomalies
-  if (chg === 0 && kind === 'edited') return 100;
-
-  const pct = Math.round((chg / totalLines) * 100);
-  
-  // Guarantee at least 1% for shared changes, capped at 100%
-  return Math.max(kind === 'shared' ? 1 : 0, Math.min(100, pct));
+  const pct = total ? (changed / total) * 100 : 100;
+  return pct > 0 && pct < 1 ? '<1' : String(Math.min(100, Math.round(pct)));
 }
 
 // ── Output ────────────────────────────────────────────────────────────────────
 
 const rows = [...affected]
-  .filter(([page]) => isDeployed(page))
-  .map(([page, kind]) => ({ url: getUrl(page), title: getTitle(page), kind, pct: getChangePercent(page, kind) }))
+  .filter(([page]) => isFile(page) && isDeployed(page))   // a deleted page has nothing to preview
+  .map(([page, kind]) => ({ url: getUrl(page), title: getTitle(page), kind, pct: kind === 'edited' ? getChangePercent(page) : '' }))
   .sort((a, b) => (a.kind === b.kind ? a.url.localeCompare(b.url) : a.kind === 'edited' ? -1 : 1));
 
 for (const { url, title, kind, pct } of rows) process.stdout.write(`${url}\t${title}\t${kind}\t${pct}\n`);

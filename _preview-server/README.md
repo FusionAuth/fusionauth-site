@@ -11,7 +11,7 @@ Nginx serves the static build output on HTTPS via [sslip.io](https://sslip.io) w
 1. Developer pushes to a PR.
 2. GitHub Actions posts a "⏳ Building preview…" comment and creates a **GitHub Deployment** for `preview-pr-<N>` (shows a yellow indicator in the PR header).
 3. Actions SCPs the scripts to EC2, then SSHes to run `build-preview.sh`.
-4. `build-preview.sh` fetches the PR ref, sets up a git worktree, builds with `npm run build`, and emits `PAGE:` lines for the changed-pages table.
+4. `build-preview.sh` fetches the PR ref and the PR's base branch, sets up a git worktree, builds with `npm run build`, and emits `PAGE:` lines for the changed-pages table. `scripts/get-changed-pages.mjs` diffs the PR against the commit where it branched from its base, so changes that landed on the base later don't show up.
 5. Actions updates the comment with the preview URL + changed-pages table, and sets the deployment to ✅ green.
 6. When the PR closes, the slot is released and the deployment is marked inactive.
 
