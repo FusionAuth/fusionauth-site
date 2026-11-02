@@ -21,6 +21,7 @@ fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$repo_root/scripts/lib/run-locally.sh"
+source "$repo_root/scripts/lib/fusionauth-version.sh"
 snapshot_dir="$repo_root/astro/extractedcode/configuration-snippets"
 json_dir="$repo_root/astro/src/content/json/generated"
 templates_json="$repo_root/astro/src/content/json/themes/templates.json"
@@ -144,7 +145,7 @@ printf '\nFetching fusionauth-app for JSON generation...\n'
 app_zip="${FUSIONAUTH_APP_ZIP:-}"
 version="${FUSIONAUTH_VERSION:-}"
 if [[ -z "$app_zip" ]]; then
-  version="${version:-$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')}"
+  version="${version:-$(pinned_fusionauth_version)}"
   app_zip="$staging_dir/app.zip"
   printf 'Downloading version %s\n' "$version"
   curl -f -L -s "https://files.fusionauth.io/products/fusionauth/${version}/fusionauth-app-${version}.zip" -o "$app_zip"

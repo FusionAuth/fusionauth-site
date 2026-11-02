@@ -8,6 +8,7 @@
 #
 # Expects the standard GitHub Actions environment plus GH_TOKEN with issues: write.
 # WORKFLOW_NAME overrides GITHUB_WORKFLOW; .github/workflows/report-scheduled-run.yml sets it to the caller's name.
+# DETAILS, when set, goes into the issue body and each failure comment.
 
 set -euo pipefail
 
@@ -21,6 +22,9 @@ label="scheduled-failure"
 workflow="${WORKFLOW_NAME:-$GITHUB_WORKFLOW}"
 title="Scheduled workflow failing: $workflow"
 run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+details="${DETAILS:+
+
+$DETAILS}"
 
 issue="$(gh issue list --repo "$GITHUB_REPOSITORY" --label "$label" --state open --json number,title |
   jq -r --arg title "$title" 'map(select(.title == $title))[0].number // empty')"
@@ -31,7 +35,7 @@ if [[ "$result" == success ]]; then
 fi
 
 if [[ -n "$issue" ]]; then
-  gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body "Failed again: $run_url"
+  gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body "Failed again: $run_url$details"
   exit 0
 fi
 
@@ -40,6 +44,6 @@ gh label create "$label" --repo "$GITHUB_REPOSITORY" --force \
   --color B60205 --description "A scheduled workflow is failing"
 gh issue create --repo "$GITHUB_REPOSITORY" --label "$label" --title "$title" --body "$owners
 
-\`$workflow\` failed: $run_url
+\`$workflow\` failed: $run_url$details
 
 The job log lists every change the run found and ends with the command that reproduces the run locally; the run summary repeats that command. Later failures add a comment here, and the next passing run closes this issue."

@@ -110,4 +110,4 @@ Prerelease builds show an "Early Access" badge in the admin header. The screensh
 
 ## Version pinning
 
-`docker-compose.yml` pins `fusionauth/fusionauth-app` to a specific version. This prevents surprise visual changes when Docker pulls a new image. The Update FusionAuth version workflow opens a PR that bumps the pin after each release. Merging it triggers the Update screenshots workflow, which retakes the screenshots and opens its own PR. To bump it by hand, run `bash scripts/update_fusionauth_version.sh` from the repository root and retake all screenshots.
+`docker-compose.yml` pins `fusionauth/fusionauth-app` to the release in the repository's `fusionauth-version` file. This prevents surprise visual changes when Docker pulls a new image. The Update FusionAuth version workflow opens a PR that bumps the pin after each release. Once it merges, the weekly Update screenshots workflow retakes the screenshots against the new release and opens its own PR, or you can start that workflow by hand. See "Update the docs for a new FusionAuth release" in the [repository README](../../README.md).

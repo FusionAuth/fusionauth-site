@@ -1,26 +1,83 @@
 #!/usr/bin/env bash
-# Pin fusionauth/fusionauth-app to the latest release in the docker install compose file and the screenshot tooling.
+# Pin the FusionAuth release the docs document in fusionauth-version, and copy it into the files that can't read that file.
 set -euo pipefail
 
 mode=update
 case "${1:-}" in
   '') ;;
   --check) mode=check ;;
+  --check-latest) mode=check-latest ;;
   --help)
-    printf 'Usage: bash scripts/update_fusionauth_version.sh [--check]\n'
-    printf 'Pin fusionauth/fusionauth-app to the latest release in:\n'
+    printf 'Usage: bash scripts/update_fusionauth_version.sh [--check | --check-latest]\n'
+    printf 'Pin the latest FusionAuth release in fusionauth-version, and copy it into:\n'
     printf '  astro/public/docs/docker-compose.yml (served at /docs/docker-compose.yml)\n'
     printf '  astro/screenshots/docker-compose.yml (retake screenshots after changing it)\n'
-    printf 'Set FUSIONAUTH_VERSION to pin a specific version. With --check, report a stale pin without changing files.\n'
+    printf 'Set FUSIONAUTH_VERSION to pin a specific version. With --check, report copies that differ from fusionauth-version without changing files.\n'
+    printf 'With --check-latest, fail when fusionauth-version pins a release other than the latest one.\n'
     exit 0 ;;
   *) printf 'Unknown argument: %s\n' "$1" >&2; exit 2 ;;
 esac
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$repo_root/scripts/lib/run-locally.sh"
-files=(astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml)
+source "$repo_root/scripts/lib/fusionauth-version.sh"
+pin_file=fusionauth-version
+copies=(astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml)
+pinned="$(pinned_fusionauth_version)"
 
-version="${FUSIONAUTH_VERSION:-$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')}"
+latest_release() {
+  local latest
+  if ! latest="$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]')"; then
+    printf 'Error: could not read the latest FusionAuth release from https://account.fusionauth.io/api/version.\n' >&2
+    return 1
+  fi
+  printf '%s\n' "$latest"
+}
+
+if [[ "$mode" == check-latest ]]; then
+  trap 'run_locally "bash scripts/update_fusionauth_version.sh --check-latest"' EXIT
+  latest="$(latest_release)"
+  if [[ "$latest" == "$pinned" ]]; then
+    printf '%s pins FusionAuth %s, the latest release.\n' "$pin_file" "$pinned"
+    exit 0
+  fi
+  details="Version mismatch: $pin_file pins FusionAuth $pinned, but the latest release is FusionAuth $latest. Once the docs for $latest are on main, merge the \"chore: pin FusionAuth $latest\" PR, or run \"FUSIONAUTH_VERSION=$latest bash scripts/update_fusionauth_version.sh\" and open a PR. See \"Update the docs for a new FusionAuth release\" in the README."
+  printf '%s\n' "$details" >&2
+  if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    printf 'details=%s\n' "$details" >> "$GITHUB_OUTPUT"
+  fi
+  exit 1
+fi
+
+# the screenshot pin is wrapped in ${FUSIONAUTH_IMAGE:-...} so it can be overridden locally
+pin_copy() {
+  sed -E "s#(fusionauth/fusionauth-app:)[0-9]+\.[0-9]+\.[0-9]+#\1$2#" "$repo_root/$1"
+}
+
+for file in "${copies[@]}"; do
+  if ! grep -qE 'fusionauth/fusionauth-app:[0-9]+\.[0-9]+\.[0-9]+' "$repo_root/$file"; then
+    printf 'No pinned fusionauth/fusionauth-app image found in %s.\n' "$file" >&2
+    exit 1
+  fi
+done
+
+if [[ "$mode" == check ]]; then
+  trap 'run_locally "bash scripts/update_fusionauth_version.sh --check"' EXIT
+  stale=()
+  for file in "${copies[@]}"; do
+    pin_copy "$file" "$pinned" | diff -u --label "$file" --label "$file" "$repo_root/$file" - || stale+=("$file")
+  done
+  if [[ ${#stale[@]} -gt 0 ]]; then
+    printf '\n%s pins FusionAuth %s, but these files pin a different version:\n' "$pin_file" "$pinned" >&2
+    printf '  %s\n' "${stale[@]}" >&2
+    printf 'To fix them, run this from the repo root: FUSIONAUTH_VERSION=%s bash scripts/update_fusionauth_version.sh\n' "$pinned" >&2
+    exit 1
+  fi
+  printf 'Every copy matches %s (FusionAuth %s).\n' "$pin_file" "$pinned"
+  exit 0
+fi
+
+version="${FUSIONAUTH_VERSION:-$(latest_release)}"
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   printf 'Unexpected FusionAuth version "%s". Nothing was changed.\n' "$version" >&2
   exit 1
@@ -28,14 +85,9 @@ fi
 trap 'run_locally "FUSIONAUTH_VERSION=$version bash scripts/update_fusionauth_version.sh"' EXIT
 
 stale=()
-for file in "${files[@]}"; do
-  # the screenshot pin is wrapped in ${FUSIONAUTH_IMAGE:-...} so it can be overridden locally
-  current="$(sed -n 's#^ *image: \(\${FUSIONAUTH_IMAGE:-\)\{0,1\}fusionauth/fusionauth-app:\([^}]*\)}\{0,1\}$#\2#p' "$repo_root/$file")"
-  if [[ -z "$current" ]]; then
-    printf 'No fusionauth/fusionauth-app image line found in %s.\n' "$file" >&2
-    exit 1
-  fi
-  [[ "$current" == "$version" ]] || stale+=("$file ($current)")
+[[ "$pinned" == "$version" ]] || stale+=("$pin_file ($pinned)")
+for file in "${copies[@]}"; do
+  pin_copy "$file" "$version" | cmp -s "$repo_root/$file" - || stale+=("$file")
 done
 
 if [[ ${#stale[@]} -eq 0 ]]; then
@@ -50,22 +102,16 @@ if ! curl -f --silent --output /dev/null "https://hub.docker.com/v2/repositories
 fi
 
 printf '\nProposed changes:\n'
-for file in "${files[@]}"; do
-  sed "s#^\( *image: \(\${FUSIONAUTH_IMAGE:-\)\{0,1\}fusionauth/fusionauth-app:\)[^}]*#\1$version#" "$repo_root/$file" |
-    diff -u --label "$file" --label "$file" "$repo_root/$file" - || true
+printf '%s\n' "$version" | diff -u --label "$pin_file" --label "$pin_file" "$repo_root/$pin_file" - || true
+for file in "${copies[@]}"; do
+  pin_copy "$file" "$version" | diff -u --label "$file" --label "$file" "$repo_root/$file" - || true
 done
 printf '\n'
 
-if [[ "$mode" == check ]]; then
-  printf 'FusionAuth %s is out but these files pin an older version:\n' "$version" >&2
-  printf '  %s\n' "${stale[@]}" >&2
-  printf 'Run the command below, then open a PR.\n' >&2
-  exit 1
-fi
-
-for file in "${files[@]}"; do
-  sed -i.bak "s#^\( *image: \(\${FUSIONAUTH_IMAGE:-\)\{0,1\}fusionauth/fusionauth-app:\)[^}]*#\1$version#" "$repo_root/$file"
-  rm -f "$repo_root/$file.bak"
+printf '%s\n' "$version" > "$repo_root/$pin_file"
+for file in "${copies[@]}"; do
+  pin_copy "$file" "$version" > "$repo_root/$file.next"
+  mv "$repo_root/$file.next" "$repo_root/$file"
 done
 printf 'Pinned FusionAuth %s in:\n' "$version"
 printf '  %s\n' "${stale[@]}"

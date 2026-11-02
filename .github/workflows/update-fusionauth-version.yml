@@ -2,23 +2,32 @@ name: Update FusionAuth version
 
 on:
   schedule:
-    - cron: '17 9 */2 * *'
+    - cron: '17 9 * * *'
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    outputs:
+      details: ${{ steps.behind.outputs.details }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v7
 
-      # pins the docker install compose file and the screenshot tooling; sets `version` only when it changed something
+      # before the bump rewrites the pin; the last step fails the job if this did
+      - name: Compare the pin to the latest release
+        id: behind
+        continue-on-error: true
+        run: bash scripts/update_fusionauth_version.sh --check-latest
+
+      # pins fusionauth-version and its copies; sets `version` only when it changed something
       - name: Pin latest FusionAuth release
         id: bump
         run: bash scripts/update_fusionauth_version.sh
@@ -45,15 +54,15 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml
+          git add fusionauth-version astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml
           git commit -m "chore: pin FusionAuth $VERSION"
           git push --force origin "$BRANCH"
 
           {
-            printf 'Pins `fusionauth/fusionauth-app:%s` in the Docker install compose file (`astro/public/docs/docker-compose.yml`, served at /docs/docker-compose.yml) and the screenshot tooling (`astro/screenshots/docker-compose.yml`).\n\n' "$VERSION"
+            printf 'Pins FusionAuth %s in `fusionauth-version`, which the API, template, and external content checks read, and in its copies: the Docker install compose file (`astro/public/docs/docker-compose.yml`, served at /docs/docker-compose.yml) and the screenshot tooling (`astro/screenshots/docker-compose.yml`).\n\n' "$VERSION"
             printf '### Changes\n\n```diff\n'
-            git diff HEAD~1 HEAD -- astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml
-            printf '```\n\nMerging this PR triggers the Update screenshots workflow, which retakes the screenshots against the new version and opens its own PR.\n\n'
+            git diff HEAD~1 HEAD
+            printf '```\n\nMerge this PR after the docs for %s are on `main`. The API docs check in the Shakedown build runs against %s on this PR, so it fails until they are. See "Update the docs for a new FusionAuth release" in the README.\n\n' "$VERSION" "$VERSION"
             printf '### Reproduce locally\n\nRun this from the repo root:\n\n```bash\nFUSIONAUTH_VERSION=%s bash scripts/update_fusionauth_version.sh\n```\n' "$VERSION"
           } > "$RUNNER_TEMP/pr-body.md"
           cat "$RUNNER_TEMP/pr-body.md"
@@ -65,12 +74,25 @@ jobs:
             exit 1
           fi
 
+          # PRs opened with GITHUB_TOKEN don't trigger pull_request workflows, but a dispatch does
+          gh workflow run test-build.yml --ref "$BRANCH"
+
+      # keeps the issue open until the pin PR merges
+      - name: Fail while the pin trails the latest release
+        if: ${{ !cancelled() && steps.behind.outcome == 'failure' }}
+        env:
+          DETAILS: ${{ steps.behind.outputs.details }}
+        run: |
+          printf '%s\n' "${DETAILS:-The pin check failed before it could compare versions. See the first step's log.}"
+          exit 1
+
   report:
     needs: update
     if: ${{ !cancelled() }}
     uses: ./.github/workflows/report-scheduled-run.yml
     with:
       result: ${{ needs.update.result }}
+      details: ${{ needs.update.outputs.details }}
     permissions:
       contents: read
       issues: write

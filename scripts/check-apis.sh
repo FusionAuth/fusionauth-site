@@ -1,24 +1,25 @@
 #!/usr/bin/env bash
-# Checks the API docs against the client builder for the latest FusionAuth release.
+# Checks the API docs against the client builder for the FusionAuth release pinned in fusionauth-version.
 #
 # Usage: bash scripts/check-apis.sh [extra check-apis-against-client-json.rb options, e.g. --pr]
 #
-# Clones fusionauth-client-builder at the branch for the latest release, falling back to the
+# Clones fusionauth-client-builder at the branch for the pinned release, falling back to the
 # minor release's .0 branch when a patch release has no branch of its own.
 #
 # Environment:
-#   FUSIONAUTH_VERSION   release to check against; defaults to the latest from the version API
+#   FUSIONAUTH_VERSION   release to check against; defaults to the release in fusionauth-version
 #   CLIENT_BUILDER_REF   client builder branch or commit to clone; defaults to the release's branch
 
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$repo_root/scripts/lib/run-locally.sh"
+source "$repo_root/scripts/lib/fusionauth-version.sh"
 builder_url=https://github.com/fusionauth/fusionauth-client-builder
 builder_dir="$(mktemp -d)"
 trap 'rm -rf "$builder_dir"' EXIT
 
-version="${FUSIONAUTH_VERSION:-$(curl -f --silent https://account.fusionauth.io/api/version | jq -r 'last(.versions[-1])')}"
+version="${FUSIONAUTH_VERSION:-$(pinned_fusionauth_version)}"
 ref="${CLIENT_BUILDER_REF:-}"
 if [[ -z "$ref" ]]; then
   ref="$version"

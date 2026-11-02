@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Refreshes the default email and message templates from the latest FusionAuth release.
+# Refreshes the default email and message templates from the FusionAuth release pinned in fusionauth-version.
 #
 # The templates ship inside fusionauth-app's jar. This downloads the release zip, pulls the
 # .ftl files out of the nested jar, copies them into astro/extractedcode/templates-<kind>,
@@ -16,7 +16,7 @@
 #   scripts/update-templates.sh all --dry-run     # leave the repo untouched
 #
 # Environment:
-#   FUSIONAUTH_VERSION    Version to pull. Defaults to the latest from the version API.
+#   FUSIONAUTH_VERSION    Version to pull. Defaults to the release in fusionauth-version.
 #   FUSIONAUTH_APP_ZIP    Path to an already-downloaded release zip, to skip the ~83MB
 #                         download while iterating locally.
 #   GITHUB_STEP_SUMMARY   When set, a summary is appended to it.
@@ -83,10 +83,8 @@ reference_page_for() {
 
 VERSION="${FUSIONAUTH_VERSION:-}"
 if [ -z "$VERSION" ]; then
-	VERSION=$(curl -f --silent https://account.fusionauth.io/api/version | jq -r '.versions[-1]') || {
-		echo "ERROR: could not read the latest version from the version API" >&2
-		exit 1
-	}
+	source "$REPO_ROOT/scripts/lib/fusionauth-version.sh"
+	VERSION=$(pinned_fusionauth_version) || exit 1
 fi
 echo "FusionAuth version: $VERSION"
 
