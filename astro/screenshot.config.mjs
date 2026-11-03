@@ -1,567 +1,200 @@
+import { piedPiperAppId, defaultTenantId, projectRoot, baseUrl, apiKey, runtime, makeTag, highlightHelpers, runTemporaryState, selectTab, tabsReady } from './screenshots/setup/kit.mjs';
+import { join } from 'path';
 import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { modules, resources } from './screenshots/setup/index.mjs';
 
 // load .env from this directory for local development (no-op if file absent)
 try {
-  const envFile = join(dirname(fileURLToPath(import.meta.url)), '.env');
-  readFileSync(envFile, 'utf-8').split('\n').forEach(line => {
-    const m = line.match(/^([^#=\s][^=]*)=(.*)/);
-    if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
-  });
+  const envFile = join(projectRoot, '.env');
+  readFileSync(envFile, 'utf-8')
+    .split('\n')
+    .forEach(line => {
+      const m = line.match(/^([^#=\s][^=]*)=(.*)/);
+      if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+    });
 } catch {}
 
-let adminLocale;
-
-// the tab bar is set up by a module script after the page loads
-const tabsReady = page => page.waitForFunction(() => customElements.get('el-tab-group') && customElements.get('el-tab-list'), null, { timeout: 10000 });
-
-// scroll the tab bar so it starts on a whole tab and still shows the selected one
-const alignTabBar = page => page.evaluate(() => {
-  const btn = document.querySelector('el-tab-list button[aria-selected="true"]');
-  const bar = btn?.closest('.tab-list-container');
-  if (!bar) return;
-  const x = el => el.getBoundingClientRect().left - bar.getBoundingClientRect().left + bar.scrollLeft;
-  const end = x(btn) + btn.offsetWidth;
-  bar.scrollLeft = end <= bar.clientWidth ? 0
-    : [...bar.querySelectorAll('el-tab-list button')].map(x).find(left => left >= end - bar.clientWidth);
-});
-
-// click until the tab's panel shows
-async function selectTab(page, label) {
-  await tabsReady(page);
-  for (let i = 0; i < 20; i++) {
-    const selected = await page.evaluate(l => {
-      const btn = [...document.querySelectorAll('el-tab-list button')].find(b => b.textContent.trim() === l);
-      const shown = () => btn?.getAttribute('aria-selected') === 'true' && !document.getElementById(btn.getAttribute('aria-controls'))?.hidden;
-      if (btn && !shown()) btn.click();
-      return shown();
-    }, label);
-    if (selected) return alignTabBar(page);
-    await page.waitForTimeout(250);
+const shots = Object.create(null);
+for (const module of modules) {
+  for (const [name, shot] of Object.entries(module.shots ?? {})) {
+    if (Object.hasOwn(shots, name)) throw new Error(`duplicate screenshot setup: ${name}`);
+    shots[name] = shot;
   }
-  throw new Error(`tab "${label}" was not selected`);
 }
-
-// switched on (not saved) so the screenshot shows the settings each one reveals
-const switches = {
-  'tenant-identities': ['tenant_emailConfiguration_verifyEmail', 'tenant_phoneConfiguration_verifyPhoneNumber'],
-  'tenant-family-settings': ['tenant_familyConfiguration_enabled'],
-  'tenant-mfa-email-settings': ['tenant_multiFactorConfiguration_email_enabled'],
-  'tenant-mfa-phone-settings': ['tenant_multiFactorConfiguration_sms_enabled', 'tenant_multiFactorConfiguration_voice_enabled'],
-  'tenant-webauthn-bootstrap-settings': ['tenant_webAuthnConfiguration_bootstrapWorkflow_enabled'],
-  'tenant-webauthn-reauthentication-settings': ['tenant_webAuthnConfiguration_reauthenticationWorkflow_enabled'],
-  'tenant-password-breach-detection-settings': ['tenant_passwordValidationRules_breachDetection_enabled'],
-  'tenant-scim-settings': ['tenant_scimServerConfiguration_enabled'],
-  'tenant-security-acl-captcha': ['tenant_captchaConfiguration_enabled'],
-  'tenant-security-client-risk-rate-limit': ['tenant_clientRiskConfiguration_enabled'],
-  'application-jwt-enabled': ['application_jwtConfiguration_enabled'],
-  'application-jwt-refresh-token': ['application_jwtConfiguration_enabled'],
-  'application-registration-verify': ['application_verifyRegistration'],
-  'application-webauthn': ['application_webAuthnConfiguration_enabled'],
-  'application-registration-self-service-advanced': ['application_registrationConfiguration_type-advanced'],
-  'application-saml-enabled': ['application_samlv2Configuration_enabled'],
-  'application-saml-authentication-request': ['application_samlv2Configuration_enabled'],
-  'application-saml-authentication-response': ['application_samlv2Configuration_enabled'],
-  'application-saml-logout-request': ['application_samlv2Configuration_enabled'],
-  'application-saml-logout-response': ['application_samlv2Configuration_enabled'],
-  'application-saml-assertion-encryption': ['application_samlv2Configuration_enabled', 'application_samlv2Configuration_assertionEncryptionConfiguration_enabled'],
-};
-
-// chosen (not saved) before the switches above
-const selects = {
-  'application-registration-self-service': { selfRegistrationType: 'Create' },
-  'application-registration-self-service-basic': { selfRegistrationType: 'Complete' },
-  'application-registration-self-service-advanced': { selfRegistrationType: 'Complete' },
-};
-
-// pages too long to show in full keep the screenshot's height, scrolled to the named section if there is one
-const fixedHeight = {
-  'tenant-identities': null,
-  'tenant-identities-template-settings': 'Template settings',
-  'tenant-jwt': 'JSON web token settings',
-  'tenant-webhooks-settings': null,
-  'tenant-security-acl-captcha': null,
-  'tenant-security-client-risk-rate-limit': 'Client risk configuration',
-  'tenant-advanced-external-identifier-durations': null,
-  'tenant-advanced-external-identifier-generation': 'External identifier generation',
-  'application-saml-enabled': null,
-};
-
-// full-width strips of the window around these parts of the page, so the sidebar stays beside them
-// screenshots of a dialog: the link that opens it
-const dialogs = {
-  'cimd-domain-view': 'a[href*="/ajax/cimd-domain/view/"]',
-  'cimd-domain-scope-add': 'a[href*="/ajax/cimd-domain/scope/add"]',
-  'cimd-domain-scope-edit': 'a[href*="/ajax/cimd-domain/scope/edit"]',
-};
-
-const bands = {
-  'tenant-token-exchange': "[data-section='token-exchange-settings']",
-  'tenant-token-exchange-enable': "[data-section='token-exchange-settings']",
-  'tenant-connectors': "el-tab-list, [data-section='connector-settings']",
-  'tenant-mfa-policy-settings': "[data-section='policies']",
-  'tenant-mfa-authenticator-settings': "[data-section='authenticator-settings']",
-  'tenant-mfa-email-settings': "[data-section='email-settings']",
-  'tenant-mfa-phone-settings': "[data-section='phone-settings']",
-  'tenant-webauthn': "el-tab-list, [data-section='webauthn-settings'], [id^='tenant_webAuthnConfiguration_relyingParty'], #tenant_webAuthnConfiguration_debug-form-row",
-  'tenant-webauthn-bootstrap-settings': "[data-section='bootstrap-passkey-authentication']",
-  'tenant-webauthn-reauthentication-settings': "[data-section='passkey-re-authentication']",
-  'tenant-oauth': "el-tab-list, [data-section='advanced-sso-settings']",
-  'tenant-password-failed-authentication-settings': "el-tab-list, [data-section='failed-authentication-settings']",
-  'tenant-password-breach-detection-settings': "[data-section='breached-password-detection-settings']",
-  'tenant-password-settings': "[data-section='password-settings']",
-  'tenant-password-cryptographic-hash-settings': "[data-section='cryptographic-hash-settings']",
-  'tenant-security-blocked-domains': "[data-section='blocked-domains-settings']",
-  'application-cleanspeak': "el-tab-list, #clean-speak-integration",
-  'application-jwt-enabled': "el-tab-list, #jwt > fieldset:first-child > legend, #application_jwtConfiguration_enabled-form-row, #jwt-settings-body > fieldset:first-child",
-  'application-jwt-refresh-token': "[data-section='refresh-token-settings']",
-  'application-registration-verify': "el-tab-list, [data-section='registration-verification-settings']",
-  'application-registration-self-service': "[data-section='self-service-registration'], #registration-configuration",
-  'application-registration-self-service-basic': "[data-section='self-service-registration'], #registration-configuration",
-  'application-registration-self-service-advanced': "[data-section='self-service-registration'], #registration-configuration",
-  'application-registration-form-settings': "[data-section='form-settings']",
-  'application-saml-authentication-request': "[data-section='authentication-request']",
-  'application-saml-authentication-response': "[data-section='authentication-response']",
-  'application-saml-logout-request': "[data-section='logout-request'], #samlv2-settings-body > .switch-group",
-  'application-saml-logout-response': "[data-section='logout-response']",
-  'application-saml-assertion-encryption': "[data-section='assertion-encryption']",
-};
+const temporaryResources = [...new Set(Object.values(shots).flatMap(shot => shot.temporaryResources ?? []))].sort((a, b) => a.order - b.order);
+const temporaryState = [...new Set(Object.values(shots).flatMap(shot => shot.temporaryState ?? []))].sort((a, b) => a.order - b.order);
 
 export default {
-  baseUrl: 'http://localhost:9011',
+  baseUrl,
   outputDir: 'public/img/docs/screenshots',
   window: { width: 1100, height: 800 },
   browser: 'webkit',
-  // render in a pinned linux container so macos and ci produce identical text
   browserContainer: true,
   chrome: {
-    style:    'golden-gate',
+    style: 'golden-gate',
     renderIn: 'css',
-    showUrl:  true,
-    url:      'local.fusionauth.io',
-    theme:    'light',
+    showUrl: true,
+    url: 'local.fusionauth.io',
+    theme: 'light',
   },
-
   docker: {
-    compose:  'screenshots/docker-compose.yml',
-    service:  'fusionauth',
+    compose: 'screenshots/docker-compose.yml',
+    service: 'fusionauth',
     healthcheck: {
-      url:      'http://localhost:9011/api/status',
-      timeout:  120000,
+      url: `${baseUrl}/api/health`,
+      timeout: 300000,
       interval: 3000,
     },
   },
 
-  beforeAll: async (context) => {
-    const page = await context.newPage();
-
-    // FusionAuth's API healthcheck passes before the kickstart finishes and the
-    // login UI becomes available. Retry navigation until the login form appears.
-    const deadline = Date.now() + 150_000;
-    while (Date.now() < deadline) {
-      await page.goto('http://localhost:9011/admin/login', {
-        waitUntil: 'load',
-        timeout: 15000,
-      }).catch(() => {});
-      const ready = await page.$('#loginId');
-      if (ready) break;
-      await new Promise(r => setTimeout(r, 3000));
+  beforeAll: async context => {
+    // 1.70 scrolls smoothly, so the capture's scroll to the crop area hasn't moved yet when it shoots
+    await context.addInitScript(() => document.addEventListener('DOMContentLoaded', () => document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important')));
+    runtime.leftoversContext = context;
+    const seed = JSON.parse(readFileSync(join(projectRoot, 'screenshots/kickstart/kickstart.json'), 'utf-8'));
+    const seedHeaders = { Authorization: seed.variables.apiKey, 'Content-Type': 'application/json' };
+    const seedDeadline = Date.now() + 300_000;
+    for (;;) {
+      const response = await fetch(`${baseUrl}/api/application/${seed.variables.defaultApplicationId}`, { headers: seedHeaders, signal: AbortSignal.timeout(5000) }).catch(() => null);
+      if (response?.ok) break;
+      if (Date.now() >= seedDeadline) throw new Error('FusionAuth bootstrap API did not become ready');
+      await new Promise(r => setTimeout(r, 1000));
     }
-
+    // Kickstart's HTTP runner can start before the server accepts fixture requests.
+    const seeded = await fetch(`${baseUrl}/api/theme/${seed.variables.screenshotsThemeId}`, { headers: seedHeaders });
+    if (seeded.status === 404) {
+      const requests = JSON.parse(JSON.stringify(seed.requests).replace(/#\{([^}]+)\}/g, (_, name) => seed.variables[name]));
+      for (const request of requests) {
+        const response = await fetch(`${baseUrl}${request.url}`, {
+          method: request.method, headers: { ...seedHeaders, ...(request.tenantId ? { 'X-FusionAuth-TenantId': request.tenantId } : {}) }, body: JSON.stringify(request.body),
+        });
+        if (!response.ok) throw new Error(`Fixture setup failed: ${request.method} ${request.url} ${response.status}`);
+      }
+    } else if (!seeded.ok) throw new Error(`Fixture readiness check failed: ${seeded.status}`);
+    const page = await context.newPage();
+    const deadline = Date.now() + 300_000;
+    let ready = false;
+    while (Date.now() < deadline) {
+      await page.goto(`${baseUrl}/admin/login`, { waitUntil: 'networkidle', timeout: 15000 }).catch(() => {});
+      ready = await page.locator('#loginId').isVisible() && await page.locator('#password').isVisible();
+      if (ready) break;
+      await page.waitForTimeout(1000);
+    }
+    if (!ready) throw new Error('FusionAuth admin login form did not become ready');
     await page.fill('#loginId', 'richard@piedpiper.com');
     await page.fill('#password', 'password');
-    // press Enter to submit -- more reliable than clicking a specific button selector
     await page.keyboard.press('Enter');
-    // the login page is under /admin too, so wait until it has been left
     await page.waitForURL(url => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login'), { timeout: 30000 });
-    adminLocale = (await context.cookies('http://localhost:9011')).find(c => c.name === 'fusionauth.locale')?.value;
+    runtime.adminLocale = (await context.cookies(`${baseUrl}`)).find(c => c.name === 'fusionauth.locale')?.value;
     await page.close();
-
-    // Configure tenant and set up screenshot infrastructure.
-    const apiKey = 'screenshot-dev-key-not-for-production';
-    const baseUrl = 'http://localhost:9011';
-    const tenantId = '30663132-6464-6665-3032-326466613934';
-    const messengerId = '00000000-0000-0000-0000-500000000001';
-
-    const appId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
-    const richardId = '00000000-0000-0000-0000-100000000001';
-
-    // activate license if key is provided (enables WebAuthn and other licensed features)
-    if (process.env.FUSIONAUTH_LICENSE_KEY) {
-      try {
-        const licResp = await fetch(`${baseUrl}/api/reactor`, {
-          method: 'POST',
-          headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ licenseId: process.env.FUSIONAUTH_LICENSE_KEY }),
-        });
-        // 409 = already activated, both are fine
-        if (!licResp.ok && licResp.status !== 409) {
-          throw new Error(`${licResp.status} ${await licResp.text()}`);
-        } else {
-          // poll until licensed: true (reactor activates asynchronously)
-          const licDeadline = Date.now() + 15_000;
-          while (Date.now() < licDeadline) {
-            const statusResp = await fetch(`${baseUrl}/api/reactor`, { headers: { 'Authorization': apiKey } });
-            const { status } = await statusResp.json();
-            if (status?.licensed === true) {
-              console.log('[screenshot] beforeAll: license active, webAuthn:', status.webAuthn);
-              break;
-            }
-            await new Promise(r => setTimeout(r, 1000));
-          }
-          // enable WebAuthn on the tenant (both workflows)
-          await fetch(`${baseUrl}/api/tenant/${tenantId}`, {
-            method: 'PATCH',
-            headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tenant: { webAuthnConfiguration: {
-              enabled: true,
-              bootstrapWorkflow: { enabled: true },
-              reauthenticationWorkflow: { enabled: true },
-            } } }),
-          });
-          // ensure Richard is registered with Pied Piper (idempotent -- 400 if already exists)
-          await fetch(`${baseUrl}/api/user/registration/${richardId}`, {
-            method: 'POST',
-            headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ registration: { applicationId: appId, roles: ['admin'] } }),
-          });
-        }
-      } catch (e) {
-        throw new Error(`beforeAll: license setup failed: ${e.message}`, { cause: e });
-      }
-    }
-
-    // CIMD and token exchange demo data; needs 1.70.0+ and a license with both features
-    try {
-      const { status } = await (await fetch(`${baseUrl}/api/reactor`, { headers: { 'Authorization': apiKey } })).json();
-      if (status?.cimd === 'ACTIVE' && status?.tokenExchange === 'ACTIVE') {
-        const call = async (method, path, body, tenantScoped = true) => {
-          const headers = { 'Authorization': apiKey, 'Content-Type': 'application/json' };
-          if (tenantScoped) headers['X-FusionAuth-TenantId'] = tenantId;
-          const r = await fetch(`${baseUrl}${path}`, { method, headers, body: body && JSON.stringify(body) });
-          if (!r.ok && !(method === 'GET' && r.status === 404)) throw new Error(`${method} ${path}: ${r.status} ${await r.text()}`);
-          return r;
-        };
-        // create once, keyed by a fixed id
-        const ensure = async (path, body, tenantScoped) => {
-          if ((await call('GET', path, undefined, tenantScoped)).status === 404) await call('POST', path, body, tenantScoped);
-        };
-
-        const cimdDomainId = '7d3c9a2e-41f6-4b8e-9c05-2e6f1a8b3d47';
-        await ensure(`/api/cimd/domain/${cimdDomainId}`, { domain: {
-          name: 'Claude', domain: 'https://claude.ai', authorizedResourceUris: ['https://mcp.piedpiper.com/mcp'],
-          consentMode: 'AlwaysPrompt', gracePeriodInSeconds: 600,
-          providedScopePolicy: { address: { enabled: false, required: false }, email: { enabled: true, required: false }, phone: { enabled: false, required: false }, profile: { enabled: true, required: false } },
-        } });
-        await ensure(`/api/cimd/domain/${cimdDomainId}/scope/b2e4f6a8-1c3d-4e5f-8a9b-0c1d2e3f4a5b`, { scope: {
-          name: 'files:read', description: 'Read access to Pied Piper files.',
-          defaultConsentMessage: 'View your files', defaultConsentDetail: 'Lets the app list and download your Pied Piper files.',
-        } });
-
-        // matches the services in the token exchange delegation guide
-        await call('PATCH', `/api/tenant/${tenantId}`, { tenant: { tokenExchangeConfiguration: { enabled: true, policyEngine: 'ENTITY' } } });
-        const entityTypeId = '5f1d3b7a-9c2e-4d6f-8a1b-3e5c7a9d1f2b';
-        const emailEntityId = '8e2a4c6b-1d3f-4a5e-9b7c-2d4f6a8c0e1b';
-        const todoEntityId = '3c5e7a9b-2d4f-4b6a-8c1e-5f7a9b2d4c6e';
-        const todoAppId = '9a1c3e5b-7d2f-4e6a-8b0c-1d3f5a7c9e2b';
-        await ensure(`/api/entity/type/${entityTypeId}`, { entityType: { name: 'API Service' } }, false);
-        await ensure(`/api/entity/${emailEntityId}`, { entity: { name: 'Email Service', clientId: 'email-service', type: { id: entityTypeId } } });
-        const todoIsNew = (await call('GET', `/api/entity/${todoEntityId}`)).status === 404;
-        if (todoIsNew) {
-          await call('POST', `/api/entity/${todoEntityId}`, { entity: { name: 'To-do Service', clientId: 'todo-service', clientSecret: 'change-this-secret', actAsTokenExchangeClient: true, type: { id: entityTypeId } } });
-          await call('POST', `/api/entity/${emailEntityId}/grant`, { grant: { recipientEntityId: todoEntityId } });
-        }
-        // one exchange gives the token exchange log an entry
-        if (todoIsNew) {
-          // a throwaway app mints the subject token; deleted after so it stays out of the application list
-          await ensure(`/api/application/${todoAppId}`, { application: { name: 'To-do App', oauthConfiguration: { clientSecret: 'todo-app-secret', enabledGrants: ['password'], requireClientAuthentication: true } } });
-          const basic = (id, secret) => 'Basic ' + Buffer.from(`${id}:${secret}`).toString('base64');
-          const form = { 'Content-Type': 'application/x-www-form-urlencoded' };
-          let accessToken;
-          // a new application can take a few seconds to reach the OAuth cache
-          for (let i = 0; i < 10 && !accessToken; i++) {
-            const r = await fetch(`${baseUrl}/oauth2/token`, { method: 'POST', headers: { ...form, Authorization: basic(todoAppId, 'todo-app-secret') },
-              body: new URLSearchParams({ grant_type: 'password', username: 'richard@piedpiper.com', password: 'password', scope: 'openid offline_access' }) });
-            accessToken = (await r.json()).access_token;
-            if (!accessToken) await new Promise(res => setTimeout(res, 2000));
-          }
-          if (!accessToken) throw new Error('password grant for the token exchange subject token failed');
-          const r = await fetch(`${baseUrl}/oauth2/token`, { method: 'POST', headers: { ...form, Authorization: basic('todo-service', 'change-this-secret') },
-            body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange', subject_token: accessToken,
-              subject_token_type: 'urn:ietf:params:oauth:token-type:access_token', audience: 'email-service', intent: 'send-reminder-email' }) });
-          if (!r.ok) throw new Error(`token exchange failed: ${r.status} ${await r.text()}`);
-          await call('DELETE', `/api/application/${todoAppId}?hardDelete=true`);
-        }
-        console.log('[screenshot] beforeAll: CIMD and token exchange data ready');
-      }
-    } catch (e) {
-      throw new Error(`beforeAll: CIMD and token exchange setup failed: ${e.message}`, { cause: e });
-    }
-
-    // ensure self-service form is configured on Pied Piper app for account management
-    // selfServiceEnabled is not a real API field; the correct field is formConfiguration.selfServiceFormId
-    try {
-      const appResp = await fetch(`${baseUrl}/api/application/${appId}`, { headers: { 'Authorization': apiKey } });
-      if (appResp.ok) {
-        const { application } = await appResp.json();
-        if (!application.formConfiguration?.selfServiceFormId) {
-          await fetch(`${baseUrl}/api/application/${appId}`, {
-            method: 'PATCH',
-            headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ application: { formConfiguration: {
-              // '94dfe967-6fdd-499d-b2de-788ea86d151a' is the built-in "Default User Self Service" form
-              selfServiceFormId: '94dfe967-6fdd-499d-b2de-788ea86d151a',
-            } } }),
-          });
-        }
-      }
-    } catch (e) {
-      throw new Error(`beforeAll: selfServiceFormId patch failed: ${e.message}`, { cause: e });
-    }
-
-    // ensure Screenshots Theme exists (used by theme-localization-messages screenshot)
-    try {
-      const themeId = '00000000-0000-0000-0000-300000000001';
-      const tResp = await fetch(`${baseUrl}/api/theme/${themeId}`, { headers: { 'Authorization': apiKey } });
-      if (!tResp.ok) {
-        await fetch(`${baseUrl}/api/theme/${themeId}`, {
-          method: 'POST',
-          headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sourceThemeId: '75a068fd-e94b-451a-9aeb-3ddb9a3b5987', theme: { id: themeId, name: 'Screenshots Theme' } }),
-        });
-        console.log('[screenshot] beforeAll: created Screenshots Theme');
-      }
-    } catch (e) {
-      throw new Error(`beforeAll: Screenshots Theme creation failed: ${e.message}`, { cause: e });
-    }
-
-    // always PUT the canonical email template content (matches the .ftl files referenced in the docs)
-    try {
-      const htmlTpl = '[#setting url_escaping_charset="UTF-8"]\nYou have requested to log into Pied Piper using this email address. If you do not recognize this request please ignore this email.\n\n[#if oneTimeCode??]\n<p>\n  Login code: ${oneTimeCode}\n</p>\n[#else]\n<p>\n  [#assign url = "${baseUrl}/oauth2/passwordless/${code}?tenantId=${user.tenantId}" /]\n  [#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]\n  <a href="${url?html}">${url?html}</a>\n</p>\n[/#if]\n- Pied Piper';
-      const txtTpl = '[#setting url_escaping_charset="UTF-8"]\nYou have requested to log into Pied Piper using this email address. If you do not recognize this request please ignore this email.\n\n[#if oneTimeCode??]\nLogin code: ${oneTimeCode}\n[#else]\n[#assign url = "${baseUrl}/oauth2/passwordless/${code}?tenantId=${user.tenantId}" /]\n[#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]\n\n${url}\n\n[/#if]\n- Pied Piper';
-      const etMethod = (await fetch(`${baseUrl}/api/email/template/00000000-0000-0000-0000-400000000001`, { headers: { 'Authorization': apiKey } })).ok ? 'PUT' : 'POST';
-      await fetch(`${baseUrl}/api/email/template/00000000-0000-0000-0000-400000000001`, {
-        method: etMethod,
-        headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emailTemplate: { name: 'Pied Piper Passwordless Login', defaultSubject: 'Complete your Pied Piper login', defaultHtmlTemplate: htmlTpl, defaultTextTemplate: txtTpl } }),
-      });
-    } catch (e) {
-      throw new Error(`beforeAll: email template update failed: ${e.message}`, { cause: e });
-    }
-
-    // always PUT the canonical message template content
-    try {
-      const smsTpl = '[#setting url_escaping_charset="UTF-8"]\nYou have requested to log into Pied Piper using this phone number. If you do not recognize this request please ignore this message.\n\n[#if oneTimeCode??]\n  Login code: ${oneTimeCode}\n[#else]\n  [#assign url = "${baseUrl}/oauth2/passwordless/${code}?tenantId=${user.tenantId}" /]\n  [#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]\n\n  ${url}\n[/#if]\n\n- Pied Piper';
-      const mtMethod = (await fetch(`${baseUrl}/api/message/template/00000000-0000-0000-0000-400000000002`, { headers: { 'Authorization': apiKey } })).ok ? 'PUT' : 'POST';
-      await fetch(`${baseUrl}/api/message/template/00000000-0000-0000-0000-400000000002`, {
-        method: mtMethod,
-        headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messageTemplate: { name: 'Pied Piper Passwordless SMS', type: 'SMS', defaultTemplate: smsTpl } }),
-      });
-    } catch (e) {
-      throw new Error(`beforeAll: message template update failed: ${e.message}`, { cause: e });
-    }
-
-    // create Generic HTTP messenger for phone OTP flow (points to sms-mock service in docker-compose)
-    try {
-      const mResp = await fetch(`${baseUrl}/api/messenger/${messengerId}`, { headers: { 'Authorization': apiKey } });
-      if (!mResp.ok) {
-        await fetch(`${baseUrl}/api/messenger/${messengerId}`, {
-          method: 'POST',
-          headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messenger: { id: messengerId, type: 'Generic', name: 'SMS Mock (screenshots)', url: 'http://sms-mock:8081/', connectTimeout: 2000, readTimeout: 2000, debug: false } }),
-        });
-        console.log('[screenshot] beforeAll: created SMS mock messenger');
-      }
-    } catch (e) {
-      throw new Error(`beforeAll: messenger setup failed: ${e.message}`, { cause: e });
-    }
-
-    // configure tenant email: set passwordless email template (needed for the login button to render)
-    try {
-      const r = await fetch(`${baseUrl}/api/tenant/${tenantId}`, {
-        method: 'PATCH',
-        headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenant: { emailConfiguration: { passwordlessEmailTemplateId: '00000000-0000-0000-0000-400000000001' } } }),
-      });
-      if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
-    } catch (e) {
-      throw new Error(`beforeAll: email template PATCH failed: ${e.message}`, { cause: e });
-    }
-
-    // configure tenant phone: messenger + SMS template (separate PATCH so email config isn't blocked by phone errors)
-    try {
-      const r = await fetch(`${baseUrl}/api/tenant/${tenantId}`, {
-        method: 'PATCH',
-        headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenant: { phoneConfiguration: { messengerId: messengerId, passwordlessTemplateId: '00000000-0000-0000-0000-400000000002' } } }),
-      });
-      if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
-    } catch (e) {
-      throw new Error(`beforeAll: phone PATCH failed: ${e.message}`, { cause: e });
-    }
-
+    for (const resource of resources) await resource(context);
   },
 
   beforeScreenshot: async (page, ctx) => {
-    // use the original URL from context -- page.url() may drop the hash after SPA navigation
+    const shot = shots[ctx?.name] ?? {};
     const url = ctx?.url ?? page.url();
+
     const { pathname, hash } = new URL(url);
+
     const fragment = hash.slice(1);
 
-    // opening an /account page resets this to en
-    if (adminLocale && pathname.startsWith('/admin')) {
-      const context = page.context();
-      const locale = (await context.cookies('http://localhost:9011')).find(c => c.name === 'fusionauth.locale');
-      if (locale?.value !== adminLocale) {
-        await context.addCookies([{ name: 'fusionauth.locale', value: adminLocale, url: 'http://localhost:9011' }]);
-        await page.reload({ waitUntil: 'networkidle' });
-      }
+    if (runtime.multiTenantCookies) {
+      await page.context().clearCookies();
+      await page.context().addCookies(runtime.multiTenantCookies);
+      runtime.multiTenantCookies = undefined;
+      await page.goto(url, { waitUntil: 'networkidle' });
     }
 
-    const oauthAppId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
-    const oauthTenantId = '30663132-6464-6665-3032-326466613934';
-    const oauthLoginUrl = `http://localhost:9011/oauth2/authorize?client_id=${oauthAppId}&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid`;
-
-    // the migration test tenant should only appear in the tenant list screenshot
-    const apiKey = 'screenshot-dev-key-not-for-production';
-    // matches the example Id in the guide text
-    const importTenantId = '25c9d123-8a79-4edd-9f76-8dd9c806b0f3';
-    const importTenantUrl = `http://localhost:9011/api/tenant/${importTenantId}`;
-    const importTenantApi = async (method, body) => {
-      const r = await fetch(importTenantUrl, {
-        method,
-        headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-        body: body && JSON.stringify(body),
-      });
-      if (!r.ok && !(method === 'GET' && r.status === 404)) {
-        throw new Error(`test tenant ${method} failed: ${r.status} ${await r.text()}`);
-      }
-      return r.ok;
-    };
-    const importTenantExists = await importTenantApi('GET');
-
-    if (ctx?.name === 'migration-tenant-list') {
-      if (!importTenantExists) {
-        await importTenantApi('POST', { tenant: { name: 'Import test' } });
-        await page.reload({ waitUntil: 'networkidle' });
-      }
-      await page.evaluate(id => {
-        const cell = [...document.querySelectorAll('td')].find(td => td.textContent.trim() === id);
-        if (cell) cell.setAttribute('data-hl', 'import-tenant-id');
-      }, importTenantId);
-    } else if (importTenantExists) {
-      await importTenantApi('DELETE');
-      // the admin UI caches the tenant count; two tenants adds a Tenant field to some forms
-      await page.waitForTimeout(5000);
-      await page.reload({ waitUntil: 'networkidle' });
+    if (runtime.savedSso && !shot.signedOut) {
+      await page.context().addCookies([runtime.savedSso]);
+      runtime.savedSso = undefined;
+      await page.goto(url, { waitUntil: 'networkidle' });
     }
 
-    if (ctx?.name === 'migration-tenant-add') {
-      await page.fill('#tenant_name', 'Import test');
-    }
-
-    // bootstrap-button: tag the "Fingerprint, device or key" link for highlighting
-    if (ctx?.name === 'passkeys-bootstrap-button') {
+    if (runtime.operateMetricsKeyExists && !shot.keepMetricsKey) {
+      await page.goto(`${baseUrl}/admin/api-key/`, { waitUntil: 'networkidle' });
       await page.evaluate(() => {
-        const btns = [...document.querySelectorAll('a, button')];
-        const btn = btns.find(el => /fingerprint|device or key/i.test(el.textContent.trim()));
-        if (btn) btn.setAttribute('data-hl', 'webauthn-bootstrap-btn');
+        const a = document.querySelector('a[href*="/ajax/api-key/delete/00000000-0000-0000-0000-f60000000002"]');
+        if (!a) throw new Error('Operate metrics key delete link not found');
+        a.closest('[popover]')?.showPopover();
+        a.click();
       });
+      await page.locator('.prime-dialog.open').waitFor();
+      await page.locator('.prime-dialog.open #apiKeyId').evaluate(el => {
+        el.value = '00000000-0000-0000-0000-f60000000002';
+      });
+      await page.locator('.prime-dialog.open button[type=submit]').click({ timeout: 10000 });
+      await page.locator('.prime-dialog.open').waitFor({ state: 'hidden', timeout: 10000 });
+      await page.waitForLoadState('networkidle');
+      runtime.operateMetricsKeyExists = false;
+      await page.goto(url, { waitUntil: 'networkidle' });
     }
 
-    // WebAuthn bootstrap login page: click "Fingerprint, device or key" from the OAuth login page
-    if (ctx?.name === 'passkeys-bootstrap-login') {
-      try {
-        await page.locator('a').filter({ hasText: /Fingerprint, device or key/i }).first().click({ timeout: 5000 });
-        await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(500);
-      } catch (e) {
-        throw new Error(`passkeys-bootstrap-login: click failed: ${e.message}`, { cause: e });
-      }
-    }
-
-    // Self-service passkeys page: log in via OAuth then navigate to account webauthn management
-    if (ctx?.name === 'passkeys-self-service') {
-      try {
-        await page.fill('#loginId', 'richard@piedpiper.com');
-        await page.fill('#password', 'password');
-        await page.locator('#submit-button').click();
-        try { await page.waitForURL(/example\.com/, { timeout: 8000 }); } catch {}
-        await page.goto(`http://localhost:9011/account/webauthn/?client_id=${oauthAppId}&tenantId=${oauthTenantId}`);
-        await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(500);
-      } catch (e) {
-        throw new Error(`passkeys-self-service: login/navigate failed: ${e.message}`, { cause: e });
-      }
-    }
-
-    // Reauth-enable page: mock WebAuthn so the page stays in "waiting" state rather than
-    // erroring (WebKit headless does not implement navigator.credentials.create).
-    if (ctx?.name === 'passkeys-reauth-enable') {
-      try {
-        await page.addInitScript(() => {
-          if (typeof PublicKeyCredential !== 'undefined') {
-            PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable = async () => true;
-          }
-          // return a never-resolving promise so the page's WebAuthn call hangs in
-          // the "waiting for authenticator" state rather than throwing
-          if (navigator.credentials) {
-            navigator.credentials.create = () => new Promise(() => {});
-            navigator.credentials.get = () => new Promise(() => {});
-          }
-        });
-        // prompt=login forces the login form even when Richard has an active session
-        await page.goto(oauthLoginUrl + '&prompt=login');
-        await page.waitForLoadState('networkidle');
-        await page.fill('#loginId', 'richard@piedpiper.com');
-        await page.fill('#password', 'password');
-        await page.locator('#submit-button').click();
-        try {
-          await Promise.race([
-            page.waitForURL(/reauth-enable/, { timeout: 8000 }),
-            page.waitForURL(/example\.com/, { timeout: 8000 }),
-          ]);
-        } catch {
-          await page.waitForTimeout(4000);
-        }
-      } catch (e) {
-        throw new Error(`passkeys-reauth-enable: setup failed: ${e.message}`, { cause: e });
-      }
-    }
-
-    if (ctx?.name === 'tenant-webhooks-settings') {
-      const webhookUrl = 'http://localhost:9011/api/webhook/00000000-0000-0000-0000-600000000001';
-      if (!(await fetch(webhookUrl, { headers: { 'Authorization': apiKey } })).ok) {
-        const r = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Authorization': apiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ webhook: { url: 'https://example.com/fusionauth-events', description: 'Example webhook', connectTimeout: 1000, readTimeout: 2000 } }),
-        });
-        if (!r.ok) throw new Error(`webhook POST failed: ${r.status} ${await r.text()}`);
+    if (runtime.adminLocale && pathname.startsWith('/admin')) {
+      const context = page.context();
+      const locale = (await context.cookies(`${baseUrl}`)).find(c => c.name === 'fusionauth.locale');
+      if (locale?.value !== runtime.adminLocale) {
+        await context.addCookies([{ name: 'fusionauth.locale', value: runtime.adminLocale, url: `${baseUrl}` }]);
         await page.reload({ waitUntil: 'networkidle' });
       }
-      const selected = await page.evaluate(() => {
-        const box = [...document.querySelectorAll('#webhooks input[type=checkbox]')].find(i => !i.id.startsWith('tenant_eventConfiguration'));
-        if (box && !box.checked) box.click();
-        return !!box;
-      });
-      if (!selected) throw new Error('example webhook checkbox not found');
     }
 
-    for (const [id, value] of Object.entries(selects[ctx?.name] ?? {})) {
-      const selected = await page.evaluate(([i, v]) => {
-        const select = document.getElementById(i);
-        if (!select) return false;
-        select.value = v;
-        select.dispatchEvent(new Event('change', { bubbles: true }));
-        return select.value === v;
-      }, [id, value]);
+    if (runtime.registerCookies) {
+      await page.context().clearCookies();
+      await page.context().addCookies(runtime.registerCookies);
+      runtime.registerCookies = undefined;
+      await page.goto(url, { waitUntil: 'networkidle' });
+    }
+
+    const oauthAppId = piedPiperAppId;
+
+    const oauthTenantId = defaultTenantId;
+
+    const oauthLoginUrl = `${baseUrl}/oauth2/authorize?client_id=${oauthAppId}&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid`;
+
+    const tag = makeTag(page);
+    const info = {
+      url,
+      pathname,
+      fragment,
+      oauthAppId,
+      oauthTenantId,
+      oauthLoginUrl,
+      apiKey,
+      tag,
+      idpShot: shot.idp,
+      shot,
+      ...highlightHelpers(page, fragment),
+    };
+    await runTemporaryState(page, url, shot, temporaryResources, temporaryState);
+
+    await shot.prepare?.(page, ctx, info, 'prepare');
+
+    if (pathname.startsWith('/account')) {
+      const modified = !!shot.modifiedAccount;
+      for (let i = 0; i < 60 && modified !== (await page.getByText('This is now modified').isVisible()); i++) {
+        await page.waitForTimeout(500);
+        await page.reload({ waitUntil: 'networkidle' });
+      }
+    }
+
+    await shot.prepare?.(page, ctx, info, 'afterAccount');
+
+    for (const [id, value] of Object.entries(shot.select ?? {})) {
+      const selected = await page.evaluate(
+        ([i, v]) => {
+          const select = document.getElementById(i);
+          if (!select) return false;
+          select.value = v;
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          return select.value === v;
+        },
+        [id, value],
+      );
       if (!selected) throw new Error(`select not set: ${id}=${value}`);
     }
 
-    for (const id of switches[ctx?.name] ?? []) {
+    for (const id of shot.switch ?? []) {
       const switched = await page.evaluate(i => {
         const input = document.getElementById(i);
         if (input && !input.checked) input.click();
@@ -570,95 +203,76 @@ export default {
       if (!switched) throw new Error(`switch not found: ${id}`);
     }
 
-    // FusionAuth creates the Tenant manager application with a new random id on each start
-    if (ctx?.name === 'application-list') {
-      const pinned = await page.evaluate(() => {
-        const row = [...document.querySelectorAll('tr')].find(tr => tr.querySelector('td')?.textContent.trim() === 'Tenant manager');
-        const cell = row?.querySelectorAll('td')[1];
-        if (cell) cell.textContent = '00000000-0000-0000-0000-700000000001';
-        return !!cell;
+    await shot.prepare?.(page, ctx, info, 'afterControls');
+
+    if (pathname.startsWith('/admin/theme/view/') && fragment) {
+      const tab = page.locator(`main button[data-tab="${fragment}"]`);
+      await tab.click();
+      await tab.evaluate(el => {
+        el.scrollIntoView({ block: 'center' });
+        window.scrollTo(0, 0);
       });
-      if (!pinned) throw new Error('Tenant manager row not found');
+      await page.waitForTimeout(1500);
     }
 
-    if (dialogs[ctx?.name]) {
-      // the opening link sits in a closed action menu, so click it from script
-      const opened = await page.evaluate(sel => {
-        const link = document.querySelector(sel);
-        link?.click();
-        return !!link;
-      }, dialogs[ctx.name]);
-      if (!opened) throw new Error(`dialog link not found: ${dialogs[ctx.name]}`);
-      await page.locator('.prime-dialog.open').waitFor();
-      await page.waitForLoadState('networkidle');
+    await shot.prepare?.(page, ctx, info, 'afterThemeTab');
+
+    if (/^\/admin\/(webhook\/(add|edit)|system-configuration\/edit)/.test(pathname) && fragment) {
+      const label = await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`)?.textContent.trim(), fragment);
+      if (!label) throw new Error(`no tab for #${fragment}`);
+      await selectTab(page, label);
     }
 
-    if (ctx?.name === 'tenant-connector-add-policy') {
-      await page.locator('el-tab-list button[aria-controls="connectors"]').click();
-      await page.locator('#add-connector-policy').click();
-      await page.locator('.prime-dialog.open').waitFor();
+    await shot.prepare?.(page, ctx, info, 'afterSystemTab');
+
+    if (shot.signedOut) {
+      const context = page.context();
+      runtime.savedSso ??= (await context.cookies(`${baseUrl}`)).find(c => c.name === 'fusionauth.sso');
+      await context.clearCookies({ name: 'fusionauth.sso' });
+      await page.goto(url, { waitUntil: 'networkidle' });
     }
 
-    // user manage pages for Big Head and Erlich: the Angular SPA may land on the Users
-    // list before routing to the specific user -- wait for the Manage User heading.
-    if (url.includes('00000000-0000-0000-0000-10000000000')) {
+    await shot.prepare?.(page, ctx, info, 'afterSignOut');
+
+    await shot.prepare?.(page, ctx, info, 'beforeUserTabs');
+
+    if (url.includes('00000000-0000-0000-0000-10000000000') && pathname.startsWith('/admin/user/manage/') && !shot.skipUserWait) {
       try {
-        await page.waitForFunction(
-          () => document.querySelector('h1')?.textContent?.trim() === 'Manage User',
-          { timeout: 20000 }
-        ).catch(async () => {
-          // retry the navigation once if Angular didn't route to the manage page
-          await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 }).catch(() => {});
-          await page.waitForFunction(
-            () => document.querySelector('h1')?.textContent?.trim() === 'Manage User',
-            { timeout: 15000 }
-          );
-        });
+        await page
+          .waitForFunction(() => document.querySelector('h1')?.textContent?.trim() === 'Manage User', { timeout: 20000 })
+          .catch(async () => {
+            // retry the navigation once if Angular didn't route to the manage page
+            await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 }).catch(() => {});
+            await page.waitForFunction(() => document.querySelector('h1')?.textContent?.trim() === 'Manage User', { timeout: 15000 });
+          });
       } catch (e) {
         throw new Error(`manage page wait failed: ${e.message}`, { cause: e });
       }
     }
 
-    // add registration screenshot: click Add registration on Erlich's manage page,
-    // then select the first available application so the full form loads
-    if (url.includes('00000000-0000-0000-0000-100000000003')) {
-      try {
-        await page.locator('a, button').filter({ hasText: /Add registration/i }).first().click({ timeout: 10000 });
-        await page.waitForTimeout(1500);
-        await page.locator('select').first().selectOption({ index: 1 });
-        await page.waitForTimeout(2500);
-        // remove focus so no field shows a browser focus ring in the screenshot
-        await page.evaluate(() => document.activeElement?.blur());
-        // registration form uses Angular bindings, not name attrs, for Languages --
-        // walk up from the label until we find a container that also holds an input,
-        // so the outline surrounds both the label and the field.
-        await page.evaluate(() => {
-          const label = [...document.querySelectorAll('label')]
-            .find(l => /^Languages\b/.test(l.textContent.trim()));
-          if (!label) return;
-          // stop at the <form> boundary so the nav sidebar's selects don't pull
-          // the walk all the way up to app-root, which would outline the full page
-          const formBoundary = label.closest('form') || document.body;
-          let container = label.parentElement;
-          while (container && container !== formBoundary) {
-            if (container.querySelector('input, select, textarea, a-tokenizer, [class*="token"], [class*="chosen"]')) break;
-            container = container.parentElement;
-          }
-          if (container && container !== formBoundary && container !== document.body) {
-            container.style.cssText += '; outline: 2px solid #f26522; outline-offset: 4px; border-radius: 2px;';
-          }
-        });
-      } catch (e) {
-        throw new Error(`registration setup failed: ${e.message}`, { cause: e });
-      }
+    if (fragment && /^\/admin\/(user\/manage|entity\/type\/add)/.test(pathname)) {
+      await tabsReady(page);
+      const label = await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`)?.textContent.trim(), fragment);
+      if (!label) throw new Error(`no tab for #${fragment}`);
+      await selectTab(page, label);
+      await page.evaluate(
+        id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`).scrollIntoView({ block: 'nearest', inline: 'nearest' }),
+        fragment,
+      );
+      // this tab loads its rows when opened
+      if (fragment === 'entity-grants') await page.locator('#entity-grants td').first().waitFor();
     }
 
-    // application edit: click the tab named by the URL fragment, or Security
-    if (pathname.includes('/admin/application/edit')) {
+    await shot.prepare?.(page, ctx, info, 'normalizeUser');
+
+    await shot.prepare?.(page, ctx, info, 'afterUserTabs');
+
+    if (pathname.includes('/admin/application/edit') || (pathname.includes('/admin/application/add') && fragment)) {
       await page.waitForTimeout(500);
       try {
         await tabsReady(page);
-        const appTab = !fragment ? 'Security'
+        const appTab = !fragment
+          ? 'Security'
           : await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`)?.textContent.trim(), fragment);
         if (!appTab) throw new Error(`no tab for #${fragment}`);
         await selectTab(page, appTab);
@@ -670,16 +284,16 @@ export default {
       }
     }
 
-    // tenant edit: click the tab named by the URL fragment
     if (pathname.includes('/admin/tenant/edit/') && fragment) {
       await tabsReady(page);
-      const tabLabel = { email: 'Email', 'email-test': 'Email', identities: 'Identities', passwordless: 'Advanced', webauthn: 'WebAuthn' }[fragment]
-        ?? await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`)?.textContent.trim(), fragment);
+      const tabLabel =
+        { email: 'Email', 'email-test': 'Email', identities: 'Identities', passwordless: 'Advanced', webauthn: 'WebAuthn' }[fragment] ??
+        (await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`)?.textContent.trim(), fragment));
       if (tabLabel) {
         try {
           await selectTab(page, tabLabel);
           // use JS click to handle tabs that are scrolled off the visible tab bar
-          const result = await page.evaluate((label) => {
+          const result = await page.evaluate(label => {
             const btns = [...document.querySelectorAll('el-tab-list button')];
             const allLabels = btns.map(b => b.textContent.trim());
             const btn = btns.find(b => b.textContent.trim() === label);
@@ -687,7 +301,8 @@ export default {
               btn.click();
               // bring a tab scrolled out of the tab bar into view
               const bar = btn.closest('.tab-list-container');
-              const b = btn.getBoundingClientRect(), r = bar?.getBoundingClientRect();
+              const b = btn.getBoundingClientRect(),
+                r = bar?.getBoundingClientRect();
               if (r && b.right > r.right) bar.scrollLeft += b.right - r.right + 16;
               else if (r && b.left < r.left) bar.scrollLeft -= r.left - b.left + 16;
               return { clicked: true };
@@ -703,19 +318,7 @@ export default {
       }
 
       // send-test-email screenshot: tag and scroll to the test email control
-      if (ctx?.name === 'tenant-send-test-email') {
-        const tagged = await page.evaluate(() => {
-          const btn = [...document.querySelectorAll('a, button')]
-            .find(el => /send test email/i.test(el.textContent.trim()));
-          if (!btn) return false;
-          const row = btn.closest('fieldset, .form-row, div') ?? btn;
-          row.setAttribute('data-hl', 'send-test-email');
-          row.scrollIntoView({ block: 'center', behavior: 'instant' });
-          return true;
-        });
-        if (!tagged) throw new Error('send test email control not found');
-        await page.waitForTimeout(300);
-      }
+      await shot.prepare?.(page, ctx, info, 'tenantTab');
 
       // webauthn tab: click enable toggle only if workflow fieldsets aren't already visible
       // (beforeAll enables WebAuthn when a license key is present; clicking again would disable it)
@@ -730,58 +333,18 @@ export default {
         await page.waitForTimeout(400);
       }
 
-      // email-config screenshot: tag and scroll to the Passwordless login row in the Email column
-      if (ctx?.name === 'passwordless-tenant-email-config') {
-        await page.evaluate(() => {
-          const sel = document.querySelector('#tenant_emailConfiguration_passwordlessEmailTemplateId');
-          if (!sel) return;
-          const innerFieldset = sel.closest('fieldset');
-          if (!innerFieldset) return;
-          let cell = sel.parentElement;
-          while (cell && cell.parentElement !== innerFieldset) cell = cell.parentElement;
-          if (cell) {
-            cell.setAttribute('data-hl', 'pw-email-template');
-            cell.scrollIntoView({ block: 'center', behavior: 'instant' });
-          }
-        });
-        await page.waitForTimeout(300);
-      }
-
-      // message-config screenshot: tag and scroll to the Passwordless login row in the Phone column
-      if (ctx?.name === 'passwordless-tenant-message-config') {
-        await page.evaluate(() => {
-          const sel = document.querySelector('#tenant_phoneConfiguration_passwordlessTemplateId');
-          if (!sel) return;
-          const innerFieldset = sel.closest('fieldset');
-          if (!innerFieldset) return;
-          let cell = sel.parentElement;
-          while (cell && cell.parentElement !== innerFieldset) cell = cell.parentElement;
-          if (cell) {
-            cell.setAttribute('data-hl', 'pw-message-template');
-            cell.scrollIntoView({ block: 'center', behavior: 'instant' });
-          }
-        });
-        await page.waitForTimeout(300);
-      }
-
-      // generation screenshot: expand the Warning accordion so the generation rows exist in DOM
-      if (ctx?.name === 'passwordless-tenant-generation') {
-        try {
-          await page.locator('button, [role="button"], summary, a').filter({ hasText: /Warning/ }).first().click({ timeout: 5000 });
-          await page.waitForTimeout(500);
-        } catch (e) {
-          throw new Error(`Warning accordion expand failed: ${e.message}`, { cause: e });
-        }
-      }
+      await shot.prepare?.(page, ctx, info, 'afterTenantWorkflow');
     }
 
-    // email template edit: click the Localization inner tab
     if (pathname.includes('/admin/email/template/edit/') && fragment === 'localization') {
       try {
         const clicked = await page.evaluate(() => {
           const els = [...document.querySelectorAll('a, button, [role="tab"]')];
           const el = els.find(e => e.textContent.trim() === 'Localization');
-          if (el) { el.click(); return true; }
+          if (el) {
+            el.click();
+            return true;
+          }
           return false;
         });
         if (!clicked) throw new Error('Localization tab element not found');
@@ -796,78 +359,10 @@ export default {
       }
     }
 
-    // oauth login page: click "Login with a magic link" to show the email request form
-    if (pathname.includes('/oauth2/authorize') && fragment === 'email-request') {
-      try {
-        await page.locator('a, button').filter({ hasText: /magic link/i }).first().click({ timeout: 5000 });
-        await page.waitForTimeout(1000);
-      } catch (e) {
-        throw new Error(`oauth magic link click failed: ${e.message}`, { cause: e });
-      }
-    }
+    await shot.prepare?.(page, ctx, info, 'beforeSizing');
 
-    // phone-otp: navigate to the passwordless form, enter an identifier, and submit
-    // to land on the OTP code-entry form (FormField strategy for phone passwordless)
-    if (pathname.includes('/oauth2/authorize') && fragment === 'phone-otp') {
-      try {
-        await page.goto(`http://localhost:9011/oauth2/passwordless?client_id=${oauthAppId}&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-callback&response_type=code&scope=openid`);
-        await page.waitForLoadState('networkidle');
-        // Big Head has mobilePhone in kickstart -- enter it to trigger the phone OTP flow
-        await page.fill('#loginId', '+15555551234');
-        // the passwordless form submit is a plain <button> with text "Send" -- no type or id attr
-        await page.locator('form[action="/oauth2/passwordless"] button').first().click();
-        await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(500);
-      } catch (e) {
-        throw new Error(`phone otp flow failed: ${e.message}`, { cause: e });
-      }
-    }
-
-    if (url.includes('/theme/edit/')) {
-      // viewport is already set to spec.height by capture.mjs before this hook runs.
-      // scroll down to reach the Add Localization button (below the fold), click it,
-      // then scroll back to top -- position:fixed dialog stays centred in the viewport.
-      await page.waitForTimeout(2000); // code editor initialization takes time
-      try {
-        // wait for Angular to render the theme editor tab list before clicking Messages.
-        // tabs are <a> elements; text includes trailing icon chars so use startsWith.
-        // "Message Templates" in the nav starts with "Message" (no s) -- won't match.
-        await page.waitForFunction(
-          () => [...document.querySelectorAll('button, [role="tab"], a')].some(el => /^Messages\b/.test(el.textContent.trim())),
-          null,
-          { timeout: 20000 }
-        );
-        await page.evaluate(() => {
-          const candidates = [...document.querySelectorAll('button, [role="tab"], a')]
-            .filter(el => /^Messages\b/.test(el.textContent.trim()));
-          // prefer the shortest match to avoid "Message Templates" nav link if regex somehow matches
-          const btn = candidates.sort((a, b) => a.textContent.trim().length - b.textContent.trim().length)[0];
-          if (btn) btn.click();
-        });
-        await page.waitForTimeout(1500);
-        // scroll down far enough to bring Add Localization into the viewport
-        const docH = await page.evaluate(() => document.documentElement.scrollHeight);
-        await page.evaluate((h) => window.scrollTo(0, h), docH);
-        await page.waitForTimeout(300);
-        await page.getByText(/Add Localization/i).first().click({ timeout: 5000 });
-        await page.waitForTimeout(800);
-        // scroll back to top -- the fixed dialog stays centred in the viewport
-        await page.evaluate(() => window.scrollTo(0, 0));
-        await page.waitForTimeout(200);
-        // a 2px empty div (class "border") sits at y=0, pushing the sticky header to y=2.
-        // under the dialog backdrop this gap appears as a black bar. zero it out.
-        await page.evaluate(() => {
-          [...document.querySelectorAll('div')].filter(el => {
-            const r = el.getBoundingClientRect();
-            return r.top === 0 && r.height > 0 && r.height <= 3 && el.children.length === 0;
-          }).forEach(el => {
-            el.style.cssText += '; height:0 !important; min-height:0 !important; border:none !important; padding:0 !important; margin:0 !important;';
-          });
-        });
-      } catch (e) {
-        throw new Error(`theme/edit setup failed: ${e.message}`, { cause: e });
-      }
-    } else {
+    if (shot.skipSizing) await shot.prepare?.(page, ctx, info, 'size');
+    else {
       // expand the viewport to fit the full inner-scroll content height;
       // this makes fullPage equivalent to a single viewport capture so fixed
       // elements stay at top: 0 rather than rendering at the wrong scroll offset.
@@ -881,14 +376,14 @@ export default {
           return max;
         }, document.documentElement.scrollHeight);
       });
-      if (fullHeight > 800 && !(ctx?.name in fixedHeight) && !(ctx?.name in bands)) {
-        await page.setViewportSize({ width: 1100, height: Math.min(fullHeight, 2500) });
+      if (fullHeight > 800 && !Object.hasOwn(shot, 'fixedHeight') && !Object.hasOwn(shot, 'band')) {
+        await page.setViewportSize({ width: page.viewportSize().width, height: Math.min(fullHeight, 2500) });
         await page.waitForTimeout(300);
       }
     }
 
     // a dialog scrolls inside itself, so grow the window until nothing in it is hidden
-    if (dialogs[ctx?.name]) {
+    if (shot.dialog) {
       for (let i = 0; i < 3; i++) {
         const hidden = await page.evaluate(() => Math.max(0, ...[...document.querySelectorAll('.prime-dialog.open, .prime-dialog.open *')]
           .filter(el => ['auto', 'scroll'].includes(getComputedStyle(el).overflowY))
@@ -903,18 +398,20 @@ export default {
     // the admin footer shows the build's version, which would date every screenshot; hidden keeps the layout
     await page.addStyleTag({ content: '.footer-version { visibility: hidden !important; }' });
 
-    await page.evaluate(() => {
-      document.querySelectorAll('.alert, [role=alert], .notification').forEach(el => el.remove());
+    await page.evaluate(keep => {
+      if (!keep) document.querySelectorAll('.alert, [role=alert], .notification').forEach(el => el.remove());
       // prerelease images show their build in the header
       document.querySelectorAll('.runtime-mode-notice').forEach(el => { if (/Early Access/.test(el.textContent)) el.remove(); });
       document.activeElement?.blur();
-    });
+    }, shot.keepAlerts);
 
-    // lets selectors name a form section by its heading, e.g. [data-section='email-settings']
     await page.evaluate(() => {
       for (const legend of document.querySelectorAll('main legend')) {
         const title = legend.textContent.trim().split('\n')[0].trim();
-        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const slug = title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '');
         // a container can hold more than one section, so tag the heading and what follows it
         for (let el = legend; el && (el === legend || el.tagName !== 'LEGEND'); el = el.nextElementSibling) {
           el.dataset.section = slug;
@@ -922,8 +419,26 @@ export default {
       }
     });
 
-    // marks the strip for crop="#screenshot-band"
-    if (bands[ctx?.name]) {
+    if (shot.sectionBox) {
+      const boxed = await page.evaluate(section => {
+        const rects = [...document.querySelectorAll(`[data-section='${section}']`)].filter(el => el.offsetParent).map(el => el.getBoundingClientRect());
+        if (!rects.length) return false;
+        const top = Math.min(...rects.map(r => r.top)),
+          bottom = Math.max(...rects.map(r => r.bottom));
+        const left = Math.min(...rects.map(r => r.left)),
+          right = Math.max(...rects.map(r => r.right));
+        const box = document.createElement('div');
+        box.dataset.hl = 'section-box';
+        box.style.cssText = `position:absolute;left:${left + scrollX - 12}px;top:${top + scrollY - 12}px;width:${right - left + 24}px;height:${bottom - top + 24}px;pointer-events:none`;
+        document.body.append(box);
+        return true;
+      }, shot.sectionBox);
+      if (!boxed) throw new Error(`section not found: ${shot.sectionBox}`);
+    }
+
+    await shot.prepare?.(page, ctx, info, 'afterSections');
+
+    if (shot.band) {
       const height = await page.evaluate(sel => {
         const rects = [...document.querySelectorAll(sel)].filter(el => el.offsetParent).map(el => el.getBoundingClientRect());
         if (!rects.length) return 0;
@@ -934,33 +449,87 @@ export default {
         band.style.cssText = `position:absolute;left:0;top:${top}px;width:${document.documentElement.clientWidth}px;height:${bottom - top}px;opacity:0;pointer-events:none`;
         document.body.append(band);
         return bottom - top;
-      }, bands[ctx.name]);
-      if (!height) throw new Error(`band selector matched nothing: ${bands[ctx.name]}`);
+      }, shot.band);
+      if (!height) throw new Error(`band selector matched nothing: ${shot.band}`);
       // a window just taller than the strip keeps the sticky sidebar beside it
-      await page.setViewportSize({ width: 1100, height: Math.max(800, Math.ceil(height) + 160) });
+      await page.setViewportSize({ width: page.viewportSize().width, height: Math.max(800, Math.ceil(height) + 160) });
     }
 
-    if (fixedHeight[ctx?.name]) {
-      const scrolled = await page.evaluate(title => {
-        const legend = [...document.querySelectorAll('main legend')].find(l => l.offsetParent && l.textContent.trim().startsWith(title));
+    if (shot.fixedHeight) {
+      const scrolled = await page.evaluate(target => {
+        const el =
+          (/^[\[#.]/.test(target) && document.querySelector(target)) ||
+          [...document.querySelectorAll('main legend')].find(l => l.offsetParent && l.textContent.trim().startsWith(target));
         // leave room for the sticky top bar
-        if (legend) window.scrollTo(0, legend.getBoundingClientRect().top + window.scrollY - 88);
-        return !!legend;
-      }, fixedHeight[ctx.name]);
-      if (!scrolled) throw new Error(`section not found: ${fixedHeight[ctx.name]}`);
+        if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 88);
+        return !!el;
+      }, shot.fixedHeight);
+      if (!scrolled) throw new Error(`section not found: ${shot.fixedHeight}`);
       await page.waitForTimeout(300);
     }
 
-    // pin run-time dates; a day over 12 shows the dd/mm order
-    if (new URL(page.url()).pathname.startsWith('/admin')) {
+    await shot.prepare?.(page, ctx, info, 'afterFraming');
+
+    if (shot.legacyVersion) {
       await page.evaluate(() => {
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-          node.textContent = node.textContent
-            .replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, '24/09/2026')
-            .replace(/\b\d{2}:\d{2}(:\d{2})? (AM|PM)\b/g, (t, s) => s ? '09:00:00 AM' : '09:00 AM');
+          node.textContent = node.textContent.replace(/FusionAuth version 1\.69\.4/g, 'FusionAuth version 1.69.1');
         }
       });
     }
+
+    const textPadding = shot.textPadding;
+
+    if (textPadding) {
+      await page.evaluate(
+        ({ specs, padding }) => {
+          for (const [i, spec] of specs.entries()) {
+            const target = document.querySelector(spec.selector);
+            if (!target) continue;
+            const r = target.getBoundingClientRect();
+            const box = document.createElement('div');
+            box.dataset.paddedHighlight = i;
+            box.style.cssText = `position:absolute;left:${r.left + scrollX - padding}px;top:${r.top + scrollY - padding}px;width:${r.width + padding * 2}px;height:${r.height + padding * 2}px;pointer-events:none`;
+            document.body.append(box);
+          }
+        },
+        { specs: ctx.highlights, padding: textPadding },
+      );
+      ctx.highlights.forEach((spec, i) => (spec.selector = `[data-padded-highlight="${i}"]`));
+    }
+
+    if (new URL(page.url()).pathname.startsWith('/admin')) {
+      await page.evaluate(
+        ({ legacyDate, adminRole, shortTime }) => {
+          let lastLogin = false,
+            seenLogin = false;
+          const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            if (adminRole && node.textContent.trim() === 'français') node.textContent = node.textContent.replace('français', 'French');
+            if (adminRole && !seenLogin && node.textContent.trim() === 'Last login') {
+              lastLogin = true;
+              seenLogin = true;
+            }
+            node.textContent = node.textContent
+              .replace(/\b\d{1,2}\/\d{1,2}\/\d{4}\b/g, adminRole ? '10/12/2026' : legacyDate ? '12/10/2026' : '24/09/2026')
+              .replace(/\b\d{2}:\d{2}(:\d{2}(,\d{3})?)? (AM|PM)\b/g, (m, seconds, millis) => {
+                if (lastLogin) {
+                  lastLogin = false;
+                  return '05:50 PM';
+                }
+                return legacyDate ? '05:49 PM' : shortTime ? '09:00 AM' : `09:00${seconds ? ':00' : ''}${millis ? ',000' : ''} AM`;
+              });
+          }
+        },
+        { legacyDate: !!shot.legacyDate, adminRole: !!shot.adminRole, shortTime: !!shot.shortTime },
+      );
+    }
+
+    await shot.prepare?.(page, ctx, info, 'afterDates');
+
+    await shot.prepare?.(page, ctx, info, 'finish');
   },
 };
+
+export { temporaryResources, temporaryState };
