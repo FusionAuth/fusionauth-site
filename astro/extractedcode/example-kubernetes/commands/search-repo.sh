@@ -1,0 +1,1 @@
+helm search repo fusionauth

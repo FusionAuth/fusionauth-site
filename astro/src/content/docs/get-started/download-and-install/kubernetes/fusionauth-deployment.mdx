@@ -15,10 +15,10 @@ You'll need a cluster running to work through this guide.
 ## Requirements
 
 * `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the [installation documentation that corresponds to your platform](https://kubernetes.io/docs/tasks/tools/).
-This guide will be using version `1.22`.
+This guide uses version `1.37`.
 * `helm` - Package manager used for installing and managing Kubernetes applications. In this guide, you will be using a Helm chart to install FusionAuth on our Kubernetes cluster. For more information, see [Installing Helm](https://helm.sh/docs/intro/install/).
-This guide will be using version `3.6.4`.
-* An available Kubernetes cluster. If you need to set up a cluster, we have provided the below installation guides for both local development environments and the major cloud providers. Each provides step-by-step instructions intended to get you up and running as fast as possible.
+This guide uses version `4.3`.
+* An available Kubernetes cluster running version `1.23` or later. If you need to set up a cluster, we have provided the below installation guides for both local development environments and the major cloud providers. Each provides step-by-step instructions intended to get you up and running as fast as possible.
   * [Local setup using minikube](/docs/get-started/download-and-install/kubernetes/minikube)
   * [Amazon Elastic Kubernetes Service (EKS)](/docs/get-started/download-and-install/kubernetes/eks)
   * [Google Kubernetes Engine (GKE)](/docs/get-started/download-and-install/kubernetes/gke)
@@ -28,15 +28,11 @@ This guide will be using version `3.6.4`.
 
 To get started, the first thing to do is add the FusionAuth Helm Chart repository. This can be done with the following.
 
-```shell title="Add a chart repository"
-helm repo add fusionauth https://fusionauth.github.io/charts
-```
+<ExtractedCode src="example-kubernetes/commands/add-repo.sh" lang="shell" title="Add a chart repository" />
 
 To view the list of repositories that you have added use the following command:
 
-```plaintext title="List chart repositories"
-helm repo list
-```
+<ExtractedCode src="example-kubernetes/commands/list-repos.sh" lang="shell" title="List chart repositories" />
 
 ```plaintext title="Output from listing chart repositories"
 NAME      	URL
@@ -45,26 +41,20 @@ fusionauth	https://fusionauth.github.io/charts
 
 To search repositories:
 
-```shell title="Search chart repositories"
-helm search repo fusionauth
-```
+<ExtractedCode src="example-kubernetes/commands/search-repo.sh" lang="shell" title="Search chart repositories" />
 
-```shell title="Output from search"
+```plaintext title="Output from search"
 NAME                 	CHART VERSION	APP VERSION	DESCRIPTION
-fusionauth/fusionauth	0.10.5       	1.30.1     	Helm chart for fusionauth
+fusionauth/fusionauth	1.69.4       	1.69.4     	Helm chart for FusionAuth
 ```
 
 ## Helm Chart Configuration
 
-Before you install, configure the `values.yaml` file contents used by the Helm Chart. The majority of the values for this chart have defaults recommended by FusionAuth but you will want to review and modify the configuration to meet your specific requirements.
+Before you install, create a `values.yaml` file that holds the chart values you want to change. Helm merges this file with the chart's defaults, so it only needs the values that differ. This guide covers the values you must set to deploy FusionAuth.
 
-To update this file, first download it:
+To review every option and its default, save the chart's default values to a separate file:
 
-```shell title="Download chart values"
-curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/main/chart/values.yaml
-```
-
-Open `values.yaml` with your favorite text editor and modify it. This guide covers configuration values which must be updated to deploy FusionAuth. You should review the entire configuration to understand all the possible options.
+<ExtractedCode src="example-kubernetes/commands/show-values.sh" lang="shell" title="Save the chart default values" />
 
 ### Replicas
 
@@ -73,25 +63,11 @@ Kubernetes will monitor the cluster to ensure that this number of instances of F
 
 By default, the **replicaCount** value is set to `1` which typically works well for development and testing environments, but you will likely want to adjust this based on your system and application requirements.
 
-```yaml title="Replica count example configuration"
-# replicaCount -- The number of fusionauth-app instances to run
-replicaCount: 1
-```
+<ExtractedCode src="example-kubernetes/values.snippet.replicas.yaml" lang="yaml" title="Replica count example configuration" />
 
-### Docker Image
+### FusionAuth Version
 
-The most current helm chart will always point to the latest version of FusionAuth.
-For this guide, FusionAuth version `1.30.1` is used.
-You can update this to any released version you'd like.
-You can find the [list of FusionAuth releases here](https://hub.docker.com/r/fusionauth/fusionauth-app/tags).
-
-```yaml title="Image configuration example"
-image:
-  # image.repository -- The name of the docker repository for fusionauth-app
-  repository: fusionauth/fusionauth-app
-  # image.repository -- The docker tag to pull for fusionauth-app
-  tag: latest
-```
+Each chart release sets **image.tag** to the FusionAuth version it was released with, so `helm install` installs that version. To run a different version, set **image.tag** in `values.yaml` to one of the [FusionAuth releases](https://hub.docker.com/r/fusionauth/fusionauth-app/tags). Use a specific version instead of `latest`, so every pod runs the same release.
 
 ### Extra Containers
 
@@ -100,69 +76,13 @@ This is useful if you want to, for instance, proxy requests to FusionAuth to put
 You can do this with the `extraContainers` value.
 Containers defined here will be added to the FusionAuth pod.
 
-```yaml title="Default extraContainers"
-extraContainers: []
-```
-
-```yaml title="extraContainers with an nginx sidecar"
-extraContainers:
-  - name: my-sidecar
-    image: nginx:latest
-```
+<ExtractedCode src="example-kubernetes/sidecar-values.yaml" lang="yaml" title="extraContainers with an nginx sidecar" />
 
 You can find [community contributed proxy configurations here](https://github.com/fusionauth/fusionauth-contrib).
 
 ### Database Configuration
 
 Now, configure the database connection. Each of our FusionAuth pods will use this configuration when communicating with the database.
-
-The following is an example of the `database` configuration section in `values.yaml`:
-
-```yaml title="Database and search example configuration"
-database:
-  # database.protocol -- Should either be postgresql or mysql. Protocol for jdbc connection to database
-  protocol: postgresql
-  # database.host -- Hostname or ip of the database instance
-  host: ""
-  # database.host -- Port of the database instance
-  port: 5432
-  # database.tls -- Configures whether or not to use tls when connecting to the database
-  tls: false
-  # database.tlsMode -- If tls is enabled, this configures the mode
-  tlsMode: require
-  # database.name -- Name of the fusionauth database
-  name: fusionauth
-
-  # To use an existing secret, set `existingSecret` to the name of the secret. We expect at most two keys: `password` is required. `rootpassword` is only required if `database.root.user` is set.
-  # database.existingSecret -- The name of an existing secret that contains the database passwords
-  existingSecret: ""
-  # database.user -- Database username for fusionauth to use in normal operation
-  user: ""
-  # database.password -- Database password for fusionauth to use in normal operation - not required if database.existingSecret is configured
-  password: ""
-  # These credentials are used for bootstrapping the database and creating it if needed. This can be useful for ephemeral clusters used for testing and dev.
-  root:
-    # database.root.user -- Database username for fusionauth to use during initial bootstrap - not required if you have manually bootstrapped your database
-    user: ""
-    # database.root.password -- Database password for fusionauth to use during initial bootstrap - not required if database.existingSecret is configured
-    password: ""
-
-search:
-  # search.engine -- Defines backend for fusionauth search capabilities. Valid values for engine are 'elasticsearch' or 'database'.
-  engine: elasticsearch
-  # search.engine -- Protocol to use when connecting to elasticsearch. Ignored when search.engine is NOT elasticsearch
-  protocol: http
-  # search.host -- Hostname or ip to use when connecting to elasticsearch. Ignored when search.engine is NOT elasticsearch
-  host: ""
-  # search.port -- Port to use when connecting to elasticsearch. Ignored when search.engine is NOT elasticsearch
-  port: 9200
-  # search.user -- Username to use with basic auth when connecting to elasticsearch. Ignored when search.engine is NOT elasticsearch
-  user: ""
-  # search.password -- Password to use with basic auth when connecting to elasticsearch. Ignored when search.engine is NOT elasticsearch
-  password: ""
-```
-
-For this guide, the following attributes need to be retrieved from your database and Elasticsearch deployments and updated in your `values.yaml` configuration.
 
 <Aside type="note">
 FusionAuth requires an external database and, optionally an external Elasticsearch cluster.
@@ -171,29 +91,37 @@ Setting these up is outside of the scope of this document.
 Consult the setup guides for instructions for AWS, GCP, and more.
 </Aside>
 
-* `database.host`
-* `database.root.user`
-* `database.root.password`
+Store the database passwords in Kubernetes Secrets rather than in `values.yaml`, so they stay out of version control and your Helm release history. Create one Secret for the password FusionAuth uses in normal operation, and one for the database superuser password FusionAuth uses to create its database:
 
-The FusionAuth standard user will be created with the credentials provided here when you install the FusionAuth helm chart.
+<ExtractedCode src="example-kubernetes/commands/create-db-secrets.sh" lang="shell" title="Create Secrets for the database passwords" />
 
-* `database.user`
-* `database.password`
+Then add a `database` section to `values.yaml` with your database host and user names, and reference the Secrets:
 
-If **search.engine** is set to `elasticsearch`:
+<ExtractedCode src="example-kubernetes/values.snippet.database.yaml" lang="yaml" title="Database configuration" />
 
-* `search.host`
+During initial setup, FusionAuth uses the `rootUser` credentials to create the `fusionauth` database and the `dbUser` user. If you'd rather set up the database yourself, follow the [advanced database installation guide](/docs/get-started/download-and-install/fusionauth-app#advanced-installation), then remove the `rootUser` section and its Secret.
 
-Additionally, you may set these values if a username/password are needed to access Elasticsearch (these are not required for this tutorial):
+The `tlsMode: require` setting encrypts the database connection, but doesn't verify the database server's certificate. To verify it, mount your database provider's CA certificate into the pod with `extraVolumes` and `extraVolumeMounts`, and set `database.url` to a full JDBC URL that uses `sslmode=verify-full`. See **`database.url`** in the [configuration reference](/docs/reference/configuration) for an example. When `database.url` is set, the chart ignores `tls` and `tlsMode`.
 
-* `search.user`
-* `search.password`
+### Search Configuration
 
-If you don't want to provide the `database.root.user` and `database.root.password` to allow FusionAuth to set up the database itself, you can also follow the [advanced database installation guide](/docs/get-started/download-and-install/fusionauth-app#advanced-installation) which lets you set up the database out of band.
+If **search.engine** is set to `elasticsearch`, add a `search` section to `values.yaml` with your search host. Use `https` if your search service supports it. If your search service doesn't require a username and password, leave out `basicAuth`:
+
+<ExtractedCode src="example-kubernetes/values.snippet.search.yaml" lang="yaml" title="Search configuration" />
+
+Store the search credentials in a Secret, like the database passwords:
+
+<ExtractedCode src="example-kubernetes/commands/create-search-secret.sh" lang="shell" title="Create a Secret for the search credentials" />
+
+### Runtime and Silent Mode
+
+Set the runtime mode to `production` and turn on [silent mode](/docs/get-started/download-and-install/reference/silent-mode). In silent mode, FusionAuth creates its database on first start and applies database migrations when you update it, without waiting for someone to complete Maintenance Mode in a browser:
+
+<ExtractedCode src="example-kubernetes/values.snippet.app.yaml" lang="yaml" title="Runtime and silent mode configuration" />
 
 ## Deploy FusionAuth To the Cluster
 
-Now that `values.yaml` is updated, it is time to install the chart on the cluster. The `helm install` command is used to install a chart by name and can be applied using the syntax:
+Now that `values.yaml` is ready, it is time to install the chart on the cluster. The `helm install` command is used to install a chart by name and can be applied using the syntax:
 
 ```shell title="Helm install format"
 helm install [CHART NAME] [CHART] [flags]
@@ -201,12 +129,10 @@ helm install [CHART NAME] [CHART] [flags]
 
 Here you will install a chart including the `-f` flag to override the default values.
 
-```shell title="Install the FusionAuth chart"
-helm install my-release fusionauth/fusionauth -f values.yaml
-```
+<ExtractedCode src="example-kubernetes/commands/install.sh" lang="shell" title="Install the FusionAuth chart" />
 
 <Aside type="note">
-You can apply override values by modifying the `values.yaml` configuration that you pass when installing a chart or by using the `--set` flag on the command line.
+You can override values in the `values.yaml` file that you pass when installing a chart, or with the `--set` flag on the command line.
 Using `--set` can be useful when developing scripts or command line tools. Either method is acceptable.
 </Aside>
 
@@ -214,10 +140,12 @@ If the previous command was successful, you should see output similar to the fol
 
 ```plaintext title="Example output"
 NAME: my-release
-LAST DEPLOYED: Sun Oct 10 19:23:41 2021
+LAST DEPLOYED: Tue Nov  3 13:26:58 2026
 NAMESPACE: default
 STATUS: deployed
 REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
 NOTES:
 1. Get the application URL by running these commands:
   export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="{.items[0].metadata.name}")
@@ -227,22 +155,16 @@ NOTES:
 
 You can get the status of your deployment with `kubectl`.
 
-```shell title="Get a list of deployments running on the cluster"
-kubectl get deployments -o wide
-```
+<ExtractedCode src="example-kubernetes/commands/get-deployments.sh" lang="shell" title="Get a list of deployments running on the cluster" />
 
 ```plaintext title="Output"
-NAME                    READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                             SELECTOR
-my-release-fusionauth   1/1     1            1           4m16s   fusionauth   fusionauth/fusionauth-app:1.30.1   app.kubernetes.io/instance=my-release,app.kubernetes.io/name=fusionauth
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                       SELECTOR
+my-release-fusionauth   1/1     1            1           21s   fusionauth   docker.io/fusionauth/fusionauth-app:1.69.4   app.kubernetes.io/instance=my-release,app.kubernetes.io/name=fusionauth
 ```
 
 As instructed by the success message output above, you can create a proxy enabling you to connect to the cluster from `localhost`:
 
-```shell title="Setup port-forwarding proxy"
-export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="{.items[0].metadata.name}")
-  echo "Visit http://127.0.0.1:9011 to use your application"
-  kubectl port-forward svc/$SVC_NAME 9011:9011
-```
+<ExtractedCode src="example-kubernetes/commands/port-forward.sh" lang="shell" title="Set up a port-forwarding proxy" />
 
 ```plaintext title="Example output of kubectl proxying command"
 Forwarding from 127.0.0.1:9011 -> 9011
@@ -252,74 +174,63 @@ Navigate to `http://localhost:9011` and you will land on the FusionAuth Setup Wi
 
 ![FusionAuth bootstrap](/img/docs/get-started/download-and-install/kubernetes/fa-initial-config.png)
 
-## Create an Ingress
+## Expose FusionAuth Through a Gateway
 
-If you want to connect FusionAuth with an external network, the last thing you need to do is to configure the cluster to be able to receive external requests. You might do this if you were using FusionAuth to authenticate users connecting to applications from the internet. On the other hand, you might not do this if you were using FusionAuth solely within your kubernetes cluster.
+To let users reach FusionAuth from outside the cluster, route traffic to it with the [Gateway API](https://gateway-api.sigs.k8s.io/), the Kubernetes API for bringing external traffic into a cluster. The FusionAuth chart can create the route for you.
 
-To direct external traffic to your cluster, you will use an [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/), a component that defines how external traffic should be handled, and an [Ingress Controller](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/) that implements those rules.
+A Gateway needs a controller that implements it. This guide uses [Envoy Gateway](https://gateway.envoyproxy.io/). Most cloud providers also offer an implementation, such as the [GKE Gateway controller](https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api). To use another implementation, install it instead of Envoy Gateway and use its GatewayClass in `gateway.yaml`.
 
-### Deploy an Ingress Resource
+### Install Envoy Gateway
 
-Create a file named `ingress.yaml` and copy and paste the following resource configuration:
+Install Envoy Gateway, which also installs the Gateway API resource definitions:
 
-```yaml title="Ingress resource configuration"
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: my-release-fusionauth
-  labels:
-    app.kubernetes.io/name: fusionauth
-    app.kubernetes.io/instance: my-release-fusionauth
-  annotations:
-    kubernetes.io/ingress.class: nginx
-spec:
-  rules:
-  - http:
-      paths:
-      - backend:
-          service:
-            name: my-release-fusionauth
-            port:
-              number: 9011
-        path: /
-        pathType: Prefix
+<ExtractedCode src="example-kubernetes/commands/install-envoy-gateway.sh" lang="shell" title="Install Envoy Gateway" />
+
+Then wait until it is ready:
+
+<ExtractedCode src="example-kubernetes/commands/wait-envoy-gateway.sh" lang="shell" title="Wait for Envoy Gateway" />
+
+### Create the Gateway
+
+The Gateway terminates TLS, so it needs a certificate for your FusionAuth hostname. Store the certificate and private key in a TLS Secret, or use [cert-manager](https://cert-manager.io/) to issue and renew one:
+
+<ExtractedCode src="example-kubernetes/commands/create-tls-secret.sh" lang="shell" title="Create a TLS Secret" />
+
+Next, create a file named `gateway.yaml` with the following resources:
+
+* A `GatewayClass` that assigns Gateways of the class `eg` to Envoy Gateway.
+* A Gateway with an HTTPS listener that uses your TLS Secret, and an HTTP listener.
+* An `HTTPRoute` that redirects every HTTP request to HTTPS.
+
+<ExtractedCode src="example-kubernetes/gateway.yaml" lang="yaml" title="Gateway resource configuration" />
+
+Replace `auth.example.com` with your FusionAuth hostname, then apply the file:
+
+<ExtractedCode src="example-kubernetes/commands/apply-gateway.sh" lang="shell" title="Apply the Gateway resources" />
+
+### Route Traffic to FusionAuth
+
+Add a `gateway` section to `values.yaml`, using the same hostname. The chart then creates an HTTPRoute that sends requests from the Gateway's HTTPS listener to FusionAuth:
+
+<ExtractedCode src="example-kubernetes/values.snippet.gateway.yaml" lang="yaml" title="Gateway route configuration" />
+
+Apply the change by upgrading the release:
+
+<ExtractedCode src="example-kubernetes/commands/upgrade.sh" lang="shell" title="Upgrade the FusionAuth release" />
+
+Finally, get the Gateway's external address:
+
+<ExtractedCode src="example-kubernetes/commands/get-gateway.sh" lang="shell" title="Get the Gateway address" />
+
+```plaintext title="Example output"
+NAME                 CLASS   ADDRESS        PROGRAMMED   AGE
+fusionauth-gateway   eg      203.0.113.10   True         2m
 ```
 
-The rules for this Ingress resource indicate that requests from the root path context, or `/`, should be directed to the `my-release-fusionauth` service.
-
-Now apply this configuration on the cluster:
-
-```shell title="Apply Ingress resource"
-kubectl apply -f ./ingress.yaml
-```
-
-### Install an Ingress Controller
-
-For this guide, you will use the NGINX Ingress controller. To install the Ingress controller, add the [nginx-ingress](https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx) repository and install the Helm chart by running the following commands:
-
-```shell title="Add ingress-nginx chart repository"
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-```
-
-```shell title="Install ingress-nginx chart"
-helm install fa-loadbalancer ingress-nginx/ingress-nginx
-```
-
-When completed, get the active services running on the cluster:
-
-```shell title="Get services information"
-kubectl get services
-```
-
-```plaintext title="Services response output"
-NAME                                            TYPE           CLUSTER-IP       EXTERNAL-IP                                                                  PORT(S)                      AGE
-fusionauth-ingress-nginx-controller             LoadBalancer   10.100.246.131   a4413292c6477456b8c1cde8f5260513-137482286.us-west-1.elb.amazonaws.com       80:30048/TCP,443:32484/TCP   37m
-```
-
-A new service will be available of type `LoadBalancer` and will contain an external IP or host name corresponding to a newly provisioned Elastic Load Balancer host name. External traffic will now be directed to the Kubernetes cluster via this ingress.
+Point the DNS record for your FusionAuth hostname at the address in the **ADDRESS** column. On a cloud provider, this is the address of a load balancer that Envoy Gateway created for the Gateway.
 
 <Aside type="note">
-If you have completed this tutorial using minikube, you can access the ingress by creating a network route to your cluster by executing the command `minikube tunnel`. For documentation on this, see [Using minikube tunnel](https://minikube.sigs.k8s.io/docs/handbook/accessing/#using-minikube-tunnel).
+If you have completed this tutorial using minikube, you can give the Gateway an address by creating a network route to your cluster with the command `minikube tunnel`. For documentation on this, see [Using minikube tunnel](https://minikube.sigs.k8s.io/docs/handbook/accessing/#using-minikube-tunnel).
 </Aside>
 
 Congratulations! You now have a fully functional Kubernetes environment running FusionAuth.
@@ -332,10 +243,10 @@ Congratulations! You now have a fully functional Kubernetes environment running 
 
 ## Next Steps
 
+Before customers log in to this instance, see [Harden a Production Instance](/docs/operate/secure/harden-a-production-instance) for the FusionAuth settings to change, and the [Kubernetes security documentation](https://kubernetes.io/docs/concepts/security/) to secure the cluster itself.
+
 To learn more about Kubernetes, here are a few recommended links to help you administer your cluster.
 
 * [Kubernetes Concepts](https://kubernetes.io/docs/concepts/)
 * [Configuration Best Practices](https://kubernetes.io/docs/concepts/configuration/overview/)
 * [Helm documentation](https://helm.sh/docs/)
-
-
