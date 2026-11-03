@@ -12,6 +12,7 @@ The following method uses the default settings when provisioning the GKE cluster
 
 * [Google Cloud Platform](https://console.cloud.google.com/) account with sufficient IAM permissions to create resources.
 * `gcloud` - Command Line tool used to manage resources in Google Cloud. For installation instructions, see [Installing Cloud SDK](https://cloud.google.com/sdk/docs/install).
+* `gke-gcloud-auth-plugin` - Lets `kubectl` authenticate to GKE clusters. Install it with `gcloud components install gke-gcloud-auth-plugin`. For more information, see [Install kubectl and configure cluster access](https://cloud.google.com/kubernetes-engine/docs/how-to/cluster-access-for-kubectl).
 <Kubectl />
 
 ## Architecture
@@ -121,7 +122,6 @@ gcloud container clusters create fusionauth-cluster \
   --num-nodes=1 \
   --region=us-west1 \
   --enable-ip-alias \
-  --cluster-version=1.30.8-gke.1051000 \
   --cluster-ipv4-cidr=10.44.0.0/14 \
   --services-ipv4-cidr=10.48.0.0/20 \
   --labels=goog-partner-solution=isol_plb32_001kf000012eawziay_hgq452iixrlzpeddhfr5gp4uxglz5lvn
@@ -130,14 +130,11 @@ gcloud container clusters create fusionauth-cluster \
 * `num-nodes` - The number of nodes to be created in each zone. In this example, you specify the region of which consists of three zones. Therefore you will have a total of `3` nodes.
 * `region` - The region to create the cluster.
 * `enable-ip-alias` - Indicates to create a [VPC-native cluster](https://cloud.google.com/kubernetes-engine/docs/concepts/alias-ips). This greatly simplifies network connectivity when communicating with the database by making pod IP addresses natively routable within the cluster's VPC network.
-* `cluster-version` - The Kubernetes version to use. \[optional\]
 * `cluster-ipv4-cidr` - Used to create the subnet's secondary IP address range for Pods. \[optional\]
-* `service-ip-range` - Used to create the subnet's secondary IP address range for Services. \[optional\]
+* `services-ipv4-cidr` - Used to create the subnet's secondary IP address range for Services. \[optional\]
 * `labels` - FusionAuth's identifier in the Google Cloud Marketplace program. This is a static value and you use the exact values shown here. \[optional\]
 
-<Aside type="tip">
-If you receive an error message stating "Master version '1.30.8-gke.1051000' is unsupported.", please see the Google documentation for [currently supported versions](https://cloud.google.com/kubernetes-engine/docs/release-notes).
-</Aside>
+Without a `--cluster-version` flag, GKE uses the default version of the cluster's release channel.
 
 For more information on the [create](https://cloud.google.com/sdk/gcloud/reference/container/clusters/create) command, see [gcloud container clusters create](https://cloud.google.com/sdk/gcloud/reference/container/clusters/create) documentation.
 
@@ -158,11 +155,11 @@ gcloud container clusters list
 ```
 
 ```shell title="Cluster list results"
-NAME                LOCATION  MASTER_VERSION   MASTER_IP     MACHINE_TYPE  NODE_VERSION     NUM_NODES  STATUS
-fusionauth-cluster  us-west1  1.21.4-gke.2300  34.83.218.38  e2-medium     1.21.4-gke.2300  3          RUNNING
+NAME                LOCATION  MASTER_VERSION      MASTER_IP     MACHINE_TYPE  NODE_VERSION        NUM_NODES  STATUS
+fusionauth-cluster  us-west1  1.35.0-gke.1192000  34.83.218.38  e2-medium     1.35.0-gke.1192000  3          RUNNING
 ```
 
-You now have a fully functional provisioned EKS cluster. For good measure, view the nodes that have been created.
+You now have a fully functional provisioned GKE cluster. For good measure, view the nodes that have been created.
 Use `kubectl` to make requests to the Kubernetes API Server.
 
 ```shell title="Get list of nodes running on the cluster"
@@ -170,10 +167,10 @@ kubectl get nodes -o wide
 ```
 
 ```shell title="Get nodes results"
-NAME                                                STATUS   ROLES    AGE   VERSION            INTERNAL-IP   EXTERNAL-IP      OS-IMAGE                             KERNEL-VERSION   CONTAINER-RUNTIME
-gke-fusionauth-cluster-default-pool-2a2e7af5-nrrb   Ready    <none>   66m   v1.21.4-gke.2300   10.138.0.23   35.203.183.157   Container-Optimized OS from Google   5.4.120+         containerd://1.4.4
-gke-fusionauth-cluster-default-pool-30c935b6-0mt4   Ready    <none>   66m   v1.21.4-gke.2300   10.138.0.24   35.185.202.53    Container-Optimized OS from Google   5.4.120+         containerd://1.4.4
-gke-fusionauth-cluster-default-pool-431a5f55-rf11   Ready    <none>   66m   v1.21.4-gke.2300   10.138.0.22   34.145.99.163    Container-Optimized OS from Google   5.4.120+         containerd://1.4.4
+NAME                                                STATUS   ROLES    AGE   VERSION               INTERNAL-IP   EXTERNAL-IP      OS-IMAGE                             KERNEL-VERSION   CONTAINER-RUNTIME
+gke-fusionauth-cluster-default-pool-2a2e7af5-nrrb   Ready    <none>   66m   v1.35.0-gke.1192000   10.138.0.23   35.203.183.157   Container-Optimized OS from Google   6.6.97+          containerd://2.0.6
+gke-fusionauth-cluster-default-pool-30c935b6-0mt4   Ready    <none>   66m   v1.35.0-gke.1192000   10.138.0.24   35.185.202.53    Container-Optimized OS from Google   6.6.97+          containerd://2.0.6
+gke-fusionauth-cluster-default-pool-431a5f55-rf11   Ready    <none>   66m   v1.35.0-gke.1192000   10.138.0.22   34.145.99.163    Container-Optimized OS from Google   6.6.97+          containerd://2.0.6
 ```
 
 Great! You have three nodes in a `READY` status. You can proceed to setting up a database.
@@ -183,10 +180,11 @@ Great! You have three nodes in a `READY` status. You can proceed to setting up a
 Create a SQL Cloud PostgreSQL instance required for FusionAuth installation.
 
 ```shell title="Create Cloud SQL for PostgreSQL instance"
-gcloud beta sql instances create fusionauth-test-db \
+gcloud sql instances create fusionauth-test-db \
   --project=fusionauth-gke-example \
-  --database-version=POSTGRES_12 \
-  --tier=db-g1-small  \
+  --database-version=POSTGRES_17 \
+  --edition=ENTERPRISE \
+  --tier=db-g1-small \
   --region=us-west1 \
   --network=default \
   --no-assign-ip
@@ -194,12 +192,13 @@ gcloud beta sql instances create fusionauth-test-db \
 
 * `project` - The Id of the shared VPC service.
 * `database-version` - Database engine type and version. See FusionAuth supported databases [here](/docs/get-started/download-and-install/reference/system-requirements#database).
+* `edition` - The Cloud SQL edition. Shared-core tiers such as `db-g1-small` are only available in the Enterprise edition.
 * `tier` - Machine type for a shared-core instance.
 * `region` - The region to create the cluster.
 * `network` - Network in the current project that the instance will be part of.
 * `no-assign-ip` - Disables assignment of a public IP address.
 
-For more information on the [create](https://cloud.google.com/sdk/gcloud/reference/beta/sql/instances/create) command, see [gcloud beta SQL instances create](https://cloud.google.com/sdk/gcloud/reference/beta/sql/instances/create) documentation.
+For more information on the [create](https://cloud.google.com/sdk/gcloud/reference/sql/instances/create) command, see [gcloud sql instances create](https://cloud.google.com/sdk/gcloud/reference/sql/instances/create) documentation.
 
 ### Configure the Default User
 
@@ -219,7 +218,7 @@ gcloud sql instances list
 
 ```shell title="List Cloud SQL instances results"
 NAME                 DATABASE_VERSION  LOCATION    TIER               PRIMARY_ADDRESS  PRIVATE_ADDRESS  STATUS
-fusionauth-test-db3  POSTGRES_12       us-west1-a  db-g1-small        -                10.50.144.5      RUNNABLE
+fusionauth-test-db   POSTGRES_17       us-west1-a  db-g1-small        -                10.50.144.5      RUNNABLE
 ```
 
 ## Configure Search Engine
@@ -255,6 +254,10 @@ After logging in, you will arrive at your Elastic Cloud dashboard. To begin crea
 ![Elastic Cloud dashboard screen](/img/docs/get-started/download-and-install/kubernetes/es-cloud-dashboard.png)
 
 Input a name for your deployment and again click on <Breadcrumb>Create deployment</Breadcrumb>.
+
+<Aside type="caution">
+FusionAuth supports Elasticsearch `7.6.1` through `7.17.x` and OpenSearch `2.x`. Choose one of these versions when you create the deployment. If your provider doesn't offer a supported version, use OpenSearch, or set **search.engine** to `database` when you deploy FusionAuth.
+</Aside>
 
 ![Create deployment screen](/img/docs/get-started/download-and-install/kubernetes/es-create-deployment.png)
 

@@ -149,6 +149,26 @@ You may want to allow access to FusionAuth only through the proxy to enhance a d
 
 In either case, disallow traffic to FusionAuth not originating from the proxy.
 
+### Restricting the Admin UI
+
+The Admin UI is served from `/admin` and makes background requests to `/ajax`. If your administrators work from known networks, configure your proxy to reject requests to both paths from any other source IP address. The hosted login pages and the APIs don't use either path, so blocking them doesn't affect your users.
+
+### Security Headers
+
+FusionAuth sends `X-Frame-Options: DENY` on its hosted login and account pages, which stops other sites from framing the login page. To allow framing by specific origins, use the Application's **Authorized request origin URLs** setting. Don't set `X-Frame-Options` at the proxy, because a second header causes inconsistent browser behavior.
+
+Add the following response headers at your proxy:
+
+```
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+```
+
+`Strict-Transport-Security` tells browsers to only use HTTPS for your FusionAuth domain. Only send it once HTTPS works for the domain and every subdomain, because browsers remember it for the full `max-age`.
+
+If you also want a `Content-Security-Policy`, deploy it as `Content-Security-Policy-Report-Only` first. The default Themes use inline scripts and styles, so a strict policy breaks the hosted login pages. See the [OWASP Secure Headers Project](https://owasp.org/www-project-secure-headers/) for more about each header.
+
 ## Trusting Proxies
 
 When running behind a proxy, FusionAuth uses the `X-Forwarded-For` header to resolve the client's IP address. To prevent man-in-the-middle attacks or IP spoofing via the `X-Forwarded-For` header, FusionAuth allows you to specify a list of trusted proxies. See the [networking configuration](/docs/operate/secure/networking) section for more information.
