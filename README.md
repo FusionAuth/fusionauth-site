@@ -106,7 +106,7 @@ These scripts read the pin, and `FUSIONAUTH_VERSION` overrides it for a single r
 - `scripts/check-apis.sh` compares the API docs against the client builder for the pinned release. The Shakedown build runs it on every PR, and the weekly **Check API docs against client libraries** workflow runs it against production.
 - `scripts/fetch_external_content.sh` and `scripts/update-templates.sh` generate JSON and templates from the pinned release. The weekly **Check external content** workflow runs both.
 
-Two files need a literal version, so they hold copies of the pin: the Docker install compose file at `astro/public/docs/docker-compose.yml`, which readers download as-is, and the screenshot tooling at `astro/screenshots/docker-compose.yml`. Don't edit those versions by hand. The Shakedown build runs `bash scripts/update_fusionauth_version.sh --check` and fails when a copy differs from the pin. The download page doesn't use the pin, because it has to list a new release right away.
+Two files need a literal version, so they hold copies of the pin: the Docker install compose file at `astro/public/docs/docker-compose.yml`, which readers download as-is, and the screenshot tooling at `astro/screenshots/docker-compose.yml`. Don't edit those versions by hand. The Shakedown build runs `bash scripts/update_fusionauth_version.sh --check` and fails when a copy differs from the pin, or when the pinned image isn't on Docker Hub yet. The download page doesn't use the pin, because it has to list a new release right away.
 
 The daily **Update FusionAuth version** workflow also runs `bash scripts/update_fusionauth_version.sh --check-latest`, and fails while the pin trails the latest release. It keeps one issue open that names both versions, and the first run after the pin catches up closes that issue. If the pin PR has to wait on something other than docs, say so in a comment on that issue.
 
@@ -123,6 +123,14 @@ When a release ships:
    ```console
    bash scripts/update_fusionauth_version.sh
    ```
+
+   To queue up docs on a release branch before the release is public, pin the upcoming version with `--unreleased`. This skips the check that the Docker image is on Docker Hub:
+
+   ```console
+   FUSIONAUTH_VERSION=<upcoming version> bash scripts/update_fusionauth_version.sh --unreleased
+   ```
+
+   Merge the branch only after the image is published. Readers download `astro/public/docs/docker-compose.yml` as-is, and CI jobs that pull the pinned image fail until it exists.
 
 1. Wait for the Shakedown build on the pin PR to pass before you merge it. That build checks the API docs against the new release, so a failure lists the fields the docs still need. Merging the pin before the docs moves the weekly checks onto the new release and fails them until the docs land.
 

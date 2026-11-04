@@ -3,17 +3,20 @@
 set -euo pipefail
 
 mode=update
+unreleased=false
 case "${1:-}" in
   '') ;;
+  --unreleased) unreleased=true ;;
   --check) mode=check ;;
   --check-latest) mode=check-latest ;;
   --help)
-    printf 'Usage: bash scripts/update_fusionauth_version.sh [--check | --check-latest]\n'
+    printf 'Usage: bash scripts/update_fusionauth_version.sh [--check | --check-latest | --unreleased]\n'
     printf 'Pin the latest FusionAuth release in fusionauth-version, and copy it into:\n'
     printf '  astro/public/docs/docker-compose.yml (served at /docs/docker-compose.yml)\n'
     printf '  astro/screenshots/docker-compose.yml (retake screenshots after changing it)\n'
-    printf 'Set FUSIONAUTH_VERSION to pin a specific version. With --check, report copies that differ from fusionauth-version without changing files.\n'
+    printf 'Set FUSIONAUTH_VERSION to pin a specific version. With --check, report copies that differ from fusionauth-version without changing files, and fail if the pinned image is not on Docker Hub.\n'
     printf 'With --check-latest, fail when fusionauth-version pins a release other than the latest one.\n'
+    printf 'With --unreleased, pin FUSIONAUTH_VERSION even if its image is not on Docker Hub yet, to prepare a release branch. Requires FUSIONAUTH_VERSION.\n'
     exit 0 ;;
   *) printf 'Unknown argument: %s\n' "$1" >&2; exit 2 ;;
 esac
@@ -49,6 +52,10 @@ if [[ "$mode" == check-latest ]]; then
   exit 1
 fi
 
+image_published() {
+  curl -f --silent --output /dev/null "https://hub.docker.com/v2/repositories/fusionauth/fusionauth-app/tags/$1"
+}
+
 # the screenshot pin is wrapped in ${FUSIONAUTH_IMAGE:-...} so it can be overridden locally
 pin_copy() {
   sed -E "s#(fusionauth/fusionauth-app:)[0-9]+\.[0-9]+\.[0-9]+#\1$2#" "$repo_root/$1"
@@ -74,15 +81,26 @@ if [[ "$mode" == check ]]; then
     exit 1
   fi
   printf 'Every copy matches %s (FusionAuth %s).\n' "$pin_file" "$pinned"
+  # a pin made with --unreleased must not merge before readers can pull the image
+  if ! image_published "$pinned"; then
+    printf 'fusionauth/fusionauth-app:%s is not on Docker Hub yet, or Docker Hub could not be reached. Wait for the image to be published, then re-run this check.\n' "$pinned" >&2
+    exit 1
+  fi
+  printf 'fusionauth/fusionauth-app:%s is on Docker Hub.\n' "$pinned"
   exit 0
 fi
 
+if [[ "$unreleased" == true && -z "${FUSIONAUTH_VERSION:-}" ]]; then
+  printf 'With --unreleased, set FUSIONAUTH_VERSION to the upcoming release, for example: FUSIONAUTH_VERSION=1.71.0 bash scripts/update_fusionauth_version.sh --unreleased\n' >&2
+  exit 2
+fi
 version="${FUSIONAUTH_VERSION:-$(latest_release)}"
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   printf 'Unexpected FusionAuth version "%s". Nothing was changed.\n' "$version" >&2
   exit 1
 fi
-trap 'run_locally "FUSIONAUTH_VERSION=$version bash scripts/update_fusionauth_version.sh"' EXIT
+flag="$([[ "$unreleased" == true ]] && printf ' --unreleased' || true)"
+trap 'run_locally "FUSIONAUTH_VERSION=$version bash scripts/update_fusionauth_version.sh$flag"' EXIT
 
 stale=()
 [[ "$pinned" == "$version" ]] || stale+=("$pin_file ($pinned)")
@@ -96,8 +114,11 @@ if [[ ${#stale[@]} -eq 0 ]]; then
 fi
 
 # release notes can land before the image does; don't point readers at a tag that can't be pulled yet
-if ! curl -f --silent --output /dev/null "https://hub.docker.com/v2/repositories/fusionauth/fusionauth-app/tags/$version"; then
-  printf 'FusionAuth %s is released but fusionauth/fusionauth-app:%s is not on Docker Hub yet. Nothing was changed.\n' "$version" "$version"
+if [[ "$unreleased" == true ]]; then
+  printf 'Pinning FusionAuth %s without checking Docker Hub. Merge only after fusionauth/fusionauth-app:%s is published.\n' "$version" "$version"
+elif ! image_published "$version"; then
+  printf 'fusionauth/fusionauth-app:%s is not on Docker Hub yet. Nothing was changed.\n' "$version"
+  printf 'To pin it anyway on a release branch, add --unreleased.\n'
   exit 0
 fi
 
