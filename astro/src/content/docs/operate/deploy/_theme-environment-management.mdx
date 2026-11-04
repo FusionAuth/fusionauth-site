@@ -1,60 +1,53 @@
+When you move a theme from one environment to another, the templates and styles usually stay the same. The asset locations often differ, such as the hostname that serves images and CSS.
 
-When moving themes from one environment to another, the theme logic and look and feel may be the same, but the assets may be different. FusionAuth templates only have access to [the documented variables](/docs/theme/advanced-themes/template-variables). FusionAuth does not resolve environment variables in the themes templates.
+Theme templates can only read [the documented template variables](/docs/theme/advanced-themes/template-variables). FusionAuth doesn't resolve environment variables in theme templates. To use different asset locations in each environment, choose one of these options:
 
-You have a few options to handle the difference in assets between theme environments.
-
-You can set variables at theme build time in the [Helpers](/docs/theme/advanced-themes/helpers) template using the [`assign`](https://freemarker.apache.org/docs/ref_directive_assign.html) directive. These variables can then be used in other templates. You can use a templating language like jinja to build the `Helpers` template at build time.
-
-Another option is to use custom fields in the **tenant.data** field. The `tenant` object is available to every template. Then you can reference these variables for different hostnames.
+* Set variables when you build the theme. In the [Helpers](/docs/theme/advanced-themes/helpers) template, set each variable with the [`assign`](https://freemarker.apache.org/docs/ref_directive_assign.html) directive. Other templates can then use the variables. To generate the Helpers template for each environment, use a templating language such as Jinja.
+* Store the locations in the **tenant.data** field. Every template can read the `tenant` object, so every template can read the locations.
 
 <Aside type="note">
-You can only set `tenant.data` values using the [client libraries](/docs/sdks) or the [API](/docs/apis).
+You can't edit **tenant.data** in the Admin UI. Set **tenant.data** with the [API](/docs/apis), a [client library](/docs/sdks), or the `data` argument of the Terraform `fusionauth_tenant` resource.
 </Aside>
 
-For example, if your development assets are at `dev.example.com/assets` and your production assets are at `prod.example.com/assets`, set a variable such as `asset_base_url` in the **tenant.data** field.
+For example, suppose development assets live at `dev.example.com/assets` and production assets live at `prod.example.com/assets`. To serve each environment's assets with the same theme:
 
-Here's an excerpt of what the development tenant `data` object might look like:
-
-```json
-{
-  "tenant" : {
-    "data" : {
-      "themes": {
-         "asset_base_url" : "dev.example.com/assets",
-         "css_base_url" : "cdn-dev.example.com"
-      }
-    }
-  }
-}
-```
-
-Production, in contrast, will use different hostnames.
-
-```json
-{
-  "tenant" : {
-    "data" : {
-      "themes": {
-         "asset_base_url" : "prod.example.com/assets",
-         "css_base_url" : "cdn-prod.example.com"
-      }
-    }
-  }
-}
-```
-
-Then, in your template, reference images using `${tenant.data.themes.asset_base_url}` and CSS files using `${tenant.data.themes.css_base_url}`. For example, a simplified theme page might look like this:
-
-```ftl
-<html>
-  <head>
-    <link rel="stylesheet" href="${tenant.data.themes.css_base_url}/css/font-awesome.min.css"/>
-    <link rel="stylesheet" href="${tenant.data.themes.css_base_url}/css/app.css"/>
-  </head>
-  <body>
-    <img src="${tenant.data.themes.asset_base_url}/logo.png" />
-    ...
-    <img src="${tenant.data.themes.asset_base_url}/other_image.png" />
-  </body>
-</html>
-```
+1. In the development Tenant, set the asset locations in **tenant.data**:
+   ```json title="Development Tenant data"
+   {
+     "tenant" : {
+       "data" : {
+         "themes": {
+            "asset_base_url" : "dev.example.com/assets",
+            "css_base_url" : "cdn-dev.example.com"
+         }
+       }
+     }
+   }
+   ```
+1. In the production Tenant, set the production locations:
+   ```json title="Production Tenant data"
+   {
+     "tenant" : {
+       "data" : {
+         "themes": {
+            "asset_base_url" : "prod.example.com/assets",
+            "css_base_url" : "cdn-prod.example.com"
+         }
+       }
+     }
+   }
+   ```
+1. In the theme templates, reference images with `${tenant.data.themes.asset_base_url}` and CSS files with `${tenant.data.themes.css_base_url}`:
+   ```ftl title="Template that uses the asset locations"
+   <html>
+     <head>
+       <link rel="stylesheet" href="${tenant.data.themes.css_base_url}/css/font-awesome.min.css"/>
+       <link rel="stylesheet" href="${tenant.data.themes.css_base_url}/css/app.css"/>
+     </head>
+     <body>
+       <img src="${tenant.data.themes.asset_base_url}/logo.png" />
+       ...
+       <img src="${tenant.data.themes.asset_base_url}/other_image.png" />
+     </body>
+   </html>
+   ```
