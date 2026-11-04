@@ -10,7 +10,7 @@ import * as webhooks from './extend/events-and-webhooks/_shared.mjs';
 
 const dir = fileURLToPath(new URL('.', import.meta.url));
 const paths = readdirSync(dir, { recursive: true }).filter(path => path.endsWith('.mjs') && !['index.mjs', 'kit.mjs'].includes(path)).sort();
-export const modules = await Promise.all(paths.map(path => import(new URL(path, import.meta.url))));
+export const modules = await Promise.all(paths.map(path => import(/* @vite-ignore */ new URL(path, import.meta.url))));
 
 // the order beforeAll creates them in
 export const resources = [
