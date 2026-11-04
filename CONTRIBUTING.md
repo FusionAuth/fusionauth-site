@@ -52,6 +52,8 @@ Follow these guidelines when writing documentation (everything under [docs](astr
 
   Remove the import line and it will work.
 
+- Auto-imports come from a small Vite plugin, `mdxComponentImporter` in `astro/astro.config.ts`. Before the MDX compiler runs, the plugin inserts every import line from `mdxComponentImports` after the file's frontmatter. If a file imports a different component under the same name, the file's import wins. To auto-import another component, add its import line to `mdxComponentImports`.
+
 - For everything else, always use the full path, not a relative path:
 
   ```jsx
