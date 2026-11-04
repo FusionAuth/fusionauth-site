@@ -6,7 +6,8 @@
  * astro.config.ts auto-imports into MDX) and walks it backward from each changed file to the
  * pages that render it. A dynamic route that calls getCollection('docs'|'articles'|'blog')
  * expands to every page in that collection. A changed file under astro/extractedcode maps to
- * the pages whose <ExtractedCode> renders it.
+ * the pages whose <ExtractedCode> renders it. A changed release note maps to its section on each
+ * page that renders the releases collection, with the version's anchor in the url.
  *
  * kind is "edited" when the page's own content changed: the page file, a content fragment it
  * includes, or a JSON example it shows. It's "shared" when the change reached the page through a
@@ -196,8 +197,36 @@ function filesShowingPublicFile(changed) {
   }));
 }
 
+// ── Release notes ─────────────────────────────────────────────────────────────
+
+const RELEASES = `${SRC}/content/releases/`;
+// only components that render entries show release content; others just read versions or dates
+const releaseRenderers = sourceFiles.filter(f => /getCollection\(\s*['"]releases['"]/.test(read(f)) && /\brender\(/.test(read(f)));
+
+function pagesReachedFrom(start) {
+  const pages = new Set();
+  const seen = new Set();
+  const queue = [start];
+  while (queue.length) {
+    const cur = queue.shift();
+    if (seen.has(cur)) continue;
+    seen.add(cur);
+    if (isPage(cur)) pages.add(cur);
+    for (const dep of dependents.get(cur) || []) queue.push(dep);
+  }
+  return pages;
+}
+
+/** @type {{page: string, file: string}[]} one row per changed release note on each page that shows it */
+const releaseChanges = [];
+
 for (const f of changedFiles) {
-  if (f.startsWith('astro/extractedcode/')) {
+  if (f.startsWith(RELEASES)) {
+    if (posix.basename(f).startsWith('_')) continue;
+    for (const renderer of releaseRenderers) {
+      for (const page of pagesReachedFrom(renderer)) releaseChanges.push({ page, file: f });
+    }
+  } else if (f.startsWith('astro/extractedcode/')) {
     for (const user of filesShowingExtractedCode(f)) walkFrom(user, 'shared', f);
   } else if (f.startsWith('astro/public/')) {
     for (const user of filesShowingPublicFile(f)) walkFrom(user, 'shared', f);
@@ -251,9 +280,10 @@ const numstat = new Map();
   }
 }
 
+// git counts lines by newline, so a trailing newline doesn't start another line
 const lineCount = (f) => {
   const text = read(f);
-  return text ? text.split('\n').length : 0;
+  return text ? text.split('\n').length - (text.endsWith('\n') ? 1 : 0) : 0;
 };
 
 // share of the page's own content that changed: the page file plus the changed fragments it includes
@@ -270,11 +300,31 @@ function getChangePercent(page) {
   return pct > 0 && pct < 1 ? '<1' : String(Math.min(100, Math.round(pct)));
 }
 
+// share of one file that changed, for a release note row
+function getFileChangePercent(f) {
+  const { added = 0, removed = 0 } = numstat.get(f) || {};
+  const now = lineCount(f);
+  const total = Math.max(now, now - added + removed);
+  const pct = total ? ((added + removed) / total) * 100 : 100;
+  return pct > 0 && pct < 1 ? '<1' : String(Math.min(100, Math.round(pct)));
+}
+
 // ── Output ────────────────────────────────────────────────────────────────────
+
+const releaseRows = releaseChanges
+  .filter(({ page }) => isFile(page) && isDeployed(page))
+  .map(({ page, file }) => {
+    // a deleted release has no section left, so link the page itself
+    const version = isFile(file) ? /^version:\s*["']?([^"'\s]+)["']?\s*$/m.exec(frontmatter(file))?.[1] : undefined;
+    return version
+      ? { url: `${getUrl(page)}#version-${version.replaceAll('.', '-')}`, title: `${getTitle(page)}: ${version}`, kind: 'edited', pct: getFileChangePercent(file) }
+      : { url: getUrl(page), title: getTitle(page), kind: 'edited', pct: '100' };
+  });
 
 const rows = [...affected]
   .filter(([page]) => isFile(page) && isDeployed(page))   // a deleted page has nothing to preview
   .map(([page, kind]) => ({ url: getUrl(page), title: getTitle(page), kind, pct: kind === 'edited' ? getChangePercent(page) : '' }))
+  .concat(releaseRows)
   .sort((a, b) => (a.kind === b.kind ? a.url.localeCompare(b.url) : a.kind === 'edited' ? -1 : 1));
 
 for (const { url, title, kind, pct } of rows) process.stdout.write(`${url}\t${title}\t${kind}\t${pct}\n`);
