@@ -1,0 +1,226 @@
+---
+title: Nuxt
+description: QuickStart integration of a Nuxt web application with FusionAuth.
+tags: nuxt quickstart, nuxt.js authentication, nuxt login, vue server-side, node.js authentication
+htmlTitle: FusionAuth QuickStart for Nuxt
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-nuxt-web/main
+icon: /img/icons/nuxt.svg
+---
+import Intro from 'src/components/quickstarts/Intro.astro';
+import {Content as LoginArchitectureWeb} from 'src/components/quickstarts/LoginArchitectureWeb.mdx';
+import NextSteps from 'src/components/quickstarts/NextSteps.astro';
+import QuickstartTshirtCTA from 'src/components/quickstarts/QuickstartTshirtCTA.astro'
+
+<Intro technology="Nuxt"
+       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-javascript-nuxt-web"/>
+
+## Prerequisites
+* [Node LTS](https://nodejs.org/en/download)
+* [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/get-started/install)).
+* [git](https://git-scm.com/downloads/): Not required but recommended if you want to track your changes.
+
+## General Architecture
+
+<LoginArchitectureWeb />
+
+## Getting Started
+In this section, you'll get FusionAuth up and running, and configured with the ChangeBank application.
+
+### Clone The Code
+First off, grab the code from the repository and change into that directory.
+
+```shell-session
+git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-nuxt-web.git
+```
+
+```shell-session
+cd fusionauth-quickstart-javascript-nuxt-web
+```
+
+### Run FusionAuth Via Docker
+
+You'll find a Docker Compose file (`docker-compose.yml`) and an environment variables configuration file (`.env`) in the root directory of the repo.
+
+Assuming you have Docker installed, you can stand up FusionAuth on your machine with the following.
+
+```shell-session
+docker compose up -d
+```
+
+Here you are using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/develop/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
+
+<Aside type="note">
+  If you ever want to reset the FusionAuth application, you need to delete the volumes created by Docker Compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
+</Aside>
+
+FusionAuth will be initially configured with these settings:
+
+* Your client Id is <code><LocalValue path="quickstart-javascript-nuxt-web/kickstart/kickstart.json" selector="$.variables.applicationId" /></code>.
+* Your client secret is <code><LocalValue path="quickstart-javascript-nuxt-web/kickstart/kickstart.json" selector="$.variables.clientSecret" /></code>.
+* Your example username is <code><LocalValue path="quickstart-javascript-nuxt-web/kickstart/kickstart.json" selector="$.variables.userEmail" /></code> and the password is <code><LocalValue path="quickstart-javascript-nuxt-web/kickstart/kickstart.json" selector="$.variables.userPassword" /></code>.
+* Your admin username is <code><LocalValue path="quickstart-javascript-nuxt-web/kickstart/kickstart.json" selector="$.variables.adminEmail" /></code> and the password is <code><LocalValue path="quickstart-javascript-nuxt-web/kickstart/kickstart.json" selector="$.variables.adminPassword" /></code>.
+* The base URL of FusionAuth is `http://localhost:9011/`.
+
+You can log in to the [FusionAuth Admin UI](http://localhost:9011/admin) and look around if you want to, but with Docker and Kickstart, everything will already be configured correctly.
+
+<Aside type="note">
+  If you want to see where the FusionAuth values came from, they can be found in the [FusionAuth app](http://localhost:9011/admin). The tenant Id is found on the Tenants page. To see the Client Id and Client Secret, go to the Applications page and click the `View` icon under the actions for the ChangeBank application. You'll find the Client Id and Client Secret values in the `OAuth configuration` section.
+</Aside>
+
+<Aside type="caution">
+  The `.env` file contains passwords. In a real application, always add this file to your `.gitignore` file and never commit secrets to version control.
+</Aside>
+
+### Create Nuxt Application
+
+In this section, you'll set up a basic Nuxt application with three pages. 
+
+1. Homepage
+1. Account - protected
+1. Makechange - protected
+
+Create a new application using the `npx`.
+
+<Aside type="note">
+If prompted you can choose `npm` for the package manager. For QuickStarts we use `npm`.
+</Aside>
+
+```shell-session
+npx nuxi@latest init changebank
+```
+
+Make sure you are in your new directory `changebank`.
+
+```shell-session
+cd changebank
+```
+
+Install [`@sidebase/nuxt-auth`](https://auth.sidebase.io/guide/getting-started/installation), which simplifies integrating with FusionAuth and creating a secure web application.
+
+<Aside type="note">
+At the time of writing `@sidebase/nuxt-auth` was requiring a lower version of `next-auth` you may find that you can update both of these components.
+
+At some point you may also find that `nuxt/auth` also supports Nuxt 3, please see the [Nuxt 3 Support](https://auth.nuxtjs.org/#nuxt-3-support) section for more information.
+</Aside>
+
+```shell-session
+npm install next-auth@~4.21.1 @sidebase/nuxt-auth@^0.7.2
+```
+
+Copy environment variables from the complete application example.
+
+```shell-session
+cp ../complete-application/.env.example .env
+```
+
+Also copy an image file into a new directory within `public` called `img`.
+
+```shell-session
+mkdir ./public/img && cp ../complete-application/public/img/money.jpg ./public/img/money.jpg
+```
+
+## Authentication
+
+Update `nuxt.config.ts` to include the new `@sidebase/nuxt-auth` and include the provider type of `authjs` just like below. 
+
+<Aside type="note">
+If you would like to code with any of the pages prior to enabling authentication, just set `globalAppMiddleware` to false.
+</Aside>
+
+<ExtractedCode src="quickstart-javascript-nuxt-web/complete-application/nuxt.config.ts" lang="ts" />
+
+Nuxt 3 includes [Route Handlers](https://nuxt.com/docs/guide/directory-structure/server#server-routes), which are the preferred way to handle REST-like requests. In the `Changebank` application you can configure NextAuth.js FusionAuth's provider in a new route handler by creating a file within `/server/api/auth/[...].ts`.
+
+On first load of Nuxt this file will make sure that you have all of the correct environment variables. The variables are then exported in an object called `authOptions` which can be imported on the server when you need to get your session using `getServerSession`.
+
+The `FusionAuthProvider` is then provided to `NextAuth` as a provider for any `GET` or `POST` commands that are sent to the `/api/auth/*` route.
+
+Create a new file named `/server/api/auth/[...].ts` and copy the following code for the ChangeBank application.
+
+<ExtractedCode src="quickstart-javascript-nuxt-web/complete-application/server/api/auth/[...].ts" lang="ts" />
+
+## App Customization
+
+### Styles
+
+Create a new file named `/changebank/assets/css/global.css` and copy the below CSS for the ChangeBank application.
+
+<ExtractedCode src="quickstart-javascript-nuxt-web/complete-application/assets/css/global.css" lang="css" />
+
+The above styles will be imported into a new layout that you will create called `/changebank/layouts/default.vue`. Update this file to match the code below. This will allow the rest of the pages within your application and the layout itself to use the global styles. This is the first time that you will use the [useAuth](https://auth.sidebase.io/guide/application-side/configuration) Composable from Sidebase. The status can then be used to determine what links should be shown in the layout.
+
+<ExtractedCode src="quickstart-javascript-nuxt-web/complete-application/layouts/default.vue" lang="ts" />
+
+### Login Button
+
+Create a new file in `/changebank/components/LoginButton.vue` that will be used for a button component.
+
+For this button you can use the `signIn` and `signOut` functions from the `useAuth` composable. Copy the below code for the ChangeBank application into `/changebank/components/LoginButton.vue`.
+
+<ExtractedCode src="quickstart-javascript-nuxt-web/complete-application/components/LoginButton.vue" lang="ts" />
+
+### Login Link
+
+Create a new file in `/changebank/components/LoginLink.vue` that will be used for a link component. For this link you can use the same `signIn` function from the `useAuth` composable as you did in the button above.
+
+Copy the below code for the ChangeBank application into `/changebank/components/LoginLink.vue`.
+
+<ExtractedCode src="quickstart-javascript-nuxt-web/complete-application/components/LoginLink.vue" lang="ts" />
+
+### Home Page
+
+Update the file `/changebank/app.vue` to remove the default Nuxt Welcome and add our layout.
+
+<ExtractedCode src="quickstart-javascript-nuxt-web/complete-application/app.vue" lang="ts" />
+
+Create the file `/changebank/pages/index.vue` which will have the Homepage details. Not much here just an image and a Login Link.
+
+<ExtractedCode src="quickstart-javascript-nuxt-web/complete-application/pages/index.vue" lang="ts" />
+
+
+### Account Page
+
+Create a new file `/changebank/pages/account.vue` which will have some fake Account details.
+
+One special note here is that if you leave the auth `globalAppMiddleware` enabled in `nuxt.config.ts` you will need to authenticate to access this page.
+
+Here's the contents of `/changebank/pages/account.vue`.
+<ExtractedCode src="quickstart-javascript-nuxt-web/complete-application/pages/account.vue" lang="ts" />
+
+### Make Change Page
+
+Finally, add some business logic for logged in users to make change with the following code in `/changebank/pages/makechange.vue`:
+
+<ExtractedCode src="quickstart-javascript-nuxt-web/complete-application/pages/makechange.vue" lang="ts" />
+
+If the user session is not present the user is redirected back to the homepage at the base route. If the user is present then the `MakeChangeForm` is presented. Create a new file located at `/changebank/components/MakeChangeForm.vue` with the below code. This component has all of the business logic needed for taking in a dollar amount of money and returning the correct amount of each coin.
+
+<ExtractedCode src="quickstart-javascript-nuxt-web/complete-application/components/MakeChangeForm.vue" lang="ts" />
+
+### Run the Application
+
+You can now open up an incognito window and visit the Nuxt app at http://localhost:3000/. Log in with the user account you created when setting up FusionAuth, and you'll see the email of the user next to a logout button.
+
+```shell-session
+npm run dev
+```
+
+Try clicking the <Breadcrumb>Login</Breadcrumb> button at the top or the link at the center of the screen.
+
+This will take you through the `NextAuth.js` authentication flow. Since `fusionauth` is set as the provider in the Login Button `signIn('fusionauth', { callbackUrl: '/account' })`, the FusionAuth Login page will be automatically presented. If you would like to see all providers you can set `fusionauth` to `undefined`.
+
+You can then login to FusionAuth with Email: `richard@example.com` Password: `password` (as you might expect not ideal for production.)
+
+This will then take you back to the application, which will check for a session and appropriately redirect you to the `/account` route when your session has been established.
+
+<QuickstartTshirtCTA/>
+
+## Next Steps
+
+<NextSteps>
+  <Fragment slot="security">
+    <li>You may also want to check the [next-auth.js FusionAuth Docs](https://next-auth.js.org/providers/fusionauth) for any of the FusionAuth Provider options that you might require.</li>
+  </Fragment>
+</NextSteps>
+
+

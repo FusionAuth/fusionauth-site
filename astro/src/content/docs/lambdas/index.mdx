@@ -1,0 +1,161 @@
+---
+title: Lambdas
+description: An overview of FusionAuth's lambdas, which are pluggable JavaScript code that run at various points in the user lifecycle.
+tags: fusionauth lambda, lambda function, custom code, javascript, jwt populate, custom claims, reconcile lambda, authentication hook, token customization
+order: 340
+---
+import LambdaTypes from 'src/content/docs/_shared/_lambda-types.astro';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+In FusionAuth, a lambda is a JavaScript function that can augment or modify behavior during authentication or authorization. For example, the following lambda adds additional claims to a JWT:
+
+```javascript
+function populate(jwt, user, registration) {
+  jwt.favoriteColor = user.data.favoriteColor;
+  jwt.applicationBackgroundColor = registration.data.backgroundColor;
+}
+```
+
+FusionAuth uses lambdas to react to events as well as to customize tokens and messages such as JWTs or SAML responses. You can also invoke your own lambdas to further customize behavior.
+
+Lambdas do not have full access to JavaScript modules and libraries. They also cannot import, require or load other libraries. This page explains the objects and methods that FusionAuth provides access to.
+
+This brief video provides an overview of lambdas:
+
+<YouTube id="aKIWILh3qxM" />
+
+## Console
+
+The `console` object creates entries in the Event Log during a lambda invocation. Unlike the browser `console` object, lambda `console` methods only accept one argument.
+
+The `console` object provides the following log methods:
+
+- `info()` - Create an event log of type Information
+- `log()` - alias to the `info` method
+- `error()` - Create an event log of type Error
+- `debug()` - Create an event log of type Debug _only when the Lambda has debugging enabled_
+  <Aside type="caution">
+   Debug messages only appear in the Event Log when you have enabled **Debug** in your lambda configuration.
+  </Aside>
+
+Messages accumulate during lambda invocation, creating a maximum of one event log of each type. For instance, multiple requests to `console.info` in the lambda function body results in a single event log of type Information that combines all of the request contents.
+
+To see object data in the Event Log, stringify objects with `JSON.stringify(<object>)`:
+
+```javascript
+function populate(jwt, user, registration) {
+  //...
+  console.log(user); // doesn't log any data other than the fact a user is an object. Probably not what you want.
+  console.log(JSON.stringify(user)); // outputs all the properties of the user object.
+  console.log(JSON.stringify(user, null, ' ')); // pretty prints the user object.
+  //...
+}
+```
+
+## HTTP Connect
+
+<PlanBlurb plan="essentials" />
+
+Lambda HTTP Connect makes HTTP requests from within a lambda.
+
+For instance, the following lambda adds additional claims to a JWT based on an HTTP request:
+
+```javascript
+function populate(jwt, user, registration) {
+  var response = fetch("https://api.example.com/api/status?" + user.id, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
+
+  if (response.status === 200) {
+    // assuming successful response looks like:
+    // {"status":"statusValue"}
+    var jsonResponse = JSON.parse(response.body);
+    jwt.status = jsonResponse.status;
+  } else {
+    jwt.status = "basic";
+  }
+}
+```
+
+For more information, see the [Lambda HTTP Connect documentation](/docs/lambdas/lambda-remote-api-calls).
+
+## Secrets
+
+<AvailableSince since="1.64.0"/>
+
+Lambda secrets help you securely store secret values used in lambdas, like API keys and application passwords.
+
+1. In the Admin UI, visit <Breadcrumb>Settings -> Key Master</Breadcrumb>.
+1. From the dropdown in the upper right, select <Breadcrumb>Import secret</Breadcrumb>.
+1. Specify a unique **secret name**, which you will use to access your secret from a lambda.
+1. Specify your **secret value**.
+
+To access secrets, use the `context` parameter. Pass a secret **name** to `context.services.secrets.get('<key>')` to retrieve the corresponding secret **value** as a string:
+
+```javascript
+function populate(jwt, user, registration, context) {
+  var apiKey = context.services.secrets.get('<secret-name>');
+
+  var response = fetch("https://api.example.org/api/status?" + user.id, {
+    method: "GET",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded"
+      "authorization": "Basic " + apiKey
+    }
+  });
+
+  if (response.status === 200) {
+    var jsonResponse = JSON.parse(response.body);
+    console.log('response: ' + jsonResponse);
+    jwt.status = jsonResponse.status;
+  } else {
+    console.warn('failed request: ' + response.status);
+    jwt.status = "basic";
+  }
+}
+```
+
+## Exceptions
+
+Throwing an exception in a lambda has the following effect:
+
+* writes an event log entry
+* exits the lambda code path
+
+The impact on the user experience depends on the type of lambda. For example, for a JWT populate lambda, the JWT will not be modified. For a reconcile lambda, the user will not be created or linked.
+
+Don't use exceptions for flow control; reserve them for _exceptional_ situations.
+
+To view exception details, enable debugging on the lambda via the <Breadcrumb>Enable debug logging</Breadcrumb> toggle in the Admin UI or the API.
+
+## Managing Lambdas
+
+Use the [FusionAuth APIs](/docs/apis/lambdas), [client libraries](/docs/sdks) or [the CLI tool](/docs/deploy/production/cli) to manage lambdas.
+
+Always [test your lambdas](/docs/lambdas/testing) and use version control to track changes to lambdas. They are part of your authentication and authorization logic.
+
+## Engine
+
+### GraalJS
+
+GraalJS is built on top of the Java virtual machine. For security reasons, FusionAuth restricts access to various GraalJS features within lambdas.
+
+The GraalJS Engine [supports ECMAScript 2021](https://www.graalvm.org/22.0/reference-manual/js/JavaScriptCompatibility/).
+
+For more information, see the [GraalJS engine documentation](https://www.graalvm.org/latest/reference-manual/js/).
+
+This engine has been available since FusionAuth version `1.35.0`.
+
+## Lambda Types
+
+Lambdas are typed according to their intended purpose. 
+Different lambda types have different signatures.
+
+FusionAuth currently supports the following lambdas; for examples and details, see the linked documentation pages:
+
+{/*  Don't add a new lambda here. Add it to the src/content/json/lambdas.json file and the list will be generated. */}
+<LambdaTypes />
+

@@ -7,7 +7,7 @@ This repo shows you how to use FusionAuth for a machine to machine scenario, whe
 
 This application will use an OAuth Client Credentials Grant workflow to request an access token. The access token will be used to make a request against an APIs to retrieve news or weather information.
 
-This application was built to illustrate the [Machine to Machine use case](https://fusionauth.io/docs/get-started/use-cases/machine-to-machine).
+This application was built to illustrate the [Machine to Machine use case](https://fusionauth.io/docs/concepts/patterns/machine-to-machine).
 
 ## Project Contents
 

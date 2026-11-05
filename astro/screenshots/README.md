@@ -72,6 +72,27 @@ npm run screenshots
 
 The `-v` flag removes the named volumes so FusionAuth starts fresh and re-runs the kickstart.
 
+## Fresh-instance screenshots
+
+A few screenshots show what a new FusionAuth installation looks like before any setup, such as the Setup Wizard in [First Time Setup](../src/content/docs/get-started/first-time-setup.mdx). The kickstarted instance can't show these pages, so the Docker Compose file also runs `fusionauth-fresh`: a second instance with no Kickstart file, at `http://127.0.0.1:9012`. Its database lives in memory, so every run starts at the Setup Wizard.
+
+These screenshots are part of the normal suite. `npm run screenshots` and `npm run check-screenshots` start both instances and capture both sets. To retake only the fresh-instance screenshots, filter on the port in their URLs:
+
+```sh
+npm run screenshots -- --filter 9012
+```
+
+To add a fresh-instance screenshot:
+
+1. Point the `Screenshot` component's `url` at `http://127.0.0.1:9012`. The `127.0.0.1` host keeps the fresh instance's cookies apart from the kickstarted instance at `localhost`.
+1. Give the shot `fresh: true` in its setup module, with a `prepare` function that gets the page into the right state. The usual normalization for the kickstarted instance doesn't run for fresh shots. See `setup/get-started/first-time-setup.mjs` for an example that completes the Setup Wizard and logs in.
+
+If a run stops partway, the fresh instance can be left past the Setup Wizard. Remove it before you retry:
+
+```sh
+docker compose -f screenshots/docker-compose.yml rm -sf fusionauth-fresh db-fresh
+```
+
 ## Prerelease images
 
 To document an unreleased version, point the screenshots at a local FusionAuth image without changing the committed pin:

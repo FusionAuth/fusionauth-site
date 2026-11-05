@@ -1,0 +1,81 @@
+---
+title: Self-Service Registration Validation Lambda
+description: An overview of the Self-Service Registration Validation lambda.
+tags: self-service registration lambda, registration validation, fusionauth lambda, custom form validation, advanced registration form
+---
+
+When you have an [Advanced Registration Form](/docs/users/register/advanced-registration-forms) you may add a lambda to perform additional validation of the form fields as the user completes steps in the form.
+
+When you create a new lambda using the FusionAuth UI, we will provide you an empty function for you to implement.
+
+## Lambda Structure
+
+If you are using the API to create the lambda, you will need to ensure your function has the following signature:
+
+```javascript
+function validate(result, user, registration, formContext, context) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `validate` that accepts the following parameters:
+
+* `result` - an object used for returning validation errors. You can modify this object.
+* `user` - the FusionAuth User object. This object is read-only.
+* `registration` - the FusionAuth UserRegistration object. This object is read-only.
+* `formContext` - an object containing data about the current form state. This object is read-only. This object has the following properties:
+  - `fields` - an array of [Form Fields](/docs/apis/custom-forms/form-fields) in the current form step.
+  - `form` - the FusionAuth Form object which is documented in the [Forms API](/docs/apis/custom-forms/forms).
+  - `step` - the current step number (see note below)
+  - `stepIndex` - the zero-indexed number of the current step (always step - 1)
+  - `totalSteps` - the total number of steps in the form
+* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+
+The `result` object contains an [Errors](/docs/apis/errors) object. The `user` and `registration` objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation.
+
+With this information you may programmatically perform any validation you wish as the user steps through the self-service registration form. When the user posts the form by hitting the <Breadcrumb>Next</Breadcrumb> or <Breadcrumb>Register</Breadcrumb> buttons (depending on the step) the data for the user and registration fields present on the form step will be populated on the `user` and `registration` objects available to the lambda. All of the objects available to the lambda are immutable except for the `result` object which will provide the validation errors to the form. The `result` is the output of the lambda function.
+
+Field errors should use a key that correlates to the form field in error and to a message defined in the theme. If the form field `user.data.name` is invalid then an appropriate error key would be `[invalid]user.data.name`, for example.
+
+## Example Lambda
+
+Here is how you can setup a simple lambda that will allow a user to tell you who their current auth provider is and who their future auth provider will be. If they supply a current auth provider FusionAuth will conditionally validate who their future auth provider is, and it must be "FusionAuth"!
+
+First you need to set up an advanced registration form with two steps. The lambda will perform validation on the second step.
+
+<Screenshot id="lambda-registration-form" url="/admin/form/edit/b4d6f8a1-3e5c-4b7d-9a2f-1c8e6d4b2a93" crop="#screenshot-band" cropPadding={0} alt="Self-Service registration example form setup" />
+
+You will also add appropriate messaging to your theme.
+
+<Screenshot id="lambda-registration-messages" url="/admin/theme/edit/d2f4a6c8-1e3b-4d5f-b7a9-8c0e2f4a6b15" height={700} chrome={false} alt="Self-Service registration example theme messages">
+  <Highlight selector="[data-hl='registration-messages']" />
+</Screenshot>
+
+Then you will supply the following lambda code for the validation
+
+```javascript
+// Validate the self-service registration form here
+function validate(result, user, registration, context) {
+    // On form step "2"
+    if (context.step === 2 &&
+        // if the user has filled out the "currentAuth" field
+        user.data.currentAuth !== null &&
+        // and their "futureAuth" provider field is not "FusionAuth"
+        user.data.futureAuth !== 'FusionAuth') {
+      // set a field error for the "futureAuth" field
+      result.errors.fieldErrors['user.data.futureAuth'] = [{
+        // with the "invalid" error code that we have defined in the theme
+        code: '[invalid]user.data.futureAuth'
+      }];
+    }
+}
+```
+
+When a user goes to register they will see this form step
+
+<Screenshot id="lambda-registration-blank" url="/oauth2/register?client_id=e6a8c0e2-4f6b-4a8d-9c1e-5b7d9f1a3c26&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid" crop=".bg-panel-bg" alt="Self-Service registration example blank form step" />
+
+When the user submits the wrong future auth provider FusionAuth will trigger the validation and supply the error message
+
+<Screenshot id="lambda-registration-invalid" url="/oauth2/register?client_id=e6a8c0e2-4f6b-4a8d-9c1e-5b7d9f1a3c26&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid" crop=".bg-panel-bg" alt="Self-Service registration example invalid form step" />
+

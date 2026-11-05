@@ -3,7 +3,7 @@
 > [!WARNING]
 > This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/example-modeling-organizations). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
 
-This repo holds a companion Node.js Express application called "AwesomeCRM" for the [Modeling Organizations guide](https://fusionauth.io/docs/extend/examples/modeling-organizations) on the FusionAuth website. The guide walks through how to model organizations in FusionAuth using the Entity Management feature.
+This repo holds a companion Node.js Express application called "AwesomeCRM" for the [Modeling Organizations guide](https://fusionauth.io/docs/concepts/patterns/modeling-organizations) on the FusionAuth website. The guide walks through how to model organizations in FusionAuth using the Entity Management feature.
 
 
 ## Project Contents

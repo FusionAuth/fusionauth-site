@@ -5,7 +5,7 @@
 > [!WARNING]
 > This repository is generated from [fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/example-protected-mcp-server). Changes here will be overwritten. Submit changes to fusionauth-site instead.
 
-Example code for a MCP server tutorial using FusionAuth. Please visit https://fusionauth.io/docs/extend/examples/controlling-access-mcp-server for the tutorial
+Example code for a MCP server tutorial using FusionAuth. Please visit https://fusionauth.io/docs/authorization/mcp-server-access for the tutorial
 
 This repository contains self-contained examples:
 

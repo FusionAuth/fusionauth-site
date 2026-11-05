@@ -3,7 +3,7 @@
 > [!WARNING]
 > This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/example-terraform). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
 
-The configuration from the [Manage FusionAuth With Terraform](https://fusionauth.io/docs/operate/deploy/terraform) guide:
+The configuration from the [Manage FusionAuth With Terraform](https://fusionauth.io/docs/deploy/production/terraform) guide:
 
 * `examples/create`: creates a Tenant, a signing key, an Application, and two roles.
 * `examples/import`: brings the default Tenant and the FusionAuth Application under Terraform management. `examples/import/first-plan` holds the configuration before the first plan.

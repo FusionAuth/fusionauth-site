@@ -41,4 +41,4 @@ An equivalent CloudFormation template is available under the `cloudformation` di
 
 ## More
 
-Learn more about migrating from Amazon Cognito to FusionAuth here: https://fusionauth.io/docs/lifecycle/migrate-users/bulk/cognito
+Learn more about migrating from Amazon Cognito to FusionAuth here: https://fusionauth.io/docs/migrate/provider-specific/cognito

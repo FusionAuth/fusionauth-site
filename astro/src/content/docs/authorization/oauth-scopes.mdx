@@ -1,0 +1,166 @@
+---
+title: Access Control with OAuth Scopes
+description: Learn about OAuth scope policy configuration, managing custom scopes, and using scopes in an OAuth2 workflow.
+tags: api consents
+order: 10
+---
+import ApplicationScopesSettings from 'src/content/docs/_shared/_application-scopes-settings.mdx';
+import OAuthScopeMessageLookup from 'src/content/docs/_shared/_oauth-scope-message-lookup.mdx';
+
+<AvailableSince since="1.50.0"/>
+
+OAuth scopes provide you with another dimension for applying access controls to applications. Scopes are requested by OAuth clients (applications) during authorization and optionally consented to by the user providing the authorization. The consented scopes make their way into the access token granted to the client and can be checked when the client uses the access token to access protected resources.
+
+In FusionAuth, applications can be designated as first-party or third-party. First-party applications are often synonymous with the authorization server from the user's perspective and don't require consent for requested scopes. Third-party applications, by contrast, require consent by an authorizing user for the scopes they request.
+
+This page details these features and explains how you can use them to customize FusionAuth's behavior.
+
+## Application Configuration
+
+The <Breadcrumb>Scopes</Breadcrumb> tab allows you to configure the application's OAuth scope handling policies.
+
+<Screenshot id="application-scopes" url="/admin/application/edit?applicationId=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&tenantId=30663132-6464-6665-3032-326466613934#scopes" alt="Application Scopes configuration" />
+
+### Form Fields
+
+<ApplicationScopesSettings />
+
+## Scope Handling Policy
+
+The application's **Scope handling policy** controls behavior when populating access tokens, Id tokens, and the UserInfo response.
+
+The `Compatibility` option is meant to maintain backwards compatibility with versions of FusionAuth before `1.50.0` or when the integration does not support the requirements of `Strict` mode.
+The `Strict` option follows specification recommendations by populating access tokens, Id tokens, and the UserInfo response based on the requested and consented scopes. It also restricts the tokens the [UserInfo](/docs/apis/oauth/userinfo) endpoint will accept. New applications default to the `Strict` policy.
+
+The [JWT populate](/docs/lambdas/tokens/jwt-populate) and [UserInfo populate](/docs/lambdas/tokens/userinfo-populate) lambdas can be used to override the claims in both configurations.
+
+The following table describes the differences between the two options in more detail.
+
+|  | Compatibility | Strict |
+| ---- | ---- | ---- |
+| Access token claims | The token contains the `email`, `email_verified`, and `preferred_username` claims for the user when that information is available. | The token contains no identifying information about the user other than the `sub` claim, which contains their unique user Id. |
+| Id token claims | The token contains the `email`, `email_verified`, and `preferred_username` claims for the user when that information is available. | The claims on the token are based on the `scope` parameter from the OAuth workflow. See below for details on the claims included for each scope. |
+| UserInfo request | The endpoint will accept either an access token or Id token on the request. No particular `scope` claim is required on the token. | The endpoint only accepts access tokens on the request. The provided token must contain `openid` in the space-delimited `scope` claim in order to be accepted. |
+| UserInfo response | The response starts with claims from the provided token, removes some that are not relevant to the UserInfo response, and then augments the response based on information available for that user. | The claims on the response are based on the `scope` claim of the provided token. See below for details on the claims included for each scope. |
+
+The `Strict` policy uses the requested and consented OAuth scopes to determine which claims to add to the Id token and UserInfo response. The `address`, `email`, `profile`, and `phone` scopes are [provided by FusionAuth](#provided-scopes) and are used to populate claims according to available user data and [Section 5.4 of the OpenID Connect specification](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims).
+
+* `address` - FusionAuth does not include physical addresses in its user data model. A lambda could be used to populate the `address` claim based on custom user data.
+* `email` - Populates the `email` and `email_verified` claims.
+* `phone` - Populates the `phone_number` claim based on the user's **user.phoneNumber** or **user.mobilePhone** value in this order of precedence. If **user.phoneNumber** is available, the `phone_number_verified` claim will also be included.
+* `profile` - Populates various profile-related data. The following describes how each claim maps to FusionAuth user data.
+
+| Claim | **User** field |
+| ---- | ---- |
+| `given_name` | `firstName` |
+| `middle_name` | `middleName` |
+| `family_name` | `lastName` |
+| `name` | `fullName` |
+| `preferred_username` | `username` |
+| `birthdate` | `birthDate` |
+| `picture` | `imageUrl` |
+| `locale` | The first value of `preferredLanguages` |
+| `zoneinfo` | `timezone` |
+
+## Provided Scopes
+
+FusionAuth provides the following scopes defined by the [OpenID Connect](https://openid.net/specs/openid-connect-core-1_0.html) specification.
+
+* `address`
+* `email`
+* `phone`
+* `profile`
+
+These scope names cannot be used to define [custom scopes](/docs/concepts/scopes).
+Each of the scopes can be individually `Enabled` or `Required`.
+Provided scopes that have been disabled are considered unknown and will be handled according to the application's **Unknown scope policy**.
+
+The user must grant consent to all `Required` provided scopes during the OAuth [consent prompt](#consent-prompt) in order to successfully complete the OAuth workflow.
+
+### Reserved Scopes
+
+FusionAuth reserves the `openid` and `offline_access` scopes.
+These scope names cannot be used to define [custom scopes](/docs/concepts/scopes), and their configuration cannot be changed.
+
+The `openid` scope is used to request identity information according to the [OpenID Connect](https://openid.net/specs/openid-connect-core-1_0.html) specification.
+
+The `offline_access` scope is used to request a refresh token on the authorization response.
+Its behavior is controlled by the **Generate refresh tokens** and **Enabled grants** configurations on the application [<Breadcrumb>OAuth</Breadcrumb> tab](/docs/concepts/types/applications#oauth).
+
+### Reserved Prefixes
+
+FusionAuth reserves the prefixes `idp-link:`, `source-entity:`, and `target-entity:`.
+Scope names starting with these prefixes cannot be used when defining [custom scopes](/docs/concepts/scopes).
+
+## Consent Mode
+
+<PlanBlurb plan="essentials" />
+
+An application whose **Relationship** has been configured as `Third-party` (which requires a paid plan) has the option to prompt users to consent to the requested OAuth scopes in order to complete the OAuth workflow.
+The [consent prompt](#consent-prompt) is a mechanism for users to limit the information shared with third-party applications.
+For example, a third-party application may _require_ the `email` scope in order to access the user's email address and create their account but _optionally_ request the `phone` scope in order to send notifications via SMS.
+Applications can also define [custom scopes](/docs/concepts/scopes) to be requested by third-parties for more fine-grained access control to APIs or limiting ability to perform certain actions on behalf of the user.
+
+The **Consent mode** controls when users will be prompted to grant consent to the requested scopes.
+
+* `Always prompt` - Always prompt the user for consent.
+* `Remember decision` - Remember previous consents; only prompt if the choice expires or if the requested or required scopes have changed. The duration of this persisted choice is controlled by the tenant's **Remember OAuth scope consent choice** configuration.
+* `Never prompt` - The user will be never be prompted to consent to requested OAuth scopes. Permission will be granted implicitly as if this were a `First-party` application. This configuration is meant for testing purposes only and should not be used in production.
+
+The `Remember decision` option requires some additional context. The duration that a user's decision is persisted can be controlled on the tenant's [Advanced](/docs/concepts/types/tenants#advanced) tab using the **Remember scope consent choice** configuration.
+After a user has made a consent decision for an application configured with the `Remember decision` option, the user will only be prompted again when any of the following is true:
+
+* Their persisted choice has expired based on the tenant's configured duration.
+* A scope is requested that is not included in their persisted choices.
+* A previously declined optional scope is requested, but it is now required.
+
+If a user has an existing persisted consent choice and is prompted for consent, their decision on the requested scopes will be merged with their existing persisted choices. Only scopes on the current request will be updated in the persisted choice. Scopes that exist in the user's persisted choice that were not on the request that triggered the prompt will not have their choice updated.
+
+For example:
+1. An application has defined custom scopes `a`, `b`, and `c` as optional
+2. A user has previously made consent decisions on these three scopes, and their choice to consent to `a` but decline `b` and `c` has been persisted
+3. Later, scopes `b` and `c` are updated to be required and a new optional scope `d` is defined
+4. The user completes another OAuth workflow with scopes `c` and `d` on the request, which triggers a consent prompt because:
+    1. `c` was previously declined but is now required
+    2. The user has not made a decision on scope `d`
+5. The user chooses to consent to `c` and decline `d`
+6. The persisted choice is updated to move `c` from declined scopes to approved scopes, and `d` is added to the list of declined scopes
+7. `a` is still persisted as an approved scope
+8. `b` is still listed as a declined scope even though it is now required because the user did not make a new decision for `b`
+9. If `b` is included in a future OAuth request, the user would be prompted for consent
+
+## Consent Prompt
+
+Users are prompted for consent using the **OAuth consent prompt** [themed](/docs/theme/) page.
+
+<Screenshot id="authenticate-oauth-consent" url="/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&response_type=code&redirect_uri=https%3A%2F%2Fexample.com&scope=openid%20email%20phone&prompt=consent" alt="OAuth Consent Prompt" />
+
+The page informs the user of the requested OAuth scopes. Required scopes are listed first with a checkmark icon and cannot be de-selected. Optional scopes use a checkbox form element to allow the user to decline consent to the corresponding scope.
+
+Clicking the <Breadcrumb>Allow</Breadcrumb> button will complete the OAuth workflow and grant consent to the selected scopes. The consented scopes will be added to the `scope` claim on the resulting tokens. Clicking the <Breadcrumb>Cancel</Breadcrumb> button will terminate the OAuth workflow and send the user to the `redirect_uri` with an [OAuth error](/docs/apis/oauth/oauth-error).
+
+The `OAuth2 consent` template can be customized like any other [themed](/docs/theme/) page and also features an expanded message lookup policy in order to allow customizing scope consent messages and details without requiring a separate theme for each verbiage change.
+
+### Consent Messages Lookup
+
+<OAuthScopeMessageLookup />
+
+### CIMD Clients
+
+<AvailableSince since="1.70.0" />
+
+[CIMD clients](/docs/authentication/oauth/client-registration#client-id-metadata-documents) are always third-party clients, and their [CIMD domain](/docs/concepts/types/cimd-domains) can't use the `NeverPrompt` consent mode. FusionAuth prompts for consent for a CIMD client even when the request includes no scopes.
+
+For a CIMD client, the consent prompt also shows details from the client's metadata document, to help the user identify the client:
+
+* the `client_name`, labeled **Name**
+* the host of the `client_id` URL, labeled **Hosted at**
+* the `client_uri`, if the document includes one, labeled **Website**
+* the host of the requested `resource`, labeled **Access to**
+* the host of the redirect URI, labeled **Redirects to**
+
+When the redirect host is `localhost`, `127.0.0.1`, or `[::1]`, the prompt also warns the user that any program on their device could receive the response.
+
+![The OAuth consent prompt for a CIMD client, showing the client's name, host, website, requested resource host, and redirect host, followed by a loopback warning and the requested scopes.](/img/docs/lifecycle/authenticate-users/oauth/oauth-consent-cimd.png)
+
+These details are available in the template as the `cimdClientName`, `cimdClientHost`, `cimdClientUri`, `cimdResourceHost`, `cimdRedirectHost`, and `cimdRedirectIsLoopback` [template variables](/docs/theme/advanced-themes/template-variables), and are rendered by the `cimdClientDetails` [helper macro](/docs/theme/advanced-themes/helpers). An advanced theme must include the [1.70.0 template changes](/docs/theme/advanced-themes/update-guides#1700) to display them. CIMD clients can still complete the consent prompt without these changes.

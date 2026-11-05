@@ -11,7 +11,7 @@ This repo holds two example JavaScript applications.
 This application will use an OAuth Authorization Code Grant workflow to log a user in, request needed OAuth Scopes and get them access and
 refresh tokens. The access token will be used to make a request against the Changebank APIs to find the user's balance.
 
-This application was built to illustrate the [API Consents Platform use case](https://fusionauth.io/docs/get-started/use-cases/api-consents-platform).
+This application was built to illustrate the [API Consents Platform use case](https://fusionauth.io/docs/concepts/patterns/api-consents-platform).
 
 ## Project Contents
 

@@ -1,0 +1,76 @@
+---
+import AvailableSince from 'src/components/api/AvailableSince.astro';
+import { parseInline } from 'marked';
+import * as semver from 'semver';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import PlanBlurb from 'src/components/plan/PlanBlurb.astro';
+
+const { description, plan, eventType, name, scope, tenantScopeVersion, transactional, version } = Astro.props;
+---
+<h2>{name}</h2>
+
+{ plan && plan === 'premium' &&
+  <PlanBlurb plan="starter" />
+}
+{ plan && plan === 'enterprise' &&
+  <PlanBlurb plan="enterprise" />
+}
+
+{ version && 
+  <AvailableSince since={version} />
+}
+
+{ description && 
+  <p set:html={parseInline(description)}/>
+}
+<slot name="description" />
+
+<p>
+<span class="italic">Event type</span>
+</p>
+<pre>
+{eventType}
+</pre>
+
+<h3>Event Scope</h3>
+{ scope === 'instance' &&
+  <>
+  <p>This is a system-scoped event. If enabled in <Breadcrumb>Settings -> Webhooks -> Your Webhook</Breadcrumb>, this event will be sent.</p>
+  <p>The tenant webhook enable or disable settings do not apply and will be ignored.</p>
+  { tenantScopeVersion &&
+      <p>In version {tenantScopeVersion} and later, the event subject may be scoped to a tenant. In such cases events are delivered only to the tenants specified by the webhook configuration.</p>
+  }
+  </>
+}
+{ scope === 'tenant' && version && semver.gte(version, '1.38.0') &&
+  <p>This is a tenant-scoped event.</p>
+  <p>It can be sent to all tenants or to one or more specified tenants. However, those tenants will not be sent events for other tenants, but only events related to themselves.</p>
+}
+{ scope === 'tenant' && version && semver.lt(version, '1.38.0') &&
+  <p>This is a tenant-scoped event.</p>
+  <p> Prior to version <code>1.37.0</code> this event was sent to all webhooks, and it was a webhook's responsibility to filter on the <b>tenantId</b> field.</p>
+  <p> In version <code>1.37.0</code> and later, this event will only be sent to tenants for which webhooks for this event are enabled.</p>
+}
+{ scope === 'tenant' && !version &&
+<p>Prior to version <code>1.37.0</code> this was a tenant-scoped event. This event will be sent to all tenants that are listening, but will contain a <b>tenantId</b> to allow for filtering.</p>
+
+<p>In version <code>1.37.0</code> and later this is also a tenant scoped event. It can be sent to all tenants or to one or more specified tenants. However, those tenants will not be sent events for other tenants, but only events related to themselves.</p>
+}
+{ scope === 'application' &&
+  <p>Prior to version <code>1.37.0</code> this was a tenant- or application-scoped event. It can be sent to all applications or to one or more specified applications.</p>
+
+  <p>The ability to limit the generation of an event for only certain applications is legacy functionality and is removed as of version <code>1.37.0</code>. In earlier versions, you almost certainly want to enable this event at the tenant level and optionally filter on the <b>tenantId</b> when consuming the event.</p>
+
+<p>In version <code>1.37.0</code> and later this is a tenant-scoped event. It can be sent to all tenants or to one or more specified tenants. Those tenants will only be sent events related to their tenant. You can optionally also filter on the <b>applicationId</b> when consuming the event.</p>
+}
+
+<h3>Transaction Compatibility</h3>
+{ transactional == "false" ? 
+  <p>
+    This event is non-transactional. The operation will succeed regardless of the webhook response status code.
+  </p>
+  :
+  <p>
+    This event is transactional. The final state of the operation which caused the webhook is not persisted to FusionAuth until after the webhook finishes; <a href="/docs/events/webhooks/writing-a-webhook#calling-fusionauth-apis-in-webhooks">learn more</a>
+  </p>
+}

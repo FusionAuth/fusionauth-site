@@ -1,4 +1,4 @@
-import { piedPiperAppId, defaultTenantId, projectRoot, baseUrl, apiKey, runtime, makeTag, highlightHelpers, runTemporaryState, selectTab, tabsReady } from './screenshots/setup/kit.mjs';
+import { piedPiperAppId, defaultTenantId, projectRoot, baseUrl, freshUrl, apiKey, runtime, makeTag, highlightHelpers, runTemporaryState, selectTab, tabsReady } from './screenshots/setup/kit.mjs';
 import { join } from 'path';
 import { readFileSync } from 'fs';
 import { modules, resources } from './screenshots/setup/index.mjs';
@@ -39,7 +39,7 @@ export default {
   },
   docker: {
     compose: 'screenshots/docker-compose.yml',
-    service: 'fusionauth',
+    service: 'fusionauth fusionauth-fresh',
     healthcheck: {
       url: `${baseUrl}/api/health`,
       timeout: 300000,
@@ -88,10 +88,17 @@ export default {
     runtime.adminLocale = (await context.cookies(`${baseUrl}`)).find(c => c.name === 'fusionauth.locale')?.value;
     await page.close();
     for (const resource of resources) await resource(context);
+    const freshDeadline = Date.now() + 300_000;
+    while (!(await fetch(`${freshUrl}/api/status`, { signal: AbortSignal.timeout(5000) }).then(r => r.ok, () => false))) {
+      if (Date.now() >= freshDeadline) throw new Error('Fresh FusionAuth instance did not become ready');
+      await new Promise(r => setTimeout(r, 1000));
+    }
   },
 
   beforeScreenshot: async (page, ctx) => {
     const shot = shots[ctx?.name] ?? {};
+    // fresh-instance shots skip the kickstarted instance's setup
+    if (shot.fresh) return shot.prepare?.(page, ctx, { url: ctx?.url ?? page.url(), shot }, 'prepare');
     const url = ctx?.url ?? page.url();
 
     const { pathname, hash } = new URL(url);
