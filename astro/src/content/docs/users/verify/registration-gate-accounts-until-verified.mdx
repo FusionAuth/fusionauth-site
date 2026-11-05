@@ -1,0 +1,187 @@
+---
+title: Gate Users Application Registration
+description: Learn how to gate users on the application level until they have been verified.
+tags: gate user registration, email verification gating, verify registration, registration gate
+---
+import CommonQuestionsGating from 'src/content/docs/users/verify/_common-questions-gating.mdx';
+import TroubleshootingGating from 'src/content/docs/users/verify/_troubleshooting-gating.mdx';
+
+## Overview
+
+As of version `1.27.0`, FusionAuth can be configured to gate users' accounts until they verify by clicking a link allowing them into an application. While users successfully authenticate, they won't be able to proceed further until they have verified their registration via email.
+
+<Aside type="note">
+Version `1.59.0` deprecated registration verification. This feature will be removed in a future version of FusionAuth.
+</Aside>
+
+### Why Do I Need This?
+
+<Aside type="note">
+Make sure you select the correct gating strategy that makes the most sense for your application. Most people will only require email verification gating.
+</Aside>
+
+Most folks will find email verification gating sufficient for their business needs (see adjacent tutorial [here](/docs/users/verify/gate-accounts-until-user-email-verified)). In this email verification workflow, we are simply checking that a user's email is real and fully owned by the user.
+
+In registration verification, the use case is slightly different. A `jared@piedpiper.com` user might have access to `Not-Hotdog` and `PiperChat`. These applications are both part of the same parent company, PiedPiper. However, PiedPiper requires separate registration verification to allow access to both `Not-Hotdog` and `PiperChat` through the same email account. This registration verification is a concrete, separate step that the user must engage in by clicking a link or entering a code (sent via email).
+
+Without this verification step, users may find it alarming their logins (`jared@piedpiper.com`) work for both `Not-Hotdog` and `PiperChat` (without their express consent, especially if they did not know about the parent company relationship). Furthermore, this user, `jared@piedpiper`, by completing verification, is proving they own the email address used to register for both applications.
+
+![Piper Web](/img/docs/lifecycle/manage-users/verification/application-registration-piedpiper.png)
+
+## Prerequisites
+
+<PlanBlurb plan="starter" />
+
+This tutorial assumes you are running FusionAuth version 1.27.0 or greater. If you aren't, head on over to the [installation guide](/docs/get-started/install) or the [update guide](/docs/update) to move to a version with support for this feature.
+
+This tutorial also assumes you have a paid plan and a valid license. If you need to buy a plan, please visit the [pricing page](/pricing). If you need to activate your instance, please visit the [Reactor page](/docs/concepts/plans-and-limits/licensing).
+
+### Gating vs Verification
+
+<Aside type="note">
+Email Verification and Application Registration Verification are not premium features, however, gating is. Gating stops the user from receiving a JWT or essentially authenticating any further. FusionAuth is enforcing a "gate" around a user until they verify their email/phone.
+</Aside>
+
+FusionAuth ships with registration verification and email verification flows. These verification flows toggle an attribute (`verified`) on a user object and on a registration array (for a user). As a developer, you have the option to gate the user (or prevent from "continuing" auth) based on these attributes when writing your application and integration code.
+
+However, with paid plan of FusionAuth, you can elect to have _FusionAuth_ "gate" your users based on these verification attributes. Gating in this sense, would prevent the user from authenticating further or obtaining a JWT and _would be enforced by the FusionAuth User Interface_.
+
+### To Enable
+
+To enable registration verification gating, do the following:
+
+- Configure the tenant with your email server.
+- Configure the application to enable registration gating.
+- Optionally customize the registration verification template. FusionAuth ships with a default template.
+- Enable self-service registration.
+- Configure your application with a redirect URL.
+
+Let's step through each of these, but first, there are some required prerequisites.
+
+## Configure the Tenant Email Server
+
+Log in to the FusionAuth Admin UI. You could do all of this configuration with the API or kickstart, but for this tutorial, you'll use the UI.
+
+Navigate to <Breadcrumb>Tenants -> Your Tenant</Breadcrumb> and then select the <Breadcrumb>Email</Breadcrumb> tab. Scroll to the <Breadcrumb>SMTP settings</Breadcrumb> section. Configure this with your SMTP server information. If you are testing locally, you can use a mock email server like [mailcatcher](https://mailcatcher.me/).
+
+<Screenshot id="tenant-smtp-settings" url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#email" alt="Tenant Configuration - SMTP settings" />
+
+Ensure a test email is delivered. If you have any issues, follow the steps in the [email troubleshooting documentation](/docs/deploy/troubleshoot/troubleshooting#troubleshooting-email).
+
+Save the configuration.
+
+## Enable Registration Verification Gating
+
+Navigate to <Breadcrumb>Applications -> Your Application</Breadcrumb> and then select the <Breadcrumb>Registration</Breadcrumb> tab. Scroll to the <Breadcrumb>Registration verification settings</Breadcrumb> section.
+
+- Enable **Verify registrations**.
+- Choose your email template. The default template is `Registration verification`, and that will work fine for this tutorial.
+- Update the **Verification strategy**. This can be either `ClickableLink` or `FormField`. The former sends an email with a link to verify the user's address and intent to register for your application. The latter emails a code which the user will provide to FusionAuth. For this tutorial, use `ClickableLink`.
+- Ensure that the **Unverified behavior** value is `Gated`.
+
+After these steps, you should end up with a configuration screen that looks like this:
+
+<Screenshot id="manage-verification-application-registration-settings" url="/admin/application/edit?applicationId=00000000-0000-0000-0000-f40000000002&tenantId=00000000-0000-0000-0000-f40000000001#registration" height={1350} alt="The application Registration tab with gated registration verification." />
+
+Lastly, enable self service registration and configure the displayed and required fields as desired.
+
+<Aside type="note">
+You can create a user with an unverified registration in other ways than self service registration. However, self service registration is the simplest way to create a user without a verified registration.
+</Aside>
+
+<Screenshot id="manage-verification-application-self-service" url="/admin/application/edit?applicationId=00000000-0000-0000-0000-f40000000002&tenantId=00000000-0000-0000-0000-f40000000001#registration" crop="#screenshot-band" cropPadding={0} alt="The application Registration tab with self-service registration enabled.">
+  <Highlight selector="#selfRegistrationType-form-row" />
+</Screenshot>
+
+Make sure you save the configuration.
+
+Next, navigate to the <Breadcrumb>OAuth</Breadcrumb> tab. Enable the `Authorization Code` grant.
+
+In addition, ensure you have entered a valid URL in the **Authorized redirect URLs** field. (The value of this redirect URL doesn't matter for this tutorial. But for production use, ensure the code at that endpoint can exchange an authorization code for a token.)
+
+Save the application configuration. You'll be returned to the list of applications.
+
+Click on the <Breadcrumb>View</Breadcrumb> button of your application to see the details of your application.
+
+<Screenshot id="manage-verification-application-details" fullPage={true} url="/admin/application/" height={1700} alt="The application details dialog with the login and registration URLs highlighted.">
+  <Highlight selector="[data-hl='verification-urls']" />
+</Screenshot>
+
+Look for the **Registration URL**. It'll be something like `https://local.fusionauth.io/oauth2/register?client_id=85a03867-dccf-4882-adde-1a79aeec50df&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect`. Copy that value as you'll use it below.
+
+At the same time, find the **OAuth IdP login URL**, and copy that as well.
+
+## Customize the Registration Verification Template
+
+Navigate to <Breadcrumb>Customizations -> Email Templates</Breadcrumb>. Edit the `Registration Verification` template by clicking on the blue <Breadcrumb>Edit</Breadcrumb> button.
+
+Modify the HTML and text templates as desired and then save them. You can also localize the messages.
+
+<Screenshot id="manage-verification-registration-template" url="/admin/email/template/edit/00000000-0000-0000-0000-f40000000012" height={1400} alt="The Registration Verification email template." />
+
+## Test It Out
+
+Now, test out the functionality. Register a new account. Make sure to use a different browser or incognito mode so that the admin account you logged in with while configuring FusionAuth doesn't interfere with new user registration.
+
+Visit the registration URL copied above. You'll be prompted to register. Fill out the form with a valid email address. After registration is complete, you'll receive an email prompting you to verify the registration.
+
+Here is the email in the mailcatcher user interface:
+
+![Verification registration in mailcatcher](/img/docs/lifecycle/manage-users/verification/verification-registration-email-mailcatcher.png)
+
+This user account will be gated and unable to completely log in if you have not verified the registration through email. In your browser where you registered, you'll see a page similar to below:
+
+<Screenshot id="manage-verification-registration-gate-link" url="/oauth2/authorize?client_id=00000000-0000-0000-0000-f40000000002&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid" height={600} alt="The registration verification gate page for the clickable link strategy." />
+
+To test the gating, open a different browser (not a window, but an entirely different browser) and visit the login URL copied above. Enter the email and password for the user you just registered.
+
+You'll be sent to the same registration verification gate page.
+
+No matter which API or hosted login page you use, no JWT will be issued until the user registration has been verified. The user will continue to see the verification prompt when they log in until then.
+
+If an API is being used to authenticate the user, the API will return a status code indicating registration verification has not yet occurred. Please see the [Login API](/docs/apis/login) for more details.
+
+If you view the user in the Admin UI and click on the <Breadcrumb>source</Breadcrumb> tab you should see the following attributes on the user.
+
+<Screenshot id="manage-verification-registration-unverified-user" fullPage={true} url="/admin/user/manage/00000000-0000-0000-0000-f40000000043#raw-user" width={1600} alt="The user Source tab with the unverified registration highlighted.">
+  <Highlight selector="[data-hl='registration-verified']" />
+</Screenshot>
+
+Once you have verified the email address by clicking on the link, you can now log in and will be sent to the configured redirect URL.
+
+## The User Object
+
+The user object changes before, during, and after the registration verification occurs. Let's look at the JSON.
+
+If a user is created and registration verification is disabled, the verified attribute of the registration object will be true. This is because FusionAuth treats all users as having verified registration (via email) when registration verification is disabled.
+
+<JSON title="Registrations Array Showing Verification Set To true/off JSON" src="registration-gate/user-registration-verification-turned-off-initially.json" />
+
+If a user is created and registration verification is enabled, the verified attribute of the registration object will be false.
+
+<JSON title="Registrations Array Showing Verification Set To false/on JSON" src="registration-gate/user-registration-verification-turned-on-initially.json" />
+
+Naturally, this attribute will be `true` once the user verifies their application registration.
+
+<Aside type="note">
+Users imported through the Import API will have whatever attributes are initially imported regardless of verification or gate settings.
+</Aside>
+
+
+## Common Questions
+
+<CommonQuestionsGating />
+
+## Troubleshooting Email and Registration Verification
+
+<TroubleshootingGating />
+
+## Next Steps
+
+Now that you've successfully set up gated registration verification, take the next steps to integrate this functionality into your application:
+
+- Discover how to [modify your theme](/docs/theme) to make the gate pages look like your application.
+- Learn more about [email templates](/docs/email) and how to customize them.
+- Have the user submit a passcode rather than click a link. With this option, the user will be prompted with a screen similar to the below image.
+
+<Screenshot id="manage-verification-registration-gate-code" url="/oauth2/authorize?client_id=00000000-0000-0000-0000-f40000000003&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid" height={600} alt="The registration verification gate page for the form field strategy." />

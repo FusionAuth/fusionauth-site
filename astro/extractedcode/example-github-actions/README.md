@@ -5,7 +5,7 @@
 
 This sample application demonstrates how to use a GitHub Action to run Playwright tests against a simple Node.js Express.js application that logs in with FusionAuth.
 
-It's part of the article available at: https://fusionauth.io/docs/get-started/run-in-the-cloud/github-actions.
+It's part of the article available at: https://fusionauth.io/docs/deploy/test/ci-workflow.
 
 ## Run the app
 

@@ -43,7 +43,7 @@ sequenceDiagram
   A-->>U: Render features per tier
 ```
 
-When a user logs in, the application forwards the authentication request to FusionAuth or another auth server. FusionAuth validates the credentials and returns a signed JWT. That JWT contains a `rollout_level` claim, which is an attribute that indicates which tier of features they should receive (for example, alpha, beta, or GA). In FusionAuth, this is done using the [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate), which takes attributes from the user and adds them to the JWT. This pattern could also be used for longer-lived groupings, such as geography or pricing tier.
+When a user logs in, the application forwards the authentication request to FusionAuth or another auth server. FusionAuth validates the credentials and returns a signed JWT. That JWT contains a `rollout_level` claim, which is an attribute that indicates which tier of features they should receive (for example, alpha, beta, or GA). In FusionAuth, this is done using the [JWT populate lambda](/docs/lambdas/tokens/jwt-populate), which takes attributes from the user and adds them to the JWT. This pattern could also be used for longer-lived groupings, such as geography or pricing tier.
 
 With the session established, the application passes the `rollout_level` to the feature management system, which evaluates the claim and returns the appropriate flag values for that user's level. The application renders the features that match, ensuring that new functionality is progressively exposed based on user attributes rather than a blanket release to all users.
 
@@ -71,13 +71,13 @@ There are several ways to control `rollout_level`:
 
 Let's look at each of these and how you'd implement them in FusionAuth.
 
-For user self-service, expose it to end users via [account self-service](/docs/lifecycle/manage-users/account-management/). `rollout_level` is just one more form field the user can adjust. You ask them what level of feature rollout they prefer. You can use FusionAuth's self-service account pages, or build your own account pages that use the [SDKs](/docs/sdks) to set this value in FusionAuth.
+For user self-service, expose it to end users via [account self-service](/docs/users/account-management/). `rollout_level` is just one more form field the user can adjust. You ask them what level of feature rollout they prefer. You can use FusionAuth's self-service account pages, or build your own account pages that use the [SDKs](/docs/sdks) to set this value in FusionAuth.
 
 ![Adding the rollout_level form field.](/img/blogs/progressive-delivery/edit-form-field.png)
 
-Above you can see creation of the `rollout_level` field; you'd then [add it to the self-service form](/docs/lifecycle/manage-users/account-management/customizing-account-management).
+Above you can see creation of the `rollout_level` field; you'd then [add it to the self-service form](/docs/users/account-management/customizing-account-management).
 
-Alternatively, admins can set the `rollout_level` using [custom admin forms](/docs/lifecycle/manage-users/admin-forms) in the FusionAuth admin UI. They can also use the SDK if the admin dashboard is in your application.
+Alternatively, admins can set the `rollout_level` using [custom admin forms](/docs/users/admin-forms) in the FusionAuth admin UI. They can also use the SDK if the admin dashboard is in your application.
 
 ![The rollout_level form field in the admin screen.](/img/blogs/progressive-delivery/admin-screen.png)
 
@@ -146,7 +146,7 @@ function populate(jwt, user, registration, context) {
 
 The user object is available to the JWT populate lambda.
 
-Getting the `rollout_level` from a group or tenant is a bit more complex, because you need to call a FusionAuth API within the lambda ([making fetch calls from a lambda is a paid feature](/docs/extend/code/lambdas/lambda-remote-api-calls)). Here's an example that pulls from the group defined above.
+Getting the `rollout_level` from a group or tenant is a bit more complex, because you need to call a FusionAuth API within the lambda ([making fetch calls from a lambda is a paid feature](/docs/lambdas/lambda-remote-api-calls)). Here's an example that pulls from the group defined above.
 
 ```javascript
 function populate(jwt, user, registration, context) {
@@ -198,7 +198,7 @@ These tokens should expire after seconds to minutes, depending on your settings.
 
 ## Searching
 
-You can also use [FusionAuth's search capabilities](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch) to query users or gather aggregate stats. For example, you might want to know how many users in a given tenant have enabled the beta `rollout_level`.
+You can also use [FusionAuth's search capabilities](/docs/users/search/user-search-with-elasticsearch) to query users or gather aggregate stats. For example, you might want to know how many users in a given tenant have enabled the beta `rollout_level`.
 
 You can do this with this search query:
 
@@ -216,7 +216,7 @@ This will give you all the users with that `user.data` field, but you can also q
 
 Running such search can help with decision making. For instance, you might want to monitor usage patterns of the `beta` group to decide when to promote a feature to GA.
 
-Please see [the search documentation](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch) for more details.
+Please see [the search documentation](/docs/users/search/user-search-with-elasticsearch) for more details.
 
 ## Connecting to Your Feature Flagging System
 

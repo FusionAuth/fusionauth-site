@@ -1,0 +1,149 @@
+---
+title: First Time Setup
+description: Learn how to log into FusionAuth for the first time, set up an API key, create an application, and register a user.
+tags: fusionauth setup, initial setup, setup wizard, first run, admin account creation, getting started
+order: 2
+---
+
+These configuration steps are common to almost all FusionAuth installations. Take these steps to avoid being inadvertently locked out of your FusionAuth server.
+
+## Access FusionAuth App
+
+You will need to access FusionAuth in your web browser. If you have installed FusionAuth on your own system, you will need to know the IP address or hostname of the system where it has been installed, often [http://localhost:9011](http://localhost:9011).
+
+Once you have a web browser open to FusionAuth you will be presented with a setup wizard that will walk you through getting FusionAuth configured and ready to begin calling the API and managing users. If you instead are being prompted by the FusionAuth Maintenance Mode, please complete that setup first and then return to this step. See the <Breadcrumb>Maintenance Mode</Breadcrumb> section in the [FusionAuth App Installation Guide](/docs/deploy/production/install/fusionauth-app).
+
+Once the setup wizard is complete you will be logged into FusionAuth using the created Administrator account.
+
+## Complete the Setup Wizard
+
+<Screenshot id="first-time-setup-wizard" url="http://127.0.0.1:9012/admin/setup-wizard" fullPage={true} alt="The Setup Wizard with the admin user details filled in." />
+
+## Configure An Email Server
+
+Email is used for many purposes in FusionAuth, including to verify user email addresses and for passwordless authentication. However, one of the most important functions is to allow for forgotten passwords.
+
+<Screenshot id="first-time-setup-email" url="http://127.0.0.1:9012/admin/first-time-setup?step=email" height={1050} alt="The email server step of First Time Setup." />
+
+[Full instructions on how to configure your email server settings.](/docs/email/configure-email)
+
+If you lose your password, you can reset it using the <Breadcrumb>Forgot Password</Breadcrumb> link on the login screen.
+
+## Add a Second Admin User
+
+Create a second user with the admin role. This user can provide access should your initially created admin user lose access for any reason.
+
+* Log in to the Admin UI.
+* Navigate to <Breadcrumb>Users</Breadcrumb>.
+* Add a user with a known, valid email address and secure password within your organization.
+* Register that user with the FusionAuth application and the `admin` role.
+
+## Activate License Key
+
+Activating the license key will allow access to all of the paid features inside FusionAuth. The key is found in your [account portal](https://account.fusionauth.io/account/plan/) and is activated in the <Breadcrumb>Reactor</Breadcrumb> tab. 
+
+<Screenshot id="first-time-setup-license" url="http://127.0.0.1:9012/admin/first-time-setup?step=license" height={900} alt="The license step of First Time Setup." />
+
+Production keys must be used for any FusionAuth instance that customers will be logging into, that is how we track MAUs.
+
+Non-production keys may be used for any other instances such as your developers' laptops, QA, or UAT. 
+
+* Log in to the Admin UI.
+* Navigate to  <Breadcrumb>Plan</Breadcrumb> and copy the appropriate key.
+* Access the FusionAuth instance and navigate to the <Breadcrumb>Reactor</Breadcrumb>.
+* Paste that key into the **License Key** field and Activate it.
+
+[Full instructions on how to activate your license](/docs/concepts/plans-and-limits/licensing).
+
+## Set Up an API Key
+
+Create an API key you can use to manage FusionAuth in an emergency. If you lose access to the Admin UI, you can use this API key to retain access to your FusionAuth instance by adding a new `admin` user.
+
+* Log in to the Admin UI.
+* Navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb>.
+* Add an API Key with no limitations. This will make it a super user key with no limitations.
+* Note the key value, and store it someplace safe.
+
+<Screenshot id="first-time-setup-api-key" url="http://127.0.0.1:9012/admin/first-time-setup?step=apiKey" height={900} alt="The API key step of First Time Setup." />
+
+<Aside type="caution">
+A key with no limitations can call every API. On a production instance, keep this key in a secrets vault and use it only in an emergency. For day-to-day use, create keys with only the endpoints they need, as described in [Restrict API Keys](/docs/deploy/harden/harden-a-production-instance#restrict-api-keys).
+</Aside>
+
+## Create an Application
+
+An application represents an app that users log into, such as the app you're building. Create one application for each app that uses FusionAuth for login.
+
+<Steps>
+
+1. Click <Breadcrumb>Applications</Breadcrumb> in the navigation menu.
+
+   <Screenshot id="first-time-setup-dashboard" url="/admin/" height={1100} alt="Dashboard to Applications">
+     <Highlight selector="[data-hl='applications-nav']" />
+   </Screenshot>
+
+1. Click the **Add** button at the top of the page.
+
+   <Screenshot id="first-time-setup-application-listing" url="/admin/application/" alt="Application Listing">
+     <Highlight selector="main a[href$='add']" />
+   </Screenshot>
+
+1. Enter a **Name** for the application. FusionAuth only uses the name for display.
+
+1. Click the <Breadcrumb>OAuth</Breadcrumb> tab and set the following fields. The example values assume an app that runs at `http://localhost:3000`.
+
+   <Screenshot id="first-time-setup-application-form" url="/admin/application/edit?applicationId=f1a3c5e7-9b2d-4f6a-8c0e-3b5d7f9a1c37&tenantId=30663132-6464-6665-3032-326466613934#oauth" alt="Application Form">
+     <Highlight selector="#redirectURLs-form-row" />
+     <Highlight selector="#application_oauthConfiguration_logoutURL-form-row" />
+     <Highlight selector="#enabled-grants-form-row" />
+     <Highlight selector="#application_oauthConfiguration_requireRegistration-form-row" />
+   </Screenshot>
+
+   * **Authorized redirect URLs**: the route in your app that completes the login, such as `http://localhost:3000/oauth-redirect`. After you type or paste a value, click the popup that appears, or FusionAuth doesn't save the value.
+   * **Logout URL**: where FusionAuth sends the browser after logout, such as `http://localhost:3000/logout`.
+   * **Enabled grants**: select **Authorization Code**.
+   * **Require registration**: enable, so only users registered to the application can log in.
+
+1. Click the **Save** button at the top of the page.
+
+1. Next to the application name, click **Select** and then **View**. In the <Breadcrumb>OAuth Configuration</Breadcrumb> section, copy the **Client Id** and **Client Secret**. Your app needs both values.
+
+   <Screenshot id="first-time-setup-application-details" url="/admin/application/" height={1100} alt="Application Details">
+     <Highlight selector="[data-hl='client-credentials']" />
+   </Screenshot>
+
+</Steps>
+
+For every application setting, see [Applications](/docs/concepts/types/applications).
+
+## Register a User
+
+A registration connects a user to an application. With **Require registration** enabled, a user can only log into the application after you add a registration. To try a login, register the admin user you created in the Setup Wizard.
+
+<Steps>
+
+1. Click <Breadcrumb>Users</Breadcrumb> in the navigation menu, then click the <Breadcrumb>Manage</Breadcrumb> button next to the user.
+
+   <Screenshot id="first-time-setup-user-search" url="/admin/user/" alt="User Search">
+     <Highlight selector="[data-hl='manage-user']" />
+   </Screenshot>
+
+1. Click <Breadcrumb>Add Registration</Breadcrumb>. If you have more than one application, select the application you created.
+
+   <Screenshot id="first-time-setup-registration-add" url="/admin/user/manage/00000000-0000-0000-0000-100000000004?tenantId=30663132-6464-6665-3032-326466613934" alt="Registration Add Form" />
+
+1. Click the **Save** button at the top of the page.
+
+</Steps>
+
+You don't need to register every user by hand. With [self-service registration](/docs/users/register/basic-registration-forms), FusionAuth adds a registration when a user signs up.
+
+## Prepare for Production
+
+Before customers log in to this instance, see [Harden a Production Instance](/docs/deploy/harden/harden-a-production-instance). It covers the settings to change from their development-friendly defaults, such as restricting the API Key you created above.
+
+## Next Steps
+
+<CardGrid>
+  <Card href="/docs/get-started/what-to-do-next" title="What to Do Next" description="Find the guide for your next task."/>
+</CardGrid>

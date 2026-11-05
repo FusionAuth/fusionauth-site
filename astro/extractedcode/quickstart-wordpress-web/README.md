@@ -5,10 +5,10 @@
 
 This repo holds an example WordPress application that uses FusionAuth as the identity provider.
 
-This repository is documented at https://fusionauth.io/docs/get-started/quickstarts/web/quickstart-wordpress-web.
+This repository is documented at https://fusionauth.io/docs/quickstarts/web/quickstart-wordpress-web.
 
 Further reading:
-- [FusionAuth OAuth Docs](https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints)
+- [FusionAuth OAuth Docs](https://fusionauth.io/docs/apis/oauth/authorize)
 
 ## Project Contents
 
@@ -51,4 +51,4 @@ cd complete-application
 
 Browse to [http://localhost:3000](http://localhost:3000) and log in with `richard@example.com` and `password`.
 
-Follow the tutorial at https://fusionauth.io/docs/get-started/quickstarts/web/quickstart-wordpress-web to learn how to configure WordPress to work with FusionAuth.
+Follow the tutorial at https://fusionauth.io/docs/quickstarts/web/quickstart-wordpress-web to learn how to configure WordPress to work with FusionAuth.

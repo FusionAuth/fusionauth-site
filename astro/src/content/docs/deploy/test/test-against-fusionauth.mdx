@@ -1,0 +1,96 @@
+---
+title: Test Against FusionAuth
+description: Learn how to run end-to-end tests against a real FusionAuth instance, reset the instance between runs, and run the same tests in CI.
+tags: testing, end-to-end tests, playwright, ci/cd, github actions, kickstart, reset fusionauth, test environment
+order: 1
+---
+
+You can download FusionAuth and run an instance next to your tests. Your tests log real users in through the real login pages, with no mocks. When a test run changes data, you reset the instance to a known state.
+
+The examples on this page come from the [example app](https://github.com/FusionAuth/fusionauth-example-get-started), a Node.js and Express app with [Playwright](https://playwright.dev/) tests. The app uses [Kickstart](/docs/get-started/develop/kickstart) to create its users, roles, and application on startup.
+
+## Write an End-to-End Test
+
+The simplest test confirms that FusionAuth is running. The test requests the Admin UI and checks the title of the login page:
+
+<ExtractedCode src="example-get-started/example.spec.snippet.fa-has-title.ts" lang="typescript" />
+
+A complete login test drives the browser through the same steps as a user:
+
+<ExtractedCode src="example-get-started/example.spec.snippet.log-in.ts" lang="typescript" />
+
+The login test does the following:
+
+* Opens the app homepage and clicks the login button.
+* Checks that the browser lands on the FusionAuth login page.
+* Fills in the credentials for a test user and submits the form.
+* Checks that the browser returns to the app with the user logged in.
+
+## Reset FusionAuth Between Runs
+
+Tests that create or delete users change the state of the instance. To start the next run from a clean state, delete the database and restart FusionAuth. On startup, FusionAuth runs your Kickstart file again.
+
+<Tabs>
+  <TabItem label="Docker">
+
+The `-v` flag removes the database volume:
+
+```shell-session
+docker compose down -v
+```
+
+```shell-session
+docker compose up
+```
+
+  </TabItem>
+  <TabItem label="ZIP or Package">
+
+Stop FusionAuth, drop the database, and start FusionAuth again. The exact commands depend on your platform and database:
+
+```shell-session
+bin/shutdown.sh
+```
+
+```shell-session
+psql -U postgres -c 'drop database fusionauth;'
+```
+
+```shell-session
+bin/startup.sh
+```
+
+  </TabItem>
+</Tabs>
+
+## Run the Tests in CI
+
+The [FusionAuth GitHub Action](/docs/deploy/test/github-actions) starts an instance inside a GitHub Actions workflow. The following step starts FusionAuth with a Kickstart file from the `kickstart` directory:
+
+```yaml
+- name: Start FusionAuth
+  uses: fusionauth/fusionauth-github-action@v1
+  with:
+    FUSIONAUTH_VERSION: latest
+    FUSIONAUTH_APP_KICKSTART_DIRECTORY_PATH: kickstart
+```
+
+Later steps install dependencies, start the app, and run Playwright:
+
+```yaml
+- name: Install npm dependencies
+  run: |
+    npm install
+    npx playwright install-deps
+    npx playwright install
+
+- name: Start app
+  run: npm run dev &
+
+- name: Run Playwright tests
+  run: npx playwright test --project=chromium
+```
+
+Each CI run starts a new instance, so CI runs don't need a reset step. Other CI systems need the same steps: start FusionAuth with Kickstart, start the app, and run the tests.
+
+For a complete workflow that also covers updating FusionAuth and deploying your app, see [Test and Deploy with GitHub Actions](/docs/deploy/test/ci-workflow).

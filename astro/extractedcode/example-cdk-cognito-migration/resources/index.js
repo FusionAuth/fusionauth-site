@@ -17,7 +17,7 @@ function processOneAttribute(attributes, name) {
 
 function processUserJSON(json) {
     // map the json returned by cognito to FusionAuth compatible json
-    // see https://fusionauth.io/docs/lifecycle/migrate-users/connectors/generic-connector for more
+    // see https://fusionauth.io/docs/users/provision/connectors/generic-connector for more
     // example Cognito JSON: {"Username":"06744664-df6e-48cc-9421-3d56a9732172","UserAttributes":[{"Name":"sub","Value":"06744664-df6e-48cc-9421-3d56a9732172"},{"Name":"website","Value":"http://example.com"},{"Name":"given_name","Value":"Test"},{"Name":"middle_name","Value":"T"},{"Name":"family_name","Value":"Testerson"},{"Name":"email","Value":"test@example.com"}],"testValue":"foo"}
     // console.log(json)
 

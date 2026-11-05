@@ -89,7 +89,7 @@ def make_api_path(type)
   base = "apis/"
 
   if is_event(type)
-    base = "extend/events-and-webhooks/events/"
+    base = "events/reference/"
     # convert audit-log-create-event to audit-log-create
     type = type.gsub("-event","")
 

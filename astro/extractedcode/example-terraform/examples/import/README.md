@@ -7,4 +7,4 @@ Brings the default Tenant and the FusionAuth Application under Terraform managem
 
 The values in `main.tf` come from a new FusionAuth instance. Compare the values with the plan for your instance.
 
-See [Manage FusionAuth With Terraform](https://fusionauth.io/docs/operate/deploy/terraform#manage-the-default-resources).
+See [Manage FusionAuth With Terraform](https://fusionauth.io/docs/deploy/production/terraform#manage-the-default-resources).

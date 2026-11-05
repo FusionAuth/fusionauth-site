@@ -12,7 +12,7 @@ Docker and the ability to edit your DNS hosts.
 ## To run
 
 * Create two local aliases in your DNS: `hooli.local` and `piedpiper.local`, both resolving to `127.0.0.1`.
-* Run `docker compose up -d`. This will run FusionAuth and configure it using [Kickstart](https://fusionauth.io/docs/get-started/download-and-install/development/kickstart)
+* Run `docker compose up -d`. This will run FusionAuth and configure it using [Kickstart](https://fusionauth.io/docs/get-started/develop/kickstart)
   * Two users are created, both with the password `password. 
     * admin@example.com is an admin user that can log into the admin UI, located at http://localhost:9011.
     * richard@example.com is a user that can log into the two application you'll start below. 

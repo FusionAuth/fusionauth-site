@@ -9,4 +9,4 @@ terraform init
 terraform apply
 ```
 
-See [Manage FusionAuth With Terraform](https://fusionauth.io/docs/operate/deploy/terraform).
+See [Manage FusionAuth With Terraform](https://fusionauth.io/docs/deploy/production/terraform).

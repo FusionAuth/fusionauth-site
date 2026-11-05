@@ -1,6 +1,6 @@
 # Protected Local MCP Server
 
-Completed code for the FusionAuth tutorial: [Protecting MCP Servers With FusionAuth OAuth](https://fusionauth.io/docs/extend/examples/protecting-mcp-servers).
+Completed code for the FusionAuth tutorial: [Protecting MCP Servers With FusionAuth OAuth](https://fusionauth.io/docs/authorization/mcp-server-access).
 
 This is a fully working MCP server with FusionAuth OAuth protection. The `get_name` tool requires a valid access token with the `get_name` scope and returns the authenticated user's name.
 

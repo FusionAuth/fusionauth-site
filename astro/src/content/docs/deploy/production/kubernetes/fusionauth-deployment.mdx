@@ -1,0 +1,252 @@
+---
+title: Deploy with k8s
+description: Learn how to deploy FusionAuth in a Kubernetes Cluster.
+tags: docker, kubernetes, k8s, container, aws
+---
+import TroubleshootingRuntimeModeMismatch from 'src/content/docs/deploy/troubleshoot/_troubleshooting-runtime-modes-at-startup.mdx';
+
+Kubernetes is an extensible and open-source container-orchestration system used for automating application deployments. Some of the most notable features it provides include self-healing, auto-scaling, and automated rollouts and rollbacks.
+
+Since the Kubernetes container runtime supports [Docker](/docs/get-started/install), FusionAuth [Docker](/docs/get-started/install) containers can be deployed to any Kubernetes cluster.
+
+The following guide demonstrates how to deploy FusionAuth containers using [kubectl](https://kubernetes.io/docs/tasks/tools/), the Kubernetes command-line tool that enables you to send commands to a cluster through the [API server](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/).
+You'll need a cluster running to work through this guide.
+
+## Requirements
+
+* `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the [installation documentation that corresponds to your platform](https://kubernetes.io/docs/tasks/tools/).
+This guide uses version `1.37`.
+* `helm` - Package manager used for installing and managing Kubernetes applications. In this guide, you will be using a Helm chart to install FusionAuth on our Kubernetes cluster. For more information, see [Installing Helm](https://helm.sh/docs/intro/install/).
+This guide uses version `4.3`.
+* An available Kubernetes cluster running version `1.23` or later. If you need to set up a cluster, we have provided the below installation guides for both local development environments and the major cloud providers. Each provides step-by-step instructions intended to get you up and running as fast as possible.
+  * [Local setup using minikube](/docs/deploy/production/kubernetes/minikube)
+  * [Amazon Elastic Kubernetes Service (EKS)](/docs/deploy/production/kubernetes/eks)
+  * [Google Kubernetes Engine (GKE)](/docs/deploy/production/kubernetes/gke)
+  * [Microsoft Azure Kubernetes Service (AKS)](/docs/deploy/production/kubernetes/aks)
+
+## Adding the Helm Chart Repository
+
+To get started, the first thing to do is add the FusionAuth Helm Chart repository. This can be done with the following.
+
+<ExtractedCode src="example-kubernetes/commands/add-repo.sh" lang="shell" title="Add a chart repository" />
+
+To view the list of repositories that you have added use the following command:
+
+<ExtractedCode src="example-kubernetes/commands/list-repos.sh" lang="shell" title="List chart repositories" />
+
+```plaintext title="Output from listing chart repositories"
+NAME      	URL
+fusionauth	https://fusionauth.github.io/charts
+```
+
+To search repositories:
+
+<ExtractedCode src="example-kubernetes/commands/search-repo.sh" lang="shell" title="Search chart repositories" />
+
+```plaintext title="Output from search"
+NAME                 	CHART VERSION	APP VERSION	DESCRIPTION
+fusionauth/fusionauth	1.69.4       	1.69.4     	Helm chart for FusionAuth
+```
+
+## Helm Chart Configuration
+
+Before you install, create a `values.yaml` file that holds the chart values you want to change. Helm merges this file with the chart's defaults, so it only needs the values that differ. This guide covers the values you must set to deploy FusionAuth.
+
+To review every option and its default, save the chart's default values to a separate file:
+
+<ExtractedCode src="example-kubernetes/commands/show-values.sh" lang="shell" title="Save the chart default values" />
+
+### Replicas
+
+The **replicaCount** value indicates the number of instances of FusionAuth to run in a [ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/).
+Kubernetes will monitor the cluster to ensure that this number of instances of FusionAuth is running at all times.
+
+By default, the **replicaCount** value is set to `1` which typically works well for development and testing environments, but you will likely want to adjust this based on your system and application requirements.
+
+<ExtractedCode src="example-kubernetes/values.snippet.replicas.yaml" lang="yaml" title="Replica count example configuration" />
+
+### FusionAuth Version
+
+Each chart release sets **image.tag** to the FusionAuth version it was released with, so `helm install` installs that version. To run a different version, set **image.tag** in `values.yaml` to one of the [FusionAuth releases](https://hub.docker.com/r/fusionauth/fusionauth-app/tags). Use a specific version instead of `latest`, so every pod runs the same release.
+
+### Extra Containers
+
+You may want to inject a sidecar or ambassador container.
+This is useful if you want to, for instance, proxy requests to FusionAuth to put it at a different path or limit the IP addresses which have access to the Admin UI.
+You can do this with the `extraContainers` value.
+Containers defined here will be added to the FusionAuth pod.
+
+<ExtractedCode src="example-kubernetes/sidecar-values.yaml" lang="yaml" title="extraContainers with an nginx sidecar" />
+
+You can find [community contributed proxy configurations here](https://github.com/fusionauth/fusionauth-contrib).
+
+### Database Configuration
+
+Now, configure the database connection. Each of our FusionAuth pods will use this configuration when communicating with the database.
+
+<Aside type="note">
+FusionAuth requires an external database and, optionally an external Elasticsearch cluster.
+Setting these up is outside of the scope of this document.
+
+Consult the setup guides for instructions for AWS, GCP, and more.
+</Aside>
+
+Store the database passwords in Kubernetes Secrets rather than in `values.yaml`, so they stay out of version control and your Helm release history. Create one Secret for the password FusionAuth uses in normal operation, and one for the database superuser password FusionAuth uses to create its database:
+
+<ExtractedCode src="example-kubernetes/commands/create-db-secrets.sh" lang="shell" title="Create Secrets for the database passwords" />
+
+Then add a `database` section to `values.yaml` with your database host and user names, and reference the Secrets:
+
+<ExtractedCode src="example-kubernetes/values.snippet.database.yaml" lang="yaml" title="Database configuration" />
+
+During initial setup, FusionAuth uses the `rootUser` credentials to create the `fusionauth` database and the `dbUser` user. If you'd rather set up the database yourself, follow the [advanced database installation guide](/docs/deploy/production/install/fusionauth-app#advanced-installation), then remove the `rootUser` section and its Secret.
+
+The `tlsMode: require` setting encrypts the database connection, but doesn't verify the database server's certificate. To verify it, mount your database provider's CA certificate into the pod with `extraVolumes` and `extraVolumeMounts`, and set `database.url` to a full JDBC URL that uses `sslmode=verify-full`. See **`database.url`** in the [configuration reference](/docs/deploy/production/configuration) for an example. When `database.url` is set, the chart ignores `tls` and `tlsMode`.
+
+### Search Configuration
+
+If **search.engine** is set to `elasticsearch`, add a `search` section to `values.yaml` with your search host. Use `https` if your search service supports it. If your search service doesn't require a username and password, leave out `basicAuth`:
+
+<ExtractedCode src="example-kubernetes/values.snippet.search.yaml" lang="yaml" title="Search configuration" />
+
+Store the search credentials in a Secret, like the database passwords:
+
+<ExtractedCode src="example-kubernetes/commands/create-search-secret.sh" lang="shell" title="Create a Secret for the search credentials" />
+
+### Runtime and Silent Mode
+
+Set the runtime mode to `production` and turn on [silent mode](/docs/deploy/production/install/silent-mode). In silent mode, FusionAuth creates its database on first start and applies database migrations when you update it, without waiting for someone to complete Maintenance Mode in a browser:
+
+<ExtractedCode src="example-kubernetes/values.snippet.app.yaml" lang="yaml" title="Runtime and silent mode configuration" />
+
+## Deploy FusionAuth To the Cluster
+
+Now that `values.yaml` is ready, it is time to install the chart on the cluster. The `helm install` command is used to install a chart by name and can be applied using the syntax:
+
+```shell title="Helm install format"
+helm install [CHART NAME] [CHART] [flags]
+```
+
+Here you will install a chart including the `-f` flag to override the default values.
+
+<ExtractedCode src="example-kubernetes/commands/install.sh" lang="shell" title="Install the FusionAuth chart" />
+
+<Aside type="note">
+You can override values in the `values.yaml` file that you pass when installing a chart, or with the `--set` flag on the command line.
+Using `--set` can be useful when developing scripts or command line tools. Either method is acceptable.
+</Aside>
+
+If the previous command was successful, you should see output similar to the following:
+
+```plaintext title="Example output"
+NAME: my-release
+LAST DEPLOYED: Tue Nov  3 13:26:58 2026
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+NOTES:
+1. Get the application URL by running these commands:
+  export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="{.items[0].metadata.name}")
+  echo "Visit http://127.0.0.1:9011 to use your application"
+  kubectl port-forward svc/$SVC_NAME 9011:9011
+```
+
+You can get the status of your deployment with `kubectl`.
+
+<ExtractedCode src="example-kubernetes/commands/get-deployments.sh" lang="shell" title="Get a list of deployments running on the cluster" />
+
+```plaintext title="Output"
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                       SELECTOR
+my-release-fusionauth   1/1     1            1           21s   fusionauth   docker.io/fusionauth/fusionauth-app:1.69.4   app.kubernetes.io/instance=my-release,app.kubernetes.io/name=fusionauth
+```
+
+As instructed by the success message output above, you can create a proxy enabling you to connect to the cluster from `localhost`:
+
+<ExtractedCode src="example-kubernetes/commands/port-forward.sh" lang="shell" title="Set up a port-forwarding proxy" />
+
+```plaintext title="Example output of kubectl proxying command"
+Forwarding from 127.0.0.1:9011 -> 9011
+```
+
+Navigate to `http://localhost:9011` and you will land on the FusionAuth Setup Wizard. For a complete tutorial walking you through the initial FusionAuth configuration, see [Setup Wizard & First Login](/docs/get-started/first-time-setup).
+
+![FusionAuth bootstrap](/img/docs/get-started/download-and-install/kubernetes/fa-initial-config.png)
+
+## Expose FusionAuth Through a Gateway
+
+To let users reach FusionAuth from outside the cluster, route traffic to it with the [Gateway API](https://gateway-api.sigs.k8s.io/), the Kubernetes API for bringing external traffic into a cluster. The FusionAuth chart can create the route for you.
+
+A Gateway needs a controller that implements it. This guide uses [Envoy Gateway](https://gateway.envoyproxy.io/). Most cloud providers also offer an implementation, such as the [GKE Gateway controller](https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api). To use another implementation, install it instead of Envoy Gateway and use its GatewayClass in `gateway.yaml`.
+
+### Install Envoy Gateway
+
+Install Envoy Gateway, which also installs the Gateway API resource definitions:
+
+<ExtractedCode src="example-kubernetes/commands/install-envoy-gateway.sh" lang="shell" title="Install Envoy Gateway" />
+
+Then wait until it is ready:
+
+<ExtractedCode src="example-kubernetes/commands/wait-envoy-gateway.sh" lang="shell" title="Wait for Envoy Gateway" />
+
+### Create the Gateway
+
+The Gateway terminates TLS, so it needs a certificate for your FusionAuth hostname. Store the certificate and private key in a TLS Secret, or use [cert-manager](https://cert-manager.io/) to issue and renew one:
+
+<ExtractedCode src="example-kubernetes/commands/create-tls-secret.sh" lang="shell" title="Create a TLS Secret" />
+
+Next, create a file named `gateway.yaml` with the following resources:
+
+* A `GatewayClass` that assigns Gateways of the class `eg` to Envoy Gateway.
+* A Gateway with an HTTPS listener that uses your TLS Secret, and an HTTP listener.
+* An `HTTPRoute` that redirects every HTTP request to HTTPS.
+
+<ExtractedCode src="example-kubernetes/gateway.yaml" lang="yaml" title="Gateway resource configuration" />
+
+Replace `auth.example.com` with your FusionAuth hostname, then apply the file:
+
+<ExtractedCode src="example-kubernetes/commands/apply-gateway.sh" lang="shell" title="Apply the Gateway resources" />
+
+### Route Traffic to FusionAuth
+
+Add a `gateway` section to `values.yaml`, using the same hostname. The chart then creates an HTTPRoute that sends requests from the Gateway's HTTPS listener to FusionAuth:
+
+<ExtractedCode src="example-kubernetes/values.snippet.gateway.yaml" lang="yaml" title="Gateway route configuration" />
+
+Apply the change by upgrading the release:
+
+<ExtractedCode src="example-kubernetes/commands/upgrade.sh" lang="shell" title="Upgrade the FusionAuth release" />
+
+Finally, get the Gateway's external address:
+
+<ExtractedCode src="example-kubernetes/commands/get-gateway.sh" lang="shell" title="Get the Gateway address" />
+
+```plaintext title="Example output"
+NAME                 CLASS   ADDRESS        PROGRAMMED   AGE
+fusionauth-gateway   eg      203.0.113.10   True         2m
+```
+
+Point the DNS record for your FusionAuth hostname at the address in the **ADDRESS** column. On a cloud provider, this is the address of a load balancer that Envoy Gateway created for the Gateway.
+
+<Aside type="note">
+If you have completed this tutorial using minikube, you can give the Gateway an address by creating a network route to your cluster with the command `minikube tunnel`. For documentation on this, see [Using minikube tunnel](https://minikube.sigs.k8s.io/docs/handbook/accessing/#using-minikube-tunnel).
+</Aside>
+
+Congratulations! You now have a fully functional Kubernetes environment running FusionAuth.
+
+## Troubleshooting
+
+### Runtime Mode Mismatch
+
+<TroubleshootingRuntimeModeMismatch />
+
+## Next Steps
+
+Before customers log in to this instance, see [Harden a Production Instance](/docs/deploy/harden/harden-a-production-instance) for the FusionAuth settings to change, and the [Kubernetes security documentation](https://kubernetes.io/docs/concepts/security/) to secure the cluster itself.
+
+To learn more about Kubernetes, here are a few recommended links to help you administer your cluster.
+
+* [Kubernetes Concepts](https://kubernetes.io/docs/concepts/)
+* [Configuration Best Practices](https://kubernetes.io/docs/concepts/configuration/overview/)
+* [Helm documentation](https://helm.sh/docs/)
