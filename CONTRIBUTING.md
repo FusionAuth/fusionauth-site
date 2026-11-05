@@ -38,7 +38,7 @@ Decide what kind of page you're writing, and keep the page to that job. Link to 
 * A how-to guide gets the reader through one task. Start with the goal and the prerequisites, then give the steps, then show how to confirm the result.
 * A concept page explains what a feature is and how the feature behaves. Concept pages don't contain step lists.
 * A reference page lists facts to look up, such as fields, options, or limits. Keep reference terse and complete.
-* A section overview orients the reader and links to the pages in the section. Use `<ChildCards />` for the links.
+* A section overview orients the reader and links to the pages in the section. Set `sectionIndex: true` in the overview's front matter to list the section's pages after the content. `sectionIndex` only lists pages directly in the folder, so a section whose pages all live in subfolders needs `<ChildCards depth={2} />` at the end of the body instead. Otherwise, use a `<ChildCards />` component in the body only when the list belongs mid-page.
 
 ### Put the Page Where Readers Look
 
@@ -59,11 +59,38 @@ When you move or rename a page, run `scripts/check-redirects.mjs` and add the re
 
 ## Formatting
 
-### Titles and Headings
+### Titles
 
-* Write page titles and headings in title case: `Configure the Issuer`. Titles can't end with punctuation.
-* Write the front matter `description` as one full sentence that ends with a period.
-* Start sections at `##`. The page title renders as the only `h1`.
+Each page has up to three titles, and each title serves a different reader:
+
+* `title` appears in the sidebar, breadcrumbs, and cards. The reader already sees the enclosing folders there, so keep `title` short: `Docker` inside Deploy > Production > Install, not `Install FusionAuth with Docker`.
+* `htmlTitle` is the `h1` on the page and the browser tab title. The reader may arrive from search with no sidebar context, so include the full context: `Install FusionAuth App with Docker`. The tab title adds ` | FusionAuth Docs` automatically. When you leave out `htmlTitle`, the page uses `title`.
+* `markdownTitle` is the title in the markdown version of the page and in the `llms.txt` indexes that agents read. Set `markdownTitle` only when agents need a different title than people. Otherwise `llms.txt` uses `htmlTitle`, then `title`.
+
+Write every title in title case, with no ending punctuation.
+
+### Descriptions
+
+The `description` appears in search results, card grids, and the page's meta description, so the description often decides whether a reader opens the page. Write one full sentence that ends with a period and names the task or topic in the reader's words. Start the sentence by page type:
+
+* How-to guides and tutorials: "Learn how to rotate signing keys without logging users out."
+* Concept pages and section overviews: "Learn about the login methods FusionAuth supports."
+* API reference: "API documentation for the Users API."
+
+Don't start with "An overview of" or "This page". Don't repeat the title word for word.
+
+### Tags and Related Pages
+
+The Related section at the bottom of every page comes from front matter `tags`. The section lists the four pages that share the most tags with the current page.
+
+* Write `tags` as a comma-separated list of the words a reader would search for: `tags: passkeys, webauthn, passwordless, login, mfa`. Look at the tags on similar pages and reuse their terms, so related pages find each other.
+* Never write a Related, See Also, or Further Reading section by hand. Link to a page in the text where the reader needs the page instead.
+* To make sure a page always appears in the Related section, list the page ids in `relatedPinFirst`, separated by commas: `relatedPinFirst: get-started/install`. Pinned pages show first, ahead of the tag matches.
+
+### Headings
+
+* Write headings in title case: `Configure the Issuer`.
+* Start sections at `##`, because `htmlTitle` renders as the only `h1`.
 * Don't wrap long lines by hand. Use your editor's soft wrap.
 
 ### Lists
@@ -153,11 +180,11 @@ The schema lives in `astro/src/content.config.js`. `title` and `description` are
 
 | Field | Notes |
 |---|---|
-| `htmlTitle` | Overrides the `<title>` tag. The sidebar keeps using `title`, and `llms.txt` prefers `htmlTitle`. |
-| `markdownTitle` | Overrides the `h1` in the markdown version of the page, for agents only. `llms.txt` prefers this field over the others. |
+| `htmlTitle`, `markdownTitle` | Longer titles for the page and for agents. See [Titles](#titles). |
+| `tags`, `relatedPinFirst` | Drive the Related section. See [Tags and Related Pages](#tags-and-related-pages). |
 | `order` | Sort position in the sidebar. Lower numbers sort first. The default is `1000`, and ties sort alphabetically. |
-| `route` | Set to `false` on a folder `index.mdx` that only sets the folder's sidebar title and order. The folder then has no page. |
-| `sectionIndex` | Set to `true` on an index page to render a `ChildCards` grid after the content. |
+| `route` | Set to `false` on a folder `index.mdx` that only names and orders a sidebar group. FusionAuth then builds no page for the folder, the sidebar shows the group as a plain label, and card grids and the Related section skip the page. |
+| `sectionIndex` | Set to `true` on a section overview to list the section's pages after the content. See [Give Each Page One Job](#give-each-page-one-job). |
 | `excludeFromNav` | Set to `true` to hide the page from `ChildCards` and `PageNav`. The page still builds. |
 | `icon`, `darkIcon`, `cardImage` | Images for card grids. |
 | `disableTOC` | Hides the table of contents. |
