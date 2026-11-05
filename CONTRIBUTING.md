@@ -1,6 +1,6 @@
 # Contributing to the FusionAuth Docs
 
-This guide applies to everyone who writes for this repo, people and AI agents alike. `AGENTS.md` links here. The guide covers the docs (`astro/src/content/docs`), articles (`astro/src/content/articles`), and the blog (`astro/src/content/blog`). For building, linting, and deploying, see the [README](README.md).
+This guide applies to everyone who writes docs, articles, dev tools, or blog posts for FusionAuth (agents too). For building, linting, and deploying, see the [README](README.md).
 
 ## Write for the Reader
 
@@ -17,12 +17,12 @@ Readers come to the docs to finish a task. Every rule below serves that goal.
 
 ### Avoid AI Writing Patterns
 
-Readers notice these patterns, and the patterns make a page read as generated. Don't use the following:
+Readers notice these patterns, and the patterns make a page read as generated. _Do not_ use the following:
 
-* Em dashes or en dashes. Use a comma, a period, a colon, or parentheses, or restructure the sentence.
+* Em dashes or en dashes. Use a comma, a period, a colon, or parentheses, or (preferred) restructure the sentence for simplicity and readability.
 * "It's not X, it's Y", "not just X, but Y", and other contrast setups.
 * Lists of three when one example makes the point.
-* Hype words: "seamless", "robust", "powerful", "leverage", "unlock", "empower", "game-changing", "cutting-edge".
+* Hype words: "seamless", "robust", "powerful", "leverage", "unlock", "empower", "game-changing", "cutting-edge" (like Hemingway, it's best to avoid adjectives altogether unless they _significantly_ alter the meaning of your phrase).
 * Stock phrases: "dive into", "delve", "at its core", "let's unpack", "in today's world", "whether you're X or Y", "it's worth noting", "load-bearing".
 * Openings that restate the title, and closings that summarize the page or say "Congratulations" or "Happy coding".
 * Bold or italics for emphasis. Bold marks field names only (see [UI Elements and Code](#ui-elements-and-code)).
@@ -107,9 +107,29 @@ Use asides sparingly, for information that doesn't fit the flow of the page. Cho
 
 An aside `title` can use inline markdown, such as `` title="The Docker `latest` tag is not dynamic" ``.
 
+### Diagrams
+
+Add a diagram whenever a subject takes more than a short paragraph to explain: a request flow between systems, a decision with several branches, or how objects relate to each other. Spatial ideas such as architecture and hierarchy deserve a diagram even when the prose is short. Write diagrams as [Mermaid](https://mermaid.js.org/) code blocks, not as images, so anyone can edit them:
+
+````plaintext
+```mermaid title="Request flow during login with FusionAuth."
+sequenceDiagram
+    participant App as Application
+    participant FusionAuth
+    App ->> FusionAuth : Redirect to the login page
+    FusionAuth ->> App : Redirect back with an authorization code
+```
+````
+
+* Use `sequenceDiagram` for requests and redirects between systems, and `graph` or `flowchart` for decisions, relationships, and architecture.
+* Give every diagram a `title` that describes the diagram in a full sentence.
+* Keep each diagram to one idea. Split a diagram that needs a legend to read.
+* Explain the diagram in the surrounding text, because some readers can't see the diagram.
+
 ### Images
 
 * Prefer generated screenshots. See [Screenshots](#screenshots).
+* Add a screenshot only when the screenshot shows something the text can't. Don't repeat a screenshot of the same screen on a page, even when the pipeline generates the screenshot for free. Every image adds to the page size. Describe a later state of a screen in text, or crop to the part that changed.
 * Give every image alt text that describes the content in a full sentence.
 * Place an image after the text that describes the image. On field reference pages, place the screenshot before the field list.
 * Use SVG when possible, or a minified PNG. Use WEBM instead of GIF: `ffmpeg -i demo.gif demo.webm`.
@@ -147,22 +167,23 @@ The sidebar builds itself from the folder structure. A folder's title and order 
 
 ### Components
 
-Most components are auto-imported into every MDX file, including `Aside`, `APIField`, `Breadcrumb`, `Card`, `ChildCards`, `Details`, `ExtractedCode`, `PlanBlurb`, `Steps`, `Table`, `Tabs`, and `TabItem`. The full list is `mdxComponentImports` in `astro/astro.config.ts`. A small Vite plugin, `mdxComponentImporter`, inserts those imports after the front matter.
+Common components are auto-imported into every MDX file, so don't import them. The list includes `Aside`, `APIField`, `Breadcrumb`, `Card`, `ChildCards`, `Details`, `ExtractedCode`, `PlanBlurb`, `Screenshot`, `Steps`, `Table`, `Tabs`, and `TabItem`. The full list is `mdxComponentImports` in `astro/astro.config.ts`. A small Vite plugin, `mdxComponentImporter`, inserts those imports after the front matter.
 
 * An explicit import of an auto-imported component fails the build. Remove the import.
 * If a file imports a different component under the same name, the file's import wins.
 * To auto-import another component, add the component's import line to `mdxComponentImports`.
 
-Import every other component by the full path from `src`:
+Everything else needs an explicit import after the front matter, including every [shared partial](#shared-content). Import by the full path from `src`, never a relative path:
 
 ```jsx
 import MyComponent from 'src/components/MyComponent.astro';
+import ReleaseNotification from 'src/content/docs/_shared/_release-notification.mdx';
 ```
 
 ### Shared Content
 
 * Name shared files with a leading underscore and dashes: `_login-api-integration.mdx`. Put content shared across sections in `astro/src/content/docs/_shared`.
-* Import a partial like a component, and pass values as props: `<AccountPortalCore topic="passkeys" />`. In an MDX partial, read props as `{props.topic}`.
+* Import each partial explicitly, because partials aren't auto-imported. Then use the partial like a component, and pass values as props: `<ReleaseNotification topic="passkeys" />`. In an MDX partial, read props as `{props.topic}`.
 * Inside a JavaScript expression, use HTML instead of markdown: `{props.show && <>See <a href="/docs/apis">the APIs</a>.</>}`. Coerce values to booleans for conditions: `{!!props.message && <span>{props.message}</span>}`.
 * Reference JSON examples with the [JSON component](astro/src/components/JSON.astro).
 
