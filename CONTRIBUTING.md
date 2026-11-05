@@ -115,6 +115,7 @@ To make a smoothie:
 * Navigation paths, tabs, buttons, menu items, and other non-field UI elements use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component: `<Breadcrumb>Settings -> API Keys</Breadcrumb>`, `Click <Breadcrumb>Submit</Breadcrumb>.`
 * Literal keys in code, files, and requests use **`bold monospace`**: ``Set **`baseUrl`** to `localhost:9011`.``
 * Filenames, paths, commands, and code values use `monospace`.
+* FusionAuth version numbers use `monospace`: ``Available in FusionAuth `1.63.0` and later.``
 * Introduce a code block with a sentence that ends in a colon or a period.
 
 ### Links
