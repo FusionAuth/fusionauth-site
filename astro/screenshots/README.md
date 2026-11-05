@@ -2,6 +2,23 @@
 
 This directory contains a self-contained Docker Compose setup that runs a local FusionAuth instance seeded with realistic demo data for taking documentation screenshots.
 
+## Setup
+
+Install the screenshot dependencies once. They're separate from the main `astro/` dependencies:
+
+```sh
+cd astro/screenshots
+npm install
+```
+
+The passkey screenshots need a FusionAuth license. Add your key to `astro/.env`, which git ignores:
+
+```sh
+FUSIONAUTH_LICENSE_KEY=<your license key>
+```
+
+Without a license, the passkey screenshots fail or lose their licensed settings, so don't commit them.
+
 ## Quick start
 
 Make sure Docker is running, then from `fusionauth-site/astro/`:
@@ -23,6 +40,33 @@ To check whether screenshots have drifted from the committed references (CI use)
 ```sh
 npm run check-screenshots
 ```
+
+## Add a screenshot to a page
+
+Place the `Screenshot` component where the image belongs. The `url` is a path on the local instance at `http://localhost:9011`. The filename comes from the URL and any highlights, and `id` overrides it:
+
+```jsx
+<Screenshot url="/admin/group/" alt="The FusionAuth groups list." />
+```
+
+To outline an element, nest a `Highlight` with a CSS `selector`. The optional `label` adds a badge above the outline. The default color is `#f60`. Override `color` only when the default doesn't work:
+
+```jsx
+<Screenshot url="/admin/user/manage/00000000-0000-0000-0000-100000000003" alt="The user registration form." fullPage={true}>
+  <Highlight selector="[name*='preferredLanguages']" label="Languages" />
+</Screenshot>
+```
+
+| Prop | Default | Description |
+|---|---|---|
+| `url` | required | Path on the FusionAuth instance, or a full URL for a [fresh-instance screenshot](#fresh-instance-screenshots) |
+| `id` | derived | Output filename, without `.png` |
+| `alt` | filename | Alt text for the image |
+| `width` | `1100` | Viewport width in px |
+| `height` | `800` | Viewport height in px |
+| `fullPage` | `false` | Capture the full scrollable height. Write `fullPage={true}`, because the capture tool ignores a bare `fullPage` |
+| `crop` | none | CSS selector for the part of the page to keep, such as `main header:has(h1), #tenant_name`. Covers every match and any highlights |
+| `cropPadding` | `16` | Space in px kept around the cropped area |
 
 ## Login credentials
 
