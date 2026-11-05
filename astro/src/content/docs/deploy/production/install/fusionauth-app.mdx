@@ -1,19 +1,73 @@
 ---
 title: Install FusionAuth App
-description: Learn how to install the FusionAuth App bundle.
+description: Learn how to install FusionAuth App on a production server with Docker or from a package.
 tags: install fusionauth, download fusionauth, fusionauth package, rpm, deb, zip install, linux install
 order: 3
 ---
 import FastPathInstall from 'src/content/docs/get-started/_fast-path-install.mdx';
 import TroubleshootingRuntimeModesAtStartup from 'src/content/docs/deploy/troubleshoot/_troubleshooting-runtime-modes-at-startup.mdx';
 
-This guide explains how to install the FusionAuth App from a package on your own server running Linux, macOS, or Windows.
+This guide explains how to install FusionAuth App on your own servers, either as a Docker container or from a package on Linux, macOS, or Windows. To run FusionAuth on your own machine for development, see [Install Locally](/docs/get-started/install) instead.
 
 Before you can run FusionAuth, you must also [install a database](/docs/deploy/production/install/database).
 
 By default, FusionAuth uses the database as the User search engine. To access advanced search functions, [install a search engine](/docs/deploy/production/install/search).
 
 <Tabs>
+  <TabItem label="Docker">
+
+The `fusionauth/fusionauth-app` image runs FusionAuth App. In production, the container connects to a database and search engine that you run separately, and you configure the container with [environment variables](/docs/deploy/production/configuration). Each configuration option maps to an environment variable: upper-case the option name and replace periods and dashes with underscores. For example, `database.url` becomes `DATABASE_URL`.
+
+<Steps>
+
+1. Pick a version. Use a specific version tag, such as `fusionauth/fusionauth-app:1.70.1`, and never `latest`. A pinned tag means every node runs the same version, and an update only happens when you change the tag. To find the current version, see the [release notes](/docs/release-notes).
+
+1. Create a file named `fusionauth.env` with the database connection, the runtime mode, and the search engine:
+
+   ```properties title="fusionauth.env"
+   DATABASE_URL=jdbc:postgresql://db.example.com:5432/fusionauth
+   DATABASE_USERNAME=fusionauth
+   DATABASE_PASSWORD=ordinary-user-password
+   DATABASE_ROOT_USERNAME=postgres
+   DATABASE_ROOT_PASSWORD=super-user-password
+   FUSIONAUTH_APP_RUNTIME_MODE=production
+   FUSIONAUTH_APP_MEMORY=1G
+   SEARCH_TYPE=elasticsearch
+   SEARCH_SERVERS=http://search.example.com:9200
+   ```
+
+   With the root credentials, [silent mode](/docs/deploy/production/install/silent-mode) creates the FusionAuth database, the ordinary user, and the schema on the first start. If your database provider doesn't give you a superuser, such as on many managed databases, create the database and user yourself. Then leave out the two `DATABASE_ROOT_` lines and add `FUSIONAUTH_APP_SILENT_MODE=true`.
+
+   To use the database for user search instead of a search engine, set `SEARCH_TYPE=database` and leave out `SEARCH_SERVERS`.
+
+   Keep this file out of version control. In an orchestrator such as Kubernetes or ECS, pass the same values from the platform's secret store instead.
+
+1. Start the container:
+
+   ```shell-session
+   docker run -d --name fusionauth \
+     --env-file fusionauth.env \
+     --restart unless-stopped \
+     -p 9011:9011 \
+     -v fusionauth_config:/usr/local/fusionauth/config \
+     fusionauth/fusionauth-app:1.70.1
+   ```
+
+   The `fusionauth_config` volume keeps the generated configuration across container restarts.
+
+1. Check that FusionAuth is ready. The status endpoint returns `200` once FusionAuth can serve requests:
+
+   ```shell-session
+   curl -s -o /dev/null -w "%{http_code}" http://localhost:9011/api/status
+   ```
+
+1. Open `http://<your-server>:9011/admin` and complete the [Setup Wizard](/docs/get-started/first-time-setup).
+
+</Steps>
+
+Before customers log in, put FusionAuth behind a [reverse proxy](/docs/deploy/production/proxy-setup) that terminates TLS, and work through [Harden a Production Instance](/docs/deploy/harden/harden-a-production-instance). To run more than one node, see [Cluster](/docs/deploy/production/cluster). To run the same configuration with Docker Compose, add a custom image, or load plugins, see [Customize Docker Images](/docs/deploy/production/install/docker-configuration). To run FusionAuth on Kubernetes, see [Kubernetes](/docs/deploy/production/kubernetes).
+
+  </TabItem>
   <TabItem label="Fast Path">
 
 <FastPathInstall />
