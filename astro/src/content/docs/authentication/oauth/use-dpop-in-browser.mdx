@@ -1,0 +1,93 @@
+---
+title: Use DPoP In A Browser App
+description: Learn how to bind tokens to the browser with DPoP using the FusionAuth React, Angular, or Vue SDK.
+tags: dpop, proof of possession, sender-constrained tokens, spa, single page application, react, angular, vue, javascript sdk, cors
+relatedPinFirst: authentication/oauth/dpop, authentication/oauth/validate-dpop
+---
+
+<PlanBlurb plan="enterprise" />
+
+<AvailableSince since="1.63.0"/>
+
+The FusionAuth JavaScript SDKs can bind access and refresh tokens to a key pair that the SDK generates in the browser. In DPoP mode, the SDK calls FusionAuth directly instead of a hosted backend. The SDK signs a proof for every request to FusionAuth and to your API. For background, see [Demonstrating Proof-of-Possession (DPoP)](/docs/authentication/oauth/dpop).
+
+Before you start, you need:
+
+* An Enterprise license on FusionAuth 1.63.0 or later.
+* A browser app that logs in with the [React](/docs/sdks/react-sdk) SDK 2.7.0 or later, the [Angular](/docs/sdks/angular-sdk) SDK 2.1.0 or later, or the [Vue](/docs/sdks/vue-sdk) SDK 1.4.0 or later.
+
+## Allow DPoP Requests From Your App
+
+In DPoP mode, the browser sends token requests straight to FusionAuth, with a **DPoP** header. Configure CORS so FusionAuth accepts those requests from your app's origin:
+
+<Steps>
+1. In the Admin UI, navigate to <Breadcrumb>Settings -> System -> CORS</Breadcrumb>.
+1. Enable **Enable CORS**.
+1. In **Allowed headers**, add `dpop`. The default list already includes `Authorization` and `Accept`. Keep both headers in the list.
+1. In **Allowed origins**, add the origin of your app, such as `http://localhost:3000`.
+1. Click <IconButton icon="save" />.
+</Steps>
+
+CORS settings apply to every Tenant and Application in the instance. For every CORS field, see the [CORS Reference](/docs/security/clients/cors). To make the same change with the API, add `dpop` to **`systemConfiguration.corsConfiguration.allowedHeaders`** with the [Update The System Configuration API](/docs/apis/system/update-the-system-configuration).
+
+## Turn On DPoP Mode
+
+Set `useDpop` to `true` in the SDK configuration. The following example shows the React SDK:
+
+```javascript {7}
+const config: FusionAuthProviderConfig = {
+  clientId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
+  redirectUri: 'http://localhost:3000',
+  serverUrl: 'http://localhost:9011',
+  scope: 'openid email profile offline_access',
+  shouldAutoRefresh: true,
+  useDpop: true,
+};
+```
+
+The SDK generates the key pair, signs proofs for the token and refresh requests, and stores the tokens. Set `dpopTokenStorage` to choose where the SDK stores tokens. `localStorage`, the default, keeps the user logged in across page reloads. `memory` clears the tokens on reload. The Angular and Vue SDKs use the same options. See the DPoP Mode section of each SDK page for the exact syntax.
+
+## Call Your API
+
+Use `dpopFetch` to call your API. `dpopFetch` adds the access token and a new proof to each request:
+
+```javascript
+const { dpopFetch } = useFusionAuth();
+
+const response = await dpopFetch('https://api.example.com/data', { method: 'GET' });
+```
+
+For an HTTP library such as axios, call `generateProof` and `getAccessToken`, then set the **Authorization** and **DPoP** headers yourself:
+
+```javascript
+const { generateProof, getAccessToken } = useFusionAuth();
+
+const accessToken = getAccessToken();
+const proof = await generateProof('https://api.example.com/data', 'GET', accessToken);
+await axios.get('https://api.example.com/data', {
+  headers: { Authorization: `DPoP ${accessToken}`, DPoP: proof },
+});
+```
+
+Pass the exact URL and method of the request to `generateProof`. Your API rejects a proof for a different URL or method.
+
+Your API must check each proof. See [Validate DPoP Requests In Your API](/docs/authentication/oauth/validate-dpop).
+
+## Confirm Tokens Are Bound
+
+To confirm that FusionAuth bound the tokens:
+
+<Steps>
+1. Open your browser's developer tools and log in to your app.
+1. Find the `POST` request to `/oauth2/token`. The request includes a **DPoP** header.
+1. In the response, check that **`token_type`** is `DPoP`.
+1. Decode the **`access_token`** and check for a **`cnf`** claim with a **`jkt`** value.
+</Steps>
+
+## Troubleshooting
+
+When login fails after you turn on DPoP mode, check the browser console and the token response:
+
+* A CORS error on `/oauth2/token` means the **DPoP** header or your app's origin is missing from the CORS configuration.
+* A `not_licensed` error means the instance doesn't have an active Enterprise license.
+* An `invalid_dpop_proof` error means FusionAuth rejected the proof. Check that `serverUrl` matches the URL FusionAuth sees for the request. Behind a proxy, FusionAuth needs the `X-Forwarded-*` headers to build that URL. See [Proxy Setup](/docs/deploy/production/proxy-setup). Also check that the clock on the user's device is within 15 seconds of the FusionAuth server clock.
