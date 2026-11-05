@@ -1,0 +1,61 @@
+---
+title: High Availability
+htmlTitle: FusionAuth Cloud High Availability Architecture
+description: Learn about the architecture of FusionAuth Cloud High Availability deployments and the failures the architecture survives.
+tags: fusionauth cloud, high availability, ha, availability zones, redundancy, failover, cloud resilience, disaster recovery
+order: 400
+---
+
+A High Availability (HA) deployment runs in a single region across three availability zones. Each availability zone runs on separate infrastructure. When one availability zone fails, the other two availability zones continue to serve traffic. To choose HA for a new deployment, see [Create a Deployment](/docs/cloud/create-a-deployment#configure-a-deployment).
+
+## HA Architecture Diagram
+
+The following diagram shows the components of an HA deployment. A global anycast edge network receives each request and passes the request to a traffic router. The traffic router forwards the request to the load balancer. The load balancer spreads traffic across three FusionAuth nodes, one in each availability zone. The primary database runs in one availability zone and replicates to a secondary database in another availability zone. Each availability zone also runs a search node.
+
+```mermaid title="An HA deployment spreads FusionAuth nodes, databases, and search nodes across three availability zones in one region."
+flowchart LR
+  edge[Global anycast edge network] --> router[Traffic router]
+  router --> lb
+  subgraph region[Region]
+    lb[Load balancer]
+    subgraph azA[Availability zone A]
+      app0[FusionAuth node 0] ~~~ db0[(Primary database)] ~~~ search0[Search node 0]
+    end
+    subgraph azB[Availability zone B]
+      app1[FusionAuth node 1] ~~~ db1[(Secondary database)] ~~~ search1[Search node 1]
+    end
+    subgraph azC[Availability zone C]
+      app2[FusionAuth node 2] ~~~ search2[Search node 2]
+    end
+    lb --> app0
+    lb --> app1
+    lb --> app2
+    db0 -.->|Replication| db1
+  end
+```
+
+## Components Replicated Across Zones
+
+Each HA deployment replicates the following components across availability zones:
+
+| Component | Redundancy |
+|-----------|------------|
+| FusionAuth nodes | Three nodes, one in each availability zone. |
+| Database | A primary and a secondary database, always in different availability zones. |
+| Load balancer | A redundant load balancer with DNS failover. |
+| Backups | Stored in Amazon S3, which replicates backups across multiple availability zones. |
+| Search nodes | FusionAuth does not back up Elasticsearch or OpenSearch data. The search cluster keeps multiple copies of each record on nodes in all three availability zones. FusionAuth can rebuild the search data from the database. |
+
+## Failure Scenarios Covered by HA
+
+An HA deployment continues to serve traffic through the following failures:
+
+| Failure | Covered | Result |
+|---------|---------|--------|
+| Single server | Yes | The remaining FusionAuth nodes continue to serve traffic. |
+| Database node | Yes | The secondary database becomes the primary automatically. |
+| Single availability zone | Yes | The FusionAuth nodes and database in the other two availability zones continue to serve traffic with no downtime. |
+| Load balancer | Yes | The redundant load balancer and DNS failover continue to route traffic. |
+| Full region | No | Requires the Disaster Recovery add-on. |
+
+HA does not protect against an outage of a full region. For cross-region protection, FusionAuth offers the [Disaster Recovery](/docs/cloud/reference/disaster-recovery) add-on to Enterprise customers.
