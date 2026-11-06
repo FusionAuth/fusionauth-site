@@ -1,4 +1,4 @@
-import { Component, Inject, signal } from '@angular/core';
+import { Component, effect, Inject, signal } from '@angular/core';
 import { FusionAuthService } from '@fusionauth/angular-sdk';
 import type { UserInfo } from '@fusionauth/angular-sdk';
 import { Router } from '@angular/router';
@@ -26,18 +26,14 @@ export class Home {
     protected readonly fusionAuth: FusionAuthService,
     @Inject(Router) private readonly router: Router,
   ) {
-    if (this.fusionAuth.isLoggedIn()) {
+    effect(() => {
+      if (!this.fusionAuth.isLoggedInSignal()) return;
       void this.loadUserInfo();
-
-      if (sessionStorage.getItem('justLoggedIn') === 'true') {
-        sessionStorage.removeItem('justLoggedIn');
-        void this.router.navigateByUrl('/account');
-      }
-    }
+      void this.router.navigateByUrl('/account');
+    });
   }
 
   protected login(): void {
-    sessionStorage.setItem('justLoggedIn', 'true');
     this.fusionAuth.startLogin();
   }
 
@@ -46,10 +42,7 @@ export class Home {
   }
 
   private async loadUserInfo(): Promise<void> {
-    try {
-      this.userInfo.set(await this.fusionAuth.getUserInfo<UserInfo>());
-    } catch (error) {
-      console.error('Unable to fetch FusionAuth user info', error);
-    }
+    try { this.userInfo.set(await this.fusionAuth.getUserInfo<UserInfo>()); }
+    catch (error) { console.error('Unable to fetch FusionAuth user info', error); }
   }
 }
