@@ -29,7 +29,6 @@ export class Account {
       void this.router.navigateByUrl('/');
       return;
     }
-
     void this.loadUserInfo();
   }
 
@@ -39,13 +38,8 @@ export class Account {
 
   private async loadUserInfo(): Promise<void> {
     this.isFetchingUserInfo.set(true);
-
-    try {
-      this.userInfo.set(await this.fusionAuth.getUserInfo<UserInfo>());
-    } catch (error) {
-      console.error('Unable to fetch FusionAuth user info', error);
-    } finally {
-      this.isFetchingUserInfo.set(false);
-    }
+    try { this.userInfo.set(await this.fusionAuth.getUserInfo<UserInfo>()); }
+    catch (error) { console.error('Unable to fetch FusionAuth user info', error);}
+    finally { this.isFetchingUserInfo.set(false); }
   }
 }

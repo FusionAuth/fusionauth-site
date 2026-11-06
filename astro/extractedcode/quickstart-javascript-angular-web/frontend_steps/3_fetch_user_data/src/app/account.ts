@@ -53,7 +53,6 @@ export class Account {
       void this.router.navigateByUrl('/');
       return;
     }
-
     void this.loadUserInfo();
   }
 
@@ -75,20 +74,16 @@ export class Account {
         familyName: info.family_name ?? '',
         birthdate: info.birthdate ?? '',
       });
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Unable to fetch user profile', error);
     }
   }
 
   private async loadUserInfo(): Promise<void> {
     this.isFetchingUserInfo.set(true);
-
-    try {
-      this.userInfo.set(await this.fusionAuth.getUserInfo<UserInfo>());
-    } catch (error) {
-      console.error('Unable to fetch FusionAuth user info', error);
-    } finally {
-      this.isFetchingUserInfo.set(false);
-    }
+    try { this.userInfo.set(await this.fusionAuth.getUserInfo<UserInfo>()); }
+    catch (error) { console.error('Unable to fetch FusionAuth user info', error); }
+    finally { this.isFetchingUserInfo.set(false); }
   }
 }
