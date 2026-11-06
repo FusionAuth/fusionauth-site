@@ -10,7 +10,7 @@ const policyTenant = {
   },
 };
 
-const forgotPasswordTemplate = {
+export const forgotPasswordTemplate = {
   order: 7,
   apply: async () => {
     const { tenant } = await apiRequest(`/api/tenant/${defaultTenantId}`);

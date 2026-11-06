@@ -7,6 +7,7 @@ import * as accountManagement from './lifecycle/manage-users/account-management/
 import * as themes from './theme/_shared.mjs';
 import * as oneTimePasswords from './lifecycle/authenticate-users/one-time-passwords/_shared.mjs';
 import * as webhooks from './extend/events-and-webhooks/_shared.mjs';
+import * as tenantManager from './lifecycle/manage-users/tenant-manager.mjs';
 
 const dir = fileURLToPath(new URL('.', import.meta.url));
 const paths = readdirSync(dir, { recursive: true }).filter(path => path.endsWith('.mjs') && !['index.mjs', 'kit.mjs'].includes(path)).sort();
@@ -23,4 +24,5 @@ export const resources = [
   webhooks.resources[0],
   oneTimePasswords.resources[1],
   shared.resources[1],
+  tenantManager.resources[0],
 ];
