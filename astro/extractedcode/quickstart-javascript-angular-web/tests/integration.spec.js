@@ -26,6 +26,20 @@ function trackPageDiagnostics(page) {
   };
 }
 
+async function loginAsRichard(page) {
+  await page.goto('http://localhost:3000/');
+  await expect(page.getByRole('button', { name: 'Login' })).toBeVisible();
+  await page.getByRole('button', { name: 'Login' }).click();
+
+  await page.waitForURL(/localhost:9011/, { timeout: 15000 });
+  await page.getByPlaceholder('Login').fill('richard@example.com');
+  await page.getByPlaceholder('Password').fill('password');
+  await page.getByRole('button', { name: 'Submit' }).click();
+
+  await page.waitForURL('http://localhost:3000/account', { timeout: 15000 });
+  await expect(page.getByText('richard@example.com')).toBeVisible();
+}
+
 test('FusionAuth admin login', async ({ page }) => {
   const dumpDiagnostics = trackPageDiagnostics(page);
 
@@ -45,32 +59,48 @@ test('FusionAuth admin login', async ({ page }) => {
   }
 });
 
-test('React app login, fetch user info, and logout via FusionAuth', async ({ page }) => {
+test('redirects logged-out users from /account to /', async ({ page }) => {
   const dumpDiagnostics = trackPageDiagnostics(page);
 
   try {
-    await page.goto('http://localhost:3000/');
-
-    await expect(page.getByRole('button', { name: 'Login' })).toBeVisible();
-    await page.getByRole('button', { name: 'Login' }).click();
-
-    await page.waitForURL(/localhost:9011/, { timeout: 15000 });
-    await page.getByPlaceholder('Login').fill('richard@example.com');
-    await page.getByPlaceholder('Password').fill('password');
-    await page.getByRole('button', { name: 'Submit' }).click();
-
-    await page.waitForURL(/localhost:3000\/account/, { timeout: 15000 });
-    await expect(page.getByText('richard@example.com')).toBeVisible();
-
-    // fetch and display user data from the /me endpoint. Assert on the text
-    // itself rather than sleeping for a fixed interval, so the wait is as long
-    // as the request actually takes and no longer.
-    await page.getByRole('button', { name: 'Show your info' }).click();
-    await expect(page.getByText('Richard Hendricks')).toBeVisible();
-
-    await page.getByRole('button', { name: 'Logout' }).click();
+    await page.goto('http://localhost:3000/account');
     await page.waitForURL('http://localhost:3000/', { timeout: 15000 });
     await expect(page.getByRole('button', { name: 'Login' })).toBeVisible();
+  } catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
+});
+
+test('logs in via FusionAuth', async ({ page }) => {
+  const dumpDiagnostics = trackPageDiagnostics(page);
+  try {
+    await loginAsRichard(page);
+  } catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
+});
+
+test('redirects logged-in users from / to /account', async ({ page }) => {
+  const dumpDiagnostics = trackPageDiagnostics(page);
+  try {
+    await loginAsRichard(page);
+    await page.goto('http://localhost:3000/');
+    await page.waitForURL('http://localhost:3000/account', { timeout: 15000 });
+    await expect(page.getByText('richard@example.com')).toBeVisible();
+  } catch (error) {
+    await dumpDiagnostics();
+    throw error;
+  }
+});
+
+test('fetches user info from the account page', async ({ page }) => {
+  const dumpDiagnostics = trackPageDiagnostics(page);
+  try {
+    await loginAsRichard(page);
+    await page.getByRole('button', { name: 'Show your info' }).click();
+    await expect(page.getByText('Richard Hendricks')).toBeVisible();
   } catch (error) {
     await dumpDiagnostics();
     throw error;

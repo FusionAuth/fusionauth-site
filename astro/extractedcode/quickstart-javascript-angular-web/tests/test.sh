@@ -4,34 +4,35 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-# Initialised up front so cleanup stays safe under `set -u` when compose
-# validation, type-checking, pulling or startup fails before the app is
-# launched. Otherwise cleanup aborts before docker compose down.
-REACT_PID=""
+# Initialised up front so cleanup stays safe under `set -u` if compose
+# validation, app startup/build, or pulling fails. Otherwise cleanup aborts
+# before docker compose down.
+APP_PID=""
+BACKEND_DIR="$PROJECT_DIR/backend_fusionauth"
 
 cleanup() {
   echo "Cleaning up..."
-  [ -n "$REACT_PID" ] && kill "$REACT_PID" 2>/dev/null || true
-  docker stop react-app-test 2>/dev/null || true
-  cd "$PROJECT_DIR/fusionauth-backend" && docker compose down -v 2>/dev/null || true
+  [ -n "$APP_PID" ] && kill "$APP_PID" 2>/dev/null || true
+  docker stop angular-app-test 2>/dev/null || true
+  (cd "$BACKEND_DIR" && docker compose down -v) 2>/dev/null || true
 }
 trap cleanup EXIT
 
 echo "Validating docker compose config..."
-cd "$PROJECT_DIR"
-docker compose -f fusionauth-backend/docker-compose.yml config > /dev/null
+(cd "$BACKEND_DIR" && docker compose config > /dev/null)
 
-for STEP_DIR in react-frontend-steps/*/; do
-  STEP_NAME=$(basename "$STEP_DIR")
-  echo "Type-checking $STEP_NAME..."
-  docker run --rm -v "$PROJECT_DIR/$STEP_DIR:/app" -w /app node:26 sh -c "npm install && npx tsc --noEmit"
+# Verify build of every step.
+for stepDir in "$PROJECT_DIR"/frontend_steps/*/; do
+  stepName=$(basename "${stepDir%/}")
+  echo "Building Angular step $stepName..."
+  docker run --rm -v "$stepDir:/app" -w /app node:26 sh -c "npm ci && npx @angular/cli@22.2.6 build"
 done
 
 echo "Pulling latest FusionAuth image..."
-(cd "$PROJECT_DIR/fusionauth-backend" && docker compose pull)
+(cd "$BACKEND_DIR" && docker compose pull)
 
 echo "Starting FusionAuth..."
-(cd "$PROJECT_DIR/fusionauth-backend" && docker compose up -d)
+(cd "$BACKEND_DIR" && docker compose up -d)
 
 echo "Waiting for FusionAuth to be ready..."
 timeout 480 bash -c 'until curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null; do
@@ -40,16 +41,17 @@ timeout 480 bash -c 'until curl -sfL http://localhost:9011/admin/ 2>/dev/null | 
 done'
 echo "FusionAuth is ready."
 
-echo "Starting React app (final step: 3-fetch-user-data)..."
-docker run --network host --name react-app-test --rm -v "$PROJECT_DIR/react-frontend-steps/3-fetch-user-data":/app -w /app node:26 sh -c "npm install && npx vite --port 3000" &
-REACT_PID=$!
+# But test only the final step, 3.
+echo "Starting Angular app (final step: 3_fetch_user_data)..."
+docker run --network host --name angular-app-test --rm -v "$PROJECT_DIR/frontend_steps/3_fetch_user_data":/app -w /app node:26 sh -c "npm ci && npx @angular/cli@22.2.6 serve --host=0.0.0.0 --port=3000" &
+APP_PID=$!
 
-echo "Waiting for React app to be ready..."
+echo "Waiting for Angular app to be ready..."
 timeout 120 bash -c 'until curl -sf http://localhost:3000 > /dev/null 2>&1; do
-  echo "  Waiting for React app..."
+  echo "  Waiting for Angular app..."
   sleep 2
 done'
-echo "React app is ready."
+echo "Angular app is ready."
 
 echo "Running Playwright tests..."
 docker run --network host --name playwright-test --rm -e NODE_PATH=/usr/lib/node_modules -v "$SCRIPT_DIR/integration.spec.js":/tests/integration.spec.js mcr.microsoft.com/playwright:v1.62.0 bash -c "npm install -g @playwright/test@1.62.0 && playwright test /tests/integration.spec.js"
