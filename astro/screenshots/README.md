@@ -57,13 +57,18 @@ To outline an element, nest a `Highlight` with a CSS `selector`. The optional `l
 </Screenshot>
 ```
 
+Two selector behaviors fail without a clear error:
+
+* `Highlight` outlines only the first element the selector matches, and skips that element without failing when the element is hidden. The Admin UI renders a hidden mobile copy of the sidebar before the desktop copy, so a selector for a sidebar link outlines nothing. Add `:not(#sidebar *)` to skip the mobile copy: `a[href$='/admin/application/']:not(#sidebar *)`.
+* The page renders each selector into a hidden element, and the link checker reads any `href='...'` in that element as a link. A selector such as `a[href='/admin/application/']` fails the build with a broken link to `/admin/application/`. Use `href$=`, `href^=`, or `href*=` instead.
+
 | Prop | Default | Description |
 |---|---|---|
 | `url` | required | Path on the FusionAuth instance, or a full URL for a [fresh-instance screenshot](#fresh-instance-screenshots) |
 | `id` | derived | Output filename, without `.png` |
 | `alt` | filename | Alt text for the image |
 | `width` | `1100` | Viewport width in px |
-| `height` | `800` | Viewport height in px |
+| `height` | `800` | Viewport height in px. The capture grows to the full page height unless the shot's entry in `setup/` sets `fixedHeight: null` |
 | `fullPage` | `false` | Capture the full scrollable height. Write `fullPage={true}`, because the capture tool ignores a bare `fullPage` |
 | `crop` | none | CSS selector for the part of the page to keep, such as `main header:has(h1), #tenant_name`. Covers every match and any highlights |
 | `cropPadding` | `16` | Space in px kept around the cropped area |
