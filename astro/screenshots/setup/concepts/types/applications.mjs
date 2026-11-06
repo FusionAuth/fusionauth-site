@@ -22,6 +22,7 @@ async function pinTenantManagerId(page) {
 }
 
 export const shots = {
+  'dashboard-applications-nav': { fixedHeight: null },
   'leftovers-application-list': { prepare: preparation({ beforeSizing: leftoversApplicationList }) },
   'application-list': { legacyVersion: true, prepare: preparation({ afterControls: pinTenantManagerId }) },
   'application-oauth': { legacyVersion: true },
