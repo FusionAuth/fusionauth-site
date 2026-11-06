@@ -209,6 +209,7 @@ const config = defineConfig({
       ignore: [
         'node_modules', 'vendor', '.gitignore', '.DS_Store',
         'package*.json', '*.lock', 'repositoryUrl.txt',
+        'frontend_steps/**/.angular/',
         'tests/test.sh', 'LICENSE', 'SECURITY.md', 'publishGithubDirectory.txt',
       ],
       // same state export-extractedcode.sh publishes to the artifact repos
