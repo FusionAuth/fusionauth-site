@@ -42,6 +42,6 @@ To run any step of the QuickStart:
    ```
 1. Run the following command to start the app:
    ```shell-session
-   npm run dev
+   npx @angular/cli@22.2.6 serve --host=0.0.0.0 --port=3000
    ```
-2. To use the app, visit the URL displayed in your terminal.
+2. To use the app, visit http://localhost:3000.
