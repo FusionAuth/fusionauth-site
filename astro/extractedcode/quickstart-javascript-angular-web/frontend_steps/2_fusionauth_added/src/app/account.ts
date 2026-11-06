@@ -1,16 +1,51 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, Inject, signal } from '@angular/core';
+import { FusionAuthService } from '@fusionauth/angular-sdk';
+import type { UserInfo } from '@fusionauth/angular-sdk';
+import { Router } from '@angular/router';
 
 @Component({
-  imports: [RouterLink],
   selector: 'app-account',
   template: `
-    <header class="titlebar">
-      <a class="button" routerLink="/">Logout</a>
-    </header>
-    <main class="centerContainer">
-      <p>User info will display here</p>
-    </main>
+    @if (fusionAuth.isLoggedInSignal() && !isFetchingUserInfo()) {
+      <header class="titlebar">
+        <span class="white">{{ userInfo()?.email }}</span>
+        <button class="button" type="button" (click)="logout()">Logout</button>
+      </header>
+      <main class="centerContainer">
+        <p>User info will display here</p>
+      </main>
+    }
   `,
 })
-export class Account {}
+export class Account {
+  protected readonly isFetchingUserInfo = signal(false);
+  protected readonly userInfo = signal<UserInfo | null>(null);
+
+  constructor(
+    protected readonly fusionAuth: FusionAuthService,
+    @Inject(Router) private readonly router: Router,
+  ) {
+    if (!this.fusionAuth.isLoggedIn()) {
+      void this.router.navigateByUrl('/');
+      return;
+    }
+
+    void this.loadUserInfo();
+  }
+
+  protected logout(): void {
+    this.fusionAuth.logout();
+  }
+
+  private async loadUserInfo(): Promise<void> {
+    this.isFetchingUserInfo.set(true);
+
+    try {
+      this.userInfo.set(await this.fusionAuth.getUserInfo<UserInfo>());
+    } catch (error) {
+      console.error('Unable to fetch FusionAuth user info', error);
+    } finally {
+      this.isFetchingUserInfo.set(false);
+    }
+  }
+}
