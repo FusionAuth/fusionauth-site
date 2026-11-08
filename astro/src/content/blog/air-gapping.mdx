@@ -8,7 +8,6 @@ categories: Education
 tags: air-gapping, self-hosted
 excerpt_separator: "{/* more */}"
 ---
-import Aside from 'src/components/Aside.astro';
 
 You may think any authentication server offering OIDC or SAML would be hosted and available on the internet. After all, web and mobile apps using an auth server are usually deployed using the internet.
 
@@ -44,7 +43,7 @@ If you have high-value assets, protecting them may motivate you to implement air
 * reputation damage
 * financial losses
 
-Another reason to consider building a system which can be air-gapped is if you are writing software to be bought and deployed into any of the above environments and want to delegate to another source of user credential and profile data. You can learn more about this scenario in [the Identity Broker use case](/docs/get-started/use-cases/identity-broker).
+Another reason to consider building a system which can be air-gapped is if you are writing software to be bought and deployed into any of the above environments and want to delegate to another source of user credential and profile data. You can learn more about this scenario in [the Identity Broker use case](/docs/concepts/patterns/identity-broker).
 
 Finally, an air-gapped environment can exist because of limited or non-existent network connectivity, such as on a cruise ship or mining station. Even if you can access satellite internet, the cost may be prohibitive. In this situation, it's the location creating the air-gapped environment, rather than any special security needs.
 
@@ -80,14 +79,14 @@ FusionAuth, being [downloadable, self-hostable software](/blog/building-self-hos
 
 After discussing your needs with [our sales team](/contact), you'll get a license key and text to add to your FusionAuth instances. Just as with a normal license, you'll have production and non-production keys. The latter allow air-gapped development, staging, and QA instances to access the same features as production.
 
-You can learn more about air-gapping FusionAuth in [the air-gapping documentation](/docs/get-started/download-and-install/reference/air-gapping).
+You can learn more about air-gapping FusionAuth in [the air-gapping documentation](/docs/deploy/production/install/air-gapping).
 
 ### Validating JWTs Without Auth Server Network Connectivity
 
 You can even have disjoint network segments, where FusionAuth is on one and an API needing to validate an access token is on another. To validate the tokens were properly signed without connectivity between the API server and FusionAuth, do the following:
 
-* Generate public/private keypairs in FusionAuth. Use [the API](/docs/apis/keys#generate-a-key) or [an SDK](/docs/sdks) to do this.
-* Bundle the public keypairs into the API artifact during the deployment process; for example, put them in the classpath of a jar file. If you can access FusionAuth from your build system, download the [jwks.json file](/docs/lifecycle/authenticate-users/oauth/endpoints#json-web-key-set-jwks). Otherwise build your file of public keys using the SDKs or APIs.
+* Generate public/private keypairs in FusionAuth. Use [the API](/docs/apis/keys/generate-a-key) or [an SDK](/docs/sdks) to do this.
+* Bundle the public keypairs into the API artifact during the deployment process; for example, put them in the classpath of a jar file. If you can access FusionAuth from your build system, download the [jwks.json file](/docs/apis/oauth/jwks). Otherwise build your file of public keys using the SDKs or APIs.
 * When an access token is presented to the API, it will contain a `kid`. Look up the corresponding public key from the locally available keypairs, and validate the access token signature. [Don't forget to perform claim validation](/articles/tokens/building-a-secure-jwt#consuming-a-jwt).
 
 Create enough keypairs to handle your desired key rotation frequency. When you need to rotate the access token signing keys, change the key that FusionAuth is using to sign the access tokens.
@@ -127,7 +126,7 @@ Plan to implement network monitoring tools to detect unusual traffic patterns or
 
 When traditional cloud-based security tools aren't available, you will need to run your monitoring tools locally and collate the logs within your air-gapped environment.
 
-Capture [FusionAuth application logs](/docs/operate/monitor), [webhook events](/docs/extend/events-and-webhooks/events/), system logs, and network traffic. Send all of these to SIEM systems running in the internal network. As with any SIEM system, regularly review logs and set up automated alerting for suspicious activities such as failed authentication attempts, unexpected privilege requests, or configuration changes.
+Capture [FusionAuth application logs](/docs/deploy/monitor), [webhook events](/docs/events/reference/), system logs, and network traffic. Send all of these to SIEM systems running in the internal network. As with any SIEM system, regularly review logs and set up automated alerting for suspicious activities such as failed authentication attempts, unexpected privilege requests, or configuration changes.
 
 Basically, do what you should do in any environment, but with the twin caveats:
 
@@ -138,7 +137,7 @@ Basically, do what you should do in any environment, but with the twin caveats:
 
 For FusionAuth updates, use your formal change management process. You'll want to:
 
-* [stay informed about new releases](/docs/operate/roadmap/releases#release-notifications)
+* [stay informed about new releases](/docs/update#stay-informed)
 * [review the features](/docs/release-notes)
 * and, when it makes sense, [download new versions](/direct-download) on an internet-connected system
 
@@ -149,7 +148,7 @@ After you are comfortable with the new release, transfer it to the production ai
 
 Document your update procedures, including rollback plans, and ensure that critical security patches can be expedited through your approval process when necessary.
 
-Regular vulnerability assessments should be conducted using offline scanning tools, and FusionAuth [configuration changes](/docs/operate/deploy) should be versioned and applied automatically to avoid configuration drift over time.
+Regular vulnerability assessments should be conducted using offline scanning tools, and FusionAuth [configuration changes](/docs/deploy) should be versioned and applied automatically to avoid configuration drift over time.
 
 ### Connectivity Driven Air-gapping
 
@@ -161,13 +160,13 @@ For example, if you are deploying FusionAuth to a cruise ship, you may want to a
 
 When traditional cloud-based security tools aren't available, you will need to run your monitoring tools locally and collate the logs within your air-gapped environment. This will help with both security and application debugging.
 
-Capture [FusionAuth application logs](/docs/operate/monitor), [webhook events](/docs/extend/events-and-webhooks/events/), system logs, and network traffic. Send all of these to log collection systems running in the internal network. Regularly review logs and set up alerting for problematic activities such as failed authentication attempts or configuration changes.
+Capture [FusionAuth application logs](/docs/deploy/monitor), [webhook events](/docs/events/reference/), system logs, and network traffic. Send all of these to log collection systems running in the internal network. Regularly review logs and set up alerting for problematic activities such as failed authentication attempts or configuration changes.
 
 #### Update Procedures
 
 For FusionAuth updates, use a change management process. You'll want to:
 
-* [stay informed about new releases](/docs/operate/roadmap/releases#release-notifications)
+* [stay informed about new releases](/docs/update#stay-informed)
 * [review the features](/docs/release-notes)
 * and, when it makes sense, [download new versions](/direct-download) on an internet-connected system
 
@@ -183,10 +182,10 @@ Pushing these changes up after the cruise ship has connectivity again can be don
 
 * install and configure Kafka to run on the ship
 * set up webhooks for all needed events
-* configure webhooks [to write to kafka](/docs/extend/events-and-webhooks/kafka)
+* configure webhooks [to write to kafka](/docs/events/kafka)
 * when the ship docks, have a process read through the kafka queues and update the existing primary database to bring it back into sync; this process should also deal with any conflicts and push down any profile changes that have been made in the primary
 
-Some configuration changes aren't captured in webhooks. You can review the webhook documentation to see [the list of available events](/docs/extend/events-and-webhooks/events/). Changes which will not be captured include:
+Some configuration changes aren't captured in webhooks. You can review the webhook documentation to see [the list of available events](/docs/events/reference/). Changes which will not be captured include:
 
 * entities, though you can [search for all entities](/docs/apis/entities/entities#request-4) with a `lastUpdateInstant` after a certain date to merge the data
 * user passwords and related values like the salt, though you can receive a webhook for when the password is changed
@@ -197,4 +196,4 @@ Air-gapped environments offer a more secure place to host applications. These ap
 
 Air-gapping can also help when you have intermittent or expensive connectivity but still want to offer a world-class authentication experience for apps on a local network.
 
-You can use FusionAuth as an air-gapped auth server and easily add features to your air-gapped applications. Learn more about air-gapping FusionAuth in [the air-gapping documentation](/docs/get-started/download-and-install/reference/air-gapping).
+You can use FusionAuth as an air-gapped auth server and easily add features to your air-gapped applications. Learn more about air-gapping FusionAuth in [the air-gapping documentation](/docs/deploy/production/install/air-gapping).

@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: My API Gateway and Lambda function
+
+Parameters:
+  apiGatewayName:
+    Type: String
+    Default: my-api
+  apiGatewayStageName:
+    Type: String
+    AllowedPattern: "[a-z0-9]+"
+    Default: call
+  apiGatewayHTTPMethod:
+    Type: String
+    Default: POST
+  lambdaFunctionName:
+    Type: String
+    AllowedPattern: "[a-zA-Z0-9]+[a-zA-Z0-9-]+[a-zA-Z0-9]+"
+    Default: my-function
+
+Resources:
+  apiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: Example API Gateway
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Name: !Ref apiGatewayName
+
+  apiGatewayRootMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: !Ref apiGatewayHTTPMethod
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt lambdaFunction.Arn
+      ResourceId: !GetAtt apiGateway.RootResourceId
+      RestApiId: !Ref apiGateway
+
+  apiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - apiGatewayRootMethod
+    Properties:
+      RestApiId: !Ref apiGateway
+      StageName: !Ref apiGatewayStageName
+
+  lambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          const AWS=require("aws-sdk"),clientId="1r4gcuhj4f127iuhoiov9234tm",region="us-east-2",fusionAuthTenantId="30663132-6464-6665-3032-326466613934",fusionAuthApplicationId="85a03867-dccf-4882-adde-1a79aeec50df",authorizationHeaderValue="2687EE95-AF19-4CE6-A8BD-963139DED32E",cognito=new AWS.CognitoIdentityServiceProvider(region);function processOneAttribute(e,t){return console.log("processing: "+t),e&&e.filter(e=>e.Name==t).length>0?e.filter(e=>e.Name==t)[0].Value:null}function processUserJSON(e){const t={user:{}};t.user.data={},t.user.data.migratedDate=new Date,t.user.data.migratedFrom="cognito";const s=e.UserAttributes,n=processOneAttribute(s,"website");null!=n&&(t.user.data.website=n),t.user.username=e.Username;const r=processOneAttribute(s,"email");null!=r&&(t.user.email=r),t.user.id=e.Username;const o=processOneAttribute(s,"sub");null!=o&&(t.user.id=o);const i=processOneAttribute(s,"given_name");null!=i&&(t.user.firstName=i);const a=processOneAttribute(s,"family_name");null!=a&&(t.user.lastName=a);const u=processOneAttribute(s,"email_verified");return null!=u&&(t.user.verified="true"==u),t.user.active=!0,t.user.tenantId=fusionAuthTenantId,t.user.registrations=[],t.user.registrations[0]={applicationId:fusionAuthApplicationId},t}exports.handler=async function(e,t){try{if(e.headers.Authorization!==authorizationHeaderValue)return{statusCode:401,headers:{},body:""};if("POST"===e.httpMethod&&"/"===e.path){const t=JSON.parse(e.body);if(t.loginId&&t.password){var s={AuthFlow:"USER_PASSWORD_AUTH",ClientId:clientId,AuthParameters:{USERNAME:t.loginId,PASSWORD:t.password}};const e=await cognito.initiateAuth(s).promise();var n={};if(e.AuthenticationResult&&e.AuthenticationResult.AccessToken){return n=processUserJSON(await cognito.getUser({AccessToken:e.AuthenticationResult.AccessToken}).promise()),{statusCode:200,headers:{},body:JSON.stringify(n)}}e.ChallengeName&&console.log("Unable to log user in. Got response: "+e.ChallengeName+" and am unsure how to handle.")}}return{statusCode:400,headers:{},body:"Invalid request"}}catch(e){var r=e.stack||JSON.stringify(e,null,2);return console.log("Error in authenticating"),console.log(r),{statusCode:404,headers:{},body:""}}};
+      Description: FusionAuth Connector lambda function
+      FunctionName: !Ref lambdaFunctionName
+      Runtime: nodejs14.x
+      Timeout: 10
+      Handler: index.handler
+      MemorySize: 128
+      Role: !GetAtt lambdaIAMRole.Arn
+
+  lambdaApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt lambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${apiGateway}/${apiGatewayStageName}/${apiGatewayHTTPMethod}/
+
+  lambdaIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        - PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Effect: Allow
+                Resource:
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${lambdaFunctionName}:*
+          PolicyName: lambda
+
+  lambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${lambdaFunctionName}
+      RetentionInDays: 90
+
+Outputs:
+  apiGatewayInvokeURL:
+    Value: !Sub https://${apiGateway}.execute-api.${AWS::Region}.amazonaws.com/${apiGatewayStageName}
+
+  lambdaArn:
+    Value: !GetAtt lambdaFunction.Arn

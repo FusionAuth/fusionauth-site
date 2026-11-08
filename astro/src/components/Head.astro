@@ -1,10 +1,16 @@
 ---
 import Font from 'astro/components/Font.astro';
+import SchemaMarkup from './SchemaMarkup.astro';
 
 interface Props {
   description?: string;
   enableBaseParent?: boolean;
   enableGTM?: boolean;
+  llmsTxtHref?: string;
+  markdownTitle?: string;
+  ogType?: string;
+  pageSchema?: object;
+  tags?: string;
   title?: string;
   openGraphImage?: string;
   canonicalUrl?: string;
@@ -16,13 +22,19 @@ const {
   description,
   enableBaseParent = false,
   enableGTM = true,
+  llmsTxtHref = '/docs/.well-known/llms.txt',
+  markdownTitle,
+  ogType = 'website',
+  pageSchema,
+  tags,
   title, openGraphImage,
   canonicalUrl,
   applyTheme = true,
   isIndexPage = false,
 } = Astro.props;
+
 const openGraphImageUrl = openGraphImage ? new URL(openGraphImage, Astro.url): new URL("/img/og/articles-developers-v1.png", Astro.url);
-const normalizedUrl = Astro.url.toString().replace(/.html$/, '');
+const normalizedUrl = Astro.url.toString().replace(/\.html$/, '');
 const isProd = import.meta.env.PROD as boolean;
 
 let canonical = canonicalUrl;
@@ -32,13 +44,10 @@ if (!canonical) {
   canonical = new URL(canonical, Astro.url).href;
 }
 
-if (canonical.endsWith('index.html')) {
-  canonical = canonical.slice(0, canonical.indexOf('index.html'));
-  if (!canonical.endsWith('/')) {
-    canonical += '/';
-  }
+if (canonical.endsWith('/index.html')) {
+  canonical = canonical.slice(0, -'index.html'.length); // keeps trailing '/'
 } else if (canonical.endsWith('.html')) {
-  canonical = canonical.slice(0, canonical.indexOf('.html'));
+  canonical = canonical.slice(0, -'.html'.length);
 }
 
 // Pages built from index.mdx are served as a directory (with trailing slash);
@@ -46,19 +55,81 @@ if (canonical.endsWith('index.html')) {
 if (isIndexPage && !canonical.endsWith('/')) {
   canonical += '/';
 }
+
 const slug = Astro.params.slug;
 ---
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width"/>
+  <!-- declares both schemes, so Safari's Adaptive Dark Mode leaves themed pages alone -->
+  {applyTheme && <meta name="color-scheme" content="light dark"/>}
+  <style is:inline>
+    body { background: #fff; color: #334155; }
+    html.dark body { background: #0f172a; color: #e2e8f0; }
+    /* hide sr-only content from humans before CSS loads */
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0; }
+    /* nav bar: same values as astro-better-nav-bar/style.css */
+    #main-header { background: #0f172a; position: sticky; top: 0; z-index: 50; }
+    .nav-desktop { display: none; }
+    .nav-mobile { display: flex; align-items: center; padding: 0.5rem 1rem; gap: 0.5rem; }
+    .nav-brand { display: flex; align-items: center; }
+    .nav-actions { display: flex; align-items: center; gap: 0.5rem; }
+    .nav-mobile-actions { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+    .nav-mobile-dropdowns { display: flex; align-items: center; gap: 0.5rem; }
+    @media (min-width: 1024px) {
+      .nav-desktop { display: flex; justify-content: space-between; align-items: center; max-width: 90rem; margin: 0 auto; padding: 0.5rem 1rem; }
+      .nav-mobile { display: none; }
+    }
+    /* main layout container — mirrors: mx-auto max-w-8xl px-4 lg:flex lg:items-start */
+    #layout-outer { max-width: 90rem; margin-left: auto; margin-right: auto; padding-left: 1rem; padding-right: 1rem; }
+    /* main content column — mirrors: flex-1 min-w-0 */
+    #layout-outer > main { flex: 1 1 0%; min-width: 0; }
+    /* sidebar and TOC visibility */
+    #side-nav { display: none; }
+    [data-toc-aside] { display: none; }
+    @media (min-width: 1024px) {
+      #layout-outer { display: flex; align-items: flex-start; }
+      #side-nav { display: block; order: -1; max-width: 270px; width: 100%; flex-shrink: 0; }
+    }
+    @media (min-width: 1280px) { [data-toc-aside] { display: block; } }
+    /* footer: horizontal sections before grid CSS loads */
+    [data-footer-grid] { display: flex; flex-wrap: wrap; gap: 1rem; }
+    [data-footer-grid] > div { flex: 1; min-width: 130px; }
+    /* action buttons: same values as Tailwind classes */
+    [data-action-btn] {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 4px;
+      font-size: 12px; color: #64748b; background: #fff;
+      text-decoration: none; cursor: pointer;
+    }
+    html.dark [data-action-btn] { border-color: #334155; color: #94a3b8; background: #0f172a; }
+  </style>
   <link rel="icon" type="image/png" href="/img/favicon.png"/>
   { canonical && <link rel="canonical" href={canonical} /> }
+  { tags && <meta name="keywords" content={tags} /> }
+  { tags && tags.split(',').map(t => t.trim()).filter(Boolean).map(t => (
+    <meta property="article:tag" content={t} />
+  )) }
   <meta name="algolia-site-verification" content="857638C054AD182F" />
-  <link rel="sitemap" href="/sitemap-index.xml">
+  <link rel="sitemap" href="/sitemap.xml">
+  <link rel="alternate" type="text/plain" title="LLM Index" href={llmsTxtHref} />
+  <link 
+    id="llm-md-link" 
+    rel="alternate" 
+    type="text/markdown" 
+    title="Page Markdown Source" 
+    href={Astro.url.pathname + "?format=md"} 
+  />
+  <link rel="preconnect" href="https://www.googletagmanager.com" />
+  <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+  <link rel="preconnect" href="https://CEDVXLJPHK-dsn.algolia.net" crossorigin />
+  <link rel="dns-prefetch" href="https://CEDVXLJPHK-dsn.algolia.net" />
   <Font cssVariable="--font-inter-var" preload />
-  <script src="../scripts/ScrollSpy.ts"></script>
-  <script src="../scripts/Visibility.ts"></script>
-  {applyTheme && <script is:inline>
+  <style is:inline>
+    /* direct reference so WebKit can match the preloaded font through the CSS variable chain */
+    body { font-family: var(--font-inter-var), sans-serif; }
+  </style>
+{applyTheme && <script is:inline>
     const getTheme = () => {
       const theme = localStorage?.getItem('theme');
       if (theme && theme !== 'system') {
@@ -75,14 +146,19 @@ const slug = Astro.params.slug;
     applyThemeClass();
   </script>}
   <title>{title}</title>
+  <link type="application/rss+xml" rel="alternate" href="/docs/releases.xml" title="Release Notes Feed">
+  <link type="application/rss+xml" rel="alternate" href="/blog/feed.xml" title="Blog Feed">
+
   <meta name="description" content={description}/>
+  {markdownTitle && <meta name="markdown-title" content={markdownTitle} />}
   <meta property="og:site_name" content="FusionAuth"/>
   <meta property="og:url" content={normalizedUrl}/>
   <meta property="og:description" content={description}/>
   <meta property="og:title" content={title}/>
-  <meta property="og:type" content="website"/>
+  <meta property="og:type" content={ogType}/>
   <meta property="og:locale" content="en_US"/>
   <meta property="og:image" content={openGraphImageUrl}/>
+  <meta property="og:image:alt" content={title}/>
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
@@ -93,7 +169,6 @@ const slug = Astro.params.slug;
   <meta name="twitter:image" content={openGraphImageUrl}>
 
   {isProd && enableGTM &&
-    <!-- Google Tag Manager -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-MZ9FDPFDF0" is:inline></script>
     <script is:inline>
       window.dataLayer = window.dataLayer || [];
@@ -101,10 +176,14 @@ const slug = Astro.params.slug;
       gtag('js', new Date());
       gtag('config', 'G-MZ9FDPFDF0');
     </script>
-    <!-- End Google Tag Manager -->
   }
 
   { enableBaseParent &&
     <base target="_parent"/>
   }
+
+  <SchemaMarkup title={title} {pageSchema} />
+  <script type="speculationrules" is:inline>
+    {"prerender":[{"where":{"href_matches":"/*"},"eagerness":"moderate"}]}
+  </script>
 </head>

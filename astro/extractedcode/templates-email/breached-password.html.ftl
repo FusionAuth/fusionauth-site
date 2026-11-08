@@ -1,0 +1,13 @@
+[#setting url_escaping_charset="UTF-8"]
+<p>This password was found in the list of vulnerable passwords, and is no longer secure.</p>
+
+<p>In order to secure your account, it is recommended to change your password at your earliest convenience.</p>
+
+<p>Follow this link to change your password.</p>
+
+[#assign url = "${baseUrl}/password/forgot?client_id=${(application.oauthConfiguration.clientId)!''}&email=${user.email?url}&tenantId=${user.tenantId}" /]
+<a href="${url?html}">
+  ${url?html}
+</a>
+
+- FusionAuth Admin

@@ -1,0 +1,57 @@
+name: Check external links (changed files)
+
+on:
+  pull_request:
+    paths:
+      - 'astro/src/**/*.md'
+      - 'astro/src/**/*.mdx'
+      - 'astro/src/**/*.astro'
+
+# a new push to the PR cancels the run for the old commit, freeing its runner slots
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Check external links in changed files
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Find changed source files
+        id: changed
+        run: |
+          set -euo pipefail
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
+            | grep -E '\.(md|mdx|astro)$' \
+            | grep '^astro/src/' \
+            > /tmp/changed-files.txt || true
+          if [ -s /tmp/changed-files.txt ]; then
+            echo "has_files=true" >> "$GITHUB_OUTPUT"
+            echo "Changed source files:"
+            cat /tmp/changed-files.txt
+          else
+            echo "has_files=false" >> "$GITHUB_OUTPUT"
+            echo "No source files changed."
+          fi
+
+      - name: Check external links
+        if: steps.changed.outputs.has_files == 'true'
+        run: |
+          mapfile -t files < /tmp/changed-files.txt
+          scripts/check-external-links.py \
+            "${files[@]}" \
+            --workers 25 \
+            --concurrency 3 \
+            --rate-limit 500 \
+            --timeout 20

@@ -1,0 +1,65 @@
+---
+title: Account Enumeration
+description: Learn which FusionAuth responses reveal whether an account exists, and how to reduce what they reveal.
+tags: account enumeration, user enumeration, tenant enumeration, security, login security, hosted login pages, themes, multi-tenant
+---
+
+Account enumeration is when an attacker learns which email addresses or usernames have accounts by comparing responses from your login, registration, and password reset flows. A list of real accounts makes phishing and password guessing more effective. The [OWASP Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/03-Identity_Management_Testing/04-Testing_for_Account_Enumeration_and_Guessable_User_Account) describes how testers look for it.
+
+Hiding every signal also makes your application harder to use. A user whose account is locked wants to know why they can't log in. Decide which signals matter for your application, then use the options on this page to remove them.
+
+## What the Hosted Pages Reveal
+
+The hosted login pages respond as follows:
+
+| Situation | Message | Reveals the account exists |
+|-----------|---------|----------------------------|
+| Login with an unknown user or a wrong password | Invalid login credentials. | No |
+| Forgot password with an unknown or known email address | The same confirmation page | No |
+| Login to an account locked by too many failed attempts | Your account has been locked. | Yes, even with a wrong password |
+| Login to a deactivated account | Your account has been locked. Please contact your system administrator. | Yes, even with a wrong password |
+| Registration with an email address that has an account | An account already exists for that email | Yes |
+
+Some steps only appear after the user enters the correct password, such as an MFA challenge or a required password change. These confirm that the password is correct, so an attacker who sees them already has the credentials. Leave them in place.
+
+## Reduce What the Hosted Pages Reveal
+
+To make locked and deactivated accounts look like any other failed login, edit your Theme's <Breadcrumb>Messages</Breadcrumb> tab and set these keys to the same text as `[InvalidLogin]`:
+
+```properties
+[InvalidLogin]=Invalid login credentials.
+[LoginPreventedException]=Invalid login credentials.
+[UserLockedException]=Invalid login credentials.
+```
+
+Users with a locked account then can't tell why their login failed. To tell them through a channel only they can read, enable **Email user when action is taken** in the Tenant's [failed authentication settings](/docs/security/account-protection/account-lockout). See [Theme Localization](/docs/theme/localization#messages) for more about message keys.
+
+Registration can't hide an existing account without confusing the person who owns it. Slow down attackers instead with [rate limiting and CAPTCHA](/docs/security/account-protection/advanced-threat-detection).
+
+## What the APIs Reveal
+
+The APIs return a different status code for each situation, so your code can respond correctly. For example, the [Login API](/docs/apis/login) returns `404` for an unknown user or a wrong password, but `409`, `410`, or `423` for an account that exists and can't log in. The [Forgot Password API](/docs/apis/users/forgot-password) returns `404` when the user doesn't exist.
+
+If you build your own login pages with these APIs, map every failure to the same message before you show it to the user.
+
+## Tenant Enumeration
+
+In a multi-tenant application, an attacker may also try to learn which of your customers use your application. When you map each customer to a Tenant by hostname or path, check the customer in your own application before you redirect to FusionAuth. Respond to an unknown customer the same way as a known one, and don't forward the request to FusionAuth:
+
+```mermaid title="Resolving the Tenant in your application before redirecting to FusionAuth."
+sequenceDiagram
+    participant b as Browser
+    participant a as Your Application
+    participant f as FusionAuth
+
+    b ->> a : GET acme.example.com/login
+    alt Known customer
+        a ->> a : Look up the Tenant and client_id for acme
+        a -->> b : Redirect to /oauth2/authorize?client_id=...
+        b ->> f : Load the login page
+    else Unknown customer
+        a -->> b : The same login page as a known customer
+    end
+```
+
+FusionAuth can't hide an invalid `client_id`. It shows an error page instead of redirecting, because the OAuth 2.0 specification forbids redirecting to an unverified client ([RFC 6749 section 4.1.2.1](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1)). The default OAuth error template also prints the error details, including the `client_id` that was sent. To remove the details, edit the OAuth error template in your Themes and replace `${oauthJSONError}` with a generic message. An invalid `client_id` doesn't identify an Application, so FusionAuth renders this page with the default Tenant's Theme. Make the change there too.

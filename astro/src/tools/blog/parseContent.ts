@@ -6,6 +6,9 @@ import { ParsedBlog } from "./ParsedBlog";
 const stripper = new Marked()
     .use(markedPlaintify());
 
+// listing pages parse the same posts over and over; key on the inputs to the blurb
+const blurbCache = new Map<string, Promise<string>>();
+
 /**
  * Takes in the blog content as returned from getCollection and parses it to a friendly object for the blog pages to use.
  *
@@ -16,6 +19,30 @@ const stripper = new Marked()
  * @param blog to be parsed.
  */
 export const parseContent = async (blog: BlogContent): Promise<ParsedBlog> => {
+  const key = `${blog.data.excerpt_separator ?? ''}\0${blog.body}`;
+  let blurbPromise = blurbCache.get(key);
+  if (!blurbPromise) {
+    blurbPromise = makeBlurb(blog);
+    blurbCache.set(key, blurbPromise);
+  }
+  const blurb = await blurbPromise;
+
+  // split frontmatter lists to arrays
+  const categories = blog.data.categories.split(',').map(cat => cat.trim());
+  const tags = blog.data.tags.split(',').map(tag => tag.trim());
+  const authors = blog.data.authors.split(',').map(author => author.trim());
+
+  return {
+    ...blog.data,
+    blurb,
+    id: blog.id,
+    categories,
+    tags,
+    authors
+  };
+};
+
+const makeBlurb = async (blog: BlogContent): Promise<string> => {
   // parse the excerpt "blurb"
   const blurbLines: string[] = [];
   const separator = blog.data.excerpt_separator;
@@ -45,17 +72,5 @@ export const parseContent = async (blog: BlogContent): Promise<ParsedBlog> => {
     blurb = blurb.substring(0, snapPoint) + '...';
   }
 
-  // split frontmatter lists to arrays
-  const categories = blog.data.categories.split(',').map(cat => cat.trim());
-  const tags = blog.data.tags.split(',').map(tag => tag.trim());
-  const authors = blog.data.authors.split(',').map(author => author.trim());
-
-  return {
-    ...blog.data,
-    blurb,
-    id: blog.id,
-    categories,
-    tags,
-    authors
-  };
+  return blurb;
 };

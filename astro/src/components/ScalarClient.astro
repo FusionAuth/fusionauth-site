@@ -1,0 +1,116 @@
+---
+import { getCollection } from "astro:content";
+import { recordMissing } from '../plugins/openapi-summary.js';
+import { LOCAL_SERVERS } from 'src/tools/docs/scalar';
+
+export interface Props {
+  path: string;
+  method: string;
+}
+
+const { path: rawPath, method } = Astro.props;
+
+// Hosted login page docs call <API> without an HTTP method; skip.
+const show = !!(method && rawPath);
+
+let specB64 = '';
+
+if (show) {
+  // Strip query string and trailing slash; replace path params with {p}
+  // so {logId} in MDX matches {auditLogId} in the spec.
+  const normalizeId = (m: string, p: string): string => {
+    const clean = p.split('?')[0].replace(/\/+$/, '').replace(/\{[^}]+\}/g, '{p}');
+    return `${m}-${clean.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
+  };
+
+  const id = normalizeId(method, rawPath);
+  const allEndpoints = await getCollection('api-endpoints');
+  const endpointMap = new Map(allEndpoints.map(e => [e.id, e]));
+  const endpoint = endpointMap.get(id);
+  const baseSpec = endpointMap.get('base-spec');
+
+  if (!endpoint || !baseSpec) {
+    recordMissing(method, rawPath, Astro.url.pathname);
+  } else {
+    function findRefs(obj: any, refs = new Set<string>()): Set<string> {
+      if (!obj || typeof obj !== 'object') return refs;
+      if (Array.isArray(obj)) {
+        for (const item of obj) findRefs(item, refs);
+      } else {
+        if (obj['$ref'] && typeof obj['$ref'] === 'string') refs.add(obj['$ref']);
+        for (const key in obj) findRefs(obj[key], refs);
+      }
+      return refs;
+    }
+
+    function extractUsedComponents(operation: any, fullComponents: any): any {
+      if (!fullComponents) return {};
+      const isolated: any = {};
+      if (fullComponents.securitySchemes) isolated.securitySchemes = fullComponents.securitySchemes;
+      const processed = new Set<string>();
+      const queue = Array.from(findRefs(operation)) as string[];
+      while (queue.length > 0) {
+        const ref = queue.shift()!;
+        if (!ref || processed.has(ref)) continue;
+        processed.add(ref);
+        const parts = ref.replace('#/components/', '').split('/');
+        if (parts.length === 2) {
+          const [type, name] = parts;
+          if (fullComponents[type]?.[name]) {
+            if (!isolated[type]) isolated[type] = {};
+            isolated[type][name] = fullComponents[type][name];
+            findRefs(fullComponents[type][name]).forEach((r: string) => queue.push(r));
+          }
+        }
+      }
+      return isolated;
+    }
+
+    const isolatedSpec = {
+      ...baseSpec.data,
+      components: extractUsedComponents(endpoint.data.operation, baseSpec.data.components),
+      paths: { [endpoint.data.path]: { [endpoint.data.method]: endpoint.data.operation } },
+      servers: LOCAL_SERVERS,
+    };
+
+    // JSON.stringify preserves Unicode as UTF-8; atob decodes base64 as Latin-1 and corrupts it.
+    // Escape non-ASCII to \uXXXX first so the JSON is ASCII-safe.
+    const safeJson = JSON.stringify(isolatedSpec).replace(
+      /[^\x00-\x7F]/g,
+      c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')
+    );
+    specB64 = Buffer.from(safeJson).toString('base64');
+  }
+}
+import Details from 'astro-better-details/Details.astro';
+---
+
+{specB64 && (
+  <Details title="OpenAPI Spec" data-markdown-ignore>
+    <div hidden class="scalar-spec-data" data-spec={specB64}></div>
+    <div class="scalar-mount" style="min-height: 4px;"></div>
+  </Details>
+)}
+
+<script>
+  import { buildOperationSrcdoc } from 'src/tools/docs/scalar';
+
+  // Capture phase because toggle doesn't bubble.
+  document.addEventListener('toggle', (e: Event) => {
+    const details = e.target as HTMLDetailsElement;
+    if (!details.open) return;
+    const mount = details.querySelector('.scalar-mount') as HTMLElement | null;
+    const dataEl = details.querySelector('.scalar-spec-data') as HTMLElement | null;
+    if (!mount || !dataEl || mount.querySelector('iframe')) return;
+
+    const isDark = document.documentElement.classList.contains('dark') ||
+                   document.documentElement.getAttribute('data-theme') === 'dark';
+    const specJson = atob(dataEl.dataset.spec ?? '');
+    const iframe = document.createElement('iframe');
+    iframe.srcdoc = buildOperationSrcdoc(specJson, isDark);
+    iframe.style.cssText = 'width:100%;height:600px;border:none;border-radius:8px;overflow-y:auto;background:transparent;display:block;';
+    iframe.title = 'OpenAPI Spec';
+    mount.style.minHeight = '';
+    mount.appendChild(iframe);
+  }, true);
+</script>

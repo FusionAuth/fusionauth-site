@@ -1,0 +1,107 @@
+services:
+
+## FUSIONAUTH ####################
+  db:
+    image: postgres:16.0-bookworm
+    container_name: faDb
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - db_net
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  fusionauth:
+    image: fusionauth/fusionauth-app:latest
+    container_name: fa
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
+      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      FUSIONAUTH_APP_INSTALLATION_SOURCE: fusionauth-quickstart-wordpress-web
+      FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
+      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
+      FUSIONAUTH_APP_RUNTIME_MODE: ${FUSIONAUTH_APP_RUNTIME_MODE}
+      FUSIONAUTH_APP_URL: http://fusionauth:9011
+    networks:
+      - db_net
+      - wp
+    ports:
+      - 9011:9011
+    volumes:
+      - fusionauth_config:/usr/local/fusionauth/config
+      - ./kickstart:/usr/local/fusionauth/kickstart
+
+## WORDPRESS ####################
+  wpdb:
+    image: mysql:9.7
+    container_name: wpDb
+    platform: linux/amd64
+    networks:
+      - wp
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_DATABASE: mysite
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+    volumes:
+      - wpdb:/var/lib/mysql
+
+  wp:
+    image: wordpress:7.0
+    container_name: wp
+    platform: linux/amd64
+    depends_on:
+      - wpdb
+      - fusionauth
+    networks:
+      - wp
+    ports:
+      - 3000:80
+    environment:
+      WORDPRESS_DB_HOST: wpdb
+      WORDPRESS_DB_USER: admin
+      WORDPRESS_DB_PASSWORD: password
+      WORDPRESS_DB_NAME: mysite
+    volumes:
+      - wp:/var/www/html
+
+  cli:
+    image: wordpress:cli-2.12-php8.3
+    container_name: wpCli
+    command: ["tail", "-f", "/dev/null"]
+    user: "33:33"
+    environment:
+      WORDPRESS_DB_HOST: wpdb
+      WORDPRESS_DB_USER: admin
+      WORDPRESS_DB_PASSWORD: password
+      WORDPRESS_DB_NAME: mysite
+    volumes:
+      - wp:/var/www/html
+    network_mode: service:wp
+
+networks:
+  db_net:
+    driver: bridge
+  wp:
+    driver: bridge
+
+volumes:
+  db_data:
+  fusionauth_config:
+  wp:
+  wpdb:

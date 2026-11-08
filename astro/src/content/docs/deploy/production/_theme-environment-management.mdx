@@ -1,0 +1,53 @@
+When you move a theme from one environment to another, the templates and styles usually stay the same. The asset locations often differ, such as the hostname that serves images and CSS.
+
+Theme templates can only read [the documented template variables](/docs/theme/advanced-themes/template-variables). FusionAuth doesn't resolve environment variables in theme templates. To use different asset locations in each environment, choose one of these options:
+
+* Set variables when you build the theme. In the [Helpers](/docs/theme/advanced-themes/helpers) template, set each variable with the [`assign`](https://freemarker.apache.org/docs/ref_directive_assign.html) directive. Other templates can then use the variables. To generate the Helpers template for each environment, use a templating language such as Jinja.
+* Store the locations in the **tenant.data** field. Every template can read the `tenant` object, so every template can read the locations.
+
+<Aside type="note">
+You can't edit **tenant.data** in the Admin UI. Set **tenant.data** with the [API](/docs/apis), a [client library](/docs/sdks), or the `data` argument of the Terraform `fusionauth_tenant` resource.
+</Aside>
+
+For example, suppose development assets live at `dev.example.com/assets` and production assets live at `prod.example.com/assets`. To serve each environment's assets with the same theme:
+
+1. In the development Tenant, set the asset locations in **tenant.data**:
+   ```json title="Development Tenant data"
+   {
+     "tenant" : {
+       "data" : {
+         "themes": {
+            "asset_base_url" : "dev.example.com/assets",
+            "css_base_url" : "cdn-dev.example.com"
+         }
+       }
+     }
+   }
+   ```
+1. In the production Tenant, set the production locations:
+   ```json title="Production Tenant data"
+   {
+     "tenant" : {
+       "data" : {
+         "themes": {
+            "asset_base_url" : "prod.example.com/assets",
+            "css_base_url" : "cdn-prod.example.com"
+         }
+       }
+     }
+   }
+   ```
+1. In the theme templates, reference images with `${tenant.data.themes.asset_base_url}` and CSS files with `${tenant.data.themes.css_base_url}`:
+   ```ftl title="Template that uses the asset locations"
+   <html>
+     <head>
+       <link rel="stylesheet" href="${tenant.data.themes.css_base_url}/css/font-awesome.min.css"/>
+       <link rel="stylesheet" href="${tenant.data.themes.css_base_url}/css/app.css"/>
+     </head>
+     <body>
+       <img src="${tenant.data.themes.asset_base_url}/logo.png" />
+       ...
+       <img src="${tenant.data.themes.asset_base_url}/other_image.png" />
+     </body>
+   </html>
+   ```

@@ -1,0 +1,40 @@
+---
+import { Marked } from "marked";
+import Prism from "prismjs";
+import loadLanguages from "prismjs/components/index.js";
+import components from "prismjs/components.js";
+import { readLocalFile } from 'src/utils/localFileReader';
+
+export interface Props {
+  /**
+   * File path relative to extractedcode (source) or src/generated-code-snippets (snippet).
+   * Snippet paths contain ".snippet." in the filename.
+   */
+  src: string;
+}
+
+const { src } = Astro.props as Props;
+const marked = new Marked({
+  renderer: {
+    code({ text, lang }) {
+      const language = (lang || '').trim().split(/\s+/)[0];
+      const supported = Object.entries(components.languages).some(([name, config]) =>
+        name === language || (typeof config === 'object' && [config.alias].flat().includes(language))
+      );
+
+      if (!supported) return false; // Let Marked escape unsupported or unlabelled code.
+      if (!Prism.languages[language]) loadLanguages(language);
+
+      const grammar = Prism.languages[language];
+      if (!grammar) return false;
+      const highlighted = Prism.highlight(text, grammar, language);
+      return `<pre><code class="language-${language}">${highlighted}</code></pre>`;
+    }
+  }
+});
+const html = marked.parse(readLocalFile(src));
+---
+
+<article>
+  <Fragment set:html={html} />
+</article>

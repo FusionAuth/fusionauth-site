@@ -1,15 +1,29 @@
 ---
+import { Admonition } from 'astro-better-admonitions';
+import type { AdmonitionTypeConfig } from 'astro-better-admonitions';
+
 interface Props {
-  since: string
+  since: string;
 }
 
 const { since }: Props = Astro.props;
-const hasContent = Astro.slots.has("default");
+
+if (!since) throw new Error('No since field');
+
+// block titles are flex, so the title gets wrapped in one element to keep the space before the version
+const hasDetail = Astro.slots.has('default');
+
+const DEPRECATED_SINCE_TYPE: Record<string, AdmonitionTypeConfig> = {
+  'deprecated-since': { label: 'Deprecated since', color: '#dc2626' },
+};
 ---
-{ since && <span class='text-red-700 italic'>Deprecated since {since}</span>
-<Fragment>
-  {hasContent &&
-    <div class="prose-p:mt-1"><slot></slot></div>
-  }
-</Fragment>
-}
+
+<Admonition
+  type="deprecated-since"
+  types={DEPRECATED_SINCE_TYPE}
+  display={hasDetail ? 'block' : 'inline'}
+  titleBold={hasDetail}
+>
+  <Fragment slot="title">{hasDetail ? <div>Deprecated since <code>{since}</code></div> : <>Deprecated since <code>{since}</code></>}</Fragment>
+  {hasDetail && <slot />}
+</Admonition>

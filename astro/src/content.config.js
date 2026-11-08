@@ -1,6 +1,48 @@
-import { defineCollection } from 'astro:content';
-import {file, glob} from 'astro/loaders';
-import { z } from 'astro/zod';
+import { defineCollection, z } from 'astro:content';
+import { file, glob } from 'astro/loaders';
+import { load as yamlLoad } from 'js-yaml';
+import fs from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
+
+const CACHE_DIR = path.join(process.cwd(), '.content-cache');
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const STALE_LIMIT_MS = 7 * 24 * 60 * 60 * 1000; // older than this, a failed fetch fails the build instead of serving stale data
+
+function readCache(cacheFile) {
+  try {
+    const age = Date.now() - fs.statSync(cacheFile).mtimeMs;
+    if (age < CACHE_TTL_MS) return fs.readFileSync(cacheFile, 'utf-8');
+  } catch { /* file missing or unreadable — treat as cache miss */ }
+  return null;
+}
+
+async function fetchWithCache(url, cacheFile) {
+  const cached = readCache(cacheFile);
+  if (cached) return cached;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    const text = await res.text();
+    fs.mkdirSync(CACHE_DIR, { recursive: true });
+    // tmp + rename so a killed build can't leave a truncated file that still looks fresh
+    fs.writeFileSync(`${cacheFile}.tmp`, text, 'utf-8');
+    fs.renameSync(`${cacheFile}.tmp`, cacheFile);
+    return text;
+  } catch (err) {
+    let stale;
+    try {
+      const age = Date.now() - fs.statSync(cacheFile).mtimeMs;
+      if (age < STALE_LIMIT_MS) stale = fs.readFileSync(cacheFile, 'utf-8');
+      else console.error(`[content] Cached copy of ${url} is ${Math.round(age / 86400000)} days old, too stale to use`);
+    } catch { /* no stale cache available */ }
+    if (stale !== undefined) {
+      console.warn(`[content] Fetch failed for ${url}, using stale cache: ${err.message}`);
+      return stale;
+    }
+    throw err;
+  }
+}
 
 const releasesCollection = defineCollection({
   loader: glob({
@@ -26,15 +68,20 @@ const articlesCollection = defineCollection({
     author: z.string().optional(),
     canonicalUrl: z.string().optional(),
     cta: z.string().optional(),
+    datePublished: z.date().optional(),
     description: z.string(),
     disableTOC: z.boolean().default(false),
     excludeFromNav: z.boolean().default(false),
     htmlTitle: z.string().optional(),
+    markdownTitle: z.string().optional(),
     icon: z.string().optional(),
     darkIcon: z.string().optional(),
     order: z.number().default(1000),
+    section: z.string().optional(),
+    tags: z.string().optional(),
     title: z.string(),
     featured: z.boolean().default(false),
+    enableKapa: z.boolean().optional(),
   }),
 });
 
@@ -55,12 +102,22 @@ const docsCollection = defineCollection({
     ),
     canonicalUrl: z.string().optional(),
     htmlTitle: z.string().optional(),
-    sidenavTitle: z.string().optional(),
-    nestedHeadings: z.boolean().optional(),
+    markdownTitle: z.string().optional(),
     disableTOC: z.boolean().default(false),
+    tags: z.string().optional(),
+    route: z.boolean().default(true),
     order: z.number().default(1000),
-    idpDisplayName: z.string().optional(),
-    sideNavSimple: z.boolean().default(false),
+    hideBgImage: z.boolean().optional(),
+    rssUrl: z.string().optional(),
+    enableKapa: z.boolean().optional(),
+    icon: z.string().optional(),
+    darkIcon: z.string().optional(),
+    cardImage: z.string().optional(),
+    excludeFromNav: z.boolean().default(false),
+    sectionIndex: z.boolean().default(false),
+    next: z.string().optional(),
+    prev: z.string().optional(),
+    relatedPinFirst: z.string().optional(),
   }),
 });
 
@@ -80,17 +137,18 @@ const blogCollection = defineCollection({
         { message: "Description must end with punctuation" }
     ),
     htmlTitle: z.string().optional(),
+    markdownTitle: z.string().optional(),
     image: z.string().optional(),
+    ogImage: z.string().optional(),
     authors: z.string().optional(), // comma-separated string
     categories: z.string().optional(), // comma-separated string
     tags: z.string().optional(), // comma-separated string
     publish_date: z.date(),
     updated_date: z.date().optional(),
-    featured_tag: z.string().optional(),
-    featured_category: z.string().optional(),
     excerpt_separator: z.string().optional(),
     canonicalUrl: z.string().optional(),
     blurb: z.string().optional(),
+    enableKapa: z.boolean().optional(),
   }),
 });
 
@@ -102,6 +160,58 @@ const jsonCollection = defineCollection({
   })
 })
 
+const directDownloadVersions = defineCollection({
+  loader: async () => {
+    const text = await fetchWithCache(
+      'https://account.fusionauth.io/api/version',
+      path.join(CACHE_DIR, 'versions.json')
+    );
+    const data = JSON.parse(text);
+
+    return data.versions.reverse().map((version) => ({
+      id: version.replace(/\./g, '_'),
+      version: version,
+      mVersion: version.replace(/-/g, '.'),
+      releaseNotesLink: `/docs/release-notes#version-${version.replace(/\./g, '-')}`
+    }));
+  },
+  schema: z.object({
+    id: z.string(),
+    version: z.string(),
+    mVersion: z.string(),
+    releaseNotesLink: z.string()
+  })
+});
+
+const apiEndpoints = defineCollection({
+  loader: {
+    name: 'openapi-endpoints',
+    load: async ({ store }) => {
+      // committed copy, also served as-is at /docs/openapi.yaml; refresh with scripts/update_openapi_spec.sh
+      const file = fs.readFileSync(path.join(process.cwd(), 'public/docs/openapi.yaml'), 'utf-8');
+
+      const spec = yamlLoad(file);
+
+      store.set({
+        id: 'base-spec',
+        data: { openapi: spec.openapi, info: spec.info, servers: spec.servers, components: spec.components }
+      });
+
+      for (const [endpointPath, methods] of Object.entries(spec.paths)) {
+        for (const [method, operation] of Object.entries(methods)) {
+          if (['parameters', 'servers', '$ref', 'summary', 'description'].includes(method)) continue;
+
+          // Normalize path-param names to {p} so {userId} and {id} map to the same ID.
+          // This lets the MDX docs use different param names than the spec without missing.
+          const normalizedPath = endpointPath.replace(/\{[^}]+\}/g, '{p}');
+          const id = `${method}-${normalizedPath.replace(/[^a-zA-Z0-9]/g, '-')}`.toLowerCase();
+          store.set({ id, data: { path: endpointPath, method, operation } });
+        }
+      }
+    }
+  }
+});
+
 const glossaryCollection = defineCollection({
   loader: file('src/data/glossary.json'),
   schema: z.object({
@@ -111,7 +221,7 @@ const glossaryCollection = defineCollection({
     aliases: z.array(z.string()).optional(),
     abbreviations: z.array(z.string()).optional(),
   })
-})
+});
 
 export const collections = {
   'docs': docsCollection,
@@ -119,5 +229,7 @@ export const collections = {
   'releases': releasesCollection,
   'json': jsonCollection,
   'blog': blogCollection,
+  'direct-download-versions': directDownloadVersions,
+  'api-endpoints': apiEndpoints,
   'glossary': glossaryCollection,
 };

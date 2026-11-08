@@ -1,0 +1,1 @@
+Your ${(method.method == "sms")?then("SMS", method.method)} two-factor authentication method[#if method.name?has_content], ${method.name},[/#if] was removed from ${user.phoneNumber} by your administrator. Contact your administrator if you have questions.

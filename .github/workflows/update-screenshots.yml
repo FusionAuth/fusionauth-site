@@ -1,0 +1,113 @@
+name: Update screenshots
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      threshold:
+        description: differing-pixel ratio that counts as a real change
+        required: false
+        default: '0.002'
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            astro/package-lock.json
+            astro/screenshots/package-lock.json
+
+      - name: Install site modules
+        run: npm ci
+        working-directory: ./astro
+
+      - name: Install screenshots CLI
+        run: npm ci
+        working-directory: ./astro/screenshots
+
+      # script exits 0 when unchanged, 2 when there's something to review, else failed
+      - name: Regenerate and compare
+        id: refresh
+        run: |
+          set +e
+          scripts/refresh-screenshots.sh --threshold "${{ inputs.threshold || '0.002' }}" 2>&1 | tee "$RUNNER_TEMP/refresh.log"
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -gt 2 ]; then exit "$status"; fi
+          if [ "$status" -eq 1 ]; then exit 1; fi
+          echo "changed=$([ "$status" -eq 2 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+        env:
+          FUSIONAUTH_LICENSE_KEY: ${{ secrets.FUSIONAUTH_LICENSE_KEY }}
+
+      - name: Upload diff images
+        if: steps.refresh.outputs.changed == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshot-diffs
+          path: astro/.screenshot-diffs/
+          if-no-files-found: ignore
+
+      - name: Open PR with updated screenshots
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          BRANCH="screenshots/auto-update-$(date +%Y-%m-%d)"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add astro/public/img/docs/screenshots/
+          git commit -m "chore: update screenshots $(date +%Y-%m-%d)"
+
+          # a rerun on the same day refreshes that day's open PR rather than opening a second one
+          if [ "$(gh pr list --head "$BRANCH" --state open --json number --jq length)" -gt 0 ]; then
+            git push --force origin "$BRANCH"
+            echo "Updated the open PR for $BRANCH."
+            exit 0
+          fi
+          git push --force origin "$BRANCH"
+
+          {
+            printf 'Screenshot refresh. Only images whose pixel diff exceeded the tolerance are included; anything within tolerance was reverted to the committed version. Diff images are in the `screenshot-diffs` artifact of [this run](%s).\n\n' "$RUN_URL"
+            printf '### Changed files\n\n'
+            git diff --name-only HEAD~1 HEAD | sed 's/^/- /'
+            printf '\n### Comparison\n\n```\n'
+            sed -n '/^Comparing /,$p' "$RUNNER_TEMP/refresh.log"
+            printf '```\n'
+          } > "$RUNNER_TEMP/pr-body.md"
+          cat "$RUNNER_TEMP/pr-body.md"
+
+          # a branch without its PR would leave the failure issue pointing at an orphan
+          if ! gh pr create --base main --head "$BRANCH" --label "screenshots" \
+            --title "chore: update screenshots $(date +%Y-%m-%d)" --body-file "$RUNNER_TEMP/pr-body.md"; then
+            git push origin --delete "$BRANCH"
+            exit 1
+          fi
+
+      - name: No changes
+        if: steps.refresh.outputs.changed == 'false'
+        run: echo "All screenshots within tolerance -- no PR needed."
+
+  report:
+    needs: update
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/report-scheduled-run.yml
+    with:
+      result: ${{ needs.update.result }}
+    permissions:
+      contents: read
+      issues: write

@@ -9,8 +9,6 @@ categories: Education
 tags: oauth, scopes, apis, api design, permissions
 excerpt_separator: "{/* more */}"
 ---
-import Aside from 'src/components/Aside.astro';
-import RemoteCode from 'src/components/RemoteCode.astro';
 
 OAuth scopes allow your users to grant permission to data held by you to third-party applications. As APIs become more common, and especially with the growth of agentic AI, proper security and consents around data access become more and more critical.
 
@@ -114,13 +112,13 @@ sequenceDiagram
     participant User as Logged In User/Browser
     participant App as Client App
     participant FusionAuth
-    participant APIs 
+    participant APIs
 
     User ->> App : Requests Login Page
     App ->> User : Redirects To FusionAuth Authorize URL With Needed Scopes
     User ->> FusionAuth : Requests Login Page
     FusionAuth ->> User : Returns Login Page
-    User ->> FusionAuth : Authenticates 
+    User ->> FusionAuth : Authenticates
     FusionAuth ->> FusionAuth : Validates Credentials
     FusionAuth ->> User : Displays Consent Page
     User ->> FusionAuth : Accepts Consents
@@ -333,7 +331,7 @@ Clearly document the scopes and how to use them. In the documentation, include:
 
 Given the relative unfamiliarity of some developers with OAuth grants, document OAuth basics too. Show them how to add one or more scopes to the authorization URL this this (newlines for clarity only):
 
-```
+```ftl
 ${fusionAuthURL}/oauth2/authorize?client_id=${clientId}
   &response_type=code
   &redirect_uri={redirectURI}
@@ -387,19 +385,36 @@ You'll need to be more communicative if you are removing a scope entirely than i
 
 Let's talk a bit about what the API or service that gets an access token containing a scope needs to do. APIs must check scopes correctly when responding to a request. Here's a few example routes from a fictitious Changebank API which check for scopes.
 
-<RemoteCode lang="javascript"
-            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-api-consents-platform/refs/heads/main/changebank-apis/routes/index.js"
-            title="Example Changebank API routes" 
-            tags="routes"
-            />
+```javascript title="Example Changebank API routes"
+router.get('/read-balance', hasScope('accounts.read'), function (req, res, next) {
+  res.json({ balance: 42 });
+});
+router.post('/make-transfer', hasScope('transfers.write'), function (req, res, next) {
+  const amount = req.query.newbalance;
+
+  // update balance
+
+  res.json({ message: "ok"});
+});
+```
 
 The `hasScope` method looks like this:
 
-<RemoteCode lang="javascript"
-            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-api-consents-platform/refs/heads/main/changebank-apis/services/hasScope.js"
-            title="The hasScope logic" 
-            tags="hasScope"
-            />
+```javascript title="The hasScope logic"
+function hasScope(scope) {
+  return (req, res, next) => {
+    const decodedToken = jose.decodeJwt(req.verifiedToken);
+    let scopes = []
+    if (decodedToken.scope) {
+      // need to check array, not string, to avoid partial matches
+      scopes = decodedToken.scope.split(" ");
+    }
+    if (scopes.includes(scope)) return next();
+    res.status(403);
+    res.send({ error: `You do not have permissions to do this.` });
+  }
+}
+```
 
 Don't forget to sanitize user input. Since scopes are part of a URL that is displayed in the browser, a nefarious user or client can modify them before making the authorization request. Make sure your application handles unexpected scopes, whether policy prohibits them for a certain third-party application or whether they are completely unknown. 
 
@@ -458,7 +473,7 @@ There are many other platforms whose scope design you can review to determine wh
 
 These include:
 
-* [Coinbase](https://docs.cdp.coinbase.com/coinbase-app/docs/auth/oauth-scopes)
+* [Coinbase](https://docs.cdp.coinbase.com/coinbase-app/oauth2-integration/scopes)
 * [Dropbox](https://developers.dropbox.com/oauth-guide)
 * [Facebook](https://developers.facebook.com/docs/permissions)
 * [GitHub](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps) example of hierarchical scopes
@@ -466,7 +481,7 @@ These include:
 * [Microsoft](https://learn.microsoft.com/en-us/entra/identity-platform/scopes-oidc)
 * [Salesforce](https://help.salesforce.com/s/articleView?id=xcloud.remoteaccess_oauth_tokens_scopes.htm&type=5)
 * [Spotify](https://developer.spotify.com/documentation/web-api/concepts/scopes)
-* [X/Twitter](https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code#scopes) - illustrates rate limits
+* [X/Twitter](https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code#scopes) - illustrates rate limits
 * [Yahoo](https://developer.yahoo.com/oauth2/guide/openid_connect/getting_started.html)
 
 ## Related RFCs
@@ -475,7 +490,7 @@ As mentioned above, scopes are a string, though you can add additional structure
 
 The [Rich Authorization Requests (RAR)](https://datatracker.ietf.org/doc/html/rfc9396) RFC, released in 2023, addresses this limitation by adding a new request parameter: `authorization_details`. This parameter contains JSON and therefore has a rich structure.
 
-The exact structure of this parameter is undefined, other than a mandatory `type` field which specifies the type of the request. The RFC also outlines optional fields to handle common authorization needs, such as:
+The exact structure of this parameter is undefined, other than a mandatory **type** field which specifies the type of the request. The RFC also outlines optional fields to handle common authorization needs, such as:
 
 * `locations`: the location or locations of the consuming API (the Changebank APIs in the example above)
 * `actions`: the action or actions the client application is trying to take
@@ -498,6 +513,6 @@ When you are designing scopes, remember:
 
 When designed thoughtfully, scopes help third-party developers request data and functionality and enhance your users' experiences. Scopes are a standardized part of OAuth and one component of a solid foundation on which to build a platform.
 
-If you'd like to read more about how to use FusionAuth to manage scopes, capture user consent and build out your platform, [check out the API Consents Platform use case](/docs/get-started/use-cases/api-consents-platform) and this [blog post](/blog/custom-scopes-in-third-party-applications).
+If you'd like to read more about how to use FusionAuth to manage scopes, capture user consent and build out your platform, [check out the API Consents Platform use case](/docs/concepts/patterns/api-consents-platform) and this [blog post](/blog/custom-scopes-in-third-party-applications).
 
 > _Enhance your platform's security with well-designed OAuth scopes. [Schedule a demo](/contact) to see FusionAuth's capabilities._

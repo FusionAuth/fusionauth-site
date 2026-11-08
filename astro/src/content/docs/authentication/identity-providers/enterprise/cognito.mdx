@@ -1,0 +1,133 @@
+---
+title: Add a OpenID Connect with Cognito IdP
+description: Set up user login using Cognito as an OpenID Connect Identity Provider.
+tags: amazon cognito, aws cognito, openid connect, aws identity provider, oidc cognito, cognito login, social login
+---
+import {Content as IdentityProviderOverviewDiagram} from 'src/content/docs/_shared/_identity-provider-overview-diagram.mdx';
+import LinkOnEmailNote from 'src/content/docs/authentication/identity-providers/social/_link-on-email-note.mdx';
+
+<LinkOnEmailNote />
+
+Once you have completed this configuration, you can have an OpenID Connect <Breadcrumb>Login with Cognito</Breadcrumb> button for one or more FusionAuth Applications.
+
+<Screenshot id="idp-login-cognito" url="/oauth2/authorize?client_id=00000000-0000-0000-0000-f20000000001&response_type=code&redirect_uri=https%3A%2F%2Fpiperchat.piedpiper.com%2Foauth-redirect&prompt=login" alt="Login with Cognito" />
+
+<IdentityProviderOverviewDiagram identity_provider_name="Cognito" />
+
+<Aside type="note">
+These instructions are for the new Cognito interface. Make sure you are using the "new console" user interface option. [Learn more](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-console.html).
+</Aside>
+
+## Register a Cognito User Pool
+
+If you're interested in connecting to Cognito, it is likely that you already have a user pool set up that you'd want to connect to. We're adding the steps to create a new user pool in this guide in the interest of completeness, or in case you would like to set up a test user pool. You can refer to the [getting started with Cognito user pools](https://docs.aws.amazon.com/cognito/latest/developerguide/getting-started-with-cognito-user-pools.html) documentation for additional reference.
+
+You will first need to log in to [AWS](https://aws.amazon.com).
+
+Once logged in, search for `Cognito` in the main search field, and select the `Cognito` service.
+
+- Choose the region you'd like the user pool to reside in from the top right region indicator dropdown.
+- Click <Breadcrumb>Create a user pool</Breadcrumb>.
+- Select the pool sign-in options for Step 1. In this example, we'll use email.
+- Review the configurations for Step 2 up to Step 4 to make sure they conform to your needs.
+- Give the pool a name in Step 5.
+- Make sure the checkbox to use hosted authentication pages is checked.
+- Choose a domain for the user pool.
+
+### Creating a User Pool App Client With a New Pool
+
+To enable FusionAuth to access the user pool, we need to set up an app client on Cognito. See [Cognito: Configuring a user pool app client](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-client-apps.html) for additional reference.
+
+To create the client, in your new user pool, under **Initial app client** on Step 5, set the app type to `confidential`.
+
+- Give the client a name. We've used `FusionClient`.
+- Set the **Callback URL** to `https://YOUR_FUSIONAUTH_URL/oauth2/callback` under <Breadcrumb>Allowed callback URLs</Breadcrumb>; for example `https://auth.piedpiper.com/oauth2/callback`.
+- Under <Breadcrumb>Authentication flows</Breadcrumb> in the **Advanced app client settings** make sure the `ALLOW_USER_PASSWORD_AUTH` auth flow is selected.
+- Check the box for your app name under **Identity Providers**.
+- Select <Breadcrumb>Authorization code grant</Breadcrumb> under **OAuth 2.0 grant types**.
+- Under **OpenID Connect scopes** select `OpenID`.
+- Review the attribute read and write permissions and then click <Breadcrumb>Next</Breadcrumb> to review the user pool configuration details.
+- Scroll down and click <Breadcrumb>Create user pool</Breadcrumb>.
+- Once the user pool is created, click on the user pool's name and scroll to the <Breadcrumb>App clients and analytics</Breadcrumb> section.
+- Open the created app client and record both the `Client ID` and `Client Secret`, which can be revealed by toggling the <Breadcrumb>Show client secret</Breadcrumb> button.
+
+The user pool and app client are now created.
+
+## Adding an App Client To an Existing Pool
+
+The existing pool must have a Hosted UI domain available and the hosted authentication pages enabled.
+
+Navigate to the <Breadcrumb>App integration</Breadcrumb> tab and go to the <Breadcrumb>App client list</Breadcrumb> section. Select `Create app client`.
+
+- Select the `Confidential Client` type.
+- Give the client a name. We've used `FusionClient`.
+- Under <Breadcrumb>Authentication flows</Breadcrumb> in the <Breadcrumb>Advanced app client settings</Breadcrumb> make sure the `ALLOW_USER_PASSWORD_AUTH` auth flow is selected.
+- In the <Breadcrumb>Hosted UI settings</Breadcrumb> section, set the **Callback URL** to `https://YOUR_FUSIONAUTH_URL/oauth2/callback` under <Breadcrumb>Allowed callback URLs</Breadcrumb>; for example `https://auth.piedpiper.com/oauth2/callback`.
+- Select `Authorization code grant` under **OAuth 2.0 grant types**.
+- Under **OpenID Connect scopes** select `OpenID`. You may select others.
+- Review the attribute read and write permissions and then click <Breadcrumb>Create app client</Breadcrumb>.
+
+Next, you can open the created app client and record both the `Client ID` and `Client Secret`, which can be revealed by toggling the <Breadcrumb>Show client secret</Breadcrumb> button.
+
+## Adding a Test User
+
+The next step in either case is adding a test user.
+
+- Open the user pool and under the <Breadcrumb>Users</Breadcrumb> tab, click <Breadcrumb>Create user</Breadcrumb>.
+- Create a user, filling out all the form fields. Make sure to record the email address and the password.
+- Click the <Breadcrumb>Create user</Breadcrumb> button.
+
+
+## Configure a New FusionAuth OpenID Connect Identity Provider
+
+Although FusionAuth doesn't include an Cognito identity provider, the OpenID Connect identity provider works as Cognito supports the standard OpenID Connect protocols.
+
+Navigate to your FusionAuth instance. Select <Breadcrumb>Settings</Breadcrumb> from the sidebar and then <Breadcrumb>Identity Providers</Breadcrumb>.
+
+Select <Breadcrumb>Add OpenID Connect</Breadcrumb> from the <Breadcrumb>Add</Breadcrumb> dropdown at the top right of the page.
+
+<Screenshot id="idp-add-menu-openid-connect" url="/admin/identity-provider/" height={1000} alt="Create a new OpenID integration">
+  <Highlight selector="[data-hl='idp-menu-item']" />
+</Screenshot>
+
+- Provide a **Name**, like `Cognito`.
+- Set **Client Id** to the **App Client Id** recorded when creating the app client on Cognito.
+- Select `HTTP Basic Authentication` for the **Client Authentication** field.
+- Set the **Client secret** to the app client secret recorded when creating the app client on Cognito.
+- Enable **Discover endpoints**
+- Use the following as the **Issuer** URL:
+
+```sh title="The Issuer URL"
+https://cognito-idp.<REGION>.amazonaws.com/<USER_POOL_ID>/
+```
+
+Replace **`<REGION>`** with the AWS region code, such as `us-east-2`, in which you created your Cognito user pool. This can be found by selecting the region indicator at the top right of the menu bar and recording the region code displayed alongside the region location.
+
+Replace **`<USER_POOL_ID>`** with the Cognito user pool Id. You can find this by clicking on your user pool. This will be something like `us-east-2_cbVy`.
+
+![User Pool Id in Cognito](/img/docs/lifecycle/authenticate-users/identity-providers/social/cognito-user-pool-id.png)
+
+Set **Button Text** to `Login with Cognito`. You can also add a URL to a Cognito icon for the button icon if you wish.
+
+<LinkOnEmailNote />
+
+Set the **Scope** field to `openid`. Choose a **Linking Strategy** of `Link on email. Create the user if they do not exist`. This will create the user if they don't exist. You may also choose a different linking strategy; see [Linking Strategies for more options](/docs/authentication/identity-providers/#linking-strategies).
+
+Choose `No Lambda` for the **Reconcile Lambda** field. If you want to examine or modify the response of the Cognito authentication event and modify the user based on that, you can [create a lambda](/docs/lambdas/) and assign it here.
+
+Then, choose the applications for which you would like the Cognito sign-in to be available and enable them. You can also create a FusionAuth registration for each application on successful authentication.
+
+Once you are done, you should have a configuration similar to this:
+
+<Screenshot id="idp-cognito-edit" url="/admin/identity-provider/edit/OpenIDConnect/00000000-0000-0000-0000-f20000000103" height={1300} alt="penID integration settings" />
+
+
+## Testing the Login
+
+To test, navigate to the applications page in FusionAuth. Click on the <Breadcrumb>View</Breadcrumb> icon (magnifying glass) next to the application you enabled Cognito login on and copy the `OAuth IdP login URL` address. Navigate to this address. You should see a `Login with Cognito` option on your app's sign-in page:
+
+<Screenshot id="idp-login-cognito" url="/oauth2/authorize?client_id=00000000-0000-0000-0000-f20000000001&response_type=code&redirect_uri=https%3A%2F%2Fpiperchat.piedpiper.com%2Foauth-redirect&prompt=login" alt="Cognito log in on FusionAuth" />
+
+Click the <Breadcrumb>Login with Cognito</Breadcrumb> button. Test logging in with the username and password for the test user added when creating the user pool on Cognito.
+
+If it is all set up correctly, you should be redirected back to your app, successfully logged in. The user will be added to FusionAuth, and you can examine the <Breadcrumb>Linked accounts</Breadcrumb> section of the user details screen to see that the Cognito OIDC link was created.

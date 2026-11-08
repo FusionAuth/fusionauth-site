@@ -1,0 +1,56 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: auth-example-com-tls
+  namespace: istio-ingress
+spec:
+  secretName: auth-example-com-tls
+  commonName: auth.example.com
+  dnsNames:
+  - auth.example.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: gateway-auth
+  namespace: istio-ingress
+spec:
+  selector:
+    istio: public-ingressgateway
+  servers:
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: auth-example-com-tls
+    hosts:
+    - auth.example.com
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: fusionauth
+  namespace: auth
+spec:
+  hosts:
+  - auth.example.com
+  gateways:
+  - istio-ingress/gateway-auth
+  http:
+  - headers:
+      request:
+        set:
+          X-Forwarded-Port: "443"
+          X-Forwarded-Proto: "https"
+    route:
+    - destination:
+        host: fusionauth
+        port:
+          number: 9011

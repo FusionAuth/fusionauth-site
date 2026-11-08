@@ -1,0 +1,109 @@
+---
+title: DPoP
+htmlTitle: Demonstrating Proof-of-Possession (DPoP)
+description: Learn how DPoP binds FusionAuth access and refresh tokens to a key pair that only your client holds.
+tags: dpop, proof of possession, sender-constrained tokens, token binding, access token, refresh token, oauth, spa, token theft
+sectionIndex: true
+---
+
+<PlanBlurb plan="enterprise" />
+
+<AvailableSince since="1.63.0"/>
+
+FusionAuth issues bearer tokens by default. Anyone who holds a bearer token can use the token. Demonstrating Proof-of-Possession (DPoP) binds a token to a key pair that your client generates. To use a bound token, the client signs a short-lived JWT called a DPoP proof and sends the proof with every request. An attacker who steals a bound token can't use the token without the private key.
+
+FusionAuth implements DPoP as defined in [RFC 9449](https://datatracker.ietf.org/doc/html/rfc9449). FusionAuth acts as the authorization server: FusionAuth checks the proof on token requests and issues bound tokens. Your API acts as the resource server and checks the proof on each request.
+
+To add DPoP to a single-page app, see [Use DPoP In A Browser App](/docs/authentication/oauth/dpop/browser-app). To check DPoP proofs in your API, see [Validate DPoP Requests In Your API](/docs/authentication/oauth/dpop/validate-requests).
+
+## How DPoP Works
+
+The client creates a key pair before the first token request. Each request then carries a new proof signed with the private key. The proof names the HTTP method and URL of the request, so a proof captured from one request doesn't work for another. Requests that carry an access token also include a hash of that access token in the proof.
+
+```mermaid title="The client binds tokens to a key at the token endpoint, then proves possession of the key on each API request."
+sequenceDiagram
+    participant Client
+    participant FusionAuth
+    participant API
+    Note over Client: Generate a key pair
+    Client ->> FusionAuth : Token request with a DPoP proof
+    Note over FusionAuth: Verify the proof<br/>Compute the key thumbprint
+    FusionAuth ->> Client : Access token with cnf.jkt<br/>token_type DPoP
+    Client ->> API : Authorization: DPoP <access token><br/>DPoP: <new proof>
+    Note over API: Verify the proof<br/>Match the key to cnf.jkt
+    API ->> Client : Response
+```
+
+FusionAuth checks the proof signature against the public key in the proof header. FusionAuth then computes the JWK SHA-256 thumbprint of the public key and writes the thumbprint into the access token. Your API compares the thumbprint in the access token with the key in each new proof. A request signed with a different key fails.
+
+## Turn On DPoP
+
+FusionAuth has no DPoP setting. A client opts in by sending a **DPoP** header on a token request. When the request carries a valid proof, FusionAuth binds the tokens. When the request has no proof, FusionAuth issues bearer tokens.
+
+You can't require DPoP for an Application. Without an Enterprise license, a token request that includes a proof fails with a `not_licensed` error.
+
+## What FusionAuth Binds
+
+When a token request includes a valid proof, FusionAuth binds the tokens in the response:
+
+* The access token gets a **`cnf`** claim. The **`jkt`** value is the thumbprint of the public key in the proof.
+* The token response returns `DPoP` as the **`token_type`**.
+* FusionAuth binds the refresh token to the same thumbprint. FusionAuth stores the binding with the refresh token, because a refresh token isn't a JWT.
+
+FusionAuth doesn't bind Id tokens.
+
+A bound access token contains a **`cnf`** claim like the following:
+
+```json
+{
+  "cnf": {
+    "jkt": "0ZcOCORZNYy-DWpqq30jZyJGHTN0d2HglBV3uiguA4I"
+  }
+}
+```
+
+The [Introspect endpoint](/docs/apis/oauth/introspect) also returns the **`cnf`** claim for bound tokens.
+
+### Bind The Authorization Code
+
+By default, FusionAuth binds tokens at the token request. To bind the authorization code too, send the thumbprint of your public key in the `dpop_jkt` parameter of the [Authorize endpoint](/docs/apis/oauth/authorize). FusionAuth then requires a proof from the same key when the client exchanges the code.
+
+## Supported Grants
+
+FusionAuth accepts DPoP proofs on the `/oauth2/token` endpoint for the following grants:
+
+* Authorization code
+* Refresh token
+* Client credentials
+* Password
+* Device code
+
+For the device code grant, send the proof to `/oauth2/device_authorize`. FusionAuth binds the device code to the key, and the token request must carry a proof from the same key. A token request with a proof for a device code issued without a proof fails. Support for DPoP with the device code grant follows a [draft specification](https://datatracker.ietf.org/doc/draft-parecki-oauth-dpop-device-flow/).
+
+The token exchange grant doesn't bind tokens. The token exchange grant also rejects a bound subject token. See [Token Exchange](/docs/authorization/token-exchange).
+
+## Where FusionAuth Accepts A Bound Token
+
+FusionAuth accepts a bound access token with the `DPoP` scheme and a new proof in the following places:
+
+* The `/oauth2/userinfo` endpoint.
+* FusionAuth APIs that support [JWT authentication](/docs/apis/authentication#jwt-authentication).
+* The [Issue A JWT](/docs/apis/jwt/issue-a-jwt) and [Refresh A JWT](/docs/apis/jwt/refresh-a-jwt) APIs. Tokens from these APIs are bound to the key in the proof.
+
+FusionAuth rejects a bound access token sent any other way, including with the `Bearer` or `JWT` scheme or in the `access_token` cookie. The rejection stops an attacker from downgrading a stolen bound token to a bearer token.
+
+FusionAuth applies the same rule to refresh tokens. A bound refresh token requires a proof from the same key. An unbound refresh token rejects any proof, so a client can't bind a bearer session to a new key.
+
+## Proof Requirements
+
+FusionAuth accepts proofs signed with the following algorithms: `Ed448`, `Ed25519`, `ES256`, `ES384`, `ES512`, `PS256`, `PS384`, `PS512`, `RS256`, `RS384`, and `RS512`. The [OpenID Connect discovery document](/docs/apis/oauth/openid-configuration) lists the same algorithms in **`dpop_signing_alg_values_supported`**.
+
+FusionAuth accepts a proof for 10 seconds after the proof's **`iat`** time, plus 15 seconds of clock skew in either direction. For every claim a proof contains, see [Proof Claims](/docs/authentication/oauth/dpop/validate-requests#proof-claims).
+
+## Limitations
+
+FusionAuth doesn't support DPoP nonces. FusionAuth never returns a **DPoP-Nonce** header, and FusionAuth ignores the **`nonce`** claim.
+
+FusionAuth checks that each proof has a **`jti`** claim, but FusionAuth doesn't record **`jti`** values. FusionAuth relies on the short proof lifetime to limit replay. To reject replayed proofs at your API, store **`jti`** values in your API. See [Validate DPoP Requests In Your API](/docs/authentication/oauth/dpop/validate-requests).
+
+DPoP protects a token after theft. DPoP doesn't protect against code running in the user's browser, because that code can ask the client to sign proofs. To compare DPoP with other ways to store tokens in a browser, see [Token Storage](/docs/security/tokens-and-keys/token-storage).

@@ -1,158 +1,355 @@
 import {defineConfig, fontProviders} from 'astro/config';
-import compress from "astro-compress";
+import { existsSync } from 'node:fs';
+import { readFile, writeFile } from 'node:fs/promises';
 import mdx from "@astrojs/mdx";
-import sitemap from "@astrojs/sitemap";
+import { satteri } from '@astrojs/markdown-satteri';
 import tailwindcss from '@tailwindcss/vite';
-import indexPages from "astro-index-pages/index.js";
-import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
-import {codeTitleRemark} from './src/plugins/code-title-remark';
-import * as markdownExtract from './src/plugins/markdown-extract.js';
-import remarkMdx from 'remark-mdx';
-import rehypeSlug from 'rehype-slug';
-import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import linkValidator, { type LinkValidatorOptions } from 'astro-link-validator';
-import { visit } from 'unist-util-visit';
+import indexPages from "./src/integrations/astro-index-pages/index.js";
+import contentChecks from "./src/integrations/content-checks.mjs";
+import genMarkdownPages from 'astro-better-gen-markdown-pages';
+import { mermaidSSR, mermaidTitle } from 'astro-better-mermaid/satteri';
+import linkChecker, { markdownLinkSyntaxChecker } from 'astro-better-link-checker';
 import icon from "astro-iconset";
+import { codeBlocks, shellSession } from 'astro-better-code-blocks/satteri';
+import { extractedCodeSnippets } from 'astro-better-code-snippet-extractor';
+import astroToc from 'astro-better-toc';
+import { openapiSummary } from './src/plugins/openapi-summary.js';
+import { cssPreload } from './src/plugins/css-preload.mjs';
+import { headingLinks } from './src/plugins/satteri-heading-links.mjs';
 
-const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
-
-export const mermaidTitleFix = () => {
-  return (tree) => {
-    visit(tree, 'code', (node, index, parent) => {
-      const meta = node.meta || '';
-      const titleMatch = meta.match(/title=["'](.*?)["']/);
-      
-      if (node.lang === 'mermaid' && titleMatch) {
-        const title = titleMatch[1];
-        const titleNode = {
-          type: 'paragraph',
-          data: {
-            hName: 'p',
-            hProperties: { 'data-title-bottom': title } // Use a unique attr for bottom titles
-          },
-          children: [{ type: 'text', value: title }]
-        };
-
-        // Insert AFTER the code block
-        parent.children.splice(index + 1, 0, titleNode);
-        return index + 2; 
-      } else if (titleMatch) {
-        const title = titleMatch[1];
-        const titleNode = {
-          type: 'paragraph',
-          data: {
-            hName: 'p',
-            hProperties: { 'data-title': title }
-          },
-          children: [{ type: 'text', value: title }]
-        };
-
-        // Inject the title BEFORE the mermaid/code block
-        parent.children.splice(index, 0, titleNode);
-        return index + 2; // Skip the new title and original code block
-      }
-    });
-  };
-};
-
-const lightboxProvider = () => {
+function buildSitemap() {
+  let siteUrl: string;
   return {
-    name: 'mdx-lightbox-provider',
-    enforce: 'post',
-    transform(code, id) {
-      if(!id.endsWith('.mdx')) return;
-      code = `import _LightboxImage from "src/components/LightboxImage.astro";\n${code}`;
-      code = code.replace(
-        "components: { Fragment: _Fragment, ...props.components, },",
-        "components: { Fragment: _Fragment, img: _LightboxImage, ...props.components, },"
-      );
-      return code;
-    }
-  }
+    name: 'build-sitemap',
+    hooks: {
+      'astro:config:done': ({ config }: { config: { site?: string } }) => {
+        siteUrl = (config.site ?? 'https://fusionauth.io').replace(/\/$/, '');
+      },
+      'astro:build:done': async ({ dir, pages }: { dir: URL; pages: { pathname: string }[] }) => {
+        const ioXml = await readFile(new URL('sitemap-io.xml', dir), 'utf-8');
+        const ioUrls = [...ioXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+
+        const docUrls: string[] = [];
+        for (const { pathname } of pages) {
+          if (pathname.startsWith('/landing/') || pathname.endsWith('.md') || pathname === '/404') continue;
+          const p = pathname === '' ? '/' : (pathname.startsWith('/') ? pathname : '/' + pathname);
+          const rel = p === '/' ? 'index.html' : p.slice(1) + '/index.html';
+          const isIndex = existsSync(new URL(rel, dir));
+          docUrls.push(siteUrl + (isIndex ? (p === '/' ? '/' : p + '/') : p));
+        }
+
+        const allUrls = [...new Set([...ioUrls, ...docUrls])].sort();
+        const xml = [
+          '<?xml version="1.0" encoding="UTF-8"?>',
+          '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+          ...allUrls.map(u => `  <url><loc>${u}</loc></url>`),
+          '</urlset>',
+          '',
+        ].join('\n');
+        await writeFile(new URL('sitemap.xml', dir), xml, 'utf-8');
+      },
+    },
+  };
 }
+
+
+const mdxComponentImports =
+  "import APIField from 'src/components/api/APIField.astro';\n" +
+  "import APIBlock from 'src/components/api/APIBlock.astro';\n" +
+  "import API from 'src/components/api/API.astro';\n" +
+  "import AvailableSince from 'src/components/api/AvailableSince.astro';\n" +
+  "import DeprecatedSince from 'src/components/api/DeprecatedSince.astro';\n" +
+  "import RemovedSince from 'src/components/api/RemovedSince.astro';\n" +
+  "import JSON from 'src/components/JSON.astro';\n" +
+  "import Breadcrumb from 'src/components/Breadcrumb.astro';\n" +
+  "import Aside from 'src/components/Aside.astro';\n" +
+  "import LocalValue from 'src/components/LocalValue/LocalValue.astro';\n" +
+  "import PlanBlurb from 'src/components/plan/PlanBlurb.astro';\n" +
+  "import PlanBlurbApi from 'src/components/plan/PlanBlurbApi.astro';\n" +
+  "import If from 'src/components/If.astro';\n" +
+  "import Icon from 'src/components/icon/Icon.astro';\n" +
+  "import IconButton from 'src/components/IconButton.astro';\n" +
+  "import ChildCards from 'astro-better-cards/ChildCards.astro';\n" +
+  "import Card from 'astro-better-cards/Card.astro';\n" +
+  "import CardGrid from 'astro-better-cards/CardGrid.astro';\n" +
+  "import ExtractedCode from 'astro-better-code-snippet-extractor/ExtractedCode.astro';\n" +
+  "import Tabs from 'astro-better-tabs/Tabs.astro';\n" +
+  "import TabItem from 'astro-better-tabs/TabItem.astro';\n" +
+  "import Details from 'astro-better-details/Details.astro';\n" +
+  "import { Steps } from 'astro-better-steps';\n" +
+  "import Table from 'astro-better-tables/Table.astro';\n" +
+  "import Screenshot from 'astro-better-declarative-screenshots/Screenshot.astro';\n" +
+  "import Highlight from 'astro-better-declarative-screenshots/Highlight.astro';\n" +
+  "import MarkdownOnly from 'astro-better-gen-markdown-pages/MarkdownOnly.astro';\n\n";
+
+// inject imports into MDX source before the MDX compiler runs, so that component
+// references compile to direct variable lookups rather than _components map lookups
+const mdxComponentImporter = () => ({
+  name: 'mdx-component-importer',
+  enforce: 'pre' as const,
+  transform(code: string, id: string) {
+    if (!id.endsWith('.mdx')) return;
+
+    // build identifier -> source map for existing imports
+    const declaredMap = new Map<string, string>();
+    const importRe = /^import\s+(?:\{([^}]+)\}|(\w+))\s+from\s+['"]([^'"]+)['"]/gm;
+    let m: RegExpExecArray | null;
+    while ((m = importRe.exec(code)) !== null) {
+      const src = m[3];
+      if (m[2]) {
+        declaredMap.set(m[2], src);
+      } else {
+        m[1].split(',').forEach(s => {
+          const name = s.trim().split(/\s+as\s+/).pop()?.trim();
+          if (name) declaredMap.set(name, src);
+        });
+      }
+    }
+
+    // skip or error per-line depending on whether the conflict is the same source
+    const linesToInject = mdxComponentImports.split('\n').filter(line => {
+      if (!line.startsWith('import')) return true;
+      const nm = line.match(/^import\s+(?:\{([^}]+)\}|(\w+))\s+from\s+['"]([^'"]+)['"]/);
+      if (!nm) return true;
+      const name = nm[2] ?? nm[1]?.trim().split(/\s+as\s+/).pop()?.trim();
+      const autoSrc = nm[3];
+      if (!name || !declaredMap.has(name)) return true;
+
+      const fileSrc = declaredMap.get(name)!;
+      // same source if exact match or relative path ending in the same file
+      const isSameSrc = fileSrc === autoSrc || fileSrc.endsWith('/' + autoSrc.split('/').pop()!);
+      if (isSameSrc) {
+        throw new Error(
+          `[mdx-component-importer] Redundant import in ${id}\n` +
+          `  \`${name}\` is auto-imported — remove the explicit import.`
+        );
+      }
+      // different component happens to share the name: skip injection, file's import wins
+      return false;
+    });
+
+    const injected = linesToInject.join('\n');
+    const frontmatter = code.match(/^---[\s\S]*?---[ \t]*\n/);
+    if (frontmatter) {
+      return code.slice(0, frontmatter[0].length) + injected + code.slice(frontmatter[0].length);
+    }
+    return injected + code;
+  }
+});
+
+const lightboxProvider = () => ({
+  name: 'mdx-lightbox-provider',
+  enforce: 'post' as const,
+  transform(code: string, id: string) {
+    if (!id.endsWith('.mdx')) return;
+    // satteri appends the layout import; hoist it so layout CSS loads first, as with unified
+    const layoutImport = code.match(/^import \{ jsx as __astro_layout_jsx__ \} from 'astro\/jsx-runtime';\nimport __astro_layout_component__ from .*;$/m);
+    if (layoutImport) code = `${layoutImport[0]}\n${code.replace(layoutImport[0], '')}`;
+    code = `import _LightboxImage from "src/components/LightboxImage.astro";\n${code}`;
+    code = code.replace(
+      "components: { Fragment: _Fragment, ...props.components, },",
+      "components: { Fragment: _Fragment, img: _LightboxImage, ...props.components, },"
+    );
+    return code;
+  }
+});
 
 const config = defineConfig({
   build: {
     format: 'file',
     concurrency: 12,
   },
+  // inter from the npm version pinned in package.json (no build-time download); latin subset, as fontsource served
   fonts: [{
-    provider: fontProviders.fontsource(),
+    provider: fontProviders.local(),
     name: 'Inter',
     cssVariable: '--font-inter-var',
-    weights: ['300 400 500 600 700 800 900'],
+    options: {
+      variants: (['normal', 'italic'] as const).map((style) => ({
+        src: [`@fontsource-variable/inter/files/inter-latin-standard-${style}.woff2`],
+        weight: '100 900',
+        style,
+        display: 'swap',
+        unicodeRange: ['U+0000-00FF', 'U+0131', 'U+0152-0153', 'U+02BB-02BC', 'U+02C6', 'U+02DA', 'U+02DC', 'U+0304', 'U+0308', 'U+0329', 'U+2000-206F', 'U+20AC', 'U+2122', 'U+2191', 'U+2193', 'U+2212', 'U+2215', 'U+FEFF', 'U+FFFD'],
+      })),
+    },
   }],
   vite: {
-    plugins: [tailwindcss(), lightboxProvider()],
+    plugins: [
+      tailwindcss(),
+      mdxComponentImporter(),
+      lightboxProvider(),
+      cssPreload(),
+    ],
     build: {
-      chunkSizeWarningLimit: 1000,
-    }
+      chunkSizeWarningLimit: 700,
+      rollupOptions: {
+        output: {
+          // Vite names the Tailwind bundle after a leaf component (Kapa); use a stable descriptive name instead.
+          assetFileNames: (info) =>
+            info.names?.some(n => n === 'Kapa.css') ? '_astro/styles.[hash][extname]' : '_astro/[name].[hash][extname]',
+        },
+      },
+    },
+    cacheDir: '.vite-cache',
+    // example apps here have tsconfigs extending packages this site doesn't install, which breaks the dep scan
+    optimizeDeps: { entries: ['!src/generated-code-snippets/**'] },
+    ssr: {
+      // svgdom and mermaid are Node-only SSR packages used in remark plugins;
+      // externalizing them prevents Vite from bundling them and breaking dynamic imports.
+      external: ['svgdom', 'mermaid'],
+    },
   },
   integrations: [
-    icon(),
-    mdx(),
-    sitemap({
-      filter: siteMapFilter
-    }),
-    indexPages(),
-    markdownExtract.default(),
-    compress({
-      Image: false,
-      SVG: false,
-      HTML: false,
-    }),
-    // only run link validator in the dev environment
-    process.env.DEV && linkValidator({
-      checkExternal: false,
-      externalTimeout: 10,
-      failOnBrokenLinks: false,
-      verbose: false,
-      exclude: [ //destination URLs to exclude from checking -- NOT files!
-        '/platform/', '/cdn/', '/dev-tools/', '/tech-papers/', '/feature/', '/features/', '/webinar/',
-        '/community/', '/forum/', '/compare/', '/industry/', '/license/', '/partners/', '/video/', '/event/', '/ebooks/', '/glossary/', '/guides/',
-        'buildvsbuy', 'auth0-migration', 'community', 'community/forum', 'aws-reinvent22', 'aws-reinvent23', 'pricing', 'download', 'contact',
-        'get-started', 'passwordless', 'direct-download', 'jobs', 'careers', 'password-history', 'partners-form', 'partners',
-        'resource/all', 'sso', 'kubernetes', 'compare-fusionauth', 'security', 'customers-partners', 'license-faq',
-        'feature-list', 'product-privacy-policy', 'passkeys', '/permify-docs/', '/permify-docs', '/legal/data-processing-addendum.pdf'
+    contentChecks(),
+    extractedCodeSnippets({
+      plugin: 'bluehawk-languages.js',
+      // Step 7 displays snippets from a Playwright spec in tests/.
+      // Exclude docs-only test runners without hiding that source file.
+      ignore: [
+        'node_modules', 'vendor', '.gitignore', '.DS_Store',
+        'package*.json', '*.lock', 'repositoryUrl.txt',
+        'tests/test.sh', 'LICENSE', 'SECURITY.md', 'publishGithubDirectory.txt',
       ],
-      //base: 'https://fusionauth.io',
+      // same state export-extractedcode.sh publishes to the artifact repos
+      state: 'published',
+    }),
+    icon(),
+    mdx({
+      syntaxHighlight: false,
+      processor: satteri({
+        mdastPlugins: [
+          mermaidTitle(),       // inserts title nodes before we transform code blocks
+          mermaidSSR(),         // replaces mermaid blocks with pre-rendered SVGs
+          shellSession(),
+        ],
+        hastPlugins: [
+          codeBlocks({ excludeLangs: ['mermaid'] }),
+          headingLinks({
+            content: '#',
+            properties: {
+              title: 'link to header',
+              ariaLabel: 'Anchor',
+              class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
+            },
+            headingProperties: {
+              class: 'group articleHeading'
+            }
+          }),
+        ],
+        features: { smartPunctuation: false },
+      })
+    }),
+    buildSitemap(),
+    indexPages(),
+    astroToc({ articleSelector: ['article.fusion-article section', 'article.fusion-article', 'article', 'main'] }),
+    genMarkdownPages({
+      pageFilter: (url) => !url.startsWith('/articles/') && url !== '/articles.md' && !url.startsWith('/blog/'),
+      indexFilter: (url) => url.startsWith('/docs/') || url === '/docs.md',
+      categorize: (url) => {
+        if (url === '/docs.md') return 'overview';
+        const seg = url.split('/')[2]?.replace(/\.md$/, '') ?? '';
+        return seg || 'overview';
+      },
+      formatCategoryName: (key) => {
+        const lower = key.toLowerCase();
+        if (lower === 'sdks') return 'SDKs';
+        if (lower === 'api') return 'API';
+        if (lower === 'ciam') return 'CIAM';
+        if (lower === 'oauth') return 'OAuth';
+        return key.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      },
+      sortCategories: (names) => names.sort((a, b) => {
+        if (a === 'Get Started') return -1;
+        if (b === 'Get Started') return 1;
+        return a.localeCompare(b);
+      }),
+      llmsTxtPath: 'docs/llms.txt',
+      llmsTxtTitle: 'FusionAuth Documentation',
+      llmsTxtDescription: 'Comprehensive documentation for FusionAuth CIAM, APIs, QuickStarts, and custom integrations. The [OpenAPI specification](https://fusionauth.io/docs/openapi.yaml) describes the REST APIs in machine-readable form.',
+      trimTitleSuffix: ' | FusionAuth Docs',
+      spokesDir: 'docs',
+      inlineCategories: ['Overview'],
+    }),
+    genMarkdownPages({
+      pageFilter: (url) => url.startsWith('/articles/') || url === '/articles.md',
+      indexFilter: (url) => url.startsWith('/articles/') || url === '/articles.md',
+      categorize: (url) => {
+        if (url === '/articles.md') return 'overview';
+        return url.split('/')[2]?.replace(/\.md$/, '') || 'overview';
+      },
+      formatCategoryName: (key) => {
+        const lower = key.toLowerCase();
+        if (lower === 'ai') return 'AI';
+        if (lower === 'ciam') return 'CIAM';
+        if (lower === 'oauth') return 'OAuth';
+        if (lower === 'gaming-entertainment') return 'Gaming & Entertainment';
+        if (lower === 'login-authentication-workflows') return 'Login & Authentication';
+        return key.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      },
+      sortCategories: (names) => names.sort((a, b) => {
+        if (a === 'Overview') return -1;
+        if (b === 'Overview') return 1;
+        return a.localeCompare(b);
+      }),
+      docsIndexUrl: 'https://fusionauth.io/docs/llms.txt',
+      llmsTxtPath: 'articles/llms.txt',
+      llmsTxtTitle: 'FusionAuth Articles',
+      llmsTxtDescription: 'In-depth articles on CIAM, authentication, OAuth, and identity management from the FusionAuth team. For technical API and integration documentation, see the [FusionAuth Docs index](https://fusionauth.io/docs/llms.txt).',
+      trimTitleSuffix: ' | FusionAuth Docs',
+      spokesDir: 'articles',
+      inlineCategories: ['Overview'],
+    }),
+    genMarkdownPages({
+      pageFilter: (url) => url.startsWith('/blog/'),
+      // Exclude pagination (/blog/2), author, tag, category, and latest pages -- only real posts.
+      indexFilter: (url) =>
+        url.startsWith('/blog/') &&
+        !/^\/blog\/(author|category|tag|latest)(\/|\.md$|$)/.test(url) &&
+        !/^\/blog\/\d+\.md$/.test(url),
+      categorize: () => 'posts',
+      formatCategoryName: () => 'Posts',
+      docsIndexUrl: 'https://fusionauth.io/docs/llms.txt',
+      llmsTxtPath: 'blog/llms.txt',
+      llmsTxtTitle: 'FusionAuth Blog',
+      llmsTxtDescription: 'News, tutorials, comparisons, and technical content from the FusionAuth team. For technical API and integration documentation, see the [FusionAuth Docs index](https://fusionauth.io/docs/llms.txt).',
+    }),
+    openapiSummary(),
+    // only run link validators when not in a preview/deploy build
+    process.env.PROD !== 'true' && markdownLinkSyntaxChecker(),
+    process.env.PROD !== 'true' && linkChecker({
+      failOnBrokenLinks: true,
+      verbose: false,
+      // Pages whose content we don't want to crawl (URL path, prefix string or RegExp)
+      excludeSourcePages: [
+        '/landing/',
+        // Generated from external API; some old versions have no release notes entry
+        '/direct-download',
+      ],
+      // Destinations to skip checking (normalized root-relative path, prefix string or RegExp)
+      excludeDestinations: [
+        // Routes that only exist at runtime (auth, Flask examples in code blocks)
+        '/login', '/logout', '/register', '/user/login', '/user/logout',
+        // Pages that live outside the Astro build (marketing site, external tools)
+        // No trailing slash — prefix match covers /community and /community/foo
+        '/platform', '/cdn', '/dev-tools', '/tech-papers', '/feature', '/features',
+        '/webinar', '/community', '/forum', '/compare', '/industry', '/license',
+        '/partners', '/video', '/event', '/ebooks', '/glossary', '/guides',
+        '/permify-docs',
+        '/buildvsbuy', '/auth0-migration', '/aws-reinvent22', '/aws-reinvent23',
+        '/lp/state-of-ai-and-identity',
+        // Standalone marketing / legal pages not in the Astro build
+        '/pricing', '/download', '/contact', '/get-started', '/passwordless',
+        '/direct-download', '/jobs', '/careers', '/password-history',
+        '/partners-form', '/resource/all', '/sso', '/kubernetes',
+        '/compare-fusionauth', '/security', '/customers-partners',
+        '/license-faq', '/feature-list', '/product-privacy-policy', '/passkeys',
+        '/legal/data-processing-addendum.pdf',
+        '/auth0-migration',
+      ],
     })
   ],
-  markdown: {
-    smartypants: false,
-    remarkPlugins: [
-      remarkMdx,
-      mermaidTitleFix
-    ],
-    rehypePlugins: [
-      // Tweak GFM task list syntax
-      // @ts-ignore
-      rehypeTasklistEnhancer(),
-      rehypeSlug,
-      [
-        rehypeAutolinkHeadings,
-        {
-          behavior: 'append',
-          content: {
-            type: 'text',
-            value: '#',
-          },
-          properties: {
-            title: ['link to header'],
-            class: 'anchor-link !border-b-0 !no-underline ml-2 opacity-0 group-hover:opacity-100'
-          },
-          headingProperties: {
-            class: 'group'
-          }
-        },
-      ],
-    ],
-    syntaxHighlight: {
-      type: "shiki",
-      excludeLangs: ["mermaid"]
-    }
-  },
-  site: 'https://fusionauth.io/',
+  site: process.env.SITE_URL || 'https://fusionauth.io/',
 });
 
 export default config;

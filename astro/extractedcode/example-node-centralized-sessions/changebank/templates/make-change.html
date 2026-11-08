@@ -1,0 +1,65 @@
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>FusionAuth Express Web</title>
+  <link rel="stylesheet" href="/static/css/changebank.css">
+</head>
+<body>
+  <div id="page-container">
+    <div id="page-header">
+      <div id="logo-header">
+        <img src="https://fusionauth.io/cdn/samplethemes/changebank/changebank.svg" />
+        <div class="h-row">
+          <p class="header-email"></p>
+          <a class="button-lg" href="/logout">Logout</a>
+        </div>
+      </div>
+
+      <div id="menu-bar" class="menu-bar">
+        <a class="menu-link inactive" href="http://changebankforum.local:8081/forum">Changebank Forum</a>
+        <a class="menu-link" href="/make-change">Make Change</a>
+        <a class="menu-link inactive" href="/account">Account</a>
+      </div>
+    </div>
+
+    <div style="flex: 1;">
+      <div class="column-container">
+        <div class="app-container change-container">
+          <h3>We Make Change</h3>
+            <div class="error-message"></div>
+            <div class="change-message">
+            </div>
+
+          <form onsubmit="makeChange(event)" id="make-change-form">
+            <div class="h-row">
+              <div class="change-label">Amount in USD: $</div>
+              <input class="change-input" name="amount" id="amount" value="0.00" type="number" step="0.01" />
+              <input class="change-submit" type="submit" value="Make Change" />
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Snag cookie user data
+      const user = JSON.parse(decodeURIComponent(document.cookie.split('; ').filter(c => c.includes('userDetails')).at(0).split('=').at(-1)).replace('j:', ''))
+      document.querySelector('.header-email').innerHTML = user.email;
+
+      const makeChange = async (e) => {
+        e.preventDefault();
+
+        const resp = await (await fetch('/make-change', {
+          method: 'POST',
+          body: new URLSearchParams(new FormData(e.currentTarget)),
+          headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+          },
+        })).json();
+        const result = JSON.parse(resp);
+        result.error ? document.querySelector('.error-message').innerHTML = result.error : document.querySelector('.error-message').innerHTML = '';
+        document.querySelector('.change-message').innerHTML = result.message;
+      }
+    </script>
+</body>
+</html>

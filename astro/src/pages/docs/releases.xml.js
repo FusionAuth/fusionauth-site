@@ -5,13 +5,12 @@ export async function GET(context) {
   const items = await getReleaseNoteRssItems();
   return rss({
     title: 'FusionAuth Releases Feed',
-    id: 'https://fusionauth.io',
-    site: 'https://fusionauth.io',
+    site: context.site,
     description: 'The latest releases of FusionAuth',
     author: {
       name: 'FusionAuth'
     },
-    updated: items[0].pubDate,
+    updated: items[0]?.pubDate,
     items,
   });
 }

@@ -1,0 +1,66 @@
+name: Preview build
+
+on:
+  workflow_run:
+    workflows: ["Request preview build"] # must match preview-kickoff.yml name
+    types: [completed]
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+concurrency:
+  group: preview-pr-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+jobs:
+  build-or-cleanup:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SSH_KEY: ${{ secrets.PREVIEW_SSH_KEY }}
+      PREVIEW_HOST: ${{ secrets.PREVIEW_HOST }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            _preview-server/scripts
+
+      - name: Download PR Metadata
+        uses: actions/download-artifact@v8
+        with:
+          name: pr-metadata
+          path: pr-metadata
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Load Metadata
+        id: meta
+        run: |
+          {
+            echo "pr=$(cat pr-metadata/pr)"
+            echo "sha=$(cat pr-metadata/sha)"
+            echo "branch=$(cat pr-metadata/branch)"
+            # runs requested before the base was recorded diff against main
+            echo "base=$(cat pr-metadata/base 2>/dev/null || echo main)"
+            echo "action=$(cat pr-metadata/action)"
+          } >> "$GITHUB_OUTPUT"
+          chmod +x _preview-server/scripts/*.sh
+
+      - name: Handle Build
+        if: steps.meta.outputs.action != 'closed'
+        env:
+          PR: ${{ steps.meta.outputs.pr }}
+          SHA: ${{ steps.meta.outputs.sha }}
+          BRANCH: ${{ steps.meta.outputs.branch }}
+          BASE: ${{ steps.meta.outputs.base }}
+        run: ./_preview-server/scripts/orchestrate-build.sh
+
+      - name: Handle Cleanup
+        if: steps.meta.outputs.action == 'closed'
+        env:
+          PR: ${{ steps.meta.outputs.pr }}
+        run: ./_preview-server/scripts/orchestrate-cleanup.sh

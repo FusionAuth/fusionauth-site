@@ -1,0 +1,138 @@
+---
+title: Add a LinkedIn IdP
+description: Learn how to add a login with LinkedIn button to your application.
+tags: linkedin login, social login, linkedin identity provider, login with linkedin, linkedin oauth
+---
+import IdpApplicationConfiguration from 'src/content/docs/_shared/_idp-application-configuration.mdx';
+import {Content as LoginApiIntegration} from 'src/content/docs/_shared/_login-api-integration.mdx';
+import {Content as IdentityProviderOverviewDiagram} from 'src/content/docs/_shared/_identity-provider-overview-diagram.mdx';
+import LinkingStrategyEditLimit from 'src/content/docs/_shared/_idp-linking-strategy-edit-limits.mdx';
+
+<AvailableSince since="1.23.0"/>
+
+Adding a Sign in with LinkedIn button to FusionAuth is simple, and this guide will walk you through the steps necessary to collect the credentials from LinkedIn in order to enable this Social login.
+
+Once you have completed this configuration you will be able to enable the LinkedIn login button for one or more FusionAuth Applications. Below is an example login page with the LinkedIn Identity Provider enabled.
+
+<Screenshot id="idp-login-linkedin" url="/oauth2/authorize?client_id=00000000-0000-0000-0000-f20000000001&response_type=code&redirect_uri=https%3A%2F%2Fpiperchat.piedpiper.com%2Foauth-redirect&prompt=login" alt="LinkedIn Login" />
+
+<IdentityProviderOverviewDiagram identity_provider_name="LinkedIn" />
+
+## Create A LinkedIn Account
+
+Ensure you have a LinkedIn login, and then navigate to the [Linked In developer portal](https://www.linkedin.com/developers/).
+
+## Optionally Create a LinkedIn App
+
+If you have an existing LinkedIn app which you are going to use, skip this step.
+
+If you don't have an existing LinkedIn app, navigate to the [new application form](https://www.linkedin.com/developer/apps/new) and fill it out. In the following example I will create my first application before I can create credentials. I will call the application `Pied Piper`.
+
+![Create LinkedIn App](/img/docs/lifecycle/authenticate-users/identity-providers/social/linkedin-create-app.png)
+
+## Grant Your App Required Permissions
+
+In the LinkedIn developer portal, ensure you are viewing the correct LinkedIn application by navigating to <Breadcrumb>My apps -> Your Application</Breadcrumb>.
+
+If you don't see the <Breadcrumb>Products</Breadcrumb> tab for your application, navigate to <Breadcrumb>Products</Breadcrumb> in the top level menu. This may occur if this is your first LinkedIn application.
+
+Navigate to <Breadcrumb>My apps -> Your Application -> Products</Breadcrumb>. Select `Sign In With LinkedIn` and accept the terms.
+
+<Aside type="note">
+  Your application may not be immediately available. It may be reviewed for a time by the LinkedIn platform team.
+</Aside>
+
+![Adding the Sign In With LinkedIn product](/img/docs/lifecycle/authenticate-users/identity-providers/social/linkedin-adding-product.png)
+
+## Set Up Your LinkedIn App Client Credentials
+
+In the LinkedIn developer portal, ensure you are viewing the correct LinkedIn app by navigating to <Breadcrumb>My apps -> Your Application</Breadcrumb>.
+
+View the application credentials by going to <Breadcrumb>Auth -> Application credentials</Breadcrumb>. Record both the `Client ID` and the `Client Secret` values.
+
+![Retrieve LinkedIn Credentials](/img/docs/lifecycle/authenticate-users/identity-providers/social/linkedin-app-credentials.png)
+
+Add your redirect URL. This value will be your FusionAuth installation hostname with the string `/oauth2/callback` appended. For example, if you are going to access FusionAuth at `https://login.piedpiper.com` then you will add `https://login.piedpiper.com/oauth2/callback` to the `Authorized redirect URLs for your app` list.
+
+Save the setting.
+
+You should see the following scopes in the <Breadcrumb>OAuth 2.0 Scopes</Breadcrumb> section:
+
+* `openid`
+* `profile`
+* `email`
+
+If these scopes are not visible in the UI you may need to add them to the configuration in FusionAuth and attempt a login using the integration. The initial login should trigger LinkedIn to update the configuration visible in their UI. See [Create a LinkedIn Identity Provider](#create-a-linkedin-identity-provider).
+
+Now you have completed creating a LinkedIn App with the appropriate permissions.
+
+### LinkedIn Identity Provider Scopes
+
+<Aside type="caution">
+  LinkedIn has changed their API programs over time.
+</Aside>
+
+Depending on when you created your application in LinkedIn you may have a different set of scopes available to you. LinkedIn has an older Compliance program with different scopes that no longer registers new apps, and a newer program based on OpenID Connect.
+
+The legacy scopes you may need to use instead are `r_emailaddress` for email address info and `r_liteprofile` or `r_basicprofile` for the rest of the user info. These scopes were used to call LinkedIn's [Profile API](https://learn.microsoft.com/en-us/linkedin/shared/integrations/people/profile-api)
+
+Prior to 1.49.0 FusionAuth only supported using the legacy scopes. The new scopes `openid`, `profile`, and `email` are used with the [UserInfo API](https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2#api-request-to-retreive-member-details).
+
+If you are using these scopes you will need to update to FusionAuth 1.49.0 or later.
+
+If you do not see these scopes, you may not have added the LinkedIn product to your LinkedIn app correctly. You may also need to reload the app page or log out of LinkedIn and log in again to make sure your application has the proper permissions.
+
+## Create a LinkedIn Identity Provider
+
+The last step will be to create a LinkedIn Identity Provider in FusionAuth. Log in to the FusionAuth Admin UI. Create an Identity Provider by navigating to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and click on the menu on the upper right and select `Add LinkedIn`.
+
+This will take you to the `Add LinkedIn` screen, and you'll fill out the `Client Id` and `Client secret` required fields with the values previously recorded. The button text is also required, but it will be defaulted to `Sign in with LinkedIn`. You may optionally modify this value.
+
+<IdpApplicationConfiguration identity_provider="LinkedIn" details_link="/docs/authentication/identity-providers/social/linkedin#form-fields">
+  <Screenshot id="idp-linkedin-configuration" url="/admin/identity-provider/edit/LinkedIn/00000000-0000-0000-0000-f20000000134" alt="Configure linkedin identity provider" />
+</IdpApplicationConfiguration>
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Id" optional since="1.61.0">
+    An optional UUID. When this value is omitted a unique Id will be generated automatically.
+  </APIField>
+  <APIField name="Tenant" optional since="1.62.0">
+    The tenant to which this identity provider belongs. This field only displays when the user selects a specific tenant on the previous page. When `Global identity provider` is selected on the previous page, this field does not display.
+  </APIField>
+  <APIField name="Name" required since="1.61.0">
+    A unique name to identify the identity provider. This name is for display purposes only and it can be modified later if desired.
+  </APIField>
+  <APIField name="Client Id" required>
+    The LinkedIn Client Id found in your LinkedIn credentials settings in the **Client ID** field.
+  </APIField>
+  <APIField name="Client secret" required>
+    The LinkedIn Client Secret found in your LinkedIn credentials settings in the **Client secret** field.
+  </APIField>
+  <APIField name="Button text" required>
+    The text to be displayed in the button on the login form. This value defaults to `Sign in with LinkedIn` but it may be modified to your preference.
+  </APIField>
+  <APIField name="Scope" optional>
+    This optional field defines the scope you're requesting from the user during login The default scopes are the suggested values. See the [LinkedIn documentation](https://docs.microsoft.com/en-us/linkedin/) for further information.
+  </APIField>
+  <APIField name="Linking strategy" optional defaults="Link on email. Create the user if they do not exist.">
+    The linking strategy for LinkedIn. [See Linking Strategies for more](/docs/authentication/identity-providers/#linking-strategies).
+
+    <LinkingStrategyEditLimit />
+
+    When the **Linking strategy** is equal to `Link on email. Create the user if they do not exist.` or `Link on email. Do not create the user if they do not exist.` and the **email_verified** claim is present on the response from LinkedIn and the value is `false` a link will not be established and an error will be returned indicating a link cannot be established using an unverified email address.
+  </APIField>
+  <APIField name="Reconcile lambda" optional>
+    A lambda may be utilized to map custom claims returned from LinkedIn. See the [LinkedIn Reconcile lambda documentation](/docs/lambdas/reconcile/linkedin-reconcile) for more details.
+
+    To configure a lambda, navigate to <Breadcrumb>Customizations -> Lambdas</Breadcrumb>.
+  </APIField>
+  <APIField name="Enable debug logging" optional defaults="false">
+    Creates event log entries to help debug integration errors. Check <Breadcrumb>System -> Event Log</Breadcrumb>.
+  </APIField>
+</APIBlock>
+
+## Building Your Own Integration
+
+<LoginApiIntegration apiRef="/docs/apis/identity-providers/linkedin#complete-the-linkedin-login" identity_provider_name="LinkedIn" />

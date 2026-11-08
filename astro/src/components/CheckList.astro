@@ -1,0 +1,31 @@
+---
+interface Props {
+  id?: string;
+  class?: string;
+}
+const { id, class: cls } = Astro.props;
+---
+
+<ul
+  class={`checklist${cls ? ' ' + cls : ''}`}
+  data-checklist-id={id || undefined}
+>
+  <slot />
+</ul>
+
+{id && (
+  <script>
+    document.querySelectorAll<HTMLElement>('.checklist[data-checklist-id]').forEach(el => {
+      const key = `checklist:${el.getAttribute('data-checklist-id')}`;
+      const inputs = Array.from(el.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'));
+      let saved: boolean[] = [];
+      try { saved = JSON.parse(localStorage.getItem(key) ?? '[]'); } catch {}
+      inputs.forEach((inp, i) => {
+        if (i < saved.length) inp.checked = saved[i];
+        inp.addEventListener('change', () => {
+          localStorage.setItem(key, JSON.stringify(inputs.map(x => x.checked)));
+        });
+      });
+    });
+  </script>
+)}

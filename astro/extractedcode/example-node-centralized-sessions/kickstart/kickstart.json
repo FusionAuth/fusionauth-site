@@ -1,0 +1,182 @@
+{
+  "variables": {
+    "apiKey": "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod",
+    "refreshTokenScopedApiKey": "45678990-c283-4e96-9d2a-eb1215c69f8f-not-for-prod",
+    "asymmetricKeyId": "#{UUID()}",
+    "changeBankApplicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+    "changeBankClientSecret": "changebank-super-secret-secret-that-should-be-regenerated-for-production",
+    "changeBankForumApplicationId": "a7fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+    "changeBankForumClientSecret": "changebank-forum-super-secret-secret-that-should-be-regenerated-for-production",
+    "fusionAuthURL": "http://localhost:9011",
+    "newThemeId": "#{UUID()}",
+    "defaultTenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
+    "adminEmail": "admin@example.com",
+    "adminPassword": "password",
+    "adminUserId": "00000000-0000-0000-0000-000000000001",
+    "userEmail": "richard@example.com",
+    "userPassword": "password",
+    "userUserId": "00000000-0000-0000-0000-111111111111"
+  },
+  "apiKeys": [
+    {
+      "key": "#{apiKey}",
+      "description": "Unrestricted API key"
+    },
+    {
+      "key": "#{refreshTokenScopedApiKey}",
+      "description": "Restricted API key - only for RT checking",
+      "permissions": {
+        "endpoints": {
+          "/api/jwt/refresh": [
+            "GET","DELETE"
+          ]
+        }
+      }
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "url": "/api/key/generate/#{asymmetricKeyId}",
+      "body": {
+        "key": {
+          "algorithm": "RS256",
+          "name": "For exampleapp",
+          "length": 2048
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/application/#{changeBankApplicationId}",
+      "tenantId": "#{defaultTenantId}",
+      "body": {
+        "application": {
+          "name": "ChangeBank Centralized Session Example",
+          "oauthConfiguration": {
+            "authorizedRedirectURLs": [
+              "http://changebank.local:8080/oauth-redirect"
+            ],
+            "logoutURL": "http://changebank.local:8080/endsession",
+            "clientSecret": "#{changeBankClientSecret}",
+            "enabledGrants": [
+              "authorization_code",
+              "refresh_token"
+            ],
+            "generateRefreshTokens": true,
+            "requireRegistration": true
+          },
+          "jwtConfiguration": {
+            "enabled": true,
+            "accessTokenKeyId": "#{asymmetricKeyId}",
+            "idTokenKeyId": "#{asymmetricKeyId}"
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/application/#{changeBankForumApplicationId}",
+      "tenantId": "#{defaultTenantId}",
+      "body": {
+        "application": {
+          "name": "ChangeBank Forum Centralized Session Example",
+          "oauthConfiguration": {
+            "authorizedRedirectURLs": [
+              "http://changebankforum.local:8081/oauth-redirect"
+            ],
+            "logoutURL": "http://changebankforum.local:8081/endsession",
+            "clientSecret": "#{changeBankForumClientSecret}",
+            "enabledGrants": [
+              "authorization_code",
+              "refresh_token"
+            ],
+            "generateRefreshTokens": true,
+            "requireRegistration": true
+          },
+          "jwtConfiguration": {
+            "enabled": true,
+            "accessTokenKeyId": "#{asymmetricKeyId}",
+            "idTokenKeyId": "#{asymmetricKeyId}"
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{adminUserId}",
+      "body": {
+        "registration": {
+          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+          "roles": [
+            "admin"
+          ]
+        },
+        "roles": [
+          "admin"
+        ],
+        "skipRegistrationVerification": true,
+        "user": {
+          "email": "#{adminEmail}",
+          "firstName": "Dinesh",
+          "lastName": "Chugtai",
+          "password": "#{adminPassword}"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{userUserId}",
+      "body": {
+        "user": {
+          "birthDate": "1985-11-23",
+          "email": "#{userEmail}",
+          "firstName": "Richard",
+          "lastName": "Hendricks",
+          "password": "#{userPassword}"
+        },
+        "registration": {
+          "applicationId": "#{changeBankApplicationId}"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{userUserId}",
+      "body": {
+        "registration": {
+          "applicationId": "#{changeBankForumApplicationId}"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/theme/#{newThemeId}",
+      "body": {
+        "sourceThemeId": "75a068fd-e94b-451a-9aeb-3ddb9a3b5987",
+        "theme": {
+          "name": "React theme"
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/theme/#{newThemeId}",
+      "body": {
+        "theme": {
+          "stylesheet": "@{css/styles.css}"
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/tenant/#{defaultTenantId}",
+      "body": {
+        "tenant": {
+          "themeId": "#{newThemeId}",
+          "issuer": "#{fusionAuthURL}"
+        }
+      }
+    }
+  ]
+}

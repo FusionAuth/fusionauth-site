@@ -1,32 +1,56 @@
 ---
 import { getCollection, render } from "astro:content";
 import Layout from '/src/layouts/Docs.astro';
+import ChildCards from 'astro-better-cards/ChildCards.astro';
+import PageNav from 'astro-better-cards/PageNav.astro';
+import RelatedContent from '/src/components/RelatedContent.astro';
 
 export async function getStaticPaths() {
   const entries = await getCollection("docs");
-  return entries.map(entry => {
-    let slug = entry.id.replace(/^\/docs\//, '');
+  return entries
+    .filter(entry => entry.data.route !== false)
+    .map(entry => {
+      let slug = entry.id.replace(/^\/docs\//, '');
 
-    // root index page (/docs/)
-    if (slug === 'index') {
-      slug = undefined;
-    }
+      // root index page (/docs/)
+      if (slug === 'index') {
+        slug = undefined;
+      }
 
-    if (slug && slug.endsWith('/index')) {
-      slug = slug.replace(/\/index$/, '');
-    }
+      if (slug && slug.endsWith('/index')) {
+        slug = slug.replace(/\/index$/, '');
+      }
 
-    return {
-      params: { slug }, 
-      props: { entry },
-    };
-  });
+      return {
+        params: { slug },
+        props: { entry },
+      };
+    });
 }
 
 const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
+
 const isIndexPage = entry.id === 'index' || entry.id.endsWith('/index');
+
+// collection-relative folder path this page represents (for sectionIndex)
+const sectionFolder = entry.id.replace(/\.(md|mdx)$/i, '').replace(/\/index$/, '');
+
+// PageNav path-matching uses Astro.url.pathname which includes /docs/, but
+// collection IDs don't — so relative refs never match. Pass absolute paths so
+// PageNav's absolute-path branch strips /docs/ and finds the right entry.
+const entryFolder = entry.id.replace(/\.(md|mdx)$/i, '').split('/').slice(0, -1).join('/');
+function toAbsoluteNav(ref) {
+  if (!ref) return undefined;
+  if (ref.startsWith('/')) return ref;
+  return `/docs/${entryFolder ? entryFolder + '/' : ''}${ref}`;
+}
+const prevNav = toAbsoluteNav(entry.data.prev);
+const nextNav = toAbsoluteNav(entry.data.next);
 ---
-<Layout frontmatter={entry.data} {headings} {isIndexPage} disableTOC={entry.data.disableTOC || headings.length ===0}>
+<Layout frontmatter={entry.data} {headings} {isIndexPage} disableTOC={entry.data.disableTOC}>
   <Content />
+  {entry.data.sectionIndex && <ChildCards collection="docs" folder={sectionFolder} />}
+  <PageNav prev={prevNav} next={nextNav} />
+  <RelatedContent tags={entry.data.tags} currentId={entry.id} pinFirst={entry.data.relatedPinFirst} />
 </Layout>

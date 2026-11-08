@@ -1,26 +1,13 @@
 ---
+import { getCollection } from 'astro:content';
+import { ReleaseNotesSelector as BaseSelector } from 'astro-better-release-notes';
+
+const allUpdates = await getCollection('releases');
+const updates = allUpdates.sort((a, b) => {
+  const dateDiff = b.data.date.valueOf() - a.data.date.valueOf();
+  if (dateDiff !== 0) return dateDiff;
+  return b.data.version.localeCompare(a.data.version, undefined, { numeric: true });
+});
 ---
 
-<label>
-  <select id="release-notes-version" class="border-2 border-gray-300 focus-ring-indigo-300 h-10 px-2 dark:text-slate-300 dark:bg-gray-900 text-slate-900 bg-gray-300" style="width: 100%;"></select>
-</label>
-
-<slot />
-
-<script>
-  let options = '';
-  const elements = document.querySelectorAll('h2.release-note');
-
-  for (let i = 0; i < elements.length; i++) {
-    const element = elements[i];
-    options += '<option value="' + element.id + '">' + element.innerHTML.trim().replaceAll('#', '') + '</option>\n';
-  }
-
-  const select = document.getElementById('release-notes-version') as HTMLSelectElement;
-  if (select) {
-    select.insertAdjacentHTML('beforeend', options);
-    select.addEventListener('change', function() {
-      window.location.hash = select.options[select.selectedIndex].value;
-    });
-  }
-</script>
+<BaseSelector {updates} />

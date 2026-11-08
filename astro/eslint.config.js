@@ -4,10 +4,19 @@ import tseslint from "typescript-eslint";
 import * as mdx from 'eslint-plugin-mdx';
 import eslintPluginAstro from 'eslint-plugin-astro';
 import tsParser from "@typescript-eslint/parser";
-import astroParser from 'astro-eslint-parser';
+import * as astroParser from 'astro-eslint-parser';
 
 export default [
   {files: ["**/*.{js,mjs,cjs,ts,md,mdx}"]},
+  {ignores: [
+    "localcode/**/eslint.config.js",
+    "localcode/**/vite.config.ts",
+    "dist/**",
+    ".astro/**",
+    ".vite-cache/**",
+    "public/js/**",
+    "extractedcode/**",
+  ]},
   {languageOptions: { globals: globals.browser }},
   {
     ...pluginJs.configs.recommended,
@@ -64,6 +73,24 @@ export default [
         project: './tsconfig.json',
         sourceType: 'module',
       }
+    }
+  },
+  {
+    files: ['localcode/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+      }
+    },
+    rules: {
+      'no-unused-vars': 'off',
+    }
+  },
+  {
+    files: ['src/generated-code-snippets/**/*.js'],
+    rules: {
+      'no-unused-vars': 'off',
     }
   },
 ];
