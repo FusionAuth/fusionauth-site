@@ -176,7 +176,7 @@ sequenceDiagram
 ### Glossary Terms
 
 All documentation should use the shared glossary system for technical and business terms (such as "Default Tenant", "User", "Role", "RS256", "rfc6749").
-* To add or edit a glossary term, update the JSON file at `astro/src/data/glossary.json`. Each entry should include a `"definition"` field and a `"categories"` array (strings), and may include optional `"link"` (internal or external), `"aliases"`, or `"abbreviations"` arrays (strings).
+* To add or edit a glossary term, update the JSON file at `astro/src/data/glossary.json`. Each entry should include a `"definition"` field and a `"categories"` array (strings), and may include optional `"link"` (internal or external), `"standards"` (array of standard objects with `"name"` and `"url"`), `"aliases"`, or `"abbreviations"` arrays (strings).
 * Terms must be written in full (e.g., "JSON Web Token" instead of "JWT" or "JWT (JSON Web Token)").
 * Abbreviations should be added to the `abbreviations` field.
 * Terms can belong to multiple categories; they will appear under each category on the glossary page.

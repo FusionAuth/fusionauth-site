@@ -220,6 +220,10 @@ const glossaryCollection = defineCollection({
     categories: z.array(z.string()).optional(),
     aliases: z.array(z.string()).optional(),
     abbreviations: z.array(z.string()).optional(),
+    standards: z.array(z.object({
+      name: z.string(),
+      url: z.string()
+    })).optional(),
   })
 });
 
