@@ -81,7 +81,6 @@ async function bootstrapLogin(page) {
 
 export const shots = {
   'passkeys-tenant-enable-webauthn': { legacyVersion: true },
-  'passkeys-tenant-enable-workflows': { legacyVersion: true },
   'passkeys-reauth-enable': { prepare: preparation({ afterAccount: reauthEnable }) },
   'passkeys-self-service': { prepare: preparation({ afterAccount: selfService }) },
   'passkeys-bootstrap-button': { prepare: preparation({ afterAccount: bootstrapButton }) },

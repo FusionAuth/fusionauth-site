@@ -15,6 +15,5 @@ async function showSendTestEmail(page) {
 }
 
 export const shots = {
-  'tenant-email-settings': { legacyVersion: true },
   'tenant-send-test-email': { legacyVersion: true, prepare: preparation({ tenantTab: showSendTestEmail }) },
 };

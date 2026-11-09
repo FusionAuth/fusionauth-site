@@ -74,12 +74,10 @@ async function selectRegisterTheme(page) {
 
 export const shots = {
   'register-built-out-advanced-form': registerShot(),
-  'register-basic-registration': registerShot({ fixedHeight: '.tab-list-container' }),
   'register-minimum-price-form-field': registerShot({ before: fillField(registerFields[0]) }),
   'register-geographic-area-form-field': registerShot({ before: fillField(registerFields[2]) }),
   'register-new-form': registerShot({ before: page => page.fill('#form_name', 'Real estate search registration form') }),
   'register-first-step-form-editor': registerShot(),
-  'register-second-step-form-editor': registerShot(),
   'register-find-registration-url': registerShot({ before: showRegistrationUrl(registerIds.app) }),
   'register-first-step-no-placeholder': registerShot({ before: firstStep(false, true), temporaryState: [uncompressedTextInputs] }),
   'register-new-user-data-display': registerShot({
