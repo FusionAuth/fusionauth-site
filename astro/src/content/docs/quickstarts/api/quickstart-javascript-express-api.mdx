@@ -62,12 +62,12 @@ docker compose up
 During Docker Compose startup, the included `fusionauth/kickstart.json` file uses the FusionAuth API to:
 
 * Generate an API key
-* Create an application for your API with appropriate settings and redirect URIs (<Breadcrumb>Applications -> Edit Application</Breadcrumb>)
-* Create an admin user (`admin@example.com`) and register the user with your app (<Breadcrumb>Users</Breadcrumb>)
+* Create an application for your API with appropriate settings (<Breadcrumb>Applications -> Edit Application</Breadcrumb>)
+* Create an admin user (`admin@example.com`) and register the user with the FusionAuth application (<Breadcrumb>Users</Breadcrumb>)
 * Create two API users (`reader@example.com` and `writer@example.com`) and their roles, and register the users with your application
 </Aside>
 
-Once Docker Compose intializes all containers, open a browser and navigate to the FusionAuth Admin UI at [http://localhost:9011/admin](http://localhost:9011/admin). Use the following admin account credentials to log in:
+Once Docker Compose initializes all containers, open a browser and navigate to the FusionAuth Admin UI at [http://localhost:9011/admin](http://localhost:9011/admin). Use the following admin account credentials to log in:
 
 * Username: `admin@example.com`
 * Password: `password`
@@ -78,7 +78,7 @@ After authenticating, you should see the FusionAuth Admin UI, which shows inform
 
 ## Create the API
 
-In the steps below you will create three files to form an Express.js API server. The server is able to check the authenticity of the access tokens it receives against FusionAuth's certificate.
+In the steps below, you will create three files to form an Express.js API server. The server verifies access tokens with the public signing keys FusionAuth publishes in a JSON Web Key Set (JWKS).
 
 <Steps>
 
@@ -96,17 +96,21 @@ In the steps below you will create three files to form an Express.js API server.
 
 1. Create a file called `security.mjs` in the `api` directory and insert the content below:
     <ExtractedCode src="quickstart-javascript-express-api/complete-application/security.mjs" lang="js"/>
-    The `dotenv` library allows the code to read your `.env` environment variable file. The `jose` library gets FusionAuth's certificate from `jwks.json`. It then provides the Express.js middleware function, `verifyJWT`, which uses `jose` to verify the token received in requests in `jose.jwtVerify(accessToken, jwksClient)`. Finally, the `hasRole` middleware function checks if the user's token has the `reader` or `writer` role.
+    The `dotenv` library loads the variables from your `.env` file. The `jose` library retrieves FusionAuth's public signing keys from the `/.well-known/jwks.json` endpoint. The `verifyJWT` middleware uses `jose.jwtVerify` to verify each token's signature and validate its issuer and audience. The `hasRole` middleware checks whether the token has the required `reader` or `writer` role.
 
 1. Create a file called `api.mjs` in the `api` directory and insert the content below:
     <ExtractedCode src="quickstart-javascript-express-api/complete-application/api.mjs" lang="js"/>
-    This Express server has one endpoint each for reading and writing, protected by `hasRole('reader')` or `hasRole('writer')` imported from the `security.mjs` file  , which ensures that the client must be authenticated by FusionAuth and have the role necessary for the endpoint.
+    This Express server has one endpoint each for reading and writing, protected by `hasRole('reader')` or `hasRole('writer')` imported from the `security.mjs` file.
 
 1. In the terminal in the `api` directory that is running, start the Express server:
     ```shell-session
     node api.mjs
     ```
 </Steps>
+
+<Aside type="caution">
+The example returns token validation details and internal error messages to API clients. In production, rather return generic error responses and log sensitive error details on the server.
+</Aside>
 
 <Aside type="caution">
   The `.env` file contains passwords. In a real application, always add this file to your `.gitignore` file and never commit secrets to version control.
