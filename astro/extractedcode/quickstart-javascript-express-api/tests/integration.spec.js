@@ -1,125 +1,69 @@
 const { test, expect } = require('@playwright/test');
 
-const _header = {
-  'Authorization': 'this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works',
-  'Content-Type': 'application/json'
+const fusionAuthUrl = 'http://localhost:9011';
+const apiUrl = 'http://localhost:3000';
+const apiKey = 'this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works';
+const applicationId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
+
+async function getToken(request, loginId) {
+  const loginResponse = await request.post(`${fusionAuthUrl}/api/login`, {
+    headers: {Authorization: apiKey, 'Content-Type': 'application/json', },
+    data: {loginId, password: 'password', applicationId, },
+  });
+  expect(loginResponse.ok()).toBeTruthy();
+  const loginData = await loginResponse.json();
+  expect(loginData.token).toBeTruthy();
+  return loginData.token;
 }
 
-test('Teller can access /make-change endpoint', async ({ request }) => {
-  const loginResponse = await request.post('http://localhost:9011/api/login', {
-    headers: _header,
-    data: {
-      loginId: 'teller@example.com',
-      password: 'password',
-      applicationId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'
-    }
-  });
-  expect(loginResponse.ok()).toBeTruthy();
-  const loginData = await loginResponse.json();
-  const token = loginData.token;
-  const makeChangeResponse = await request.get('http://localhost:3000/make-change?total=1.02', {
-    headers: { 'Authorization': `Bearer ${token}`}
-  });
-  expect(makeChangeResponse.ok()).toBeTruthy();
-  const changeData = await makeChangeResponse.json();
-  expect(changeData.total).toBe(1.02);
-  expect(changeData.nickels).toBe(20);
-  expect(changeData.pennies).toBe(2);
+function bearerHeaders(token) { return { Authorization: `Bearer ${token}` }; }
+
+test('Admin can log in to FusionAuth Admin UI', async ({ page }) => {
+  await page.goto(`${fusionAuthUrl}/admin/`);
+  await page.waitForLoadState('networkidle');
+  await page.getByPlaceholder('Login').fill('admin@example.com');
+  await page.getByPlaceholder('Password').fill('password');
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await expect(page).toHaveURL(/\/admin\//);
+  await expect(page.getByRole('heading', { name: 'Recent logins' })).toBeVisible();
 });
 
-test('Basic authorization scheme is rejected', async ({ request }) => {
-  const loginResponse = await request.post('http://localhost:9011/api/login', {
-    headers: _header,
-    data: {
-      loginId: 'teller@example.com',
-      password: 'password',
-      applicationId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'
-    }
-  });
-  expect(loginResponse.ok()).toBeTruthy();
-  const loginData = await loginResponse.json();
-  const makeChangeResponse = await request.get('http://localhost:3000/make-change?total=1.02', {
-    headers: { 'Authorization': `Basic ${loginData.token}` }
-  });
-  expect(makeChangeResponse.status()).toBe(401);
+test('Read and write requests without a token are rejected', async ({ request }) => {
+  const readResponse = await request.get(`${apiUrl}/read`);
+  expect(readResponse.status()).toBe(401);
+  const writeResponse = await request.post(`${apiUrl}/write`, { data: { value: 'unauthorized-write' },});
+  expect(writeResponse.status()).toBe(401);
 });
 
-test('Totals with more than two decimal places are rejected', async ({ request }) => {
-  const loginResponse = await request.post('http://localhost:9011/api/login', {
-    headers: _header,
-    data: {
-      loginId: 'teller@example.com',
-      password: 'password',
-      applicationId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'
-    }
+test('Reader can read but cannot write', async ({ request }) => {
+  const readerToken = await getToken(request, 'reader@example.com');
+  const readResponse = await request.get(`${apiUrl}/read`, { headers: bearerHeaders(readerToken), });
+  expect(readResponse.ok()).toBeTruthy();
+  expect(await readResponse.json()).toContain('1');
+  const writeResponse = await request.post(`${apiUrl}/write`, {
+    headers: bearerHeaders(readerToken),
+    data: { value: 'reader-write-should-be-rejected' },
   });
-  expect(loginResponse.ok()).toBeTruthy();
-  const loginData = await loginResponse.json();
-  const makeChangeResponse = await request.get('http://localhost:3000/make-change?total=1.005', {
-    headers: { 'Authorization': `Bearer ${loginData.token}` }
-  });
-  expect(makeChangeResponse.status()).toBe(400);
-  expect(await makeChangeResponse.json()).toEqual({ error: 'Invalid or missing "total" parameter' });
+  expect(writeResponse.status()).toBe(403);
 });
 
-test('Teller can access /panic endpoint', async ({ request }) => {
-  const loginResponse = await request.post('http://localhost:9011/api/login', {
-    headers: _header,
-    data: {
-      loginId: 'teller@example.com',
-      password: 'password',
-      applicationId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'
-    }
+test('Writer can write and reader can read the saved value', async ({ request }) => {
+  const writerToken = await getToken(request, 'writer@example.com');
+  const readerToken = await getToken(request, 'reader@example.com');
+  const value = `integration-test-${Date.now()}`;
+  const writeResponse = await request.post(`${apiUrl}/write`, {
+    headers: bearerHeaders(writerToken),
+    data: { value },
   });
-  expect(loginResponse.ok()).toBeTruthy();
-  const loginData = await loginResponse.json();
-  const token = loginData.token;
-  const panicResponse = await request.post('http://localhost:3000/panic', {
-    headers: {'Authorization': `Bearer ${token}`}
+  expect(writeResponse.ok()).toBeTruthy();
+  expect(await writeResponse.json()).toBe('Write successful');
+  const writerReadResponse = await request.get(`${apiUrl}/read`, {
+    headers: bearerHeaders(writerToken),
   });
-  expect(panicResponse.ok()).toBeTruthy();
-  const panicData = await panicResponse.json();
-  expect(panicData.message).toBe("We've called the police!");
-});
-
-test('Customer can access /make-change endpoint', async ({ request }) => {
-  const loginResponse = await request.post('http://localhost:9011/api/login', {
-    headers: _header,
-    data: {
-      loginId: 'customer@example.com',
-      password: 'password',
-      applicationId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'
-    }
+  expect(writerReadResponse.status()).toBe(403);
+  const readResponse = await request.get(`${apiUrl}/read`, {
+    headers: bearerHeaders(readerToken),
   });
-  expect(loginResponse.ok()).toBeTruthy();
-  const loginData = await loginResponse.json();
-  const token = loginData.token;
-  const makeChangeResponse = await request.get('http://localhost:3000/make-change?total=3.24', {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  expect(makeChangeResponse.ok()).toBeTruthy();
-  const changeData = await makeChangeResponse.json();
-  expect(changeData.total).toBe(3.24);
-  expect(changeData.nickels).toBe(64);
-  expect(changeData.pennies).toBe(4);
-});
-
-test('Customer cannot access /panic endpoint', async ({ request }) => {
-  const loginResponse = await request.post('http://localhost:9011/api/login', {
-    headers: _header,
-    data: {
-      loginId: 'customer@example.com',
-      password: 'password',
-      applicationId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'
-    }
-  });
-  expect(loginResponse.ok()).toBeTruthy();
-  const loginData = await loginResponse.json();
-  const token = loginData.token;
-  const panicResponse = await request.post('http://localhost:3000/panic', {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  expect(panicResponse.status()).toBe(403);
-  const panicData = await panicResponse.json();
-  expect(panicData.error).toBe('You do not have a role with permissions to do this.');
+  expect(readResponse.ok()).toBeTruthy();
+  expect(await readResponse.json()).toContain(value);
 });

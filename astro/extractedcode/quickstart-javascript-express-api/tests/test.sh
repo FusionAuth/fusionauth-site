@@ -21,7 +21,7 @@ echo "Starting FusionAuth..."
 docker compose up -d
 
 echo "Starting app..."
-docker run --network host --name app -v "$PROJECT_DIR/complete-application":/app -w /app --rm node:26 bash -c "npm install && npm run start" &
+docker run --network host --name app -v "$PROJECT_DIR/complete-application":/app -w /app --rm node:26 bash -c "npm install && node api.mjs" &
 APP_PID=$!
 until docker inspect app > /dev/null 2>&1; do
   sleep 1
@@ -37,7 +37,7 @@ done
 echo "FusionAuth is ready."
 
 echo "Waiting for app to be ready..."
-until curl -sf http://localhost:3000 > /dev/null 2>&1; do
+until curl -s http://localhost:3000 > /dev/null 2>&1; do
   echo "  Waiting for app..."
   sleep 5
 done
