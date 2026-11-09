@@ -1,5 +1,5 @@
 import express from 'express';
-import jose from 'jose';
+import * as jose from 'jose';
 import dotenv from 'dotenv/config';
 import cookieParser from 'cookie-parser';
 
@@ -9,8 +9,6 @@ const data = new Set('1');
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
-app.use('/', router);
-app.use(verifyJWT);
 
 router.get('/', function (req, res, next) { res.json({ title: 'Express API' }); });
 
@@ -22,7 +20,6 @@ router.post('/write',  function (req, res) {
   return res.json('Write successful');
 });
 
-app.listen(3000, '0.0.0.0', () => { console.log(`API available at http://localhost:3000`); });
 
 function hasRole(role) {
   return (req, res, next) => {
@@ -61,6 +58,10 @@ const verifyJWT = async (req, res, next) => {
     }
   }
 };
+
+app.use(verifyJWT);
+app.use('/', router);
+app.listen(3000, '0.0.0.0', () => { console.log(`API available at http://localhost:3000`); });
 
 // curl localhost:3000/read
 // curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'
