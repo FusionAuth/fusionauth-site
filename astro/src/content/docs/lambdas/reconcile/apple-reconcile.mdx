@@ -1,6 +1,6 @@
 ---
 title: Apple Reconcile Lambda
-description: Learn how to map the data from a Apple login to a FusionAuth user and registration with a reconcile lambda.
+description: Learn how to map the data from an Apple login to a FusionAuth user and registration with a reconcile lambda.
 tags: apple reconcile lambda, apple sign in, social login, fusionauth lambda, identity provider reconcile, custom claims
 ---
 import ReconcileLambdaIntro from 'src/content/docs/lambdas/_reconcile-lambda-intro.mdx';
@@ -11,7 +11,7 @@ import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function reconcile(user, registration, idToken, context) {
@@ -22,20 +22,20 @@ function reconcile(user, registration, idToken, context) {
 This lambda must contain a function named `reconcile` that accepts the following parameters:
 
 <ReconcileLambdaUserRegistrationParameters />
-* `idToken` - the JSON payload of the validated and decoded Id Token returned from Apple. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `idToken`: the JSON payload of the validated and decoded Id Token returned from Apple. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The Id Token object that contains the payload returned by Apple and may contain well known OpenID Connect registered claims as well as any custom claims defined by Apple.
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. The `idToken` object holds the payload from Apple. The payload can include registered OpenID Connect claims and custom Apple claims.
 
 ## Assigning The Lambda
 
-Once a lambda is created, you may assign it to the Apple identity provider in the IdP configuration.
+After you create the lambda, assign the lambda to the Apple identity provider.
 
-Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and select your existing Apple configuration or click <Breadcrumb>Add provider</Breadcrumb> and select Apple if it has not yet been configured.
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing Apple configuration. If you haven't configured Apple yet, click <Breadcrumb>Add provider</Breadcrumb> and select Apple.
 
 ## Default Lambda
 
-A default Apple reconcile lambda is available in FusionAuth that may be used or modified. The default Apple lambda function is documented below.
+FusionAuth includes a default Apple reconcile lambda. You can use the default lambda as is or change the lambda:
 
 ```javascript
 // This is the default Apple reconcile, modify this to your liking.
@@ -50,3 +50,11 @@ function reconcile(user, registration, idToken) {
   }
 }
 ```
+
+## Example Lambda
+
+Apple sends the user's name only during the first login, in the **`user`** claim. The following lambda saves the name and builds **`fullName`** from the name. On later logins, the lambda keeps the saved name.
+
+When a user chooses Hide My Email, Apple sends a private relay address and sets the **`is_private_email`** claim. The lambda stores the flag in **`user.data.applePrivateEmail`**, so your application can ask for a direct address later. Apple sends **`is_private_email`** as a string or a boolean, and the lambda handles both.
+
+<ExtractedCode src="example-lambdas/lambdas/apple-reconcile/name-and-private-email.js" lang="javascript" title="A lambda that saves the Apple name and flags private relay addresses." />

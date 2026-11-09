@@ -4,13 +4,13 @@ description: Learn how to convert a FusionAuth user into the SCIM user response 
 tags: scim user lambda, scim provisioning, fusionauth lambda, user converter, scim response, user provisioning
 ---
 
-If you would like to convert an outgoing FusionAuth User response into a SCIM User and optionally SCIM EnterpriseUser, you must specify a lambda in the SCIM configuration. This lambda will be invoked after the User was acted upon.
+A SCIM User Response Converter lambda converts a FusionAuth user into the SCIM User response, and optionally the SCIM EnterpriseUser extension, that FusionAuth returns to the SCIM client. FusionAuth runs the lambda after FusionAuth acts on the user.
 
-When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+When you create a lambda in the Admin UI, FusionAuth provides an empty function for you to implement.
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+If you create the lambda with the API, the function must have the following signature:
 
 ```javascript
 function convert(scimUser, user, context) {
@@ -18,60 +18,43 @@ function convert(scimUser, user, context) {
 }
 ```
 
-This lambda must contain a function named `convert` that accepts the following parameters:
+The lambda must contain a function named `convert` that accepts the following parameters:
 
-* `scimUser` - the SCIM response object. You can modify this object.
-* `user` - the FusionAuth User object. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `scimUser`: the SCIM response. You can modify this object.
+* `user`: the FusionAuth user. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The FusionAuth `user` object is well documented in the [User API](/docs/apis/users) documentation. The SCIM User object is a JavaScript object containing the SCIM User and optionally the SCIM EnterpriseUser response JSON payload. See [SCIM User](https://datatracker.ietf.org/doc/html/rfc7643#section-4.1) and [SCIM EnterpriseUser extension](https://datatracker.ietf.org/doc/html/rfc7643#section-4.3).
+The [User API](/docs/apis/users) documents the FusionAuth user. The `scimUser` object holds the SCIM User response JSON, plus the SCIM EnterpriseUser extension. See [SCIM User](https://datatracker.ietf.org/doc/html/rfc7643#section-4.1) and [SCIM EnterpriseUser extension](https://datatracker.ietf.org/doc/html/rfc7643#section-4.3).
 
-You may add or modify anything in the `scimUser` object.
+Before the lambda runs, FusionAuth fills in the following `scimUser` fields:
 
-## Assigning The Lambda
+* **`id`**: the FusionAuth user Id.
+* **`externalId`**
+* **`active`**
+* **`schemas`**: the core User schema. For requests to the EnterpriseUsers endpoint, FusionAuth adds the enterprise extension schema.
+* **`meta`**: **`created`**, **`lastModified`**, **`resourceType`**, and **`location`**, the URI of the user resource.
 
-Once a lambda is created, you must assign it to a Tenant. See the <Breadcrumb>SCIM</Breadcrumb> tab in the Tenant configuration.
+The lambda can add to or change any field in `scimUser`.
+
+## Assign the Lambda
+
+After you create the lambda, assign the lambda to a tenant on the <Breadcrumb>SCIM</Breadcrumb> tab of the tenant configuration.
 
 ## Default Lambda
 
-A default SCIM User Response Converter Lambda that converts an outgoing FusionAuth User to a SCIM USER and SCIM EnterpriseUser response to a FusionAuth User is available and may be used or modified. The lambda function is documented below.
+FusionAuth provides a default SCIM User Response Converter lambda. The default lambda copies the FusionAuth user to the core SCIM User attributes. The lambda returns each extension stored under **`user.data.extensions`** and adds the extension schema to **`schemas`**. The default SCIM User Request Converter lambda stores extensions in the same place.
 
-```javascript
-function convert(scimUser, user) {
-  // Un-comment this line to see the user object printed to the event log
-  // console.info(JSON.stringify(user, null, 2));
+The default lambda always returns one email and one phone number. When the user has no mobile phone, the phone number entry has no **`value`**.
 
-  scimUser.active = user.active;
-  scimUser.userName = user.username;
-  scimUser.name = {
-    formatted: user.fullName,
-    familyName: user.lastName,
-    givenName: user.firstName,
-    middleName: user.middleName,
-    honorificPrefix: user.data.honorificPrefix,
-    honorificSuffix: user.data.honorificSuffix
-  };
+<ExtractedCode src="example-lambdas/lambdas/scim-user-response-converter/default.js" lang="javascript" title="The default SCIM User Response Converter lambda." />
 
-  scimUser.phoneNumbers = [{
-    primary: true,
-    value: user.mobilePhone,
-    type: "mobile"
-  }];
+## Example: Return Enterprise Attributes From User Data
 
-  scimUser.emails = [{
-    primary: true,
-    value: user.email,
-    type: "work"
-  }];
+The following lambda reverses the [enterprise attributes example](/docs/lambdas/scim/scim-user-request-converter#example-store-enterprise-attributes-in-user-data) for the SCIM User Request Converter. The lambda makes these changes to the default lambda:
 
-  // Optionally return any custom extensions stored in user.data
-  if (user.data && user.data.extensions) {
-    for (var extension in user.data.extensions) {
-      if (scimUser.schemas.indexOf(extension) === -1) {
-        scimUser.schemas.push(extension);
-      }
-      scimUser[extension] = user.data.extensions[extension];
-    }
-  }
-}
-```
+* The lambda builds the enterprise extension from the **`user.data`** fields that the request converter wrote. When the user has none of those fields, the lambda leaves out the extension.
+* The lambda builds the manager **`$ref`** from **`scimUser.meta.location`**, by swapping the user Id at the end of the URI for the manager Id.
+* The lambda adds the enterprise schema to **`schemas`** when the SCIM client called the core Users endpoint.
+* The lambda returns **`emails`** and **`phoneNumbers`** only when the user has an email or mobile phone.
+
+<ExtractedCode src="example-lambdas/lambdas/scim-user-response-converter/enterprise-fields.js" lang="javascript" title="A lambda that returns enterprise extension attributes from user data." />

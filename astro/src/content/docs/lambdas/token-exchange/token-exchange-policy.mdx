@@ -1,14 +1,15 @@
 ---
 title: Token Exchange Policy Lambda
-description: Reference for the Token Exchange Policy lambda, which decides whether FusionAuth allows a token exchange request.
+description: Learn how to decide whether FusionAuth allows a token exchange request with a policy lambda.
 tags: token exchange policy lambda, token exchange authorization, rfc 8693, delegation authorization
 ---
+import LambdaContext from 'src/content/docs/lambdas/token-exchange/_token-exchange-policy-context.mdx';
 
 <PlanBlurb plan="enterprise" />
 
 <AvailableSince since="1.70.0"/>
 
-A Token Exchange Policy lambda decides whether FusionAuth allows a [token exchange](/docs/authorization/token-exchange) request, and which audiences, scopes, and lifetime the issued token receives. FusionAuth runs this lambda for every exchange in a Tenant that uses the Lambda policy engine. It runs after FusionAuth authenticates the exchanger and validates the subject token.
+A Token Exchange Policy lambda decides whether FusionAuth allows a [token exchange](/docs/authorization/token-exchange) request, and which audiences, scopes, and lifetime the issued token receives. FusionAuth runs this lambda for every exchange in a Tenant that uses the Lambda policy engine. The lambda runs after FusionAuth authenticates the exchanger and validates the subject token. When a requested audience matches the client Id of an Entity in another Tenant, FusionAuth denies the exchange with an `invalid_target` error before the lambda runs.
 
 ## Lambda Structure
 
@@ -53,14 +54,9 @@ The Admin UI fills a new lambda of this type with an example implementation.
 
 ### The `context` Object
 
-<APIBlock>
-  <APIField name="tenantId" type="UUID">
-    The Id of the Tenant processing the exchange.
-  </APIField>
-  <APIField name="services.secrets" type="Object">
-    Provides access to [secrets](/docs/lambdas#secrets) through `context.services.secrets.get('<secret-name>')`.
-  </APIField>
-</APIBlock>
+The read-only `context` object has the following fields:
+
+<LambdaContext />
 
 ### The `result` Object
 
@@ -115,10 +111,14 @@ FusionAuth responds to a denied exchange with a `403` status code. The response 
 FusionAuth applies the following rules to an `ALLOW` decision before it builds the token:
 
 * FusionAuth drops any value in **`granted.aud`** that isn't in **`exchange.requestedAudiencesAndResources`**. If no values remain, FusionAuth denies the exchange with an `invalid_target` error.
-* When the subject token has a `scope` claim, FusionAuth drops any value in **`granted.scope`** that the subject token's `scope` claim doesn't contain. If the request included `scope` and no granted scopes remain, FusionAuth denies the exchange with an `invalid_scope` error.
+* When the subject token has a `scope` claim, FusionAuth drops any value in **`granted.scope`** that the subject token's `scope` claim doesn't contain. If the lambda granted scopes and FusionAuth drops all of them, FusionAuth denies the exchange with an `invalid_scope` error.
+* When the subject token's `scope` claim is present but empty, FusionAuth drops every value in **`granted.scope`** and issues the token without scopes.
+* When the subject token has no `scope` claim, FusionAuth keeps every value in **`granted.scope`**.
 * FusionAuth sets the token lifetime to **`granted.expires_in`** or the default lifetime, whichever is shorter. The default lifetime is the exchanger's Entity Type JWT duration when the Entity Type has JWT configuration enabled, and the Tenant's JWT duration otherwise.
 
-FusionAuth writes an Information entry to the [Event Log](/docs/deploy/troubleshoot/troubleshooting#event-log) listing any audiences and scopes it dropped.
+Because FusionAuth drops every audience outside the request, FusionAuth can't allow a request that includes neither `audience` nor `resource`.
+
+When FusionAuth drops audiences or scopes, FusionAuth writes an Information entry to the [Event Log](/docs/deploy/troubleshoot/troubleshooting#event-log) that lists the dropped values.
 
 ### Errors
 
@@ -129,7 +129,7 @@ FusionAuth treats the following as a lambda error and rejects the exchange:
 * An `ALLOW` decision is missing **`granted`** or any of its fields.
 * A `DENY` decision is missing **`denial`** or either of its fields, or uses an unsupported **`error_code`**.
 
-FusionAuth responds to a lambda error with a `400` status code and an `invalid_request` error, and records the attempt in the token exchange audit log with the `POLICY_LAMBDA_ERROR` outcome. The response doesn't include exception details. To see them, enable debugging on the lambda.
+FusionAuth responds to a lambda error with a `400` status code and an `invalid_request` error, and records the attempt in the token exchange audit log with the `POLICY_LAMBDA_ERROR` outcome. The response doesn't include exception details. FusionAuth writes the exception to the [Event Log](/docs/deploy/troubleshoot/troubleshooting#event-log) as an Error entry.
 
 ## Assigning the Lambda
 
@@ -147,104 +147,20 @@ To assign the lambda with the [Tenant API](/docs/apis/tenants), set **`tenant.to
 
 ### Allow Specific Exchangers for Each Audience
 
-This lambda maps each exchanger to the one audience it may call and the scopes it may receive. It grants the intersection of the requested scopes and the allowed scopes:
+This lambda maps each exchanger to one allowed audience and a set of allowed scopes. The lambda grants the requested scopes that the rule allows. When the subject token comes from an external issuer, the lambda grants only `:read` scopes and a 60 second lifetime:
 
-```javascript
-function policy(result, exchange, context) {
-  const rules = {
-    'todo-service': { audience: 'email-service', scopes: ['email:send'] },
-    'billing-service': { audience: 'invoice-service', scopes: ['invoice:read', 'invoice:write'] }
-  };
-
-  const rule = rules[exchange.clientId];
-  if (!rule) {
-    result.decision = 'DENY';
-    result.denial = {
-      error_code: 'unauthorized_client',
-      error_description: 'This client may not exchange tokens.'
-    };
-    return;
-  }
-
-  if (exchange.requestedAudiencesAndResources.indexOf(rule.audience) === -1) {
-    result.decision = 'DENY';
-    result.denial = {
-      error_code: 'invalid_target',
-      error_description: 'The requested audience is not permitted for this client.'
-    };
-    return;
-  }
-
-  result.decision = 'ALLOW';
-  result.granted = {
-    aud: [rule.audience],
-    scope: exchange.requestedScopes.filter(scope => rule.scopes.indexOf(scope) !== -1),
-    expires_in: 300
-  };
-}
-```
-
-### Limit Tokens From External Issuers
-
-This lambda accepts JWTs from external issuers, but only issues short-lived, read-only tokens for them:
-
-```javascript
-function policy(result, exchange, context) {
-  const external = exchange.subjectTokenValidationStatus !== 'AUTHORITATIVE';
-
-  result.decision = 'ALLOW';
-  result.granted = {
-    aud: exchange.requestedAudiencesAndResources,
-    scope: external ? ['read'] : exchange.requestedScopes,
-    expires_in: external ? 60 : 900
-  };
-}
-```
+<ExtractedCode src="example-lambdas/lambdas/token-exchange-policy/exchanger-rules.js" lang="javascript" title="A lambda that allows specific exchangers for each audience." />
 
 ### Call an External Authorization Service
 
-This lambda asks an external service like [FusionAuth FGA by Permify](/permify-docs/) whether to allow the exchange. It reads the service's API key from a [secret](/docs/lambdas#secrets) and calls the service with [Lambda HTTP Connect](/docs/lambdas/lambda-remote-api-calls):
+This lambda asks an external service like [FusionAuth FGA by Permify](/permify-docs/) whether to allow the exchange. The lambda reads the service's API key from a [secret](/docs/lambdas#secrets) and calls the service with [Lambda HTTP Connect](/docs/lambdas/lambda-remote-api-calls). When the service denies the exchange, the lambda returns the service's reason to the client. When the service returns a status other than `200`, or FusionAuth can't reach the service, the lambda logs the status and denies the exchange. An unreachable service returns a status of `-1`:
 
-```javascript
-function policy(result, exchange, context) {
-  const response = fetch('https://authz.example.com/api/exchange', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + context.services.secrets.get('authz-api-key'),
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      exchanger: exchange.clientId,
-      subject: exchange.subjectTokenClaims.sub,
-      audiences: exchange.requestedAudiencesAndResources,
-      scopes: exchange.requestedScopes
-    })
-  });
-
-  if (response.status !== 200) {
-    result.decision = 'DENY';
-    result.denial = {
-      error_code: 'invalid_request',
-      error_description: 'The authorization service denied the exchange.'
-    };
-    return;
-  }
-
-  // assumes a response like {"aud": [...], "scope": [...], "expires_in": 300}
-  const decision = JSON.parse(response.body);
-  result.decision = 'ALLOW';
-  result.granted = {
-    aud: decision.aud,
-    scope: decision.scope,
-    expires_in: decision.expires_in
-  };
-}
-```
+<ExtractedCode src="example-lambdas/lambdas/token-exchange-policy/external-authz.js" lang="javascript" title="A lambda that calls an external authorization service." />
 
 ## Debugging
 
 To troubleshoot a policy lambda:
 
-* Enable debugging on the lambda to write `console.debug()` output and exception details to the [Event Log](/docs/deploy/troubleshoot/troubleshooting#event-log). See [Console](/docs/lambdas#console).
+* Enable debugging on the lambda to write `console.debug()` output to the [Event Log](/docs/deploy/troubleshoot/troubleshooting#event-log). See [Console](/docs/lambdas#console).
 * Enable **Enable debug logging** in the Tenant's token exchange settings to write the reason for each failed exchange to the Event Log.
 * Review the outcome and policy decision for each attempt in the Admin UI under <Breadcrumb>System -> Token Exchange Log</Breadcrumb>, or with the [Search the Token Exchange Audit Log](/docs/apis/system/search-the-token-exchange-audit-log) API.

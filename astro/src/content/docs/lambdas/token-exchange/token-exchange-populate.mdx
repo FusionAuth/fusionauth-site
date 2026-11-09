@@ -1,14 +1,15 @@
 ---
 title: Token Exchange Populate Lambda
-description: Reference for the Token Exchange Populate lambda, which adds or narrows claims in tokens issued through token exchange.
+description: Learn how to add or narrow the claims in tokens FusionAuth issues through token exchange.
 tags: token exchange populate lambda, custom claims, token customization, rfc 8693
 ---
+import LambdaContext from 'src/content/docs/lambdas/token-exchange/_token-exchange-populate-context.mdx';
 
 <PlanBlurb plan="enterprise" />
 
 <AvailableSince since="1.70.0"/>
 
-A Token Exchange Populate lambda modifies the claims of an access token issued through [token exchange](/docs/authorization/token-exchange). FusionAuth runs this lambda after the policy engine allows an exchange and before it signs the token. The lambda is optional.
+A Token Exchange Populate lambda modifies the claims of an access token issued through [token exchange](/docs/authorization/token-exchange). FusionAuth runs this lambda after the policy engine allows an exchange and before FusionAuth signs the token. The lambda is optional.
 
 ## Lambda Structure
 
@@ -28,7 +29,7 @@ The function accepts the following parameters:
 
 ### The `jwt` Object
 
-Before the lambda runs, the `jwt` object contains the claims FusionAuth built from the policy decision and the subject token, including `sub`, `aud`, `scope`, `act`, `client_id`, `exp`, and `tid`. The lambda can add claims, change claims, and remove claims by setting them to `null`, with the following restrictions.
+Before the lambda runs, the `jwt` object contains the claims FusionAuth built from the policy decision and the subject token, including `sub`, `aud`, `scope`, `act`, `client_id`, `gty`, `exp`, and `tid`. The lambda can add and change claims, and remove a claim by setting the claim to `null`. The following restrictions apply.
 
 FusionAuth discards any changes to the following reserved claims:
 
@@ -49,13 +50,15 @@ FusionAuth discards any changes to the following reserved claims:
 * `tid`
 * `tty`
 
+FusionAuth also removes any `fa_uid` claim the lambda adds.
+
 The lambda can only narrow the following claims:
 
-* `aud`: FusionAuth keeps only the values that the policy engine granted. If no granted values remain, or the lambda removes the claim, FusionAuth restores the granted audiences.
-* `scope`: FusionAuth keeps only the scopes that the policy engine granted. If no granted scopes remain, or the lambda removes the claim, FusionAuth restores the granted scopes.
-* `exp`: FusionAuth ignores a value later than the original expiration.
+* `aud`: FusionAuth keeps only the values that the policy engine granted. If no granted values remain, or the lambda removes the claim, FusionAuth restores the granted audiences. When the policy engine granted no audiences, FusionAuth removes `aud`.
+* `scope`: FusionAuth keeps only the scopes that the policy engine granted. If no granted scopes remain, or the lambda removes the claim, FusionAuth restores the granted scopes. When the policy engine granted no scopes, FusionAuth removes `scope`.
+* `exp`: FusionAuth caps `exp` at the original expiration, so the lambda can shorten the token lifetime but not extend the lifetime. Setting `exp` to `null` keeps the original value.
 
-FusionAuth copies the `amr`, `applicationId`, `auth_time`, `authenticationType`, and `sid` claims from the subject token when they are present. FusionAuth doesn't copy any other claims from the subject token. To carry over another claim, copy it from **`exchange.subjectToken`**.
+FusionAuth copies the `amr`, `applicationId`, `auth_time`, `authenticationType`, and `sid` claims from the subject token when they are present. FusionAuth doesn't copy any other claims from the subject token. To carry over another claim, copy the claim from **`exchange.subjectToken`**.
 
 To avoid conflicts with registered claims and claims FusionAuth adds in the future, give custom claims a namespaced name, such as `https://example.com/department`.
 
@@ -84,11 +87,9 @@ To avoid conflicts with registered claims and claims FusionAuth adds in the futu
 
 ### The `context` Object
 
-<APIBlock>
-  <APIField name="services.secrets" type="Object">
-    Provides access to [secrets](/docs/lambdas#secrets) through `context.services.secrets.get('<secret-name>')`.
-  </APIField>
-</APIBlock>
+The read-only `context` object has the following fields:
+
+<LambdaContext />
 
 ### Errors
 
@@ -100,59 +101,22 @@ To assign the lambda in the Admin UI:
 
 1. Navigate to <Breadcrumb>Tenants</Breadcrumb> and click <IconButton icon="edit" /> on the Tenant.
 1. Select the <Breadcrumb>OAuth</Breadcrumb> tab.
-1. In the <Breadcrumb>Token exchange settings</Breadcrumb> section, select the lambda in **Token exchange populate lambda**.
+1. In the <Breadcrumb>Token exchange settings</Breadcrumb> section, turn on **Enable token exchange grant**.
+1. Select the lambda in **Token exchange populate lambda**.
 1. Click <IconButton icon="save" />.
 
 To assign the lambda with the [Tenant API](/docs/apis/tenants), set **`tenant.tokenExchangeConfiguration.populateLambdaId`** to the lambda's Id.
 
 ## Examples
 
-### Add Claims From the Exchanger Entity
+### Add Claims From the Exchange
 
-This lambda copies values from the exchanger Entity's `data` into the token:
+This lambda copies the exchanger Entity's department from the Entity's `data`, and the `intent` request parameter. The lambda also carries a custom organization claim over from the subject token, because FusionAuth doesn't copy custom claims:
 
-```javascript
-function populate(jwt, exchange, context) {
-  const data = exchange.entity.data || {};
-  if (data.department) {
-    jwt['https://example.com/department'] = data.department;
-  }
-  if (exchange.intent) {
-    jwt['https://example.com/intent'] = exchange.intent;
-  }
-}
-```
-
-### Copy a Claim From the Subject Token
-
-This lambda carries a custom claim from the subject token into the issued token:
-
-```javascript
-function populate(jwt, exchange, context) {
-  const orgId = exchange.subjectToken['https://example.com/org_id'];
-  if (orgId) {
-    jwt['https://example.com/org_id'] = orgId;
-  }
-}
-```
+<ExtractedCode src="example-lambdas/lambdas/token-exchange-populate/carry-claims.js" lang="javascript" title="A lambda that adds claims from the exchange." />
 
 ### Narrow the Scope and Lifetime
 
-This lambda removes write access and shortens the lifetime of tokens exchanged for a reporting service:
+This lambda removes write access and caps the lifetime at five minutes for tokens exchanged for a reporting service. When the policy engine granted only write scopes, the lambda leaves **`scope`** unchanged, because FusionAuth restores the granted scopes when none remain:
 
-```javascript
-function populate(jwt, exchange, context) {
-  if ((exchange.audiences || []).indexOf('reporting-service') === -1) {
-    return;
-  }
-
-  const readOnly = (exchange.scopes || []).filter(scope => scope.indexOf(':write') === -1);
-  if (readOnly.length > 0) {
-    jwt.scope = readOnly.join(' ');
-  }
-  var maxExp = jwt.iat + 300;
-  if (jwt.exp > maxExp) {
-    jwt.exp = maxExp;
-  }
-}
-```
+<ExtractedCode src="example-lambdas/lambdas/token-exchange-populate/narrow-for-reporting.js" lang="javascript" title="A lambda that narrows the scope and lifetime of a token." />

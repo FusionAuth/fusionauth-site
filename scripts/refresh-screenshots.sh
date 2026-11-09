@@ -68,21 +68,48 @@ if [ "$COMPARE_ONLY" -eq 0 ]; then
 	# Removing first means a screenshot whose declaration is gone does not linger,
 	# and the comparison reports it as removed.
 	rm -f "$SHOTS_DIR"/*.png
-	( cd "$REPO_ROOT/astro" && npm run screenshots -- --strict ) || {
-		echo "ERROR: capture failed; restoring the committed screenshots" >&2
-		cp "$BASELINE"/*.png "$SHOTS_DIR"/ 2>/dev/null
-		exit 1
-	}
+	( cd "$REPO_ROOT/astro" && npm run screenshots -- --strict ) 2>&1 | tee "$BASELINE/capture.log"
+	capture_status=${PIPESTATUS[0]}
 fi
 
-echo ""
-rm -rf "$DIFF_DIR"
-node "$REPO_ROOT/scripts/compare-screenshots.mjs" \
-	--baseline "$BASELINE" \
-	--candidate "$SHOTS_DIR" \
-	--threshold "$THRESHOLD" \
-	--revert-within-tolerance \
-	--out "$DIFF_DIR"
+compare() {
+	echo ""
+	rm -rf "$DIFF_DIR"
+	node "$REPO_ROOT/scripts/compare-screenshots.mjs" \
+		--baseline "$BASELINE" \
+		--candidate "$SHOTS_DIR" \
+		--threshold "$THRESHOLD" \
+		--revert-within-tolerance \
+		--out "$DIFF_DIR"
+}
+
+if [ "${capture_status:-0}" -ne 0 ]; then
+	echo "ERROR: capture failed; restoring the committed screenshots" >&2
+	# the CLI ends with "  - <name>: <error>" for each screenshot it couldn't take
+	failed=$(sed -n '/screenshot(s) failed:/,$s/^  - \([^:]*\): \(.*\)$/\1\t\2/p' "$BASELINE/capture.log")
+	if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+		{
+			printf '## Screenshot capture failed\n\n'
+			if [ -n "$failed" ]; then
+				printf '| Screenshot | Error |\n|------------|-------|\n'
+				printf '%s\n' "$failed" | awk -F '\t' '{ gsub(/\|/, "\\|", $2); printf "| `%s` | %s |\n", $1, $2 }'
+			else
+				printf 'The capture stopped before taking screenshots. See the job log.\n'
+			fi
+			printf '\n'
+		} >> "$GITHUB_STEP_SUMMARY"
+	fi
+	# the failed captures are placeholders, so compare the committed images for those and report drift in the rest
+	while IFS=$'\t' read -r name _; do
+		[ -z "$name" ] || cp "$BASELINE/$name.png" "$SHOTS_DIR/" 2>/dev/null
+	done <<< "$failed"
+	[ -z "$failed" ] || compare
+	rm -f "$SHOTS_DIR"/*.png
+	cp "$BASELINE"/*.png "$SHOTS_DIR"/ 2>/dev/null
+	exit 1
+fi
+
+compare
 compare_status=$?
 
 echo ""

@@ -106,7 +106,7 @@ These scripts read the pin, and `FUSIONAUTH_VERSION` overrides it for a single r
 - `scripts/check-apis.sh` compares the API docs against the client builder for the pinned release. The Shakedown build runs it on every PR, and the weekly **Check API docs against client libraries** workflow runs it against production.
 - `scripts/fetch_external_content.sh` and `scripts/update-templates.sh` generate JSON and templates from the pinned release. The weekly **Check external content** workflow runs both.
 
-Three files need a literal version, so they hold copies of the pin: the Docker install compose file at `astro/public/docs/docker-compose.yml`, which readers download as-is, the screenshot tooling at `astro/screenshots/docker-compose.yml`, and the production Docker examples in `astro/src/content/docs/deploy/production/install/fusionauth-app.mdx`. Don't edit those versions by hand. The Shakedown build runs `bash scripts/update_fusionauth_version.sh --check` and fails when a copy differs from the pin, or when the pinned image isn't on Docker Hub yet. The download page doesn't use the pin, because it has to list a new release right away.
+Four files need a literal version, so they hold copies of the pin: the Docker install compose file at `astro/public/docs/docker-compose.yml`, which readers download as-is and the `example-testing-lambdas` tests run, the screenshot tooling at `astro/screenshots/docker-compose.yml`, the production Docker examples in `astro/src/content/docs/deploy/production/install/fusionauth-app.mdx`, and the lambda conformance check at `astro/extractedcode/example-lambdas/docker-compose.yml`. Don't edit those versions by hand. The Shakedown build runs `bash scripts/update_fusionauth_version.sh --check` and fails when a copy differs from the pin, or when the pinned image isn't on Docker Hub yet. The download page doesn't use the pin, because it has to list a new release right away.
 
 The daily **Update FusionAuth version** workflow also runs `bash scripts/update_fusionauth_version.sh --check-latest`, and fails while the pin trails the latest release. It keeps one issue open that names both versions, and the first run after the pin catches up closes that issue. If the pin PR has to wait on something other than docs, say so in a comment on that issue.
 
@@ -141,6 +141,8 @@ When a release ships:
    scripts/update-templates.sh all
    bash scripts/update_openapi_spec.sh
    ```
+
+   When the lambda types in the release change, the `example-lambdas` tests fail until the harness and the lambda docs match. See the [release check](astro/extractedcode/example-lambdas/README.md#release-check).
 
 1. Retake the screenshots against the new release. The weekly **Update screenshots** workflow does this on its own, or you can start it by hand from the Actions tab. See [`astro/screenshots/README.md`](astro/screenshots/README.md) for details.
 

@@ -5,13 +5,13 @@ tags: hypr reconcile lambda, hypr passwordless, fusionauth lambda, identity prov
 ---
 import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
 
-When an HYPR identity provider is used to complete a federated login request FusionAuth will use the email address to reconcile the user. You may optionally utilize a lambda to customize the user and user registration during this authentication event.
+When a user logs in with a HYPR identity provider, FusionAuth uses the email address to reconcile the user. You can use a lambda to customize the user and registration during the login.
 
-When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+When you create a lambda in the Admin UI, FusionAuth provides an empty function.
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function reconcile(user, registration, context) {
@@ -22,13 +22,19 @@ function reconcile(user, registration, context) {
 This lambda must contain a function named `reconcile` that accepts the following parameters:
 
 <ReconcileLambdaUserRegistrationParameters />
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented here in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation.
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. HYPR returns no profile data, so the lambda receives no third object.
+
+## Example Lambda
+
+The following lambda counts HYPR logins and records the time of the last HYPR login in `user.data.hypr`. The lambda also gives the user the `passwordless` role, so your application can tell which users log in with HYPR. Add the `passwordless` role to your application before you use the lambda.
+
+<ExtractedCode src="example-lambdas/lambdas/hypr-reconcile/passwordless.js" lang="javascript" title="A lambda that records HYPR logins." />
 
 ## Assigning The Lambda
 
-Once a lambda is created, you may assign it to the HYPR identity provider in the IdP configuration.
+After you create the lambda, assign the lambda to the HYPR identity provider.
 
-Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and select your existing HYPR configuration or click <Breadcrumb>Add provider</Breadcrumb> and select HYPR if it has not yet been configured.
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing HYPR configuration. If you haven't configured HYPR yet, click <Breadcrumb>Add provider</Breadcrumb> and select HYPR.
 

@@ -10,7 +10,7 @@ import ReconcileLambdaIntro from 'src/content/docs/lambdas/_reconcile-lambda-int
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function reconcile(user, registration, twitterUser, context) {
@@ -21,20 +21,18 @@ function reconcile(user, registration, twitterUser, context) {
 This lambda must contain a function named `reconcile` that accepts the following parameters:
 
 <ReconcileLambdaUserRegistrationParameters />
-* `twitterUser` - the JSON user object returned by the Twitter Verify Credentials API. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `twitterUser`: the JSON user object returned by the Twitter Verify Credentials API. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `twitterUser` may contain various user claims to utilize during the reconcile process.
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. The `twitterUser` object holds the profile fields the Twitter API returns.
 
 ## Assigning The Lambda
 
-Once a lambda is created, you may assign it to the Twitter identity provider in the IdP configuration.
+Assign the lambda to the Twitter Identity Provider. Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>, then edit your Twitter Identity Provider. If you haven't configured Twitter yet, click <Breadcrumb>Add provider</Breadcrumb> and select Twitter.
 
-Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and select your existing Twitter configuration or click <Breadcrumb>Add provider</Breadcrumb> and select Twitter if it has not yet been configured.
+## Default Lambda
 
-## Example Lambda
-
-There is not a default Twitter reconcile lambda provided by FusionAuth. The following is an example lambda you can use as a starting point.
+FusionAuth includes a default Twitter reconcile lambda, which you can use or modify:
 
 ```javascript
 // This is the default Twitter reconcile, modify this to your liking.
@@ -59,3 +57,9 @@ function reconcile(user, registration, twitterUser) {
   registration.username = twitterUser.screen_name;
 }
 ```
+
+## Example Lambda
+
+The default lambda removes the `_normal` suffix only from PNG profile images. The following lambda removes the suffix from any image type. The lambda skips the placeholder image Twitter shows for users with no profile image. The lambda also stores the user's location in **`user.data.location`** when the Twitter profile has a location.
+
+<ExtractedCode src="example-lambdas/lambdas/twitter-reconcile/profile.js" lang="javascript" title="A lambda that saves the Twitter profile, full-size image, and location." />

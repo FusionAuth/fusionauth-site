@@ -1,34 +1,11 @@
-Here is an example of a simple Lambda that assists FusionAuth to reconcile the User from a successful GitHub login request.
+The following lambda reconciles a user after a GitHub login. The lambda copies the GitHub avatar and name to the user, and sets the registration username to the GitHub login. The lambda stores the company and location in **`user.data`**, and removes the `@` that GitHub adds to organization names in the company field.
+
+The lambda also calls the GitHub API with the access token from the `tokens` argument to list the user's GitHub organizations. The lambda maps each organization to a role with `orgRoles`, and drops organizations with no mapping. The call needs the `read:org` scope in the identity provider configuration. When the call fails, the lambda logs the error and keeps the current roles, so the login still succeeds. Calling an API from a lambda requires the Essentials plan or higher. See [Lambda HTTP Connect](/docs/lambdas/lambda-remote-api-calls).
+
+<ExtractedCode src="example-lambdas/lambdas/openid-reconcile/github-profile-and-org-roles.js" lang="javascript" title="A lambda that saves the GitHub profile and assigns roles from GitHub organizations." />
+
+To see what your IdP returns in the `jwt` object while you develop a lambda, print the object to the Event Log. Add the following line to the lambda:
 
 ```javascript
-function reconcile(user, registration, jwt, id_token, tokens) {
-  // This is an example lambda function reconcile the GitHub login
-
-  // Set GitHub Avatar URL to the FusionAuth imageURL
-  user.imageUrl = jwt.avatar_url;
-
-  // Update the registration username to the GitHub short name
-  registration.username = jwt.login;
-
-  // Store the company and location returned from GitHub in custom user data.
-  user.data = user.data || {};
-  user.data.company = jwt.company;
-  user.data.location = jwt.location;
-
-  // The id_token may be available depending upon your IdP configuration.
-  // - Ensure the value is defined before accessing it.
-  if (id_token) {
-    user.data.companyName = id_token.companyName;
-  }
-
-  // Create an event log of type 'Debug' when the lambda has debug logging enabled
-  console.debug('FusionAuth reconciled a User from GitHub and I helped!');
-}
-```
-
-During development if you want to get a better idea of what your IdP is returning in the `jwt` object, you may print the contents of this object to the Event Log to help you write the lambda. Add the following line of code to your lambda to dump the entire object to an informational event log.
-
-```javascript
-// Pretty print the jwt object to the Event Log
 console.info(JSON.stringify(jwt, null, 2));
 ```

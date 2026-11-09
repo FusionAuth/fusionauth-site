@@ -3,12 +3,13 @@ title: CIMD Client Registration Lambda
 description: Learn how to allow or reject the CIMD clients that register with a CIMD domain.
 tags: cimd client registration lambda, client id metadata document, cimd, mcp, oauth client registration, fusionauth lambda, enterprise feature
 ---
+import LambdaContext from 'src/content/docs/lambdas/login/_cimd-client-registration-context.mdx';
 
 <PlanBlurb plan="enterprise" />
 
 <AvailableSince since="1.70.0"/>
 
-When a [CIMD client](/docs/authentication/oauth/client-registration#client-id-metadata-documents) logs in, FusionAuth fetches the client's metadata document and registers the client just-in-time. Using this lambda function, you can allow or reject that registration, change the scopes and token settings the client gets, or revoke a client that is already registered.
+When a [CIMD client](/docs/authentication/oauth/client-registration#client-id-metadata-documents) logs in, FusionAuth fetches the client's metadata document and registers the client just-in-time. With this lambda, you can allow or reject that registration, change the scopes and token settings the client gets, or revoke a client that is already registered.
 
 A registration lambda is the only way to filter which clients may register when a [CIMD domain](/docs/concepts/types/cimd-domains) uses the `*` wildcard. Without a lambda that rejects clients you don't recognize, a domain that uses the `*` wildcard accepts every client that publishes a valid metadata document. See [CIMD Security](/docs/security/clients/cimd-security#limit-who-can-register).
 
@@ -18,22 +19,22 @@ The CIMD client registration lambda has access to the following information:
 * the scope and token settings FusionAuth will apply by default, taken from the CIMD domain
 * the `resource` the client requested
 * metadata about the request, such as the IP address and user agent
-* authentication threats detected for the request, when Advanced Threat Detection is enabled
+* authentication threats detected for the request, when Advanced Threat Detection is enabled. Currently, FusionAuth only reports `ImpossibleTravel`.
 
 The lambda doesn't receive the user.
 
-You can use Lambda HTTP Connect to access external resources from this lambda, but you should use external resources sparingly. The lambda runs during the user's login, so any additional latency will impact users.
+You can use Lambda HTTP Connect to access external resources from this lambda. Keep external calls to a minimum, because the lambda runs during the user's login and every delay slows the login.
 
 ## When The Lambda Runs
 
-FusionAuth runs the registration lambda after the user logs in, in the following cases:
+FusionAuth runs the registration lambda in the following cases:
 
 * A client registers through the domain for the first time.
 * A user logs in after the client's cached metadata document has expired, and FusionAuth fetches the document again.
-* A registered client requests a `resource` that the lambda hasn't evaluated since the document was last fetched. This can happen during a login or a refresh token request. Each fetch clears the decisions for every other resource, so after a fetch the lambda runs again the first time the client uses each resource.
+* A registered client requests a `resource` that the lambda hasn't evaluated since FusionAuth last fetched the document. The request can be a login, a token request with an authorization code, or a token request with a refresh token. Each fetch clears the decisions for every other resource, so after a fetch the lambda runs again the first time the client uses each resource.
 * A registered client requests a new `resource` during the domain's **Grace period**, after a fetch of the document has failed. In this case, the lambda evaluates the cached metadata.
 
-The lambda doesn't run while the client's cached document is still valid and the lambda has already evaluated the requested resource. It also doesn't run when a resource server validates a token issued to the client.
+The lambda doesn't run while the client's cached document is still valid and the lambda has already evaluated the requested resource. The lambda also doesn't run when a resource server validates a token issued to the client.
 
 ## Lambda Structure
 
@@ -47,9 +48,9 @@ function evaluate(result, clientMetadata, context) {
 
 The `evaluate` function must accept the following parameters:
 
-* `result` - an object used to return the registration decision to FusionAuth. FusionAuth fills it in with the domain's settings before calling the lambda.
-* `clientMetadata` - the read-only metadata from the client's document.
-* `context` - a read-only object containing context for the current request.
+* `result`: an object used to return the registration decision to FusionAuth. FusionAuth fills it in with the domain's settings before calling the lambda.
+* `clientMetadata`: the read-only metadata from the client's document.
+* `context`: a read-only object containing context for the current request.
 
 `result` is of type `ClientRegistrationLambdaResult`, with the following structure:
 
@@ -68,6 +69,7 @@ class ClientRegistrationLambdaResult {
     /**
      * The Id of the JWT populate lambda that populates the access token and Id token issued to this client.
      * Defaults to the domain's JWT populate lambda. Must be the Id of a JWT populate lambda.
+     * Setting the value to null keeps the domain's JWT populate lambda.
      * Only applies when FusionAuth fetches the document; ignored when the lambda evaluates a new resource.
      * @type {string}
      */
@@ -153,7 +155,7 @@ Some properties apply to a single `resource` and others apply to the client's wh
 | `ttlInSeconds` | The whole registration | Only when FusionAuth fetches the document. |
 | `jwtPopulateLambdaId` | The whole registration | Only when FusionAuth fetches the document. |
 
-Because of this, the lambda can't change `ttlInSeconds` or `jwtPopulateLambdaId` when it runs for a new `resource` inside the cache window. In that case, FusionAuth ignores both, and the registration keeps the values it got at the last fetch. The lambda's `scopes` and `providedScopePolicy` still apply to the new `resource`. For more on the cache window, see [CIMD Registration Caching And Lifecycle](/docs/authentication/oauth/cimd-registration-lifecycle#a-new-resource-inside-the-cache-window).
+Because of this, the lambda can't change `ttlInSeconds` or `jwtPopulateLambdaId` when the lambda runs for a new `resource` inside the cache window. In that case, FusionAuth ignores both, and the registration keeps the values it got at the last fetch. The lambda's `scopes` and `providedScopePolicy` still apply to the new `resource`. For more on the cache window, see [CIMD Registration Caching And Lifecycle](/docs/authentication/oauth/cimd-registration-lifecycle#a-new-resource-inside-the-cache-window).
 
 FusionAuth recalculates a `resource`'s `scopes` and `providedScopePolicy` the first time the client uses that `resource` after each fetch of the document, because a fetch clears them. FusionAuth fetches the document at the first login after the cache window ends. See [When A Registration Is Refreshed](/docs/authentication/oauth/cimd-registration-lifecycle#when-a-registration-is-refreshed).
 
@@ -211,41 +213,13 @@ class ClientMetadata {
 }
 ```
 
-`context` is an immutable argument of type `Context`, with the following structure:
+### The `context` Object
 
-```javascript
-class Context {
-    /**
-     * A list of authentication threats detected for this request. This will only be populated when
-     * Advanced Threat Detection is enabled.
-     * @type {Set<String>} - Possible values are [BlocklistedIp], [BotDetected], [DormantAccount], [DormantPassword],
-     * [ImpossibleTravel], [RecentIdentityChange], [RecentPasswordChange], [SuspiciousUserAgent], [UnrecognizedDevice],
-     * or [UntrustedDevice].
-     */
-    authenticationThreats;
+The read-only `context` object has the following fields:
 
-    /**
-     * Event information about the current request. This is an optional value and may be null.
-     * @type {EventInfo} - See the MFA requirement lambda for details
-     */
-    eventInfo;
+<LambdaContext />
 
-    /**
-     * The resource the client requested, which is the value of the `resource` request parameter.
-     * @type {string}
-     */
-    resource;
-
-    /**
-     * Provides access to services available to the lambda, including secrets.
-     * Use `context.services.secrets.get('<key>')` to retrieve a secret value.
-     * @type {Services}
-     */
-    services;
-}
-```
-
-For the fields of `eventInfo`, see the `EventInfo` class on the [MFA requirement lambda](/docs/lambdas/login/mfa-requirement#lambda-structure) page. For more information on authentication threats, see the [Advanced Threat Detection](/docs/security/account-protection/advanced-threat-detection) documentation.
+For this lambda, FusionAuth sets only `ipAddress` and `userAgent`, and doesn't set `location`. When the lambda runs during a token request, `eventInfo` describes the caller of the token endpoint, which is often the client's server instead of the user's browser. For more information on authentication threats, see the [Advanced Threat Detection](/docs/security/account-protection/advanced-threat-detection) documentation.
 
 ### Failure Handling
 
@@ -253,62 +227,34 @@ The lambda fails closed. FusionAuth rejects the client when any of the following
 
 * The lambda throws an error. FusionAuth writes the error to the Event Log.
 * The lambda sets `decision` to a value other than `ALLOW`, `DENY`, or `REVOKE`. Matching is case-sensitive, but FusionAuth ignores surrounding whitespace.
-* The lambda sets `decision` to `null` or deletes it.
+* The lambda sets `decision` to `null`. Deleting `decision` keeps the default of `ALLOW`, because FusionAuth ignores fields the lambda removes.
 * The lambda sets `scopes` or `providedScopePolicy` to `null`. To remove every custom scope, set `scopes` to an empty array instead.
 * The lambda sets `jwtPopulateLambdaId` to an Id that doesn't belong to a JWT populate lambda.
 
-Whenever the lambda rejects a client, on purpose or because it failed, FusionAuth writes an Error entry to the Event Log and sends a [CIMD Registration Failed](/docs/events/reference/cimd/cimd-registration-failed) event with the reason `lambdaRejected`. Neither one says why the lambda rejected the client. To record the reason, call `console.info` from the lambda, which writes an Event Log entry of type Information.
+Whenever the lambda rejects a client, on purpose or because the lambda failed, FusionAuth writes an Error entry to the Event Log and sends a [CIMD Registration Failed](/docs/events/reference/cimd/cimd-registration-failed) event with the reason `lambdaRejected`. Neither one says why the lambda rejected the client. To record the reason, call `console.info` from the lambda, which writes an Event Log entry of type Information.
 
 ## Assigning The Lambda
 
-Once a lambda is created, you must assign it to a CIMD domain. Using the FusionAuth Admin UI, edit the CIMD domain and find the **Registration lambda** field on the <Breadcrumb>Lambdas</Breadcrumb> tab. The field only lists lambdas of type `CIMD client registration`.
+After you create the lambda, assign the lambda to a CIMD domain. In the Admin UI, edit the CIMD domain and find the **CIMD client registration lambda** field on the <Breadcrumb>Lambdas</Breadcrumb> tab. The field only lists lambdas of type `CIMD client registration`.
 
-Or if you are using the [CIMD Domain API](/docs/apis/cimd-domains), assign the lambda Id to the `domain.registrationLambdaId` field.
+With the [CIMD Domain API](/docs/apis/cimd-domains), set **`domain.registrationLambdaId`** to the lambda Id.
 
 ## Example Lambdas
 
-The following example allows only clients hosted on `claude.ai` or `chatgpt.com`, which is useful on a CIMD domain that uses the `*` wildcard:
+### Allow Only Known Clients
 
-```javascript
-function evaluate(result, clientMetadata, context) {
-  var allowedHosts = ['claude.ai', 'chatgpt.com'];
-  if (!allowedHosts.includes(clientMetadata.clientIdHost)) {
-    result.decision = 'DENY';
-    console.info('Rejected CIMD client ' + clientMetadata.clientId);
-  }
-}
-```
+The following lambda suits a CIMD domain that uses the `*` wildcard. The lambda allows only clients hosted on a short list of hosts, and logs each rejected client to the [Event Log](/docs/deploy/troubleshoot/troubleshooting#event-log). The lambda also revokes a retired client. FusionAuth deletes the client's registration and refresh tokens the next time the lambda runs for that client, as described in [When The Lambda Runs](#when-the-lambda-runs).
 
-The following example narrows what one client may request by removing a custom scope and disabling the `phone` scope:
+<ExtractedCode src="example-lambdas/lambdas/cimd-client-registration/client-allowlist.js" lang="javascript" title="A lambda that allows only known CIMD clients." />
 
-```javascript
-function evaluate(result, clientMetadata, context) {
-  if (clientMetadata.clientIdHost === 'chatgpt.com') {
-    result.scopes = result.scopes.filter(function(scope) {
-      return scope.name !== 'reports:write';
-    });
-    result.providedScopePolicy.phone.enabled = false;
-  }
-}
-```
+### Narrow Scopes for Less Trusted Clients
 
-The following example revokes a specific client. FusionAuth deletes the client's registration and refresh tokens the next time the lambda runs for that client, as described in [When The Lambda Runs](#when-the-lambda-runs):
+The following lambda gives `chatgpt.com` clients fewer permissions than the domain allows. The lambda removes the custom `:write` scopes and disables the `phone` and `address` scopes. The lambda also sets the shortest cache duration, so FusionAuth fetches the client's document again sooner. The lambda filters **`scopes`** instead of setting the value to `null`, because FusionAuth denies a client when the lambda sets a scope decision to `null`.
 
-```javascript
-function evaluate(result, clientMetadata, context) {
-  var revokedClientIds = ['https://app.example.com/oauth/client.json'];
-  if (revokedClientIds.includes(clientMetadata.clientId)) {
-    result.decision = 'REVOKE';
-  }
-}
-```
+<ExtractedCode src="example-lambdas/lambdas/cimd-client-registration/narrow-scopes.js" lang="javascript" title="A lambda that narrows scopes for less trusted CIMD clients." />
 
-The following example rejects registrations from requests that look automated. This example assumes you are licensed for the [Advanced Threat Detection](/docs/security/account-protection/advanced-threat-detection) feature:
+### Make One Resource Read-Only
 
-```javascript
-function evaluate(result, clientMetadata, context) {
-  if (context.authenticationThreats && context.authenticationThreats.includes('BotDetected')) {
-    result.decision = 'DENY';
-  }
-}
-```
+FusionAuth stores the **`scopes`** decision separately for each `resource`, so a lambda can grant different scopes for each resource. The following lambda removes the custom `:write` scopes for every client that requests the admin resource. Other resources keep the domain's scopes:
+
+<ExtractedCode src="example-lambdas/lambdas/cimd-client-registration/read-only-resource.js" lang="javascript" title="A lambda that removes write scopes for one resource." />
