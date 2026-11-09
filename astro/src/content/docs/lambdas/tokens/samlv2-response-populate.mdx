@@ -5,13 +5,13 @@ tags: saml v2 lambda, saml response populate, fusionauth lambda, identity provid
 ---
 import SamlResponseFields from 'src/content/docs/lambdas/_saml-response-fields.mdx';
 
-In order to handle complex integrations with SAML service providers, you can specify a lambda to be used by a FusionAuth application acting as SAML identity provider (IdP). This lambda will be invoked prior to the SAML response being sent back to the service provider.
+To customize the SAML response for a service provider, assign a lambda to a FusionAuth application that acts as a SAML Identity Provider (IdP). FusionAuth runs the lambda before FusionAuth sends the SAML response to the service provider.
 
-When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+When you create a lambda in the Admin UI, FusionAuth provides an empty function for you to implement.
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function populate(samlResponse, user, registration, context) {
@@ -19,30 +19,31 @@ function populate(samlResponse, user, registration, context) {
 }
 ```
 
-This lambda must contain a function named `populate` that accepts the following parameters:
+The lambda must contain a function named `populate` that accepts the following parameters:
 
-* `samlResponse` - the SAML v2 response object. You can modify this object.
-* `user` - the FusionAuth User object. This object is read-only.
-* `registration` - the FusionAuth UserRegistration object. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `samlResponse`: the SAML v2 response object. You can modify this object.
+* `user`: the FusionAuth User object. This object is read-only.
+* `registration`: the FusionAuth UserRegistration object. This parameter is `null` when the user is not registered for the application. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The SAML response object mimics the format of the XML document, but is designed to be much simpler to use than dealing with the DOM object model. Here is a list of the fields you have access to manipulate in the SAML response:
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. The `samlResponse` object follows the structure of the XML document, without the DOM object model. The lambda can change the following fields in the SAML response:
 
 <SamlResponseFields />
 
-## Assigning The Lambda
+## Assigning the Lambda
 
-Once a lambda is created, you may assign it to one or more applications in the SAML configuration. See the <Breadcrumb>SAML</Breadcrumb> tab in the Application configuration.
+After you create the lambda, assign the lambda to one or more Applications on the <Breadcrumb>SAML</Breadcrumb> tab of the Application configuration.
 
-## Example Lambda
+## Example Lambdas
 
-Here is an example of a simple Lambda that sets a few extra parameters into the SAML response from the User, including some custom data:
+### Map Attributes for a Service Provider
 
-```javascript
-function populate(samlResponse, user, registration) {
-  // Set an attribute named 'roles' from the User assigned roles for this registration
-  samlResponse.assertion.attributes['roles'] = registration.roles || [];
-  // Set an attribute named 'favoriteColor' using the custom data attribute named 'favoriteColor'
-  samlResponse.assertion.attributes['favoriteColor'] = [user.data.favoriteColor];
-}
-```
+FusionAuth adds default attributes to the assertion, such as `email`, `first_name`, and the `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress` form of each name. Many service providers expect their own attribute names instead. The following lambda replaces the default attributes with the names a service provider expects. The lambda leaves out an attribute when the user has no value for the attribute:
+
+<ExtractedCode src="example-lambdas/lambdas/samlv2-populate/attribute-mapping.js" lang="javascript" title="A lambda that maps user fields to service provider attribute names." />
+
+SAML attributes can hold several values, so every attribute value is an array, even for a single value.
+
+### Send One Role
+
+Some service providers accept one role per user. For a lambda that picks one role from the user's roles, see the [Zendesk](/docs/authentication/act-as-an-idp/saml/zendesk) integration.

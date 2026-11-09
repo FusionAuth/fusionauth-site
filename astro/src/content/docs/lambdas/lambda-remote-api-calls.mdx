@@ -12,47 +12,30 @@ import { YouTube } from '@astro-community/astro-embed-youtube';
 
 Lambda HTTP Connect allows you to make HTTP requests from within a lambda with `fetch()`. Lambdas can contact any URL accessible from your FusionAuth instance.
 
-This features allows you to access data from external systems to configure token claims or to add data to a user profile. It also allows you to push profile or other data from FusionAuth to an external system as needed.
+Use HTTP Connect to read data from an external system into token claims or a user profile. You can also push profile data from FusionAuth to an external system.
 
-Here's a video showing more details about Lambda HTTP Connect:
+The following video shows Lambda HTTP Connect in more detail:
 
 <YouTube id="_TnDUPQm3aQ" />
 
 ## Example Lambda
 
-To make a request, call `fetch()`, passing:
+To make a request, call `fetch()` with the following arguments:
 
-- a string containing a URL
-- optionally, an object containing options to configure the request.
+* A URL string.
+* Optionally, an options object that configures the request.
 
-The following lambda makes an HTTP `GET` request to an API hosted at `api.example.com` with the `Content-Type` header set to `application/json`. The lambda uses the response returned from that API to add additional claims to a JWT:
+The following lambda makes an HTTP `GET` request to a billing API at `billing.example.com`. The lambda reads the API key from a [secret](/docs/lambdas#secrets) and sets short timeouts, so a slow API doesn't hold up login. The lambda adds the tier from the response to the JWT as a namespaced claim:
 
-```javascript title="A lambda which adds claims based on an external API."
-function populate(jwt, user, registration) {
-  var response = fetch("https://api.example.com/api/status?" + user.id, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json"
-    }
-  });
+<ExtractedCode src="example-lambdas/lambdas/jwt-populate/billing-tier.js" lang="javascript" title="A lambda that adds a claim from an external API." />
 
-  if (response.status === 200) {
-    // assuming successful response looks like:
-    // {"status":"statusValue"}
-    var jsonResponse = JSON.parse(response.body);
-    jwt.status = jsonResponse.status;
-  } else {
-    jwt.status = "basic";
-  }
-}
-```
+`fetch()` returns a response with a `status` and a `body` string. Parse the body with `JSON.parse()`. When FusionAuth can't reach the API, the response has a `status` of `-1`. The lambda checks the status before reading the body, and adds a default tier when the request fails. Login still succeeds.
 
-You can also call FusionAuth APIs with a valid API key:
+You can also call FusionAuth APIs with a valid API key.
 
 <MembershipLambda />
 
-Use the local FusionAuth HTTP port (`fusionauth-app.http-local.port`, default value `9012`), whenever making a FusionAuth API call in a lambda. Doing so minimizes network traffic contention and improves performance.
-
+Use the local FusionAuth HTTP port for every FusionAuth API call in a lambda. The **`fusionauth-app.http-local.port`** setting controls the port, which defaults to `9012`. The local port reduces network contention and improves performance.
 
 ## Options
 
@@ -60,9 +43,9 @@ Use the local FusionAuth HTTP port (`fusionauth-app.http-local.port`, default va
 
 <AvailableSince since="1.55.1"/>
 
-Within lambda functions, external requests should always return quickly. Every moment of delay causes additional latency during the FusionAuth request, which can reduce the performance of FusionAuth or even cause errors. This happens because lambda functions are blocking, rather than asynchronous: FusionAuth must wait for the lambda to complete before the user interaction can complete.
+External requests in a lambda must return quickly. A lambda blocks the FusionAuth request until the lambda completes, so every delay adds latency to the user interaction. A slow request can reduce FusionAuth performance or cause errors.
 
-Lambdas use default connect and read timeouts of 2 seconds. But you can modify these timeouts if you know a request may be slow. To specify a timeout, pass the optional second parameter to `fetch()` and assign a value and assign an integer value (in milliseconds) to the `connectTimeout` or `readTimeout` fields in that object:
+Lambdas use default connect and read timeouts of 2 seconds. To change a timeout for a slow request, pass an options object as the second argument to `fetch()`. Set **`connectTimeout`** or **`readTimeout`** to an integer number of milliseconds:
 
 ```javascript
 var response = fetch("https://api.example.com/api/status", {
@@ -74,18 +57,21 @@ var response = fetch("https://api.example.com/api/status", {
 
 ### Body
 
-By default, `fetch()` does not send a request body. To specify a request body, pass the optional second parameter to `fetch()` and assign a **string** value to the `body` field in that object:
+By default, `fetch()` sends no request body. To send a body, set **`body`** to a string in the options object:
 
 ```javascript
 var response = fetch("https://api.example.com/api/status", {
     method: "PUT",
-    body: "test body pls ignore"
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "active" })
   });
 ```
 
+Set a `Content-Type` header that matches the body. Without the header, `fetch()` labels the body as form data. See [Headers](#headers).
+
 ### Method
 
-By default, `fetch()` issues an HTTP `GET` request. To use a different method, pass the optional second parameter to `fetch()` and pass any valid [HTTP method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods) as a **string** to the `method` field in that object:
+By default, `fetch()` sends an HTTP `GET` request. To use a different method, set **`method`** in the options object to an [HTTP method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods) name as a string:
 
 ```javascript
 var response = fetch("https://api.example.com/api/status", {
@@ -95,20 +81,31 @@ var response = fetch("https://api.example.com/api/status", {
 
 ### Headers
 
-By default, `fetch()` does not specify any headers. To specify headers in a request, pass the optional second parameter to `fetch()` and assign a value to the `header` field in that object:
+By default, `fetch()` sends the following request headers:
+
+* `Accept`: `*/*`
+* `Connection`: `keep-alive`
+* `Host`: the host of the URL
+* `User-Agent`: `Restify (https://github.com/inversoft/restify)`
+
+When the request has a body, `fetch()` also sends `Content-Length`. Without a `Content-Type` header, `fetch()` sends `Content-Type: application/x-www-form-urlencoded`, even when the body is JSON.
+
+To send other headers, or to replace a default header, set **`headers`** in the options object:
 
 ```javascript
-var response = fetch("https://example.org", {
-  method: "GET",
+var response = fetch("https://api.example.com/api/status", {
   headers: {
-    "Content-Type": "application/json"
+    "Accept": "application/json",
+    "Authorization": "Bearer " + context.services.secrets.get("status-api-key")
   }
 });
 ```
 
-You can provide request header values in the following ways:
+To send a header several times, set the header value to an array of strings, such as `"X-Tag": ["a", "b"]`.
 
-* An anonymous object:
+You can provide request headers in the following ways:
+
+* A plain object:
 
   ```javascript
   headers: {
@@ -116,7 +113,7 @@ You can provide request header values in the following ways:
   }
   ```
 
-* A hash or map:
+* A `Headers` object built from a plain object:
 
   ```javascript
   headers: new Headers({
@@ -124,7 +121,7 @@ You can provide request header values in the following ways:
   })
   ```
 
-* An array:
+* A `Headers` object built from an array of name and value pairs:
 
   ```javascript
   headers: new Headers([
@@ -132,13 +129,15 @@ You can provide request header values in the following ways:
   ])
   ```
 
+The lambda `Headers` object has no methods such as `append()` or `set()`. Pass every header to the constructor.
+
 ## Response
 
 `fetch()` returns an object that contains the following fields:
 
 <APIBlock>
   <APIField name="headers" type="Object">
-    The headers returned by the response. The keys of this object are the header names. All header keys are lower cased.
+    The headers returned by the response. The keys of this object are the header names. Header lookups ignore case, so `headers['content-type']` and `headers['Content-Type']` return the same value. A header with several values returns an array.
   </APIField>
   <APIField name="status" type="Integer">
     The HTTP status code of the response.
@@ -154,7 +153,7 @@ You can provide request header values in the following ways:
 
 To securely store secret values used in lambdas, like API keys and application passwords, use a [lambda secret](/docs/lambdas#secrets). To create a secret, open the Admin UI and navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>.
 
-To access secrets, use the `context` parameter. Pass a secret **name** to `context.services.secrets.get('<key>')` to retrieve the corresponding secret **value** as a string:
+To access secrets, use the `context` parameter. Pass a secret name to `context.services.secrets.get('<secret-name>')` to retrieve the secret value as a string:
 
 ```javascript
 function populate(jwt, user, registration, context) {
@@ -167,6 +166,6 @@ function populate(jwt, user, registration, context) {
 
 ## Lambda HTTP Connect Limitations
 
-Do not call any FusionAuth API that itself invokes the calling lambda: the circular dependency on your lambda will cause the request to fail. For example, in a JWT Populate lambda, do not invoke the Login API.
+Don't call a FusionAuth API that invokes the calling lambda. FusionAuth rejects the recursive call with a `400` response. For example, don't call the Login API from a JWT populate lambda.
 
-The `fetch` method in a lambda does not implement the [entire `fetch` API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) as implemented in a browser: for example, the first argument to `fetch` must always be a string.
+The lambda `fetch()` method doesn't implement the [entire `fetch` API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) that browsers provide. The first argument must be a string. `fetch()` returns the response synchronously, and the response has no `json()` method or `ok` field.

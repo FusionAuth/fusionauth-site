@@ -5,8 +5,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 // the roles lambda as the guide shows it
-const lambdaBody = () => readFileSync(join(projectRoot, 'src/content/docs/authentication/act-as-an-idp/saml/zendesk.mdx'), 'utf-8')
-  .match(/```javascript\n(function populate[\s\S]*?)```/)[1];
+const lambdaBody = () => readFileSync(join(projectRoot, 'extractedcode/example-lambdas/lambdas/samlv2-populate/zendesk-role.js'), 'utf-8');
 
 const rolesLambda = {
   order: 25,

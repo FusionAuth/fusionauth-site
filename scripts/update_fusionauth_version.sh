@@ -12,9 +12,10 @@ case "${1:-}" in
   --help)
     printf 'Usage: bash scripts/update_fusionauth_version.sh [--check | --check-latest | --unreleased]\n'
     printf 'Pin the latest FusionAuth release in fusionauth-version, and copy it into:\n'
-    printf '  astro/public/docs/docker-compose.yml (served at /docs/docker-compose.yml)\n'
+    printf '  astro/public/docs/docker-compose.yml (served at /docs/docker-compose.yml, and run by the example-testing-lambdas tests)\n'
     printf '  astro/screenshots/docker-compose.yml (retake screenshots after changing it)\n'
     printf '  astro/src/content/docs/deploy/production/install/fusionauth-app.mdx (the production Docker examples)\n'
+    printf '  astro/extractedcode/example-lambdas/docker-compose.yml (the lambda conformance check)\n'
     printf 'Set FUSIONAUTH_VERSION to pin a specific version. With --check, report copies that differ from fusionauth-version without changing files, and fail if the pinned image is not on Docker Hub.\n'
     printf 'With --check-latest, fail when fusionauth-version pins a release other than the latest one.\n'
     printf 'With --unreleased, pin FUSIONAUTH_VERSION even if its image is not on Docker Hub yet, to prepare a release branch. Requires FUSIONAUTH_VERSION.\n'
@@ -26,7 +27,8 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$repo_root/scripts/lib/run-locally.sh"
 source "$repo_root/scripts/lib/fusionauth-version.sh"
 pin_file=fusionauth-version
-copies=(astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml astro/src/content/docs/deploy/production/install/fusionauth-app.mdx)
+copies=(astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml astro/src/content/docs/deploy/production/install/fusionauth-app.mdx
+        astro/extractedcode/example-lambdas/docker-compose.yml)
 pinned="$(pinned_fusionauth_version)"
 
 latest_release() {

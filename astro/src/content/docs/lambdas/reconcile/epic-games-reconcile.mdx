@@ -1,6 +1,6 @@
 ---
 title: Epic Games Reconcile Lambda
-description: Learn how to map the data from a Epic Games login to a FusionAuth user and registration with a reconcile lambda.
+description: Learn how to map the data from an Epic Games login to a FusionAuth user and registration with a reconcile lambda.
 tags: epic games reconcile lambda, epic games login, social login, fusionauth lambda, identity provider reconcile, custom claims
 ---
 import ReconcileLambdaIntro from 'src/content/docs/lambdas/_reconcile-lambda-intro.mdx';
@@ -10,7 +10,7 @@ import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function reconcile(user, registration, userInfo, context) {
@@ -21,13 +21,21 @@ function reconcile(user, registration, userInfo, context) {
 This lambda must contain a function named `reconcile` that accepts the following parameters:
 
 <ReconcileLambdaUserRegistrationParameters />
-* `userInfo` - data returned by the Epic Games Account API. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `userInfo`: the response from the Epic Account Services accounts API. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `idToken` may contain various user claims depending upon the user's Epic Games configuration.
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects.
+
+The `userInfo` object is an array that holds one account. The account has an **`accountId`**, a **`displayName`**, a **`preferredLanguage`**, and a **`linkedAccounts`** array of the platforms linked to the Epic account. FusionAuth uses **`displayName`** as the username. Epic Games doesn't return an email address.
+
+## Example Lambda
+
+The following lambda stores the Epic account Id, display name, and linked platforms in `user.data.epic`. When the user has no preferred language, the lambda copies the Epic preferred language to the user.
+
+<ExtractedCode src="example-lambdas/lambdas/epic-games-reconcile/account.js" lang="javascript" title="A lambda that copies the Epic Games account to the user." />
 
 ## Assigning The Lambda
 
-Once a lambda is created, you may assign it to the Epic Games identity provider in the IdP configuration.
+After you create the lambda, assign the lambda to the Epic Games identity provider.
 
-Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and select your existing Epic Games configuration or click <Breadcrumb>Add provider</Breadcrumb> and select Epic Games if it has not yet been configured.
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing Epic Games configuration. If you haven't configured Epic Games yet, click <Breadcrumb>Add provider</Breadcrumb> and select Epic Games.

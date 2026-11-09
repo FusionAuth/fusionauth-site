@@ -290,70 +290,9 @@ function checkRequired(result, user, registration, context) {
 }
 ```
 
-The following lambda mimics an application policy:
+The following lambda mimics an application policy. The lambda applies the application login policy, or the tenant login policy when the application has none. When the policy requires a challenge, the lambda honors an unexpired MFA trust according to the application trust policy. Start from this lambda when you need a custom rule on top of the standard policies.
 
-```javascript
-// Returns true when an existing two-factor trust should bypass the challenge,
-// per the application's applicationMultiFactorTrustPolicy.
-function hasValidTrust(context) {
-  // Default to 'Any' to match FusionAuth's default trust behavior when unset.
-  var trustPolicy = (context.policies && context.policies.applicationMultiFactorTrustPolicy) || 'Any';
-
-  // 'None' never honors an existing trust.
-  if (trustPolicy === 'None') {
-    return false;
-  }
-
-  var trust = context.mfaTrust;
-  if (!trust) {
-    return false;
-  }
-
-  // Reject an expired trust.
-  if (trust.expirationInstant && trust.expirationInstant <= Date.now()) {
-    return false;
-  }
-
-  // 'This' only honors a trust established by the current application.
-  if (trustPolicy === 'This') {
-    var currentAppId = context.application && context.application.id;
-    return !!currentAppId && trust.applicationId === currentAppId;
-  }
-
-  // 'Any' honors a valid trust from any application.
-  return true;
-}
-
-function checkRequired(result, user, registration, context) {
-  var policies = context.policies || {};
-
-  // Effective login policy: the application overrides the tenant when set.
-  var loginPolicy = policies.applicationLoginPolicy || policies.tenantLoginPolicy;
-
-  // Does the user have a configured MFA method?
-  var methods = (user.twoFactor && user.twoFactor.methods) || [];
-  var hasMethod = methods.length > 0;
-
-  // Base requirement from the login policy.
-  var required;
-  if (loginPolicy === 'Required') {
-    required = true;       // always challenge; FusionAuth forces enrollment if no method exists
-  } else if (loginPolicy === 'Enabled') {
-    required = hasMethod;  // challenge only when the user has a method
-  } else {
-    required = false;      // Disabled, or no policy set
-  }
-
-  // Honor the application trust policy. An existing trust only matters
-  // when a challenge would otherwise occur.
-  if (required && hasValidTrust(context)) {
-    required = false;
-  }
-
-  result.required = required;
-}
-
-```
+<ExtractedCode src="example-lambdas/lambdas/mfa-requirement/application-policy.js" lang="javascript" title="A lambda that mimics an application MFA policy." />
 
 ### Client Risk Configuration
 
@@ -371,17 +310,11 @@ To customize MFA to meet your needs, use one of the following methods:
 
 ### MFA Requirement Lambda
 
-Under <Breadcrumb> Customization -> Lambdas</Breadcrumb>, create a new Lambda of type `MFA requirement lambda`.
+Under <Breadcrumb>Customizations -> Lambdas</Breadcrumb>, create a new Lambda of type `MFA requirement lambda`.
 
-The following example forces an MFA check for any user whose email address includes the string 'gilfoyle':
+The following example requires MFA for members of one group, and for users with the `admin` or `billing-admin` role in the application. Replace `replace-with-your-mfa-group-id` with the Id of your group:
 
-```javascript
-function checkRequired(result, user, registration, context) {
-  if (user.email.includes('gilfoyle')) {
-    result.required = true;
-  }
-}
-```
+<ExtractedCode src="example-lambdas/lambdas/mfa-requirement/require-for-admins.js" lang="javascript" title="A lambda that requires MFA for admins and members of a group." />
 
 For more information, see [the MFA requirement lambda documentation](/docs/lambdas/login/mfa-requirement).
 

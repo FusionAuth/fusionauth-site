@@ -7,12 +7,12 @@ import ReconcileLambdaIntro from 'src/content/docs/lambdas/_reconcile-lambda-int
 import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
 import SamlResponseFields from 'src/content/docs/lambdas/_saml-response-fields.mdx';
 
-<ReconcileLambdaIntro identity_provider_name="SAML v2" prefix="an" extra_reconcile=" and well known SAML v2 attributes " extra_text="It is common that the SAML attributes (claims) returned from the SAML IdP login request will contain custom attributes. In order to utilize these custom attributes you may wish to use a lambda to assist FusionAuth during the login request to copy these claims to appropriate fields on the FusionAuth user object."
+<ReconcileLambdaIntro identity_provider_name="SAML v2" prefix="an" extra_reconcile=" and well known SAML v2 attributes " extra_text="The SAML response from an IdP often includes custom attributes. To copy custom attributes to fields on the FusionAuth user, use a lambda."
 />
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function reconcile(user, registration, samlResponse, context) {
@@ -23,38 +23,29 @@ function reconcile(user, registration, samlResponse, context) {
 This lambda must contain a function named `reconcile` that accepts the following parameters:
 
 <ReconcileLambdaUserRegistrationParameters />
-* `samlResponse` - the SAML v2 response object. This is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `samlResponse`: the SAML v2 response object. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented here in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The SAML response object mimics the format of the XML document, but is designed to be much simpler to use than dealing with the DOM object model. Here is a list of the fields you have access to manipulate in the SAML response:
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. The SAML response object follows the structure of the XML document, without the DOM object model. The SAML response has the following fields:
 
 <SamlResponseFields />
 
 ## Assigning The Lambda
 
-Once a lambda is created, you may assign it to one or more SAML v2 IdPs in the IdP configuration.
+After you create the lambda, assign the lambda to one or more SAML v2 identity providers.
 
-Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and select your existing a SAML v2 configuration or click <Breadcrumb>Add provider</Breadcrumb> and select SAML v2 if it has not yet been configured.
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing SAML v2 configuration. If you haven't configured SAML v2 yet, click <Breadcrumb>Add provider</Breadcrumb> and select SAML v2.
 
 ## Example Lambda
 
-Here is an example of a simple Lambda that sets roles and attributes on the FusionAuth user from the SAML v2 response.
+The **`samlResponse.assertion.attributes`** map holds a list of values for every attribute, even when the attribute has one value. The following lambda reads the first value of the name and department attributes. The attribute names in the example are the claim URIs that Azure AD sends. When an attribute is missing, the lambda keeps the saved value.
+
+The lambda also sets the registration roles from the **`groups`** attribute. The `groupRoles` map lists the IdP groups that grant a role, and the lambda drops groups with no mapping. When the response has no **`groups`** attribute, the lambda leaves the roles unchanged.
+
+<ExtractedCode src="example-lambdas/lambdas/samlv2-reconcile/attributes-and-group-roles.js" lang="javascript" title="A lambda that maps SAML attributes to the user and assigns roles from groups." />
+
+To see what your IdP returns in the `samlResponse` object while you develop a lambda, print the object to the Event Log. Add the following line to the lambda:
 
 ```javascript
-function reconcile(user, registration, samlResponse) {
-  // Assign the roles to the user from the SAML attribute named 'roles'
-  registration.roles = samlResponse.assertion.attributes['roles'] || [];
-  // Set Assign a custom attribute from the SAML attribute named 'favoriteColor'
-  registration.data.favoriteColor = samlResponse.assertion.attributes['favoriteColor'];
-
-  // Create an event log of type 'Debug' when the lambda has debug logging enabled
-  console.debug('FusionAuth reconciled a User from a SAML v2 IdP and I helped!');
-}
-```
-
-During development if you want to get a better idea of what your IdP is returning in the `samlResponse` object, you may print the contents of this object to the Event Log to help you write the lambda. Add the following line of code to your lambda to dump the entire object to an informational event log.
-
-```javascript
-// Pretty print the samlResponse object to the Event Log
 console.info(JSON.stringify(samlResponse, null, 2));
 ```

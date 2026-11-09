@@ -1,43 +1,19 @@
-# Testing Lambdas Application
+# Testing Lambdas
 
-> [!WARNING]
-> This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/example-testing-lambdas). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
-
-This repo holds a modified version of the FusionAuth 5 minute getting started guide. It uses the kickstart functionality to obviate manual configuration of FusionAuth.
-
-This project is used to show examples of creating and testing lambdas.
-
-This project is paired with the [Lambda Guide](https://fusionauth.io/docs/lambdas/testing). In order for the tests to pass, you need to work through that guide.
+The tested code for the [Test Lambdas](https://fusionauth.io/docs/lambdas/testing) guide. Follow the guide to build the same project from scratch.
 
 ## Project Contents
 
-The `docker-compose.yml` file and the `kickstart` directory are used to start and configure a local FusionAuth server.
+* `kickstart/kickstart.json` configures FusionAuth for the guide.
+* `complete-application` holds the lambda, the harness unit test, and the integration test from the guide.
+* `tests` runs the whole guide against FusionAuth.
 
-The `/app` directory contains an Express.js application that uses FusionAuth for authentication.
+## Run the Tests
 
-The `/complete-application` directory contains the same app plus a full lambda testing infrastructure.
-
-## Project Dependencies
-
-* Docker, for running FusionAuth
-* Node.js 18 or later, for running the example application
-
-## Running FusionAuth
-To run FusionAuth, just stand up the docker containers using `docker-compose`.
+The tests start FusionAuth with `astro/public/docs/docker-compose.yml`, the file the guide tells readers to download, so the FusionAuth version follows `fusionauth-version`. Run the tests from the `fusionauth-site` repository:
 
 ```shell
-docker compose up
+bash astro/extractedcode/example-testing-lambdas/tests/test.sh
 ```
 
-This will start a PostgreSQL database and the FusionAuth server.
-
-## Running the Example App
-
-```shell
-cd app && npm install && npm start
-```
-
-Visit the local webserver at `http://localhost:3000/` and sign in using the credentials:
-
-* username: richard@example.com
-* password: password
+The tests need Docker and `jq`.

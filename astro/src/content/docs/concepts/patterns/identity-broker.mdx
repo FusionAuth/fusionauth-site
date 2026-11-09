@@ -136,23 +136,9 @@ To map between these, use a custom reconcile lambda. This ensures user data in F
 
 Here's the body of [an example OIDC reconcile lambda](/docs/lambdas/reconcile/openid-connect-response-reconcile) which maps roles from a customer data store to the application roles:
 
-```javascript
-function reconcile(user, registration, jwt, id_token, tokens) {
-  registration.roles = [mapCustomerRoleToAppRole(jwt.role)];
-}
+<ExtractedCode src="example-lambdas/lambdas/openid-reconcile/map-roles.js" lang="javascript" title="A lambda that maps customer role names to application role names." />
 
-function mapCustomerRoleToAppRole(customerRole) {
-  const roleMap = {
-    administrator: 'admin',
-    dev: 'developer',
-    ba: 'business_analyst',
-  };
-
-  return roleMap[customerRole] || null;
-}
-```
-
-The above lambda should be installed in Customer 1's FusionAuth instance. For customer 2, you'd use a different `mapCustomerRoleToAppRole` function. Associate the lambda with the identity provider during the initial configuration.
+The lambda reads the customer's roles from the **`roles`** claim, and drops roles with no mapping. When the claim is missing, the lambda leaves the registration roles unchanged. Install the lambda in Customer 1's FusionAuth instance. For Customer 2, use a different `roleMap`. Associate the lambda with the identity provider during the initial configuration.
 
 There may be other profile attributes such as name or title that need mapping. Lambdas can help with these too.
 
@@ -228,11 +214,11 @@ sequenceDiagram
 
 There may be certain sets of users that you don't want to have access to your analytics application, even if they can log in using the remote identity server.
 
-Block these users from logging in using the [login validation lambda](/docs/lambdas/login/login-validation). Say you wanted to prevent anyone with the `dev` role from logging to the analytics application. You'd use a lambda body similar to this one:
+Block these users from logging in using the [login validation lambda](/docs/lambdas/login/login-validation). For example, the following lambda blocks users with the `developer` role from logging in to the analytics application:
 
 ```javascript
 function validate(result, user, registration, context) {
-  if (registration.roles && registration.roles.contains('dev')) {
+  if (registration && registration.roles && registration.roles.indexOf('developer') !== -1) {
     result.errors.generalErrors = [{
       code: "[LoginRestricted]",
       message: "Sorry, you can't log in. Please contact the app administrator for more details."
@@ -249,7 +235,7 @@ If there are issues, enable the `debug` setting in the Identity Provider configu
 
 Deploy your application into any environment and have FusionAuth take care of the authentication integration.
 
-Your engineering team leverages FusionAuth tokens for identity data. They can code against the FusionAuth API or use the SDKs if user information beyond that is needed.
+Your engineering team uses FusionAuth tokens for identity data. Engineers can code against the FusionAuth API or use the SDKs if user information beyond that is needed.
 
 Your customers can configure their own identity store and have all their users log in using that.
 

@@ -33,8 +33,7 @@ const registrationApp = {
       { fields: [builtIn('Username'), builtIn('Password')] },
       { fields: [r.currentFieldId, r.futureFieldId] },
     ] } });
-    const body = readFileSync(join(projectRoot, 'src/content/docs/lambdas/login/self-service-registration.mdx'), 'utf-8')
-      .match(/```javascript\n(\/\/ Validate the self-service registration form here[\s\S]*?)```/)[1];
+    const body = readFileSync(join(projectRoot, 'extractedcode/example-lambdas/lambdas/self-service-registration-validation/conditional-field.js'), 'utf-8');
     await api(`/api/lambda/${r.lambdaId}`, 'POST', { lambda: { name: 'Auth Registration validation', type: 'SelfServiceRegistrationValidation', engineType: 'GraalJS', body } });
     const { theme: source } = await api(`/api/theme/${defaultThemeId}`);
     await api(`/api/theme/${r.themeId}`, 'POST', { sourceThemeId: defaultThemeId, theme: { name: 'Auth Registration' } });

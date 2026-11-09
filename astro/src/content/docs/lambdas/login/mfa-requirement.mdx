@@ -7,7 +7,7 @@ import AuthenticationTypeValues from 'src/content/docs/_shared/authentication-ty
 
 <PlanBlurb plan="enterprise" />
 
-During logins, password changes, and [MFA Status API](/docs/apis/two-factor/retrieve-multi-factor-status) calls, FusionAuth performs various validations to decide whether to challenge the user on one of their MFA methods. Using this lambda function, you may extend this functionality to change FusionAuth's MFA decision for that user or trigger a suspicious login event.
+During logins, password changes, and [MFA Status API](/docs/apis/two-factor/retrieve-multi-factor-status) calls, FusionAuth decides whether to challenge the user with one of the user's MFA methods. With this lambda, you can change FusionAuth's MFA decision for the user or trigger a suspicious login event.
 
 The MFA Requirement Lambda has access to the following information:
 
@@ -19,7 +19,7 @@ The MFA Requirement Lambda has access to the following information:
 * the MFA policy settings on the tenant and application
 * metadata about the request
 
-You can use Lambda HTTP Connect to access external resources during validation, but you should use external resources sparingly; any additional latency will impact users.
+You can use Lambda HTTP Connect to access external resources from this lambda. Keep external calls to a minimum, because every delay slows the request for your users.
 
 ## Lambda Structure
 
@@ -33,12 +33,12 @@ function checkRequired(result, user, registration, context) {
 
 The `checkRequired` function must accept the following parameters:
 
-* `result` - an object used for returning modified MFA requirements back to FusionAuth.
-* `user` - the read-only FusionAuth User object.
-* `registration` - the FusionAuth `UserRegistration` object. This parameter will be `undefined` when the user is not registered for the application (e.g. SSO, when an existing user signs into an application for the first time). This object is read-only.
-* `context` - an object containing context for the current request. This object is read-only and contains several optional fields.
+* `result`: an object used for returning modified MFA requirements back to FusionAuth.
+* `user`: the read-only FusionAuth User object.
+* `registration`: the FusionAuth `UserRegistration` object. This parameter is `null` when the request doesn't include an application, or when the user isn't registered for the application, such as when an existing user logs in to an application with SSO for the first time. This object is read-only.
+* `context`: an object containing context for the current request. This object is read-only and contains several optional fields.
 
-For more information about `user` and `application`, see the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation.
+For more information about `user` and `registration`, see the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation.
 
 `result` is of type `RequiredLambdaResult`, with the following structure:
 
@@ -82,14 +82,18 @@ class Context {
     action;
 
     /**
-     * The FusionAuth Application object (if applicable). This only exists if an applicationId was passed in to the relevant API, upstream from the lambda.
+     * The FusionAuth Application object, without secrets. This is null unless an applicationId was passed in to the relevant API, upstream from the lambda.
      * @type {Application}
      */
     application;
 
     /**
-     * A list of authentication threats detected for this request. This will only be populated when the action is `login` and Advanced Threat Detection is enabled.
-     * @type {Set<String>} - Possible values are [ImpossibleTravel].
+     * A list of authentication threats detected for this request. This is only populated when the action is `login` or `changePassword`, and only with the
+     * risk signals enabled in the tenant's client risk configuration. This is always empty for the MFA Status API.
+     * Currently, FusionAuth only adds [ImpossibleTravel], when the impossible travel signal is HIGH. Use clientRisk for the other signals.
+     * @type {Set<String>} - Possible values are [BlocklistedIp], [BotDetected], [DormantAccount], [DormantPassword],
+     * [ImpossibleTravel], [RecentIdentityChange], [RecentPasswordChange], [SuspiciousUserAgent], [UnrecognizedDevice],
+     * or [UntrustedDevice].
      */
     authenticationThreats;
 
@@ -117,7 +121,8 @@ class Context {
 
     /**
      * If existing two-factor trust was supplied (via a cookie/hosted pages or
-     * `twoFactorTrustId` on the API), this value will contain details about that trust.
+     * `twoFactorTrustId` on the API), this value will contain details about that trust. This is null when FusionAuth
+     * detects impossible travel with high risk.
      * @type {Trust}
      */
     mfaTrust;
@@ -140,7 +145,8 @@ class Context {
 class ClientRisk {
     /**
      * The client risk score for the user calculated by a combination of Intelligent MFA signals if Intelligent MFA is available.
-     * @type {String} - Possible score values are [LOW], [MEDIUM], or [HIGH]. Or [NOT_AVAILABLE] if Intelligent MFA is not available.
+     * @type {String} - Possible score values are [LOW], [MEDIUM], [HIGH], or [NOT_AVAILABLE].
+     * The value is [NOT_COMPUTED] when your plan doesn't include Intelligent MFA.
      * @since 1.68.0
      */
     status;
@@ -227,20 +233,20 @@ class Location {
 
 class Policies {
     /**
-     * This value will be set to the application's MFA login policy, if set.
-     * @type {string} - Possible values are [Disabled], [Enabled], or [Required].
+     * This value will be set to the application's MFA login policy, if set. This is null when the request doesn't include an application.
+     * @type {string} - Possible values are [ChallengeOnHighRisk], [ChallengeOnMediumRisk], [Disabled], [Enabled], or [Required].
      */
     applicationLoginPolicy;
 
     /**
-     * If the Application has an MFA trust policy set, this value will be set to that policy.
+     * If the Application has an MFA trust policy set, this value will be set to that policy. This is null when the request doesn't include an application.
      * @type {string} - Possible values are [Any], [This], or [None].
      */
     applicationMultiFactorTrustPolicy;
 
     /**
      * This value will be set to the tenant's MFA login policy.
-     * @type {string} - Possible values are [Disabled], [Enabled], or [Required].
+     * @type {string} - Possible values are [ChallengeOnHighRisk], [ChallengeOnMediumRisk], [Disabled], [Enabled], or [Required].
      */
     tenantLoginPolicy;
 }
@@ -326,34 +332,32 @@ For more information about `context.application`, see the [Application API refer
 
 For more information on advanced threat protection, see the [Advanced Threat Detection](/docs/security/account-protection/advanced-threat-detection) documentation.
 
+## Errors and Ignored Results
+
+If the lambda throws an exception, FusionAuth requires MFA and writes the exception to the [Event Log](/docs/deploy/troubleshoot/troubleshooting#event-log).
+
+For the `login` and `changePassword` actions, FusionAuth ignores the lambda's result when the Tenant has no MFA methods enabled. FusionAuth then doesn't send a suspicious login event either. For the `stepUp` action, FusionAuth always uses the lambda's result.
+
 ## Assigning The Lambda
 
-Once a lambda is created, you must assign it to a Tenant. Using the FusionAuth Admin UI, find the **MFA requirement lambda** field found on the <Breadcrumb>Multi-Factor</Breadcrumb> tab in the Tenant configuration.
+After you create the lambda, assign the lambda to a Tenant. In the Admin UI, find the **MFA requirement lambda** field on the <Breadcrumb>Multi-Factor</Breadcrumb> tab of the Tenant configuration.
 
-Or if you are using the Tenant API, assign the lambda Id to the `tenant.lambdaConfiguration.multiFactorRequirementId` field.
+With the Tenant API, set **`tenant.lambdaConfiguration.multiFactorRequirementId`** to the lambda Id.
 
-A lambda can also be configured at the application level and, if an application is provided on the request (see action above), the application's lambda will take precedence over the tenant's lambda. To assign an application-specific lambda, using the FusionAuth Admin UI, find the **MFA requirement lambda** field found on the <Breadcrumb>Multi-Factor</Breadcrumb> tab in the Application configuration.
+You can also assign a lambda to an application. An application lambda requires the Application MFA feature, which is part of the Enterprise plan. Without the feature, FusionAuth returns a validation error when you save the application. When the request includes an application with an assigned lambda, FusionAuth runs the application's lambda instead of the Tenant's lambda for every action. When the application has no lambda assigned, FusionAuth runs the Tenant's lambda. When the Tenant has no MFA methods enabled, FusionAuth always runs the Tenant's lambda. In the Admin UI, find the **MFA requirement lambda** field on the <Breadcrumb>Multi-Factor</Breadcrumb> tab of the Application configuration.
 
-Or if you are using the Application API, assign the lambda Id to the `application.lambdaConfiguration.multiFactorRequirementId` field.
+With the Application API, set **`application.lambdaConfiguration.multiFactorRequirementId`** to the lambda Id.
 
 ## Example Lambdas
 
-The following example requires MFA if the user's email address contains the string `gilfoyle`, and otherwise uses the default MFA decision:
+### Challenge Risky Logins
 
-```javascript
-function checkRequired(result, user, registration, context) {
-  if (user.email.includes('gilfoyle')) {
-    result.required = true;
-  }
-}
-```
+The following lambda requires MFA when FusionAuth rates the login as `MEDIUM` or `HIGH` risk, or reports impossible travel. For `HIGH` risk logins and impossible travel, the lambda also sets **`sendSuspiciousLoginEvent`**. For every other login, the lambda keeps FusionAuth's decision. FusionAuth only computes **`clientRisk`** with [Intelligent MFA](/docs/authentication/multi-factor-authentication/contextual#intelligent-mfa), and only fills **`authenticationThreats`** with [Advanced Threat Detection](/docs/security/account-protection/advanced-threat-detection). Without those features, the lambda keeps FusionAuth's decision.
 
-A more complex example might involve using the user's location to determine if MFA should be required. In this example, if the user is logging in from outside the United States, MFA will be required. Note that this example assumes you are licensed for the [Advanced Threat Detection](/docs/security/account-protection/advanced-threat-detection) feature.
+<ExtractedCode src="example-lambdas/lambdas/mfa-requirement/risk-based.js" lang="javascript" title="A lambda that requires MFA for risky logins." />
 
-```javascript
-function checkRequired(result, user, registration, context) {
-    if (context.eventInfo?.location?.country !== "USA") {
-        result.required = true;
-    }
-}
-```
+### Always Challenge Privileged Users
+
+The following lambda requires MFA for members of an `mfa_required` group, and for users with an admin role in the application. The `registration` is `null` when the request doesn't include an application, so the lambda only checks roles when a registration exists.
+
+<ExtractedCode src="example-lambdas/lambdas/mfa-requirement/require-for-admins.js" lang="javascript" title="A lambda that requires MFA for admins and members of a group." />
