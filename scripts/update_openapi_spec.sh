@@ -25,11 +25,8 @@ ref="${OPENAPI_REF:-}"
 if [[ -z "$ref" ]]; then
   version="${FUSIONAUTH_VERSION:-$(pinned_fusionauth_version)}"
   tags="$(git ls-remote --tags https://github.com/FusionAuth/fusionauth-openapi.git)"
-  # fusionauth-openapi only tags releases that change the spec, so use the newest tag at or before the pin
-  tag=''
-  for t in $(awk '{sub("refs/tags/", "", $2); print $2}' <<< "$tags" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V); do
-    if [[ "$(printf '%s\n' "$t" "$version" | sort -V | tail -1)" == "$version" ]]; then tag="$t"; fi
-  done
+  # only spec-changing releases get tags; "-pin" sorts after an equal tag and before the next, so take the line above it
+  tag="$({ awk '{sub("refs/tags/", "", $2); print $2}' <<< "$tags" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$'; echo "$version-pin"; } | sort -V | awk -v pin="$version-pin" '$0 == pin { print last; exit } { last = $0 }')"
   # annotated tags list the commit on a ^{} line
   ref="$(awk -v t="refs/tags/$tag" '$2 == t || $2 == t "^{}" { sha = $1 } END { print sha }' <<< "$tags")"
   printf 'FusionAuth %s uses the fusionauth-openapi %s tag.\n' "$version" "$tag"

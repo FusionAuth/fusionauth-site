@@ -263,7 +263,12 @@ async function probes(licensed) {
 
   await putContextProbe(ids.tokenExchangePolicyLambda, 'TokenExchangePolicy');
   await api('PATCH', `/api/tenant/${tenantId}`, { tenant: { tokenExchangeConfiguration: { policyEngine: 'LAMBDA', policyEngineLambdaId: ids.tokenExchangePolicyLambda } } });
-  await loggedContext('Token exchange policy', 'TokenExchangePolicy', ids.tokenExchangePolicyLambda, exchange);
+  try {
+    await loggedContext('Token exchange policy', 'TokenExchangePolicy', ids.tokenExchangePolicyLambda, exchange);
+  } finally {
+    // the probe denies every exchange, so put the populate probe's engine back for the next run
+    await api('PATCH', `/api/tenant/${tenantId}`, { tenant: { tokenExchangeConfiguration: { policyEngine: 'ENTITY' } } });
+  }
 }
 
 const realResult = await realRun();
