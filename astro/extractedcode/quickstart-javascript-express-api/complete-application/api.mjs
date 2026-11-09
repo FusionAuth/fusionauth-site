@@ -7,8 +7,6 @@ const data = new Set('1');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-router.get('/', function (req, res, next) { res.json({ title: 'Express API' }); });
-
 router.get('/read', hasRole('reader'), function (req, res) { return res.json([...data]); });
 
 router.post('/write', hasRole('writer'), function (req, res) {

@@ -15,10 +15,7 @@ export async function verifyJWT(req, res, next) {
   }
   catch (e) {
     if (e instanceof jose.errors.JOSEError) res.status(401).send({ error: e.message, code: e.code });
-    else {
-        console.dir(`Internal server error: ${e}`);
-        res.status(500).send({ error: JSON.stringify(e) });
-    }
+    else res.status(500).send({ error: JSON.stringify(e) });
   }
 }
 
