@@ -69,6 +69,7 @@ const mdxComponentImports =
   "import If from 'src/components/If.astro';\n" +
   "import Icon from 'src/components/icon/Icon.astro';\n" +
   "import IconButton from 'src/components/IconButton.astro';\n" +
+  "import GlossaryTerm from 'src/components/GlossaryTerm.astro';\n" +
   "import ChildCards from 'astro-better-cards/ChildCards.astro';\n" +
   "import Card from 'astro-better-cards/Card.astro';\n" +
   "import CardGrid from 'astro-better-cards/CardGrid.astro';\n" +
