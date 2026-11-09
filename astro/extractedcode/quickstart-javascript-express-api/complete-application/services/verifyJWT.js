@@ -1,9 +1,7 @@
 require('dotenv/config');
 const jose = require('jose');
 
-const jwksClient = jose.createRemoteJWKSet(
-  new URL(`${process.env.BASE_URL}/.well-known/jwks.json`)
-);
+const jwksClient = jose.createRemoteJWKSet(new URL(`${process.env.BASE_URL}/.well-known/jwks.json`));
 
 const verifyJWT = async (req, res, next) => {
   const authHeader = req.headers.authorization;
