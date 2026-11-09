@@ -109,21 +109,56 @@ In the steps below you will create three files to form an Express.js server. The
 
 ## Use the API
 
+There are [several ways to acquire a token](/docs/authentication/oauth/) in FusionAuth, but for this example, you will use the [Login API](/docs/apis/login).
 
-```shell-session
-curl localhost:3000/read
+<Steps>
 
-curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'
+1. Get an access token for `reader@example.com` by making the following request in a new terminal.
+    ```shell-session
+    curl --location 'http://localhost:9011/api/login' \
+    --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{
+      "loginId": "reader@example.com",
+      "password": "password",
+      "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
+    }'
+    ```
 
+1. Copy the `token` from the response, which should look like this:
+  ```json
+  {
+    "token": "eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA",
+    "tokenExpirationInstant": 1689353059670,
+    "user": {
+        ...
+    }
+  }
+  ```
 
+1. Paste your full token from the previous step over the placeholder token containing the `...` below to call the `/read` endpoint and see what data the API has:
+    ```shell-session
+    curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOi...rmGdDw'
+   ```
+  The API returns `["1"]`
 
-curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkVfdDFhdkhIRnkxUjA0SzNETjdPTEQyaWVxSSJ9.eyJhdWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJleHAiOjE3OTQyNTUwNTUsImlhdCI6MTc5NDI1MTQ1NSwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo5MDExIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMTExMTExMTExMTExIiwianRpIjoiYjM0MjVlMzMtNDJiYy00NDg4LTllZTgtOTRkM2I3NzBjYTg1IiwiYXV0aGVudGljYXRpb25UeXBlIjoiUEFTU1dPUkQiLCJ0dHkiOiJhdCIsImFwcGxpY2F0aW9uSWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJyb2xlcyI6WyJyZWFkZXIiXSwiYXV0aF90aW1lIjoxNzk0MjUxNDU1LCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMifQ.xvjBglZFJEo6CRtqRvXwjfb7So53OzmWx1giC2yLgIvJB_0_3qG70Yz88a3ttEc_f2Sf40DDpmExh0wfHgfqMwq3cv4cW0uf_FcgEGn51w0lOZ6Wm_KRq68te335IvI5WYFQdK0667qcT8raOvsnl7ws42zLH5WR2klABrMv7SDC3c9xHnZaYUjtzNdqowd8AMTG52aELATRrQtitEJkQasm6r-Go0OtLqOZsiswOwnukUoyGisYN6M2i1YAL4i-YmGHc__TYwYPFNfO95Sv-wRC0O6b9h6XbCLct8jNEdQtNa2MKoTn24nP1phm6aSr6AFMA-IPd2ZJLCKYHGJ8NA'
+1. Call the write endpoint, replacing the token once again:
+    ```shell-session
+    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOi...rmGdDw'
+    ```
+    The API returns `{"error":"You do not have a role with permissions to do this."}` because you are trying to access the endpoint while having the reader role but not the writer role. The endpoint is secure.
 
-curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}' --header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkVfdDFhdkhIRnkxUjA0SzNETjdPTEQyaWVxSSJ9.eyJhdWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJleHAiOjE3OTQyNTUwNTUsImlhdCI6MTc5NDI1MTQ1NSwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo5MDExIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMTExMTExMTExMTExIiwianRpIjoiYjM0MjVlMzMtNDJiYy00NDg4LTllZTgtOTRkM2I3NzBjYTg1IiwiYXV0aGVudGljYXRpb25UeXBlIjoiUEFTU1dPUkQiLCJ0dHkiOiJhdCIsImFwcGxpY2F0aW9uSWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJyb2xlcyI6WyJyZWFkZXIiXSwiYXV0aF90aW1lIjoxNzk0MjUxNDU1LCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMifQ.xvjBglZFJEo6CRtqRvXwjfb7So53OzmWx1giC2yLgIvJB_0_3qG70Yz88a3ttEc_f2Sf40DDpmExh0wfHgfqMwq3cv4cW0uf_FcgEGn51w0lOZ6Wm_KRq68te335IvI5WYFQdK0667qcT8raOvsnl7ws42zLH5WR2klABrMv7SDC3c9xHnZaYUjtzNdqowd8AMTG52aELATRrQtitEJkQasm6r-Go0OtLqOZsiswOwnukUoyGisYN6M2i1YAL4i-YmGHc__TYwYPFNfO95Sv-wRC0O6b9h6XbCLct8jNEdQtNa2MKoTn24nP1phm6aSr6AFMA-IPd2ZJLCKYHGJ8NA'
-```
+1. Use the command from the first step to get a token for the writer user, by replacing `reader@example.com` with `writer@example.com`.
 
-eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkVfdDFhdkhIRnkxUjA0SzNETjdPTEQyaWVxSSJ9.eyJhdWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJleHAiOjE3OTQyNTUwNTUsImlhdCI6MTc5NDI1MTQ1NSwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo5MDExIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMTExMTExMTExMTExIiwianRpIjoiYjM0MjVlMzMtNDJiYy00NDg4LTllZTgtOTRkM2I3NzBjYTg1IiwiYXV0aGVudGljYXRpb25UeXBlIjoiUEFTU1dPUkQiLCJ0dHkiOiJhdCIsImFwcGxpY2F0aW9uSWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJyb2xlcyI6WyJyZWFkZXIiXSwiYXV0aF90aW1lIjoxNzk0MjUxNDU1LCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMifQ.xvjBglZFJEo6CRtqRvXwjfb7So53OzmWx1giC2yLgIvJB_0_3qG70Yz88a3ttEc_f2Sf40DDpmExh0wfHgfqMwq3cv4cW0uf_FcgEGn51w0lOZ6Wm_KRq68te335IvI5WYFQdK0667qcT8raOvsnl7ws42zLH5WR2klABrMv7SDC3c9xHnZaYUjtzNdqowd8AMTG52aELATRrQtitEJkQasm6r-Go0OtLqOZsiswOwnukUoyGisYN6M2i1YAL4i-YmGHc__TYwYPFNfO95Sv-wRC0O6b9h6XbCLct8jNEdQtNa2MKoTn24nP1phm6aSr6AFMA-IPd2ZJLCKYHGJ8NA
+1. Now use the new writer token returned to call the write endpoint again:
+   ```shell-session
+    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOi...rmGdDw'
+    ```
+    This time the API should return `"Write successful"`.
 
+1. Finally, if you call the read endpoint again with the initial reader token, you should see the new saved value returned: `["1","hello"]`
+
+</Steps>
 
 ## Next Steps
 
