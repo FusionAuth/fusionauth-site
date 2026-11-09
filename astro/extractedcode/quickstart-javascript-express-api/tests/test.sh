@@ -3,18 +3,19 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+FUSIONAUTH_DIR="$PROJECT_DIR/fusionauth"
 
 LOGS_PID=""
 cleanup() {
   echo "Cleaning up..."
   [ -n "$LOGS_PID" ] && kill "$LOGS_PID" 2>/dev/null || true
   docker stop app 2>/dev/null || true
-  cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
+  cd "$FUSIONAUTH_DIR" && docker compose down -v 2>/dev/null || true
 }
 trap cleanup EXIT
 
 echo "Pulling latest FusionAuth image..."
-cd "$PROJECT_DIR"
+cd "$FUSIONAUTH_DIR"
 docker compose pull
 
 echo "Starting FusionAuth..."
