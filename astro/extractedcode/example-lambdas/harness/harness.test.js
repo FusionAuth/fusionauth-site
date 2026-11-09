@@ -112,8 +112,9 @@ test('secrets come from context.services', () => {
   assert.deepEqual(jwt, { found: 'abc', missing: 'null', scopes: ['openid'] });
 });
 
-test('context fixtures are only allowed where FusionAuth supplies them', () => {
-  assert.throws(() => runLambda('function reconcile() {}', 'GoogleReconcile', {}, { context: { a: 1 } }), /only context.services/);
+test('context fixtures only allow the fields FusionAuth passes the type', () => {
+  assert.throws(() => runLambda('function reconcile() {}', 'GoogleReconcile', {}, { context: { a: 1 } }), /context\.a\b/);
+  assert.throws(() => runLambda('function populate() {}', 'JWTPopulate', {}, { context: { scopes: [], tenantId: 'x' } }), /context\.tenantId\b/);
 });
 
 test('b64GuidToString uses Microsoft GUID byte order', () => {

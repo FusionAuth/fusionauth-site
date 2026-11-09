@@ -1,0 +1,33 @@
+* `accessToken`: the encoded JWT. FusionAuth sets `accessToken` when a JWT authenticates the request to `/api/user/change-password`, or when the request to `/api/two-factor/status` includes a `token`. Otherwise, `accessToken` is `null`.
+* `action`: the action that runs the lambda: `login`, `changePassword`, or `stepUp`. Logins and password changes through FusionAuth APIs or hosted pages always use `login` or `changePassword`. To use `stepUp`, pass `stepUp` in the **`action`** field of the [MFA Status API](/docs/apis/two-factor/retrieve-multi-factor-status).
+* `application`: the FusionAuth Application object, without secrets. The value is `null` unless the API request that runs the lambda includes an `applicationId`.
+* `authenticationThreats`: the authentication threats FusionAuth detected for the request. FusionAuth only fills the list for the `login` and `changePassword` actions, and only with the risk signals enabled in the Tenant's client risk configuration. The list is always empty for the MFA Status API. Currently, FusionAuth only adds `ImpossibleTravel`, when the impossible travel signal is `HIGH`. Use `clientRisk` for the other signals. The possible values are `BlocklistedIp`, `BotDetected`, `DormantAccount`, `DormantPassword`, `ImpossibleTravel`, `RecentIdentityChange`, `RecentPasswordChange`, `SuspiciousUserAgent`, `UnrecognizedDevice`, and `UntrustedDevice`.
+* `authenticationType`: <AvailableSince since="1.63.0"/> the method used to authenticate the user. FusionAuth only sets `authenticationType` for the `login` action. The possible values follow this list.
+* `clientRisk`: <AvailableSince since="1.68.0"/> the client risk for the user, calculated from a combination of Intelligent MFA signals. The `clientRisk` object has the following field:
+  * `status`: the risk score: `LOW`, `MEDIUM`, `HIGH`, or `NOT_AVAILABLE`. The value is `NOT_COMPUTED` when your plan doesn't include Intelligent MFA.
+* `eventInfo`: information about the request. The value can be `null`, depending on what the API request provides. The `eventInfo` object has the following fields:
+  * `data`: additional data for the event, as a map. The value can be `null`.
+  * `deviceDescription`: the description of the device.
+  * `deviceName`: the name of the device.
+  * `deviceType`: the type of the device.
+  * `ipAddress`: the IP address of the request.
+  * `location`: the location of the IP address, with the fields `city`, `country`, `latitude`, `longitude`, `region`, and `zipcode`. FusionAuth only sets `location` with Advanced Threat Detection.
+  * `os`: the operating system of the device.
+  * `userAgent`: the user agent of the request.
+* `mfaTrust`: the user's existing MFA trust, from a cookie on the hosted pages or from **`twoFactorTrustId`** in the API request. The value is `null` without an existing trust, and when FusionAuth detects impossible travel with high risk. The `mfaTrust` object has the following fields:
+  * `applicationId`: the Id of the application the trust was first established for.
+  * `attributes`: additional attributes of the trust, as a map.
+  * `expirationInstant`: the instant the trust expires.
+  * `id`: the `twoFactorTrustId`.
+  * `insertInstant`: the instant FusionAuth created the trust.
+  * `startInstants`: the instants the trust started, with the following fields:
+    * `applications`: a map from each application Id to the instant the user completed `/api/two-factor/login` for the application.
+    * `tenant`: the first instant the trust was established for the user's Tenant.
+  * `state`: additional state of the trust, as a map.
+  * `tenantId`: the Id of the user's Tenant.
+  * `userId`: the Id of the user.
+* `policies`: the MFA policies for the Tenant and the application, with the following fields:
+  * `applicationLoginPolicy`: the application's MFA login policy: `ChallengeOnHighRisk`, `ChallengeOnMediumRisk`, `Disabled`, `Enabled`, or `Required`. The value is `null` when the request doesn't include an application.
+  * `applicationMultiFactorTrustPolicy`: the application's MFA trust policy: `Any`, `This`, or `None`. The value is `null` when the request doesn't include an application.
+  * `tenantLoginPolicy`: the Tenant's MFA login policy, with the same values as `applicationLoginPolicy`.
+* `services`: <AvailableSince since="1.64.0"/> access to [secrets](/docs/lambdas#secrets) through `context.services.secrets.get('<secret-name>')`.

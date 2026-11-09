@@ -53,7 +53,7 @@ Pass these options to `loadLambda(source, type, options)` or `loadLambdaFile(url
 | `debug` | Set to `true` to keep `console.debug` output, like the lambda **Enable debug logging** setting. |
 | `requestPath` | The API path that triggered the lambda. A `fetch()` to that path returns `400`, as FusionAuth does to stop recursive calls. |
 
-The second argument to `invoke()` takes a `context` fixture for lambda types where FusionAuth passes more than `context.services`, such as JWT Populate and Login Validation.
+The second argument to `invoke()` takes a `context` fixture. The fixture can only hold the fields that FusionAuth passes the lambda type, which `harness/lambda-types.js` lists for each type. The harness supplies `context.services` itself.
 
 ### What the Harness Reproduces
 
@@ -75,8 +75,11 @@ The `conformance` folder holds two kinds of lambdas that `conformance/check.js` 
 
 * `conformance-lambda.js` records how the runtime behaves, including globals, `fetch()`, `Headers`, secrets, and console output.
 * `probe-lambda.js` records its arguments, then changes every claim. The check feeds the recorded arguments to the harness and compares the claims each side keeps. The check runs the probe as a JWT populate lambda for an Id token, a UserInfo populate lambda, a client credentials JWT populate lambda, and a token exchange populate lambda.
+* `context-probe.js` logs the names of the context fields for a login validation lambda, an MFA requirement lambda, and a token exchange policy lambda. The check reads the names from the Event Log.
 
-The client credentials probe needs a license, and the token exchange probe needs an Enterprise license. The check skips each probe that the license doesn't cover. To run the check:
+For every lambda the check runs, the check fails when FusionAuth passes a context field that `harness/lambda-types.js` doesn't list for the type. FusionAuth leaves out empty fields, so a listed field can be missing.
+
+The client credentials probe needs a license. The MFA requirement and token exchange probes need an Enterprise license. The check skips each probe that the license doesn't cover. To run the check:
 
 ```shell
 docker compose up -d
@@ -84,3 +87,7 @@ node conformance/check.js
 ```
 
 Without a license, `fetch()` returns `402`, and the check compares that behavior instead. To check `fetch()` fully, replace the `licenseId` in `kickstart/kickstart.json` with your license key before starting FusionAuth.
+
+## Release Check
+
+`harness/release-types.test.js` compares the harness and the docs with the lambda types in the pinned FusionAuth release. `scripts/fetch_external_content.sh` writes the release types and signatures to `astro/src/content/json/generated/lambda-types.json`. The test fails when the release adds or removes a type, or changes a function name or argument list, until `harness/lambda-types.js`, `astro/src/content/json/lambdas.json`, and the lambda type pages match. The test also checks the context partial next to each type page, such as `lambdas/tokens/_jwt-populate-context.mdx`. Each unindented line in the partial starts with ``* `field`: ``, followed by any markdown. Nested bullets describe subfields. The top-level fields must match the `context` list in `harness/lambda-types.js`, plus `services`, and the page must render the partial as `<LambdaContext />`. Outside the `fusionauth-site` repository, the test skips.

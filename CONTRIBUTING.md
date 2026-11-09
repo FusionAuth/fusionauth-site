@@ -223,7 +223,7 @@ import ReleaseNotification from 'src/content/docs/_shared/_release-notification.
 
 ### API Docs
 
-* The OpenAPI spec at `astro/public/docs/openapi.yaml` is a copy of [fusionauth-openapi](https://github.com/FusionAuth/fusionauth-openapi). After each release, refresh the copy with `bash scripts/update_openapi_spec.sh` and review the diff.
+* The OpenAPI spec at `astro/public/docs/openapi.yaml` is a copy of [fusionauth-openapi](https://github.com/FusionAuth/fusionauth-openapi) at the newest tag at or before `fusionauth-version`. After each release, refresh the copy with `bash scripts/update_openapi_spec.sh` and review the diff. The weekly external content check fails when the copy drifts from that tag.
 * Version pins in the Docker Compose files and the production Docker examples follow `fusionauth-version`. Don't edit the pins by hand. See "Update the docs for a new FusionAuth release" in the [README](README.md).
 * When an API returns the same object singly and in arrays, reuse the `-base` partial pattern from the tenant and application APIs.
 * When a field is only required while another feature is enabled, mark the field optional and explain in the description: ``This field is required when **`theOtherField.enabled`** is set to true.``

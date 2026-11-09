@@ -142,6 +142,8 @@ When a release ships:
    bash scripts/update_openapi_spec.sh
    ```
 
+   When the lambda types in the release change, the `example-lambdas` tests fail until the harness and the lambda docs match. See the [release check](astro/extractedcode/example-lambdas/README.md#release-check).
+
 1. Retake the screenshots against the new release. The weekly **Update screenshots** workflow does this on its own, or you can start it by hand from the Actions tab. See [`astro/screenshots/README.md`](astro/screenshots/README.md) for details.
 
 ## Scheduled jobs

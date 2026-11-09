@@ -43,8 +43,9 @@ kickstart_done() {
     -H "Authorization: $API_KEY" | grep "00000000-0000-0000-0000-000000000002" > /dev/null
 }
 
+# mounts astro so harness/release-types.test.js can read the release snapshot and lambdas.json
 run_node() {
-  docker run --rm --network host -v "$PROJECT_DIR":/app:ro -w /app node:22 "$@"
+  docker run --rm --network host -v "$PROJECT_DIR/../..":/astro:ro -w /astro/extractedcode/example-lambdas node:22 "$@"
 }
 
 echo "Running the lambda example tests in the harness..."

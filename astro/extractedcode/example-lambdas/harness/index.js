@@ -200,8 +200,9 @@ export function loadLambda(source, type, options = {}) {
       logs = { info: '', debug: '', error: '' };
       requests = [];
 
-      if (invokeOptions.context && !definition.callerContext) {
-        throw new Error(`FusionAuth passes ${type} lambdas only context.services, so a context fixture can't be used.`);
+      const unknown = Object.keys(invokeOptions.context ?? {}).filter((key) => !(definition.context ?? []).includes(key));
+      if (unknown.length) {
+        throw new Error(`FusionAuth doesn't pass ${type} lambdas context.${unknown.join(', context.')}.`);
       }
 
       const inputs = definition.args.map((arg) => args[arg.name] ?? null);
