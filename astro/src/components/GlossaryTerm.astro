@@ -20,6 +20,12 @@ function htmlToText(html: string): string {
     .trim();
 }
 
+// Number the terms on each page in render order, before the first await, so the order
+// follows the page. Astro.locals is a new object for each page, so every id is unique on
+// the page and stays the same between builds.
+const locals = Astro.locals as { glossaryTermCount?: number };
+const termIndex = locals.glossaryTermCount = (locals.glossaryTermCount ?? 0) + 1;
+
 const { term: termProp } = Astro.props;
 const slotHtml = Astro.slots.has('default') ? (await Astro.slots.render('default')).trim() : '';
 const lookupTerm = (termProp ?? htmlToText(slotHtml)).trim();
@@ -48,7 +54,7 @@ if (lookupTerm && !entry) {
 const definition = entry?.data.definition;
 const link = entry?.data.link;
 const isExternal = link?.startsWith('http');
-const id = `tooltip-${lookupTerm.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Math.floor(Math.random() * 1000000)}`;
+const id = `tooltip-${lookupTerm.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${termIndex}`;
 
 const Tag = link ? 'a' : 'span';
 ---
