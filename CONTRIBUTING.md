@@ -175,17 +175,32 @@ sequenceDiagram
 
 ### Glossary Terms
 
-All documentation should use the shared glossary system for technical and business terms (such as "Default Tenant", "User", "Role", "RS256", "rfc6749").
-* To add or edit a glossary term, update the JSON file at `astro/src/data/glossary.json`. Each entry should include a `"definition"` field and a `"categories"` array (strings), and may include optional `"link"` (internal or external), `"standards"` (array of standard objects with `"name"` and `"url"`), `"aliases"`, or `"abbreviations"` arrays (strings).
-* Terms must be written in full (e.g., "JSON Web Token" instead of "JWT" or "JWT (JSON Web Token)").
-* Abbreviations should be added to the `abbreviations` field.
-* Terms can belong to multiple categories; they will appear under each category on the glossary page.
-* To reference a glossary term inline within documentation, use the `GlossaryTerm` component (available in `.astro` and `.mdx` files). It supports three ways of being used:
-    * **preferred** Using the child content as the term: `<GlossaryTerm>User</GlossaryTerm>`
-    * Specifying a different lookup term: `<GlossaryTerm term="Default Tenant">Default Tenant Id</GlossaryTerm>` (useful when the displayed text is different from the glossary entry).
-    * As a self-closing tag: `<GlossaryTerm term="User" />`
-* If the term has a link in the glossary, it will be rendered as a clickable link. If not, only the definition is shown via tooltip on hover.
-* The glossary system supports external links (rendered with an external-link icon), internal doc links, or no link.
+The shared glossary defines technical and business terms, such as Default Tenant and RS256. Use the glossary for these terms in all documentation. The [Glossary page](astro/src/content/docs/glossary.mdx) lists every term. The [GlossaryTerm](astro/src/components/GlossaryTerm.astro) component shows the definition of a term in a tooltip.
+
+To add or edit a term, edit `astro/src/data/glossary.json`. Each key is the name of a term. Write the name in full: `JSON Web Token`, not `JWT` or `JWT (JSON Web Token)`. Each entry takes the following fields:
+
+* **`definition`**: The text of the tooltip and the glossary card. Required.
+* **`categories`**: An array of category names. Give every term at least one category. The category filters on the Glossary page use the values.
+* **`link`**: A root-relative docs path or an external URL. Optional. A term with a link renders as a link. An external link also shows an external-link icon.
+* **`abbreviations`**: An array of abbreviations for the term, such as `["JWT"]`. Optional.
+* **`aliases`**: An array of other names for the term. Optional.
+* **`standards`**: An array of the standards that define the term. Each standard has a **`name`**, such as `RFC 7519`, and a **`url`**. Optional.
+
+`GlossaryTerm` is auto-imported in MDX files. In an `.astro` file, import the component from `src/components/GlossaryTerm.astro`. Wrap the term in the component:
+
+```jsx
+<GlossaryTerm>Default Tenant</GlossaryTerm>
+```
+
+The component looks up the text between the tags. The lookup matches the name of a term, an alias, an abbreviation, or the name of a standard. Case doesn't matter. When the displayed text differs from the glossary entry, pass the name of the term in **`term`**:
+
+```jsx
+<GlossaryTerm term="Default Tenant">Default Tenant Id</GlossaryTerm>
+```
+
+To display the name of the term as the glossary spells the name, use a self-closing tag: `<GlossaryTerm term="User" />`.
+
+Text that matches no entry renders as plain text without a tooltip.
 
 ## Authoring Reference
 
@@ -209,7 +224,7 @@ The sidebar builds itself from the folder structure. A folder's title and order 
 
 ### Components
 
-Common components are auto-imported into every MDX file, so don't import them. The list includes `Aside`, `APIField`, `Breadcrumb`, `Card`, `ChildCards`, `Details`, `ExtractedCode`, `PlanBlurb`, `Screenshot`, `Steps`, `Table`, `Tabs`, and `TabItem`. The full list is `mdxComponentImports` in `astro/astro.config.ts`. A small Vite plugin, `mdxComponentImporter`, inserts those imports after the front matter.
+Common components are auto-imported into every MDX file, so don't import them. The list includes `Aside`, `APIField`, `Breadcrumb`, `Card`, `ChildCards`, `Details`, `ExtractedCode`, `GlossaryTerm`, `PlanBlurb`, `Screenshot`, `Steps`, `Table`, `Tabs`, and `TabItem`. The full list is `mdxComponentImports` in `astro/astro.config.ts`. A small Vite plugin, `mdxComponentImporter`, inserts those imports after the front matter.
 
 * An explicit import of an auto-imported component fails the build. Remove the import.
 * If a file imports a different component under the same name, the file's import wins.
