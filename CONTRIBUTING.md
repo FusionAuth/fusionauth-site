@@ -198,7 +198,7 @@ The component looks up the text between the tags. The lookup matches the name of
 <Term term="Default Tenant">Default Tenant Id</Term>
 ```
 
-To display the name of the term as the glossary spells the name, use a self-closing tag: `<Term term="User" />`.
+A self-closing tag displays the value of **`term`** as written: `<Term term="JWT" />` displays `JWT`, not `JSON Web Token`.
 
 Text that matches no entry renders as plain text without a tooltip.
 
