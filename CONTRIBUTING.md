@@ -186,19 +186,19 @@ To add or edit a term, edit `astro/src/data/glossary.json`. Each key is the name
 * **`aliases`**: An array of other names for the term. Optional.
 * **`standards`**: An array of the standards that define the term. Each standard has a **`name`**, such as `RFC 7519`, and a **`url`**. Optional.
 
-`GlossaryTerm` is auto-imported in MDX files. In an `.astro` file, import the component from `src/components/GlossaryTerm.astro`. Wrap the term in the component:
+`GlossaryTerm` is auto-imported in MDX files as `Term`. In an `.astro` file, import the component from `src/components/GlossaryTerm.astro`. Wrap the term in the component:
 
 ```jsx
-<GlossaryTerm>Default Tenant</GlossaryTerm>
+<Term>Default Tenant</Term>
 ```
 
 The component looks up the text between the tags. The lookup matches the name of a term, an alias, an abbreviation, or the name of a standard. Case doesn't matter. When the displayed text differs from the glossary entry, pass the name of the term in **`term`**:
 
 ```jsx
-<GlossaryTerm term="Default Tenant">Default Tenant Id</GlossaryTerm>
+<Term term="Default Tenant">Default Tenant Id</Term>
 ```
 
-To display the name of the term as the glossary spells the name, use a self-closing tag: `<GlossaryTerm term="User" />`.
+To display the name of the term as the glossary spells the name, use a self-closing tag: `<Term term="User" />`.
 
 Text that matches no entry renders as plain text without a tooltip.
 
