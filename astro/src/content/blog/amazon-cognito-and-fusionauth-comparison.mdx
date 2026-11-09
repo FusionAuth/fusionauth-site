@@ -52,7 +52,7 @@ When choosing between Cognito and FusionAuth, certain technical constraints can 
 
 With Cognito, you [can add custom attributes after pool creation](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html#user-pool-settings-custom-attributes), but you **cannot remove them or alter their mutability**. Once you set an attribute as [required vs. optional](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html#cognito-user-pools-standard-attributes) or mutable vs. immutable, that decision is permanent. If your data model is still evolving, a schema mistake on day one follows you forever. The only fix is creating a new User Pool and migrating users.
 
-FusionAuth's `user.data` field accepts arbitrary JSON and can be restructured at any time without user migrations, though you need to be careful about [type changes](/docs/get-started/core-concepts/limitations#data-type-changes-in-data-fields). [Registration objects](/docs/get-started/core-concepts/types/registrations) provide per-application data separation when needed, giving you the flexibility to evolve your data model as your business grows.
+FusionAuth's `user.data` field accepts arbitrary JSON and can be restructured at any time without user migrations, though you need to be careful about [type changes](/docs/concepts/plans-and-limits/limitations#data-type-changes-in-data-fields). [Registration objects](/docs/concepts/types/registrations) provide per-application data separation when needed, giving you the flexibility to evolve your data model as your business grows.
 
 ### Custom Attribute Limits
 
@@ -103,7 +103,7 @@ If you're building B2B SaaS, both Cognito tenant mapping approaches have serious
 
 Most teams end up with a hybrid approach that's worse than either option: a single pool with extensive Lambda logic to simulate per-tenant behavior, adding latency to every login.
 
-FusionAuth offers a first-class [Tenant](/docs/get-started/core-concepts/types/tenants) entity with isolated configuration (password rules, MFA, email templates, themes) per tenant, a single deployment, tenant-scoped API operations, and no artificial limit on tenant count.
+FusionAuth offers a first-class [Tenant](/docs/concepts/types/tenants) entity with isolated configuration (password rules, MFA, email templates, themes) per tenant, a single deployment, tenant-scoped API operations, and no artificial limit on tenant count.
 
 ### JWT Customization Requires Lambda
 
@@ -117,7 +117,7 @@ This introduces several challenges:
 
 Note: As of November 2024, [Essentials and Plus tiers](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-sign-in-feature-plans.html) support native **access token** customization without a Lambda. However, **ID token customization still requires the Lambda** on [all tiers](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-lambda-pre-token-generation.html), and Lite-tier users have no native token customization.
 
-FusionAuth's [JWT Populate lambda](/docs/extend/code/lambdas/) runs in-process with no cold start or network hop. Claims can reference user data, registration data, or group membership directly—no external database lookup needed. You can also make HTTP requests if you need to reference external data.
+FusionAuth's [JWT Populate lambda](/docs/lambdas/) runs in-process with no cold start or network hop. Claims can reference user data, registration data, or group membership directly—no external database lookup needed. You can also make HTTP requests if you need to reference external data.
 
 ### Local Development Environment
 
@@ -132,7 +132,7 @@ Cognito has no local emulator. Every authentication call during development must
 
 This creates a slow inner dev loop, flaky CI/CD (network-dependent), and "works on my machine" drift.
 
-FusionAuth runs as a [standard Docker container](/docs/get-started/download-and-install/docker) on any developer's laptop (`docker compose up`). It provides identical software and API behavior with production, works offline, gives each developer an isolated instance, and allows CI/CD to spin up disposable instances per test run.
+FusionAuth runs as a [standard Docker container](/docs/get-started/install) on any developer's laptop (`docker compose up`). It provides identical software and API behavior with production, works offline, gives each developer an isolated instance, and allows CI/CD to spin up disposable instances per test run.
 
 ### Cross-Region Replication
 
@@ -146,9 +146,9 @@ With FusionAuth, you control the database layer and can architect multi-region f
 
 You [cannot export password hashes](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-using-import-tool.html) from Cognito. AWS states: "Password import is not supported, because security best practices require that passwords are not available as plain text, and we don't support importing hashes." This means users must reset passwords during any migration away from Cognito, or you must perform a slow, gradual migration.
 
-FusionAuth [Connectors](/docs/lifecycle/migrate-users/provider-specific/cognito) enable a transparent slow migration that migrates passwords on login, but you can't do a clean bulk export from Cognito.
+FusionAuth [Connectors](/docs/migrate/provider-specific/cognito) enable a transparent slow migration that migrates passwords on login, but you can't do a clean bulk export from Cognito.
 
-When migrating *to* FusionAuth from other systems, FusionAuth's [Import Users API](/docs/apis/users/import) supports bulk import with password hashes for 10+ algorithms (bcrypt, salted-SHA-256, salted-PBKDF2-HMAC-SHA-256, phpass, and others) plus [custom password hashing plugins](/docs/extend/code/password-hashes/custom-password-hashing). Cognito only supports [CSV user import](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-using-import-tool.html) without password hashes or a [User Migration Lambda](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-lambda-migrate-user.html) that migrates users one at a time on login.
+When migrating *to* FusionAuth from other systems, FusionAuth's [Import Users API](/docs/apis/users/import) supports bulk import with password hashes for 10+ algorithms (bcrypt, salted-SHA-256, salted-PBKDF2-HMAC-SHA-256, phpass, and others) plus [custom password hashing plugins](/docs/migrate/password-hashes/custom-password-hashing). Cognito only supports [CSV user import](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-using-import-tool.html) without password hashes or a [User Migration Lambda](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-lambda-migrate-user.html) that migrates users one at a time on login.
 
 ### Flat Group Model—No Application-Scoped Roles
 
@@ -160,7 +160,7 @@ Cognito's [group model](https://docs.aws.amazon.com/cognito/latest/developerguid
 
 Common workarounds include using custom attributes to store per-app roles (hitting the 50-attribute cap and losing searchability) or maintaining a separate authorization layer in DynamoDB.
 
-FusionAuth's [Registrations](/docs/get-started/core-concepts/types/registrations) provide per-application data separation. [Roles](/docs/get-started/core-concepts/types/roles) are defined per-application, assigned per-registration, and appear in the JWT `roles` claim automatically. [Groups](/docs/get-started/core-concepts/types/groups) can grant application roles to all members. A user can be `admin` in App A and `viewer` in App B without custom attribute hacks.
+FusionAuth's [Registrations](/docs/concepts/types/registrations) provide per-application data separation. [Roles](/docs/concepts/types/roles) are defined per-application, assigned per-registration, and appear in the JWT `roles` claim automatically. [Groups](/docs/concepts/types/groups) can grant application roles to all members. A user can be `admin` in App A and `viewer` in App B without custom attribute hacks.
 
 ### Limited Webhook and Event System
 
@@ -174,7 +174,7 @@ Cognito provides [Lambda triggers](https://docs.aws.amazon.com/cognito/latest/de
 
 If you need to synchronize user lifecycle events to downstream systems (CRMs, analytics, provisioning, audit logs), you must build that plumbing yourself—typically with CloudTrail log parsing or EventBridge rules watching API call patterns.
 
-FusionAuth offers [50+ webhook event types](/docs/extend/events-and-webhooks/events/) covering the full user lifecycle: user CRUD, registration CRUD, login success/failure, group membership changes, password events, MFA method add/remove, IdP link/unlink, JWT refresh, and more. Events are delivered via HTTP POST to any endpoint or to Kafka. Some threat-detection events require the Enterprise plan.
+FusionAuth offers [50+ webhook event types](/docs/events/reference/) covering the full user lifecycle: user CRUD, registration CRUD, login success/failure, group membership changes, password events, MFA method add/remove, IdP link/unlink, JWT refresh, and more. Events are delivered via HTTP POST to any endpoint or to Kafka. Some threat-detection events require the Enterprise plan.
 
 ### Email and SMS Template Constraints
 
@@ -186,13 +186,13 @@ Cognito's email customization relies on the [Custom Message Lambda trigger](http
 - Without Amazon SES configured, Cognito's [default email sender has a low daily sending quota](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-email.html)
 - **No built-in localization**—you must detect the user's locale in your Lambda and branch accordingly
 
-FusionAuth's [email templates](/docs/email/email-templates) use [Apache FreeMarker](https://freemarker.apache.org/) with full conditional logic, loops, and [replacement variables](/docs/email/template-reference) (user data, tenant data, application context). Templates support [per-locale localization](/docs/get-started/core-concepts/localization-and-internationalization) natively. Full HTML with no artificial character limits (up to 65,535 bytes per template). Per-application email template overrides are available on paid plans.
+FusionAuth's [email templates](/docs/email/email-templates) use [Apache FreeMarker](https://freemarker.apache.org/) with full conditional logic, loops, and [replacement variables](/docs/email/template-reference) (user data, tenant data, application context). Templates support [per-locale localization](/docs/concepts/localization-and-internationalization) natively. Full HTML with no artificial character limits (up to 65,535 bytes per template). Per-application email template overrides are available on paid plans.
 
 ### Additional Considerations
 
 **MFA flexibility:** Cognito supports TOTP and SMS MFA on all tiers, and email OTP on [Essentials and Plus tiers](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-sign-in-feature-plans.html). MFA policy (required, optional, off) is configured per pool—you cannot require MFA for one application but make it optional for another within the same pool.
 
-FusionAuth supports TOTP (all plans), SMS and email MFA (paid plans). MFA policy is configurable per tenant. Per-application MFA policy is available on the Enterprise plan, and the requirement can be evaluated dynamically via a [login validation lambda](/docs/extend/code/lambdas/login-validation).
+FusionAuth supports TOTP (all plans), SMS and email MFA (paid plans). MFA policy is configurable per tenant. Per-application MFA policy is available on the Enterprise plan, and the requirement can be evaluated dynamically via a [login validation lambda](/docs/lambdas/login/login-validation).
 
 ### Localization
 
@@ -200,7 +200,7 @@ A company doing business through the internet today has a storefront open to cus
 
 ### Configurable Password Hashing
 
-Every application has different security requirements. Some need to be HIPAA compliant, while others can be less stringent. We let you [pick the level of security](/docs/operate/secure/advanced-threat-detection) you need, and adjust it as quickly as your needs or threats evolve. We also allow you to use [different password schemas](/docs/extend/code/password-hashes/custom-password-hashing) for different groups of users, making it possible to consolidate multiple identity management systems into one efficient platform. This can be a completely transparent process without any downtime or customer friction.
+Every application has different security requirements. Some need to be HIPAA compliant, while others can be less stringent. We let you [pick the level of security](/docs/security/account-protection/advanced-threat-detection) you need, and adjust it as quickly as your needs or threats evolve. We also allow you to use [different password schemas](/docs/migrate/password-hashes/custom-password-hashing) for different groups of users, making it possible to consolidate multiple identity management systems into one efficient platform. This can be a completely transparent process without any downtime or customer friction.
 
 For more details, [read about how we migrated Switchboard.app](/blog/switchboard-reduced-migration-time) from their previous solution.
 
@@ -274,7 +274,7 @@ Rate each **technical factor** from **-2** (strongly favors Cognito) to **+2** (
 
 You can also view technical documentation about how you can migrate from Cognito to FusionAuth.
 
-<Button href="/docs/lifecycle/migrate-users/provider-specific/cognito" label="View the Cognito Technical Migration Guide" />
+<Button href="/docs/migrate/provider-specific/cognito" label="View the Cognito Technical Migration Guide" />
 
 > _Considering a switch from Cognito? [Schedule a demo](/contact) to see how FusionAuth offers greater control and flexibility._
 

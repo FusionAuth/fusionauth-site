@@ -1,0 +1,137 @@
+---
+title: Validate In Your API
+htmlTitle: Validate DPoP Requests In Your API
+order: 20
+description: Learn how to check DPoP proofs and DPoP-bound FusionAuth access tokens in your API.
+tags: dpop, proof of possession, sender-constrained tokens, resource server, api, access token, jwt validation, token binding
+relatedPinFirst: authentication/oauth/dpop, authentication/oauth/dpop/browser-app
+---
+
+<PlanBlurb plan="enterprise" />
+
+<AvailableSince since="1.63.0"/>
+
+FusionAuth checks DPoP proofs on requests to FusionAuth. Your API must check the proof on every request to your API. Without that check, a bound token works like a bearer token at your API. For background, see [Demonstrating Proof-of-Possession (DPoP)](/docs/authentication/oauth/dpop).
+
+Before you start, you need:
+
+* An API that already validates FusionAuth access tokens. See [Validate An Access Token](/docs/authentication/oauth/tokens#validate-an-access-token).
+* A client that sends DPoP requests, such as an app set up with [Use DPoP In A Browser App](/docs/authentication/oauth/dpop/browser-app).
+
+## Read The Request
+
+A DPoP request carries the access token in the **Authorization** header with the `DPoP` scheme, and a proof in the **DPoP** header:
+
+```properties
+Authorization: DPoP eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+DPoP: eyJhbGciOiJFUzI1NiIsInR5cCI6ImRwb3Arand0IiwiandrIjp7...
+```
+
+The proof is a JWT. The proof header holds the client's public key:
+
+```json
+{
+  "typ": "dpop+jwt",
+  "alg": "ES256",
+  "jwk": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "AHTcLNyra6ThKWfhRkn-79L9hzt71LJD9x3hZEHjW5E",
+    "y": "Zfy3_hVtvO0V8ZjQVRuZZIfEZ-31fMfwYFueYQLdI2Q"
+  }
+}
+```
+
+The proof payload describes the request:
+
+```json
+{
+  "jti": "eb228a3e-e95f-4920-a07a-09a791716075",
+  "htm": "GET",
+  "htu": "https://api.example.com/data",
+  "iat": 1788182460,
+  "ath": "fUHyO2r2Z3DZ53EsNrWBb0xWXoaNy59IiKCAqksmQEo"
+}
+```
+
+If your API serves a browser app on another origin, allow the **Authorization** and **DPoP** request headers in your API's CORS configuration.
+
+## Validate The Request
+
+Keep validating the access token as you do for a bearer token. DPoP adds three checks on top of that validation. Reject the request when any check fails. Skipping a check reopens the attack that the check blocks.
+
+Some OAuth libraries run these checks for you. When you use a library, confirm that the library checks **`ath`** and **`cnf.jkt`**. The checks come from [RFC 9449 section 4.3](https://datatracker.ietf.org/doc/html/rfc9449#section-4.3).
+
+### Check That The Proof Is Valid
+
+The proof must be a well-formed DPoP JWT, signed by the key in the proof header:
+
+* The request has exactly one **DPoP** header, and the **Authorization** header uses the `DPoP` scheme.
+* The proof header has a **`typ`** of `dpop+jwt` and an asymmetric **`alg`**.
+* The **`jwk`** in the proof header is a public key with no private key members.
+* The proof signature verifies with the **`jwk`**.
+
+Reject a token with a **`cnf`** claim that arrives with the `Bearer` scheme. Otherwise an attacker can drop the proof and use a stolen token as a bearer token.
+
+### Check That The Proof Matches The Request
+
+The proof must describe the request your API received. Otherwise an attacker can reuse a proof captured from a different request:
+
+* **`htm`** matches the HTTP method.
+* **`htu`** matches the URL, without the query and fragment. Behind a proxy or load balancer, compare against the URL the client called, not the internal URL.
+* **`iat`** is recent. FusionAuth accepts proofs up to 25 seconds old and up to 15 seconds in the future. Use a similar window.
+
+### Check That The Proof Matches The Token
+
+The proof must come from the key that FusionAuth bound to the token. Otherwise an attacker can sign proofs for a stolen token with a key of their own:
+
+* **`ath`** matches the base64url-encoded SHA-256 hash of the access token, without padding.
+* The JWK SHA-256 thumbprint of the **`jwk`**, computed as defined in [RFC 7638](https://datatracker.ietf.org/doc/html/rfc7638), matches **`cnf.jkt`** in the access token.
+
+### Reject Replayed Proofs
+
+Replay protection is optional. Without replay protection, an attacker who captures a request can resend the request until the proof's **`iat`** window closes. To reject replays, record each **`jti`** value and reject a proof with a **`jti`** you have already seen. Keep each value for at least the length of your **`iat`** window. FusionAuth doesn't record **`jti`** values, so your API needs a store of its own.
+
+## Respond To A Failed Check
+
+When a check fails, return `401 Unauthorized` with a **WWW-Authenticate** header that uses the `DPoP` scheme, as defined in [RFC 9449 section 7.1](https://datatracker.ietf.org/doc/html/rfc9449#section-7.1):
+
+```properties
+WWW-Authenticate: DPoP error="invalid_dpop_proof", algs="ES256 PS256"
+```
+
+Use `invalid_dpop_proof` when the proof fails a check. Use `invalid_token` when the access token fails a check.
+
+## Require A Nonce
+
+A nonce limits how long a pre-generated proof works. FusionAuth doesn't issue nonces, but your API can, as described in [RFC 9449 section 9](https://datatracker.ietf.org/doc/html/rfc9449#section-9). To require a nonce, return `401 Unauthorized` with a **DPoP-Nonce** header and a `use_dpop_nonce` error. The client retries with the nonce in the **`nonce`** claim of a new proof. The FusionAuth SDK `dpopFetch` function retries automatically.
+
+For a browser app on another origin, add **DPoP-Nonce** to the exposed headers in your API's CORS configuration. Otherwise the browser hides the header from the client.
+
+## Proof Claims
+
+The following table lists the members of the proof header and payload:
+
+| Member | Location | Description |
+|---|---|---|
+| **`typ`** | Header | Always `dpop+jwt`. |
+| **`alg`** | Header | The signature algorithm. FusionAuth accepts `Ed448`, `Ed25519`, `ES256`, `ES384`, `ES512`, `PS256`, `PS384`, `PS512`, `RS256`, `RS384`, and `RS512`. |
+| **`jwk`** | Header | The client's public key, as a JWK. |
+| **`jti`** | Payload | A unique Id for the proof. |
+| **`htm`** | Payload | The HTTP method of the request. |
+| **`htu`** | Payload | The URL of the request, without the query and fragment. |
+| **`iat`** | Payload | The time the client created the proof, in seconds since the epoch. |
+| **`ath`** | Payload | The base64url-encoded SHA-256 hash of the access token. Present when the request carries an access token. FusionAuth token requests don't include **`ath`**. |
+| **`nonce`** | Payload | The nonce from a **DPoP-Nonce** header. Present only when your API requires a nonce. FusionAuth ignores **`nonce`**. |
+
+## Troubleshooting
+
+The following table lists common failures and the usual fix:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| The thumbprint doesn't match **`cnf.jkt`** | The client signed the proof with a different key than the key used at the token request. | Make sure the client keeps one key pair for the life of the tokens. Log in again after the client replaces the key. |
+| **`ath`** doesn't match | The hash covers the wrong value, or the encoding is wrong. | Hash the exact access token string from the **Authorization** header. Encode the hash as base64url without padding. |
+| **`htu`** doesn't match | Your API compares against an internal URL, or the client signed a URL with a query string. | Compare against the public URL without the query and fragment. |
+| **`iat`** is out of range | The client clock and the server clock differ. | Sync the server clock. Allow some skew for client devices. |
+| FusionAuth returns `invalid_dpop_proof` | FusionAuth rejected a proof sent to FusionAuth. | Check the error description in the response. See the [OAuth Error API](/docs/apis/oauth/oauth-error). |

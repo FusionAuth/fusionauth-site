@@ -2,6 +2,8 @@ import { createHmac } from 'crypto';
 import { fileURLToPath } from 'url';
 
 export const baseUrl = 'http://localhost:9011';
+// un-kickstarted instance for first-time setup shots; a different host keeps its cookies apart
+export const freshUrl = 'http://127.0.0.1:9012';
 export const apiKey = 'screenshot-dev-key-not-for-production';
 export const projectRoot = fileURLToPath(new URL('../../', import.meta.url));
 // state the hooks share between screenshots

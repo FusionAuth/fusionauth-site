@@ -1,6 +1,6 @@
 # Protected Remote MCP Server
 
-Remote deployment variant for the FusionAuth tutorial: [Protecting MCP Servers With FusionAuth OAuth](https://fusionauth.io/docs/extend/examples/protecting-mcp-servers).
+Remote deployment variant for the FusionAuth tutorial: [Protecting MCP Servers With FusionAuth OAuth](https://fusionauth.io/docs/authorization/mcp-server-access).
 
 This folder contains only the MCP server. It is intended for use with an existing FusionAuth instance. The setup script includes `--fusionauth-url`, `--api-key`, `--tenant-id`, and `--connector-ui` flags for remote deployments.
 
