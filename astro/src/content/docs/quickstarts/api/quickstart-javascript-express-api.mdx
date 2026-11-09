@@ -1,348 +1,260 @@
 ---
 title: Node.js/Express.js API
+htmlTitle: FusionAuth QuickStart for Node.js/Express.js API
 description: QuickStart integration of a JavaScript Express.js API application action as a resource server with FusionAuth.
 tags: express api, node.js api, javascript api quickstart, express authentication, node authentication, bearer token
-htmlTitle: FusionAuth QuickStart for Node.js/Express.js API
 codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-api/main
 icon: /img/icons/javascript.svg
 ---
-import Intro from 'src/components/quickstarts/Intro.astro';
-import {Content as LoginArchitectureApi} from 'src/components/quickstarts/LoginArchitectureApi.mdx';
-import NextStepsApi from 'src/components/quickstarts/NextStepsApi.astro';
-import QuickstartTshirtCTA from 'src/components/quickstarts/QuickstartTshirtCTA.astro'
 
-<Intro technology="Express"
-       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api"
-       api/>
+In this QuickStart, you learn how to use FusionAuth for authentication and authorization of an Express.js resource server. FusionAuth will prevent unauthorized clients (users) calling your API functions.
+
+<Aside type="note">
+This API QuickStart explains authorization without a graphical user interface for business clients. You might instead be looking for the [Express.js web QuickStart](/docs/quickstarts/web/express), which explains how to use FusionAuth on your website for login and authorization for human clients.
+</Aside>
+
+TODO
+This QuickStart adds login and a protected page to an Angular web app using a preconfigured, local version of FusionAuth in the following steps:
+
+1. Create a new Angular app.
+1. Customize the app with home and account pages.
+1. Add login to protect the account page.
+1. Add a button to the account page to fetch the user's information.
 
 ## Prerequisites
 
-For this QuickStart, you'll need:
+This QuickStart requires:
 
-* [Node.js](https://nodejs.org/en/download) version 18 or later.
-* [Docker](https://www.docker.com) version 20 or later, which is the quickest way to start FusionAuth. (There are [other ways](/docs/get-started/install)).
-* [curl](https://curl.se/download.html), command line tool and library for transferring data with URLs.
+* [Node.js](https://nodejs.org/en/download) 26 or later
+* [Docker](https://docs.docker.com/get-started/get-docker) 23 or later
+* [curl](https://curl.se/download.html), command line tool and library for making HTTP requests.
 
- <Aside type="note">Web quickstarts provide a UI where the user logs in to FusionAuth graphically with their username and password, and the web application server handles all authenticaion token storage. API quickstarts require a client to make a non-graphical HTTP request to FusionAuth to get an authentication token, whereafter the client must store andn send the API server the token on every request</Aside>
+<Aside type="tip">
+If you use macOS or Windows, you need one of the following container management tools:
+  * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use OrbStack for `docker compose` commands after installation, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
 
- <Aside type="note">
-Web quickstarts demonstrate the OAuth Authorization Code flow, where a user logs in via a FusionAuth-hosted page and the web server handles exchanging the authorization code for tokens (access, refresh, and ID). API quickstarts demonstrate how a resource server validates an access token — the client either obtains this token via the Authorization Code flow (human-facing) or the Client Credentials flow (machine-to-machine, no browser required), then passes it to the API server on every request.
+Be sure to open your container management tool to configure and install any dependencies needed by that tool, including Rosetta and Developer Tools on macOS.
+
+If you use Windows, replace `/` with `\` in all file paths.
 </Aside>
 
-<Steps>
-</Steps>
+## Install and Run FusionAuth
 
-## General Architecture
-
-<LoginArchitectureApi />
-
-## Getting Started
-
-In this section, you’ll get FusionAuth up and running and create a resource server that will serve the API.
-
-### Clone The Code
-
-First off, grab the code from the repository and change into that directory.
+To begin, clone the [GitHub repository for this QuickStart](https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api) to your local machine:
 
 ```shell-session
-git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api.git && \
-cd fusionauth-quickstart-javascript-express-api
+git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api
 ```
 
-All shell commands in this guide can be entered in a terminal from the `fusionauth-quickstart-javascript-express-api` folder location. On Windows, you need to replace forward slashes with backslashes in paths.
+The repository contains:
 
-All the files you'll create in this guide already exist in the `complete-application` subfolder, if you prefer to copy them.
+* `backend_fusionauth`, a preconfigured version of FusionAuth
+* `api`, a runnable version of each development step of the Angular application
 
-### Run FusionAuth Via Docker
-
-You'll find a Docker Compose file (`docker-compose.yml`) and an environment variables configuration file (`.env`) in the root directory of the repo.
-
-Assuming you have Docker installed, you can stand up FusionAuth on your machine with the following.
+Navigate to `fusionauth-quickstart-javascript-angular-web/backend_fusionauth`:
 
 ```shell-session
-docker compose up -d
+cd fusionauth-quickstart-javascript-angular-web/backend_fusionauth
 ```
 
-Here you are using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/develop/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
+If you are not using Linux, then start your container runtime, such as Docker Desktop, OrbStack, or Podman before running Docker Compose.
+
+To start a local instance of FusionAuth, run the following command:
+
+```shell-session
+docker compose up
+```
 
 <Aside type="note">
-  If you ever want to reset the FusionAuth application, you need to delete the volumes created by Docker Compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
+During Docker Compose startup, the included `kickstart/kickstart.json` file uses the FusionAuth API to:
+
+* Generate an API key
+* Configure CORS (<Breadcrumb>Settings -> System -> CORS</Breadcrumb>)
+* Create your app ("QuickStart App") with appropriate settings and redirect URIs (<Breadcrumb>Applications -> Edit Application</Breadcrumb>)
+* Create an admin user (admin@example.com) and register the user with your app (<Breadcrumb>Users</Breadcrumb>)
+* Create a user (richard@example.com) and register the user with your app
+* Create a custom theme ("QuickStart Theme") using `backend_fusionauth/kickstart/css/styles.css` and apply it to your default tenant (<Breadcrumb>Customizations -> Themes</Breadcrumb>)
 </Aside>
 
-FusionAuth will be initially configured with these settings:
+Once Docker Compose intializes all containers, open a browser and navigate to the FusionAuth Admin UI at [http://localhost:9011/admin](http://localhost:9011/admin). Use the following admin account credentials to log in:
 
-* Your client Id is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.applicationId" /></code>.
-* Your client secret is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.requests[?(@.url == '/api/application/#{applicationId}')].body.application.oauthConfiguration.clientSecret" /></code>.
-* Your example teller username is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.tellerEmail" /></code> and the password is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.tellerPassword" /></code>. They will have the role of `teller`.
-* Your example customer username is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.customerEmail" /></code> and the password is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.customerPassword" /></code>. They will have the role of `customer`.
-* Your admin username is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.adminEmail" /></code> and the password is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.adminPassword" /></code>.
-* The base URL of FusionAuth is `http://localhost:9011/`.
+* Username: `admin@example.com`
+* Password: `password`
 
-You can log in to the [FusionAuth Admin UI](http://localhost:9011/admin) and look around if you want to, but with Docker and Kickstart, everything will already be configured correctly.
+After authenticating, you should see the FusionAuth Admin UI, which shows information about active users, logins, registrations, and more:
+
+![The FusionAuth Admin UI.](/img/quickstarts/react/fusionauth-admin.png)
+
+## Create the Angular App
+
+Open a new terminal in the `fusionauth-quickstart-javascript-angular-web` directory to create the frontend app.
+
+1. Run the command below to create a new Angular app using a minimal template:
+    ```shell-session
+    npx @angular/cli@22.2.6 new app --defaults --inline-template --inline-style --style=css --skip-git --skip-tests --ssr=false --ai-config=none # https://angular.dev/cli/new
+    ```
+1. Run the app:
+    ```shell-session
+    cd app
+    npx @angular/cli@22.2.6 serve --host=0.0.0.0 --port=3000
+    ```
+
+You can now browse to the web app at http://localhost:3000 (which matches the allowed authentication URL defined in the FusionAuth Kickstart file earlier).
+
+As you follow this guide, the app should hot-reload when you change the source files. But if the page doesn't refresh, press <kbd>Ctrl C</kbd> to stop the Angular server, then press <kbd>Up</kbd> and <kbd>Enter</kbd> to rerun the `serve` command.
+
+## Customize the Angular App
+
+### Update the Main App Component
+
+Replace the contents of `src/app/app.ts` with the following code:
+
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/1_customized/src/app/app.ts" lang="ts"/>
+
+This deletes the placeholder welcome text on the home page.
+
+### Configure the Routes
+
+Replace the contents of `src/app/app.routes.ts` with the following code:
+
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/1_customized/src/app/app.routes.ts" lang="ts"/>
+
+The home page is displayed at `/`, and the account page at `/account`.
+
+### Create the Homepage
+
+Create `src/app/home.ts` with the following code:
+
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/1_customized/src/app/home.ts" lang="ts"/>
+
+The <Breadcrumb>Login</Breadcrumb> link navigates to the account page. You'll replace this navigation with the FusionAuth login flow in the next section.
+
+### Create the Account Page
+
+Create `src/app/account.ts` with the following code:
+
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/1_customized/src/app/account.ts" lang="ts"/>
+
+The <Breadcrumb>Logout</Breadcrumb> link returns to the homepage. You'll replace this navigation with the FusionAuth logout flow in the next section.
+
+### Update the Stylesheet
+
+Replace the contents of `src/styles.css` with the following CSS:
+
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/1_customized/src/styles.css" lang="css"/>
+
+## Add FusionAuth for Authentication
+
+In this section, you'll protect the account page by requiring users to log in.
+
+### Configure and Enable FusionAuth
+
+1. Run the following command in a new terminal to install the FusionAuth Angular SDK:
+
+  ```shell-session
+  npm install @fusionauth/angular-sdk@~2.1.0
+  ```
+
+1. Open `src/app/app.config.ts` and replace the file contents with the following code to:
+
+   * configure the FusionAuth Angular SDK
+   * register `FusionAuthModule` with Angular's application providers
+
+   <ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/2_fusionauth_added/src/app/app.config.ts" lang="ts"/>
 
 <Aside type="note">
-  If you want to see where the FusionAuth values came from, they can be found in the [FusionAuth app](http://localhost:9011/admin). The tenant Id is found on the Tenants page. To see the Client Id and Client Secret, go to the Applications page and click the `View` icon under the actions for the ChangeBank application. You'll find the Client Id and Client Secret values in the `OAuth configuration` section.
+This FusionAuth configuration specifies the following values:
+
+* `redirectUri`: URI to open after a successful login.
+* `postLogoutRedirectUri`: URI to open after logout.
+* `shouldAutoRefresh`: Set to automatically renew the access token.
+* `scope`: OAuth 2.0 permissions for the access token.
+* `clientId`: Id of the application in the FusionAuth instance.
+* `serverUrl`: Base URL for the FusionAuth authorization server.
+* `onRedirect`: Callback that executes when a redirect occurs.
 </Aside>
 
-<Aside type="caution">
-  The `.env` file contains passwords. In a real application, always add this file to your `.gitignore` file and never commit secrets to version control.
-</Aside>
+### Add Login and Logout to Homepage
 
-### Create A Basic Express Application
+Open `src/app/home.ts` and replace the file contents with the following code to:
 
-Now, you are going to create an Express API application. While this section builds a simple API, you can use the same configuration to integrate an existing API with FusionAuth.
+* use the FusionAuth Angular SDK to start login and logout
+* redirect authenticated users to the account page
+* display the authenticated user's email and logout button, or a login button when logged out
 
-You are going to be building an API backend for a banking application called ChangeBank. This API will have two endpoints.
-- `make-change`: This endpoint will allow you to call GET with a `total` amount and receive a response indicating how many nickels and pennies are needed to make change. Valid roles are `customer` and `teller`.
-- `panic`: Tellers may call this POST endpoint to call the police in case of an incident. The only valid role is `teller`.
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/2_fusionauth_added/src/app/home.ts" lang="ts"/>
 
-Both endpoints will be protected such that a valid JSON web token (JWT) will be required in a cookie or Authorization header in order for the endpoints to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
+### Add Logout to Account Page
 
-Create the starter app called `your-application` for this API. Accept all the defaults.
+Open `src/app/account.ts` and replace the file contents with the following code to:
 
-```shell-session
-npx express-generator@latest your-application --no-view && \
-cd your-application && \
-npm install && \
-npm audit fix --force
-```
+* redirect logged-out users to the home page
+* retrieve and display the authenticated user's email
+* log the user out with the Angular SDK's `logout()` method
 
-```shell-session
-npm install dotenv && \
-npm install jose@4
-```
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/2_fusionauth_added/src/app/account.ts" lang="ts"/>
 
-Here you set up your application and add project dependencies. The [`dotenv`](https://www.npmjs.com/package/dotenv) library allows the code to read your `.env` environment variable file. Additionally, the [`jose`](https://www.npmjs.com/package/jose) library allows you to validate the authenticity of the JWT.
+### Test Authentication
 
-Now, create the `.env` file in your `your-application` folder and add the following to it.
+1. Open a _private browser window_ so you don't retain your login status from previous sections.
+
+1. Navigate to the Angular app at [http://localhost:3000](http://localhost:3000).
+
+   ![The landing page of the Angular app.](/img/quickstarts/react/landing-page.png)
+
+1. Click the <Breadcrumb>Login</Breadcrumb> button. Your browser should redirect to FusionAuth at `http://localhost:9011`.
+
+   ![The FusionAuth login screen.](/img/quickstarts/react/login-fusionauth.png)
+
+1. Authenticate with the credentials for the user created in `backend_fusionauth/kickstart/kickstart.json`:
+
+   * Username: `richard@example.com`
+   * Password: `password`
+
+FusionAuth validates the credentials, then redirects back to the `redirectUri` set in `src/app/app.config.ts`. The home page checks whether the user is logged in. After a successful login, the app navigates to the account page.
+
+Right now, you should see the account page containing the placeholder text `User info will display here`:
+
+![The home page, not yet populated with user data.](/img/quickstarts/react/home-sans-data.png)
+
+Let's use the FusionAuth `/app/me` endpoint to fetch and display that user data instead of placeholder text.
+
+## Fetch User Data
+
+In this section, you'll use the [FusionAuth API](/docs/apis/hosted-backend#me) to retrieve and display user data.
+
+### Call the FusionAuth API
+
+1. Open `src/app/account.ts` and update the `Account` component to:
+
+   * add a signal for the user's name and birthdate
+   * fetch the user's profile from `/app/me` when the button is clicked
+   * display the fetched name and birthdate
+
+   <ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/3_fetch_user_data/src/app/account.ts" lang="ts"/>
 
 <Aside type="note">
-This is a different environment file to the one in the root folder used by Docker for FusionAuth
+`showUserInfo()` fetches the [`/app/me` endpoint](/docs/apis/hosted-backend#me) and stores the returned name and birthdate in an Angular signal. The request uses `credentials: 'include'` to send the cookie set by FusionAuth during login.
 </Aside>
 
-<ExtractedCode src="fusionauth-quickstart-javascript-express-api/complete-application/.env" lang="shell" />
+### Test User Data Functionality
 
- ## Authentication
+1. Browse to the account page at [http://localhost:3000/account](http://localhost:3000/account).
 
-Before you configure authentication, you need to change the default `app.js` file created by Express to add an authentication check to every call made to the API.
+   ![The account page, ready to show user data.](/img/quickstarts/react/home-with-data-not-shown.png)
 
-Add the following lines in `app.js` just above `app.use('/', indexRouter);`.
+1. Click the <Breadcrumb>Show your info</Breadcrumb> button to fetch and display the latest user data.
 
-<ExtractedCode src="fusionauth-quickstart-javascript-express-api/app.snippet.verifyToken.js" lang="javascript" />
-
-The line, `const verifyJWT = require('./services/verifyJWT');`, imports middleware to add authentication to the app. Let's create that file now.
-
-First create the `services` directory under `your-application`.
-
-```shell-session
-mkdir services
-```
-
-In this `services` folder, add the file `verifyJWT.js`, and copy in the following code.
-
-<ExtractedCode src="fusionauth-quickstart-javascript-express-api/complete-application/services/verifyJWT.js" lang="javascript" />
-
-The first line, `require('dotenv/config');`, tells the application to use the settings from `.env` you created earlier.
-
-The function `verifyJWT` gets the JWT access token from a cookie or the `Authorization` header in the request, and it uses `jose.js` to check the signature is correct for your installation of FusionAuth. If either the token is missing or it is not signed correctly, an error is returned. Otherwise, the next function in the Express middleware stack is called.
-
-Now, you'll add one more file that will check if the user has a role with permissions necessary to call an API endpoint.
-
-In the `services` folder, add the file `hasRole.js` and copy in the following code.
-
-<ExtractedCode src="fusionauth-quickstart-javascript-express-api/complete-application/services/hasRole.js" lang="javascript" />
-
-This function is given a list of roles, any of which allow the user's request. It returns a middleware function that checks if the JWT contains one of the required roles, and either returns an error or allows the next function in the middleware stack to proceed.
-
-<Aside type="note">
-You do not need to check for the existence of a token in a cookie here because the previous middleware function you wrote already did that.
-</Aside>
-
-### Create The Routes
-
-All that's left to do is write the two endpoints that will demonstrate your authentication.
-
-Overwrite `routes/index.js` with the following code.
-
-<ExtractedCode src="fusionauth-quickstart-javascript-express-api/complete-application/routes/index.js" lang="javascript" />
-
-The POST `panic` route uses the `hasRole` function with the `'teller'` parameter to disallow non-tellers.
-
-The GET `make-change` route uses `hasRole` function with the `['customer', 'teller']` array as a parameter to allow either customers or tellers to make change. This route checks that the user has supplied a number for `total`, then either returns change as JSON or an error if the total was invalid.
-
-## Run The Application
-
-Start the API server by running the command below in the `your-application` directory:
-
-```shell-session
-npm run start
-```
-
-### Get A Token
-
-There are [several ways to acquire a token](/docs/authentication/oauth/) in FusionAuth, but for this example, you will use the [Login API](/docs/apis/login) to keep things simple.
-
-First, let's try the requests as the `teller@example.com` user. Based on the configuration, this user has the `teller` role and should be able to use both `/make-change` and `/panic`.
-
-Acquire an access token for `teller@example.com` by making the following request in a new terminal window.
-
-```shell-session
-curl --location 'http://localhost:9011/api/login' \
---header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
---header 'Content-Type: application/json' \
---data-raw '{
-  "loginId": "teller@example.com",
-  "password": "password",
-  "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
-}'
-```
-
-Copy the `token` from the response, which should look like this:
-
-```json
-{
-  "token": "eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA",
-  "tokenExpirationInstant": 1689353059670,
-  "user": {
-      ...
-  }
-}
-```
-
-### Make The Request
-
-<Aside type="note">
-The code is set up to extract the token from either a cookie or the `Authorization` header so depending on your preference you can replace `--cookie 'app.at=<your_token>'` with `--header 'Authorization: Bearer <your_token>'` when making requests to the API.
-
-If you use a cookie, make sure you store it in a secure, HttpOnly cookie to avoid exfiltration attacks. See [Storing OAuth Tokens](/articles/oauth/oauth-token-storage) for more information.
-</Aside>
-
-Make a request to `/make-change` with a query parameter `total=1.02`. Use the `token` as the `app.at` cookie.
-
-```shell-session
-curl --cookie 'app.at=<your_token>' 'http://localhost:3000/make-change?total=1.02'
-```
-
-Alternatively you can make the same request by passing your token in the `Authorization` header.
-
-```shell-session
-curl --location 'http://localhost:3000/make-change?total=1.02' \
---header 'Authorization: Bearer <your_token>'
-```
-
-Your response should look like this:
-
-```json
-{
-  "total":1.02,
-  "nickels":20,
-  "pennies":2
-}
-```
-
-You were successfully authorized. You can try making the request without the JWT or with a different string rather than a valid token, and see that you are denied access.
-
-Next, call the `/panic` endpoint because you are in trouble!
-
-```shell-session
-curl --location --request POST 'http://localhost:3000/panic' --cookie 'app.at=<your_token>'
-```
-
-This is a `POST` not a `GET` because you want all your emergency calls to be non-idempotent.
-
-Your response should look like this:
-
-```json
-{
-  "message": "We've called the police!"
-}
-```
-
-Nice, help is on the way!
-
-Now, let's try as `customer@example.com`, which has the role `customer`. Acquire a token for `customer@example.com`.
-
-```shell-session
-curl --location 'http://localhost:9011/api/login' \
---header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
---header 'Content-Type: application/json' \
---data-raw '{
-  "loginId": "customer@example.com",
-  "password": "password",
-  "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
-}'
-```
-
-Now, use the token in that response to call `/make-change` with a query parameter `total=3.24`.
-
-```shell-session
-curl --cookie 'app.at=<your_token>' 'http://localhost:3000/make-change?total=3.24'
-```
-
-Your response should look like this:
-
-```json
-{
-  "total": 3.24,
-  "nickels": 64,
-  "pennies": 4
-}
-```
-
-So far so good. Now, let's try to call the `/panic` endpoint. (We're adding the `-i` flag to see the headers of the response.)
-
-```shell-session
-curl -i --request POST 'http://localhost:3000/panic' --cookie 'app.at=<your_token>'
-```
-
-Your response should look like:
-
-```
-HTTP/1.1 403 Forbidden
-X-Powered-By: Express
-Content-Type: application/json; charset=utf-8
-Content-Length: 63
-ETag: W/"3f-eBPCxvxzYQmL0BG1KPuKqm5VcP4"
-Date: Tue, 12 Sep 2023 09:46:52 GMT
-Connection: keep-alive
-Keep-Alive: timeout=5
-
-{"error":"You do not have a role with permissions to do this."}
-```
-
-Uh oh, I guess you are not allowed to do that.
-
-Enjoy your secured resource server!
-
-<QuickstartTshirtCTA/>
+   ![The account page, displaying user data.](/img/quickstarts/react/home-with-data-shown.png)
 
 ## Next Steps
 
-<NextStepsApi />
+This is a quick introduction to using FusionAuth for user authentication. To learn more about integrating FusionAuth with your product, see [Get Started](/docs/get-started).
 
-## Troubleshooting
+FusionAuth has many features (including [Social Login](/docs/lifecycle/authenticate-users/identity-providers/#social-identity-providers), [Single Sign-On](/docs/lifecycle/authenticate-users/single-sign-on), [Passkeys](/docs/lifecycle/authenticate-users/passkeys/configure), [Multi-factor Authentication](/docs/lifecycle/authenticate-users/multi-factor-authentication)), most of which are free. Some require additional licensing. For details, see the [pricing page](/pricing).
 
-* I get `Failed to connect to localhost port 9011: Couldn't connect to server` when I call the Login API.
+For information on the Angular SDK, see [the GitHub documentation](https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-angular/docs).
 
-Ensure FusionAuth is running in the Docker container. You should be able to log in as the admin user, `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
-
-* The `/panic` endpoint doesn't work when I call it.
-
-Make sure you are making a `POST` call and using a token with the `teller` role.
-
-* `docker compose` command is not found.
-
-Ensure you have the latest version of Docker, or try `docker-compose` instead. If on Linux, install `docker.ce` instead of `docker.io`.
-
-* It still doesn't work.
-
-You can always pull down a complete running application and compare what's different.
-
-```shell-session
-git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api.git && \
-cd fusionauth-quickstart-javascript-express-api && \
-docker compose up -d && \
-cd complete-application && \
-npm install && \
-npm run start
-```
+You can ask general questions in [the FusionAuth forum](/community/forum).
