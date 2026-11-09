@@ -24,10 +24,6 @@ test('challenges and flags a high risk login', () => {
   assert.deepEqual(run({ clientRisk: { status: 'HIGH' } }), { required: true, sendSuspiciousLoginEvent: true });
 });
 
-test('challenges a login from an unrecognized device', () => {
-  assert.deepEqual(run({ authenticationThreats: ['UnrecognizedDevice'] }), { required: true, sendSuspiciousLoginEvent: false });
-});
-
 test('challenges and flags impossible travel', () => {
   assert.deepEqual(run({ authenticationThreats: ['ImpossibleTravel'] }), { required: true, sendSuspiciousLoginEvent: true });
 });

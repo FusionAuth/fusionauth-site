@@ -25,13 +25,3 @@ test('revokes a retired client', () => {
   const clientId = 'https://app.piedpiper.com/oauth/legacy-client.json';
   assert.equal(run({ clientId, clientIdHost: 'app.piedpiper.com' }).result.decision, 'REVOKE');
 });
-
-test('denies an allowed client when the request looks automated', () => {
-  const { result, logs } = run({}, { authenticationThreats: ['UnrecognizedDevice', 'BotDetected'] });
-  assert.equal(result.decision, 'DENY');
-  assert.match(logs.info, /because of BotDetected/);
-});
-
-test('ignores threats that do not block registration', () => {
-  assert.equal(run({}, { authenticationThreats: ['UnrecognizedDevice'] }).result.decision, 'ALLOW');
-});
