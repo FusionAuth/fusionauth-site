@@ -185,6 +185,7 @@ To add or edit a term, edit `astro/src/data/glossary.json`. Each key is the name
 * **`abbreviations`**: An array of abbreviations for the term, such as `["JWT"]`. Optional.
 * **`aliases`**: An array of other names for the term. Optional.
 * **`standards`**: An array of the standards that define the term. Each standard has a **`name`**, such as `RFC 7519`, and a **`url`**. Optional.
+* **`plan`**: The plan required for the feature: `Community`, `Licensed Community`, `Starter`, `Essentials`, or `Enterprise`. Optional.
 
 `GlossaryTerm` is auto-imported in MDX files as `Term`. In an `.astro` file, import the component from `src/components/GlossaryTerm.astro`. Wrap the term in the component:
 

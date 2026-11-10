@@ -224,6 +224,13 @@ const glossaryCollection = defineCollection({
       name: z.string(),
       url: z.string()
     })).optional(),
+    plan: z.enum([
+      'Community',
+      'Licensed Community',
+      'Starter',
+      'Essentials',
+      'Enterprise'
+    ]).optional()
   })
 });
 
