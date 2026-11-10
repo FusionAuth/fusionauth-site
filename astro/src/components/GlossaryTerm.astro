@@ -1,0 +1,35 @@
+---
+import { findGlossaryEntry, glossaryAnchorHref } from 'src/plugins/glossary.mjs';
+
+interface Props {
+  term: string;
+}
+
+const { term } = Astro.props;
+const entry = findGlossaryEntry(term);
+if (!entry) throw new Error(`[GlossaryTerm] no glossary entry matches "${term}"`);
+
+// external links and links to the current page go to the glossary entry instead
+const pagePath = Astro.url.pathname.replace(/(\.html|\/)$/, '');
+const internal = entry.link.startsWith('/') && entry.link.split('#')[0] !== pagePath;
+const href = internal ? entry.link : glossaryAnchorHref(entry);
+
+// ids only need to be unique within a page; Astro.locals is per page
+const locals = Astro.locals as { glossaryTermCount?: number };
+locals.glossaryTermCount = (locals.glossaryTermCount ?? 0) + 1;
+const id = `glossary-tip-${locals.glossaryTermCount}`;
+---
+<span class="glossary-term not-prose"><a href={href} aria-describedby={id} style={`anchor-name: --${id}`}>{Astro.slots.has('default') ? <slot /> : term}</a><span id={id} role="tooltip" class="glossary-tooltip" style={`position-anchor: --${id}`} data-markdown-ignore><span class="glossary-tooltip-body">{entry.definition}</span></span></span>
+
+<script>
+  // WCAG 1.4.13: Esc hides the open tooltip until the pointer or focus leaves the term
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll<HTMLElement>('.glossary-term:is(:hover, :focus-within)').forEach((el) => {
+      el.dataset.dismissed = '';
+      const reset = () => delete el.dataset.dismissed;
+      el.addEventListener('pointerleave', reset, { once: true });
+      el.addEventListener('focusout', reset, { once: true });
+    });
+  });
+</script>
