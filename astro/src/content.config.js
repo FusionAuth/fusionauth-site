@@ -1,5 +1,5 @@
 import { defineCollection, z } from 'astro:content';
-import { file, glob } from 'astro/loaders';
+import { glob } from 'astro/loaders';
 import { load as yamlLoad } from 'js-yaml';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -212,21 +212,6 @@ const apiEndpoints = defineCollection({
   }
 });
 
-const glossaryCollection = defineCollection({
-  loader: file('src/data/glossary.json'),
-  schema: z.object({
-    definition: z.string(),
-    link: z.string().optional(),
-    categories: z.array(z.string()).optional(),
-    aliases: z.array(z.string()).optional(),
-    abbreviations: z.array(z.string()).optional(),
-    standards: z.array(z.object({
-      name: z.string(),
-      url: z.string()
-    })).optional(),
-  })
-});
-
 export const collections = {
   'docs': docsCollection,
   'articles': articlesCollection,
@@ -235,5 +220,4 @@ export const collections = {
   'blog': blogCollection,
   'direct-download-versions': directDownloadVersions,
   'api-endpoints': apiEndpoints,
-  'glossary': glossaryCollection,
 };

@@ -1,90 +1,35 @@
 ---
-import { getCollection, getEntry } from 'astro:content';
+import { findGlossaryEntry, glossaryAnchorHref } from 'src/plugins/glossary.mjs';
 
 interface Props {
-  term?: string;
+  term: string;
 }
 
-// Astro.slots.render() returns HTML that is already escaped. Convert the HTML to
-// plain text for the lookup, and render the HTML as-is so nothing is escaped twice.
-function htmlToText(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, '')
-    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
-    .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+const { term } = Astro.props;
+const entry = findGlossaryEntry(term);
+if (!entry) throw new Error(`[GlossaryTerm] no glossary entry matches "${term}"`);
 
-// Number the terms on each page in render order, before the first await, so the order
-// follows the page. Astro.locals is a new object for each page, so every id is unique on
-// the page and stays the same between builds.
+// external links and links to the current page go to the glossary entry instead
+const pagePath = Astro.url.pathname.replace(/(\.html|\/)$/, '');
+const internal = entry.link.startsWith('/') && entry.link.split('#')[0] !== pagePath;
+const href = internal ? entry.link : glossaryAnchorHref(entry);
+
+// ids only need to be unique within a page; Astro.locals is per page
 const locals = Astro.locals as { glossaryTermCount?: number };
-const termIndex = locals.glossaryTermCount = (locals.glossaryTermCount ?? 0) + 1;
-
-const { term: termProp } = Astro.props;
-const slotHtml = Astro.slots.has('default') ? (await Astro.slots.render('default')).trim() : '';
-const lookupTerm = (termProp ?? htmlToText(slotHtml)).trim();
-
-let entry = lookupTerm ? await getEntry('glossary', lookupTerm) : undefined;
-
-if (lookupTerm && !entry) {
-  const entries = await getCollection('glossary',
-    ({id, data}) => [
-      id,
-      ...(data.aliases ?? []),
-      ...(data.abbreviations ?? []),
-      ...(data.standards?.map((s: {name: string; url: string}) => s.name) ?? [])
-    ]
-      .map((s: string) => s.toLowerCase())
-      .includes(lookupTerm.toLowerCase())
-  );
-
-  if (entries.length > 1) {
-    console.warn(`Multiple glossary entries found for term "${lookupTerm}": ${entries.map(e => e.id).join(', ')}`);
-  }
-
-  entry = entries.at(0);
-}
-
-const definition = entry?.data.definition;
-const link = entry?.data.link;
-const isExternal = link?.startsWith('http');
-const id = `tooltip-${lookupTerm.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${termIndex}`;
-
-const Tag = link ? 'a' : 'span';
+locals.glossaryTermCount = (locals.glossaryTermCount ?? 0) + 1;
+const id = `glossary-tip-${locals.glossaryTermCount}`;
 ---
+<span class="glossary-term"><a href={href} aria-describedby={id} style={`anchor-name: --${id}`}>{Astro.slots.has('default') ? <slot /> : term}</a><span id={id} role="tooltip" class="glossary-tooltip" style={`position-anchor: --${id}`} data-markdown-ignore><span class="glossary-tooltip-body">{entry.definition}</span></span></span>
 
-{!entry ? (
-  slotHtml ? <Fragment set:html={slotHtml} /> : lookupTerm
-) : (
-<Tag
-  href={link}
-  target={isExternal ? '_blank' : undefined}
-  rel={isExternal ? 'noopener noreferrer' : undefined}
-  aria-describedby={definition ? id : undefined}
-  class:list={[
-    "inline-flex items-center relative font-normal! text-inherit! underline! decoration-dotted! underline-offset-2! border-b-0! group/glossary cursor-help",
-    { "cursor-pointer": link }
-  ]}
-  style={{'anchor-name': '--' + id}}
->
-  {slotHtml ? <Fragment set:html={slotHtml} /> : lookupTerm}
-  {isExternal && <i aria-label="(external)" class="fa-solid fa-arrow-up-right-from-square text-[0.8em] ml-1"></i>}
-  {definition && (
-    <span
-      id={id}
-      role="tooltip"
-      class="glossary-tooltip"
-      style={{'--tooltip-anchor': '--' + id}}
-      data-markdown-ignore
-    >
-      {definition}
-    </span>
-  )}
-</Tag>
-)}
+<script>
+  // WCAG 1.4.13: Esc hides the open tooltip until the pointer or focus leaves the term
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll<HTMLElement>('.glossary-term:is(:hover, :focus-within)').forEach((el) => {
+      el.dataset.dismissed = '';
+      const reset = () => delete el.dataset.dismissed;
+      el.addEventListener('pointerleave', reset, { once: true });
+      el.addEventListener('focusout', reset, { once: true });
+    });
+  });
+</script>

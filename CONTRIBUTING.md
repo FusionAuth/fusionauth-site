@@ -175,32 +175,41 @@ sequenceDiagram
 
 ### Glossary Terms
 
-The shared glossary defines technical and business terms, such as Default Tenant and RS256. Use the glossary for these terms in all documentation. The [Glossary page](astro/src/content/docs/glossary.mdx) lists every term. The [GlossaryTerm](astro/src/components/GlossaryTerm.astro) component shows the definition of a term in a tooltip.
+The shared glossary defines FusionAuth objects and identity standards, such as Default Tenant and RS256. The [Glossary](astro/src/content/docs/concepts/glossary.mdx) page lists every term. Add a term only when a reader needs the definition to follow the docs. Leave out general tools such as Docker, and spellings that belong in [Terminology](#terminology).
 
-To add or edit a term, edit `astro/src/data/glossary.json`. Each key is the name of a term. Write the name in full: `JSON Web Token`, not `JWT` or `JWT (JSON Web Token)`. Each entry takes the following fields:
+To add or edit a term, edit `astro/src/data/glossary.json`. Each key is the name of a term. Write the name in full and in title case: `JSON Web Token`, not `JWT`. Each entry takes the following fields:
 
-* **`definition`**: The text of the tooltip and the glossary card. Required.
-* **`categories`**: An array of category names. Give every term at least one category. The category filters on the Glossary page use the values.
-* **`link`**: A root-relative docs path or an external URL. Optional. A term with a link renders as a link. An external link also shows an external-link icon.
-* **`abbreviations`**: An array of abbreviations for the term, such as `["JWT"]`. Optional.
+* **`definition`**: The plain-text definition that the tooltip and the Glossary page show. Write one or two sentences, and don't use markdown. Required.
+* **`link`**: The page that explains the term, as a root-relative docs path or an `https://` URL. Required.
+* **`abbreviations`**: An array of abbreviations, such as `["JWT"]`. Optional.
 * **`aliases`**: An array of other names for the term. Optional.
 * **`standards`**: An array of the standards that define the term. Each standard has a **`name`**, such as `RFC 7519`, and a **`url`**. Optional.
 
-`GlossaryTerm` is auto-imported in MDX files as `Term`. In an `.astro` file, import the component from `src/components/GlossaryTerm.astro`. Wrap the term in the component:
+The build fails when an entry has an unknown field or is missing a required field, or when two entries share a name, alias, or abbreviation.
 
-```jsx
-<Term>Default Tenant</Term>
+To mark a term in an MDX page, wrap the term in double square brackets:
+
+```markdown
+FusionAuth creates the [[Default Tenant]] during installation.
 ```
 
-The component looks up the text between the tags. The lookup matches the name of a term, an alias, an abbreviation, or the name of a standard. Case doesn't matter. When the displayed text differs from the glossary entry, pass the name of the term in **`term`**:
+The term renders as a link to the term's `link` page, with the definition in a tooltip. External links and links to the current page go to the term's Glossary entry instead. The name between the brackets can be the term, an alias, or an abbreviation, in any case. The page shows the name as written, so `[[JWT]]` displays `JWT`.
 
-```jsx
-<Term term="Default Tenant">Default Tenant Id</Term>
+To display different text, add a pipe and the label after the name:
+
+```markdown
+Each [[Tenant|tenant]] has its own settings.
 ```
 
-A self-closing tag displays the value of **`term`** as written: `<Term term="JWT" />` displays `JWT`, not `JSON Web Token`.
+Inside a table, escape the pipe: `[[Tenant\|tenant]]`.
 
-Text that matches no entry renders as plain text without a tooltip.
+Follow these rules:
+
+* Mark only the first use of a term on a page. The build fails when a page marks the same term twice.
+* Don't mark terms in headings or inside links. The build fails in both cases.
+* Use the syntax in MDX files only. To show literal double brackets in prose, use inline code.
+
+In an `.astro` file, import the component from `src/components/GlossaryTerm.astro`, and pass the name of the term in **`term`**: `<GlossaryTerm term="Default Tenant">Default Tenant</GlossaryTerm>`.
 
 ## Authoring Reference
 
@@ -224,7 +233,7 @@ The sidebar builds itself from the folder structure. A folder's title and order 
 
 ### Components
 
-Common components are auto-imported into every MDX file, so don't import them. The list includes `Aside`, `APIField`, `Breadcrumb`, `Card`, `ChildCards`, `Details`, `ExtractedCode`, `Term`, `PlanBlurb`, `Screenshot`, `Steps`, `Table`, `Tabs`, and `TabItem`. The full list is `mdxComponentImports` in `astro/astro.config.ts`. A small Vite plugin, `mdxComponentImporter`, inserts those imports after the front matter.
+Common components are auto-imported into every MDX file, so don't import them. The list includes `Aside`, `APIField`, `Breadcrumb`, `Card`, `ChildCards`, `Details`, `ExtractedCode`, `PlanBlurb`, `Screenshot`, `Steps`, `Table`, `Tabs`, and `TabItem`. The full list is `mdxComponentImports` in `astro/astro.config.ts`. A small Vite plugin, `mdxComponentImporter`, inserts those imports after the front matter.
 
 * An explicit import of an auto-imported component fails the build. Remove the import.
 * If a file imports a different component under the same name, the file's import wins.
