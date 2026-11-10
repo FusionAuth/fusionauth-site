@@ -1,0 +1,312 @@
+---
+title: Vue.js
+htmlTitle: FusionAuth QuickStart for Vue.js
+description: QuickStart a Vue.js Web App with FusionAuth.
+tags: vue quickstart, vue.js authentication, vue login, vue oauth, javascript authentication, spa authentication
+icon: /img/icons/vue.js.svg
+---
+
+
+This QuickStart adds login and a protected page to a Vue.js web app using a preconfigured, local version of FusionAuth in the following steps:
+
+1. Create a new Vue app.
+1. Customize the app with home and account pages.
+1. Add login to protect the account page.
+1. Add a button to the account page to fetch the user's information.
+
+## Prerequisites
+
+This QuickStart requires:
+
+* [Node.js](https://nodejs.org/en/download) 22.22.2 or later, or 24.15 or later
+* [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later
+* On macOS and Windows, one of the following container management tools:
+  * [Docker desktop](https://www.docker.com/products/docker-desktop/)
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use Orbstack for `docker compose` commands after install, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
+
+Be sure to open your container management tool to configure and install any dependencies needed by that tool, including Rosetta and Developer Tools on macOS.
+
+## Install and Run FusionAuth
+
+To begin, clone the [GitHub repository for this QuickStart](https://github.com/FusionAuth/fusionauth-quickstart-javascript-vue-web) to your local machine:
+
+```shell-session
+git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-vue-web.git
+```
+
+The repository contains:
+
+* `fusionauth-backend`, a preconfigured version of FusionAuth
+* `vue-frontend-steps`, a runnable version of each development step of the Vue application
+
+Navigate to `fusionauth-quickstart-javascript-vue-web/fusionauth-backend`:
+
+```shell-session
+cd fusionauth-quickstart-javascript-vue-web/fusionauth-backend
+```
+
+Open your container management tool (Docker Desktop, OrbStack, or Podman) to start the Docker daemon.
+
+To start a local instance of FusionAuth, run the following command:
+
+```shell-session
+docker compose up -d
+```
+
+If you see an error that reads "Is the docker daemon running?", make sure your container management tool is accepting commands. Depending on your tool:
+* to use Docker Desktop, Docker Desktop must be open
+* to use Orbstack, enable OrbStack to run as the docker daemon with `docker context use orbstack`, then open the Orbstack app
+* to use Podman, replace `docker` in the above command with `podman`
+
+<Aside type="note">
+During the Docker compose process, the included `kickstart/kickstart.json` file uses the FusionAuth API to:
+
+* Generate an API key
+* Configure [[CORS]] (<Breadcrumb>Settings -> System -> CORS</Breadcrumb>)
+* Create your app ("Quick Start App") with appropriate settings and redirect URIs (<Breadcrumb>Applications -> Edit Application</Breadcrumb>)
+* Create an admin user (admin@example.com) with access to the FusionAuth Admin UI (<Breadcrumb>Users</Breadcrumb>)
+* Create a user (richard@example.com) and register the user with your app
+* Create a custom theme ("Quick Start Theme") using `fusionauth-backend/kickstart/css/styles.css` and apply it to your [[default tenant]] (<Breadcrumb>Customizations -> Themes</Breadcrumb>)
+</Aside>
+
+Once Docker compose completes, open a browser window and navigate to the Admin UI of your FusionAuth instance at [http://localhost:9011/admin](http://localhost:9011/admin). Use the following admin account credentials to log in:
+
+* Username: `admin@example.com`
+* Password: `password`
+
+After authenticating, you should see the FusionAuth Admin UI, which shows information about active users, logins, registrations, and more:
+
+<Screenshot id="quickstart-admin-dashboard" url="/admin/" height={742} alt="The FusionAuth Admin UI." />
+
+## Create the Vue App
+
+First, create a new TypeScript Vue app with the official `create-vue` scaffolding tool:
+
+1. If your terminal is still in the `fusionauth-backend` directory, run `cd ..` to navigate back up to `fusionauth-quickstart-javascript-vue-web`.
+
+1. To generate a new Vue app with Vue Router in a folder called `app-quickstart-vue`, run the following command:
+
+   ```shell-session
+   npm create vue@3.24.0 app-quickstart-vue -- --ts --router --default
+   ```
+
+   Select `Yes` to install the `create-vue` package if prompted.
+
+1. Navigate into the app folder and install the project dependencies with the following commands:
+
+   ```shell-session
+   cd app-quickstart-vue
+   ```
+
+   ```shell-session
+   npm install
+   ```
+
+1. Delete the example components, assets, and about page that `create-vue` generates, as you'll replace them with your own pages:
+
+   ```shell-session
+   rm -rf src/components src/assets src/views/AboutView.vue
+   ```
+
+## Customize the Vue App
+
+### Update the Main App File
+
+Replace the contents of `src/main.ts` with the following code:
+
+<ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/1-customized/src/main.ts" lang="typescript"/>
+
+This file creates the Vue app, adds the router, loads the stylesheet, and mounts the app into the `#app` element in `index.html`.
+
+### Update the Root Component
+
+Replace the contents of `src/App.vue` with the following code:
+
+<ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/1-customized/src/App.vue" lang="markup"/>
+
+`RouterView` displays the page that matches the current URL.
+
+### Update the Router
+
+Replace the contents of `src/router/index.ts` with the following code:
+
+<ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/1-customized/src/router/index.ts" lang="typescript"/>
+
+The app has two pages: a public homepage at `/` and an account page at `/account`. Any other URL redirects to the homepage.
+
+### Create the Homepage
+
+Replace the contents of `src/views/HomeView.vue` with the following code:
+
+<ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/1-customized/src/views/HomeView.vue" lang="markup"/>
+
+The login button redirects the user to the account page. You'll replace this click handler when you add authentication.
+
+### Create the Account Page
+
+Create the file `src/views/AccountView.vue` for the account page and add the following code:
+
+<ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/1-customized/src/views/AccountView.vue" lang="markup"/>
+
+The logout button redirects to the homepage. You'll replace this click handler when you add authentication.
+
+### Add the Stylesheet
+
+Create the file `src/App.css` and add the following CSS:
+
+<ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/1-customized/src/App.css" lang="css"/>
+
+### Run the Vue App
+
+Run your app on port `3000`:
+
+1. In `package.json`, update the `dev` script to use port `3000`. Replace:
+
+   ```json
+   "dev": "vite",
+   ```
+
+   with:
+
+   ```json
+   "dev": "vite --port 3000",
+   ```
+
+1. From the Vue app directory, run the following command to start the web server:
+
+   ```shell-session
+   npm run dev
+   ```
+
+1. To view your app, open a web browser and navigate to [http://localhost:3000](http://localhost:3000).
+
+## Add FusionAuth for Authentication
+
+In this section, you protect the account page with a login.
+
+### Configure and Enable FusionAuth
+
+1. From the Vue app directory (`app-quickstart-vue`), run the following command to install the FusionAuth Vue SDK:
+
+   ```shell-session
+   npm install @fusionauth/vue-sdk@~1.4.0
+   ```
+
+1. Open `src/main.ts` and replace the file contents with the following code to:
+
+   * import the FusionAuth Vue plugin and its configuration type
+   * configure and add the FusionAuth plugin
+   * send the user to the account page after they log in
+
+   <ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/2-fusionauth-added/src/main.ts" lang="typescript"/>
+
+<Aside type="note">
+This FusionAuth configuration specifies the following values:
+
+* `redirectUri`: URI to open after a successful login.
+* `postLogoutRedirectUri`: URI to open after logout.
+* `shouldAutoRefresh`: Set to automatically renew the access token.
+* `shouldAutoFetchUserInfo`: Return data for the user as part of a successful login.
+* `scope`: OAuth 2.0 permissions for the access token.
+* `clientId`: ID of the application in the FusionAuth instance.
+* `serverUrl`: Base URL for the FusionAuth authorization server.
+* `onRedirect`: Callback that executes when a redirect occurs. The SDK calls it before the router has loaded the first page, so it waits for `router.isReady()` before navigating.
+</Aside>
+
+### Protect the Account Page
+
+Open `src/router/index.ts` and replace the file contents with the following code to add a `beforeEnter` guard to the account route. The guard uses the FusionAuth Vue SDK to check whether the user is logged in, and sends users who aren't logged in back to the homepage:
+
+<ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/2-fusionauth-added/src/router/index.ts" lang="typescript"/>
+
+### Add Login and Logout to Homepage
+
+Open `src/views/HomeView.vue` and replace the file contents with the following code to:
+
+* get the login state, user data, and login and logout functions from the FusionAuth Vue SDK `useFusionAuth()` composable
+* show an authenticated user's email and a logout button in the title bar, otherwise a login button
+* start the login process with the SDK `login()` function when the user clicks the login button
+
+<ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/2-fusionauth-added/src/views/HomeView.vue" lang="markup"/>
+
+### Add Logout to Account Page
+
+Open `src/views/AccountView.vue` and replace the file contents with the following code to:
+
+* get user data and the logout function from the FusionAuth Vue SDK
+* show the page once the SDK has fetched the user's data
+* display the user's email in the title bar
+* start the logout process with the SDK `logout()` function when the user clicks the logout button
+
+<ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/2-fusionauth-added/src/views/AccountView.vue" lang="markup"/>
+
+### Test Authentication
+
+1. Start the web server:
+
+   ```shell-session
+   npm run dev
+   ```
+
+1. Open a _private browser window_ so you don't retain your login status from previous sections.
+
+1. Navigate to the Vue app at [http://localhost:3000](http://localhost:3000).
+
+   ![The landing page of the Vue app.](/img/quickstarts/react/landing-page.png)
+
+1. Click the login button. Your browser should redirect to FusionAuth at `http://localhost:9011`.
+
+   <Screenshot id="quickstart-login" url="/oauth2/authorize?client_id=5c8e2f4a-7b1d-4e9c-a3f6-0d2b8e7c1a94&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&prompt=login" alt="The FusionAuth login screen." />
+
+1. Authenticate with the credentials for the user created in the `fusionauth-backend/kickstart/kickstart.json` file:
+
+   * Username: `richard@example.com`
+   * Password: `password`
+
+FusionAuth validates the credentials, then redirects back to the `redirectUri` set in `src/main.ts`. The `onRedirect` callback then navigates to the account page.
+
+Right now, you should see an account page with your email and a logout button in the title bar, and the stub text `User info will display here`:
+
+![The account page, not yet populated with user data.](/img/quickstarts/react/home-sans-data.png)
+
+Let's fetch and display that user data instead of stub text.
+
+## Fetch User Data
+
+In this section you use the [FusionAuth API](/docs/apis/hosted-backend#me) to refresh and display detailed user data.
+
+### Call the FusionAuth API
+
+1. Open `src/views/AccountView.vue` and replace the file contents with the following code to:
+
+   * import `ref` from Vue
+   * add a `getUserInfo()` function that gets user data from FusionAuth and saves it in `newUserInfo`
+   * display current user data from `newUserInfo`
+   * add a button that calls `getUserInfo()`
+
+   <ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/3-fetch-user-data/src/views/AccountView.vue" lang="markup"/>
+
+<Aside type="note">
+`getUserInfo()` sets `newUserInfo` to the result of an asynchronous call to the [`/me` endpoint](/docs/apis/hosted-backend#me). The API call uses `credentials: include` to authorize the API call with a cookie set by FusionAuth during login.
+</Aside>
+
+### Test User Data Functionality
+
+1. Browse to the account page at [http://localhost:3000/account](http://localhost:3000/account).
+
+   ![The account page, now ready to show user data.](/img/quickstarts/react/home-with-data-not-shown.png)
+
+1. Click the **Show your info** button to fetch and display the latest user data.
+
+   ![The account page, showing user data.](/img/quickstarts/react/home-with-data-shown.png)
+
+## Next Steps
+
+This is a quick introduction to using FusionAuth for user authentication. To learn more about integrating FusionAuth with your product, see [Get Started](/docs/get-started).
+
+FusionAuth has many features (including [Social Login](/docs/authentication/identity-providers/#social-identity-providers), [Single Sign-On](/docs/authentication/sessions/single-sign-on), [Passkeys](/docs/authentication/passkeys/configure), [Multi-factor Authentication](/docs/authentication/multi-factor-authentication)), most of which are free. Some require additional licensing. For details, see the [pricing page](/pricing).
+
+For information on the Vue SDK, see [the Vue SDK documentation](/docs/sdks/vue-sdk).
+
+You can ask general questions in [the FusionAuth forum](/community/forum).
