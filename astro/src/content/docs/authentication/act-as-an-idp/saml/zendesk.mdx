@@ -30,21 +30,15 @@ When you are done, your screen should look like this just before saving. The rol
 
 <Screenshot id="authenticate-zendesk-application-roles" url="/admin/application/add#roles" alt="Creating FusionAuth application with Zendesk roles." height={1200} />
 
-Next, we'll create a lambda to take FusionAuth role information and populate the SAML assertion that Zendesk will receive. Navigate to <Breadcrumb>Settings -> Lambdas</Breadcrumb> and click the add button.
+Next, create a lambda that adds the FusionAuth role to the SAML assertion Zendesk receives. Navigate to <Breadcrumb>Customizations -> Lambdas</Breadcrumb> and click the <IconButton icon="add" /> button.
 
 * Name the lambda `Populate Zendesk roles`.
 * Set the type to `SAML v2 populate`.
 * Add the following function body:
 
-```javascript
-function populate(samlResponse, user, registration) {
-  if (registration && registration.roles) {
-    samlResponse.assertion.attributes.role = registration.roles;
-  }
-}
-```
+<ExtractedCode src="example-lambdas/lambdas/samlv2-populate/zendesk-role.js" lang="javascript" title="A lambda that sends the Zendesk role of the user." />
 
-When this lambda function is executed, it will set the users' roles in the SAML assertion to the roles found in the registration. These roles are the ones assigned by FusionAuth for the Zendesk FusionAuth application. If no roles are assigned, Zendesk treats the user as an end user, not an agent or an admin.
+Zendesk reads one value from the `role` attribute. The lambda sends `admin` when the user has the `admin` role in the Zendesk FusionAuth application, and `agent` when the user has the `agent` role. A user with both roles gets `admin`. When the user has neither role, the lambda sends no `role` attribute, and Zendesk treats the user as an end user.
 
 <Screenshot id="authenticate-zendesk-lambda-add" url="/admin/lambda/add" alt="Creating a lambda to populate roles." height={1200} />
 

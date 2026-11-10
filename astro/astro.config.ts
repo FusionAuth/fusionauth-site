@@ -16,6 +16,7 @@ import astroToc from 'astro-better-toc';
 import { openapiSummary } from './src/plugins/openapi-summary.js';
 import { cssPreload } from './src/plugins/css-preload.mjs';
 import { headingLinks } from './src/plugins/satteri-heading-links.mjs';
+import { glossaryTerms } from './src/plugins/satteri-glossary-terms.mjs';
 
 function buildSitemap() {
   let siteUrl: string;
@@ -69,6 +70,7 @@ const mdxComponentImports =
   "import If from 'src/components/If.astro';\n" +
   "import Icon from 'src/components/icon/Icon.astro';\n" +
   "import IconButton from 'src/components/IconButton.astro';\n" +
+  "import GlossaryTerm from 'src/components/GlossaryTerm.astro';\n" +
   "import ChildCards from 'astro-better-cards/ChildCards.astro';\n" +
   "import Card from 'astro-better-cards/Card.astro';\n" +
   "import CardGrid from 'astro-better-cards/CardGrid.astro';\n" +
@@ -222,6 +224,7 @@ const config = defineConfig({
           mermaidTitle(),       // inserts title nodes before we transform code blocks
           mermaidSSR(),         // replaces mermaid blocks with pre-rendered SVGs
           shellSession(),
+          glossaryTerms(),
         ],
         hastPlugins: [
           codeBlocks({ excludeLangs: ['mermaid'] }),

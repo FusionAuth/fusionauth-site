@@ -58,6 +58,7 @@ json_files=(
   'cookies.json'
   'authenticationtype.json'
   'api-endpoints.json'
+  'lambda-types.json'
 )
 
 staging_dir="$(mktemp -d)"
@@ -178,6 +179,11 @@ java -cp "$cp:$java_classes" GenerateJSONFromAnnotations \
 javac -cp "$cp" -d "$java_classes" "$repo_root/scripts/java/GenerateEndpointsJSON.java"
 java -cp "$cp:$java_classes" GenerateEndpointsJSON \
   "$staging_dir/json/api-endpoints.json"
+
+# Lambda types and signatures, compared with the harness and lambdas.json by the example-lambdas tests
+javac -cp "$cp" -d "$java_classes" "$repo_root/scripts/java/GenerateLambdaTypesJSON.java"
+java -cp "$cp:$java_classes" GenerateLambdaTypesJSON \
+  "$staging_dir/json/lambda-types.json"
 
 # Diff checking for JSON
 for json_file in "${json_files[@]}"; do

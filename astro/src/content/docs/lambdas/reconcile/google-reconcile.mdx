@@ -10,7 +10,7 @@ import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function reconcile(user, registration, idToken, context) {
@@ -21,20 +21,20 @@ function reconcile(user, registration, idToken, context) {
 This lambda must contain a function named `reconcile` that accepts the following parameters:
 
 <ReconcileLambdaUserRegistrationParameters />
-* `idToken` - the JSON payload returned by the Google Token Info API. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `idToken`: the JSON payload returned by the Google Token Info API. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `idToken` may contain various user claims to utilize during the reconcile process.
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. The `idToken` object can include user claims for the lambda to read.
 
 ## Assigning The Lambda
 
-Once a lambda is created, you may assign it to the Google identity provider in the IdP configuration.
+After you create the lambda, assign the lambda to the Google identity provider.
 
-Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and select your existing Google configuration or click <Breadcrumb>Add provider</Breadcrumb> and select Google if it has not yet been configured.
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing Google configuration. If you haven't configured Google yet, click <Breadcrumb>Add provider</Breadcrumb> and select Google.
 
 ## Default Lambda
 
-A default Google reconcile lambda is available in FusionAuth that may be used or modified. The default Google lambda function is documented below.
+FusionAuth includes a default Google reconcile lambda. You can use the default lambda as is or change the lambda:
 
 ```javascript
 // This is the default Google reconcile, modify this to your liking.
@@ -50,3 +50,11 @@ function reconcile(user, registration, idToken) {
   user.imageUrl = idToken.picture;
 }
 ```
+
+## Example Lambda
+
+The default lambda overwrites each profile field, even when Google leaves a claim out. The following lambda keeps the saved value when a claim is missing.
+
+Google includes the **`hd`** claim only for Google Workspace accounts, and the claim holds the Workspace domain. The lambda adds the `employee` role to the registration when **`hd`** is `example.com`. Personal Google accounts get no extra role. Replace `example.com` with your Workspace domain.
+
+<ExtractedCode src="example-lambdas/lambdas/google-reconcile/workspace-role.js" lang="javascript" title="A lambda that gives Google Workspace users the employee role." />

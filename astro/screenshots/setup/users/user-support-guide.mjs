@@ -1,5 +1,6 @@
 import { normalizeRegistrationIds, temporaryResources31 as registerResources } from './register/_shared.mjs';
 import { normalizeUserMethods } from '../_shared.mjs';
+import { forgotPasswordTemplate } from '../migrate/index.mjs';
 import { preparation, dineshId } from '../kit.mjs';
 
 // pins the registration ids and puts the page back at the top
@@ -135,6 +136,9 @@ const managed = (beforeSizing, stages) => register(beforeSizing, { normalizeUser
 export const shots = {
   'register-users-tab': register(searchDinesh),
   'register-new-user-form': register(fillNewUser),
+  // the menu only offers a password reset once the tenant has a forgot password template
+  'register-send-password-reset': { ...managed(showMenuItem('Send password reset')), temporaryState: [forgotPasswordTemplate] },
+  'register-confirm-reset': { ...managed(openMenuDialog('Send password reset')), temporaryState: [forgotPasswordTemplate] },
   'register-require-password-change': managed(showMenuItem('Require password change')),
   'register-confirm-change': managed(openMenuDialog('Require password change')),
   'register-verify': managed(settle),

@@ -4,13 +4,13 @@ description: Learn how to add custom claims to the UserInfo response.
 tags: userinfo populate lambda, userinfo endpoint, fusionauth lambda, custom claims, oauth2, openid connect, oidc claims
 ---
 
-If you would like to augment the claims provided in the UserInfo response, you can specify a lambda in the Application's OAuth configuration.
+To add or change claims in the UserInfo response, assign a lambda in the Application's OAuth configuration.
 
-When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+When you create a lambda in the Admin UI, FusionAuth provides an empty function for you to implement.
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function populate(userInfo, user, registration, jwt, context) {
@@ -18,42 +18,32 @@ function populate(userInfo, user, registration, jwt, context) {
 }
 ```
 
-This lambda must contain a function named `populate` that accepts the following parameters:
+The lambda must contain a function named `populate` that accepts the following parameters:
 
-* `userInfo` - the claims object to be returned as a JSON payload. You can modify this object.
-* `user` - the FusionAuth User object. This object is read-only.
-* `registration` - the FusionAuth UserRegistration object. This object is read-only.
-* `jwt` - the claims object from the provided JWT. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `userInfo`: the claims object that FusionAuth returns as a JSON payload. You can modify this object.
+* `user`: the FusionAuth User object. This object is read-only.
+* `registration`: the FusionAuth UserRegistration object. This parameter is `null` when the user is not registered for the application. This object is read-only.
+* `jwt`: the claims object from the provided JWT. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The JWT object is a JavaScript object containing the JWT payload. See [OpenID Connect & OAuth 2.0 Token](/docs/authentication/oauth/tokens).
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. For the claims in the `jwt` object, see [OpenID Connect & OAuth 2.0 Token](/docs/authentication/oauth/tokens).
 
-You may add, remove, or modify anything in the `userInfo` object except for certain reserved claims. The following claims are considered reserved and modifications or removal will not be reflected in the final UserInfo response:
+You can add, remove, or change any claim in the `userInfo` object, except the reserved claims. To remove a claim, set the claim to `null`. Deleting a claim with `delete` has no effect. FusionAuth discards changes to the following reserved claims:
 
-- `email`
-- `email_verified`
-- `phone_number_verified`
-- `sub`
-- `tid`
+* `email`
+* `email_verified`
+* `phone_number_verified`
+* `sub`
+* `tid`
 
-## Assigning The Lambda
+## Assigning the Lambda
 
-Once a lambda is created, you must assign it to an Application. See the <Breadcrumb>OAuth</Breadcrumb> tab in the Application configuration.
+After you create the lambda, assign the lambda to an Application on the <Breadcrumb>OAuth</Breadcrumb> tab of the Application configuration.
 
 ## Example Lambda
 
-Here is an example of a simple Lambda that adds a few extra claims to the UserInfo response.
+The following lambda adds the user's department from `user.data` and the user's roles for the application as namespaced claims. The lambda also removes the `birthdate` claim, so the UserInfo response doesn't share the user's birth date with the application:
 
-```javascript
-function populate(userInfo, user, registration, jwt) {
-  // Add a new claim named 'favoriteColor' from a custom data attribute on the user
-  userInfo.favoriteColor = user.data.favoriteColor;
-  // Add a new claim named 'dept' using a custom data attribute on the registration
-  userInfo.dept = registration.data.departmentName;
-  // Copy a claim named 'applicationId' from the provided JWT
-  userInfo.applicationId = jwt.applicationId;
+<ExtractedCode src="example-lambdas/lambdas/userinfo-populate/profile-claims.js" lang="javascript" title="A lambda that adds department and role claims and removes the birthdate claim." />
 
-  // Create an event log of type 'Debug' when the lambda has debug logging enabled
-  console.debug('Added custom claims to the UserInfo response');
-}
-```
+When `user.data` has no department, the lambda sets the department claim to `null`, and FusionAuth leaves the claim out of the response.

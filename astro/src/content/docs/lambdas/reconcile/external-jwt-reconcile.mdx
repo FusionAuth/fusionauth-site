@@ -10,7 +10,7 @@ import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function reconcile(user, registration, jwt, context)  {
@@ -21,34 +21,21 @@ function reconcile(user, registration, jwt, context)  {
 This lambda must contain a function named `reconcile` that accepts the following parameters:
 
 <ReconcileLambdaUserRegistrationParameters />
-* `jwt` - the JSON payload returned by the external identity provider JWT. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `jwt`: the JSON payload returned by the external identity provider JWT. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `jwt` may contain various user claims to utilize during the reconcile process.
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. The `jwt` object can include user claims for the lambda to read.
 
 ## Assigning The Lambda
 
-Once a lambda is created, you may assign it to the External JWT identity provider in the IdP configuration.
+After you create the lambda, assign the lambda to the External JWT identity provider.
 
-Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and select your existing External JWT configuration or click <Breadcrumb>Add provider</Breadcrumb> and select External JWT if it has not yet been configured.
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing External JWT configuration. If you haven't configured External JWT yet, click <Breadcrumb>Add provider</Breadcrumb> and select External JWT.
 
 ## Example Lambda
 
-The following is a simple example of an External JWT reconcile lambda. You will need to modify it to suit your needs.
+The following lambda copies the name and picture claims to the user, and keeps the saved value when a claim is missing. The lambda stores the **`iss`** claim in **`registration.data.issuer`**.
 
-```javascript
-// This is an example External JWT reconcile, modify this to your liking.
-function reconcile(user, registration, jwt) {
-  // User claims
-  user.firstName = jwt.first_name;
-  user.lastName = jwt.last_name;
-  user.birthDate = jwt.birth_date;
-  user.imageUrl = jwt.image_url;
-  user.data = user.data || {};
-  user.data['email'] = jwt.email;
+The lambda also sets the registration roles from the **`roles`** claim, but accepts only the roles in the `allowedRoles` list. Without the list, the other system could grant any role in your application, including an administrator role. When the JWT has no **`roles`** claim, the lambda leaves the roles unchanged.
 
-  // Registration claims
-  registration.data = registration.data || {};
-  registration.data['iss'] = jwt.iss;
-}
-```
+<ExtractedCode src="example-lambdas/lambdas/external-jwt-reconcile/allowed-roles.js" lang="javascript" title="A lambda that maps external JWT claims and accepts only allowed roles." />

@@ -58,7 +58,7 @@ FusionAuth handles a token exchange request in the following order. If any step 
 1. Evaluate the Tenant's [policy engine](#policy-engines), which decides whether to allow the exchange and which audiences and scopes to grant.
 1. Build the new token. The token contains the subject token's `sub`, the granted audiences in `aud`, the granted scopes in `scope`, a new `act` claim, and the exchanger's client Id in `client_id`.
 1. Run the Tenant's [Token Exchange Populate lambda](/docs/lambdas/token-exchange/token-exchange-populate), if one is configured.
-1. Sign the token. FusionAuth uses the access token signing key from the exchanger's Entity Type when the Entity Type has JWT configuration enabled, and the Tenant's access token signing key otherwise.
+1. Sign the token. FusionAuth uses the access token signing key from the exchanger's [[Entity Type]] when the Entity Type has JWT configuration enabled, and the Tenant's access token signing key otherwise.
 1. Write an audit log entry and send the `token.exchange` event to any configured webhooks. The `token.exchange` event is transactional, so if a webhook fails to accept it, FusionAuth rejects the exchange.
 1. Return the token.
 
@@ -126,7 +126,7 @@ The policy engine decides whether FusionAuth allows an exchange, and which audie
 
 | | Entity | Lambda |
 |---|---|---|
-| Decision based on | Entity Grants between the exchanger and each audience | Custom JavaScript in a Token Exchange Policy lambda |
+| Decision based on | [[Entity Grants]] between the exchanger and each audience | Custom JavaScript in a Token Exchange Policy lambda |
 | `audience` parameter | Required. Each value must be the client Id of an Entity in the Tenant. | Optional, but the request must include `audience` or `resource`. |
 | `resource` parameter | Rejected | Supported |
 | `scope` parameter | Ignored | Passed to the lambda |
@@ -179,3 +179,4 @@ FusionAuth's implementation of RFC 8693 has the following limitations:
 * FusionAuth only issues access tokens. The `requested_token_type` parameter, if present, must be `urn:ietf:params:oauth:token-type:access_token`.
 * FusionAuth doesn't support the `actor_token` and `actor_token_type` parameters.
 * The exchanger must be an Entity. Applications can't act as exchangers.
+* The [UserInfo endpoint](/docs/apis/oauth/userinfo) and the [MFA Status API](/docs/apis/two-factor/retrieve-multi-factor-status) reject exchanged tokens. To read User details, send the User's original token, or have the resource server call the [User API](/docs/apis/users) with an API key.
