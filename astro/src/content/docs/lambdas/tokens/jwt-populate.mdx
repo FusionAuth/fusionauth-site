@@ -1,0 +1,86 @@
+---
+title: JWT Populate Lambda
+description: Learn how to add custom claims to the access tokens and Id tokens FusionAuth issues.
+tags: jwt populate lambda, custom claims, fusionauth lambda, javascript, token customization, jwt hook, add jwt claims, openid connect
+---
+import { YouTube } from '@astro-community/astro-embed-youtube';
+import LambdaContext from 'src/content/docs/lambdas/tokens/_jwt-populate-context.mdx';
+
+To add or change claims in a JWT, assign a lambda in the JWT configuration. FusionAuth runs the lambda before FusionAuth signs the token and issues the token to the user.
+
+Here's a brief video showing how to set up a JWT populate lambda:
+
+<YouTube id="xFp1QkTiOAU" />
+
+When you create a lambda in the Admin UI, FusionAuth provides an empty function for you to implement.
+
+FusionAuth doesn't run this lambda when you call the Login API directly and omit the **`applicationId`** request parameter.
+
+## Lambda Structure
+
+When you create the lambda with the API, give the function the following signature:
+
+```javascript
+function populate(jwt, user, registration, context) {
+  // Lambda code goes here
+}
+```
+
+The lambda must contain a function named `populate` that accepts the following parameters:
+
+* `jwt`: the claims object that FusionAuth signs and returns as the JWT payload. You can modify this object.
+* `user`: the FusionAuth User object. This object is read-only.
+* `registration`: the FusionAuth UserRegistration object. This parameter is `null` when the user is not registered for the application. This object is read-only.
+* `context`: <AvailableSince since="1.59.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+
+### The `jwt` Object
+
+You can add or change any claim in the `jwt` object, except the header and the reserved claims. When adding a custom claim to the JWT, always use a namespace to avoid clashes with future standard or FusionAuth-specific claims. To remove a claim, set the claim to `null`. Deleting a claim with `delete` has no effect.
+
+FusionAuth discards changes to the following reserved claims:
+
+* `act`: <AvailableSince since="1.70.0"/> the actor claim chain, which token exchange manages
+* `amr`
+* `auth_time`
+* `authenticationType`
+* `cnf`
+* `fa_uid`
+* `gty`
+* `iat`
+* `sub`
+* `tid`
+* `tty`
+
+Starting in version `1.59.0`, you can lower the `exp` claim to shorten the lifetime of the token. FusionAuth caps `exp` at the lifetime configured for the application, so a lambda can't extend the lifetime. You can't remove `exp`. FusionAuth keeps the original value when you set `exp` to `null`. A shorter lifetime helps when one FusionAuth application issues tokens for several contexts. For example, the requested scopes in `context.scopes` can tell the lambda to issue a short-lived token.
+
+The `authenticationType` claim holds the authentication method, such as `PASSWORD`, `REFRESH_TOKEN`, `PASSWORDLESS`, or `JWT_SSO`. Read `jwt.authenticationType` to change the claims by login method.
+
+### The `user` and `registration` Objects
+
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. For the claims in the JWT payload, see [OpenID Connect & OAuth 2.0 Token](/docs/authentication/oauth/tokens).
+
+### The `context` Object
+
+The read-only `context` object has the following fields:
+
+<LambdaContext />
+
+## Assigning the Lambda
+
+After you create the lambda, assign the lambda to an Application on the <Breadcrumb>JWT</Breadcrumb> tab of the Application configuration.
+
+## Example Lambdas
+
+### Map Roles to Permissions
+
+The following lambda turns the user's roles for the application into a `permissions` claim. The lambda also adds the plan from `user.data` as a namespaced claim. A resource server can then check one permission instead of knowing every role:
+
+<ExtractedCode src="example-lambdas/lambdas/jwt-populate/role-permissions.js" lang="javascript" title="A lambda that maps roles to permissions." />
+
+### Shorten Admin Tokens
+
+The following lambda limits access tokens for users with the `admin` role to 15 minutes. The lambda also removes the `roles` claim when the user has no roles, by setting the claim to `null`:
+
+<ExtractedCode src="example-lambdas/lambdas/jwt-populate/admin-token-lifetime.js" lang="javascript" title="A lambda that shortens admin tokens and removes an empty roles claim." />
+
+For a lambda that calls the FusionAuth API to add group names, see [Making API Calls From Lambdas](/docs/lambdas/lambda-remote-api-calls).

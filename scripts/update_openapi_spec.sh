@@ -8,20 +8,28 @@ case "${1:-}" in
   --check) mode=check ;;
   --help)
     printf 'Usage: bash scripts/update_openapi_spec.sh [--check]\n'
-    printf 'Download the latest spec from fusionauth-openapi into astro/public/docs/openapi.yaml.\n'
+    printf 'Download the spec for the pinned FusionAuth release from fusionauth-openapi into astro/public/docs/openapi.yaml.\n'
+    printf 'The spec comes from the newest fusionauth-openapi tag at or before fusionauth-version, or FUSIONAUTH_VERSION when set.\n'
     printf 'With --check, report whether upstream differs without changing files.\n'
-    printf 'Set OPENAPI_REF to a fusionauth-openapi commit to use it instead of the main branch.\n'
+    printf 'Set OPENAPI_REF to a fusionauth-openapi commit to use it instead of the tag.\n'
     exit 0 ;;
   *) printf 'Unknown argument: %s\n' "$1" >&2; exit 2 ;;
 esac
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$repo_root/scripts/lib/run-locally.sh"
+source "$repo_root/scripts/lib/fusionauth-version.sh"
 spec="$repo_root/astro/public/docs/openapi.yaml"
 
 ref="${OPENAPI_REF:-}"
 if [[ -z "$ref" ]]; then
-  ref="$(git ls-remote --exit-code https://github.com/FusionAuth/fusionauth-openapi.git refs/heads/main | awk '{print $1}')"
+  version="${FUSIONAUTH_VERSION:-$(pinned_fusionauth_version)}"
+  tags="$(git ls-remote --tags https://github.com/FusionAuth/fusionauth-openapi.git)"
+  # only spec-changing releases get tags; "-pin" sorts after an equal tag and before the next, so take the line above it
+  tag="$({ awk '{sub("refs/tags/", "", $2); print $2}' <<< "$tags" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$'; echo "$version-pin"; } | sort -V | awk -v pin="$version-pin" '$0 == pin { print last; exit } { last = $0 }')"
+  # annotated tags list the commit on a ^{} line
+  ref="$(awk -v t="refs/tags/$tag" '$2 == t || $2 == t "^{}" { sha = $1 } END { print sha }' <<< "$tags")"
+  printf 'FusionAuth %s uses the fusionauth-openapi %s tag.\n' "$version" "$tag"
 fi
 if [[ ! "$ref" =~ ^[0-9a-f]{40}$ ]]; then
   printf 'Could not resolve a fusionauth-openapi commit (got "%s"). Nothing was changed.\n' "$ref" >&2

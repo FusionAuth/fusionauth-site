@@ -28,7 +28,7 @@ There are a few steps you need to take before you can dive into configuring the 
 
 To fully explore this scenario, you need to have an application users can sign into with their Active Directory credentials. In this post, you are going to use ASP.NET to run such an application, so make sure you have .NET Core version 3 installed if you want to follow along with the code. I found the [bash script here](https://dotnet.microsoft.com/download/dotnet-core/scripts) worked best for installing on macOS.
 
-Then, ensure you have FusionAuth installed and running. You can download and install FusionAuth [using Docker, RPM, or in a number of other ways](/docs/get-started/download-and-install). You'll need at least version 1.18. Make sure you've [activated your instance](/docs/get-started/core-concepts/licensing) by providing a license key to enable the Connector feature.
+Then, ensure you have FusionAuth installed and running. You can download and install FusionAuth [using Docker, RPM, or in a number of other ways](/docs/get-started/install). You'll need at least version 1.18. Make sure you've [activated your instance](/docs/concepts/plans-and-limits/licensing) by providing a license key to enable the Connector feature.
 
 Next, make sure you have Active Directory accessible to the server running FusionAuth, since they will need to communicate. In my case, since AWS Microsoft Managed AD doesn't by [default expose an interface to the outside world](https://forums.aws.amazon.com/thread.jspa?messageID=688592&#688592), I stood up a FusionAuth server on an EC2 instance in the same subnet. You could use a VPN, SSH tunnel or HTTP proxy in front of Active Directory as well.
 
@@ -117,7 +117,7 @@ Seems pretty simple, right? Let's take these one at a time.
 
 ### Create the LDAP lambda
 
-Because FusionAuth has no idea about the structure of your Active Directory or other LDAP database, you'll need to create a [reconciliation lambda](/docs/extend/code/lambdas/reconcile/ldap-connector-reconcile) to map the attributes from LDAP to FusionAuth. At its most basic, this lambda looks like this:
+Because FusionAuth has no idea about the structure of your Active Directory or other LDAP database, you'll need to create a [reconciliation lambda](/docs/lambdas/reconcile/ldap-connector-reconcile) to map the attributes from LDAP to FusionAuth. At its most basic, this lambda looks like this:
 
 ```javascript
 function reconcile(user, userAttributes) {
@@ -127,7 +127,7 @@ function reconcile(user, userAttributes) {
 
 This code isn't too helpful though, as no user attributes are copied. At a minimum, you must set `user.id` and either `user.username` or `user.email` values. You also probably want to configure the `registrations` collection, which is the set of FusionAuth applications for which this user is authorized. If you have multiple tenants, populate `user.tenantId` as well.
 
-The lambda will receive a `userAttributes` variable from the Connector. This contains attributes requested from Active Directory. You'll see how to request specific attributes below. From `userAttributes`, you'll want to assemble a FusionAuth `user` object. All the normal [lambda limitations apply](/docs/extend/code/lambdas/). The attributes of the `user` object are thoroughly documented in the [API docs](/docs/apis/users/create), but in general you'll be copying values from `userAttributes` to `user`, or hardcoding values. Here's a more full featured example lambda function, which copies some attributes, sets `active` to `true`, and registers the user for a given application:
+The lambda will receive a `userAttributes` variable from the Connector. This contains attributes requested from Active Directory. You'll see how to request specific attributes below. From `userAttributes`, you'll want to assemble a FusionAuth `user` object. All the normal [lambda limitations apply](/docs/lambdas/). The attributes of the `user` object are thoroughly documented in the [API docs](/docs/apis/users/create), but in general you'll be copying values from `userAttributes` to `user`, or hardcoding values. Here's a more full featured example lambda function, which copies some attributes, sets `active` to `true`, and registers the user for a given application:
 
 ```javascript
 // Using the response from an LDAP connector, reconcile the User.
@@ -199,7 +199,7 @@ function guidToString(b64)
 
 The functions `guidToString` and `decodeBase64` convert the `objectGUID` attribute, stored as a set of bytes in Active Directory, to a FusionAuth friendly UUID.
 
-If you are using version 1.19.7 or later, use the built in function instead: `FusionAuth.ActiveDirectory.b64GuidToString(userAttributes['objectGuid;binary'])`. See [the LDAP lambda docs](/docs/extend/code/lambdas/reconcile/ldap-connector-reconcile) for more information about that function.
+If you are using version 1.19.7 or later, use the built in function instead: `FusionAuth.ActiveDirectory.b64GuidToString(userAttributes['objectGuid;binary'])`. See [the LDAP lambda docs](/docs/lambdas/reconcile/ldap-connector-reconcile) for more information about that function.
 
 ### Configure the LDAP Connector to interact with Microsoft AD
 
@@ -236,7 +236,7 @@ After you've set up the Connector, you need to tell FusionAuth how to use it. In
 
 Click <Breadcrumb>Add policy</Breadcrumb> and select the Connector. You may optionally enter the email domain or domains for which this Connector should be used; add multiple domains on separate lines. You can also leave the value of `*` which will cause this Connector to be checked for users with any email address, which is what this post will do.
 
-If you check the <Breadcrumb>Migrate User</Breadcrumb> option, this configures FusionAuth to check Active Directory for user attributes, including the password, only at the first authentication of each user. You can read more [about migration here](/docs/lifecycle/migrate-users/connectors/). For this post, Active Directory will remain the system of record, so leave it unchecked and save the policy entry.
+If you check the <Breadcrumb>Migrate User</Breadcrumb> option, this configures FusionAuth to check Active Directory for user attributes, including the password, only at the first authentication of each user. You can read more [about migration here](/docs/users/provision/connectors/). For this post, Active Directory will remain the system of record, so leave it unchecked and save the policy entry.
 
 ![Setting up the policy for the Active Directory Connector.](/img/blogs/active-directory-connector/fusionauth-tenant-connector-policy.png)
 

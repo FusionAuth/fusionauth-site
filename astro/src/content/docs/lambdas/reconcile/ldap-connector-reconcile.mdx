@@ -1,0 +1,81 @@
+---
+title: LDAP Connector Reconcile Lambda
+description: Learn how to map LDAP attributes to a FusionAuth user with the LDAP Connector reconcile lambda.
+tags: ldap connector reconcile lambda, ldap, fusionauth lambda, identity provider reconcile, directory sync, custom claims
+---
+
+When the tenant connector policies send a login to an LDAP Connector, the LDAP Connector lambda maps the LDAP attributes to a FusionAuth user. The lambda runs every time the LDAP Connector runs.
+
+When you create a lambda in the Admin UI, FusionAuth provides an empty function.
+
+## Lambda Structure
+
+When you create the lambda with the API, give the function the following signature:
+
+```javascript
+function reconcile(user, userAttributes, context) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `reconcile` that accepts the following parameters:
+
+* `user`: an empty FusionAuth User object for the lambda to fill in. FusionAuth stores the result as the user.
+* `userAttributes`: the user attributes returned from LDAP during authentication. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+
+The [User API](/docs/apis/users) documentation describes the `user` object. The `userAttributes` object holds the values the LDAP server returns.
+
+### LDAP Attributes
+
+LDAP returns each attribute as a string or a byte array. The lambda can only use a non-string attribute in byte array form.
+
+To request an attribute as a byte array, add the `;binary` LDAP attribute option to the attribute name. For example, request `objectGUID;binary` instead of `objectGUID`.
+
+## Helper Functions
+
+FusionAuth provides helper functions to the lambda in the `FusionAuth` namespace.
+
+### Active Directory Object GUID To UUID
+
+With Microsoft Active Directory, request the **objectGUID** attribute as a byte array. Add `objectGUID;binary` to the **Requested Attributes** of the connector.
+
+The lambda receives a byte array attribute as a Base64 encoded string. The following code converts the Base64 `objectGUID` string to a UUID with the FusionAuth helper:
+
+```javascript
+// Example usage to convert a Base64 encoded Microsoft Active Directory objectGUID to a valid FusionAuth UUID
+user.id = FusionAuth.ActiveDirectory.b64GuidToString(userAttributes['objectGUID;binary']);
+```
+
+
+## Assigning The Lambda
+
+After you create the lambda, select the lambda when you add an LDAP Connector.
+
+Navigate to <Breadcrumb>Settings -> Connectors</Breadcrumb> and click <Breadcrumb>Add</Breadcrumb>. Select LDAP as the connector type.
+
+## Example Lambdas
+
+FusionAuth builds a new user from the lambda on every LDAP login. The lambda must set **`user.id`** to a UUID, or the login fails. Set **`user.active`** to `true`, because a new user is inactive by default. FusionAuth replaces the user's registrations and group memberships with the ones the lambda sets.
+
+When the user already exists, FusionAuth updates the stored user from the lambda output, including **`email`** and **`username`**. When the connector policy has **Migrate to FusionAuth** enabled, FusionAuth authenticates the user locally after the first login, so the lambda stops running for that user.
+
+An attribute with one value arrives as a string. An attribute with several values, such as **`memberOf`**, arrives as an array. The example lambdas handle both forms.
+
+### OpenLDAP
+
+The following lambda uses the OpenLDAP **`entryUUID`** attribute as the user Id. **`entryUUID`** is an operational attribute, so add **`entryUUID`** to the **Requested Attributes** of the connector. The lambda maps the **`uid`**, **`mail`**, and **`cn`** attributes to the user. The lambda then turns each **`memberOf`** group into a role in one application. Replace the application Id and the group names with your own.
+
+<ExtractedCode src="example-lambdas/lambdas/ldap-connector-reconcile/openldap.js" lang="javascript" title="A lambda that maps OpenLDAP attributes and groups to a FusionAuth user." />
+
+The **`memberOf`** attribute requires the OpenLDAP `memberof` overlay.
+
+### Active Directory
+
+Active Directory has no **`uid`** attribute and stores the **`objectGUID`** attribute as binary. The following lambda converts **`objectGUID;binary`** to a UUID with the `FusionAuth.ActiveDirectory.b64GuidToString` helper. The lambda maps the **`sAMAccountName`**, **`userPrincipalName`**, **`givenName`**, and **`sn`** attributes to the user, then maps groups to roles.
+
+<Aside type="caution">
+Add `objectGUID;binary` to the **Requested Attributes** of the LDAP connector. When you request only `objectGUID`, the lambda receives no usable value.
+</Aside>
+
+<ExtractedCode src="example-lambdas/lambdas/ldap-connector-reconcile/active-directory.js" lang="javascript" title="A lambda that maps Active Directory attributes and groups to a FusionAuth user." />

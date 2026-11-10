@@ -38,7 +38,7 @@ services:
   fusionauth:
     # pin to a specific version so screenshots are reproducible across machines
     # set FUSIONAUTH_IMAGE in screenshots/.env (gitignored) to use a local prerelease image
-    image: ${FUSIONAUTH_IMAGE:-fusionauth/fusionauth-app:1.70.1}
+    image: ${FUSIONAUTH_IMAGE:-fusionauth/fusionauth-app:1.70.2}
     depends_on:
       db:
         condition: service_healthy
@@ -73,3 +73,37 @@ services:
       retries: 30
       start_period: 60s
 
+
+  # an instance that skips Kickstart, for screenshots of first-time setup
+  # tmpfs keeps no data between runs, so every run starts at the Setup Wizard
+  db-fresh:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: fusionauth
+      POSTGRES_PASSWORD: hacking_is_not_cool
+      POSTGRES_DB: fusionauth
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fusionauth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  fusionauth-fresh:
+    image: ${FUSIONAUTH_IMAGE:-fusionauth/fusionauth-app:1.70.2}
+    depends_on:
+      db-fresh:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://db-fresh:5432/fusionauth
+      DATABASE_ROOT_USERNAME: fusionauth
+      DATABASE_ROOT_PASSWORD: hacking_is_not_cool
+      DATABASE_USERNAME: fusionauth
+      DATABASE_PASSWORD: hacking_is_not_cool
+      FUSIONAUTH_APP_MEMORY: 512M
+      # matches the docker install readers follow
+      FUSIONAUTH_APP_RUNTIME_MODE: development
+      SEARCH_TYPE: database
+    ports:
+      - "9012:9011"

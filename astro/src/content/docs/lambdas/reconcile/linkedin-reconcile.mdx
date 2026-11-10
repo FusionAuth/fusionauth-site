@@ -1,0 +1,92 @@
+---
+title: LinkedIn Reconcile Lambda
+description: Learn how to map the data from a LinkedIn login to a FusionAuth user and registration with a reconcile lambda.
+tags: linkedin reconcile lambda, linkedin login, social login, fusionauth lambda, identity provider reconcile, custom claims
+---
+import ReconcileLambdaIntro from 'src/content/docs/lambdas/_reconcile-lambda-intro.mdx';
+import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
+
+<ReconcileLambdaIntro identity_provider_name="LinkedIn" prefix="a" />
+
+## Lambda Structure
+
+When you create the lambda with the API, give the function the following signature:
+
+```javascript
+function reconcile(user, registration, linkedInUser, context) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `reconcile` that accepts the following parameters:
+
+<ReconcileLambdaUserRegistrationParameters />
+* `linkedInUser`: the JSON payload returned by the LinkedIn Email and Me APIs. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. The fields in `linkedInUser` depend on the user's LinkedIn settings and the scopes in the identity provider configuration.
+
+## Assigning The Lambda
+
+After you create the lambda, assign the lambda to the LinkedIn identity provider.
+
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing LinkedIn configuration. If you haven't configured LinkedIn yet, click <Breadcrumb>Add provider</Breadcrumb> and select LinkedIn.
+
+## Default Lambda
+
+FusionAuth includes a default LinkedIn reconcile lambda. You can use the default lambda as is or change the lambda:
+
+The default lambda handles two response formats. The format depends on the type of LinkedIn integration your application uses. See [Set Up Your LinkedIn App Client Credentials](/docs/authentication/identity-providers/social/linkedin#set-up-your-linkedin-app-client-credentials) for more information.
+
+To see which format LinkedIn returns, print the `linkedInUser` object to the Event Log with `console.log`.
+
+```javascript
+// This is the default LinkedIn reconcile, modify this to your liking.
+function reconcile(user, registration, linkedInUser) {
+  // Un-comment this line to see the linkedInUser object printed to the event log
+  // console.info(JSON.stringify(linkedInUser, null, ' '));
+
+  // Depending on how and when you have set up your LinkedIn application you may get a different response back in the linkedInUser.
+  //
+  // The first checks apply if you are using the "Sign In with LinkedIn using OpenID Connect" with the "openid", "email", and "profile" scopes.
+  // If so FusionAuth will call the LinkedIn UserInfo API.
+  // See https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2#api-request-to-retreive-member-details
+  //
+  // The second checks apply if you are using the legacy program and Profile API with the "r_liteprofile" or "r_basicprofile" scopes.
+  // See https://learn.microsoft.com/en-us/linkedin/shared/integrations/people/profile-api
+
+  if (linkedInUser.given_name) {
+    user.firstName = linkedInUser.given_name;
+  } else if (linkedInUser.localizedFirstName) {
+    user.firstName = linkedInUser.localizedFirstName;
+  }
+
+  if (linkedInUser.family_name) {
+    user.lastName = linkedInUser.family_name;
+  } else if (linkedInUser.localizedLastName) {
+    user.lastName = linkedInUser.localizedLastName;
+  }
+
+  if (linkedInUser.picture) {
+    // UserInfo will only supply one image size
+    user.imageUrl = linkedInUser.picture;
+  } else if (linkedInUser.profilePicture){
+    // LinkedIn may return several images sizes.
+    // See https://docs.microsoft.com/en-us/linkedin/shared/references/v2/profile/profile-picture
+    // We'll sort the array by descending size and then grab the largest one.
+    var images = linkedInUser.profilePicture['displayImage~'].elements || [];
+    images.sort(function(a, b) {
+      return b.data["com.linkedin.digitalmedia.mediaartifact.StillImage"].displaySize.width - a.data["com.linkedin.digitalmedia.mediaartifact.StillImage"].displaySize.width;
+    });
+    if (images.length > 0) {
+      user.imageUrl = images[0].identifiers[0].identifier;
+    }
+  }
+}
+```
+
+## Example Lambda
+
+The following lambda reads the name from either LinkedIn response format, and keeps the saved name when LinkedIn leaves the name out. The lambda also sets the user's preferred language from the **`locale`** field. LinkedIn sends **`locale`** as a string such as `en-US` or as an object such as `{ "country": "US", "language": "en" }`, and the lambda handles both. The lambda changes **`preferredLanguages`** only when the user has no preferred language yet.
+
+<ExtractedCode src="example-lambdas/lambdas/linkedin-reconcile/profile-and-language.js" lang="javascript" title="A lambda that saves the LinkedIn profile and preferred language." />

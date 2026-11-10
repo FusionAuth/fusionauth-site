@@ -12,7 +12,7 @@ Docker and the ability to edit your hostnames file.
 ## To run
 
 * Create two local aliases in your DNS: `changebank.local` and `changebankforum.local`, both resolving to `127.0.0.1`.
-* Run `docker compose up -d`. This will run FusionAuth and configure it using [Kickstart](https://fusionauth.io/docs/get-started/download-and-install/development/kickstart)
+* Run `docker compose up -d`. This will run FusionAuth and configure it using [Kickstart](https://fusionauth.io/docs/get-started/develop/kickstart)
   * Two users are created, both with the password `password. 
     * admin@example.com is an admin user that can log into the admin UI, located at http://localhost:9011.
     * richard@example.com is a user that can log into the two application you'll start below. 
@@ -34,7 +34,7 @@ In the non-incognito window, log into the admin UI using the credentials above. 
 
 If you log out of ChangeBank Forum, you are only logged out of that application. If you log out of ChangeBank, the user is logged out of everything (all refresh tokens are revoked).
 
-[Learn more about Logout and Session Management in FusionAuth](https://fusionauth.io/docs/lifecycle/authenticate-users/logout-session-management)
+[Learn more about Logout and Session Management in FusionAuth](https://fusionauth.io/docs/authentication/sessions/logout-session-management)
 
 ## Last updated
 

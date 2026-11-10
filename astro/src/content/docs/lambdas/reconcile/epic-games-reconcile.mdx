@@ -1,0 +1,41 @@
+---
+title: Epic Games Reconcile Lambda
+description: Learn how to map the data from an Epic Games login to a FusionAuth user and registration with a reconcile lambda.
+tags: epic games reconcile lambda, epic games login, social login, fusionauth lambda, identity provider reconcile, custom claims
+---
+import ReconcileLambdaIntro from 'src/content/docs/lambdas/_reconcile-lambda-intro.mdx';
+import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
+
+<ReconcileLambdaIntro identity_provider_name="Epic Games" prefix="an" />
+
+## Lambda Structure
+
+When you create the lambda with the API, give the function the following signature:
+
+```javascript
+function reconcile(user, registration, userInfo, context) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `reconcile` that accepts the following parameters:
+
+<ReconcileLambdaUserRegistrationParameters />
+* `userInfo`: the response from the Epic Account Services accounts API. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects.
+
+The `userInfo` object is an array that holds one account. The account has an **`accountId`**, a **`displayName`**, a **`preferredLanguage`**, and a **`linkedAccounts`** array of the platforms linked to the Epic account. FusionAuth uses **`displayName`** as the username. Epic Games doesn't return an email address.
+
+## Example Lambda
+
+The following lambda stores the Epic account Id, display name, and linked platforms in `user.data.epic`. When the user has no preferred language, the lambda copies the Epic preferred language to the user.
+
+<ExtractedCode src="example-lambdas/lambdas/epic-games-reconcile/account.js" lang="javascript" title="A lambda that copies the Epic Games account to the user." />
+
+## Assigning The Lambda
+
+After you create the lambda, assign the lambda to the Epic Games identity provider.
+
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing Epic Games configuration. If you haven't configured Epic Games yet, click <Breadcrumb>Add provider</Breadcrumb> and select Epic Games.

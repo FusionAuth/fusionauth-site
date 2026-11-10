@@ -1,0 +1,100 @@
+---
+title: Deploy
+htmlTitle: Manage FusionAuth Configuration Across Environments
+description: Learn how to keep FusionAuth configuration in code and promote changes from one environment to another.
+order: 390
+tags: deployment, configuration management, environment promotion, infrastructure as code, devops, deploy fusionauth, staging, production
+---
+import ThemeEnvironments from 'src/content/docs/deploy/production/_theme-environment-management.mdx';
+
+Most teams run more than one FusionAuth instance, such as development, staging, and production instances. Each instance needs the same Tenants, Applications, and settings. A few values differ between environments.
+
+Keep the configuration in code. Code lets a team review each change before the change reaches production. The same code then applies the change to every instance.
+
+```mermaid title="One configuration, applied to each instance with values for that instance."
+graph LR
+    repo[Configuration repository] -->|Development values| dev[Development]
+    repo -->|Staging values| staging[Staging]
+    repo -->|Production values, after review| prod[Production]
+```
+
+## Configuration and Data
+
+FusionAuth holds two kinds of objects:
+
+* Configuration defines how the system behaves. A team sets up configuration once and changes the configuration rarely.
+* Data changes as people use your applications.
+
+Keep configuration in code. Let applications manage data through the [APIs](/docs/apis).
+
+| Configuration | Data |
+|---------------|------|
+| Tenants, Applications, and roles | Users and registrations |
+| Signing keys and API keys | Group memberships |
+| Themes, email templates, and lambdas | Refresh tokens and sessions |
+| Identity providers, webhooks, and connectors that your team sets up | Identity providers that your customers set up themselves |
+
+To add users, turn on [self-service registration](/docs/users/register/basic-registration-forms), create users with the [User API](/docs/apis/users), or [migrate users](/docs/migrate/) from another system.
+
+## Choose a Tool
+
+### Terraform
+
+The [FusionAuth Terraform provider](https://registry.terraform.io/providers/fusionauth/fusionauth/latest) manages most configuration objects. Terraform shows each change before applying the change. Terraform also tracks which objects the configuration owns. Terraform fits most teams, and the provider works with [OpenTofu](https://opentofu.org/) too. See [Manage FusionAuth With Terraform](/docs/deploy/production/terraform).
+
+### Scripts
+
+Scripts call the API directly or through a [client library](/docs/sdks/). Run scripts the way you run database migrations. Scripts can call every API, including APIs that the Terraform provider doesn't support yet. However, scripts don't track which changes ran on which instance. Keep a record of the scripts that ran on each instance.
+
+### The FusionAuth CLI
+
+The [FusionAuth CLI](/docs/deploy/production/cli) downloads and uploads themes, email templates, lambdas, and messages as files. Keep the files in version control and edit the files with any editor. Use the CLI alongside Terraform or scripts.
+
+### The Admin UI
+
+The Admin UI is the quickest way to try a setting on a development instance. After the setting works, copy the change into code.
+
+Avoid changing production through the Admin UI. A change made in the Admin UI reaches only one instance. The [Audit Log](/docs/apis/audit-logs) at <Breadcrumb>System -> Audit Log</Breadcrumb> records who changed what.
+
+## Default Resources
+
+Every instance starts with objects that FusionAuth creates, such as the default Tenant, the FusionAuth Application, and the default theme. The FusionAuth Application runs the Admin UI. See [Default Configuration](/docs/concepts/plans-and-limits/limitations#default-configuration) for the full list and the Ids.
+
+Code can't create or delete default resources. To change the settings of a default resource, import the resource into your tool. To use a default resource without changing the resource, look up the resource by name or Id.
+
+The FusionAuth Application has the same Id on every instance. The default Tenant has a different Id on each instance. To set the default Tenant Id, use [Kickstart](/docs/get-started/develop/kickstart).
+
+To keep default resources out of your code, leave the default Tenant to the Admin UI. Create separate Tenants for your applications. Most of the configuration then consists of objects that your code creates.
+
+## Changes Made Outside Your Tool
+
+A change made outside your tool, such as an edit in the Admin UI, makes the instance drift from the code. The next run of the tool reverts the change. To prevent drift:
+
+* Limit who can change configuration on production with [Admin UI roles](/docs/concepts/types/roles#admin-ui-roles).
+* Configure the tool to ignore fields that applications write on purpose, such as the **data** field of an Application.
+
+## Secrets
+
+The tool needs an API key for each instance. Store the keys in the secret store of your CI system, not in the repository. On a new instance, [Kickstart](/docs/get-started/develop/kickstart) can create the first key.
+
+Terraform state contains secrets, such as OAuth client secrets. Store state in a backend that encrypts the state and restricts access. See [Sensitive Data in State](https://developer.hashicorp.com/terraform/language/state/sensitive-data).
+
+## Environment Differences
+
+Some values differ between instances, such as hostnames, redirect URLs, and email server settings. Pass these values in as variables, such as Terraform [input variables](https://developer.hashicorp.com/terraform/language/values/variables). Don't keep a separate copy of the configuration for each environment.
+
+### Theme Assets
+
+<ThemeEnvironments />
+
+## What to Avoid
+
+### Copying the Database
+
+On a self-hosted instance, copying the database between environments or changing settings with SQL might seem like a shortcut. FusionAuth doesn't support either approach. The database schema is internal and can change in any release. The database also holds passwords and other personal data that shouldn't move between environments.
+
+### Using Kickstart for Ongoing Changes
+
+[Kickstart](/docs/get-started/develop/kickstart) configures a new instance on the first start. Kickstart suits continuous integration and creating the first API key. Kickstart doesn't run on an instance that already has configuration, so Kickstart can't apply later changes. To follow progress on Kickstart for existing instances, upvote the [Kickstart migrations issue](https://github.com/FusionAuth/fusionauth-issues/issues/560).
+
+<ChildCards depth={2} />

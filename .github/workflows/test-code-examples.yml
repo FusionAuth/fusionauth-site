@@ -7,6 +7,9 @@ on:
       - 'scripts/fetch_external_content.sh'
       - 'scripts/lib/**'
       - 'scripts/tests/test_fetch_external_content.py'
+      - 'astro/src/content/json/lambdas.json'
+      - 'astro/src/content/json/generated/lambda-types.json'
+      - 'astro/src/content/docs/lambdas/**'
       - '.github/workflows/check-external-content.yml'
       - '.github/workflows/test-code-examples.yml'
   workflow_dispatch:
@@ -72,6 +75,13 @@ jobs:
                   .github/workflows/check-external-content.yml \
                   .github/workflows/test-code-examples.yml; then
                 # Refresh tooling lives outside its extractedcode suite.
+                dirs+=("$name")
+              elif [ "$name" = "example-lambdas" ] &&
+                ! git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- \
+                  astro/src/content/json/lambdas.json \
+                  astro/src/content/json/generated/lambda-types.json \
+                  astro/src/content/docs/lambdas/; then
+                # harness/release-types.test.js checks these against the release
                 dirs+=("$name")
               fi
             done

@@ -1,0 +1,42 @@
+---
+title: Steam Reconcile Lambda
+description: Learn how to map the data from a Steam login to a FusionAuth user and registration with a reconcile lambda.
+tags: steam reconcile lambda, steam login, gaming login, fusionauth lambda, identity provider reconcile, custom claims
+---
+import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
+import ReconcileLambdaIntro from 'src/content/docs/lambdas/_reconcile-lambda-intro.mdx';
+
+<ReconcileLambdaIntro identity_provider_name="Steam" prefix="a" />
+
+## Lambda Structure
+
+When you create the lambda with the API, give the function the following signature:
+
+```javascript
+function reconcile(user, registration, userInfo, context) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `reconcile` that accepts the following parameters:
+
+<ReconcileLambdaUserRegistrationParameters />
+* `userInfo`: the response from the Steam `GetPlayerSummaries` API. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects.
+
+The `userInfo` object holds a `response.players` array with one player. FusionAuth sets the username from **`personaname`**. Steam doesn't return an email address. A player with a private profile returns fewer fields, so **`realname`** and **`loccountrycode`** can be missing.
+
+## Example Lambda
+
+The following lambda stores the Steam Id and profile URL in `user.data.steam`. The lambda sets the user's image to the full-size avatar on every login, so the image stays current. When the profile includes a real name, the lambda uses the real name as the full name of a user who has none.
+
+<ExtractedCode src="example-lambdas/lambdas/steam-reconcile/profile.js" lang="javascript" title="A lambda that copies the Steam profile to the user." />
+
+## Assigning The Lambda
+
+After you create the lambda, assign the lambda to the Steam identity provider.
+
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing Steam configuration. If you haven't configured Steam yet, click <Breadcrumb>Add provider</Breadcrumb> and select Steam.
+

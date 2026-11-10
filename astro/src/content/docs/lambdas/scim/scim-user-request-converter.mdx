@@ -1,0 +1,59 @@
+---
+title: SCIM User Request Converter Lambda
+description: Learn how to convert an incoming SCIM user request into a FusionAuth user with a lambda.
+tags: scim user lambda, scim provisioning, fusionauth lambda, user converter, scim request, user provisioning
+---
+
+A SCIM User Request Converter lambda converts an incoming SCIM User request, and optionally the SCIM EnterpriseUser extension, into a FusionAuth user. FusionAuth runs the lambda before FusionAuth creates or updates the user.
+
+When you create a lambda in the Admin UI, FusionAuth provides an empty function for you to implement.
+
+## Lambda Structure
+
+If you create the lambda with the API, the function must have the following signature:
+
+```javascript
+function convert(user, options, scimUser, context) {
+  // Lambda code goes here
+}
+```
+
+The lambda must contain a function named `convert` that accepts the following parameters:
+
+* `user`: the FusionAuth user. You can modify this object. FusionAuth passes a new user with an empty **`data`** object. The lambda sets every user field that comes from the SCIM request.
+* `options`: the request options. You can modify this object. The object has the following properties:
+  * `options.applicationId`: the Id of an application to register the user with.
+  * `options.disableDomainBlock`
+  * `options.sendSetPasswordEmail`: applies only when FusionAuth creates a user.
+  * `options.sendSetPasswordIdentityType`
+  * `options.skipVerification`
+* `scimUser`: the SCIM request. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+
+The [User API](/docs/apis/users) documents the FusionAuth user. The `options` properties match the Create User API parameters outside the user object, such as `disableDomainBlock`.
+
+The `scimUser` object holds the SCIM User request JSON, plus the SCIM EnterpriseUser extension when the client sends one. See [SCIM User](https://datatracker.ietf.org/doc/html/rfc7643#section-4.1) and [SCIM EnterpriseUser extension](https://datatracker.ietf.org/doc/html/rfc7643#section-4.3).
+
+## Assign the Lambda
+
+After you create the lambda, assign the lambda to a tenant on the <Breadcrumb>SCIM</Breadcrumb> tab of the tenant configuration.
+
+## Default Lambda
+
+FusionAuth provides a default SCIM User Request Converter lambda. The default lambda copies the core SCIM User attributes to the FusionAuth user. The lambda uses the email and phone number marked **`primary`**. The lambda stores each extension, such as the enterprise extension, under **`user.data.extensions`**, keyed by the schema URN.
+
+<ExtractedCode src="example-lambdas/lambdas/scim-user-request-converter/default.js" lang="javascript" title="The default SCIM User Request Converter lambda." />
+
+## Example: Store Enterprise Attributes in User Data
+
+The following lambda extends the default lambda for a SCIM client that sends the enterprise extension. The lambda makes these changes:
+
+* The lambda copies **`employeeNumber`**, **`costCenter`**, **`organization`**, **`division`**, and **`department`** to top-level **`user.data`** fields, which you can search on and read in other lambdas. The lambda skips empty values.
+* The lambda stores the manager Id and display name in **`user.data.managerId`** and **`user.data.managerName`**.
+* The lambda falls back to the first email and phone number when the SCIM client marks none as primary.
+* The lambda treats a missing **`active`** value as active, because SCIM clients may omit **`active`**.
+* The lambda sets **`options.applicationId`**, so FusionAuth registers each provisioned user with an employee portal application. Replace the `replace-with-` value with the Id of your application.
+
+<ExtractedCode src="example-lambdas/lambdas/scim-user-request-converter/enterprise-fields.js" lang="javascript" title="A lambda that stores enterprise extension attributes in user data." />
+
+Pair this lambda with the [enterprise attributes example](/docs/lambdas/scim/scim-user-response-converter#example-return-enterprise-attributes-from-user-data) for the SCIM User Response Converter, so FusionAuth returns the same attributes to the SCIM client.

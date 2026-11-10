@@ -1,0 +1,68 @@
+---
+title: Facebook Reconcile Lambda
+description: Learn how to map the data from a Facebook login to a FusionAuth user and registration with a reconcile lambda.
+tags: facebook reconcile lambda, facebook login, social login, fusionauth lambda, identity provider reconcile, custom claims
+---
+import ReconcileLambdaIntro from 'src/content/docs/lambdas/_reconcile-lambda-intro.mdx';
+import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
+
+<ReconcileLambdaIntro identity_provider_name="Facebook" prefix="a" />
+
+## Lambda Structure
+
+When you create the lambda with the API, give the function the following signature:
+
+```javascript
+function reconcile(user, registration, facebookUser, context) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `reconcile` that accepts the following parameters:
+
+<ReconcileLambdaUserRegistrationParameters />
+* `facebookUser`: the User returned from the Facebook Me API. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. The fields in `facebookUser` depend on the user's Facebook settings.
+
+## Assigning The Lambda
+
+After you create the lambda, assign the lambda to the Facebook identity provider.
+
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing Facebook configuration. If you haven't configured Facebook yet, click <Breadcrumb>Add provider</Breadcrumb> and select Facebook.
+
+## Default Lambda
+
+FusionAuth includes a default Facebook reconcile lambda. You can use the default lambda as is or change the lambda:
+
+```javascript
+// This is the default Facebook reconcile, modify this to your liking.
+function reconcile(user, registration, facebookUser) {
+  // Un-comment this line to see the facebookUser object printed to the event log
+  // console.info(JSON.stringify(facebookUser, null, 2));
+
+  user.firstName = facebookUser.first_name;
+  user.middleName = facebookUser.middle_name;
+  user.lastName = facebookUser.last_name;
+  user.fullName = facebookUser.name;
+
+  if (facebookUser.picture && !facebookUser.picture.data.is_silhouette) {
+    user.imageUrl = facebookUser.picture.data.url;
+  }
+
+  if (facebookUser.birthday) {
+    // Convert MM/dd/yyyy -> YYYY-MM-DD
+    var parts = facebookUser.birthday.split('/');
+    user.birthDate = parts[2] + '-' +  parts[0] + '-' +  parts[1];
+  }
+}
+```
+
+## Example Lambda
+
+Facebook users control whether Facebook shares the birth year, the month and day, or both. As a result, the **`birthday`** field is `MM/DD/YYYY`, `MM/DD`, or `YYYY`. The default lambda expects the full format, and writes an invalid birth date for the other two formats.
+
+The following lambda sets **`birthDate`** only from a full birthday. The lambda stores a month and day in **`user.data.birthday`** and a year in **`user.data.birthYear`**. The lambda also keeps the saved profile values when Facebook leaves a field out.
+
+<ExtractedCode src="example-lambdas/lambdas/facebook-reconcile/birthday.js" lang="javascript" title="A lambda that handles full and partial Facebook birthdays." />

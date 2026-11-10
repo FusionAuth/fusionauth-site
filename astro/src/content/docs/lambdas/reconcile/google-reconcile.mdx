@@ -1,0 +1,60 @@
+---
+title: Google Reconcile Lambda
+description: Learn how to map the data from a Google login to a FusionAuth user and registration with a reconcile lambda.
+tags: google reconcile lambda, google login, social login, fusionauth lambda, identity provider reconcile, custom claims
+---
+import ReconcileLambdaIntro from 'src/content/docs/lambdas/_reconcile-lambda-intro.mdx';
+import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
+
+<ReconcileLambdaIntro identity_provider_name="Google" prefix="a" />
+
+## Lambda Structure
+
+When you create the lambda with the API, give the function the following signature:
+
+```javascript
+function reconcile(user, registration, idToken, context) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `reconcile` that accepts the following parameters:
+
+<ReconcileLambdaUserRegistrationParameters />
+* `idToken`: the JSON payload returned by the Google Token Info API. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. The `idToken` object can include user claims for the lambda to read.
+
+## Assigning The Lambda
+
+After you create the lambda, assign the lambda to the Google identity provider.
+
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing Google configuration. If you haven't configured Google yet, click <Breadcrumb>Add provider</Breadcrumb> and select Google.
+
+## Default Lambda
+
+FusionAuth includes a default Google reconcile lambda. You can use the default lambda as is or change the lambda:
+
+```javascript
+// This is the default Google reconcile, modify this to your liking.
+function reconcile(user, registration, idToken) {
+  // Un-comment this line to see the idToken object printed to the event log
+  // console.info(JSON.stringify(idToken, null, 2));
+
+  // The idToken is the response from the tokeninfo endpoint
+  // https://developers.google.com/identity/sign-in/web/backend-auth#calling-the-tokeninfo-endpoint
+  user.firstName = idToken.given_name;
+  user.lastName = idToken.family_name;
+  user.fullName = idToken.name;
+  user.imageUrl = idToken.picture;
+}
+```
+
+## Example Lambda
+
+The default lambda overwrites each profile field, even when Google leaves a claim out. The following lambda keeps the saved value when a claim is missing.
+
+Google includes the **`hd`** claim only for Google Workspace accounts, and the claim holds the Workspace domain. The lambda adds the `employee` role to the registration when **`hd`** is `example.com`. Personal Google accounts get no extra role. Replace `example.com` with your Workspace domain.
+
+<ExtractedCode src="example-lambdas/lambdas/google-reconcile/workspace-role.js" lang="javascript" title="A lambda that gives Google Workspace users the employee role." />

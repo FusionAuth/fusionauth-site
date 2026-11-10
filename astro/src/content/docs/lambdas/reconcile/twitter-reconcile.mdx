@@ -1,0 +1,65 @@
+---
+title: Twitter Reconcile Lambda
+description: Learn how to map the data from a Twitter login to a FusionAuth user and registration with a reconcile lambda.
+tags: twitter reconcile lambda, twitter login, social login, fusionauth lambda, identity provider reconcile, custom claims
+---
+import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
+import ReconcileLambdaIntro from 'src/content/docs/lambdas/_reconcile-lambda-intro.mdx';
+
+<ReconcileLambdaIntro identity_provider_name="Twitter" prefix="a" />
+
+## Lambda Structure
+
+When you create the lambda with the API, give the function the following signature:
+
+```javascript
+function reconcile(user, registration, twitterUser, context) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `reconcile` that accepts the following parameters:
+
+<ReconcileLambdaUserRegistrationParameters />
+* `twitterUser`: the JSON user object returned by the Twitter Verify Credentials API. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. The `twitterUser` object holds the profile fields the Twitter API returns.
+
+## Assigning The Lambda
+
+Assign the lambda to the Twitter Identity Provider. Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>, then edit your Twitter Identity Provider. If you haven't configured Twitter yet, click <Breadcrumb>Add provider</Breadcrumb> and select Twitter.
+
+## Default Lambda
+
+FusionAuth includes a default Twitter reconcile lambda, which you can use or modify:
+
+```javascript
+// This is the default Twitter reconcile, modify this to your liking.
+function reconcile(user, registration, twitterUser) {
+  // Un-comment this line to see the twitterUser object printed to the event log
+  // console.info(JSON.stringify(twitterUser, null, 2));
+
+  // Set name if available in the response
+  if (twitterUser.name) {
+    user.fullName = twitterUser.name;
+  }
+
+  // https://developer.twitter.com/en/docs/accounts-and-users/user-profile-images-and-banners.html
+  if (twitterUser.profile_image_url_https) {
+    // Remove the _normal suffix to get the original size.
+    user.imageUrl = twitterUser.profile_image_url_https.replace('_normal.png', '.png');
+  }
+
+  // Set twitter screen_name in registration.
+  // - This is just for display purposes, this value cannot be used to uniquely identify
+  //   the user in FusionAuth.
+  registration.username = twitterUser.screen_name;
+}
+```
+
+## Example Lambda
+
+The default lambda removes the `_normal` suffix only from PNG profile images. The following lambda removes the suffix from any image type. The lambda skips the placeholder image Twitter shows for users with no profile image. The lambda also stores the user's location in **`user.data.location`** when the Twitter profile has a location.
+
+<ExtractedCode src="example-lambdas/lambdas/twitter-reconcile/profile.js" lang="javascript" title="A lambda that saves the Twitter profile, full-size image, and location." />

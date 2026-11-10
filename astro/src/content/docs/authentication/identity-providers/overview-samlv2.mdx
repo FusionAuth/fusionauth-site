@@ -1,0 +1,244 @@
+---
+title: Add an External SAML v2 IdP
+description: Learn how to set up user log in using the SAML v2 Identity Provider.
+order: 1
+tags: saml, set up saml v2, saml v2, saml v2 idp, idp
+---
+import IdpApplicationConfiguration from 'src/content/docs/_shared/_idp-application-configuration.mdx';
+import LinkingStrategyEditLimit from 'src/content/docs/_shared/_idp-linking-strategy-edit-limits.mdx';
+import IdpManagedDomainsTroubleshooting from 'src/content/docs/authentication/identity-providers/_idp-managed-domains-troubleshooting.mdx';
+import ManagedDomainsDescription from 'src/content/docs/authentication/identity-providers/_managed-domains-description.mdx';
+import SamlIdpInitWarning from 'src/content/docs/_shared/_saml-idp-init-warning.mdx';
+import SamlSpLimitations from 'src/content/docs/_shared/_saml-sp-limitations.mdx';
+import Samlv2IntegrationDetailsFields from 'src/content/docs/authentication/identity-providers/_samlv2-integration-details-fields.mdx';
+
+This guide explains how to add a login button that enables users to authenticate through an external SAML v2 Identity Provider (IdP).
+
+<Aside type="note">
+This page explains how to add an external SAML v2 Identity Provider to your FusionAuth instance: this enables users to log in to FusionAuth applications via a third-party SAML v2 Identity Provider.
+
+To instead use FusionAuth as a SAML v2 Identity Provider for other applications (where FusionAuth provides the system of record for users), see [Host a SAML v2 Identity Provider](/docs/authentication/act-as-an-idp/host-saml-idp).
+</Aside>
+
+We also provide examples for SAML providers whose implementation requires unique configuration:
+
+* [Configure SAML v2 for Active Directory Federation Services (ADFS)](/docs/authentication/identity-providers/enterprise/adfs)
+* [Configure SAML v2 for Okta](/docs/authentication/identity-providers/enterprise/okta-samlv2)
+
+Once configured, you can enable the SAML v2 login button for applications. The following login page provides a way to log in via the PiedPiper SAML v2 Identity Provider:
+
+<Screenshot id="idp-login-samlv2" url="/oauth2/authorize?client_id=00000000-0000-0000-0000-f20000000001&response_type=code&redirect_uri=https%3A%2F%2Fpiperchat.piedpiper.com%2Foauth-redirect&prompt=login" alt="SAML v2 Login" />
+
+
+## Add a SAML v2 Identity Provider
+
+<IdpApplicationConfiguration identity_provider="SAML v2" details_link="/docs/authentication/identity-providers/overview-samlv2#form-fields">
+  <Screenshot id="idp-samlv2-configuration" url="/admin/identity-provider/edit/SAMLv2/00000000-0000-0000-0000-f20000000114" alt="Configure samlv2 identity provider" />
+</IdpApplicationConfiguration>
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    Whether this SAMLv2 Identity Provider is enabled.
+  </APIField>
+  <APIField name="Id" optional>
+    An optional UUID. When this value is omitted a unique Id will be generated automatically.
+  </APIField>
+  <APIField name="Source" optional since="1.65.0" defaults="System">
+    The source of this identity provider.
+
+    This value is set only when creating the identity provider. If provided on update, it is ignored and the existing value is preserved.
+
+    The maximum length is `191` characters.
+  </APIField>
+  <APIField name="Tenant" optional since="1.62.0">
+    The tenant to which this identity provider belongs. This field only displays when the user selects a specific tenant on the previous page. When `Global identity provider` is selected on the previous page, this field does not display.
+  </APIField>
+  <APIField name="Name" required>
+    A unique name to identify the identity provider. This name is for display purposes only and it can be modified later if desired.
+  </APIField>
+  <APIField name="IdP endpoint" required>
+    The URL of the SAML identity providers login page.
+  </APIField>
+  <APIField name="NameID format" optional since="1.28.0">
+    The NameID format to send to the SAML v2 identity provider in the AuthN request.
+  </APIField>
+  <APIField name="Verification keys" required since="1.69.0">
+    The keys stored in Key Master that are used to verify the SAML response sent back to FusionAuth from the identity provider. These are the public key(s) provided to you by the identity provider.
+  </APIField>
+  <APIField name="Button text" required>
+    The text to be displayed in the button on the login form. This value defaults to `Login with SAML` but it may be modified to your preference.
+  </APIField>
+  <APIField name="Button image" optional>
+    The image to be displayed in the button on the login form. When this value is omitted a default SAML icon will be displayed on the login button.
+  </APIField>
+  <APIField name="Enable IdP initiated login" optional since="1.43.0">
+    Allows IdP initiated login requests for this configuration. You must have a valid license to use this feature.
+
+    IdP initiated login is not supported for [CIMD clients](/docs/authentication/identity-providers/#cimd-clients). When this is enabled, the identity provider cannot be enabled for a CIMD domain. <AvailableSince since="1.70.0" />
+
+    <SamlIdpInitWarning />
+  </APIField>
+  <APIField name="Issuer" optional>
+    The service provider EntityId used by FusionAuth for this SAML v2 identity provider.
+
+    If not provided, FusionAuth uses <code>&lt;base_url&gt;/samlv2/sp/&lt;identityProviderId&gt;</code>.
+  </APIField>
+  <APIField name="Expected Issuer" optional since="1.43.0">
+    The expected EntityId (unique identifier) of the external SAML v2 identity provider.
+
+    Required when **Enable IdP-initiated login** is enabled.
+  </APIField>
+  <APIField name="Linking strategy" optional since="1.28.0">
+    The linking strategy for the SAMLv2 provider. [See Linking Strategies for more](/docs/authentication/identity-providers/#linking-strategies).
+
+    <LinkingStrategyEditLimit />
+  </APIField>
+  <APIField name="Reconcile lambda" optional>
+    A lambda maps custom claims returned from the SAML Response to the FusionAuth User or Registration.
+
+    To create or configure a lambda, navigate to <Breadcrumb>Customizations -> Lambdas</Breadcrumb>. See the [lambda documentation](/docs/lambdas) for more information on using lambdas.
+  </APIField>
+  <APIField name="Enable debug logging" optional defaults="false">
+    Some identity providers are not compliant with the SAML and XML signing specifications. This makes it challenging to get them working with FusionAuth.
+
+    If you are running into integration issues, toggle this setting on and FusionAuth will output debugging information into the Event Log during a SAML login. You can find the event log in <Breadcrumb>System -> Event Log</Breadcrumb>.
+  </APIField>
+</APIBlock>
+
+### Options
+
+<Screenshot id="idp-samlv2-add-options" url="/admin/identity-provider/add/SAMLv2?identityProvider.tenantId=30663132-6464-6665-3032-326466613934&global=false#options" height={1000} alt="Add SAML v2 Options section" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Unique Id claim" optional>
+    The name of the claim that is returned in the SAML response that contains the unique Id of the user. If this isn't set, FusionAuth uses the `NameID`.
+  </APIField>
+  <APIField name="Use NameId for email" optional>
+    If this is enabled, FusionAuth will assume that the `NameID` in the SAML response contains the email address of the user.
+  </APIField>
+  <APIField name="Email claim" optional>
+    The name of the email claim returned in the SAML response.
+
+    When **Use NameId for email** is enabled this field will not be displayed and will not be required.
+  </APIField>
+  <APIField name="Username claim" optional>
+    The name of the username claim returned in the SAML response. FusionAuth never uses the `NameID` as the username, so if this isn't set, the user has no username unless the reconcile lambda sets one. Set this when the **Linking strategy** links by username.
+  </APIField>
+  <APIField name="Use POST method" optional>
+    When enabled the authentication request will use the HTTP POST binding with the identity provider instead of the default Redirect binding which uses the HTTP GET method.
+  </APIField>
+  <APIField name="Sign requests" optional>
+    When enabled authentication requests sent to the Identity Provider will be signed.
+  </APIField>
+  <APIField name="Request signing key" optional>
+    The key used to sign the SAML request. Required when **Sign request** is enabled. To create, manage, or import a key, navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>.
+  </APIField>
+  <APIField name="Canonicalization method" optional>
+    The XML signature canonicalization method used when digesting and signing the SAML request. Required when **Use POST method** and **Sign request** are enabled.
+  </APIField>
+  <APIField name="Enable login hint" optional since="1.43.0">
+    When enabled FusionAuth will provide the username or email address when available to the IdP as a login hint when HTTP redirect bindings are used to initiate the AuthN request.
+  </APIField>
+  <APIField name="Login hint parameter name" optional since="1.43.0">
+    The name of the parameter used to pass the username or email as login hint to the IDP when HTTP redirect bindings are used to initiate the AuthN request. Required when **Enable login hint** is enabled.
+  </APIField>
+  <APIField name="Destination assertion policy" optional since="1.43.0">
+    The policy to use when performing a destination assertion on the SAML login request.
+
+    The possible values are:
+
+    * `Enabled` - Verifies the Destination attribute in the SAML response is equal to the expected Destination which is the FusionAuth ACS (Assertion Consumer Service) URL. This is the default and the recommended setting.
+    * `Disabled` - Do not validate the Destination attribute. This is not recommended, please use with caution.
+    * `Allow alternates` - Verifies the Destination attribute is either the expected FusionAuth ACS, or one of the configured alternate values. This option is intended to assist with migrations from third-party IdPs and should be used with caution.
+  </APIField>
+  <APIField name="Alternate destinations" optional since="1.43.0">
+    The array of URLs that FusionAuth will accept as SAML login destinations if the **Destination Assertion Policy** is `Allow alternates`.
+  </APIField>
+  <APIField name="Require encrypted assertions" optional since="1.55.1">
+    When enabled FusionAuth requires encrypted assertions in SAML responses from the identity provider. SAML responses from the identity provider containing unencrypted assertions will be rejected by FusionAuth.
+  </APIField>
+  <APIField name="Assertion decryption key" optional since="1.55.1">
+    The key used to decrypt SAML responses. Required when **Require encrypted assertions** is enabled. To create, manage or import a key, navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>.
+
+    The selected Key must contain an RSA private key. The associated public key or certificate should be provided to the SAML Identity Provider to encrypt assertions.
+  </APIField>
+</APIBlock>
+
+### Managed domains
+
+<Screenshot id="idp-samlv2-add-domains" url="/admin/identity-provider/add/SAMLv2?identityProvider.tenantId=30663132-6464-6665-3032-326466613934&global=false#managed-domains" crop="#screenshot-band" cropPadding={0} alt="Add SAML v2 Managed Domains section" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Managed domains" optional>
+    <ManagedDomainsDescription type="SAML v2"/>
+  </APIField>
+</APIBlock>
+
+## Integration Details
+
+After configuring the Identity Provider, FusionAuth will display values likely required by your SAML v2 Identity Provider to trust FusionAuth as a relying party. Do so by navigating to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>, click the action menu next to your SAML provider, then select the <Breadcrumb>View</Breadcrumb> button.
+
+<Screenshot id="idp-list-samlv2-view" width={1600} url="/admin/identity-provider/" height={800} alt="View the identity provider list">
+  <Highlight selector="[data-hl='idp-menu-item']" />
+</Screenshot>
+
+When viewing the details, scroll to the <Breadcrumb>SAML v2 Integration details</Breadcrumb> section. There you will find the necessary values to configure an integration with a SAMLv2 IdP.
+
+FusionAuth resolves the service provider EntityId from the `Issuer` value in this section. If you do not configure `identityProvider.issuer`, FusionAuth uses `<base_url>/samlv2/sp/<identityProviderId>`. If you do configure `identityProvider.issuer`, FusionAuth uses that value instead.
+
+FusionAuth expects the Audience value in the SAML assertion to match this same value.
+
+<Screenshot id="idp-view-samlv2" url="/admin/identity-provider/" height={1000} alt="View the SAMLv2 identity provider details">
+  <Highlight selector="[data-hl='idp-dialog-section']" />
+</Screenshot>
+
+### Fields
+
+<Samlv2IntegrationDetailsFields idp_init="false" />
+
+## CORS Configuration
+
+To complete the login request, the SAML v2 Identity Provider will make an HTTP `POST` request to the callback URL in FusionAuth. In order for this request to be allowed through the CORS filter you will need to navigate to <Breadcrumb>Settings -> System -> CORS</Breadcrumb> and add the SAML IdP origin as an **Allowed Origin** the CORS configuration.
+
+Once you complete your SAML v2 Identity Provider configuration, if your CORS configuration is not yet configured to allow the login request to complete you will be shown the following warning prompting you to complete the CORS configuration. See [CORS Filter reference](/docs/security/clients/cors) for additional details on modifying the CORS configuration.
+
+<Screenshot id="idp-cors-warning-samlv2" width={1600} url="/admin/identity-provider/" height={1250} alt="SAMLv2 CORS Warning">
+  <Highlight selector="[data-hl='section-box']" />
+</Screenshot>
+
+## Redirects
+
+After a user has logged into their SAML IdP and then sent back to FusionAuth, they can be redirected to another URL. To do so, follow these steps:
+
+* Determine the URL you want the user to arrive at after logging in. Suppose that URL is `https://example.com/welcome`.
+* Make sure that `https://example.com/welcome` is added to the **Authorized Redirect URLs** field in the Application configuration.
+* URL encode the URL. `https://example.com/welcome` becomes `https%3A%2F%2Fexample.com%2Fwelcome`.
+* Append the URL encoded value to the ACS you are putting in the IdP. It might look something like this: `https://local.fusionauth.io/samlv2/acs?RelayState=https%3A%2F%2Fexample.com%2Fwelcome`.
+
+If you do not provide a `RelayState` parameter, the user will be redirected to the first Authorized redirect URI found in the FusionAuth Application OAuth configuration. 
+
+See [SAML v2 Integration Details](/docs/authentication/identity-providers/overview-samlv2#integration-details) for additional details.
+
+### Redirects And Lambdas
+
+While you can configure a lambda to be executed when a user logs in to FusionAuth using SAML, they cannot affect the end destination of a user. Instead, they allow you to examine a read-only SAML response and add, modify, or remove attributes from the user or registration objects.
+
+## Troubleshooting
+
+<IdpManagedDomainsTroubleshooting idp_type_name="SAML" />
+
+### Troubleshooting SAML Flows
+
+To troubleshoot, turn on the **Debug** option and then navigate to <Breadcrumb>System -> Event Log</Breadcrumb>.
+
+Proceed through the SAML flow and review the Event log entries to see if there are any configuration issues.
+
+## Limitations
+
+<SamlSpLimitations />

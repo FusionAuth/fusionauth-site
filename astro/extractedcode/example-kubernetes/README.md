@@ -1,12 +1,12 @@
 # Deploy FusionAuth with Kubernetes
 
-The files and commands shown in the [Deploy with k8s](https://fusionauth.io/docs/get-started/download-and-install/kubernetes/fusionauth-deployment) guide.
+The files and commands shown in the [Deploy with k8s](https://fusionauth.io/docs/deploy/production/kubernetes/fusionauth-deployment) guide.
 
 * `values.yaml`: the chart values the guide sets, with placeholders like `<database-host>`
 * `sidecar-values.yaml`: the optional sidecar example
 * `gateway.yaml`: the Gateway API resources that expose FusionAuth over HTTPS through Envoy Gateway
 * `commands/`: one file per command block in the guide
-* `minikube/`: the PostgreSQL and Elasticsearch manifests and commands from the [Local Cluster with minikube](https://fusionauth.io/docs/get-started/download-and-install/kubernetes/minikube) guide
+* `minikube/`: the PostgreSQL and Elasticsearch manifests and commands from the [Local Cluster with minikube](https://fusionauth.io/docs/deploy/production/kubernetes/minikube) guide
 
 ## Test
 

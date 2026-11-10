@@ -2,7 +2,7 @@ When developing against a FusionAuth Cloud instance with a hostname ending in `f
 
 These endpoints do not work correctly for cross origin requests. Cross origin requests occur when the application making the request to FusionAuth is using a separate domain. For example, if your application URL is `app.acme.com` and the FusionAuth URL is `acme.fusionauth.io` requests from your application to FusionAuth will be considered cross origin.
 
-If possible, have FusionAuth and your application served by the same domain, using a [proxy if needed](/docs/operate/deploy/proxy-setup). For example, serve your app from `app.acme.com` and FusionAuth from `auth.acme.com`.
+If possible, have FusionAuth and your application served by the same domain, using a [proxy if needed](/docs/deploy/production/proxy-setup). For example, serve your app from `app.acme.com` and FusionAuth from `auth.acme.com`.
 
 If this configuration is not possible, use one of these alternative methods:
 

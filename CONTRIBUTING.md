@@ -1,412 +1,253 @@
-## Content Style Guide
+# Contributing to the FusionAuth Docs
 
-Follow these guidelines when writing documentation (everything under [docs](astro/src/content/docs)) and articles (everything under [articles](astro/src/content/articles)):
+This guide applies to everyone who writes docs, articles, dev tools, or blog posts for FusionAuth (agents too). For building, linting, and deploying, see the [README](README.md).
 
-- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth.
-  For example, see the API Key APIs description for `apiKeyId`, where API Key is capitalized: `The unique Id of the API Key to create. If not specified a secure random UUID will be generated.`
-  - EXCEPT WHEN referring to an object being created/updated in FusionAuth (e.g. `To allow users to log into and use your application, you'll need to create an Application in FusionAuth.`; `This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.`)
-- Do not manually wrap long lines. Use the soft wrap in your editor to view while editing
-- Do not use smart quotes or smart apostrophes; stick to ASCII when possible
-- Use `Id` instead of `ID` or `id` when describing a unique identifier
-- Use `Admin UI` (note the capital A) when writing about the admin user interface
-- Use `logged in` instead of `logged-in`
-- `log in` is the verb, `login` is the noun
-- Use `UserInfo` instead of `Userinfo`
-- Use "self-hosted" as an adjective, e.g. "Self-hosted instances are the best way to try FusionAuth!"
-- Use "self-hosting" as a noun, e.g. "FusionAuth supports self-hosting". If you aren't sure whether to use "self-hosting" or "self-hosted", try "self-hosted"
-- Don't abbreviate FusionAuth, use the full name.
-- Always provide an alt text for images. It should always be a full sentence describing the content of the image.
-- In general, put screenshot images after the text describing the image. That is "This functionality....\n\n<screenshot of functionality>". However, when describing fields for screens, as in the core concepts section, put the screenshot first.
-- If possible use an SVG for images. Otherwise, a PNG that has been properly minified is acceptable.
-- Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
-- When introducing a code snippet, always use a colon or a period. For example: "The code to exchange the token is:" or "The code to exchange the token is similar to below."
-- Avoid personal pronouns when possible; exceptions can be made in tutorials and quickstarts, but never in reference or concept docs.
-- When writing a bulleted list, format each bullet items similarly (e.g. all should be complete sentences, or not complete sentences; if one starts with a verb, they should probably all start with a verb and share the same subject)
-- All image captions should be one or more complete sentences.
-- Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
-- Headers should use title case, not start case: `This Is the Header Text`.
-- Use `Asides` sparingly to call out important information that doesn't otherwise fit into the flow of prose on the page:
-  - `tip` for fun facts
-  - `note` for low-priority knowledge (e.g. a summary of some kickstart variables)
-  - `important` for medium-priority knowledge that could impede the user's ability to complete a task (e.g. the server won't start unless you set the `BAZ` environment variable)
-  - `warn` for high-priority knowledge that could lead to data loss (e.g. back up your data before a version update)
-- When linking to `fusionauth.io` URLs, omit the domain name (e.g. don't use `https://fusionauth.io/docs/get-started`, use `/docs/get-started`)
-- Use the following syntax to reference UI elements:
-- **Field names (keys)**: Use **bold** for the name or label of a field, checkbox, toggle, etc. in a form. Use it for writable and read-only fields. Example: `Set the **Issuer** field to...`
-- **Field values (values)**: Use `monospace` (backticks) for a **value** entered into or returned from a field. Use it for literal, example, and enumerated values. Example: `Set **Relationship** to `Third-party`.`
-- [Breadcrumb](astro/src/components/Breadcrumb.astro): A navigation path, tab, or interactive non-field UI element (button, link, menu item, icon button, etc.) or a display-only UI label that is not a field label, including section labels on a page. Example: `Navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb>`, `On the <Breadcrumb>OAuth</Breadcrumb> tab.`, or `Click <Breadcrumb>Submit</Breadcrumb>.`
-- Use `monospace` to describe a literal VALUE defined in code (e.g. set **`baseUrl`** to `localhost:9001`)
-- Use **`bold-monospace`** together to describe a literal KEY defined in code (e.g. set **`baseUrl`** to `localhost:9001`)
-- All links elements should be fully-qualified and never include a slash at the end (i.e. `[users](/docs/apis/users)` not `[users](./users)`)
-- Page titles should be title-case, not sentences
-- Page descriptions should be full sentences
-- Use `order` (ascending) to change the default (alphabetical) sort of pages in a section
-- Most common components are auto-imported into every MDX file and do not need an explicit import statement. This includes `APIField`, `APIBlock`, `API`, `AvailableSince`, `DeprecatedSince`, `RemovedSince`, `JSON`, `Breadcrumb`, `Aside`, `LocalValue`, `PlanBlurb`, `PlanBlurbApi`, `If`, `Icon`, `IconButton`, `ChildCards`, `Card`, `ExtractedCode`, `Tabs`, `TabItem`, `Details`, `Steps`, `Table`, and `MarkdownOnly`. The full list and their source paths are declared in `mdxComponentImports` near the top of `astro/astro.config.ts`.
+## Write for the Reader
 
-- If you add an explicit import for one of the auto-imported components, the build will fail with an error like:
+Readers come to the docs to finish a task. Every rule below serves that goal.
 
-  ```
-  [mdx-component-importer] Redundant import in /path/to/file.mdx
-    `Aside` is auto-imported — remove the explicit import.
-  ```
+* Address the reader as "you". Write steps in the imperative: "Click **Save**," not "The user should click **Save**."
+* Keep sentences short, with one idea per sentence. Split a sentence that chains clauses with "and", "which", or a semicolon.
+* Use active voice. Write "FusionAuth sends an email," not "An email is sent."
+* Repeat the noun instead of using a pronoun. Write "The lambda runs after login," not "It runs after login." Avoid "it", "they", "this", and "these" as subjects, even when the noun is long.
+* Say what happens. Skip filler such as "simply", "just", "easily", "basically", and "note that".
+* State limits and requirements plainly, including the required plan or version.
+* Use plain ASCII: straight quotes, straight apostrophes, and no smart punctuation.
+* Use the Oxford comma: "apples, bananas, and oranges".
 
-  Remove the import line and it will work.
+### Avoid AI Writing Patterns
 
-- Auto-imports come from a small Vite plugin, `mdxComponentImporter` in `astro/astro.config.ts`. Before the MDX compiler runs, the plugin inserts every import line from `mdxComponentImports` after the file's frontmatter. If a file imports a different component under the same name, the file's import wins. To auto-import another component, add its import line to `mdxComponentImports`.
+Readers notice these patterns, and the patterns make a page read as generated. _Do not_ use the following:
 
-- For everything else, always use the full path, not a relative path:
+* Em dashes or en dashes. Use a comma, a period, a colon, or parentheses, or (preferred) restructure the sentence for simplicity and readability.
+* "It's not X, it's Y", "not just X, but Y", and other contrast setups.
+* Lists of three when one example makes the point.
+* Hype words: "seamless", "robust", "powerful", "leverage", "unlock", "empower", "game-changing", "cutting-edge" (like Hemingway, it's best to avoid adjectives altogether unless they _significantly_ alter the meaning of your phrase).
+* Stock phrases: "dive into", "delve", "at its core", "let's unpack", "in today's world", "whether you're X or Y", "it's worth noting", "load-bearing".
+* Openings that restate the title, and closings that summarize the page or say "Congratulations" or "Happy coding".
+* Bold or italics for emphasis. Bold marks field names only (see [UI Elements and Code](#ui-elements-and-code)).
+* Emoji.
 
-  ```jsx
-  import MyComponent from 'src/components/MyComponent.astro';
-  ```
+## Structure Pages
 
-## LLM Cliches
+### Give Each Page One Job
 
-- Avoid emdashes
-- Avoid lists of three items when one example will do
-- Avoid "It's not X, it's Y"
+Decide what kind of page you're writing, and keep the page to that job. Link to other pages instead of mixing types.
 
-## Lists
+* A tutorial teaches by building something end to end. Tutorials live in Get Started and QuickStarts.
+* A how-to guide gets the reader through one task. Start with the goal and the prerequisites, then give the steps, then show how to confirm the result.
+* A concept page explains what a feature is and how the feature behaves. Concept pages don't contain step lists.
+* A reference page lists facts to look up, such as fields, options, or limits. Keep reference terse and complete.
+* A section overview orients the reader and links to the pages in the section. Set `sectionIndex: true` in the overview's front matter to list the section's pages after the content. `sectionIndex` only lists pages directly in the folder, so a section whose pages all live in subfolders needs `<ChildCards depth={2} />` at the end of the body instead. Otherwise, use a `<ChildCards />` component in the body only when the list belongs mid-page.
 
-- When order matters, use a ordered list (e.g. `1. `)
-- For ordered lists, always use `1. ` instead of manually ordering; astro automatically handles numbering.
-- When order doesn't matter, use an unordered list (e.g. `* `).
-- For unordered lists, always use `* `.
-- Always introduce lists with a colon. (yes, I know this list violates that rule)
-- Capitalize the first word unless the bullet points continue a sentence started in the introduction.
-- If the list item is a sentence, include a period at the end.
+### Put the Page Where Readers Look
 
-### List Examples
+The sidebar is organized by task. Put each page in the section a reader would open for that task:
 
+* Get Started, QuickStarts, and How FusionAuth Works (`concepts`) cover learning the product.
+* Authentication, Users, and Authorization cover building an integration.
+* Theme, Email, and Messengers cover customizing the user experience.
+* Lambdas and Events cover extending FusionAuth with code.
+* Security covers protecting accounts, tokens, and clients.
+* Deploy, Update, and Cloud cover running FusionAuth.
+* Migrate covers moving users and data into, between, or out of FusionAuth.
+* Client Libraries and SDKs, APIs, and Developer Tools hold reference material.
 
-```plaintext
-Smoothie-compatible fruits include the following:
+Give every page one home. When a page serves two sections, link to the page from the other section. To reuse a block of content on several pages, put the block in a [shared partial](#shared-content).
 
-* apples
-* bananas
-* blueberries
-```
+When you move or rename a page, run `scripts/check-redirects.mjs` and add the redirects the script reports. See [Redirects](README.md#redirects) in the README.
 
-Smoothie-compatible fruits include the following:
+## Formatting
 
-* apples
-* bananas
-* blueberries
+### Titles
+
+Each page has up to three titles, and each title serves a different reader:
+
+* `title` appears in the sidebar, breadcrumbs, and cards. The reader already sees the enclosing folders there, so keep `title` short: `Docker` inside Deploy > Production > Install, not `Install FusionAuth with Docker`.
+* `htmlTitle` is the `h1` on the page and the browser tab title. The reader may arrive from search with no sidebar context, so include the full context: `Install FusionAuth App with Docker`. The tab title adds ` | FusionAuth Docs` automatically. When you leave out `htmlTitle`, the page uses `title`.
+* `markdownTitle` is the title in the markdown version of the page and in the `llms.txt` indexes that agents read. Set `markdownTitle` only when agents need a different title than people. Otherwise `llms.txt` uses `htmlTitle`, then `title`.
+
+Write every title in title case, with no ending punctuation.
+
+### Descriptions
+
+The `description` appears in search results, card grids, and the page's meta description, so the description often decides whether a reader opens the page. Write one full sentence that ends with a period and names the task or topic in the reader's words. Start the sentence by page type:
+
+* How-to guides and tutorials: "Learn how to rotate signing keys without logging users out."
+* Concept pages and section overviews: "Learn about the login methods FusionAuth supports."
+* API reference: "API documentation for the Users API."
+
+Don't start with "An overview of" or "This page". Don't repeat the title word for word.
+
+### Tags and Related Pages
+
+The Related section at the bottom of every page comes from front matter `tags`. The section lists the four pages that share the most tags with the current page.
+
+* Write `tags` as a comma-separated list of the words a reader would search for: `tags: passkeys, webauthn, passwordless, login, mfa`. Look at the tags on similar pages and reuse their terms, so related pages find each other.
+* Never write a Related, See Also, or Further Reading section by hand. Link to a page in the text where the reader needs the page instead.
+* To make sure a page always appears in the Related section, list the page ids in `relatedPinFirst`, separated by commas: `relatedPinFirst: get-started/install`. Pinned pages show first, ahead of the tag matches.
+
+### Headings
+
+* Write headings in title case: `Configure the Issuer`.
+* Start sections at `##`, because `htmlTitle` renders as the only `h1`.
+* Don't wrap long lines by hand. Use your editor's soft wrap.
+
+### Lists
+
+* Use an ordered list only when order matters, such as steps. Use an unordered list for options, prerequisites, and features.
+* Number every ordered item `1.`, and Astro renders the real numbers. Start unordered items with `*`.
+* Introduce a list with a sentence that ends in a colon.
+* Keep items parallel: all full sentences or all fragments, starting the same way.
+* End an item with a period when the item is a sentence.
 
 ```plaintext
 To make a smoothie:
 
-1. Put milk in a blender.
-1. Put a banana in a blender.
-1. Put an apple in a blender.
-1. Put blueberries in a blender.
+1. Put milk and a banana in a blender.
 1. Run the blender for 30 seconds.
 ```
 
-To make a smoothie:
+### UI Elements and Code
 
-1. Put milk in a blender.
-1. Put a banana in a blender.
-1. Put an apple in a blender.
-1. Put blueberries in a blender.
-1. Run the blender for 30 seconds.
+* Field names and labels use **bold**: `Set **Issuer** to your domain.`
+* Values entered into or returned from a field use `monospace`: ``Set **Relationship** to `Third-party`.``
+* Navigation paths, tabs, buttons, menu items, and other non-field UI elements use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component: `<Breadcrumb>Settings -> API Keys</Breadcrumb>`, `Click <Breadcrumb>Submit</Breadcrumb>.`
+* Literal keys in code, files, and requests use **`bold monospace`**: ``Set **`baseUrl`** to `localhost:9011`.``
+* Filenames, paths, commands, and code values use `monospace`.
+* FusionAuth version numbers use `monospace`: ``Available in FusionAuth `1.63.0` and later.``
+* Introduce a code block with a sentence that ends in a colon or a period.
 
-## Proper names and other verbiage
+### Links
 
-- .NET Core
-- air-gapped (not airgapped or air gapped)
-- Azure AD
-- CAPTCHA
-- client-side
-- Connector
-- curl
-- Docker
-- Docker Compose
-- e-commerce
-- ECMAScript
-- Elasticsearch
-- esport
-- first-party
-- fine-grained authorization
-- FusionAuth Cloud
-- Google reCAPTCHA
-- Identity Provider
-- IdP
-- Kickstart
-- macOS
-- multi-factor authentication
-- multi-tenancy/multi-tenant
-- Node.js
-- OAuth and OAuth2
-- one-time password
-- private-labeled (an adjective)
-- re-authentication
-- self-service
-- server-side (an adjective)
-- Spring Boot
-- third-party
-- two-factor
-- WebAuthn
-- webview
-- X.509
+* Link to other pages on `fusionauth.io` with a root-relative path and no trailing slash: `[Users API](/docs/apis/users)`. Don't use the domain or a relative path such as `./users`.
+* Make link text describe the destination. Write "see [Account Lockout](/docs/security/account-protection/account-lockout)", not "click [here](...)".
 
-## Version Signposting
+### Asides
 
-- When adding a feature, mark the top of the page or top of the section (if added to an existing page) with the [`AvailableSince` component](astro/src/components/api/AvailableSince.astro):
+Use asides sparingly, for information that doesn't fit the flow of the page. Choose the type by the cost of missing the information:
 
-  ```jsx
-  <AvailableSince since="1.43.0" />
-  ```
+* `note` for useful context.
+* `tip` for a shortcut or a better way to do something.
+* `caution` for something that can stop a task from working.
+* `danger` for something that can lose data or weaken security.
+* `version` for version-specific behavior.
 
-  This will render as a badge showing the text "Available since `<version>`".
+An aside `title` can use inline markdown, such as `` title="The Docker `latest` tag is not dynamic" ``.
 
-  You can also include render this as an admonition by including text between the open and closing tags:
+### Diagrams
 
-  ```jsx
-  <AvailableSince since="1.43.0">
+Add a diagram whenever a subject takes more than a short paragraph to explain: a request flow between systems, a decision with several branches, or how objects relate to each other. Spatial ideas such as architecture and hierarchy deserve a diagram even when the prose is short. Write diagrams as [Mermaid](https://mermaid.js.org/) code blocks, not as images, so anyone can edit them:
 
-  The foo cannot be used with the baz.
-  </AvailableSince>
-   ```
+````plaintext
+```mermaid title="Request flow during login with FusionAuth."
+sequenceDiagram
+    participant App as Application
+    participant FusionAuth
+    App ->> FusionAuth : Redirect to the login page
+    FusionAuth ->> App : Redirect back with an authorization code
+```
+````
 
-- When deprecating a feature, use [DeprecatedSince](astro/src/components/api/DeprecatedSince.astro):
+* Use `sequenceDiagram` for requests and redirects between systems, and `graph` or `flowchart` for decisions, relationships, and architecture.
+* Give every diagram a `title` that describes the diagram in a full sentence.
+* Keep each diagram to one idea. Split a diagram that needs a legend to read.
+* Explain the diagram in the surrounding text, because some readers can't see the diagram.
 
-  ```jsx
-  <DeprecatedSince since="1.5.0">
-  ```
+### Images
 
-  You can also render this as an admonition by including text between the open and closing tags.
-  
-- When removing a feature, use [RemovedSince](astro/src/components/api/RemovedSince.astro):
+* Prefer generated screenshots. See [Screenshots](#screenshots).
+* Add a screenshot only when the screenshot shows something the text can't. Don't repeat a screenshot of the same screen on a page, even when the pipeline generates the screenshot for free. Every image adds to the page size. Describe a later state of a screen in text, or crop to the part that changed.
+* Give every image alt text that describes the content in a full sentence.
+* Place an image after the text that describes the image. On field reference pages, place the screenshot before the field list.
+* Use SVG when possible, or a minified PNG. Use WEBM instead of GIF: `ffmpeg -i demo.gif demo.webm`.
 
-  ```jsx
-  <RemovedSince since="1.5.0">
-  ```
+## Terminology
 
-  You can also render this as an admonition by including text between the open and closing tags.
+* Write "FusionAuth" in full, never abbreviated.
+* Write "Admin UI" for the FusionAuth admin interface.
+* Capitalize FusionAuth domain objects when you mean the FusionAuth object, especially in API docs: "The unique Id of the API Key." Use lowercase for the general idea: "the application your users log into".
+* Write `Id`, not `ID` or `id`. Write UUIDs, never GUIDs, in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`.
+* "Log in" is the verb, "login" is the noun, and "logged in" has no hyphen.
+* "Self-hosted" is the adjective and "self-hosting" is the noun. When unsure, use "self-hosted".
+* Write "update" for moving to a newer FusionAuth version. Reserve "migration" for moving users or data, and for database migrations.
+* Spell these names exactly as shown: .NET Core, air-gapped, Azure AD, CAPTCHA, client-side, Connector, curl, Defaults, Docker, Docker Compose, e-commerce, ECMAScript, Elasticsearch, esport, first-party, fine-grained authorization, FusionAuth Cloud, Google reCAPTCHA, Identity Provider, IdP, Kickstart, macOS, multi-factor authentication, multi-tenancy, multi-tenant, Node.js, OAuth, OAuth2, one-time password, private-labeled, re-authentication, self-service, server-side, Spring Boot, third-party, two-factor, UserInfo, WebAuthn, webview, X.509.
 
-- We currently use [FontAwesome](https://fontawesome.com/) to render icons, so you can use them to refer to UI buttons, like this:
-  
-  ```jsx
-  <IconButton icon="edit" />
-  <IconButton icon="add" />
-  <IconButton icon="view" />
-  ```
+## Authoring Reference
 
-  ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
+### Front Matter
 
-## Shared content
+The schema lives in `astro/src/content.config.js`. `title` and `description` are required. Common optional fields:
 
-- For content shared across multiple pages, preface the filename with `_` and use dashes to separate words, e.g. `_login-api-integration`.
-- You may include both markdown files and astro components as imports in MDX. These are treated as components.
-  ```jsx
-  import AccountPortalCore from 'src/content/docs/_shared/_account-portal.mdx';
-  ...
-  <AccountPortalCore/>
-  ```
-- You can pass `props` to both astro components and mdx components.
-  - For astro components this looks like:
-    ```typescript
-    ---
-    const { feature } = Astro.props;
-    ---
-    { feature && <><strong>Note:</strong> An Enterprise plan is required to utilize {feature}. </>}
-    ```
-  - For mdx it looks like:
-    ```mdxjs
-    ---
-    ---
-    # Getting Help
-    You can find help for {props.topic} at [help](/help)
-    ```
-  - In MDX files you can put some content behind a javascript expression, but be aware that you can only use HTML markup -- NOT markdown -- inside.
-    ```mdxjs
-    ---
-    ---
-    {props.showStuff && <>
-      This is some more content <a href="/home">Home</a>
-    </>}
-    ```
-  - You may need to add a empty tag multi-line content after the expression to indicate that this is a block
-  - Content passed in the `<slot></slot>` of a component will be passed as rendered markdown.
-  - you may need to coerce a prop into a boolean to use as a conditional for an expression. Such as `{!!props.message && <span>{props.message}</span>}`;
-- JSON files are their own content collection in astro. You can reference these using the [JSON component](astro/src/components/JSON.astro)
-- We have an alias mapped in [tsconfig](astro/tsconfig.json) that allows you to use absolute references from 'src'. Otherwise, imports must use relative paths.
+| Field | Notes |
+|---|---|
+| `htmlTitle`, `markdownTitle` | Longer titles for the page and for agents. See [Titles](#titles). |
+| `tags`, `relatedPinFirst` | Drive the Related section. See [Tags and Related Pages](#tags-and-related-pages). |
+| `order` | Sort position in the sidebar. Lower numbers sort first. The default is `1000`, and ties sort alphabetically. |
+| `route` | Set to `false` on a folder `index.mdx` that only names and orders a sidebar group. FusionAuth then builds no page for the folder, the sidebar shows the group as a plain label, and card grids and the Related section skip the page. |
+| `sectionIndex` | Set to `true` on a section overview to list the section's pages after the content. See [Give Each Page One Job](#give-each-page-one-job). |
+| `excludeFromNav` | Set to `true` to hide the page from `ChildCards` and `PageNav`. The page still builds. |
+| `icon`, `darkIcon`, `cardImage` | Images for card grids. |
+| `disableTOC` | Hides the table of contents. |
+| `canonicalUrl` | Overrides the canonical URL. |
 
-### Front matter fields
+The sidebar builds itself from the folder structure. A folder's title and order come from the folder's `index.mdx`.
 
-Every docs page uses YAML front matter. The schema is defined in `astro/src/content.config.js`.
+### Components
 
-Required fields:
+Common components are auto-imported into every MDX file, so don't import them. The list includes `Aside`, `APIField`, `Breadcrumb`, `Card`, `ChildCards`, `Details`, `ExtractedCode`, `PlanBlurb`, `Screenshot`, `Steps`, `Table`, `Tabs`, and `TabItem`. The full list is `mdxComponentImports` in `astro/astro.config.ts`. A small Vite plugin, `mdxComponentImporter`, inserts those imports after the front matter.
 
-| Field | Type | Notes |
-|---|---|---|
-| `title` | string | Shown as the page heading and in the sidebar. Cannot end with punctuation. |
-| `description` | string | One sentence summary shown in search and card overviews. Must end with a period. |
+* An explicit import of an auto-imported component fails the build. Remove the import.
+* If a file imports a different component under the same name, the file's import wins.
+* To auto-import another component, add the component's import line to `mdxComponentImports`.
 
-Common optional fields:
+Everything else needs an explicit import after the front matter, including every [shared partial](#shared-content). Import by the full path from `src`, never a relative path:
 
-| Field | Type | Notes |
-|---|---|---|
-| `htmlTitle` | string | Overrides the `<title>` tag on the rendered page. The navigation sidebar continues to use the `title`, but `llms.txt` will prefer this title. |
-| `markdownTitle` | string | Overrides the `h1` in the markdown version of the page. Use to serve an LLM-optimized title only to agents when humans would prefer a different title. `llms.txt` will prefer this title over `htmlTitle` or `title`. |
-| `sidenavTitle` | string | Overrides how the page appears in the sidebar when the full title is too long. |
-| `order` | number | Controls sort position within the parent section. Lower numbers sort first. Default is 1000 (alphabetical fallback). |
-| `route` | boolean | Set to `false` to prevent the page from being built as a URL while keeping it in the content collection for nav ordering. Use this for folder index pages that are pure navigation (no real content) -- pair with a redirect in `astro.config.ts`. |
-| `icon` | string | Path to an icon image shown in card grids (e.g. `/img/icons/my-icon.svg`). Used by `ChildCards` and `DocCard`. |
-| `darkIcon` | string | Alternate icon shown in dark mode. If omitted, `icon` is used for both modes. |
-| `cardImage` | string | Path to a header image shown at the top of a card in the `full` variant. Useful for visually distinguishing sections in card grids. |
-| `excludeFromNav` | boolean | Set to `true` to hide this page from `ChildCards` auto-discovery. The page still builds and is accessible by URL. |
-| `sectionIndex` | boolean | Set to `true` on an index page to automatically render a `ChildCards` grid after the page content. Replaces manually written `<ChildCards>` in MDX. |
-| `disableTOC` | boolean | Hides the table of contents for this page. |
-| `canonicalUrl` | string | Full canonical URL override, used when a page is a redirect target or duplicate of another page. |
-
-### Cards
-
-Docs cards are rendered using [astro-better-cards](https://better-static-sites.github.io/content/cards/). You can use [`ChildCards`](https://better-static-sites.github.io/content/cards/#childcards) to automatically render a collection of links to sub-pages within a folder (with configurable depth). Or you can use [`PageNav`](https://better-static-sites.github.io/content/cards/#pagenav) to display next and last links using `nextPage` and `lastPage` in page front matter.
-
-### API docs
-
-- The OpenAPI spec lives in `astro/public/docs/openapi.yaml`. The site serves it at `/docs/openapi.yaml`, the [OpenAPI Specification page](https://fusionauth.io/docs/apis/openapi) renders it in full, and the interactive client on each API reference page (`<API>`) uses it. It's a copy of the spec in [fusionauth-openapi](https://github.com/FusionAuth/fusionauth-openapi), so builds don't change when that repository does. After each FusionAuth release, refresh it from the repository root, review the diff, and commit it:
-  ```shell
-  bash scripts/update_openapi_spec.sh
-  ```
-  The weekly Check external content workflow runs `bash scripts/update_openapi_spec.sh --check` and reports when the copy differs from upstream.
-- The Docker install page and the download widget point readers at `astro/public/docs/docker-compose.yml`, which the site serves at `/docs/docker-compose.yml`. It pins `fusionauth/fusionauth-app` to the release in `fusionauth-version`, as does the screenshot tooling in `astro/screenshots/docker-compose.yml`. Don't edit either version by hand. See "Update the docs for a new FusionAuth release" in the [README](README.md) for how the pin moves.
-- We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
-- `Defaults` is always capitalized.
-- If a field is required, but only when another feature is enabled, mark it optional rather than required in the API. Then, add a note in the description saying when it is required, like so:
-  ```
-  This field is required when **`theOtherField.enabled`** is set to true.
-  ```
-- If a feature is only available when using a Licensed Community plan (or above), use `PlanBlurb`:
-  ```jsx
-  <PlanBlurb plan="licensed" version="1.52.0" />
-  ```
-  In the API reference, use `PlanBlurbApi`:
-  ```jsx
-  <PlanBlurbApi plan="licensed" feature="this feature" />
-  ```
-- If a feature is only available when using a Starter plan (or above), use `PlanBlurb`:
-  ```jsx
-  <PlanBlurb plan="starter" version="1.52.0" />
-  ```
-  In the API reference, use `PlanBlurbApi`:
-  ```jsx
-  <PlanBlurbApi plan="starter" feature="this feature" />
-  ```
-- If a feature is only available when using an Essentials plan (or above), use `PlanBlurb`:
-  ```jsx
-  <PlanBlurb plan="essentials" version="1.52.0" />
-  ```
-  In the API reference, use `PlanBlurbApi`:
-  ```jsx
-  <PlanBlurbApi essentials="essentials" feature="this feature" />
-  ```
-- If a feature is only available when using an Enterprise plan, use `PlanBlurb`:
-  ```jsx
-  <PlanBlurb plan="enterprise" version="1.52.0" />
-  ```
-  In the API reference, use `PlanBlurbApi`:
-  ```jsx
-  <PlanBlurbApi plan="enterprise" feature="this feature" />
-  ```
-
-### Generative Screenshots
-
-> [!NOTE]
-> Migration still in progress.
-
-Screenshots in the docs are generated automatically from a headless browser pointed at a local FusionAuth instance using [astro-better-declarative-screenshots](https://better-static-sites.github.io/content/declarative-screenshots/). Docker, the FusionAuth container, and a PostgreSQL database all start automatically when you run the screenshot command.
-
-#### Setup
-
-Install the screenshot dependencies once (separate from the main `astro/` dependencies):
-
-```shell-session
-cd astro/screenshots
-npm install
+```jsx
+import MyComponent from 'src/components/MyComponent.astro';
+import ReleaseNotification from 'src/content/docs/_shared/_release-notification.mdx';
 ```
 
-The passkey screenshots need a FusionAuth license. Add your key to `astro/.env`, which is gitignored:
+### Shared Content
 
-```shell-session
-FUSIONAUTH_LICENSE_KEY=<your license key>
-```
+* Name shared files with a leading underscore and dashes: `_login-api-integration.mdx`. Put content shared across sections in `astro/src/content/docs/_shared`.
+* Import each partial explicitly, because partials aren't auto-imported. Then use the partial like a component, and pass values as props: `<ReleaseNotification topic="passkeys" />`. In an MDX partial, read props as `{props.topic}`.
+* Inside a JavaScript expression, use HTML instead of markdown: `{props.show && <>See <a href="/docs/apis">the APIs</a>.</>}`. Coerce values to booleans for conditions: `{!!props.message && <span>{props.message}</span>}`.
+* Reference JSON examples with the [JSON component](astro/src/components/JSON.astro).
 
-Without a license, the passkey screenshots fail or come out without their licensed settings, so don't commit them.
+### Versions and Plans
 
-#### Generate Screenshots
+* Mark a new feature with `<AvailableSince since="1.43.0" />` at the top of the page or section. Mark deprecated and removed features with `DeprecatedSince` and `RemovedSince`. Put text between the tags to render the badge as an aside.
+* Mark a paid feature with `<PlanBlurb plan="enterprise" version="1.52.0" />`, or with `<PlanBlurbApi plan="enterprise" feature="this feature" />` in the API reference. The plans are `licensed`, `starter`, `essentials`, and `enterprise`.
+* Refer to UI icons with `<IconButton icon="edit" />`.
 
-From the `astro/` directory:
+### API Docs
 
-```shell-session
-npm run screenshots
-```
+* The OpenAPI spec at `astro/public/docs/openapi.yaml` is a copy of [fusionauth-openapi](https://github.com/FusionAuth/fusionauth-openapi) at the newest tag at or before `fusionauth-version`. After each release, refresh the copy with `bash scripts/update_openapi_spec.sh` and review the diff. The weekly external content check fails when the copy drifts from that tag.
+* Version pins in the Docker Compose files and the production Docker examples follow `fusionauth-version`. Don't edit the pins by hand. See "Update the docs for a new FusionAuth release" in the [README](README.md).
+* When an API returns the same object singly and in arrays, reuse the `-base` partial pattern from the tenant and application APIs.
+* When a field is only required while another feature is enabled, mark the field optional and explain in the description: ``This field is required when **`theOtherField.enabled`** is set to true.``
 
-This starts Docker (if not already running), waits for FusionAuth to become healthy, logs in with the kickstart credentials, captures every `<Screenshot>` component found in the source, and writes PNGs to `public/img/docs/screenshots/`. Existing files are overwritten.
+### Code Examples
 
-To regenerate a single screenshot, pass a filter matching the filename or URL:
+Code examples in guides come from tested projects in `astro/extractedcode`, shown with the `ExtractedCode` component. See [Tested code examples](README.md#tested-code-examples) in the README.
 
-```shell-session
-npm run screenshots -- --filter groups
-```
+### Screenshots
 
-#### Add a Screenshot to a Page
-
-Place the component where you want the screenshot to appear:
+Screenshots come from a headless browser pointed at a local FusionAuth instance. Declare each screenshot where the image belongs:
 
 ```jsx
 <Screenshot url="/admin/group/" alt="The FusionAuth groups list." />
 ```
 
-The `url` is the path on the local FusionAuth instance (`http://localhost:9011`). The filename is derived automatically from the URL and any highlights; pass `id="my-name"` to override it.
-
-To highlight a specific element, nest a `<Highlight>` inside the `<Screenshot>`:
-
-```jsx
-<Screenshot url="/admin/user/manage/00000000-0000-0000-0000-100000000003" alt="The user registration form." fullPage={true}>
-  <Highlight selector="[name*='preferredLanguages']" label="Languages" />
-</Screenshot>
-```
-
-`selector` is a CSS selector for the element to outline. `label` adds a small badge above the highlight. The default highlight color is `#f60`; pass `color="#f26522"` to override (but override sparingly, only when truly necessary, to keep things consistent).
-
-Available `<Screenshot>` props:
-
-| Prop | Default | Description |
-|---|---|---|
-| `url` | required | Path on the FusionAuth instance |
-| `id` | auto-derived | Override the output filename (without `.png`) |
-| `alt` | filename | Alt text for the image |
-| `width` | 1100 | Viewport width in px |
-| `height` | 800 | Viewport height in px |
-| `fullPage` | false | Capture full scrollable height |
-| `crop` | — | CSS selector for the part of the page to crop to, such as `main header:has(h1), #tenant_name` to keep the page title and buttons; covers every match and any highlights |
-| `cropPadding` | 16 | Space in px kept around the cropped area |
-
-### Moving Pictures
-
-GIFs take up quite a lot of space. Use WEBMs instead:
-
-```shell-session
-ffmpeg -i terminalizer.gif terminalizer.webm
-```
+Add `<Highlight selector="..." />` inside the component to outline an element. Use `id`, `height`, `fullPage`, or `crop` to control the capture. To capture, run `npm run screenshots` from `astro/`, or `npm run screenshots -- --filter <name>` for one screenshot. For setup, licenses, fresh-instance screenshots, and the full prop list, see the [screenshots README](astro/screenshots/README.md).
 
 ## Blog
 
-Follow everything in the `Content Style Guidelines` section.
+Blog posts follow the rest of this guide, plus the following:
 
-- If updating an blog post, please update the add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
-- You can use docs components in blog posts, but please don't create new components for individual blog posts. File a request with `#devsuccess` on Slack if you have a need that isn't satisfied by our current suite of components and Docs will consider creating it with or for you.
-- Use markdown image syntax: `![alt text](/path/to/images)`
-- Locate blog post images in `/astro/public/img/blogs/` in a directory related to the blog title.
-- We use Prism for code formatting; see [this list](https://prismjs.com/docs/prism.languages) for supported language names.
-- For site navigation and sequential UI operations (tabs, pages, sidebar entries, links), use Breadcrumb: `Navigate to <Breadcrumb>Tenants -> Password</Breadcrumb>` with arrows.
-- For field names and labels (keys), use **bold**: `**Login Identifier Attribute**`.
-- For field values (values), use `monospace`: ``userPrincipalName``. Use quotes only when presenting a literal text value for an editable field.
-- In summary, **bold** is for attributes (keys), `monospace` is for values, and **`bold monospace`** is for literal attribute names in files, requests, and code. Filenames, directories, paths, and commands are always `monospace`.
-- Every blog post needs at least one category.
-- Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter.
-- Descriptions must be full sentences ending with a period.
-- Titles should not end in a period. They can end in a ? or ! if absolutely necessary.
+* When you update a post, add `updated_date: YYYY-MM-DD` to the front matter instead of changing the date.
+* Give every post at least one category. Add comma-separated tags. The first tag drives related posts unless the post sets `featuredTag`.
+* Put images in `/astro/public/img/blogs/<post-name>/` and use markdown image syntax.
+* Reuse docs components instead of building components for one post. To request a new component, ask in `#devsuccess` on Slack.
+* Code blocks use Prism language names. See the [Prism language list](https://prismjs.com/docs/prism.languages).

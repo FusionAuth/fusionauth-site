@@ -1,0 +1,171 @@
+---
+title: Start and Stop a Production Instance
+description: Learn how to start and stop the FusionAuth services on a production server, in Docker, and in Kubernetes.
+tags: start fusionauth, stop fusionauth, restart fusionauth, service management, systemd, docker, kubernetes, process management
+order: 40
+---
+
+This page covers starting and stopping FusionAuth on servers you manage. To start and stop a local development instance, see [Install Locally](/docs/get-started/install#start-stop-and-reset).
+
+## Start and Stop Order
+
+FusionAuth uses the database and the search engine to store and retrieve users. Start the search engine before FusionAuth App, and stop the search engine last. Start the database before FusionAuth App as well.
+
+## Remove a Node From a Cluster
+
+In a cluster, take a node out of the load balancer before you stop the node. Otherwise the load balancer keeps sending login traffic to the stopped node. For the full steps, see [Cluster](/docs/deploy/production/cluster). To stop every node for an update, see [Update a Production Instance](/docs/update/prod-instance).
+
+## Commands
+
+The macOS and Windows examples assume an installation directory of `/usr/local/fusionauth` and `\fusionauth`. Adjust the paths for your installation directory.
+
+<Tabs>
+  <TabItem label="Docker">
+
+Run these commands from the directory that contains your `docker-compose.yml` file. To start every service in the background:
+
+```shell-session
+docker compose up -d
+```
+
+To stop every service and keep the data volumes:
+
+```shell-session
+docker compose stop
+```
+
+Don't use `docker compose down -v` on a production instance. The `-v` flag deletes the database volume.
+
+  </TabItem>
+  <TabItem label="Kubernetes">
+
+Kubernetes starts and stops pods for you. To restart every FusionAuth pod one at a time, restart the deployment. Replace `my-release-fusionauth` with the name of your deployment:
+
+```shell-session
+kubectl rollout restart deployment/my-release-fusionauth
+```
+
+To stop FusionAuth, scale the deployment to zero replicas:
+
+```shell-session
+kubectl scale deployment/my-release-fusionauth --replicas=0
+```
+
+To start FusionAuth again, scale the deployment back to the number of replicas you run.
+
+  </TabItem>
+  <TabItem label="Linux">
+
+FusionAuth installation using Debian or RPM packages also installs the `fusionauth-search` and `fusionauth-app` services. Use these services to start and stop FusionAuth.
+
+To start FusionAuth:
+
+```shell-session
+sudo systemctl start fusionauth-search
+```
+
+```shell-session
+sudo systemctl start fusionauth-app
+```
+
+To stop Fusionauth:
+
+```shell-session
+sudo systemctl stop fusionauth-app
+```
+
+```shell-session
+sudo systemctl stop fusionauth-search
+```
+
+If you'd prefer to use the native Elastic and Tomcat scripts, follow the macOS instructions.
+
+  </TabItem>
+  <TabItem label="macOS">
+To start FusionAuth:
+
+```shell-session
+/usr/local/fusionauth/fusionauth-search/elasticsearch/bin/elasticsearch
+```
+
+```shell-session
+/usr/local/fusionauth/fusionauth-app/bin/start.sh
+```
+
+To stop FusionAuth:
+
+```shell-session
+/usr/local/fusionauth/fusionauth-app/bin/stop.sh
+```
+
+Always stop Elasticsearch last. If you started Elasticsearch using the `elasticsearch` script, shut Elasticsearch down by closing that terminal window.
+  </TabItem>
+  <TabItem label="macOS with Homebrew">
+To start FusionAuth:
+
+```shell-session
+brew services start opensearch
+```
+
+```shell-session
+brew services start fusionauth-app
+```
+
+To stop FusionAuth:
+
+```shell-session
+brew services stop fusionauth-app
+```
+
+```shell-session
+brew services stop opensearch
+```
+  </TabItem>
+  <TabItem label="Windows">
+
+  	On Windows, you can run FusionAuth using either native PowerShell scripts, or Windows services.
+
+    <Tabs>
+	  <TabItem label="PowerShell scripts">
+To start FusionAuth:
+
+```powershell
+\fusionauth\fusionauth-search\elasticsearch\bin\elasticsearch.bat
+```
+
+```powershell
+\fusionauth\fusionauth-app\bin\start.ps1
+```
+
+To stop FusionAuth:
+
+```powershell
+\fusionauth\fusionauth-app\bin\stop.ps1
+```
+
+Always stop Elasticsearch last. If you started Elasticsearch using the `elasticsearch.bat` script, shut it down by closing that command window.
+      </TabItem>
+      <TabItem label="Windows Services">
+To start FusionAuth:
+
+```powershell
+net start FusionAuthSearch
+```
+
+```powershell
+net start FusionAuthApp
+```
+
+To stop FusionAuth:
+
+```powershell
+net stop FusionAuthApp
+```
+
+```powershell
+net stop FusionAuthSearch
+```
+      </TabItem>
+	</Tabs>
+  </TabItem>
+</Tabs>

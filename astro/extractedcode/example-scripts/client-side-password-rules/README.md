@@ -1,6 +1,6 @@
 ## Client-side Password Validation Example
 
-FusionAuth provides password rules, configurable at the [tenant level](https://fusionauth.io/docs/get-started/core-concepts/tenants). These include checks on a password value such as:
+FusionAuth provides password rules, configurable at the [tenant level](https://fusionauth.io/docs/concepts/types/tenants). These include checks on a password value such as:
 
 * a password must have one special character
 * a password length must be at least 12 characters, in lowercase, uppercase, or a combination including special characters
