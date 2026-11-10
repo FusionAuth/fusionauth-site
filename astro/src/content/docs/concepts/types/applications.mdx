@@ -87,6 +87,88 @@ Before you start your integration with FusionAuth, you need at least one Applica
   </APIField>
 </APIBlock>
 
+### View Integration Details
+
+After you save an Application, FusionAuth generates the URLs that your app or service provider needs to integrate with FusionAuth. To see the URLs, navigate to <Breadcrumb>Applications</Breadcrumb>, open the action menu for your Application, and select <Breadcrumb>View</Breadcrumb>:
+
+<Screenshot id="authenticate-application-list-view-menu" url="/admin/application/" alt="The View item in the action menu on the Applications page.">
+  <Highlight selector="[data-hl='view']" />
+</Screenshot>
+
+The View dialog shows two generated sections: **OAuth2 & OpenID Connect Integration details** and **SAML v2 Integration details**. The rest of the dialog repeats the Application's configuration.
+
+FusionAuth builds every URL in these sections from the address you used to open the Admin UI. If you open the Admin UI at `localhost` or an internal hostname, replace that host with the public FusionAuth URL your users reach.
+
+#### OAuth2 & OpenID Connect Integration Details
+
+<Screenshot id="application-view-oauth-details" url="/admin/application/" alt="The Application View dialog with the OAuth2 and OpenID Connect Integration details highlighted." height={1200}>
+  <Highlight selector="[data-hl='oauth-details']" />
+</Screenshot>
+
+<APIBlock>
+  <APIField name="Login URL">
+    A link that starts an Authorization Code grant for this Application at the [Authorize endpoint](/docs/apis/oauth/authorize). The dialog shows one Login URL for each of the Application's **Authorized redirect URLs**, or a `{your redirect URI here}` placeholder when the Application has none.
+
+    The URL contains only **`client_id`**, **`response_type`**, and **`redirect_uri`**. Add **`scope`** and **`state`**, and add **`code_challenge`** and **`code_challenge_method`** when the Application requires PKCE.
+  </APIField>
+  <APIField name="Registration URL">
+    The same link for the registration page, at `/oauth2/register`. The dialog shows this URL only when [self-service registration](#self-service-registration) is enabled.
+  </APIField>
+  <APIField name="Logout URL">
+    A link to the [Logout endpoint](/docs/apis/oauth/logout) for this Application.
+  </APIField>
+  <APIField name="Introspect endpoint">
+    The [Introspect endpoint](/docs/apis/oauth/introspect), for checking whether a token is active.
+  </APIField>
+  <APIField name="Token endpoint">
+    The [Token endpoint](/docs/apis/oauth/token), for exchanging an authorization code or refresh token for tokens.
+  </APIField>
+  <APIField name="Userinfo endpoint">
+    The [UserInfo endpoint](/docs/apis/oauth/userinfo), for reading claims about the user with an access token.
+  </APIField>
+  <APIField name="Device endpoint">
+    The [Device Authorize endpoint](/docs/apis/oauth/device), for starting the Device Authorization grant.
+  </APIField>
+  <APIField name="OpenID Connect Discovery">
+    The [OpenID Connect discovery document](/docs/apis/oauth/openid-configuration) for the Application's Tenant. Most OIDC libraries need only this URL and the client Id. Universal applications have no Tenant, so the dialog leaves out this URL for them.
+  </APIField>
+  <APIField name="JSON Web Key (JWK) Set">
+    The [JWKS endpoint](/docs/apis/oauth/jwks), which publishes the public keys for verifying token signatures.
+  </APIField>
+  <APIField name="Account URL">
+    A link to [self-service account management](/docs/users/account-management) for this Application. Replace `{your return URI here}` with the page in your app that the **Return to application** link opens.
+  </APIField>
+</APIBlock>
+
+#### SAML v2 Integration Details
+
+The dialog shows this section even when SAML is disabled for the Application, so you can give these values to a service provider before you configure SAML. Universal applications have no Tenant, so the section is empty for them. For setup steps, see [Host a SAML IdP](/docs/authentication/act-as-an-idp/host-saml-idp).
+
+<Screenshot id="authenticate-application-saml-view-dialog" url="/admin/application/" alt="The Application View dialog with the SAML v2 Integration details highlighted." height={1200}>
+  <Highlight selector="[data-hl='saml-details']" />
+</Screenshot>
+
+<APIBlock>
+  <APIField name="Entity Id">
+    The identifier of FusionAuth as a SAML identity provider, at `/samlv2/{tenantId}`. Every Application in a Tenant shares this value.
+  </APIField>
+  <APIField name="Login URL">
+    The single sign-on URL, where the service provider sends authentication requests.
+  </APIField>
+  <APIField name="Logout URL">
+    The single logout URL, where the service provider sends logout requests.
+  </APIField>
+  <APIField name="Metadata URL">
+    The identity provider metadata XML. Many service providers can import this URL instead of the separate values. The metadata includes the signing certificate.
+  </APIField>
+  <APIField name="NameIDFormat">
+    The default NameID format, `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`. FusionAuth uses this format when the authentication request doesn't name a format. FusionAuth also accepts the `persistent` and `unspecified` formats.
+  </APIField>
+  <APIField name="Initiate login URL">
+    The URL that starts an IdP-initiated login for this Application, at `/samlv2/initiate-login/{tenantId}/{clientId}`. The URL works only when **Enable IdP-initiated login** is enabled in the [Authentication Response](#authentication-response) settings.
+  </APIField>
+</APIBlock>
+
 ### Roles
 
 The <Breadcrumb>Roles</Breadcrumb> tab will only be available on the Add Application form. To manage roles after the Application has been created you will use the Manage Roles action.
@@ -471,7 +553,7 @@ The SAML configuration allows you to reveal FusionAuth as a SAML v2 Identity Pro
   <APIField name="Enable IdP-initiated login" optional defaults="false" since="1.41.0">
     When enabled, FusionAuth will be able to initiate a login request to a SAML v2 Service Provider.
 
-    Once enabled, open the View dialog or this application to view the integration URI. You will find this value in the view dialog in the SAML v2 Integration details, and the value will be named **Initiate login URL**:.
+    Once enabled, find the **Initiate login URL** in the [SAML v2 Integration details](#saml-v2-integration-details).
   </APIField>
   <APIField name="NameID format" optional defaults="Persistent" since="1.41.0">
     The NameId format to send in the AuthN response to the SAML v2 Service Provider. There are two valid values:

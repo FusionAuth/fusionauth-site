@@ -1,4 +1,5 @@
-import { preparation } from '../../kit.mjs';
+import { preparation, piedPiperAppId } from '../../kit.mjs';
+import { authShot } from '../../authentication/_shared.mjs';
 import { useDocsHost, keepFraming } from '../../get-started/_shared.mjs';
 
 async function leftoversApplicationList(page, ctx) {
@@ -21,7 +22,15 @@ async function pinTenantManagerId(page) {
   if (!pinned) throw new Error('Tenant manager row not found');
 }
 
+// the view dialog with its OAuth integration details boxed
+async function viewOauthDetails(page, ctx, { box, mark, openView, row }) {
+  await openView(`/ajax/application/view/${piedPiperAppId}`, 'OAuth2 & OpenID Connect Integration details');
+  await mark('data-row', 'oauth', '.prime-dialog.open h3', 'OAuth2 & OpenID Connect Integration details');
+  await box('oauth-details', [".prime-dialog.open h3[data-row='oauth']", await row('account', 'Account URL:')], 4);
+}
+
 export const shots = {
+  'application-view-oauth-details': authShot({ fixedHeight: null }, viewOauthDetails),
   'dashboard-applications-nav': { fixedHeight: null },
   'leftovers-application-list': { prepare: preparation({ beforeSizing: leftoversApplicationList }) },
   'application-list': { legacyVersion: true, prepare: preparation({ afterControls: pinTenantManagerId }) },
