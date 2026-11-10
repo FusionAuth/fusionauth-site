@@ -1,0 +1,91 @@
+---
+title: Add Login to an External App
+htmlTitle: Add FusionAuth Login to an External Application
+description: Learn how to let users log in to a third-party application, such as a SaaS product, with their FusionAuth accounts over OpenID Connect or SAML v2.
+tags: identity provider, single sign-on, sso, openid connect, oidc, saml v2, saml, third-party application, saas, external application
+order: 0
+---
+
+An external application is software you don't build, such as a SaaS product or an off-the-shelf tool. When the external application supports single sign-on, the external application can send users to FusionAuth to log in. FusionAuth acts as the identity provider, and users log in with their FusionAuth accounts. To add login to an application you build, see [Add Login to Your App](/docs/authentication/oauth/add-login-to-your-app).
+
+## Before You Begin
+
+You need:
+
+* Admin access to FusionAuth and to the single sign-on settings of the external application.
+* A FusionAuth URL that the external application and your users' browsers can reach. Most SaaS products require an `https` URL on the public internet.
+* A test user in the [[Tenant]] you plan to use.
+
+## Choose a Protocol
+
+Look in the external application's single sign-on settings for the supported protocols. The settings often appear under a name such as "SSO", "Identity Provider", or "Authentication". When the external application supports both OpenID Connect and SAML v2, use OpenID Connect. OpenID Connect needs fewer values and no certificate exchange.
+
+For step-by-step guides for specific products, see the [OpenID Connect integrations](/docs/authentication/act-as-an-idp/oidc) and the [SAML v2 integrations](/docs/authentication/act-as-an-idp/saml).
+
+Each external application needs its own [[Application]] in FusionAuth. Follow the section for your protocol to create the Application.
+
+## Configure OpenID Connect
+
+The external application acts as an OpenID Connect relying party. Most relying parties require the issuer in the tokens to match the FusionAuth URL. The setup wizard sets the issuer to the URL you used during setup, which might be `localhost`. Installs that skip the setup wizard, such as Kickstart installs, keep a placeholder such as `https://example.com`. New Tenants copy the issuer of the Default Tenant. To connect the external application to FusionAuth:
+
+1. Navigate to <Breadcrumb>Tenants</Breadcrumb> and click <IconButton icon="edit" /> next to your Tenant.
+1. On the <Breadcrumb>General</Breadcrumb> tab, set **Issuer** to the FusionAuth URL, such as `https://auth.example.com`, and click <IconButton icon="save" />.
+1. In the external application, start adding an OpenID Connect identity provider. Copy the callback URL that the external application shows. The external application might call the URL the redirect URI or the sign-in redirect URL.
+1. When the external application requires `RS256` Id tokens and your Tenant signs tokens with an HMAC key, create an RSA key before you create the Application. See [Sign Tokens with an RSA Key](#sign-tokens-with-an-rsa-key).
+1. In FusionAuth, navigate to <Breadcrumb>Applications</Breadcrumb> and click <IconButton icon="add" />.
+1. Enter a **Name** and select the **Tenant** that holds the users who log in to the external application.
+1. Select the <Breadcrumb>OAuth</Breadcrumb> tab and add the callback URL to **Authorized redirect URLs**.
+1. When you created an RSA key, select the <Breadcrumb>JWT</Breadcrumb> tab and enable **Enable application-level JWT override**. Select the RSA key as the **Access token signing key** and the **Id token signing key**.
+1. Click <IconButton icon="save" />.
+1. On the <Breadcrumb>Applications</Breadcrumb> page, open the action menu for your Application and select <Breadcrumb>View</Breadcrumb>.
+1. Copy the **Client Id**, the **Client secret**, and the **OpenID Connect Discovery** URL from the dialog. For what each value means, see [OAuth2 & OpenID Connect Integration Details](/docs/concepts/types/applications#oauth2--openid-connect-integration-details).
+1. In the external application, enter the client Id, the client secret, and the discovery URL. Request the `openid`, `email`, and `profile` scopes.
+1. Save the identity provider in the external application.
+
+When the external application asks for the issuer instead of the discovery URL, enter the Tenant **Issuer**. When the external application asks for each endpoint separately, copy the **Token endpoint**, **Userinfo endpoint**, and **JSON Web Key (JWK) Set** values from the View dialog. For the authorization endpoint, copy the **Login URL** and remove the query string, so that only the `/oauth2/authorize` URL remains.
+
+### Sign Tokens with an RSA Key
+
+Installs that skip the setup wizard sign tokens with HMAC keys. New Tenants copy the keys of the Default Tenant. With an HMAC key, FusionAuth signs the Id token with the client secret, and the [JWKS endpoint](/docs/apis/oauth/jwks) doesn't publish the key. To check your Tenant, look at **Id token signing key** on the <Breadcrumb>JWT</Breadcrumb> tab of the Tenant. To create an RSA key for the Application:
+
+1. Navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>.
+1. Open the menu next to <Breadcrumb>Generate EC key pair</Breadcrumb> and select <Breadcrumb>Generate RSA key pair</Breadcrumb>.
+1. Enter a name and save the key.
+
+When you create the Application, select the RSA key on the <Breadcrumb>JWT</Breadcrumb> tab.
+
+## Configure SAML v2
+
+The external application acts as a SAML service provider. To connect the external application to FusionAuth:
+
+1. In the external application, start adding a SAML identity provider. Copy the service provider entity Id and the Assertion Consumer Service (ACS) URL. Some external applications call the entity Id the audience or the issuer.
+1. In FusionAuth, navigate to <Breadcrumb>Applications</Breadcrumb> and click <IconButton icon="add" />.
+1. Enter a **Name** and select the **Tenant** that holds the users who log in to the external application.
+1. Select the <Breadcrumb>SAML</Breadcrumb> tab and enable **Enable SAML v2**.
+1. Set **Issuer** to the entity Id from the external application.
+1. Add the ACS URL to **Authorized redirect URLs**.
+1. Click <IconButton icon="save" />. FusionAuth generates a signing key for the Application.
+1. On the <Breadcrumb>Applications</Breadcrumb> page, open the action menu for your Application and select <Breadcrumb>View</Breadcrumb>.
+1. In the **SAML v2 Integration details** section, copy the **Metadata URL**. For the other values in the section, see [SAML v2 Integration Details](/docs/concepts/types/applications#saml-v2-integration-details).
+1. In the external application, import the metadata URL. When the external application can't import metadata, enter the **Entity Id** and **Login URL** instead. Then download the certificate: navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>, open the action menu for the key named `SAML key generated for application` followed by your Application name, and select <Breadcrumb>Download</Breadcrumb>.
+1. Save the identity provider in the external application.
+
+By default, the assertion identifies the user by email address and contains only the user's Id and email address. When the external application needs other attributes, such as names or roles, add a [SAML v2 populate lambda](/docs/lambdas/tokens/samlv2-response-populate) and select the lambda as the **Populate lambda** on the <Breadcrumb>SAML</Breadcrumb> tab. For the NameID formats FusionAuth supports and the other SAML settings, see [Host a SAML v2 Identity Provider](/docs/authentication/act-as-an-idp/host-saml-idp).
+
+## Give Users Access
+
+Any user in the Tenant can log in to the external application by default. To limit login to users with a [[Registration]] for the Application, enable **Require registration to complete OAuth authorization** on the <Breadcrumb>OAuth</Breadcrumb> tab of the Application. The setting applies to SAML v2 logins too.
+
+To register a user, navigate to <Breadcrumb>Users</Breadcrumb>, click <Icon name="user" /> next to the user, and click **Add registration**. With OpenID Connect, FusionAuth adds the user's roles for the Application to the tokens as the **`roles`** claim. See [Registrations](/docs/concepts/types/registrations).
+
+## Confirm the Login
+
+To confirm that login works:
+
+1. Open the external application in a private browser window.
+1. Start single sign-on from the external application's login page.
+1. Confirm that the browser shows the FusionAuth login page.
+1. Log in as the test user.
+1. Confirm that the browser returns to the external application and that the test user is logged in.
+
+When the login fails, enable **Enable debug logging** on the <Breadcrumb>OAuth</Breadcrumb> or <Breadcrumb>SAML</Breadcrumb> tab of the Application and try again. Read the details in <Breadcrumb>System -> Event Log</Breadcrumb>. Turn off debug logging when you finish.
