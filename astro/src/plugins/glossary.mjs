@@ -47,3 +47,31 @@ export function findGlossaryEntry(name) {
 }
 
 export const glossaryAnchorHref = (entry) => `${GLOSSARY_PATH}#${entry.anchor}`;
+
+// optimal string alignment distance: a swap of adjacent letters counts as one edit
+function editDistance(a, b) {
+  let prev2 = [];
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) cur[j] = Math.min(cur[j], prev2[j - 2] + 1);
+    }
+    prev2 = prev;
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+/** up to 3 canonical ids that look like a misspelling of, or contain, `name` */
+export function suggestGlossaryTerms(name) {
+  const needle = name.trim().toLowerCase();
+  const best = new Map();
+  for (const [key, id] of lookup) {
+    const contains = Math.min(key.length, needle.length) >= 4 && (key.includes(needle) || needle.includes(key));
+    const score = contains ? 1 : editDistance(needle, key);
+    if (score <= Math.max(2, Math.floor(needle.length / 4)) && score < (best.get(id) ?? Infinity)) best.set(id, score);
+  }
+  return [...best].sort((a, b) => a[1] - b[1]).slice(0, 3).map(([id]) => id);
+}

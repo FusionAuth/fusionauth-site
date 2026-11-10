@@ -175,41 +175,18 @@ sequenceDiagram
 
 ### Glossary Terms
 
-The shared glossary defines FusionAuth objects and identity standards, such as Default Tenant and RS256. The [Glossary](astro/src/content/docs/concepts/glossary.mdx) page lists every term. Add a term only when a reader needs the definition to follow the docs. Leave out general tools such as Docker, and spellings that belong in [Terminology](#terminology).
-
-To add or edit a term, edit `astro/src/data/glossary.json`. Each key is the name of a term. Write the name in full and in title case: `JSON Web Token`, not `JWT`. Each entry takes the following fields:
-
-* **`definition`**: The plain-text definition that the tooltip and the Glossary page show. Write one or two sentences, and don't use markdown. Required.
-* **`link`**: The page that explains the term, as a root-relative docs path or an `https://` URL. Required.
-* **`abbreviations`**: An array of abbreviations, such as `["JWT"]`. Optional.
-* **`aliases`**: An array of other names for the term. Optional.
-* **`standards`**: An array of the standards that define the term. Each standard has a **`name`**, such as `RFC 7519`, and a **`url`**. Optional.
-
-The build fails when an entry has an unknown field or is missing a required field, or when two entries share a name, alias, or abbreviation.
-
-To mark a term in an MDX page, wrap the term in double square brackets:
+Wrap a term from the [Glossary](astro/src/content/docs/concepts/glossary.mdx) in double square brackets. The term renders as a link, with the definition in a tooltip. Add `::` and a label to display different text:
 
 ```markdown
 FusionAuth creates the [[Default Tenant]] during installation.
+Each [[Tenant::tenant]] has its own settings.
 ```
 
-The term renders as a link to the term's `link` page, with the definition in a tooltip. External links and links to the current page go to the term's Glossary entry instead. The name between the brackets can be the term, an alias, or an abbreviation, in any case. The page shows the name as written, so `[[JWT]]` displays `JWT`.
+The name can be the term, an alias, or an abbreviation, in any case. Mark a term where a reader might not know the term, usually at the first use on a page. Terms don't work in headings or links. In an `.astro` file, use `<GlossaryTerm term="Default Tenant" />`.
 
-To display different text, add a pipe and the label after the name:
+To add a term, add an entry to `astro/src/data/glossary.json`. Key the entry by the full name in title case, such as `JSON Web Token`. Each entry needs a plain-text **`definition`** of one or two sentences and a **`link`** to the page that explains the term. The optional fields are **`abbreviations`**, **`aliases`**, and **`standards`**, an array of `{ "name", "url" }` objects. Add only terms that readers need defined, not general tools such as Docker.
 
-```markdown
-Each [[Tenant|tenant]] has its own settings.
-```
-
-Inside a table, escape the pipe: `[[Tenant\|tenant]]`.
-
-Follow these rules:
-
-* Mark only the first use of a term on a page. The build fails when a page marks the same term twice.
-* Don't mark terms in headings or inside links. The build fails in both cases.
-* Use the syntax in MDX files only. To show literal double brackets in prose, use inline code.
-
-In an `.astro` file, import the component from `src/components/GlossaryTerm.astro`, and pass the name of the term in **`term`**: `<GlossaryTerm term="Default Tenant">Default Tenant</GlossaryTerm>`.
+The build fails on an unknown term and suggests the closest matches.
 
 ## Authoring Reference
 
