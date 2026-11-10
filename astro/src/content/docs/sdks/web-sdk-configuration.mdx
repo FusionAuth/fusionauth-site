@@ -1,0 +1,135 @@
+---
+title: Web SDK Configuration
+htmlTitle: React, Angular, and Vue SDK Configuration Reference
+description: Learn about every configuration option the FusionAuth React, Angular, and Vue SDKs accept.
+tags: react sdk, angular sdk, vue sdk, javascript sdk, sdk configuration, hosted backend, dpop, spa authentication, client library
+order: 40
+---
+
+The [React](/docs/sdks/react-sdk), [Angular](/docs/sdks/angular-sdk), and [Vue](/docs/sdks/vue-sdk) SDKs share one set of configuration options. This page lists every option for React SDK `2.7.0`, Angular SDK `2.1.0`, and Vue SDK `1.4.0`.
+
+## Pass the Configuration
+
+Each SDK takes the options in a different place:
+
+* React: pass the options as props to `<FusionAuthProvider>`. The type is `FusionAuthProviderConfig`.
+* Angular: pass the options to `FusionAuthModule.forRoot()`. The type is `FusionAuthConfig`.
+* Vue: pass the options to `app.use(FusionAuthVuePlugin, config)`. The type is `FusionAuthConfig`.
+
+## Required Options
+
+<APIBlock>
+  <APIField name="serverUrl" type="String" required>
+    The origin of the server that handles login, logout, and token refresh. By default, this server is FusionAuth, which provides the [hosted backend](/docs/apis/hosted-backend). In DPoP mode, this server must be FusionAuth.
+
+    The SDK replaces any path in this URL with the endpoint paths below. Set the paths with **`loginPath`** and the other path options, not in **`serverUrl`**.
+  </APIField>
+  <APIField name="clientId" type="String" required>
+    The client Id of your FusionAuth [[Application]]. The SDK sends the client Id as the `client_id` query parameter on every request.
+  </APIField>
+  <APIField name="redirectUri" type="String" required>
+    The URL FusionAuth redirects the browser to after login and registration. Add this URL to the **Authorized redirect URLs** of the Application.
+  </APIField>
+</APIBlock>
+
+## Login and Logout Options
+
+<APIBlock>
+  <APIField name="scope" type="String" optional>
+    The OAuth scopes to request, separated by spaces, such as `openid offline_access`. When you leave out **`scope`**, the server uses the default scopes. The hosted backend requests `openid offline_access`.
+  </APIField>
+  <APIField name="authParams" type="Array" optional>
+    Extra query parameters for the login and register requests, as an array of objects. For example, `[{ idp_hint: '82339786-3dff-42a6-aac6-1f1ceecb6c46' }]` adds `idp_hint` to the request. The SDK ignores **`authParams`** in DPoP mode.
+  </APIField>
+  <APIField name="postLogoutRedirectUri" type="String" optional>
+    The URL FusionAuth redirects the browser to after logout. Defaults to **`redirectUri`**. Add this URL to the **Authorized redirect URLs** of the Application.
+  </APIField>
+  <APIField name="onRedirect" type="Function" optional>
+    A function the SDK calls when the browser returns from login or registration. The SDK passes the **`state`** value from the login or register call.
+  </APIField>
+  <APIField name="onLoginFailure" type="Function" optional>
+    A function the SDK calls with an `Error` when the code exchange fails after login. The SDK calls this function only in DPoP mode, because the hosted backend handles the exchange in hosted backend mode.
+  </APIField>
+</APIBlock>
+
+## Token Options
+
+<APIBlock>
+  <APIField name="shouldAutoRefresh" type="Boolean" optional defaults="false">
+    When `true`, the SDK refreshes the access token before the token expires. Refresh requires a refresh token, so request the `offline_access` scope.
+  </APIField>
+  <APIField name="autoRefreshSecondsBeforeExpiry" type="Number" optional defaults="10">
+    How many seconds before the access token expires the SDK refreshes the token. Applies only when **`shouldAutoRefresh`** is `true`.
+  </APIField>
+  <APIField name="onAutoRefreshFailure" type="Function" optional>
+    A function the SDK calls with an `Error` when an automatic refresh fails.
+  </APIField>
+  <APIField name="shouldAutoFetchUserInfo" type="Boolean" optional defaults="false">
+    When `true`, the SDK fetches the user's profile after login. React and Vue only. In Angular, call `FusionAuthService.getUserInfo()` instead.
+  </APIField>
+  <APIField name="accessTokenExpireCookieName" type="String" optional defaults="app.at_exp">
+    The name of the cookie that holds the access token expiration time, in seconds since the UNIX epoch. The SDK reads this cookie to decide whether the user is logged in. Change the name when your own backend sets a different cookie. The Angular and Vue types don't declare this option, but both SDKs read the option.
+  </APIField>
+</APIBlock>
+
+## Endpoint Path Options
+
+The SDK appends these paths to **`serverUrl`**. The defaults match the [hosted backend](/docs/apis/hosted-backend). Change the paths when you run your own backend, as described in [Use Your Own Backend](#use-your-own-backend).
+
+<APIBlock>
+  <APIField name="loginPath" type="String" optional defaults="/app/login/">
+    The path the browser opens to start login.
+  </APIField>
+  <APIField name="registerPath" type="String" optional defaults="/app/register/">
+    The path the browser opens to start registration.
+  </APIField>
+  <APIField name="logoutPath" type="String" optional defaults="/app/logout/">
+    The path the browser opens to log out.
+  </APIField>
+  <APIField name="tokenRefreshPath" type="String" optional defaults="/app/refresh/">
+    The path the SDK calls to refresh the access token.
+  </APIField>
+  <APIField name="mePath" type="String" optional defaults="/app/me/">
+    The path the SDK calls to fetch the user's profile.
+  </APIField>
+</APIBlock>
+
+## DPoP Options
+
+DPoP mode requires React SDK `2.7.0`, Angular SDK `2.1.0`, or Vue SDK `1.4.0`, and FusionAuth `1.63.0` or later. For setup, see [Use DPoP in a Browser App](/docs/authentication/oauth/dpop/browser-app).
+
+<APIBlock>
+  <APIField name="useDpop" type="Boolean" optional defaults="false">
+    When `true`, the SDK calls the FusionAuth OAuth endpoints directly and binds tokens to a key pair in the browser. The SDK ignores the endpoint path options in DPoP mode.
+  </APIField>
+  <APIField name="dpopTokenStorage" type="String" optional defaults="localStorage">
+    Where the SDK stores tokens in DPoP mode. `localStorage` keeps the user logged in across page reloads. `memory` clears the tokens on reload. The SDK stores tokens under a key that includes the client Id, so two Applications on the same origin keep separate tokens.
+  </APIField>
+</APIBlock>
+
+## Server-Side Rendering Options
+
+<APIBlock>
+  <APIField name="nextCookieAdapter" type="Function" optional>
+    React only. The `useCookies` function from the [`next-client-cookies`](https://www.npmjs.com/package/next-client-cookies) package, so the SDK can read cookies during Next.js server rendering. See the [React SDK](/docs/sdks/react-sdk#configuration-with-nextjs).
+  </APIField>
+  <APIField name="nuxtUseCookie" type="Function" optional>
+    Vue only. The Nuxt `useCookie` function, so the SDK can read cookies during Nuxt server rendering. See the [Vue SDK](/docs/sdks/vue-sdk#configuring-with-nuxt).
+  </APIField>
+</APIBlock>
+
+## Use Your Own Backend
+
+To use your own backend instead of the hosted backend, set **`serverUrl`** to your backend and implement the endpoints the SDK calls:
+
+| Option | Request | Query parameters | Expected result |
+|---|---|---|---|
+| **`loginPath`** | Browser navigation | `client_id`, `redirect_uri`, `scope`, `state`, and any **`authParams`** | Start the OAuth Authorization Code grant and set the session cookies. |
+| **`registerPath`** | Browser navigation | Same as **`loginPath`** | Start registration and set the session cookies. |
+| **`logoutPath`** | Browser navigation | `client_id`, `post_logout_redirect_uri` | Clear the session cookies and log the user out of FusionAuth. |
+| **`tokenRefreshPath`** | `POST` with cookies, `Content-Type: text/plain` | `client_id` | Refresh the tokens, update the cookies, and return a `2xx` status. |
+| **`mePath`** | `GET` with cookies | None | Return the user's profile as JSON. |
+
+After login and each refresh, set a cookie that JavaScript can read, with the name in **`accessTokenExpireCookieName`** and the access token expiration time in seconds since the UNIX epoch. Without this cookie, the SDK treats the user as logged out.
+
+For an example backend, see the [FusionAuth JavaScript SDK Express server](https://github.com/FusionAuth/fusionauth-javascript-sdk-express).
