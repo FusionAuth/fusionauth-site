@@ -21,7 +21,7 @@ This QuickStart creates an Express.js server with a `write` endpoint to store da
 
 This QuickStart requires:
 
-* [Node.js](https://nodejs.org/en/download) 26 or later
+* [Node.js](https://nodejs.org/en/download) 22 or later
 * [Docker](https://docs.docker.com/get-started/get-docker) 23 or later
 * [curl](https://curl.se/download.html), command line tool and library for making HTTP requests.
 
@@ -48,8 +48,6 @@ The repository contains:
 
 * `fusionauth`, a preconfigured version of FusionAuth
 * `complete-application`, a finished runnable version of the API you will build in this guide
-
-If you are not using Linux, then start your container runtime, such as Docker Desktop, OrbStack, or Podman before running Docker Compose.
 
 To start a local instance of FusionAuth, run the following command:
 
@@ -86,9 +84,9 @@ In the steps below, you will create three files to form an Express.js API server
     ```shell-session
     mkdir api
     cd api
-    npm install express@5.3.0 jose@6.2.16 dotenv@18.0.10 # later versions might work, but we tested with these
+    npm install express@5.3.0 jose@6.2.16 dotenv@18.0.10
     ```
-    This creates a new directory to hold the API and installs Express.js
+    This creates a new directory to hold the API and installs Express.js, jose, and dotenv. Later versions might work, but we tested with these.
 
 1. Create a file called `.env` in the `api` directory and insert the content below:
     <ExtractedCode src="quickstart-javascript-express-api/complete-application/.env" lang="text"/>
@@ -102,18 +100,14 @@ In the steps below, you will create three files to form an Express.js API server
     <ExtractedCode src="quickstart-javascript-express-api/complete-application/api.mjs" lang="js"/>
     This Express server has one endpoint each for reading and writing, protected by `hasRole('reader')` or `hasRole('writer')` imported from the `security.mjs` file.
 
-1. In the terminal in the `api` directory that is running, start the Express server:
+1. In the same terminal, start the Express server:
     ```shell-session
     node api.mjs
     ```
 </Steps>
 
 <Aside type="caution">
-The example returns token validation details and internal error messages to API clients. In production, rather return generic error responses and log sensitive error details on the server.
-</Aside>
-
-<Aside type="caution">
-  The `.env` file contains passwords. In a real application, always add this file to your `.gitignore` file and never commit secrets to version control.
+The example returns token validation details and internal error messages to API clients. In production, return generic error responses instead, and log sensitive error details on the server.
 </Aside>
 
 ## Use the API
@@ -147,17 +141,17 @@ There are [several ways to acquire a token](/docs/authentication/oauth/) in Fusi
 
 1. Paste your full token from the previous step over the placeholder token containing the `...` below to call the `/read` endpoint and see what data the API has:
     ```shell-session
-    curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOi...rmGdDw'
+    curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA'
     ```
     The API returns `["1"]`.
 
 1. Call the write endpoint, replacing the token once again:
     ```shell-session
-    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOi...rmGdDw'
+    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA'
     ```
     The API returns `{"error":"You do not have a role with permissions to do this."}` because you are trying to access the endpoint while having the reader role but not the writer role. The endpoint is secure.
 
-1. Use the command from the step one to get a token for the writer user, by replacing `reader@example.com` with `writer@example.com`:
+1. Use the command from step one to get a token for the writer user, by replacing `reader@example.com` with `writer@example.com`:
     ```shell-session
     curl --location 'http://localhost:9011/api/login' \
     --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
@@ -170,12 +164,16 @@ There are [several ways to acquire a token](/docs/authentication/oauth/) in Fusi
     ```
 
 1. Now use the new writer token returned to call the write endpoint again:
-   ```shell-session
-    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOi...rmGdDw'
+    ```shell-session
+    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA'
     ```
     This time the API should return `"Write successful"`.
 
-1. Finally, if you call the read endpoint again with the initial reader token, you should see the new saved value returned: `["1","hello"]`
+1. Finally, call the read endpoint again with the reader token:
+    ```shell-session
+    curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA'
+    ```
+    The API returns the new saved value: `["1","hello"]`.
 
 </Steps>
 

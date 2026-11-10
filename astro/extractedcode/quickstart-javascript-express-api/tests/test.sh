@@ -31,10 +31,10 @@ docker logs -f app &
 LOGS_PID=$!
 
 echo "Waiting for FusionAuth to be ready..."
-until curl -sf http://localhost:9011/admin/ > /dev/null 2>&1; do
+timeout 480 bash -c 'until curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null; do
   echo "  Waiting for FusionAuth..."
   sleep 5
-done
+done'
 echo "FusionAuth is ready."
 
 echo "Waiting for app to be ready..."

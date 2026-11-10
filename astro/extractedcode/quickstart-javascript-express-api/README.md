@@ -3,11 +3,11 @@
 > [!WARNING]
 > This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/quickstart-javascript-express-api). Changes to files here will be overwritten by that automation. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
 
-This repository contains a locally hosted FusionAuth instance and an Express API. For full instructions, see the [FusionAuth Express API QuickStart](https://fusionauth.io/docs/get-started/quickstarts/api/quickstart-javascript-express-api).
+This repository contains a locally hosted FusionAuth instance and an Express API. For full instructions, see the [FusionAuth Express API QuickStart](https://fusionauth.io/docs/quickstarts/api/quickstart-javascript-express-api).
 
 ## Dependencies
 
-* Node.js 26 or later.
+* Node.js 22 or later.
 * Docker 23 or later.
 
 ## Start FusionAuth

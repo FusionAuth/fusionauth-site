@@ -10,7 +10,7 @@ app.use(express.urlencoded({ extended: false }));
 router.get('/read', hasRole('reader'), function (req, res) { return res.json([...data]); });
 
 router.post('/write', hasRole('writer'), function (req, res) {
-  if (!req.body.value) { return res.status(400).json({ error: 'Provide a value to write.' }); }
+  if (!req.body?.value) { return res.status(400).json({ error: 'Provide a value to write.' }); }
   data.add(req.body.value);
   return res.json('Write successful');
 });
