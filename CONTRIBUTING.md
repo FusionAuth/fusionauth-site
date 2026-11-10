@@ -184,7 +184,7 @@ Each [[Tenant::tenant]] has its own settings.
 
 The name can be the term, an alias, or an abbreviation, in any case. Mark a term where a reader might not know the term, usually at the first use on a page. Terms don't work in headings or links. In an `.astro` file, use `<GlossaryTerm term="Default Tenant" />`.
 
-To add a term, add an entry to `astro/src/data/glossary.json`. Key the entry by the full name in title case, such as `JSON Web Token`. Each entry needs a plain-text **`definition`** of one or two sentences and a **`link`** to the page that explains the term. The optional fields are **`abbreviations`**, **`aliases`**, and **`standards`**, an array of `{ "name", "url" }` objects. Add only terms that readers need defined, not general tools such as Docker.
+To add a term, add an entry to `astro/src/data/glossary.json`. Key the entry by the full name in title case, such as `JSON Web Token`. Each entry needs a plain-text **`definition`** of one or two sentences and a **`link`** to the page that explains the term. The optional fields are **`abbreviations`**, **`aliases`**, and **`standards`**, an array of `{ "name", "url" }` objects. Add only terms that readers need defined. Add a general tool only when FusionAuth integrates with the tool tightly, such as Elasticsearch or Kafka, not Docker.
 
 The build fails on an unknown term and suggests the closest matches.
 
