@@ -12,7 +12,7 @@ For full instructions, see the [FusionAuth Angular QuickStart](https://fusionaut
 
 ## Dependencies
 
-* [Node.js](https://nodejs.org/en/download) v26+
+* [Node.js](https://nodejs.org/en/download) v22.22.3+ or v24.15+
 * [Docker](https://docs.docker.com/get-started/get-docker/) v23+
 * On macOS and Windows, one of the following container management tools:
   * [OrbStack](https://docs.orbstack.dev/quick-start) (run `docker context use orbstack` after installation to use OrbStack for `docker compose` commands)
