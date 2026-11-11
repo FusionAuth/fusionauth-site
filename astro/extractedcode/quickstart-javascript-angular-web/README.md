@@ -1,65 +1,47 @@
-# Quickstart: Angular app with FusionAuth
+# FusionAuth QuickStart: Angular SPA
 
 > [!WARNING]
 > This repository is generated from content that lives at [github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/quickstart-javascript-angular-web). Changes to files here _will be overwritten by that automation_. File an issue or pull request with [fusionauth-site](https://github.com/FusionAuth/fusionauth-site) instead.
 
-This repository contains an Angular app that works with a locally running instance of [FusionAuth](https://fusionauth.io/), the authentication and authorization platform.
+This repository contains:
 
-## Setup
+- a locally-hosted FusionAuth authorization server that runs in a container group
+- frontend Angular code for each step of the QuickStart
 
-### Prerequisites
-- [Node](https://nodejs.org/en/download/): This will be needed to run the Angular app.
-- [Docker](https://www.docker.com): The quickest way to stand up FusionAuth.
-  - (Alternatively, you can [Install FusionAuth Manually](https://fusionauth.io/docs/v1/tech/installation-guide/)).
+For full instructions, see the [FusionAuth Angular QuickStart](https://fusionauth.io/docs/get-started/quickstarts/spa/quickstart-javascript-angular-web).
 
-### FusionAuth Installation via Docker
+## Dependencies
 
-In the root of this project directory (next to this README) are two files [a Docker compose file](./docker-compose.yml) and an [environment variables configuration file](./.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
+* [Node.js](https://nodejs.org/en/download) v22.22.3+ or v24.15+
+* [Docker](https://docs.docker.com/get-started/get-docker/) v23+
+* On macOS and Windows, one of the following container management tools:
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (run `docker context use orbstack` after installation to use OrbStack for `docker compose` commands)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
+  * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
-```
-docker compose up -d
-```
+## Install and Start FusionAuth
 
-The FusionAuth configuration files also make use of a unique feature of FusionAuth, called [Kickstart](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart): when FusionAuth comes up for the first time, it will look at the [Kickstart file](./kickstart/kickstart.json) and mimic API calls to configure FusionAuth for use when it is first run. 
+To install and run FusionAuth locally:
 
-> **NOTE**: If you ever want to reset the FusionAuth system, delete the volumes created by docker compose by executing `docker compose down -v`. 
+1. Navigate to the `backend_fusionauth` directory.
+1. Run the following Docker Compose command:
+   ```shell-session
+   docker compose up -d
+   ```
+2. Once Docker Compose completes startup, you should see the `backend_fusionauth` container group in your container management tool. This group contains containers called `fusionauth` and `db`. To access FusionAuth, visit [http://localhost:9011/admin](http://localhost:9011/admin).
+3. You can access your FusionAuth admin dashboard with the username `admin@example.com` and the password `password`.
 
-FusionAuth will be initially configured with these settings:
+## Set Up the Angular App
 
-* Your client Id is: `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
-* Your client secret is: `super-secret-secret-that-should-be-regenerated-for-production`
-* Your example username is `richard@example.com` and your password is `password`.
-* Your admin username is `admin@example.com` and your password is `password`.
-* Your fusionAuthBaseUrl is 'http://localhost:9011/'
+To run any step of the QuickStart:
 
-You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
-
-### Angular complete-application
-
-The `complete-application` directory contains a minimal Angular app configured to authenticate with locally running FusionAuth.
-
-* If you want to use your own server to perform the OAuth token exchange, update the `serverUrl` property of your [config object](https://github.com/FusionAuth/fusionauth-quickstart-javascript-angular-web/blob/main/complete-application/src/app/app.module.ts). See [example server implementation](https://github.com/FusionAuth/fusionauth-javascript-sdk-express).
-
-Install dependencies and run the Angular app with:
-```
-cd complete-application
-npm i
-npm start
-```
-
-Now vist the Angular app at [http://localhost:4200](http://localhost:4200)
-You can log in with a user preconfigured during Kickstart, `richard@example.com` with the password of `password`.
-
-### Further Information
-
-Visit https://fusionauth.io/quickstarts/quickstart-javascript-angular-web for a step by step guide on how to build this Angular app integrated with FusionAuth from scratch.
-
-### Troubleshooting
-
-* I get `This site can’t be reached  localhost refused to connect.` when I click the Login button
-
-Ensure FusionAuth is running in the Docker container.  You should be able to login as the admin user, `admin@example.com` with the password of `password` at http://localhost:9011/admin
-
-### Maintaining this repo
-
-> Please note that code snippets from this repository are pulled into [this tutorial](https://fusionauth.io/docs/quickstarts/quickstart-javascript-angular-web) on the fusionauth site. Please consider this when making changes here.
+1. Navigate into a `frontend_steps` folder, such as `frontend_steps/3_fetch_user_data`.
+1. Run the following command to install dependencies:
+   ```shell-session
+   npm install
+   ```
+1. Run the following command to start the app:
+   ```shell-session
+   npx @angular/cli@22.2.6 serve --host=0.0.0.0 --port=3000
+   ```
+2. To use the app, visit http://localhost:3000.

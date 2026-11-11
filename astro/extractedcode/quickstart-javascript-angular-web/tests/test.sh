@@ -3,71 +3,58 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-LOGS_PID=""
-READINESS_TIMEOUT=300
+
+# Initialised up front so cleanup stays safe under `set -u` if compose
+# validation, app startup/build, or pulling fails. Otherwise cleanup aborts
+# before docker compose down.
+APP_PID=""
+BACKEND_DIR="$PROJECT_DIR/backend_fusionauth"
 
 cleanup() {
   echo "Cleaning up..."
-  [ -n "$LOGS_PID" ] && kill "$LOGS_PID" 2>/dev/null || true
-  docker stop angular 2>/dev/null || true
-  # keeps build output out of snippet extraction; containers write it as root, so delete it from one
-  docker run --rm -v "$PROJECT_DIR/complete-application":/app node:20 rm -rf /app/.angular
-  cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
+  [ -n "$APP_PID" ] && kill "$APP_PID" 2>/dev/null || true
+  docker stop angular-app-test 2>/dev/null || true
+  (cd "$BACKEND_DIR" && docker compose down -v) 2>/dev/null || true
 }
 trap cleanup EXIT
 
-# wait_for <description> <command...> - poll until the command succeeds or the
-# timeout expires, failing loudly rather than hanging.
-wait_for() {
-  local description="$1"; shift
-  local deadline=$(( SECONDS + READINESS_TIMEOUT ))
-  until "$@" > /dev/null 2>&1; do
-    if [ "$SECONDS" -ge "$deadline" ]; then
-      echo "Timed out after ${READINESS_TIMEOUT}s waiting for ${description}." >&2
-      return 1
-    fi
-    echo "  Waiting for ${description}..."
-    sleep 5
-  done
-  echo "${description} is ready."
-}
-
-fusionauth_ready() {
-  curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null
-}
-
 echo "Validating docker compose config..."
-cd "$PROJECT_DIR"
-docker compose -f docker-compose.yml config > /dev/null
+(cd "$BACKEND_DIR" && docker compose config > /dev/null)
+
+# Verify build of every step.
+for stepDir in "$PROJECT_DIR"/frontend_steps/*/; do
+  stepName=$(basename "${stepDir%/}")
+  echo "Building Angular step $stepName..."
+  docker run --rm -v "$stepDir:/app" -w /app node:26 sh -c "npm ci && npx @angular/cli@22.2.6 build"
+done
 
 echo "Pulling latest FusionAuth image..."
-docker compose pull
+(cd "$BACKEND_DIR" && docker compose pull)
 
 echo "Starting FusionAuth..."
-docker compose up -d
-
-echo "Starting Angular app..."
-docker run --network host --name angular --rm -e NG_CLI_ANALYTICS=false -v "$PROJECT_DIR/complete-application":/app -w /app node:20 bash -c \
-  "npm ci && npx ng serve --host 0.0.0.0 --port 4200" &
-until docker inspect angular > /dev/null 2>&1; do
-  sleep 1
-done
-docker logs -f angular &
-LOGS_PID=$!
+(cd "$BACKEND_DIR" && docker compose up -d)
 
 echo "Waiting for FusionAuth to be ready..."
-wait_for "FusionAuth" fusionauth_ready
+timeout 480 bash -c 'until curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null; do
+  echo "  Waiting for FusionAuth..."
+  sleep 5
+done'
+echo "FusionAuth is ready."
 
-angular_ready() {
-  curl -sf http://localhost:4200
-}
+# But test only the final step, 3.
+echo "Starting Angular app (final step: 3_fetch_user_data)..."
+docker run --network host --name angular-app-test --rm -v "$PROJECT_DIR/frontend_steps/3_fetch_user_data":/app -w /app node:26 sh -c "npm ci && npx @angular/cli@22.2.6 serve --host=0.0.0.0 --port=3000" &
+APP_PID=$!
 
 echo "Waiting for Angular app to be ready..."
-wait_for "Angular app" angular_ready
+timeout 120 bash -c 'until curl -sf http://localhost:3000 > /dev/null 2>&1; do
+  echo "  Waiting for Angular app..."
+  sleep 2
+done'
+echo "Angular app is ready."
 
 echo "Running Playwright tests..."
-cd "$SCRIPT_DIR"
-docker run --network host --name playwright-test --rm -e NODE_PATH=/usr/lib/node_modules -v "$SCRIPT_DIR/integration.spec.js":/tests/integration.spec.js mcr.microsoft.com/playwright:v1.62.0 bash -c "npm install -g @playwright/test@1.62.0 && playwright test /tests/integration.spec.js"
+docker run --network host --name playwright-test --rm -e NODE_PATH=/usr/lib/node_modules -v "$SCRIPT_DIR:/tests" -w /tests mcr.microsoft.com/playwright:v1.62.0 bash -c "npm install -g @playwright/test@1.62.0 && playwright test integration.spec.js"
 TEST_EXIT_CODE=$?
 
 exit $TEST_EXIT_CODE

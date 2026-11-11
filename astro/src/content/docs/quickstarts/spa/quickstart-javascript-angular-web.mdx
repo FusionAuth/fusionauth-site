@@ -1,225 +1,251 @@
 ---
 title: Angular
-description: QuickStart integration of an Angular web application with FusionAuth.
-tags: angular quickstart, angular authentication, angular login, angular oauth, typescript authentication, spa authentication
 htmlTitle: FusionAuth QuickStart for Angular
-codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-angular-web/main
+description: QuickStart an Angular Web App with FusionAuth.
+tags: angular quickstart, angular authentication, angular login, angular oauth, javascript authentication, spa authentication
 icon: /img/icons/angular-spa.svg
 ---
-import HostedBackendWarning from 'src/content/docs/_shared/_hosted-backend-warning.md';
-import Intro from 'src/components/quickstarts/Intro.astro';
-import {Content as LoginArchitectureSdk} from 'src/components/quickstarts/LoginArchitectureSdk.mdx';
-import NextSteps from 'src/components/quickstarts/NextSteps.astro';
-import QuickstartTshirtCTA from 'src/components/quickstarts/QuickstartTshirtCTA.astro'
 
-<Intro technology="Angular"
-       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-javascript-angular-web"/>
+This QuickStart adds login and a protected page to an Angular web app using a preconfigured, local version of FusionAuth in the following steps:
+
+1. Create a new Angular app.
+1. Customize the app with home and account pages.
+1. Add login to protect the account page.
+1. Add a button to the account page to fetch the user's information.
 
 ## Prerequisites
 
-* [Node v18](https://nodejs.org/en): This will be used to run the Angular application.
-* [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/get-started/install)).
+This QuickStart requires:
 
-This app has been tested with Node v18 and Angular v16.2.0. This example should work with other compatible versions of Node and Angular.
+* [Node.js](https://nodejs.org/en/download) 22.22.3 or later, or 24.15 or later
+* [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later
 
-## General Architecture
+<Aside type="tip">
+If you use macOS or Windows, you need one of the following container management tools:
+  * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use OrbStack for `docker compose` commands after installation, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
 
-<LoginArchitectureSdk />
+Be sure to open your container management tool to configure and install any dependencies needed by that tool, including Rosetta and Developer Tools on macOS.
 
-## Getting Started
+If you use Windows, replace `/` with `\` in all file paths.
+</Aside>
 
-In this section, you'll get FusionAuth up and running and use Angular CLI to create a new application.
+## Install and Run FusionAuth
 
-### Clone the Code
-First off, grab the code from the repository and change into that directory.
-
-```shell-session
-git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-angular-web.git
-```
-
-```shell-session
-cd fusionauth-quickstart-javascript-angular-web
-```
-
-### Run FusionAuth via Docker
-
-You'll find a Docker Compose file (`docker-compose.yml`) and an environment variables configuration file (`.env`) in the root directory of the repo.
-
-Assuming you have Docker installed, you can stand up FusionAuth on your machine with the following.
+To begin, clone the [GitHub repository for this QuickStart](https://github.com/FusionAuth/fusionauth-quickstart-javascript-angular-web) to your local machine:
 
 ```shell-session
-docker compose up -d
+git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-angular-web
 ```
 
-Here you are using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/develop/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
+The repository contains:
+
+* `backend_fusionauth`, a preconfigured version of FusionAuth
+* `frontend_steps`, a runnable version of each development step of the Angular application
+
+Navigate to `fusionauth-quickstart-javascript-angular-web/backend_fusionauth`:
+
+```shell-session
+cd fusionauth-quickstart-javascript-angular-web/backend_fusionauth
+```
+
+If you are not using Linux, then start your container runtime, such as Docker Desktop, OrbStack, or Podman before running Docker Compose.
+
+To start a local instance of FusionAuth, run the following command:
+
+```shell-session
+docker compose up
+```
 
 <Aside type="note">
-  If you ever want to reset the FusionAuth application, you need to delete the volumes created by Docker Compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
+During Docker Compose startup, the included `kickstart/kickstart.json` file uses the FusionAuth API to:
+
+* Generate an API key
+* Configure [[CORS]] (<Breadcrumb>Settings -> System -> CORS</Breadcrumb>)
+* Create your app ("Quick Start App") with appropriate settings and redirect URIs (<Breadcrumb>Applications -> Edit Application</Breadcrumb>)
+* Create an admin user (admin@example.com) with access to the FusionAuth Admin UI (<Breadcrumb>Users</Breadcrumb>)
+* Create a user (richard@example.com) and register the user with your app
+* Create a custom theme ("Quick Start Theme") using `backend_fusionauth/kickstart/css/styles.css` and apply it to your [[default tenant]] (<Breadcrumb>Customizations -> Themes</Breadcrumb>)
 </Aside>
 
-FusionAuth will be initially configured with these settings:
+Once Docker Compose initializes all containers, open a browser and navigate to the FusionAuth Admin UI at [http://localhost:9011/admin](http://localhost:9011/admin). Use the following admin account credentials to log in:
 
-* Your client Id is <code><LocalValue path="quickstart-javascript-angular-web/kickstart/kickstart.json" selector="$.variables.applicationId" /></code>.
-* Your client secret is <code><LocalValue path="quickstart-javascript-angular-web/kickstart/kickstart.json" selector="$.requests[?(@.url == '/api/application/#{applicationId}')].body.application.oauthConfiguration.clientSecret" /></code>.
-* Your example username is <code><LocalValue path="quickstart-javascript-angular-web/kickstart/kickstart.json" selector="$.variables.userEmail" /></code> and the password is <code><LocalValue path="quickstart-javascript-angular-web/kickstart/kickstart.json" selector="$.variables.userPassword" /></code>.
-* Your admin username is <code><LocalValue path="quickstart-javascript-angular-web/kickstart/kickstart.json" selector="$.variables.adminEmail" /></code> and the password is <code><LocalValue path="quickstart-javascript-angular-web/kickstart/kickstart.json" selector="$.variables.adminPassword" /></code>.
-* The base URL of FusionAuth is `http://localhost:9011/`.
+* Username: `admin@example.com`
+* Password: `password`
 
-You can log in to the [FusionAuth Admin UI](http://localhost:9011/admin) and look around if you want to, but with Docker and [[Kickstart]], everything will already be configured correctly.
+After authenticating, you should see the FusionAuth Admin UI, which shows information about active users, logins, registrations, and more:
+
+<Screenshot id="quickstart-admin-dashboard" url="/admin/" height={742} alt="The FusionAuth Admin UI." />
+
+## Create the Angular App
+
+Open a new terminal in the `fusionauth-quickstart-javascript-angular-web` directory to create the frontend app.
+
+1. Run the command below to create a new Angular app using a minimal template:
+    ```shell-session
+    npx @angular/cli@22.2.6 new app --defaults --inline-template --inline-style --style=css --skip-git --skip-tests --ssr=false --ai-config=none
+    ```
+1. Run the app:
+    ```shell-session
+    cd app
+    npx @angular/cli@22.2.6 serve --host=0.0.0.0 --port=3000
+    ```
+
+You can now browse to the web app at http://localhost:3000 (which matches the allowed authentication URL defined in the FusionAuth Kickstart file earlier).
+
+As you follow this guide, the app should hot-reload when you change the source files. But if the page doesn't refresh, press <kbd>Ctrl C</kbd> to stop the Angular server, then press <kbd>Up</kbd> and <kbd>Enter</kbd> to rerun the `serve` command.
+
+## Customize the Angular App
+
+### Update the Main App Component
+
+Replace the contents of `src/app/app.ts` with the following code:
+
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/1_customized/src/app/app.ts" lang="ts"/>
+
+This deletes the placeholder welcome text on the home page.
+
+### Configure the Routes
+
+Replace the contents of `src/app/app.routes.ts` with the following code:
+
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/1_customized/src/app/app.routes.ts" lang="ts"/>
+
+The home page is displayed at `/`, and the account page at `/account`.
+
+### Create the Homepage
+
+Create `src/app/home.ts` with the following code:
+
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/1_customized/src/app/home.ts" lang="ts"/>
+
+The <Breadcrumb>Login</Breadcrumb> link navigates to the account page. You'll replace this navigation with the FusionAuth login flow in the next section.
+
+### Create the Account Page
+
+Create `src/app/account.ts` with the following code:
+
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/1_customized/src/app/account.ts" lang="ts"/>
+
+The <Breadcrumb>Logout</Breadcrumb> link returns to the homepage. You'll replace this navigation with the FusionAuth logout flow in the next section.
+
+### Update the Stylesheet
+
+Replace the contents of `src/styles.css` with the following CSS:
+
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/1_customized/src/styles.css" lang="css"/>
+
+## Add FusionAuth for Authentication
+
+In this section, you'll protect the account page by requiring users to log in.
+
+### Configure and Enable FusionAuth
+
+1. Open a new terminal in the `app` directory and run the following command to install the FusionAuth Angular SDK:
+
+   ```shell-session
+   npm install @fusionauth/angular-sdk@~2.1.0
+   ```
+
+1. Open `src/app/app.config.ts` and replace the file contents with the following code to:
+
+   * configure the FusionAuth Angular SDK
+   * register `FusionAuthModule` with Angular's application providers
+
+   <ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/2_fusionauth_added/src/app/app.config.ts" lang="ts"/>
 
 <Aside type="note">
-  If you want to see where the FusionAuth values came from, they can be found in the [FusionAuth app](http://localhost:9011/admin). The tenant Id is found on the Tenants page. To see the Client Id and Client Secret, go to the Applications page and click the `View` icon under the actions for the ChangeBank application. You'll find the Client Id and Client Secret values in the `OAuth configuration` section.
+This FusionAuth configuration specifies the following values:
+
+* `redirectUri`: URI to open after a successful login.
+* `postLogoutRedirectUri`: URI to open after logout.
+* `shouldAutoRefresh`: Set to automatically renew the access token.
+* `scope`: OAuth 2.0 permissions for the access token.
+* `clientId`: Id of the application in the FusionAuth instance.
+* `serverUrl`: Base URL for the FusionAuth authorization server.
+* `onRedirect`: Callback that executes when a redirect occurs.
 </Aside>
 
-<Aside type="caution">
-  The `.env` file contains passwords. In a real application, always add this file to your `.gitignore` file and never commit secrets to version control.
-</Aside>
+### Add Login and Logout to Homepage
 
-### Create a basic Angular application
+Open `src/app/home.ts` and replace the file contents with the following code to:
 
-Now you are going to create a basic Angular application using the Angular CLI. While this section builds a simple Angular application, you can use the same configuration to integrate your existing Angular application with FusionAuth.
+* use the FusionAuth Angular SDK to start login and logout
+* redirect authenticated users to the account page
+* display the authenticated user's email and logout button, or a login button when logged out
 
-```shell-session
-npx @angular/cli new changebank && cd changebank
-```
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/2_fusionauth_added/src/app/home.ts" lang="ts"/>
 
-You'll be prompted to answer a few questions about your application. You can choose the defaults for all of them.
+### Add Logout to Account Page
 
-#### Create the Application
+Open `src/app/account.ts` and replace the file contents with the following code to:
 
-We are going to use the [Hosted Backend](/docs/apis/hosted-backend) feature of FusionAuth, so you don't need to worry about setting up a backend server.
+* redirect logged-out users to the home page
+* retrieve and display the authenticated user's email
+* log the user out with the Angular SDK's `logout()` method
 
-<Aside type="caution">
-While this example uses localhost for your application and FusionAuth, there are complications if you plan to deploy using FusionAuth Cloud.
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/2_fusionauth_added/src/app/account.ts" lang="ts"/>
 
-  <HostedBackendWarning />
-</Aside>
+### Test Authentication
 
-First, install the FusionAuth Angular SDK:
+1. Open a _private browser window_ so you don't retain your login status from previous sections.
 
-```shell-session
-npm install @fusionauth/angular-sdk
-```
+1. Navigate to the Angular app at [http://localhost:3000](http://localhost:3000).
 
-Next, you'll need to configure the SDK with your FusionAuth URL and Client Id. You can do this by adding the following to your `src/app/app.module.ts` file inside the `imports: [ ]` section:
+   ![The landing page of the Angular app.](/img/quickstarts/react/landing-page.png)
 
-<ExtractedCode src="quickstart-javascript-angular-web/app.module.snippet.fusionAuthModuleConfiguration.ts" lang="typescript" />
+1. Click the <Breadcrumb>Login</Breadcrumb> button. Your browser should redirect to FusionAuth at `http://localhost:9011`.
 
-Don't forget to import the `FusionAuthModule` at the top of the file.
+   <Screenshot id="quickstart-login" url="/oauth2/authorize?client_id=5c8e2f4a-7b1d-4e9c-a3f6-0d2b8e7c1a94&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&prompt=login" alt="The FusionAuth login screen." />
 
-<ExtractedCode src="quickstart-javascript-angular-web/app.module.snippet.importAngularSDK.ts" lang="typescript" />
+1. Authenticate with the credentials for the user created in `backend_fusionauth/kickstart/kickstart.json`:
 
+   * Username: `richard@example.com`
+   * Password: `password`
 
-Our example application is going to have a home page, an account page and a page where someone can make change. The account and make change page will be protected and only visible to logged in users.
+FusionAuth validates the credentials, then redirects back to the `redirectUri` set in `src/app/app.config.ts`. The home page checks whether the user is logged in. After a successful login, the app navigates to the account page.
 
-#### Create a Home Page
+Right now, you should see the account page containing the placeholder text `User info will display here`:
 
-The next step is to get a basic home page up and running. We'll take this opportunity to copy in all the images and CSS style files that you'll need for the application.
+![The account page, not yet populated with user data.](/img/quickstarts/react/home-sans-data.png)
 
-Run the following copy commands to copy these files from the QuickStart repo into your project. This assumes that you checked the QuickStart repo out into the parent directory. If that's not the case, replace the `..` below with your actual repo location.
+Let's use the FusionAuth `/app/me` endpoint to fetch and display that user data instead of placeholder text.
 
-```shell-session
-cp -r ../complete-application/src/assets src && \
-cp -r ../complete-application/src/styles.css src
-```
+## Fetch User Data
 
-The home page will be a simple page with a welcome message and a login link. You can create a new component for this page with the Angular CLI:
+In this section, you'll use the [FusionAuth API](/docs/apis/hosted-backend#me) to retrieve and display user data.
 
-```shell-session
-npx ng generate component home-page --standalone
-```
+### Call the FusionAuth API
 
-Then, add the welcome message and login link to the `src/app/home-page/home-page.component.html` template by replacing the contents of that file with the below contents:
+1. Open `src/app/account.ts` and update the `Account` component to:
 
-<ExtractedCode src="quickstart-javascript-angular-web/complete-application/src/app/home-page/home-page.component.html" lang="html" />
+   * add a signal for the user's name and birthdate
+   * fetch the user's profile from `/app/me` when the button is clicked
+   * display the fetched name and birthdate
 
-And the login function to the component `src/app/home-page/home-page.component.ts`. Update that file to look like this:
+   <ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/3_fetch_user_data/src/app/account.ts" lang="ts"/>
 
-<ExtractedCode src="quickstart-javascript-angular-web/complete-application/src/app/home-page/home-page.component.ts" lang="typescript" />
-
-#### Create an Account Page
-
-The account page displays a random balance for the logged in user. You can create a new component for this page with the Angular CLI:
-
-```shell-session
-npx ng generate component account-page --standalone
-```
-
-Then, display the balance in the `src/app/account-page/account-page.component.html` template by replacing the default content with the below:
-
-<ExtractedCode src="quickstart-javascript-angular-web/complete-application/src/app/account-page/account-page.component.html" lang="html" />
-
-You'll need the balance property in the component `src/app/account-page/account-page.component.ts`. Update that file to look like this content:
-
-<ExtractedCode src="quickstart-javascript-angular-web/complete-application/src/app/account-page/account-page.component.ts" lang="typescript" />
-
-#### Create A Make Change Page
-
-Next, you'll create a page only visible to logged in users. This page displays an input field for the user to enter a dollar amount and a button to convert that amount into coins. You can create a new component for this page with the Angular CLI:
-
-```shell-session
-npx ng generate component make-change-page --standalone
-```
-
-Then, add the input field and button to the `src/app/make-change-page/make-change-page.component.html` template, replacing the current contents:
-
-<ExtractedCode src="quickstart-javascript-angular-web/complete-application/src/app/make-change-page/make-change-page.component.html" lang="html" />
-
-You'll also need the make change function to the component `src/app/make-change-page/make-change-page.component.ts`. Here is the full contents of that file:
-
-<ExtractedCode src="quickstart-javascript-angular-web/complete-application/src/app/make-change-page/make-change-page.component.ts" lang="typescript" />
-
-## Authentication
-
-You now have created a basic Angular application with a home page, account page and a page for making change. The next step is to add authentication to the application.
-
-### Auth Guard
-
-The first step is to create an Auth Guard. This will be used to protect the account page and only allow logged in users to access it.
-
-Create a new file called `auth-guard.ts` in the `src/app` directory:
-
-<ExtractedCode src="quickstart-javascript-angular-web/complete-application/src/app/auth-guard.ts" lang="typescript" />
-
-The Auth Guard is a functional router guard, which can be used to handle anonymous and logged in states. The first parameter defines if
-the guard should allow logged in users `true` or anonymous users `false`. The second parameter is the route to redirect to if the guard fails.
-
-### Routing
-
-Next, you'll need to add the Auth Guard to the routing configuration. Open the `src/app/app.module.ts` file and add the RouterModule with the following routes inside the `imports: [ ]` part:
-
-<ExtractedCode src="quickstart-javascript-angular-web/app.module.snippet.routerConfiguration.ts" lang="typescript" />
-
-Don't forget to import the `RouterModule` and `authGuard` at the top of the file.
-
-<ExtractedCode src="quickstart-javascript-angular-web/app.module.snippet.importAuthGuard.ts" lang="typescript" />
-
-
-### Tie it all together
-
-Now that you have the Auth Guard and the routing configured, you can tie it all together. Open the `src/app/app.component.html` file and replace its content with the following:
-
-<ExtractedCode src="quickstart-javascript-angular-web/complete-application/src/app/app.component.html" lang="html" />
-
-Finally, open the `src/app/app.component.ts` file and replace it with the following:
-
-<ExtractedCode src="quickstart-javascript-angular-web/complete-application/src/app/app.component.ts" lang="typescript" />
-
-## Running the Application
-
-You can now run the application with the following command:
-
-```shell-session
-npm start
-```
-
-You can now open up an incognito window and navigate to http://localhost:4200. You will be greeted with the home page. Log in with the user account you created when setting up FusionAuth, and you'll be redirected to the account page.
 <Aside type="note">
-The username and password of the `Example user` can be found in the <a href="#run-fusionauth-via-docker">FusionAuth via Docker</a> section at the top of this article.
+`showUserInfo()` fetches the [`/app/me` endpoint](/docs/apis/hosted-backend#me) and stores the returned name and birthdate in an Angular signal. The request uses `credentials: 'include'` to send the cookie set by FusionAuth during login.
 </Aside>
 
-<QuickstartTshirtCTA/>
+### Test User Data Functionality
+
+1. Browse to the account page at [http://localhost:3000/account](http://localhost:3000/account).
+
+   ![The account page, ready to show user data.](/img/quickstarts/react/home-with-data-not-shown.png)
+
+1. Click the <Breadcrumb>Show your info</Breadcrumb> button to fetch and display the latest user data.
+
+   ![The account page, displaying user data.](/img/quickstarts/react/home-with-data-shown.png)
 
 ## Next Steps
 
-<NextSteps />
+This is a quick introduction to using FusionAuth for user authentication. To learn more about integrating FusionAuth with your product, see [Get Started](/docs/get-started).
+
+FusionAuth has many features (including [Social Login](/docs/authentication/identity-providers/#social-identity-providers), [Single Sign-On](/docs/authentication/sessions/single-sign-on), [Passkeys](/docs/authentication/passkeys/configure), [Multi-factor Authentication](/docs/authentication/multi-factor-authentication)), most of which are free. Some require additional licensing. For details, see the [pricing page](/pricing).
+
+For information on the Angular SDK, see [the GitHub documentation](https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-angular/docs).
+
+You can ask general questions in [the FusionAuth forum](/community/forum).
