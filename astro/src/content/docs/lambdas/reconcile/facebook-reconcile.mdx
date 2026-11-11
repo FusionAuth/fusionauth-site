@@ -10,7 +10,7 @@ import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function reconcile(user, registration, facebookUser, context) {
@@ -21,20 +21,20 @@ function reconcile(user, registration, facebookUser, context) {
 This lambda must contain a function named `reconcile` that accepts the following parameters:
 
 <ReconcileLambdaUserRegistrationParameters />
-* `facebookUser` - the User returned from the Facebook Me API. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `facebookUser`: the User returned from the Facebook Me API. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `facebookUser` may contain various user claims depending upon the user's Facebook configuration.
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. The fields in `facebookUser` depend on the user's Facebook settings.
 
 ## Assigning The Lambda
 
-Once a lambda is created, you may assign it to the Facebook identity provider in the IdP configuration.
+After you create the lambda, assign the lambda to the Facebook identity provider.
 
-Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and select your existing Facebook configuration or click <Breadcrumb>Add provider</Breadcrumb> and select Facebook if it has not yet been configured.
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing Facebook configuration. If you haven't configured Facebook yet, click <Breadcrumb>Add provider</Breadcrumb> and select Facebook.
 
 ## Default Lambda
 
-A default Facebook reconcile lambda is available in FusionAuth that may be used or modified. The default Facebook lambda function is documented below.
+FusionAuth includes a default Facebook reconcile lambda. You can use the default lambda as is or change the lambda:
 
 ```javascript
 // This is the default Facebook reconcile, modify this to your liking.
@@ -59,3 +59,10 @@ function reconcile(user, registration, facebookUser) {
 }
 ```
 
+## Example Lambda
+
+Facebook users control whether Facebook shares the birth year, the month and day, or both. As a result, the **`birthday`** field is `MM/DD/YYYY`, `MM/DD`, or `YYYY`. The default lambda expects the full format, and writes an invalid birth date for the other two formats.
+
+The following lambda sets **`birthDate`** only from a full birthday. The lambda stores a month and day in **`user.data.birthday`** and a year in **`user.data.birthYear`**. The lambda also keeps the saved profile values when Facebook leaves a field out.
+
+<ExtractedCode src="example-lambdas/lambdas/facebook-reconcile/birthday.js" lang="javascript" title="A lambda that handles full and partial Facebook birthdays." />

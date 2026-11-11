@@ -10,7 +10,7 @@ import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function reconcile(user, registration, userInfo, context) {
@@ -21,13 +21,21 @@ function reconcile(user, registration, userInfo, context) {
 This lambda must contain a function named `reconcile` that accepts the following parameters:
 
 <ReconcileLambdaUserRegistrationParameters />
-* `userInfo` - the JSON payload returned by the Sony PlayStation Network UserInfo API. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `userInfo`: the response from the Sony PlayStation Network token information API. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `userInfo` may contain various user claims depending upon the user's Sony PlayStation Network configuration.
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects.
+
+The `userInfo` object holds fields such as **`online_id`**, **`user_uuid`**, **`country_code`**, **`language_code`**, and **`is_sub_account`**. FusionAuth uses **`online_id`** as the username. FusionAuth reads the email address from a separate account request, so `userInfo` doesn't include the email address.
+
+## Example Lambda
+
+The following lambda stores the online Id, account UUID, and country in `user.data.psn`. When the user has no preferred language, the lambda copies the PlayStation language to the user. PlayStation sub accounts belong to children, so the lambda gives a sub account the `restricted` role. Add the `restricted` role to your application before you use the lambda.
+
+<ExtractedCode src="example-lambdas/lambdas/sony-psn-reconcile/account.js" lang="javascript" title="A lambda that copies the PlayStation Network account to the user." />
 
 ## Assigning The Lambda
 
-Once a lambda is created, you may assign it to the Sony PlayStation Network identity provider in the IdP configuration.
+After you create the lambda, assign the lambda to the Sony PlayStation Network identity provider.
 
-Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and select your existing Sony PlayStation Network configuration or click <Breadcrumb>Add provider</Breadcrumb> and select Sony PlayStation Network if it has not yet been configured.
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing Sony PlayStation Network configuration. If you haven't configured Sony PlayStation Network yet, click <Breadcrumb>Add provider</Breadcrumb> and select Sony PlayStation Network.

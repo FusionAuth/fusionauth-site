@@ -52,8 +52,9 @@ jobs:
         env:
           FUSIONAUTH_LICENSE_KEY: ${{ secrets.FUSIONAUTH_LICENSE_KEY }}
 
+      # a failed capture still compares the screenshots that worked, so upload its diffs too
       - name: Upload diff images
-        if: steps.refresh.outputs.changed == 'true'
+        if: ${{ !cancelled() && (steps.refresh.outputs.changed == 'true' || steps.refresh.outcome == 'failure') }}
         uses: actions/upload-artifact@v7
         with:
           name: screenshot-diffs
@@ -74,9 +75,11 @@ jobs:
           git commit -m "chore: update screenshots $(date +%Y-%m-%d)"
 
           # a rerun on the same day refreshes that day's open PR rather than opening a second one
-          if [ "$(gh pr list --head "$BRANCH" --state open --json number --jq length)" -gt 0 ]; then
+          existing="$(gh pr list --head "$BRANCH" --state open --json url --jq '.[0].url // empty')"
+          if [ -n "$existing" ]; then
             git push --force origin "$BRANCH"
-            echo "Updated the open PR for $BRANCH."
+            echo "Updated $existing."
+            printf '### Pull request\n\nUpdated %s with the new screenshots.\n' "$existing" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           git push --force origin "$BRANCH"
@@ -92,15 +95,17 @@ jobs:
           cat "$RUNNER_TEMP/pr-body.md"
 
           # a branch without its PR would leave the failure issue pointing at an orphan
-          if ! gh pr create --base main --head "$BRANCH" --label "screenshots" \
-            --title "chore: update screenshots $(date +%Y-%m-%d)" --body-file "$RUNNER_TEMP/pr-body.md"; then
+          if ! url="$(gh pr create --base main --head "$BRANCH" --label "screenshots" \
+            --title "chore: update screenshots $(date +%Y-%m-%d)" --body-file "$RUNNER_TEMP/pr-body.md")"; then
             git push origin --delete "$BRANCH"
             exit 1
           fi
+          echo "Opened $url."
+          printf '### Pull request\n\nOpened %s with the new screenshots.\n' "$url" >> "$GITHUB_STEP_SUMMARY"
 
       - name: No changes
         if: steps.refresh.outputs.changed == 'false'
-        run: echo "All screenshots within tolerance -- no PR needed."
+        run: echo "All screenshots are within tolerance, so the run opened no PR." | tee -a "$GITHUB_STEP_SUMMARY"
 
   report:
     needs: update

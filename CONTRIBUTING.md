@@ -175,33 +175,18 @@ sequenceDiagram
 
 ### Glossary Terms
 
-The shared glossary defines technical and business terms, such as Default Tenant and RS256. Use the glossary for these terms in all documentation. The [Glossary page](astro/src/content/docs/glossary.mdx) lists every term. The [GlossaryTerm](astro/src/components/GlossaryTerm.astro) component shows the definition of a term in a tooltip.
+Wrap a term from the [Glossary](astro/src/content/docs/concepts/glossary.mdx) in double square brackets. The term renders as a link, with the definition in a tooltip. Add `::` and a label to display different text:
 
-To add or edit a term, edit `astro/src/data/glossary.json`. Each key is the name of a term. Write the name in full: `JSON Web Token`, not `JWT` or `JWT (JSON Web Token)`. Each entry takes the following fields:
-
-* **`definition`**: The text of the tooltip and the glossary card. Required.
-* **`categories`**: An array of category names. Give every term at least one category. The category filters on the Glossary page use the values.
-* **`link`**: A root-relative docs path or an external URL. Optional. A term with a link renders as a link. An external link also shows an external-link icon.
-* **`abbreviations`**: An array of abbreviations for the term, such as `["JWT"]`. Optional.
-* **`aliases`**: An array of other names for the term. Optional.
-* **`standards`**: An array of the standards that define the term. Each standard has a **`name`**, such as `RFC 7519`, and a **`url`**. Optional.
-* **`plan`**: The plan required for the feature: `Community`, `Licensed Community`, `Starter`, `Essentials`, or `Enterprise`. Optional.
-
-`GlossaryTerm` is auto-imported in MDX files as `Term`. In an `.astro` file, import the component from `src/components/GlossaryTerm.astro`. Wrap the term in the component:
-
-```jsx
-<Term>Default Tenant</Term>
+```markdown
+FusionAuth creates the [[Default Tenant]] during installation.
+Each [[Tenant::tenant]] has its own settings.
 ```
 
-The component looks up the text between the tags. The lookup matches the name of a term, an alias, an abbreviation, or the name of a standard. Case doesn't matter. When the displayed text differs from the glossary entry, pass the name of the term in **`term`**:
+The name can be the term, an alias, or an abbreviation, in any case. Mark a term where a reader might not know the term, usually at the first use on a page. Terms don't work in headings or links. In an `.astro` file, use `<GlossaryTerm term="Default Tenant" />`.
 
-```jsx
-<Term term="Default Tenant">Default Tenant Id</Term>
-```
+To add a term, add an entry to `astro/src/data/glossary.json`. Key the entry by the full name in title case, such as `JSON Web Token`. Each entry needs a plain-text **`definition`** of one or two sentences and a **`link`** to the page that explains the term. The optional fields are **`abbreviations`**, **`aliases`**, **`standards`** (an array of `{ "name", "url" }` objects), and **`plan`** (`Community`, `Licensed Community`, `Starter`, `Essentials`, or `Enterprise`). Add only terms that readers need defined. Add a general tool only when FusionAuth integrates with the tool tightly, such as Elasticsearch or Kafka, not Docker.
 
-A self-closing tag displays the value of **`term`** as written: `<Term term="JWT" />` displays `JWT`, not `JSON Web Token`.
-
-Text that matches no entry renders as plain text without a tooltip.
+The build fails on an unknown term and suggests the closest matches.
 
 ## Authoring Reference
 
@@ -225,7 +210,7 @@ The sidebar builds itself from the folder structure. A folder's title and order 
 
 ### Components
 
-Common components are auto-imported into every MDX file, so don't import them. The list includes `Aside`, `APIField`, `Breadcrumb`, `Card`, `ChildCards`, `Details`, `ExtractedCode`, `Term`, `PlanBlurb`, `Screenshot`, `Steps`, `Table`, `Tabs`, and `TabItem`. The full list is `mdxComponentImports` in `astro/astro.config.ts`. A small Vite plugin, `mdxComponentImporter`, inserts those imports after the front matter.
+Common components are auto-imported into every MDX file, so don't import them. The list includes `Aside`, `APIField`, `Breadcrumb`, `Card`, `ChildCards`, `Details`, `ExtractedCode`, `GlossaryTerm`, `PlanBlurb`, `Screenshot`, `Steps`, `Table`, `Tabs`, and `TabItem`. The full list is `mdxComponentImports` in `astro/astro.config.ts`. A small Vite plugin, `mdxComponentImporter`, inserts those imports after the front matter.
 
 * An explicit import of an auto-imported component fails the build. Remove the import.
 * If a file imports a different component under the same name, the file's import wins.
@@ -253,7 +238,7 @@ import ReleaseNotification from 'src/content/docs/_shared/_release-notification.
 
 ### API Docs
 
-* The OpenAPI spec at `astro/public/docs/openapi.yaml` is a copy of [fusionauth-openapi](https://github.com/FusionAuth/fusionauth-openapi). After each release, refresh the copy with `bash scripts/update_openapi_spec.sh` and review the diff.
+* The OpenAPI spec at `astro/public/docs/openapi.yaml` is a copy of [fusionauth-openapi](https://github.com/FusionAuth/fusionauth-openapi) at the newest tag at or before `fusionauth-version`. After each release, refresh the copy with `bash scripts/update_openapi_spec.sh` and review the diff. The weekly external content check fails when the copy drifts from that tag.
 * Version pins in the Docker Compose files and the production Docker examples follow `fusionauth-version`. Don't edit the pins by hand. See "Update the docs for a new FusionAuth release" in the [README](README.md).
 * When an API returns the same object singly and in arrays, reuse the `-base` partial pattern from the tenant and application APIs.
 * When a field is only required while another feature is enabled, mark the field optional and explain in the description: ``This field is required when **`theOtherField.enabled`** is set to true.``

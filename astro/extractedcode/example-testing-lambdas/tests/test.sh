@@ -3,14 +3,18 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-LOGS_PID=""
+REPO_ROOT="$(cd "$PROJECT_DIR/../../.." && pwd)"
 READINESS_TIMEOUT=300
+
+# the same file readers download from /docs/docker-compose.yml, so the image follows fusionauth-version
+compose() {
+  INSTALLATION_SOURCE=fusionauth-example-testing-lambdas \
+    docker compose -f "$REPO_ROOT/astro/public/docs/docker-compose.yml" --project-directory "$PROJECT_DIR" "$@"
+}
 
 cleanup() {
   echo "Cleaning up..."
-  [ -n "$LOGS_PID" ] && kill "$LOGS_PID" 2>/dev/null || true
-  docker stop testApp 2>/dev/null || true
-  cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
+  compose down -v 2>/dev/null || true
 }
 trap cleanup EXIT
 
@@ -38,19 +42,13 @@ create_lambda() {
   local api_key="$1"
   local fa_url="$2"
   local response http_code body lambda_id
-  response=$(curl -s -X POST "${fa_url}/api/lambda/f3b3b547-7754-452d-8729-21b50d111505" \
-    -H "Authorization: ${api_key}" \
-    -H "Content-Type: application/json" \
-    -w "\n%{http_code}" \
-    -d '{
-      "lambda": {
-        "body": "function populate(jwt, user, registration) {\n  jwt.message = '\''Hello World!'\'';\n  console.info('\''Hello World!'\'');\n}",
-        "debug": true,
-        "engineType": "GraalJS",
-        "name": "[ATest]",
-        "type": "JWTPopulate"
-      }
-    }')
+  response=$(jq -n --rawfile body "$PROJECT_DIR/complete-application/role-permissions.js" \
+      '{lambda: {body: $body, name: "[ATest]", type: "JWTPopulate"}}' |
+    curl -s -X POST "${fa_url}/api/lambda/f3b3b547-7754-452d-8729-21b50d111505" \
+      -H "Authorization: ${api_key}" \
+      -H "Content-Type: application/json" \
+      -w "\n%{http_code}" \
+      -d @-)
   http_code=$(echo "$response" | tail -1)
   body=$(echo "$response" | sed '$d')
   if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
@@ -63,9 +61,6 @@ create_lambda() {
     -w "\n%{http_code}" \
     -d '{
       "application": {
-        "jwtConfiguration": {
-          "enabled": true
-        },
         "lambdaConfiguration": {
           "accessTokenPopulateId": "f3b3b547-7754-452d-8729-21b50d111505"
         }
@@ -80,31 +75,18 @@ create_lambda() {
 }
 
 echo "Validating docker compose config..."
-cd "$PROJECT_DIR"
-docker compose -f docker-compose.yml config > /dev/null
+compose config > /dev/null
 
-echo "Pulling latest FusionAuth image..."
-docker compose pull
+echo "Pulling the FusionAuth image..."
+compose pull
 
 echo "Starting FusionAuth..."
-docker compose up -d
+compose up -d
 
-echo "Installing Node.js app dependencies..."
-docker run --rm -v "$PROJECT_DIR/complete-application:/app" -w /app node:26 sh -c \
-  "npm install"
-
-echo "Starting Node.js app..."
-docker run --network host --name testApp --rm -v "$PROJECT_DIR/complete-application":/app -w /app \
-  -e CLIENT_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e \
-  -e CLIENT_SECRET=super-secret-secret-that-should-be-regenerated-for-production \
-  -e BASE_URL=http://localhost:9011 \
-  node:26 sh -c "npm start" &
-NODE_PID=$!
-until docker inspect testApp > /dev/null 2>&1; do
-  sleep 1
-done
-docker logs -f testApp &
-LOGS_PID=$!
+# lambda.test.mjs imports the harness from the lambda examples
+echo "Copying the lambda harness..."
+rm -rf "$PROJECT_DIR/complete-application/harness" "$PROJECT_DIR/complete-application/lambdas"
+cp -R "$REPO_ROOT/astro/extractedcode/example-lambdas/harness" "$PROJECT_DIR/complete-application/harness"
 
 echo "Waiting for FusionAuth to be ready..."
 wait_for "FusionAuth" fusionauth_ready
@@ -112,12 +94,5 @@ wait_for "FusionAuth" fusionauth_ready
 echo "Creating lambda..."
 create_lambda "lambda_testing_key" "http://localhost:9011"
 
-echo "Waiting for Node.js app to be ready..."
-wait_for "Node.js app" curl -sf http://localhost:3000
-
 echo "Running Playwright tests..."
-cd "$SCRIPT_DIR"
 docker run --network host --name playwright-test --rm -e NODE_PATH=/usr/lib/node_modules -v "$SCRIPT_DIR/integration.spec.js":/tests/integration.spec.js -v "$PROJECT_DIR/complete-application":/app -w /tests mcr.microsoft.com/playwright:v1.62.0 bash -c "npm install -g @playwright/test@1.62.0 && cd /app && npm install && cd /tests && npx playwright test"
-TEST_EXIT_CODE=$?
-
-exit $TEST_EXIT_CODE

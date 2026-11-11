@@ -25,7 +25,6 @@ async function createMetricsKey(page) {
 }
 
 export const shots = {
-  'operate-datadog-fusionauth-enableapikey-prometheus-endpoint': { fixedHeight: null },
   'operate-datadog-enableget-prometheus-endpoint': { fixedHeight: null, prepare: preparation({ beforeSizing: page => grantMetricsEndpoint(page, '/api/prometheus/metrics') }) },
   'operate-datadog-fusionauth-apikey': { fixedHeight: null, keepMetricsKey: true, prepare: preparation({ beforeSizing: createMetricsKey }) },
 };

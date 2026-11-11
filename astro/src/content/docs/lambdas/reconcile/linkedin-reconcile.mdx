@@ -10,7 +10,7 @@ import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function reconcile(user, registration, linkedInUser, context) {
@@ -21,24 +21,24 @@ function reconcile(user, registration, linkedInUser, context) {
 This lambda must contain a function named `reconcile` that accepts the following parameters:
 
 <ReconcileLambdaUserRegistrationParameters />
-* `linkedInUser` - the JSON payload returned by the LinkedIn Email and Me APIs. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `linkedInUser`: the JSON payload returned by the LinkedIn Email and Me APIs. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `linkedInUser` may contain various user claims depending upon the user's LinkedIn configuration and the scopes requested in the LinkedIn configuration.
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects. The fields in `linkedInUser` depend on the user's LinkedIn settings and the scopes in the identity provider configuration.
 
 ## Assigning The Lambda
 
-Once a lambda is created, you may assign it to the LinkedIn identity provider in the IdP configuration.
+After you create the lambda, assign the lambda to the LinkedIn identity provider.
 
-Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and select your existing LinkedIn configuration or click <Breadcrumb>Add provider</Breadcrumb> and select LinkedIn if it has not yet been configured.
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing LinkedIn configuration. If you haven't configured LinkedIn yet, click <Breadcrumb>Add provider</Breadcrumb> and select LinkedIn.
 
 ## Default Lambda
 
-A default LinkedIn reconcile lambda is available in FusionAuth that may be used or modified. The default LinkedIn lambda function is documented below.
+FusionAuth includes a default LinkedIn reconcile lambda. You can use the default lambda as is or change the lambda:
 
-Note that in this lambda we handle two different response objects depending on what type of integration with LinkedIn your application is using. See [Set Up Your LinkedIn App Client Credentials](/docs/authentication/identity-providers/social/linkedin#set-up-your-linkedin-app-client-credentials) for more information.
+The default lambda handles two response formats. The format depends on the type of LinkedIn integration your application uses. See [Set Up Your LinkedIn App Client Credentials](/docs/authentication/identity-providers/social/linkedin#set-up-your-linkedin-app-client-credentials) for more information.
 
-The best way to know which format your user's data is being return in is to use the `console.log` statement and print the **linkedInUser** field to the event log.
+To see which format LinkedIn returns, print the `linkedInUser` object to the Event Log with `console.log`.
 
 ```javascript
 // This is the default LinkedIn reconcile, modify this to your liking.
@@ -85,3 +85,8 @@ function reconcile(user, registration, linkedInUser) {
 }
 ```
 
+## Example Lambda
+
+The following lambda reads the name from either LinkedIn response format, and keeps the saved name when LinkedIn leaves the name out. The lambda also sets the user's preferred language from the **`locale`** field. LinkedIn sends **`locale`** as a string such as `en-US` or as an object such as `{ "country": "US", "language": "en" }`, and the lambda handles both. The lambda changes **`preferredLanguages`** only when the user has no preferred language yet.
+
+<ExtractedCode src="example-lambdas/lambdas/linkedin-reconcile/profile-and-language.js" lang="javascript" title="A lambda that saves the LinkedIn profile and preferred language." />

@@ -1,0 +1,159 @@
+---
+title: APIs
+htmlTitle: Build a Password Reset Flow With the API
+description: Learn how to build your own forgot password pages with the Forgot Password and Change Password APIs, including users with MFA.
+tags: account recovery, forgot password, password reset, change password, changePasswordId, trust token, trust challenge, mfa, login api
+order: 2
+---
+
+If you build your own login pages with the [Login API](/docs/apis/login), build your own forgot password pages as well. This guide shows the API calls behind each step of the [forgot password workflow](/docs/users/account-recovery).
+
+## Prerequisites
+
+* A forgot password template on the [[Tenant]] for each identity type your users log in with. See [Choose the Forgot Password Templates](/docs/users/account-recovery/hosted-pages#choose-the-forgot-password-templates). To deliver the change password Id yourself, skip the templates and see [Send the Message Yourself](#send-the-message-yourself).
+* An [API key](/docs/apis/authentication#api-key-authentication) for the steps that run on your server.
+
+## Point the Message at Your Page
+
+The default forgot password templates link to the FusionAuth change password page. Edit the email and message templates to link to your own page instead, and pass the change password Id in the URL:
+
+```plaintext
+https://app.example.com/reset-password?id=${changePasswordId}
+```
+
+For the other template variables, see the [email template reference](/docs/email/template-reference#forgot-password) and the [message template reference](/docs/messengers/template-reference#forgot-password).
+
+## Start the Workflow
+
+When the user submits your forgot password form, call the [Forgot Password API](/docs/apis/users/forgot-password). Your browser code can call the API without an API key:
+
+```http
+POST /api/user/forgot-password
+Content-Type: application/json
+
+{
+  "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+  "loginId": "richard@example.com",
+  "loginIdTypes": ["email", "phoneNumber", "username"],
+  "state": {
+    "redirect": "/settings"
+  }
+}
+```
+
+**`loginIdTypes`** defaults to `email` and `username`. Add `phoneNumber` to let users recover by text message. FusionAuth sends a text message when the login Id matches a phone number, and an email otherwise.
+
+**`applicationId`** selects the Application's templates, when the Application has templates. FusionAuth returns **`state`** when the user completes the workflow, so your page can return the user to the right place.
+
+Without an API key, the API returns an empty `200` response whether or not the user exists. With an API key, the API returns `404` for an unknown user and `422` for a user with no email address or phone number. Show the same confirmation to the user for all of these responses, so your page doesn't reveal which accounts exist. See [Account Enumeration](/docs/security/account-protection/account-enumeration).
+
+A `403` response means the workflow is off for that identity type. See [Turn Off Forgot Password](/docs/users/account-recovery/turn-off-forgot-password).
+
+### Send the Message Yourself
+
+To deliver the change password Id through your own email or messaging system, call the API from your server with an API key, and set **`sendForgotPasswordMessage`** to `false`:
+
+```json
+{
+  "loginId": "richard@example.com",
+  "sendForgotPasswordMessage": false
+}
+```
+
+FusionAuth creates the Id without sending a message, and returns the Id in the response:
+
+```json
+{
+  "changePasswordId": "YkQY5Gsyo4RlfmDciBGRmvfj3RmatUqrbjoIZ19fmw4"
+}
+```
+
+Keep the Id on your server until you send the Id to the user. Anyone who holds the Id can set the user's password.
+
+## Check the Change Password Id
+
+When the user opens the link, check the Id before you show the new password form. Call the [Validate Password Change API](/docs/apis/users/validate-password-change):
+
+```http
+GET /api/user/change-password/YkQY5Gsyo4RlfmDciBGRmvfj3RmatUqrbjoIZ19fmw4
+```
+
+The response tells your page what to show:
+
+* `200`: show the new password form.
+* `404`: the Id expired or was already used. Ask the user to start again.
+* `400` with the `[TrustTokenRequired]` error: the user has MFA enabled. Complete an MFA challenge first, as shown in [Handle Users With MFA](#handle-users-with-mfa).
+
+The check doesn't use up the Id.
+
+## Change the Password
+
+Send the Id and the new password to the [Change Password API](/docs/apis/users/change-password):
+
+```http
+POST /api/user/change-password
+Content-Type: application/json
+
+{
+  "changePasswordId": "YkQY5Gsyo4RlfmDciBGRmvfj3RmatUqrbjoIZ19fmw4",
+  "password": "a-new-password"
+}
+```
+
+When the password breaks a Tenant password rule, the API returns `400` with field errors for **`password`**, and the Id still works. Show the errors and let the user try again.
+
+On success, the API returns a one-time password and the **`state`** from the first request:
+
+```json
+{
+  "oneTimePassword": "A2o6I0Bylr2yzNPu4Y_ld0jE-BkG9RfEX8QORl9fe6U",
+  "state": {
+    "redirect": "/settings"
+  }
+}
+```
+
+## Log the User In
+
+To log the user in without asking for the new password, send the one-time password to the [Login API](/docs/apis/login/authenticate-otp) from your server:
+
+```json
+{
+  "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+  "oneTimePassword": "A2o6I0Bylr2yzNPu4Y_ld0jE-BkG9RfEX8QORl9fe6U"
+}
+```
+
+The response contains the user's access token, as for any other login. To ask the user to log in again instead, skip this step.
+
+## Handle Users With MFA
+
+A user with MFA enabled must pass an MFA challenge before FusionAuth accepts a new password. The challenge produces a trust token, which you send with the new password. Run these steps on your server, because the first step needs an API key:
+
+1. Call the [Start Multi-Factor API](/docs/apis/two-factor/start-multi-factor) with the user's login Id and a long, random **`trustChallenge`**. Keep the **`trustChallenge`** on your server. The response contains a **`twoFactorId`** and the user's MFA methods.
+1. Ask the user for a code. For an email or SMS method, send the code first with the [Send a Multi-Factor Code API](/docs/apis/two-factor/send-a-multi-factor-code-during-login-or-step-up). An authenticator app user reads the code from the app.
+1. Call the [Complete a Multi-Factor Login API](/docs/apis/login/complete-mfa) with the **`twoFactorId`** and the code. The response contains a **`trustToken`**.
+1. Call the Change Password API with the **`trustToken`** and the same **`trustChallenge`** from the first step:
+
+```json
+{
+  "changePasswordId": "YkQY5Gsyo4RlfmDciBGRmvfj3RmatUqrbjoIZ19fmw4",
+  "password": "a-new-password",
+  "trustChallenge": "c2FtcGxlLXRydXN0LWNoYWxsZW5nZQ",
+  "trustToken": "WbWqpLXGQb7RVMd2Re1PK5gGtJSnYzFZbIGNsfD9yQk"
+}
+```
+
+Without the matching **`trustChallenge`**, the API rejects the trust token with the `[TrustTokenRequired]` error. For more about trust tokens, see [Trust Tokens and Trust Challenges](/docs/authentication/multi-factor-authentication#trust-tokens-and-trust-challenges).
+
+## Test the Flow
+
+To confirm that the flow works:
+
+1. Submit your forgot password form for a test user.
+1. Open the link in the email or text message.
+1. Set a new password.
+1. Log in with the new password.
+1. Open the link again. Your page shows that the Id expired.
+
+Repeat the test with a user who has MFA enabled, and with a phone number if your users recover by text message.

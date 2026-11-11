@@ -10,7 +10,7 @@ import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function reconcile(user, registration, userInfo, context) {
@@ -21,15 +21,23 @@ function reconcile(user, registration, userInfo, context) {
 This lambda must contain a function named `reconcile` that accepts the following parameters:
 
 <ReconcileLambdaUserRegistrationParameters />
-* `userInfo` - the JSON payload returned by the Nintendo Token Info API. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `userInfo`: the response from the Nintendo Account `users/me` API. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `userInfo` may contain various user claims depending upon the user's Nintendo configuration.
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects.
+
+The fields in `userInfo` depend on the scopes you request. By default, FusionAuth reads the unique Id from **`id`**, the email from **`email`**, and the username from **`preferred_username`**. You can change these claim names in the identity provider configuration.
+
+## Example Lambda
+
+The following lambda stores the Nintendo Account Id, nickname, and country in `user.data.nintendo`. The lambda copies the birthday and language to the user only when the user has no value yet. The lambda checks each field first, because the response can leave out any field.
+
+<ExtractedCode src="example-lambdas/lambdas/nintendo-reconcile/profile.js" lang="javascript" title="A lambda that copies the Nintendo Account profile to the user." />
 
 ## Assigning The Lambda
 
-Once a lambda is created, you may assign it to the Nintendo identity provider in the IdP configuration.
+After you create the lambda, assign the lambda to the Nintendo identity provider.
 
-Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and select your existing Nintendo configuration or click <Breadcrumb>Add provider</Breadcrumb> and select Nintendo if it has not yet been configured.
+Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. Select your existing Nintendo configuration. If you haven't configured Nintendo yet, click <Breadcrumb>Add provider</Breadcrumb> and select Nintendo.
 
 

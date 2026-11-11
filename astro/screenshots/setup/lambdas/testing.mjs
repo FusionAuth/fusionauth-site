@@ -1,13 +1,16 @@
-import { preparation } from '../kit.mjs';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { preparation, projectRoot } from '../kit.mjs';
 
 const atestLambdaId = 'f3b3b547-7754-452d-8729-21b50d111505';
-const atestBody = word => `function populate(jwt, user, registration) {\n  jwt.message = '${word} World!';\n  console.info('${word} World!');\n}`;
+// the lambda body the testing guide shows
+const atestBody = readFileSync(join(projectRoot, 'extractedcode/example-testing-lambdas/complete-application/role-permissions.js'), 'utf-8');
 
 const atestLambda = {
   order: 3,
   paths: [`/api/lambda/${atestLambdaId}`],
   create: async api => {
-    await api(`/api/lambda/${atestLambdaId}`, 'POST', { lambda: { name: '[ATest]', type: 'JWTPopulate', engineType: 'GraalJS', debug: true, body: atestBody('Goodbye') } });
+    await api(`/api/lambda/${atestLambdaId}`, 'POST', { lambda: { name: '[ATest]', type: 'JWTPopulate', body: atestBody } });
   },
 };
 
@@ -17,12 +20,10 @@ async function fillLambda(page) {
   await page.selectOption('select[name="lambda.type"]', 'JWTPopulate');
   await page.waitForTimeout(500);
   const set = await page.evaluate(body => {
-    const debug = document.getElementById('lambda_debug');
-    if (debug && !debug.checked) debug.click();
     const cm = document.querySelector('main .CodeMirror')?.CodeMirror;
     cm?.setValue(body);
     return !!cm;
-  }, atestBody('Hello'));
+  }, atestBody);
   if (!set) throw new Error('lambda body editor not found');
 }
 
@@ -46,5 +47,4 @@ export const shots = {
     prepare: preparation({ afterSystemTab: chooseLambda }),
     temporaryResources: [atestLambda],
   },
-  'lambda-updated': { temporaryResources: [atestLambda] },
 };

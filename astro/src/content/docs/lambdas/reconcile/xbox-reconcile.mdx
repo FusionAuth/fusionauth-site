@@ -1,6 +1,6 @@
 ---
 title: Xbox Reconcile Lambda
-description: Learn how to map the data from a Xbox login to a FusionAuth user and registration with a reconcile lambda.
+description: Learn how to map the data from an Xbox login to a FusionAuth user and registration with a reconcile lambda.
 tags: xbox reconcile lambda, xbox login, gaming login, fusionauth lambda, identity provider reconcile, custom claims
 ---
 import ReconcileLambdaIntro from 'src/content/docs/lambdas/_reconcile-lambda-intro.mdx';
@@ -10,7 +10,7 @@ import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/lambdas/
 
 ## Lambda Structure
 
-If you are using the API to create the lambda you will need to ensure your function has the following signature:
+When you create the lambda with the API, give the function the following signature:
 
 ```javascript
 function reconcile(user, registration, userInfo, context) {
@@ -21,15 +21,21 @@ function reconcile(user, registration, userInfo, context) {
 This lambda must contain a function named `reconcile` that accepts the following parameters:
 
 <ReconcileLambdaUserRegistrationParameters />
-* `userInfo` - the JSON payload returned by the Xbox Token Info API. This object is read-only.
-* `context` - <AvailableSince since="1.64.0"/> - an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
+* `userInfo`: the response from the Xbox Live XSTS token request. This object is read-only.
+* `context`: <AvailableSince since="1.64.0"/> an object containing the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `userInfo` may contain various user claims depending upon the user's Xbox configuration.
+The [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation describe the `user` and `registration` objects.
+
+The player claims live in **`DisplayClaims.xui[0]`**. The **`gtg`** claim holds the gamertag. FusionAuth uses the gamertag as the username. The **`xid`** claim holds the Xbox user Id. The **`agg`** claim holds the age group: `Adult`, `Teen`, or `Child`.
+
+## Example Lambda
+
+The following lambda stores the gamertag, Xbox user Id, and age group in `user.data.xbox`. The lambda gives a player in the `Teen` or `Child` age group the `restricted` role. The lambda recalculates the role on every login, so the role goes away when the player becomes an adult. Add the `restricted` role to your application before you use the lambda.
+
+<ExtractedCode src="example-lambdas/lambdas/xbox-reconcile/age-group.js" lang="javascript" title="A lambda that assigns a role from the Xbox age group." />
 
 ## Assigning The Lambda
 
-Once a lambda is created, you may assign it to the Xbox identity provider in the IdP configuration.
-
-Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and select your existing Xbox configuration or click <Breadcrumb>Add provider</Breadcrumb> and select Xbox if it has not yet been configured.
+Assign the lambda to the Xbox Identity Provider. Navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>, then edit your Xbox Identity Provider. If you haven't configured Xbox yet, click <Breadcrumb>Add provider</Breadcrumb> and select Xbox.
 
 

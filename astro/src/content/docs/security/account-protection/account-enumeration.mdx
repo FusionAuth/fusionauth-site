@@ -10,12 +10,13 @@ Hiding every signal also makes your application harder to use. A user whose acco
 
 ## What the Hosted Pages Reveal
 
-The hosted login pages respond as follows:
+The [[hosted login pages]] respond as follows:
 
 | Situation | Message | Reveals the account exists |
 |-----------|---------|----------------------------|
 | Login with an unknown user or a wrong password | Invalid login credentials. | No |
 | Forgot password with an unknown or known email address | The same confirmation page | No |
+| Forgot password with a phone number when the Tenant has no forgot password message template | Forgot password handling is not enabled. | Yes, for a phone number that has an account |
 | Login to an account locked by too many failed attempts | Your account has been locked. | Yes, even with a wrong password |
 | Login to a deactivated account | Your account has been locked. Please contact your system administrator. | Yes, even with a wrong password |
 | Registration with an email address that has an account | An account already exists for that email | Yes |
@@ -34,11 +35,13 @@ To make locked and deactivated accounts look like any other failed login, edit y
 
 Users with a locked account then can't tell why their login failed. To tell them through a channel only they can read, enable **Email user when action is taken** in the Tenant's [failed authentication settings](/docs/security/account-protection/account-lockout). See [Theme Localization](/docs/theme/localization#messages) for more about message keys.
 
+To hide whether a phone number has an account on the forgot password page, set a forgot password message template on the Tenant. See [Choose the Forgot Password Templates](/docs/users/account-recovery/hosted-pages#choose-the-forgot-password-templates).
+
 Registration can't hide an existing account without confusing the person who owns it. Slow down attackers instead with [rate limiting and CAPTCHA](/docs/security/account-protection/advanced-threat-detection).
 
 ## What the APIs Reveal
 
-The APIs return a different status code for each situation, so your code can respond correctly. For example, the [Login API](/docs/apis/login) returns `404` for an unknown user or a wrong password, but `409`, `410`, or `423` for an account that exists and can't log in. The [Forgot Password API](/docs/apis/users/forgot-password) returns `404` when the user doesn't exist.
+The APIs return a different status code for each situation, so your code can respond correctly. For example, the [Login API](/docs/apis/login) returns `404` for an unknown user or a wrong password, but `409`, `410`, or `423` for an account that exists and can't log in. The [Forgot Password API](/docs/apis/users/forgot-password) returns `404` when the user doesn't exist and the request uses an API key.
 
 If you build your own login pages with these APIs, map every failure to the same message before you show it to the user.
 
@@ -62,4 +65,4 @@ sequenceDiagram
     end
 ```
 
-FusionAuth can't hide an invalid `client_id`. It shows an error page instead of redirecting, because the OAuth 2.0 specification forbids redirecting to an unverified client ([RFC 6749 section 4.1.2.1](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1)). The default OAuth error template also prints the error details, including the `client_id` that was sent. To remove the details, edit the OAuth error template in your Themes and replace `${oauthJSONError}` with a generic message. An invalid `client_id` doesn't identify an Application, so FusionAuth renders this page with the default Tenant's Theme. Make the change there too.
+FusionAuth can't hide an invalid `client_id`. It shows an error page instead of redirecting, because the OAuth 2.0 specification forbids redirecting to an unverified client ([RFC 6749 section 4.1.2.1](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1)). The default OAuth error template also prints the error details, including the `client_id` that was sent. To remove the details, edit the OAuth error template in your Themes and replace `${oauthJSONError}` with a generic message. An invalid `client_id` doesn't identify an Application, so FusionAuth renders this page with the [[default Tenant]]'s Theme. Make the change there too.

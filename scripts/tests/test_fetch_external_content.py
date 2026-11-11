@@ -72,6 +72,8 @@ elif command == "java":
             (out_dir / f).write_text(data["json"][f])
     elif "GenerateEndpointsJSON" in args:
         pathlib.Path(args[args.index("GenerateEndpointsJSON") + 1]).write_text(data["json"]["api-endpoints.json"])
+    elif "GenerateLambdaTypesJSON" in args:
+        pathlib.Path(args[args.index("GenerateLambdaTypesJSON") + 1]).write_text(data["json"]["lambda-types.json"])
 elif command == "unzip":
     if "-p" in args:
         sys.stdout.write(data["json"]["sample-usage-data.json"])
@@ -139,7 +141,8 @@ class RefreshTests(unittest.TestCase):
                 
         # Load JSON fixtures
         for json_file in ["sample-usage-data.json", "indexentity.json", "indexuser.json", 
-                          "cookies.json", "authenticationtype.json", "api-endpoints.json"]:
+                          "cookies.json", "authenticationtype.json", "api-endpoints.json",
+                          "lambda-types.json"]:
             path = self.json_dir / json_file
             if not path.exists():
                 path.write_text('{\n  "mock": "data"\n}')
@@ -193,8 +196,8 @@ class RefreshTests(unittest.TestCase):
         self.assertEqual(sum(command == "git" for command, _ in requests), 3)
         self.assertEqual(sum(command == "curl" for command, _ in requests), 14) # 13 github + 1 zip
         self.assertEqual(sum(command == "unzip" for command, _ in requests), 2)
-        self.assertEqual(sum(command == "javac" for command, _ in requests), 2)
-        self.assertEqual(sum(command == "java" for command, _ in requests), 2)
+        self.assertEqual(sum(command == "javac" for command, _ in requests), 3)
+        self.assertEqual(sum(command == "java" for command, _ in requests), 3)
 
     def test_reproduce_command_pins_resolved_revisions_and_version(self):
         result = self.run_script("--check")
