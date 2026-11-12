@@ -1,0 +1,93 @@
+---
+title: Add Login to Your App
+htmlTitle: Add FusionAuth Login to an App You Build
+description: Learn how to add FusionAuth login to a web, mobile, or single-page app you build with an OpenID Connect library and the OAuth Authorization Code grant.
+tags: oauth, oidc, openid connect, authorization code grant, pkce, login, logout, hosted login pages, add login
+order: 5
+---
+
+Your app sends users to the FusionAuth [[hosted login pages]] with the [[Authorization Code Grant]]. After login, FusionAuth redirects the browser back to your app with a code, and your app exchanges the code for tokens. An OpenID Connect library builds the requests and validates the tokens, so you configure the library and FusionAuth. To add login to software you don't build, such as a SaaS product, see [Add Login to an External App](/docs/authentication/act-as-an-idp/add-login-to-external-app).
+
+For a working sample app in your framework, start from a [QuickStart](/docs/quickstarts) instead.
+
+## Before You Begin
+
+You need:
+
+* Admin access to FusionAuth.
+* An OpenID Connect library for your framework, or a [FusionAuth SDK](/docs/sdks).
+* The URL in your app that receives the user after login, such as `https://app.example.com/callback`.
+* A test user in the [[Tenant]] you plan to use.
+
+## Set the Issuer
+
+FusionAuth puts the Tenant **Issuer** in the **`iss`** claim of every token and in the discovery document. The setup wizard sets the issuer to the URL you used during setup, which might be `localhost`. Installs that skip the setup wizard, such as Kickstart installs, keep a placeholder such as `https://example.com`. New Tenants copy the issuer of the Default Tenant. A library that takes an issuer instead of a discovery URL loads the endpoints from the issuer, so the placeholder breaks login. To set the issuer to the URL your app uses to reach FusionAuth:
+
+1. Navigate to <Breadcrumb>Tenants</Breadcrumb> and click <IconButton icon="edit" /> next to your Tenant.
+1. On the <Breadcrumb>General</Breadcrumb> tab, set **Issuer** to the FusionAuth URL, such as `https://auth.example.com`.
+1. Click <IconButton icon="save" />.
+
+## Create an Application
+
+Each app needs its own [[Application]] in FusionAuth. To create and configure the Application:
+
+1. Navigate to <Breadcrumb>Applications</Breadcrumb> and click <IconButton icon="add" />.
+1. Enter a **Name** and select the **Tenant** that holds your users.
+1. Select the <Breadcrumb>OAuth</Breadcrumb> tab.
+1. Add the callback URL of your app to **Authorized redirect URLs**.
+1. Set **Logout URL** to the page your app shows after logout.
+1. Set **PKCE** to `Required`.
+1. Set **Client Authentication** for your type of app:
+   * For an app with a server that can keep a secret, keep the default, `Required`.
+   * For a single-page or mobile app, select `Not required when using PKCE`. A browser or a device can't keep the client secret private.
+1. Click <IconButton icon="save" />.
+
+New Applications enable the `Authorization Code` and `Refresh Token` grants and **Generate refresh tokens**, so your app can keep users logged in after the access token expires.
+
+## Register Users
+
+Any user in the Tenant can log in by default. FusionAuth adds the **`roles`** claim to the tokens only when the user has a [[Registration]] for the Application.
+
+To register the test user, navigate to <Breadcrumb>Users</Breadcrumb>, click <Icon name="user" /> next to the user, and click **Add registration**. To let users register themselves, turn on [self-service registration](/docs/users/register/basic-registration-forms). To block users without a registration, enable **Require registration to complete OAuth authorization** on the <Breadcrumb>OAuth</Breadcrumb> tab.
+
+## Configure Your Library
+
+On the <Breadcrumb>Applications</Breadcrumb> page, open the action menu for the Application and select <Breadcrumb>View</Breadcrumb>. The dialog shows the values your library needs. See [OAuth2 & OpenID Connect Integration Details](/docs/concepts/types/applications#oauth2--openid-connect-integration-details).
+
+Give your library these values:
+
+| Library setting | Value |
+|---|---|
+| Discovery URL | The **OpenID Connect Discovery** URL from the View dialog. When your library asks for an issuer instead, use the Tenant **Issuer**. |
+| Client Id | The **Client Id** from the View dialog. |
+| Client secret | The **Client secret** from the View dialog. Leave the secret out of single-page and mobile apps. |
+| Redirect URI | The callback URL you added to **Authorized redirect URLs**. |
+| Scopes | `openid offline_access`. Add `email` and `profile` to get those claims in the Id token. |
+| PKCE | `S256`. |
+
+Your library then sends users to the login page and exchanges the code for tokens. The library also validates the [[Id Token]]: the signature, the **`iss`** and **`aud`** claims, and the expiration. For the claims in each token, see [Tokens](/docs/authentication/oauth/tokens). For the requests your library makes, see the [Authorization Code grant example](/docs/authentication/oauth#example-authorization-code-grant).
+
+Store tokens on your server, or in `HttpOnly` cookies for a browser app. For a single-page app without a backend, the [hosted backend](/docs/apis/hosted-backend) exchanges the code and sets the cookies for your app.
+
+## Log Users Out
+
+To log a user out, your app ends the app session and redirects the browser to the **Logout URL** from the View dialog:
+
+```plaintext
+https://auth.example.com/oauth2/logout?client_id={clientId}
+```
+
+FusionAuth ends the FusionAuth session and redirects the browser to the Application's **Logout URL**. To send the browser to another page, add a `post_logout_redirect_uri` parameter, and add that page to **Authorized redirect URLs**. FusionAuth shows an error page for a `post_logout_redirect_uri` that isn't in the list.
+
+## Confirm the Login
+
+To confirm that login works:
+
+1. Open your app in a private browser window and start login.
+1. Confirm that the browser shows the FusionAuth login page.
+1. Log in as the test user.
+1. Confirm that the browser returns to the callback URL and that your app shows the test user as logged in.
+1. Log out, and confirm that the browser returns to your app.
+1. Start login again, and confirm that FusionAuth asks for credentials.
+
+When the login fails, enable **Enable debug logging** on the <Breadcrumb>OAuth</Breadcrumb> tab of the Application and try again. Read the details in <Breadcrumb>System -> Event Log</Breadcrumb>. Turn off debug logging when you finish.

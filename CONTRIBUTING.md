@@ -8,6 +8,7 @@ Readers come to the docs to finish a task. Every rule below serves that goal.
 
 * Address the reader as "you". Write steps in the imperative: "Click **Save**," not "The user should click **Save**."
 * Keep sentences short, with one idea per sentence. Split a sentence that chains clauses with "and", "which", or a semicolon.
+* Lead with a condition that decides whether the reader acts. Write "When the Application requires PKCE, add **`code_challenge`**," not "Add **`code_challenge`** when the Application requires PKCE." A reader can then skip a step that doesn't apply. Keep a timing condition at the end when the step applies to every reader: "Turn off debug logging when you finish."
 * Use active voice. Write "FusionAuth sends an email," not "An email is sent."
 * Repeat the noun instead of using a pronoun. Write "The lambda runs after login," not "It runs after login." Avoid "it", "they", "this", and "these" as subjects, even when the noun is long.
 * Say what happens. Skip filler such as "simply", "just", "easily", "basically", and "note that".
