@@ -228,6 +228,8 @@ import ReleaseNotification from 'src/content/docs/_shared/_release-notification.
 
 * Name shared files with a leading underscore and dashes: `_login-api-integration.mdx`. Put content shared across sections in `astro/src/content/docs/_shared`.
 * Import each partial explicitly, because partials aren't auto-imported. Then use the partial like a component, and pass values as props: `<ReleaseNotification topic="passkeys" />`. In an MDX partial, read props as `{props.topic}`.
+* The build fails when a bare `{props.topic}` in an MDX partial renders without a value. The error names the page, the partial, and the line. Pass the prop from every caller. When an empty value is intended, write `{props.topic ?? ''}`. Content inside a false `<If>`, or inside a component with a false **`renderif`**, never renders, so the check skips that content.
+* A bare **`renderif`** flag on `APIField` or `Aside`, such as `renderif={props.is_create}`, needs a boolean from every caller: `<Partial is_create />` or `<Partial is_create={false} />`. The build fails when a caller leaves out the flag or passes a string such as `"false"`. When leaving the flag out should mean false, write `renderif={!!props.is_create}`. Other expressions, such as `!props.is_create`, and every `<If condition>` follow JavaScript truthiness, so a missing flag counts as false.
 * Inside a JavaScript expression, use HTML instead of markdown: `{props.show && <>See <a href="/docs/apis">the APIs</a>.</>}`. Coerce values to booleans for conditions: `{!!props.message && <span>{props.message}</span>}`.
 * Reference JSON examples with the [JSON component](astro/src/components/JSON.astro).
 
