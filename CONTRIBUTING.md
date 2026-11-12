@@ -173,7 +173,7 @@ sequenceDiagram
 * "Log in" is the verb, "login" is the noun, and "logged in" has no hyphen.
 * "Self-hosted" is the adjective and "self-hosting" is the noun. When unsure, use "self-hosted".
 * Write "update" for moving to a newer FusionAuth version. Reserve "migration" for moving users or data, and for database migrations.
-* Spell these names exactly as shown: .NET Core, air-gapped, Azure AD, CAPTCHA, client-side, Connector, curl, Defaults, Docker, Docker Compose, e-commerce, ECMAScript, Elasticsearch, esport, first-party, fine-grained authorization, FusionAuth Cloud, Google reCAPTCHA, Identity Provider, IdP, Kickstart, macOS, multi-factor authentication, multi-tenancy, multi-tenant, Node.js, OAuth, OAuth2, one-time password, private-labeled, re-authentication, self-service, server-side, Spring Boot, third-party, two-factor, UserInfo, WebAuthn, webview, X.509.
+* Spell these names exactly as shown: .NET Core, air-gapped, Azure AD, CAPTCHA, client-side, Connector, curl, Defaults, Docker, Docker Compose, e-commerce, ECMAScript, Elasticsearch, esport, first-party, fine-grained authorization, FusionAuth Cloud, Google reCAPTCHA, hCaptcha, Identity Provider, IdP, Kickstart, macOS, multi-factor authentication, multi-tenancy, multi-tenant, Node.js, OAuth, OAuth2, one-time password, private-labeled, re-authentication, self-service, server-side, Spring Boot, third-party, two-factor, UserInfo, WebAuthn, webview, X.509.
 
 ### Glossary Terms
 
