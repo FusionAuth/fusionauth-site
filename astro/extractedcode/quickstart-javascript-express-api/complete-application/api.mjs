@@ -1,17 +1,20 @@
 import express from 'express';
+import * as jose from 'jose';
 import { hasRole, verifyJWT } from './security.mjs';
 
 const app = express();
 const router = express.Router();
-const data = new Set('1');
+const posts = new Map();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-router.get('/read', hasRole('reader'), function (req, res) { return res.json([...data]); });
+router.get('/read', hasRole('free', 'paid'), function (req, res) { return res.json([...posts.values()]); });
 
-router.post('/write', hasRole('writer'), function (req, res) {
-  if (!req.body?.value) { return res.status(400).json({ error: 'Provide a value to write.' }); }
-  data.add(req.body.value);
+router.post('/write', hasRole('paid'), function (req, res) {
+  const userId = jose.decodeJwt(req.verifiedToken).sub;
+  const post = posts.get(req.body.uuid);
+  if (post && post.userId !== userId) return res.status(403).json({ error: 'You may edit only your own posts.' });
+  posts.set(req.body.uuid, { uuid: req.body.uuid, userId, text: req.body.text });
   return res.json('Write successful');
 });
 

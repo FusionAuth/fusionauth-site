@@ -19,9 +19,9 @@ export async function verifyJWT(req, res, next) {
   }
 }
 
-export function hasRole(role) {
+export function hasRole(...roles) {
   return (req, res, next) => {
-    if (jose.decodeJwt(req.verifiedToken).roles?.includes(role)) return next();
+    if (jose.decodeJwt(req.verifiedToken).roles?.some(role => roles.includes(role))) return next();
     res.status(403).send({ error: 'You do not have a role with permissions to do this.' });
   };
 }

@@ -31,39 +31,47 @@ test('Admin can log in to FusionAuth Admin UI', async ({ page }) => {
 test('Read and write requests without a token are rejected', async ({ request }) => {
   const readResponse = await request.get(`${apiUrl}/read`);
   expect(readResponse.status()).toBe(401);
-  const writeResponse = await request.post(`${apiUrl}/write`, { data: { value: 'unauthorized-write' },});
+  const writeResponse = await request.post(`${apiUrl}/write`, { data: { uuid: 'unauthorized', text: 'No token' },});
   expect(writeResponse.status()).toBe(401);
 });
 
-test('Reader can read but cannot write', async ({ request }) => {
-  const readerToken = await getToken(request, 'reader@example.com');
-  const readResponse = await request.get(`${apiUrl}/read`, { headers: bearerHeaders(readerToken), });
+test('Free user can read but cannot write', async ({ request }) => {
+  const freeToken = await getToken(request, 'free@example.com');
+  const readResponse = await request.get(`${apiUrl}/read`, { headers: bearerHeaders(freeToken), });
   expect(readResponse.ok()).toBeTruthy();
-  expect(await readResponse.json()).toContain('1');
   const writeResponse = await request.post(`${apiUrl}/write`, {
-    headers: bearerHeaders(readerToken),
-    data: { value: 'reader-write-should-be-rejected' },
+    headers: bearerHeaders(freeToken),
+    data: { uuid: 'free-post', text: 'Freda cannot write' },
   });
   expect(writeResponse.status()).toBe(403);
 });
 
-test('Writer can write and reader can read the saved value', async ({ request }) => {
-  const writerToken = await getToken(request, 'writer@example.com');
-  const readerToken = await getToken(request, 'reader@example.com');
-  const value = `integration-test-${Date.now()}`;
+test('Paid users can write and edit only their own posts, and free users can read them', async ({ request }) => {
+  const paidToken = await getToken(request, 'premium@example.com');
+  const secondPaidToken = await getToken(request, 'premium2@example.com');
+  const freeToken = await getToken(request, 'free@example.com');
+  const uuid = `integration-test-${Date.now()}`;
   const writeResponse = await request.post(`${apiUrl}/write`, {
-    headers: bearerHeaders(writerToken),
-    data: { value },
+    headers: bearerHeaders(paidToken),
+    data: { uuid, text: 'First post' },
   });
   expect(writeResponse.ok()).toBeTruthy();
-  expect(await writeResponse.json()).toBe('Write successful');
-  const writerReadResponse = await request.get(`${apiUrl}/read`, {
-    headers: bearerHeaders(writerToken),
+  const editResponse = await request.post(`${apiUrl}/write`, {
+    headers: bearerHeaders(paidToken),
+    data: { uuid, text: 'Edited post' },
   });
-  expect(writerReadResponse.status()).toBe(403);
-  const readResponse = await request.get(`${apiUrl}/read`, {
-    headers: bearerHeaders(readerToken),
+  expect(editResponse.ok()).toBeTruthy();
+  const paidReadResponse = await request.get(`${apiUrl}/read`, { headers: bearerHeaders(paidToken), });
+  expect(paidReadResponse.ok()).toBeTruthy();
+  const otherUsersEdit = await request.post(`${apiUrl}/write`, {
+    headers: bearerHeaders(secondPaidToken),
+    data: { uuid, text: 'Paul cannot edit Peter\'s post' },
   });
-  expect(readResponse.ok()).toBeTruthy();
-  expect(await readResponse.json()).toContain(value);
+  expect(otherUsersEdit.status()).toBe(403);
+  const readResponse = await request.get(`${apiUrl}/read`, { headers: bearerHeaders(freeToken), });
+  expect(await readResponse.json()).toContainEqual({
+    uuid,
+    userId: '00000000-0000-0000-0000-222222222222',
+    text: 'Edited post',
+  });
 });
