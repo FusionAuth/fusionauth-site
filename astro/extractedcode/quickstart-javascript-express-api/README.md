@@ -32,4 +32,4 @@ This repository contains a locally hosted FusionAuth instance and an Express API
    node api.mjs
    ```
 
-The API listens on port `3000`. Send access tokens in the `Authorization: Bearer <token>` header. The `reader@example.com` user can call `GET /read`. The `writer@example.com` user can call `POST /write` with a JSON `value` field.
+The API listens on port `3000`. Send access tokens in the `Authorization: Bearer <token>` header. The `free@example.com` user can call `GET /read`. The `premium@example.com` user can call `POST /write`.
