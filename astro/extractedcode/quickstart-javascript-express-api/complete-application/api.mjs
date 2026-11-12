@@ -4,7 +4,9 @@ import { hasRole, verifyJWT } from './security.mjs';
 
 const app = express();
 const router = express.Router();
-const posts = new Map();
+const posts = new Map([
+  ['00000000-0000-0000-0000-000000000001', { uuid: '00000000-0000-0000-0000-000000000001', userId: '00000000-0000-0000-0000-222222222222', text: 'Welcome to the forum.' }],
+]);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

@@ -25,16 +25,10 @@ This QuickStart requires:
 * [Docker](https://docs.docker.com/get-started/get-docker) 23 or later
 * [curl](https://curl.se/download.html), command line tool and library for making HTTP requests.
 
-<Aside type="tip">
 If you use macOS or Windows, you need one of the following container management tools:
   * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
   * [OrbStack](https://docs.orbstack.dev/quick-start) (to use OrbStack for `docker compose` commands after installation, run `docker context use orbstack`)
   * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
-
-Be sure to open your container management tool to configure and install any dependencies needed by that tool, including Rosetta and Developer Tools on macOS.
-
-If you use Windows, replace `/` with `\` in all file paths.
-</Aside>
 
 ## Install and Run FusionAuth
 
@@ -90,7 +84,7 @@ In the steps below, you will create three files to form an Express.js API server
 
 1. Create a file called `.env` in the `api` directory and insert the content below:
     <ExtractedCode src="quickstart-javascript-express-api/complete-application/.env" lang="text"/>
-    This file holds the settings the API will use to connect to FusionAuth to verify tokens.
+    This file holds the settings the API will use to connect to FusionAuth to verify tokens. The `.env` file contains passwords. In a real application, always add this file to your `.gitignore` file and never commit secrets to version control.
 
 1. Create a file called `security.mjs` in the `api` directory and insert the content below:
     <ExtractedCode src="quickstart-javascript-express-api/complete-application/security.mjs" lang="js"/>
@@ -105,10 +99,6 @@ In the steps below, you will create three files to form an Express.js API server
     node api.mjs
     ```
 </Steps>
-
-<Aside type="caution">
-The example returns token validation details and internal error messages to API clients. In production, return generic error responses instead, and log sensitive error details on the server.
-</Aside>
 
 ## Use the API
 
@@ -128,26 +118,15 @@ There are [several ways to acquire a token](/docs/authentication/oauth/) in Fusi
     }'
     ```
 
-1. Copy the `token` from the response, which should look like the ellipsized token below:
-    ```json
-    {
-      "token": "eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA",
-      "tokenExpirationInstant": 1689353059670,
-      "user": {
-          ...
-      }
-    }
-    ```
-
-1. Paste your full token from the previous step over the placeholder token containing the `...` below to call the `/read` endpoint and see what data the API has:
+1. Copy the `token` value from the response above, which should look like a longer version: `"token": "eyJhbGciOiJSUz"`.  Call the `/read` endpoint, replacing the placeholder `eyJhbGciOiJSUz` with your token value you just copied:
     ```shell-session
-    curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA'
+    curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
     The API returns `["1"]`.
 
-1. Call the write endpoint, replacing the token once again:
+1. Call the `/write` endpoint, replacing the placeholder with your token value again:
     ```shell-session
-    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA'
+    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
     The API returns `{"error":"You do not have a role with permissions to do this."}` because you are trying to access the endpoint while having the reader role but not the writer role. The endpoint is secure.
 
@@ -165,13 +144,13 @@ There are [several ways to acquire a token](/docs/authentication/oauth/) in Fusi
 
 1. Now use the new writer token returned to call the write endpoint again:
     ```shell-session
-    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA'
+    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
     This time the API should return `"Write successful"`.
 
 1. Finally, call the read endpoint again with the reader token:
     ```shell-session
-    curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA'
+    curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
     The API returns the new saved value: `["1","hello"]`.
 
@@ -183,12 +162,18 @@ In this tutorial you learnt how to add FusionAuth to a web server in the simples
 
 At login, clients submit their username and password directly to FusionAuth, so your server doesn't need to handle low-level protocols.
 
-Then, by using the Jose library to handle tokens, your `security.mjs` file needs only two functions:
+Thereafter, by using the Jose library to handle tokens, your `security.mjs` file needs only two functions to guarantee security:
 - `verifyJWT` to check the user is authenticated by FusionAuth and
 - `hasRole` to check if the user is authorized for the endpoint they are calling.
 
-In your main `api.mjs` endpoints, you can use the `hasRole` middleware to check if a user is authenticated and authorized, and if you need to work with a unique unchanging user Id in your database, use `jose.decodeJwt(req.verifiedToken).sub` to get the UUID provided by FusionAuth.
+In your main `api.mjs` endpoints, you can use the `hasRole` middleware to check if a user is authenticated and authorized, and if you need to work with a unique unchanging user Id in your database, use `jose.decodeJwt(req.verifiedToken).sub` to get the user UUID provided by FusionAuth.
 
 ## Next Steps
 
 <NextStepsApi />
+
+
+TODO
+- join commands with && rather than multiline
+- intro. explanatory text
+- full human test
