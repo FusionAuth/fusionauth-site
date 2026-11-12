@@ -22,8 +22,6 @@ async function showForgotPasswordMessage(page) {
 }
 
 export const shots = {
-  'theme-kickstart-app-oauth': { switch: ['application_oauthConfiguration_requireRegistration'], legacyVersion: true },
-  'theme-kickstart-manage-user': { legacyVersion: true },
   'theme-preview-oauth-authorize': { fixedHeight: null, legacyVersion: true },
   'theme-preview-oauth-logout': { fixedHeight: null, legacyVersion: true },
   'theme-dark-messages': { fixedHeight: null, prepare: preparation({ afterThemeTab: showForgotPasswordMessage }) },
