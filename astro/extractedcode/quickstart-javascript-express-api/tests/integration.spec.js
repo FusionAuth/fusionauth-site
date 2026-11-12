@@ -46,25 +46,25 @@ test('Free user can read but cannot write', async ({ request }) => {
   expect(writeResponse.status()).toBe(403);
 });
 
-test('Paid users can write and edit only their own posts, and free users can read them', async ({ request }) => {
-  const paidToken = await getToken(request, 'premium@example.com');
-  const secondPaidToken = await getToken(request, 'premium2@example.com');
+test('Premium users can write and edit only their own posts, and free users can read them', async ({ request }) => {
+  const premiumToken = await getToken(request, 'premium@example.com');
+  const secondPremiumToken = await getToken(request, 'premium2@example.com');
   const freeToken = await getToken(request, 'free@example.com');
   const uuid = `integration-test-${Date.now()}`;
   const writeResponse = await request.post(`${apiUrl}/write`, {
-    headers: bearerHeaders(paidToken),
+    headers: bearerHeaders(premiumToken),
     data: { uuid, text: 'First post' },
   });
   expect(writeResponse.ok()).toBeTruthy();
   const editResponse = await request.post(`${apiUrl}/write`, {
-    headers: bearerHeaders(paidToken),
+    headers: bearerHeaders(premiumToken),
     data: { uuid, text: 'Edited post' },
   });
   expect(editResponse.ok()).toBeTruthy();
-  const paidReadResponse = await request.get(`${apiUrl}/read`, { headers: bearerHeaders(paidToken), });
-  expect(paidReadResponse.ok()).toBeTruthy();
+  const premiumReadResponse = await request.get(`${apiUrl}/read`, { headers: bearerHeaders(premiumToken), });
+  expect(premiumReadResponse.ok()).toBeTruthy();
   const otherUsersEdit = await request.post(`${apiUrl}/write`, {
-    headers: bearerHeaders(secondPaidToken),
+    headers: bearerHeaders(secondPremiumToken),
     data: { uuid, text: 'Paul cannot edit Peter\'s post' },
   });
   expect(otherUsersEdit.status()).toBe(403);

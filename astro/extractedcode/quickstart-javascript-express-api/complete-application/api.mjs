@@ -10,9 +10,9 @@ const posts = new Map([
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-router.get('/read', hasRole('free', 'paid'), function (req, res) { return res.json([...posts.values()]); });
+router.get('/read', hasRole('free', 'premium'), function (req, res) { return res.json([...posts.values()]); });
 
-router.post('/write', hasRole('paid'), function (req, res) {
+router.post('/write', hasRole('premium'), function (req, res) {
   const userId = jose.decodeJwt(req.verifiedToken).sub;
   const post = posts.get(req.body.uuid);
   if (post && post.userId !== userId) return res.status(403).json({ error: 'You may edit only your own posts.' });

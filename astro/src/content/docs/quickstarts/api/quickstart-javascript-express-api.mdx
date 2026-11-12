@@ -56,7 +56,7 @@ During Docker Compose startup, the included `fusionauth/kickstart.json` file use
 * Generate an API key
 * Create an application for your API with appropriate settings (<Breadcrumb>Applications -> Edit Application</Breadcrumb>)
 * Create an admin user (`admin@example.com`) and register the user with the FusionAuth application (<Breadcrumb>Users</Breadcrumb>)
-* Create two API users (`reader@example.com` and `writer@example.com`) and their roles, and register the users with your application
+* Create three API users (`free@example.com`, `premium@example.com`, and `premium2@example.com`) with the `free` or `premium` role, and register the users with your application
 </Aside>
 
 Once Docker Compose initializes all containers, open a browser and navigate to the FusionAuth Admin UI at [http://localhost:9011/admin](http://localhost:9011/admin). Use the following admin account credentials to log in:
@@ -92,9 +92,9 @@ In the steps below, you will create three files to form an Express.js API server
 
 1. Create a file called `api.mjs` in the `api` directory and insert the content below:
     <ExtractedCode src="quickstart-javascript-express-api/complete-application/api.mjs" lang="js"/>
-    This Express server has one endpoint each for reading and writing, protected by `hasRole('free', 'paid')` or `hasRole('paid')` imported from the `security.mjs` file. If a client tries to call an endpoint without the necessary authentication and role it will be rejected before the code inside the endpoint function is even reached.
+    This Express server has one endpoint each for reading and writing, protected by `hasRole('free', 'premium')` or `hasRole('premium')` imported from the `security.mjs` file. If a client tries to call an endpoint without the necessary authentication and role it will be rejected before the code inside the endpoint function is even reached.
 
-2. In the same terminal, start the Express server:
+1. In the same terminal, start the Express server:
     ```shell-session
     node api.mjs
     ```
@@ -106,7 +106,7 @@ There are [several ways to acquire a token](/docs/authentication/oauth/) in Fusi
 
 <Steps>
 
-1. Get an access token for `reader@example.com` by making the following request in a new terminal.
+1. Get an access token for `free@example.com` by making the following request in a new terminal.
     ```shell-session
     curl --location 'http://localhost:9011/api/login' \
     --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
@@ -123,15 +123,15 @@ There are [several ways to acquire a token](/docs/authentication/oauth/) in Fusi
     ```shell-session
     curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
-    The API returns the only stored message `{ uuid: '00000000-0000-0000-0000-000000000001', userId: '00000000-0000-0000-0000-222222222222', text: 'Welcome to the forum.' }`.
+    The API returns the only stored message `[ {"uuid":"00000000-0000-0000-0000-000000000001","userId":"00000000-0000-0000-0000-222222222222","text":"Welcome to the forum."} ]`.
 
 1. Call the `/write` endpoint, replacing the placeholder with your token value again:
     ```shell-session
-    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOiJSUz'
+    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"uuid":"00000000-0000-0000-0000-444444444444","text":"Hello from Freda"}' --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
     The API returns `{"error":"You do not have a role with permissions to do this."}` because you are trying to access the endpoint while having the free role but not the premium role. The endpoint is secure.
 
-1. Use the command from step one to get a token for the writer user, by replacing `free@example.com` with `premium@example.com`:
+1. Use the command from step one to get a token for the premium user, by replacing `free@example.com` with `premium@example.com`:
     ```shell-session
     curl --location 'http://localhost:9011/api/login' \
     --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
@@ -143,19 +143,19 @@ There are [several ways to acquire a token](/docs/authentication/oauth/) in Fusi
     }'
     ```
 
-1. Now use the new writer token returned to call the write endpoint again:
+1. Now use the new premium token returned to call the write endpoint again:
     ```shell-session
-    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOiJSUz'
+    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"uuid":"00000000-0000-0000-0000-444444444444","text":"Hello from Peter"}' --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
     This time the API should return `"Write successful"`.
 
-1. Finally, call the read endpoint again with the reader token:
+1. Finally, call the read endpoint again with the free token:
     ```shell-session
     curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
-    The API returns the new saved message.
+    The API returns the saved messages.
 
-1. If you want to experimt more, you could call the `write` endpoint again with the same message Id but a different text to test message editing. You could also login with the second premium user, `premium2@example.com` and try to edit another user's message to test user-level security.
+1. If you want to experiment more, you could call the `write` endpoint again with the same message Id but a different text to test message editing. You could also login with the second premium user, `premium2@example.com` and try to edit another user's message to test user-level security.
 
 </Steps>
 
