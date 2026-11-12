@@ -9,14 +9,17 @@ import AvailableSince from 'src/components/api/AvailableSince.astro';
 // I did my best here but this is crazy for a docs page, just sayin'. I ported it, I didn't create it.
 const { idp_token_or_code, idp_display_name, idp_id, idp_lowercase, idp_since } = Astro.props;
 
-let token_for_login_request = '';
-if (idp_token_or_code === 'token or code') {
-  token_for_login_request = 'an accessToken';
-} else if (idp_display_name == 'Facebook') {
-  token_for_login_request = 'a short-lived User accessToken';
-} else if (idp_display_name === 'Google') {
-  token_for_login_request = 'an idToken';
+let token_for_login_request = 'an access token';
+if (idp_display_name === 'Google') {
+  token_for_login_request = 'an Id token';
+} else if (idp_display_name === 'Facebook') {
+  token_for_login_request = 'a short-lived user access token';
+} else if (idp_display_name === 'Xbox') {
+  token_for_login_request = 'an Xbox Live user token';
 }
+
+// facebook prefers the code when both are sent, every other idp prefers the token
+const preferred_field = idp_display_name === 'Facebook' ? 'code' : 'token';
 
 let data_code_since = '';
 if (['Google', 'Facebook'].includes(idp_display_name)) {
@@ -48,92 +51,94 @@ const show_code_and_token_examples = ['Facebook', 'Google'].includes(idp_display
 
 <APIBlock>
   <APIField name="applicationId" type="UUID" required>
-    The Id of the Application the user is to be logged into. This application must have {idp_display_name} login enabled for this request to succeed.
+    The Id of the Application the user logs in to. The Application must have {idp_display_name} login enabled.
   </APIField>
 
   <APIField name="data.appId" type="String" optional since="1.41.0" renderif={ idp_display_name === 'Steam'}>
-    The Steam application Id.
-    Use this value with the **`data.sessionTicket`** to complete login. The fields **`data.appId`** and **`data.sessionTicket`** will be preferred over **`data.token`** if all values are provided.
+    The Steam application Id. Send this field with **`data.sessionTicket`**.
+
+    When the Steam **apiMode** is `Partner` and you send **`data.appId`** and **`data.sessionTicket`**, FusionAuth uses the session ticket and ignores **`data.token`**. In `Public` mode, FusionAuth ignores the session ticket and uses **`data.token`**.
   </APIField>
   <APIField name="data.sessionTicket" type="String" optional since="1.41.0" renderif={ idp_display_name === 'Steam'}>
-    The Steam user session ticket.
-    Use this value with the **`data.appId`** to complete login. The fields **`data.appId`** and **`data.sessionTicket`** will be preferred over **`data.token`** if all values are provided.
+    The Steam user session ticket. Send this field with **`data.appId`**. FusionAuth sends the ticket to the Steam AuthenticateUserTicket API.
+
+    When the Steam **apiMode** is `Partner` and you send **`data.appId`** and **`data.sessionTicket`**, FusionAuth uses the session ticket and ignores **`data.token`**. In `Public` mode, FusionAuth ignores the session ticket and uses **`data.token`**.
   </APIField>
 
   <APIField name="data.appleUser" type="String" optional renderif={idp_display_name === 'Apple'}>
-    The Apple user object. The first time a user completes the Sign in with Apple flow a user object will be returned, when this occurs pass it in using this property. During subsequent authentication requests to Apple the user object will not be returned.
+    The Apple user object. Apple returns the user object only the first time a user completes Sign in with Apple. When Apple returns the user object, send the object in this field.
   </APIField>
   <APIField name="data.code" type="String" optional renderif={idp_display_name === 'Apple'}>
-    The authorization code returned from the Sign in with Apple.
+    The authorization code that Sign in with Apple returns.
   </APIField>
   <APIField name="data.id_token" type="String" optional renderif={idp_display_name === 'Apple'}>
-    The Apple `id_token` returned during Sign in with Apple.
+    The `id_token` that Sign in with Apple returns.
   </APIField>
   <APIField name="data.isNativeApp" type="String" optional defaults="false" since="1.43.0" renderif={idp_display_name === 'Apple'} >
-    Set this property equal to `"true"` for login from a mobile app to use the **`bundleId`** from the IdP configuration instead of the **`servicesId`**.
+    For login from a mobile app, set this field to `"true"`. FusionAuth then uses the **`bundleId`** from the Identity Provider configuration instead of the **`servicesId`**.
   </APIField>
   <APIField name="data.redirect_uri" type="String" optional renderif={idp_display_name === 'Apple'}>
-    The authorized redirect URI from your Sign in with Apple configuration. Apple calls this a **Return URL**. This value will be the publicly available URL of FusionAuth with the `/oauth2/callback` suffix.
+    The authorized redirect URI from your Sign in with Apple configuration, which Apple calls the **Return URL**. The value is the public URL of FusionAuth followed by `/oauth2/callback`.
 
     <br/>
     <br/>
     <AvailableSince since="1.43.0"/>
     <br/>
 
-    **`data.redirect_uri`** is no longer a required field for mobile app logins when **`data.isNativeApp`** is `"true"`.
+    When **`data.isNativeApp`** is `"true"`, **`data.redirect_uri`** is optional.
   </APIField>
 
-  { idp_token_or_code === 'token or code' && <CommonDataCodeOrToken data_code_since={data_code_since}/> }
+  { idp_token_or_code === 'token or code' && <CommonDataCodeOrToken data_code_since={data_code_since} idp_display_name={idp_display_name} token_for_login_request={token_for_login_request} preferred_field={preferred_field} /> }
 
-  <APIField name="data.token" type="String" required renderif={idp_token_or_code === 'token'}>
-    The Steam OAuth access token returned from their login API. This token will be sent to the Steam Token Details API as the `access_token` parameter.
+  <APIField name="data.token" type="String" optional renderif={idp_token_or_code === 'token'}>
+    The Steam OAuth access token from the Steam login API. FusionAuth sends the token to the Steam GetTokenDetails API as the `access_token` parameter.
+
+    This field is required unless the Steam **apiMode** is `Partner` and you send **`data.appId`** and **`data.sessionTicket`**.
   </APIField>
 
-  { idp_display_name === 'Facebook' && <CommonDataCodeOrToken data_code_since={data_code_since} />}
+  { idp_display_name === 'Facebook' && <CommonDataCodeOrToken data_code_since={data_code_since} idp_display_name={idp_display_name} token_for_login_request={token_for_login_request} preferred_field={preferred_field} />}
 
   <APIField name="data.code" type="String" required  renderif={idp_display_name === 'HYPR'}>
-    The `code` returned from the Start Login API.
+    The `code` that the Start Login API returns.
   </APIField>
 
   <APIField name="data.code" type="String" required renderif={ idp_display_name === 'LinkedIn'}>
-    When using the authorization code grant, LinkedIn will have returned an authorization code. To complete the login request, provide the `code` and the `redirect_uri` parameters to allow FusionAuth to complete this grant by exchanging the authorization code for an `access_token`.
+    The authorization code that LinkedIn returns to your redirect URI. FusionAuth exchanges the code for an access token at the LinkedIn token endpoint.
   </APIField>
   <APIField name="data.redirect_uri" type="String" required renderif={ idp_display_name === 'LinkedIn'}>
-    The redirect URI that was provided to the LinkedIn Authorization endpoint. This value will be sent to the Token Info API as the `redirect_uri` parameter.
+    The redirect URI that your app sent to the LinkedIn authorization endpoint. FusionAuth sends the value to the LinkedIn token endpoint as the `redirect_uri` parameter.
   </APIField>
 
   <APIField name="data.samlResponse" type="String" required renderif={idp_display_name === 'SAML v2'}>
-    The `SAMLResponse` parameter from the form submit (via a `POST` request) from the SAML v2 identity provider. This must contain the `code` retrieved from the Start Login Request API call.
+    The `SAMLResponse` parameter that the SAML v2 Identity Provider sends in a form `POST`. The response must contain the `code` from the Start Login API.
   </APIField>
 
   <APIField name="data.samlResponse" type="String" required  renderif={idp_display_name === 'SAML v2 IdP Initiated'}>
-    The `SAMLResponse` parameter from the form submit (via a `POST` request) from the SAML v2 IdP Initiated identity provider.
+    The `SAMLResponse` parameter that the SAML v2 IdP Initiated Identity Provider sends in a form `POST`.
   </APIField>
 
   <APIField name="data.oauth_token" type="String" required renderif={ idp_display_name === 'Twitter'}>
-    The Twitter OAuth token returned from their login API. This token will be sent to the Twitter OAuth Access Token API as the `oauth_token` parameter.
-    
+    The OAuth token from the Twitter login API. FusionAuth sends the token to the Twitter OAuth Access Token API as the `oauth_token` parameter.
 
     <br/>
     <br/>
     <AvailableSince since="1.25.0"/>
     <br/>
 
-    If this value is an access token then it will not be sent to the Twitter OAuth Access Token API, and instead be directly used to call the Twitter Verify Credentials API to obtain user details. See notes in **oauth_verifier**.
+    When you leave out **`oauth_verifier`**, FusionAuth treats the value as an access token. FusionAuth then skips the Twitter OAuth Access Token API and calls the Twitter Verify Credentials API for the user details.
   </APIField>
   <APIField name="data.oauth_token_secret" type="String" required renderif={ idp_display_name === 'Twitter'}>
-    The Twitter OAuth token secret returned from their login API. This token will be used to sign the request to the OAuth Access Token API.
-    
+    The OAuth token secret from the Twitter login API. FusionAuth signs the request to the Twitter OAuth Access Token API with the secret.
 
     <br/>
     <br/>
     <AvailableSince since="1.25.0"/>
     <br/>
 
-    If this value is an access token then it will not be sent to the Twitter OAuth Access Token API, and instead be directly used to call the Twitter Verify Credentials API to obtain user details. See notes in **oauth_verifier**.
+    When you leave out **`oauth_verifier`**, FusionAuth treats the value as an access token. FusionAuth then skips the Twitter OAuth Access Token API and calls the Twitter Verify Credentials API for the user details.
   </APIField>
-  <APIField name="data.oauth_verifier" type="String" required renderif={ idp_display_name === 'Twitter'}>
-    The Twitter OAuth verifier returned from their login API. This token will be sent to the Twitter OAuth Access Token API in the request body as the `oauth_verifier` parameter.
+  <APIField name="data.oauth_verifier" type="String" optional renderif={ idp_display_name === 'Twitter'}>
+    The OAuth verifier from the Twitter login API. FusionAuth sends the verifier to the Twitter OAuth Access Token API in the request body as the `oauth_verifier` parameter.
 
 
     <br/>
@@ -141,58 +146,55 @@ const show_code_and_token_examples = ['Facebook', 'Google'].includes(idp_display
     <AvailableSince since="1.25.0"/>
     <br/>
 
-    You may optionally omit the **`oauth_verifier`** field if the values for **`oauth_token`** and **`oauth_token_secret`** are an access token. This allows for a use case where you are not using the FusionAuth themed login pages and you have integrated the Twitter login using this API and prior to calling FusionAuth you have already exchanged these values for a Twitter access token. In this scenario, you may take these two parameters representing the access token and FusionAuth will still complete the login for you by skipping the request to exchange the request token for an access token.
+    When **`oauth_token`** and **`oauth_token_secret`** hold an access token, you can leave out **`oauth_verifier`**. Use this option when your app calls Twitter without the FusionAuth hosted login pages and exchanges the request token for an access token before calling FusionAuth. FusionAuth skips the exchange and completes the login with the access token.
   </APIField>
 
   <APIField name="data.code" type="String" required renderif={ idp_display_name === 'OpenID Connect'}>
-    The authorization code, this is the `code` parameter that was returned on the Authorization redirect URI. This code will be sent to the Token endpoint as the `code` parameter.
+    The `code` parameter that the OpenID Connect provider returns to your redirect URI. FusionAuth sends the code to the token endpoint as the `code` parameter.
   </APIField>
   <APIField name="data.redirect_uri" type="String" required renderif={ idp_display_name === 'OpenID Connect'}>
-    The redirect URI that was provided to the OpenID Connect Authorization endpoint. This value will be sent to the Token endpoint as the `redirect_uri` parameter.
+    The redirect URI that your app sent to the OpenID Connect authorization endpoint. FusionAuth sends the value to the token endpoint as the `redirect_uri` parameter.
   </APIField>
 
   <APIField name="encodedJWT" type="String" required renderif={idp_display_name === 'External JWT'}>
-    The encoded JWT which contains the user's identity information.
+    The encoded JWT that contains the user's identity information.
   </APIField>
   <APIField name="identityProviderId" type="UUID" required>
-    The unique Id of the identity provider to process this login request.
+    The unique Id of the Identity Provider that processes the login request.
   </APIField>
   <APIField name="connectionTestId" type="String" since="1.65.0" optional>
     The Id of an identity provider connection test returned by the [Start an Identity Provider Connection Test](/docs/apis/identity-providers/test#start-an-identity-provider-connection-test) API.
   </APIField>
   <APIField name="ipAddress" type="String" optional>
-    The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
-    the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
-    be stored in the User login history.
+    The IP address of the end user who logs in. When you leave out this field, FusionAuth uses the `X-Forwarded-For` header, or the address of the last proxy that sent the request. FusionAuth stores the IP address in the user's login history.
   </APIField>
   <APIField name="metaData.device.description" type="String" optional>
-    A human readable description of the device represented by the `device` parameter.
+    A human-readable description of the device.
   </APIField>
   <APIField name="metaData.device.lastAccessedAddress" type="String" optional>
-    The IP address of this login request.
+    The IP address of the login request.
   </APIField>
   <APIField name="metaData.device.name" type="String" optional>
-    A human readable name of the device represented by the `device` parameter.
+    A human-readable name of the device.
   </APIField>
   <APIField name="metaData.device.type" type="String" optional>
-    The type of device represented by the `device` parameter.
-    Prior to version `1.46.0`, this value was restricted to the following types:
+    The type of device. Before version `1.46.0`, the value had to be one of the following types:
     <DeviceTypeList />
-    In version <code>1.46.0</code> and beyond, this value can be any string value you'd like, have fun with it!
+    In version <code>1.46.0</code> and later, the value can be any string.
   </APIField>
   <APIField name="newDevice" type="Boolean" optional defaults="false">
-    Indicates that this device has never been used by this user to log in before. One of many signals used to decide whether to issue an MFA challenge as part of [Intelligent MFA](/docs/authentication/multi-factor-authentication/contextual#intelligent-mfa) or the [MFA Requirement Lambda](/docs/lambdas/login/mfa-requirement). When `true`, triggers the [New Device Webhook](/docs/events/reference/user/login/user-login-new-device).
+    Set to `true` when the user has never logged in from the device. FusionAuth uses the value as one signal when deciding whether to issue an MFA challenge for [Intelligent MFA](/docs/authentication/multi-factor-authentication/contextual#intelligent-mfa) or the [MFA Requirement Lambda](/docs/lambdas/login/mfa-requirement). When `true`, triggers the [New Device Webhook](/docs/events/reference/user/login/user-login-new-device).
   </APIField>
   <APIField name="noJWT" type="Boolean" optional defaults="false">
-    When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` field, and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
+    When `true`, FusionAuth doesn't issue a JWT. The response body has no `token` field, and FusionAuth doesn't write the `access_token` and `refresh_token` cookies.
 
-    This optional parameter may be helpful when performing high volume authentication requests and the JWT is not being used, in this scenario removing the additional latency required to issue and sign the JWT may have a measurable cumulative effect on performance.
+    When you send many login requests and don't use the JWT, set this field to `true` to skip the time FusionAuth spends signing JWTs.
   </APIField>
   <APIField name="noLink" type="Boolean" optional defaults="false" since="1.29.0">
-    When this value is set to `true`, if a link does not yet exist to a FusionAuth user, a `404` status code will be returned instead of using the requested linking strategy. This may be useful if you want to identify if a link exists before starting a full interactive workflow with the user to complete a link.
+    When `true` and no link to a FusionAuth user exists, FusionAuth returns a `404` status code instead of applying the linking strategy. Use this field to check for a link before you start an interactive linking workflow with the user.
   </APIField>
   <APIField name="refresh_token" type="String" optional renderif={idp_display_name === 'External JWT'}>
-    A refresh token from the identity provider.
+    A refresh token from the Identity Provider.
   </APIField>
 </APIBlock>
 
