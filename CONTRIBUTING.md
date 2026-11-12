@@ -123,6 +123,7 @@ To make a smoothie:
 
 * Link to other pages on `fusionauth.io` with a root-relative path and no trailing slash: `[Users API](/docs/apis/users)`. Don't use the domain or a relative path such as `./users`.
 * Make link text describe the destination. Write "see [Account Lockout](/docs/security/account-protection/account-lockout)", not "click [here](...)".
+* Describe the subject first, and put the link in a separate sentence at the end: "For more information, see [Account Lockout](/docs/security/account-protection/account-lockout)." When a link points to a list of fields, write "For a full list of fields, see the [Graph API User reference](https://developers.facebook.com/docs/graph-api/reference/user)." Don't write "See X for the fields."
 
 ### Asides
 
