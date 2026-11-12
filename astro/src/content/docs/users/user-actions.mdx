@@ -184,7 +184,7 @@ Below is a diagram of this process.
 
 ### FusionAuth Setup
 
-This guide assumes you have installed Node.js and FusionAuth. For FusionAuth installation instructions, please follow the [Install Locally](/docs/get-started/install). You should be able to log in to FusionAuth at `http://localhost:9011/admin` and your Node.js test app at `http://localhost:3000`.
+This guide assumes you have installed Node.js and FusionAuth. To install FusionAuth, see [Install Locally](/docs/get-started/install). You should be able to log in to FusionAuth at `http://localhost:9011/admin`.
 
 <Aside type="note">
 You can't use the [online FusionAuth sandbox](https://sandbox.fusionauth.io/admin) for this tutorial because you need to point the webhooks and emails to fake localhost services.
@@ -531,37 +531,43 @@ In this last Action, you will add Options that represent the responses a user ma
 
 ## PiedPiper Setup
 
-Your JavaScript code will act as PiedPiper, Intercom, and Slack, all in one. You'll use the `fusionauth-example-5-minute-guide` Node.js app as the base to start from. If you have not worked through [that guide](/docs/get-started/install) and do not have the code available, please do so before continuing.
+The example app plays PiedPiper, Intercom, and Slack. To download and configure the example app:
 
-* Set the **`CLIENT_ID`** and **`CLIENT_SECRET`** in your `.env` file to the values you recorded for the new PiedPiper Application in this [section](#create-piedpiper-application).
-* Create a new environment variable in the `.env` file called **API_KEY** and set the value to the value of the API key you created earlier `FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh`.
-* Note in the `package.json` file that the `@fusionauth/typescript-client` library is available for use. This is what will be calling the FusionAuth API to create Action instances.
+1. Clone the example app and install the dependencies:
 
-### Create Mock Intercom API
+   ```shell-session
+   git clone https://github.com/FusionAuth/fusionauth-example-user-actions-guide.git
+   cd fusionauth-example-user-actions-guide
+   npm install
+   ```
 
-In the `fusionauth-example-5-minute-guide` Node.js app, open `app.js`.
+1. Copy `.env.sample` to `.env`.
+1. In `.env`, set **`CLIENT_ID`** to `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`, and set **`CLIENT_SECRET`** to the value you recorded in [Create PiedPiper Application](#create-piedpiper-application).
+1. In `.env`, set **`API_KEY`** to the API key you created earlier, `FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh`.
 
-You'll add a new route that pretends to be Intercom and will listen for new subscribers to start the onboarding process. In this tutorial, the API will just print the webhook to the console so that you can see what it looks like.
+The rest of this section explains the routes in `app.js` that handle the webhooks. You don't need to change the code.
 
-After the line `var indexRouter = require('./routes/index');`, add a reference to the FusionAuth TypeScript client library, the **`API_KEY`** and **`BASE_URL`** environment variables.
+### Mock Intercom API
+
+The app calls the FusionAuth API with the [TypeScript client library](/docs/sdks/typescript). `app.js` reads the **`API_KEY`** and **`BASE_URL`** environment variables for the client:
 
 <ExtractedCode src="example-user-actions-guide/app.snippet.tsClientLib.js" lang="js" />
 
-Below the line `app.use('/', indexRouter);`, add the following.
+The `/intercom` route stands in for Intercom, which starts onboarding for new subscribers. The route prints each webhook to the console, so you can see what FusionAuth sends:
 
 <ExtractedCode src="example-user-actions-guide/app.snippet.intercom.js" lang="js" />
 
-### Create Mock Slack API
+### Mock Slack API
 
-Now make a similar API to mock Slack by adding the following code below the code you added previously.
+The `/slack` route stands in for Slack in the same way:
 
 <ExtractedCode src="example-user-actions-guide/app.snippet.slack.js" lang="js" />
 
-Administrators monitoring PiedPiper on Slack can immediately contact the user to help them if their survey response was `Bad`.
+Administrators who monitor PiedPiper on Slack can contact a user right away when the user's survey response is `Bad`.
 
-### Create PiedPiper API to Listen for Expiry and Call Prevent Login Action
+### PiedPiper API to Listen for Expiry and Call Prevent Login Action
 
-The final piece of code you'll add to `app.js` is a little more complex. The `expire` route below is called by FusionAuth when the user's subscription Action instance ends. To ban the user from logging in after this time, PiedPiper applies the **Prevent Login** Action to the user by calling the FusionAuth API.  Add this code directly below the mock Slack code you just added.
+FusionAuth calls the `/expire` route when the user's subscription Action ends. To stop the user from logging in after that, the route applies the **Prevent Login** Action to the user with the FusionAuth API:
 
 <ExtractedCode src="example-user-actions-guide/app.snippet.expire.js" lang="js" />
 

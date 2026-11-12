@@ -1,0 +1,84 @@
+---
+title: Implicit and Password Grants
+htmlTitle: Legacy OAuth Implicit and Password Grants
+description: Learn how the legacy OAuth Implicit and Password grants work in FusionAuth, for existing integrations.
+order: 60
+tags: oauth, oauth2, implicit grant, password grant, resource owner password credentials, legacy
+---
+
+FusionAuth supports the Implicit grant and the Password grant for existing integrations. Both grants expose tokens or passwords to more parties than the [Authorization Code grant](/docs/authentication/oauth/authorization-code) does. Use the Authorization Code grant for new apps.
+
+## Implicit Grant
+
+<Aside type="caution">
+The Implicit grant returns the access token in the URL fragment, where the token can leak through browser history. The browser also has no safe place to store the token.
+</Aside>
+
+The Implicit grant skips the code exchange. FusionAuth returns the access token in the redirect from the authorize endpoint. To use the Implicit grant, enable `Implicit` in **Enabled grants** on the <Breadcrumb>OAuth</Breadcrumb> tab of the Application.
+
+### Send the Browser to the Authorize Endpoint
+
+Redirect the browser to the `/oauth2/authorize` endpoint with **`response_type`** set to `token`. The example adds line breaks for readability.
+
+```plaintext title="Example HTTP Request"
+GET /oauth2/authorize?
+      client_id=06494b74-a796-4723-af44-1bdb96b48875
+      &redirect_uri=https%3A%2F%2Fwww.piedpiper.com%2Fcallback
+      &response_type=token
+Host: piedpiper.fusionauth.io
+```
+
+After the user logs in, FusionAuth redirects the browser to the **`redirect_uri`**. The parameters, including the **`access_token`**, follow the `#` fragment delimiter:
+
+```plaintext title="Example HTTP Redirect Response"
+HTTP/1.1 302 Found
+Location: https://www.piedpiper.com/callback#
+           access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo
+           &expires_in=3599
+           &iss=https%3A%2F%2Fpiedpiper.fusionauth.io
+           &locale=en
+           &token_type=Bearer
+           &userState=Authenticated
+```
+
+For every parameter, see the [Implicit grant request](/docs/apis/oauth/authorize#implicit-grant-request).
+
+## Password Grant
+
+<Aside type="caution">
+With the Password grant, your app collects the user's password and sends the password to FusionAuth. The user also can't log in with FusionAuth features such as social login.
+</Aside>
+
+The Resource Owner Password Credentials grant, also called the Password grant, exchanges the user's login Id and password for tokens. To use the Password grant, enable `Password` in **Enabled grants** on the <Breadcrumb>OAuth</Breadcrumb> tab of the Application.
+
+### Exchange the User's Credentials for Tokens
+
+Send the login Id and the password to the `/oauth2/token` endpoint with **`grant_type`** set to `password`. To get a refresh token, add `offline_access` to **`scope`**. The example logs in `richard@piedpiper.com` with the password `disrupt`, and adds line breaks for readability.
+
+```plaintext title="Example HTTP Request"
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+
+client_id=06494b74-a796-4723-af44-1bdb96b48875
+    &client_secret=example-client-secret-do-not-use
+    &grant_type=password
+    &password=disrupt
+    &scope=offline_access
+    &username=richard%40piedpiper.com
+```
+
+FusionAuth returns the tokens:
+
+```json title="Example JSON Response"
+{
+  "access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
+  "expires_in" : 3600,
+  "refresh_token": "ze9fi6Y9sMSf3yWp3aaO2w7AMav2MFdiMIi2GObrAi-i3248oo0jTQ",
+  "scope": "offline_access",
+  "token_type" : "Bearer",
+  "userId" : "3b6d2f70-4821-4694-ac89-60333c9c4165"
+}
+```
+
+Replace `example-client-secret-do-not-use` with the **Client secret** from the <Breadcrumb>OAuth</Breadcrumb> tab of your Application. When the **Client Authentication** of the Application is `Not required`, leave out **`client_secret`**. For when each grant needs the secret, see the [Client Secret Reference](/docs/apis/oauth/client-secret). For every field, see the [Password grant request](/docs/apis/oauth/token#resource-owner-password-credentials-grant-request).

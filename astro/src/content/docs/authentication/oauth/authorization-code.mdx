@@ -1,0 +1,138 @@
+---
+title: Authorization Code Grant
+htmlTitle: OAuth Authorization Code Grant
+description: Learn how to log users in with the OAuth Authorization Code grant and PKCE.
+order: 20
+tags: oauth, oauth2, authorization code grant, pkce, login, oidc, token endpoint
+---
+
+The Authorization Code grant is the recommended grant for logging users in. Your app redirects the browser to FusionAuth, and FusionAuth logs the user in. FusionAuth then redirects the browser back to your app with an authorization code. Your app exchanges the code for tokens.
+
+```mermaid title="Requests between the browser, your app, and FusionAuth during an Authorization Code grant."
+sequenceDiagram
+    participant Browser
+    participant App as Your App
+    participant FusionAuth
+    Browser ->> App : Click log in
+    App ->> Browser : Redirect to /oauth2/authorize with the code challenge
+    Browser ->> FusionAuth : Request the login page
+    FusionAuth ->> Browser : Redirect to the redirect URI with the authorization code
+    Browser ->> App : Request the redirect URI
+    App ->> FusionAuth : POST /oauth2/token with the code and the code verifier
+    FusionAuth ->> App : Return the tokens
+```
+
+Before you start, configure the Application, as described in [Configure Application OAuth Settings](/docs/authentication/oauth#configure-application-oauth-settings). Most apps use an OAuth library for these requests. To configure a library, see [Add Login to Your App](/docs/authentication/oauth/add-login-to-your-app). The following example shows the raw requests. The example uses a FusionAuth instance at `https://piedpiper.fusionauth.io` and an app at `https://www.piedpiper.com`.
+
+## Proof Key for Code Exchange
+
+Use [Proof Key for Code Exchange](https://datatracker.ietf.org/doc/html/rfc7636) (PKCE, pronounced "pixie") with every Authorization Code grant. PKCE stops an attacker who intercepts the authorization code from exchanging the code for tokens.
+
+Before each login, your app generates a random string called the code verifier. Your app hashes the code verifier with SHA-256 and sends the result to the authorize endpoint as the **`code_challenge`** parameter. FusionAuth stores the code challenge with the authorization code. When your app exchanges the code at the token endpoint, your app sends the original **`code_verifier`**. FusionAuth hashes the code verifier and rejects the request when the hash doesn't match the code challenge. An attacker who steals the code doesn't have the code verifier.
+
+PKCE replaces the client secret for single-page and mobile apps, because a browser or a device can't keep a secret. Server-side apps send both. Most OAuth libraries generate the code verifier and the code challenge for you. To require PKCE for an Application, set **PKCE** to `Required` on the <Breadcrumb>OAuth</Breadcrumb> tab of the Application.
+
+The following example uses the code verifier `dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk` and the code challenge `E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM`.
+
+## Send the Browser to the Authorize Endpoint
+
+To start a login, redirect the browser to the `/oauth2/authorize` endpoint. The example adds line breaks for readability.
+
+```plaintext title="Example Authorize URL"
+https://piedpiper.fusionauth.io/oauth2/authorize?
+    client_id=06494b74-a796-4723-af44-1bdb96b48875
+    &code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+    &code_challenge_method=S256
+    &redirect_uri=https%3A%2F%2Fwww.piedpiper.com%2Fcallback
+    &response_type=code
+    &scope=openid%20offline_access
+    &state=abc123
+    &tenantId=78dda1c8-14d4-4c98-be75-0ccef244297d
+```
+
+The URL uses the following parameters:
+
+* **`client_id`** is the **Client Id** from the <Breadcrumb>OAuth</Breadcrumb> tab of the Application.
+* **`code_challenge`** and **`code_challenge_method`** carry the PKCE code challenge.
+* **`redirect_uri`** is the URL that FusionAuth redirects the browser to after login. Add the URL to **Authorized redirect URLs** on the <Breadcrumb>OAuth</Breadcrumb> tab of the Application.
+* **`response_type`** is always `code` for this grant.
+* **`scope`** requests an [[Id Token]] with `openid` and a [[Refresh Token]] with `offline_access`.
+* **`state`** is a random value that your app stores before the redirect. Your app compares the value on the way back to block cross-site request forgery.
+* **`tenantId`** is the Id of the Tenant. FusionAuth uses the Tenant to pick the theme for the login page.
+
+For every parameter, see the [Authorize endpoint](/docs/apis/oauth/authorize).
+
+## Handle the Redirect
+
+After the user logs in, FusionAuth redirects the browser to the **`redirect_uri`**. The **`code`** parameter holds the authorization code:
+
+```plaintext title="Example HTTP Redirect Response"
+HTTP/1.1 302 Found
+Location: https://www.piedpiper.com/callback?
+    code=pU2DHOWjSCVh6NJKi1ClhBYNKfuqbZVT
+    &iss=https%3A%2F%2Fpiedpiper.fusionauth.io
+    &locale=en
+    &state=abc123
+    &userState=Authenticated
+```
+
+Before you use the code, check that **`state`** matches the value your app stored. Check that **`iss`** matches the Tenant **Issuer**, as described in [Issuer Validation](/docs/authentication/oauth/issuer-validation). For the other parameters, see [Redirect Parameters](/docs/apis/oauth/authorize#redirect-parameters).
+
+## Exchange the Code for Tokens
+
+Your app's server sends the code to the `/oauth2/token` endpoint. The **`client_secret`** authenticates your app, and the **`code_verifier`** completes PKCE. The example adds line breaks for readability.
+
+```plaintext title="Example HTTP Request"
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+
+client_id=06494b74-a796-4723-af44-1bdb96b48875
+    &client_secret=example-client-secret-do-not-use
+    &code=pU2DHOWjSCVh6NJKi1ClhBYNKfuqbZVT
+    &code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    &grant_type=authorization_code
+    &redirect_uri=https%3A%2F%2Fwww.piedpiper.com%2Fcallback
+```
+
+You can send the Client Id and the client secret in an `Authorization: Basic` header instead of the body. A single-page or mobile app leaves out **`client_secret`**. Set **Client Authentication** on the <Breadcrumb>OAuth</Breadcrumb> tab of the Application to `Not required when using PKCE`, and FusionAuth accepts the code verifier in place of the secret. A single-page app without a backend can use the [hosted backend](/docs/apis/hosted-backend) to make this request instead.
+
+<Aside type="caution" title="Replace the example client secret">
+  `example-client-secret-do-not-use` is a placeholder. Don't use the placeholder in a real Application. Use the **Client secret** from the <Breadcrumb>OAuth</Breadcrumb> tab of your Application, and keep the secret on your server.
+</Aside>
+
+FusionAuth returns the tokens:
+
+<JSON title="Example JSON Response" src="oauth/authorization_code_grant_response.json" />
+
+For every request and response field, see the [Token endpoint](/docs/apis/oauth/token).
+
+## Check the User's Access
+
+Validate the access token before your app trusts the claims. Most OAuth libraries validate tokens for you. For the claims in each token, see [Tokens](/docs/authentication/oauth/tokens).
+
+The **`roles`** claim lists the user's roles in the Application. FusionAuth adds the **`roles`** claim only when the user has a [[Registration]] for the Application. When the user has no Registration, your app can reject the login or start a registration flow.
+
+When your app needs more user data than the claims hold, send the access token to the [UserInfo endpoint](/docs/apis/oauth/userinfo). With an API key, your app can retrieve the full User with the [Retrieve a User API](/docs/apis/users/retrieve). The **`sub`** claim holds the User Id.
+
+After the checks pass, log the user in to your app. A web app usually creates a session and stores the user in the session.
+
+## Log Out
+
+To log the user out, end the session in your app first. Then redirect the browser to the `/oauth2/logout` endpoint, which ends the FusionAuth session. The example adds line breaks for readability.
+
+```plaintext title="Example HTTP Request"
+GET /oauth2/logout?
+      client_id=06494b74-a796-4723-af44-1bdb96b48875
+      &tenantId=78dda1c8-14d4-4c98-be75-0ccef244297d HTTP/1.1
+Host: piedpiper.fusionauth.io
+```
+
+FusionAuth redirects the browser to the **Logout URL** of the Application:
+
+```plaintext title="Example HTTP Response"
+HTTP/1.1 302 Found
+Location: https://www.piedpiper.com
+```
+
+For every parameter, see the [Logout endpoint](/docs/apis/oauth/logout).

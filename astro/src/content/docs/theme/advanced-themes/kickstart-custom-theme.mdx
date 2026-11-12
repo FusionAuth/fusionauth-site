@@ -4,100 +4,76 @@ description: Learn how to use Kickstart to create a FusionAuth Instance with a c
 tags: kickstart, custom theme, theme automation, docker setup, theme deployment, freemarker, login page customization, branding
 ---
 
-[FusionAuth Kickstart](/docs/get-started/develop/kickstart) enables you to spin up a reproducible FusionAuth environment using a template file. This guide will walk you through the process of using [[Kickstart]] to set up a FusionAuth instance with a custom theme.
+[[Kickstart]] configures a new FusionAuth instance from a template file on first startup. In this guide, you write a Kickstart that replaces the default theme with a dark theme. The Kickstart also creates the following:
 
-We'll apply a dark theme in place of the default theme. Before you use this guide, install FusionAuth with [Install Locally](/docs/get-started/install), then follow [First Time Setup](/docs/get-started/first-time-setup) through [Register a User](/docs/get-started/first-time-setup#register-a-user). This guide then automates that setup with Kickstart and applies a custom theme.
+* An Application named `Kickstart App` with OAuth settings.
+* A user who can log in to the Admin UI and who has a Registration for the Kickstart App.
+
+[First Time Setup](/docs/get-started/first-time-setup) creates the same Application and user by hand. You don't need to complete First Time Setup before this guide.
 
 ## Prerequisites
 
-You need [Node.js](https://nodejs.org/) and Docker. For the Docker requirements, see [Install Locally](/docs/get-started/install#prerequisites).
+You need Docker. For the Docker requirements, see [Install Locally](/docs/get-started/install#prerequisites).
 
-## Getting Started
+## The Default Theme
 
-Once you've completed First Time Setup, we can take a look at the state of the FusionAuth instance you created.
+FusionAuth uses the default theme until you assign a different theme. The OAuth authorize page in the default theme looks like this:
 
-Navigate to <Breadcrumb>Applications</Breadcrumb> and edit the application you created. Go to the <Breadcrumb>OAuth</Breadcrumb> tab to examine the settings that you configured.
+<Screenshot id="theme-preview-oauth-authorize" url="/admin/theme/view/75a068fd-e94b-451a-9aeb-3ddb9a3b5987#oauth2Authorize" height={1100} alt="The OAuth authorize page in the default FusionAuth theme." />
 
-<Screenshot id="theme-kickstart-app-oauth" url="/admin/application/edit?applicationId=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&tenantId=30663132-6464-6665-3032-326466613934#oauth" showHash alt="Application settings.">
-  <Highlight selector="#application_oauthConfiguration_clientId-form-row" />
-  <Highlight selector="#client-secret-input-form-row" />
-  <Highlight selector="#redirectURLs-form-row" />
-  <Highlight selector="#application_oauthConfiguration_logoutURL-form-row" />
-  <Highlight selector="#enabled-grants-form-row" />
-  <Highlight selector="#application_oauthConfiguration_requireRegistration-form-row" />
-</Screenshot>
+The OAuth logout page in the default theme looks like this:
 
-In First Time Setup, the **Authorized redirect URLs**, **Logout URL**, **Enabled grants**, and **Require registration** fields were manually entered. We will use Kickstart to automate all of these settings. We will also apply predefined **Client Id** and **Client secret** values to make launching the application easier.
-
-Now, navigate to <Breadcrumb>Users -> Manage</Breadcrumb> for the user that you registered in First Time Setup.
-
-<Screenshot id="theme-kickstart-manage-user" url="/admin/user/manage/00000000-0000-0000-0000-100000000001" alt="Manage user.">
-  <Highlight selector="#registrations" />
-</Screenshot>
-
-In First Time Setup, you created the user in the Setup Wizard. You then added a registration for the user to the application you created. We are going to automate these steps.
-
-Finally, navigate to <Breadcrumb>Customizations -> Themes</Breadcrumb> and preview the FusionAuth theme. The application you created in First Time Setup uses the OAuth authorize and OAuth logout pages.
-
-The OAuth authorize template looks like this:
-
-<Screenshot id="theme-preview-oauth-authorize" url="/admin/theme/view/75a068fd-e94b-451a-9aeb-3ddb9a3b5987#oauth2Authorize" height={1100} alt="Preview theme" />
-
-The OAuth logout template looks like this:
-
-<Screenshot id="theme-preview-oauth-logout" url="/admin/theme/view/75a068fd-e94b-451a-9aeb-3ddb9a3b5987#oauth2Logout" height={1100} alt="OAuth logout FusionAuth">
+<Screenshot id="theme-preview-oauth-logout" url="/admin/theme/view/75a068fd-e94b-451a-9aeb-3ddb9a3b5987#oauth2Logout" height={1100} alt="The OAuth logout page in the default FusionAuth theme.">
   <Highlight selector="main button[data-tab='oauth2Logout']" />
 </Screenshot>
 
-We are going to create a dark theme so these templates that will look like this:
+After you finish this guide, the same pages look like this:
 
-![OAuth authorize Dark](/img/docs/customize/look-and-feel/preview-authorize-dark.png)
+![The OAuth authorize page in the dark theme.](/img/docs/customize/look-and-feel/preview-authorize-dark.png)
 
-![OAuth logout Dark](/img/docs/customize/look-and-feel/preview-logout-dark.png)
+![The OAuth logout page in the dark theme.](/img/docs/customize/look-and-feel/preview-logout-dark.png)
 
+## Create the Kickstart Files
 
-## Creating the Files
+The Kickstart needs the following files:
 
-To customize our theme, we'll need to create two files:
+* `darkTheme.css`, a stylesheet that defines the dark theme.
+* `kickstart.json`, which lists the variables, the API key, and the API requests that configure FusionAuth.
+* One JSON file for each API request.
 
-- A CSS file, which we'll use to define the dark theme.
-- A `kickstart.json` file that will enable the automatic configuration of settings.
+To skip writing the files, download the [`theme-css-only` example](https://github.com/FusionAuth/fusionauth-example-kickstart/tree/main/theme-css-only) and go to [Download the Docker Compose File](#download-the-docker-compose-file).
 
-The requests we add to the `kickstart.json` file will each need a separate JSON file.
+### Write the Stylesheet
 
-If you'd like to skip ahead to the <Breadcrumb>Running Kickstart</Breadcrumb> section, you can [download the completed files here](https://github.com/FusionAuth/fusionauth-example-kickstart/tree/main/theme-css-only).
+A stylesheet restyles every page in a theme. Write the CSS rules with the web inspector of your browser:
 
-### The `darkTheme.css` File
+1. In the Admin UI, navigate to <Breadcrumb>Customizations -> Themes</Breadcrumb> and click <IconButton icon="view" /> on the row for `FusionAuth`.
+1. Right-click the page and select <Breadcrumb>Inspect</Breadcrumb>.
+1. Click <Breadcrumb>Select element</Breadcrumb>, then click the area of the page to style. For example, click the `div` element with the class `.panel`.
 
-The most straightforward way to add a consistent style to your theme is to define a stylesheet using CSS. You can interactively experiment with CSS in your browser to get your application looking the way you want it to.
+   ![The web inspector with the panel element selected.](/img/docs/customize/look-and-feel/div-panel-bg.png)
 
-Let's define one CSS rule together. First, preview the FusionAuth theme and open up the web inspector by right-clicking and selecting "Inspect". Click the <Breadcrumb>Select element</Breadcrumb> button and click the area of the page you would like to style, for example, the `div` element with the class `.panel`.
+   The `.panel` element has a **`background`** of `#fff`, which is white.
 
-![Panel background color](/img/docs/customize/look-and-feel/div-panel-bg.png)
+1. With the element selected, click <Breadcrumb>+</Breadcrumb> and type `background: black`.
 
-This element has a `background` property with a value of `#fff`, or pure white.
+   ![The web inspector with a new background rule on the panel element.](/img/docs/customize/look-and-feel/background-black.png)
 
-Let's change the background from white to black. With the element selected, click the plus <Breadcrumb>+</Breadcrumb> icon and type `background: black`.
+1. Copy the rule, including the selector the browser added, into a file named `darkTheme.css`:
 
-![Panel background color](/img/docs/customize/look-and-feel/background-black.png)
+   ```css
+   .panel {
+     background: black
+   }
+   ```
 
-We've just defined our first `css` rule. Copy the text that you generated, including the part that the browser made for you when you clicked the plus <Breadcrumb>+</Breadcrumb> icon, into a text editor and save it as `darkTheme.css`, like this:
+Repeat the process for each element to restyle. For a complete dark theme, use the [`darkTheme.css` example file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/theme-css-only/darkTheme.css).
 
-```css
-.panel {
-  background: black
-}
-```
+Create a folder named `kickstart`, and move `darkTheme.css` into the folder.
 
-You can keep using this process to add rules to your `darkTheme.css` file until you've got a fully defined style that you're happy with. Feel free to use [this file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/theme-css-only/darkTheme.css) for this tutorial.
+### Write `kickstart.json`
 
-Once you have your `darkTheme.css` file, create a folder called `kickstart` and move your `darkTheme.css` file into it.
-
-### The `kickstart.json` File
-
-The `kickstart.json` file allows us to automatically configure everything we need for our application from the moment we first launch it.
-
-Create a file called `kickstart.json` in the `kickstart` folder and copy the following text into it:
+`kickstart.json` configures FusionAuth on first startup. Create `kickstart/kickstart.json` with the following contents:
 
 ```json
 {
@@ -125,19 +101,17 @@ Create a file called `kickstart.json` in the `kickstart` folder and copy the fol
 }
 ```
 
-There are three sections in this code: `"variables"`, `"apiKeys"`, and `"requests"`.
+The file has three sections:
 
-The `"variables"` section defines identifiers for the key components of our FusionAuth instance. In this section, `"apiKey"`, `"themeId"`, and `"userId"` are randomly generated UUIDs. We'll use the arbitrary values in `"applicationId"`, `"clientSecret"` and `"defaultTenantId"` later on.
+* **`variables`** defines values that the requests reuse. **`apiKey`**, **`themeID`**, and **`userID`** get random UUIDs. **`applicationID`**, **`clientSecret`**, and **`defaultTenantId`** have fixed values, so you know the values in advance. **`defaultTenantId`** sets the Id of the [[default tenant]].
+* **`apiKeys`** defines the API key that Kickstart uses to run the requests. Every `kickstart.json` needs at least one API key.
+* **`requests`** lists the API requests in the order Kickstart runs them. Each `&{...}` entry loads a request from a separate file. A request can also live inline in `kickstart.json`, but separate files are easier to edit when a Kickstart grows.
 
-The `"apiKeys"` section defines the key through which our requests will be executed. At least one `"apiKey"` is required for every `kickstart.json` file.
+### Write the API Requests
 
-The `"requests"` section defines the API requests that perform our API calls. Each request is stored in a JSON file, which we need to define separately. You can also have them inline, but when you are working with a lot of changes, it is easier to have each change in a separate file.
+Create a folder named `json` inside the `kickstart` folder. Add each of the following files to the `json` folder.
 
-Let's define these files now.
-
-### The API Request JSON Files
-
-Create a subdirectory in the `kickstart` folder called `json`. In the `json` folder, add a file called `createTheme.json` containing the following code:
+`createTheme.json` creates the dark theme:
 
 ```json
 {
@@ -152,9 +126,9 @@ Create a subdirectory in the `kickstart` folder called `json`. In the `json` fol
 }
 ```
 
-This request creates the dark theme. It uses the `"sourceThemeId"` attribute to copy everything from the default FusionAuth theme, the Id of which is always `75a068fd-e94b-451a-9aeb-3ddb9a3b5987`. It also assigns the UUID initialized and contained in the `#{themeID}` variable as this theme's Id by setting it as the resource Id in the path of the URL.
+**`sourceThemeId`** copies the default FusionAuth theme, which always has the Id `75a068fd-e94b-451a-9aeb-3ddb9a3b5987`. The URL path sets the Id of the new theme to the **`themeID`** variable.
 
-Create a file called `updateTheme.json` and add the following to it:
+`updateTheme.json` applies `darkTheme.css` to the new theme:
 
 ```json
 {
@@ -168,9 +142,7 @@ Create a file called `updateTheme.json` and add the following to it:
 }
 ```
 
-This request applies our `darkTheme.css` stylesheet to the theme we created.
-
-Create a file called `setDefaultTheme.json` and copy the following into it:
+`setDefaultTheme.json` assigns the dark theme to the default tenant:
 
 ```json
 {
@@ -184,9 +156,7 @@ Create a file called `setDefaultTheme.json` and copy the following into it:
 }
 ```
 
-This request sets the dark theme as the theme for the [[default tenant]].
-
-Create a file called `createApplication.json` and copy the following into it:
+`createApplication.json` creates the Kickstart App:
 
 ```json
 {
@@ -213,9 +183,9 @@ Create a file called `createApplication.json` and copy the following into it:
 }
 ```
 
-This request creates the application and configures its OAuth settings as they appear in First Time Setup.
+The Kickstart App uses the same OAuth settings that First Time Setup uses. The redirect URL and logout URL point to an app on port `3000`. This guide doesn't run that app. FusionAuth checks the **`redirect_uri`** of an authorize request against **`authorizedRedirectURLs`**, so the Application still needs a redirect URL to show the login page.
 
-Create a file called `createUser.json` containing the following:
+`createUser.json` creates a user with a Registration for the FusionAuth application, so the user can log in to the Admin UI:
 
 ```json
 {
@@ -236,9 +206,7 @@ Create a file called `createUser.json` containing the following:
 }
 ```
 
-This request creates a user and registers the user to the default FusionAuth application. This is necessary to login to the Admin UI.
-
-Finally, create a file called `registerUser.json` containing the following:
+`registerUser.json` adds a second Registration for the Kickstart App:
 
 ```json
 {
@@ -252,62 +220,28 @@ Finally, create a file called `registerUser.json` containing the following:
 }
 ```
 
-This request adds a registration for the user that we just created to our custom application. This requires a separate request because our initial request used its `"registration"` field for the default application.
+The second Registration needs a separate request, because `createUser.json` uses the **`registration`** field for the FusionAuth application.
 
-With these files, our `kickstart` folder is complete and ready to use. The entire folder can be downloaded [here](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/theme-css-only).
+## Download the Docker Compose File
 
-## Modifying the Example App Files
+The FusionAuth `docker-compose.yml` mounts a `kickstart` folder next to the file and runs `kickstart/kickstart.json` on first startup. In the folder that holds your `kickstart` folder, download the file:
 
-Next we'll download an example Node.js app and modify the files that launch and run our FusionAuth instance.
-
-First, download the Docker files.
-
-```bash
-curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/.env
+```shell-session
+curl -o docker-compose.yml https://fusionauth.io/docs/docker-compose.yml
 ```
 
-To enable Kickstart to run from this `docker-compose.yml` file, we must make some modifications. They are described in detail at [this link](/docs/get-started/install) and copied here for your convenience:
+When another FusionAuth instance runs on port `9011`, stop that instance first. Run `docker compose down` in the folder of that instance.
 
-- In the `volumes:` section of the FusionAuth service, add `- ./kickstart:/usr/local/fusionauth/kickstart`.
+For other ways to run Kickstart in Docker, see [Docker Configuration](/docs/deploy/production/install/docker-configuration#kickstart).
 
-- Modify `.env` and add the Kickstart configuration variable: `FUSIONAUTH_APP_KICKSTART_FILE=/usr/local/fusionauth/kickstart/kickstart.json`. This path should be what the Docker container expects, not the path on the host.
+## Run Kickstart
 
-- Configure `docker-compose.yml` to pass the environment variable set by `.env` to the container. Do this by adding `FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}` to the `environment` section of the FusionAuth service.
-
-Now download the example app.
-
-```bash
-git clone https://github.com/FusionAuth/fusionauth-example-5-minute-guide \
-&& cd fusionauth-example-5-minute-guide
-```
-
-This folder contains a file called `.env.sample`:
-
-```ini title=".env.sample"
-CLIENT_ID=CHANGEME
-CLIENT_SECRET=CHANGEME
-BASE_URL=http://localhost:9011
-```
-
-Change the **`CLIENT_ID`** and **`CLIENT_SECRET`** so that they match the **`applicationId`** and **`clientSecret`** variables from your `kickstart.json` file. Then save the file as `.env`
-
-```ini title=".env"
-CLIENT_ID=404e516b-06b8-49da-9c68-c1cd1928c81d
-CLIENT_SECRET=RBLhJrfRsa0-YxVPrn_aZfzIGccWyncdvHvDNTy-Hrs
-BASE_URL=http://localhost:9011
-```
-
-## Running Kickstart
-
-Once you have completed the steps above, you should have a folder that is structured as follows. We call this folder `Kickstart_Theme`, but you can call it whatever you like.
+Your folder should now look like the following. This guide calls the folder `Kickstart_Theme`, but any name works.
 
 ```
 + Kickstart_Theme
 |
 +-- docker-compose.yml
-|
-+-- fusionauth-example-5-minute-guide
 |
 +--+ kickstart
    |
@@ -330,61 +264,58 @@ Once you have completed the steps above, you should have a folder that is struct
       +-- setDefaultTheme.json
 ```
 
-To launch the FusionAuth instance, navigate to the `Kickstart_Theme` folder and run the docker compose command.
+To launch the FusionAuth instance, run the following command in the `Kickstart_Theme` folder:
 
-```bash
+```shell-session
 docker compose up
 ```
 
-Once the execution has finished, the newly created FusionAuth instance will be accessible at `http://localhost:9011`.
+After Kickstart finishes, FusionAuth runs at `http://localhost:9011`.
 
-Login to the FusionAuth instance. The username and password are configured in `kickstart/json/createUser.json`. You can set them to be anything you like, but for this tutorial, they are defined as follows:
+Log in to the Admin UI at `http://localhost:9011/admin`. `kickstart/json/createUser.json` sets the email and password. This guide uses the following values:
 
 ```json
 "email": "richard@example.com",
 "password": "password"
 ```
 
-Enter these credentials into the login screen to be taken to the Admin UI.
+To confirm that Kickstart configured everything, look at <Breadcrumb>Applications</Breadcrumb>, <Breadcrumb>Users</Breadcrumb>, and <Breadcrumb>Customizations -> Themes</Breadcrumb>.
 
-You can look at <Breadcrumb>Applications</Breadcrumb>, <Breadcrumb>Users</Breadcrumb>, and <Breadcrumb>Customizations -> Themes</Breadcrumb> to verify that all of the settings have been configured correctly.
+## View the Themed Pages
 
+To preview the dark theme, navigate to <Breadcrumb>Customizations -> Themes</Breadcrumb>. Click <IconButton icon="view" /> on the row for `Dark Theme`. The preview renders every themed page, including the OAuth authorize and OAuth logout pages.
 
-## Running the Application
+To see the live login page, open the following URL in a private browser window:
 
-Now that everything is set up and our theme has been applied, we can run the application. Navigate to the `fusionauth-example-5-minute-guide` directory and use `npm` to start the application.
-
-```bash
-npm install
-npm start
+```plaintext
+http://localhost:9011/oauth2/authorize?client_id=404e516b-06b8-49da-9c68-c1cd1928c81d&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&response_type=code
 ```
 
-Open an incognito window and visit `http://localhost:3000`.
+The private window keeps your Admin UI session from logging you in. FusionAuth shows the login page with the dark theme:
 
-You will be taken to the landing page of the example app. However, when you click <Breadcrumb>Login</Breadcrumb> this time, you will see your custom theme applied to the OAuth authorize page.
+![The login page with the dark theme applied.](/img/docs/customize/look-and-feel/dark-authorize.png)
 
-![Dark theme applied](/img/docs/customize/look-and-feel/dark-authorize.png)
+Close the window without logging in. A login redirects the browser to `localhost:3000`, and no app runs there.
 
-Enter the same credentials you used to login to the Admin UI and click <Breadcrumb>Logout</Breadcrumb> to see the OAuth logout page.
+## Change a Default Message
 
+A Kickstart can also change the text on themed pages. The following steps change the "Forgot your password?" link on the OAuth authorize page to "Forgot your password? Click here."
 
-## Modifying the Default Messages
+![The Forgot your password link on the login page.](/img/docs/customize/look-and-feel/forgot-password.png)
 
-Let's take it one step further and assume we want to change the content of some of the messages on the OAuth pages. For example, consider the "Forgot your password?" message, which shows up on the OAuth authorize page.
+The **`defaultMessages`** field of a theme replaces every message at once. The value must contain every message in the default messages file that ships with FusionAuth. To get the full set:
 
-![Forgot password](/img/docs/customize/look-and-feel/forgot-password.png)
+1. In the Admin UI, edit the dark theme.
+1. Click <Breadcrumb>Messages</Breadcrumb>, then click <Breadcrumb>Edit</Breadcrumb>.
 
-Let's say we want to change this to say "Forgot your password? Click here." We can do this by adding a `defaultMessages` property to `json/updateTheme.json`.
+   <Screenshot id="theme-dark-messages" url="/admin/theme/edit/9c2d4e6f-8a1b-4c3d-9e5f-7a6b5c4d3e21" alt="The default messages of the dark theme, with the forgot-your-password message highlighted.">
+     <Highlight selector="[data-hl='forgot-message']" />
+   </Screenshot>
 
-The `defaultMessages` string requires at least all of the messages defined in the FusionAuth default shipped messages file to be present, as it updates all messages as a single unit. The easiest way to accomplish this is to create a new file called `defaultMessages.txt` in your `kickstart` folder and copy-paste these messages into it.
+1. Copy every message into a new file, `kickstart/defaultMessages.txt`.
+1. In `defaultMessages.txt`, change the value of `forgot-your-password` to `Forgot your password? Click here.`
 
-The messages can be accessed by editing your custom theme, navigating to the <Breadcrumb>Messages</Breadcrumb> page, and clicking the <Breadcrumb>Edit</Breadcrumb> button.
-
-<Screenshot id="theme-dark-messages" url="/admin/theme/edit/9c2d4e6f-8a1b-4c3d-9e5f-7a6b5c4d3e21" alt="Theme messages">
-  <Highlight selector="[data-hl='forgot-message']" />
-</Screenshot>
-
-Copy the entire contents of that box into your `defaultMessages.txt` file, find the `forgot-your-password` message (line 65), and modify it to "Forgot your password? Click here."
+Add **`defaultMessages`** to `json/updateTheme.json`:
 
 ```json
 {
@@ -399,28 +330,24 @@ Copy the entire contents of that box into your `defaultMessages.txt` file, find 
 }
 ```
 
-<Aside type="note">
-Kickstart will not run if it sees any users, API keys, or applications in the FusionAuth database. This is to prevent data loss. If you can login to the FusionAuth Admin UI, Kickstart will not run.
+Kickstart runs only on an empty database. When FusionAuth finds any users, API keys, or Applications, FusionAuth skips the Kickstart to protect the data. To run the updated Kickstart, delete the Docker volumes of the instance:
+
+<Aside type="danger">
+`docker compose down -v` deletes every user, Application, and setting in the instance.
 </Aside>
 
-Once you have modified `updateTheme.json`, you will need to clear the volumes created when you launched the FusionAuth instance to allow the Kickstart to rerun. You can do this by executing the following command (This will totally destroy all data stored in the instance):
-
-```bash
+```shell-session
 docker compose down -v
 ```
 
+Then start the instance again:
 
-When you relaunch the instance using the `docker compose up` command, the result will be as below with the updated message:
+```shell-session
+docker compose up
+```
 
+The login page now shows the new message:
 
+![The login page with the updated Forgot your password message.](/img/docs/customize/look-and-feel/updated-message.png)
 
-![Updated message](/img/docs/customize/look-and-feel/updated-message.png)
-
-## Conclusion
-
-This guide has shown you how to use Kickstart to launch a reproducible FusionAuth instance with a custom theme. The complete set of files for this project can be found [here](https://github.com/FusionAuth/fusionauth-example-kickstart) in the directory called `theme-css-only`.
-
-Some suggestions for further reading are as follows:
-
-- [General documentation on Themes](/docs/theme/)
-- [API-specific documentation on Themes](/docs/apis/themes)
+For more ways to customize a theme, see [Themes](/docs/theme). To manage themes with the API, see the [Themes API](/docs/apis/themes).
