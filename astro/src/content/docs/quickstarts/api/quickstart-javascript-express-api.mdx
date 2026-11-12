@@ -15,7 +15,7 @@ In this QuickStart, you learn how to use FusionAuth for authentication and autho
 This API QuickStart shows authorization for business clients, without a graphical user interface. You might instead be looking for the [Express.js web QuickStart](/docs/quickstarts/web/express), which explains how to use FusionAuth on your website for login and authorization for end users.
 </Aside>
 
-This QuickStart creates an Express.js server with a `write` endpoint to store data on the server, and a `read` endpoint to see the data. Only clients with the `writer` role in FusionAuth can use the first endpoint and only clients with `reader` can use the second endpoint.
+This QuickStart creates an Express.js server to manage a discussion forum. The API server has a `write` endpoint allowing a premium client to post messages or edit their own messages, and a `read` endpoint allowing both premium and free (but registered) clients to read all forum messages. Only clients with the `premium` role in FusionAuth can use the `write` endpoint, and if a client writes to an existing message (an edit) then the client user Id must match the message user Id. Clients with either `premium` or `free` roles can use the `read` endpoint.
 
 ## Prerequisites
 
@@ -84,17 +84,17 @@ In the steps below, you will create three files to form an Express.js API server
 
 1. Create a file called `.env` in the `api` directory and insert the content below:
     <ExtractedCode src="quickstart-javascript-express-api/complete-application/.env" lang="text"/>
-    This file holds the settings the API will use to connect to FusionAuth to verify tokens. The `.env` file contains passwords. In a real application, always add this file to your `.gitignore` file and never commit secrets to version control.
+    This file holds the settings the API will use to connect to FusionAuth to verify tokens.
 
 1. Create a file called `security.mjs` in the `api` directory and insert the content below:
     <ExtractedCode src="quickstart-javascript-express-api/complete-application/security.mjs" lang="js"/>
-    The `dotenv` library loads the variables from your `.env` file. The `jose` library retrieves FusionAuth's public signing keys from the `/.well-known/jwks.json` endpoint. The `verifyJWT` middleware uses `jose.jwtVerify` to verify each token's signature and validate its issuer and audience. The `hasRole` middleware checks whether the token has the required `reader` or `writer` role.
+    The `dotenv` library loads the variables from your `.env` file. The `jose` library retrieves FusionAuth's public signing keys from the `/.well-known/jwks.json` endpoint. This JSON file allows any application to verify that a client claiming to posses a token authenticated by FusionAuth really has a valid signature. The `verifyJWT` middleware uses `jose.jwtVerify` to verify each token's signature and validate its issuer and audience. The `hasRole` middleware checks whether the token has the required `free` or `premium` role.
 
 1. Create a file called `api.mjs` in the `api` directory and insert the content below:
     <ExtractedCode src="quickstart-javascript-express-api/complete-application/api.mjs" lang="js"/>
-    This Express server has one endpoint each for reading and writing, protected by `hasRole('reader')` or `hasRole('writer')` imported from the `security.mjs` file.
+    This Express server has one endpoint each for reading and writing, protected by `hasRole('free', 'paid')` or `hasRole('paid')` imported from the `security.mjs` file. If a client tries to call an endpoint without the necessary authentication and role it will be rejected before the code inside the endpoint function is even reached.
 
-1. In the same terminal, start the Express server:
+2. In the same terminal, start the Express server:
     ```shell-session
     node api.mjs
     ```
@@ -112,31 +112,32 @@ There are [several ways to acquire a token](/docs/authentication/oauth/) in Fusi
     --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
     --header 'Content-Type: application/json' \
     --data-raw '{
-      "loginId": "reader@example.com",
+      "loginId": "free@example.com",
       "password": "password",
       "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
     }'
     ```
+    Here you are submitting your Id and password and getting a temporary access token in return. The API clients will never need to submit their real password anywhere except FusionAuth.
 
-1. Copy the `token` value from the response above, which should look like a longer version: `"token": "eyJhbGciOiJSUz"`.  Call the `/read` endpoint, replacing the placeholder `eyJhbGciOiJSUz` with your token value you just copied:
+1. Copy the `token` value from the response above, which should look like a longer version of `"token": "eyJhbGciOiJSUz"`.  Call the `/read` endpoint, replacing the placeholder `eyJhbGciOiJSUz` token with your token value that you just copied:
     ```shell-session
     curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
-    The API returns `["1"]`.
+    The API returns the only stored message `{ uuid: '00000000-0000-0000-0000-000000000001', userId: '00000000-0000-0000-0000-222222222222', text: 'Welcome to the forum.' }`.
 
 1. Call the `/write` endpoint, replacing the placeholder with your token value again:
     ```shell-session
     curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"value":"hello"}'  --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
-    The API returns `{"error":"You do not have a role with permissions to do this."}` because you are trying to access the endpoint while having the reader role but not the writer role. The endpoint is secure.
+    The API returns `{"error":"You do not have a role with permissions to do this."}` because you are trying to access the endpoint while having the free role but not the premium role. The endpoint is secure.
 
-1. Use the command from step one to get a token for the writer user, by replacing `reader@example.com` with `writer@example.com`:
+1. Use the command from step one to get a token for the writer user, by replacing `free@example.com` with `premium@example.com`:
     ```shell-session
     curl --location 'http://localhost:9011/api/login' \
     --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
     --header 'Content-Type: application/json' \
     --data-raw '{
-      "loginId": "writer@example.com",
+      "loginId": "premium@example.com",
       "password": "password",
       "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
     }'
@@ -152,7 +153,9 @@ There are [several ways to acquire a token](/docs/authentication/oauth/) in Fusi
     ```shell-session
     curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
-    The API returns the new saved value: `["1","hello"]`.
+    The API returns the new saved message.
+
+1. If you want to experimt more, you could call the `write` endpoint again with the same message Id but a different text to test message editing. You could also login with the second premium user, `premium2@example.com` and try to edit another user's message to test user-level security.
 
 </Steps>
 
@@ -171,9 +174,3 @@ In your main `api.mjs` endpoints, you can use the `hasRole` middleware to check 
 ## Next Steps
 
 <NextStepsApi />
-
-
-TODO
-- join commands with && rather than multiline
-- intro. explanatory text
-- full human test
