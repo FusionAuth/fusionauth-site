@@ -26,7 +26,7 @@ const reactorDeactivated = {
 };
 
 // hide the instance Id and any trace of the real license key
-async function maskReactor(page) {
+export async function maskReactor(page) {
   const leaked = await page.evaluate(key => {
     const label = [...document.querySelectorAll('span, dt, label, strong')].find(e => /^Instance ID/i.test(e.textContent.trim()));
     if (!label) throw new Error('Instance ID label not found');
