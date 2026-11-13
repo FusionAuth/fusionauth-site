@@ -17,7 +17,7 @@ function unknownTermMessage(name, label) {
       ? ['If you misspelled the term, use one of these instead:', ...suggestions.map(id => `  ${withLabel(id)}`), '']
       : []),
     `If "${name}" is a new term, add an entry to src/data/glossary.json:`,
-    `  "${name}": { "definition": "One or two plain-text sentences.", "link": "/docs/path/to/page" }`,
+    `  "${name}": { "definition": "One or two sentences.", "link": "/docs/path/to/page" }`,
     '',
     'See "Glossary Terms" in CONTRIBUTING.md.',
   ].join('\n');
