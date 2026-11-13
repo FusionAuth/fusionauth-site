@@ -3,25 +3,26 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+FUSIONAUTH_DIR="$PROJECT_DIR/fusionauth"
 
 LOGS_PID=""
 cleanup() {
   echo "Cleaning up..."
   [ -n "$LOGS_PID" ] && kill "$LOGS_PID" 2>/dev/null || true
   docker stop app 2>/dev/null || true
-  cd "$PROJECT_DIR" && docker compose down -v 2>/dev/null || true
+  cd "$FUSIONAUTH_DIR" && docker compose down -v 2>/dev/null || true
 }
 trap cleanup EXIT
 
 echo "Pulling latest FusionAuth image..."
-cd "$PROJECT_DIR"
+cd "$FUSIONAUTH_DIR"
 docker compose pull
 
 echo "Starting FusionAuth..."
 docker compose up -d
 
 echo "Starting app..."
-docker run --network host --name app -v "$PROJECT_DIR/complete-application":/app -w /app --rm node:26 bash -c "npm install && npm run start" &
+docker run --network host --name app -v "$PROJECT_DIR/complete-application":/app -w /app --rm node:26 bash -c "npm install && node api.mjs" &
 APP_PID=$!
 until docker inspect app > /dev/null 2>&1; do
   sleep 1
@@ -30,14 +31,14 @@ docker logs -f app &
 LOGS_PID=$!
 
 echo "Waiting for FusionAuth to be ready..."
-until curl -sf http://localhost:9011/admin/ > /dev/null 2>&1; do
+timeout 480 bash -c 'until curl -sfL http://localhost:9011/admin/ 2>/dev/null | grep "<title>Login" > /dev/null; do
   echo "  Waiting for FusionAuth..."
   sleep 5
-done
+done'
 echo "FusionAuth is ready."
 
 echo "Waiting for app to be ready..."
-until curl -sf http://localhost:3000 > /dev/null 2>&1; do
+until curl -s http://localhost:3000 > /dev/null 2>&1; do
   echo "  Waiting for app..."
   sleep 5
 done

@@ -1,339 +1,176 @@
 ---
 title: Node.js/Express.js API
-description: QuickStart integration of a JavaScript Express.js API application action as a resource server with FusionAuth.
-tags: express api, node.js api, javascript api quickstart, express authentication, node authentication, bearer token
 htmlTitle: FusionAuth QuickStart for Node.js/Express.js API
+description: QuickStart showing how to integrate FusionAuth with a JavaScript Express.js API.
+tags: express api, node.js api, javascript api quickstart, express authentication, node authentication, bearer token
 codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-api/main
 icon: /img/icons/javascript.svg
 ---
-import Intro from 'src/components/quickstarts/Intro.astro';
-import {Content as LoginArchitectureApi} from 'src/components/quickstarts/LoginArchitectureApi.mdx';
-import NextStepsApi from 'src/components/quickstarts/NextStepsApi.astro';
-import QuickstartTshirtCTA from 'src/components/quickstarts/QuickstartTshirtCTA.astro'
 
-<Intro technology="Express"
-       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api"
-       api/>
+import NextStepsApi from 'src/components/quickstarts/NextStepsApi.astro';
+
+In this QuickStart, you learn how to use FusionAuth for authentication and authorization of an Express.js resource server. FusionAuth will prevent unauthorized clients from calling your API functions.
+
+<Aside type="note">
+This API QuickStart shows authorization for business clients, without a graphical user interface. You might instead be looking for the [Express.js web QuickStart](/docs/quickstarts/web/express), which explains how to use FusionAuth on your website for login and authorization for end users.
+</Aside>
+
+This QuickStart creates an Express.js server to manage a discussion forum. The API server has a `write` endpoint allowing a premium client to post messages or edit their own messages, and a `read` endpoint allowing both premium and free (but registered) clients to read all forum messages. Only clients with the `premium` role in FusionAuth can use the `write` endpoint, and if a client writes to an existing message (an edit) then the client user Id must match the message user Id. Clients with either `premium` or `free` roles can use the `read` endpoint.
 
 ## Prerequisites
 
-For this QuickStart, you'll need:
+This QuickStart requires:
 
-* [Node.js](https://nodejs.org/en/download) version 18 or later.
-* [Docker](https://www.docker.com) version 20 or later, which is the quickest way to start FusionAuth. (There are [other ways](/docs/get-started/install)).
-* [curl](https://curl.se/download.html), command line tool and library for transferring data with URLs.
+* [Node.js](https://nodejs.org/en/download) 22 or later
+* [Docker](https://docs.docker.com/get-started/get-docker) 23 or later
+* [curl](https://curl.se/download.html), command line tool and library for making HTTP requests.
 
-## General Architecture
+If you use macOS or Windows, you need one of the following container management tools:
+  * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use OrbStack for `docker compose` commands after installation, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
 
-<LoginArchitectureApi />
+## Install and Run FusionAuth
 
-## Getting Started
-
-In this section, you’ll get FusionAuth up and running and create a resource server that will serve the API.
-
-### Clone The Code
-
-First off, grab the code from the repository and change into that directory.
+To begin, clone the [GitHub repository for this QuickStart](https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api) to your local machine:
 
 ```shell-session
-git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api.git && \
-cd fusionauth-quickstart-javascript-express-api
+git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api
 ```
 
-All shell commands in this guide can be entered in a terminal from the `fusionauth-quickstart-javascript-express-api` folder location. On Windows, you need to replace forward slashes with backslashes in paths.
+The repository contains two directories:
 
-All the files you'll create in this guide already exist in the `complete-application` subfolder, if you prefer to copy them.
+* `fusionauth`, a preconfigured version of FusionAuth
+* `complete-application`, a finished runnable version of the API you will build in this guide
 
-### Run FusionAuth Via Docker
-
-You'll find a Docker Compose file (`docker-compose.yml`) and an environment variables configuration file (`.env`) in the root directory of the repo.
-
-Assuming you have Docker installed, you can stand up FusionAuth on your machine with the following.
+To start a local instance of FusionAuth, run the following command:
 
 ```shell-session
-docker compose up -d
+cd fusionauth-quickstart-javascript-express-api/fusionauth
+docker compose up
 ```
-
-Here you are using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/develop/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
 
 <Aside type="note">
-  If you ever want to reset the FusionAuth application, you need to delete the volumes created by Docker Compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
+During Docker Compose startup, the included `fusionauth/kickstart.json` file uses the FusionAuth API to:
+
+* Generate an API key
+* Create an application for your API with appropriate settings (<Breadcrumb>Applications -> Edit Application</Breadcrumb>)
+* Create an admin user (`admin@example.com`) and register the user with the FusionAuth application (<Breadcrumb>Users</Breadcrumb>)
+* Create three API users (`free@example.com`, `premium@example.com`, and `premium2@example.com`) with the `free` or `premium` role, and register the users with your application
 </Aside>
 
-FusionAuth will be initially configured with these settings:
+Once Docker Compose initializes all containers, open a browser and navigate to the FusionAuth Admin UI at [http://localhost:9011/admin](http://localhost:9011/admin). Use the following admin account credentials to log in:
+
+* Username: `admin@example.com`
+* Password: `password`
+
+After authenticating, you should see the FusionAuth Admin UI, which shows information about active users, logins, registrations, and more:
+
+<Screenshot id="quickstart-admin-dashboard" url="/admin/" height={742} alt="The FusionAuth Admin UI." />
+
+## Create the API
+
+In the steps below, you will create three files to form an Express.js API server. The server verifies access tokens with the public signing keys FusionAuth publishes in a [[JSON Web Key Set]] (JWKS).
+
+<Steps>
+
+1. Open a new terminal in the repository folder, `fusionauth-quickstart-javascript-express-api`, and run the commands below:
+    ```shell-session
+    mkdir api
+    cd api
+    npm install express@5.3.0 jose@6.2.16 dotenv@18.0.10
+    ```
+    This creates a new directory to hold the API and installs Express.js, jose, and dotenv. Later versions might work, but we tested with these.
+
+1. Create a file called `.env` in the `api` directory and insert the content below:
+    <ExtractedCode src="quickstart-javascript-express-api/complete-application/.env" lang="text"/>
+    This file holds the settings the API will use to connect to FusionAuth to verify tokens.
+
+1. Create a file called `security.mjs` in the `api` directory and insert the content below:
+    <ExtractedCode src="quickstart-javascript-express-api/complete-application/security.mjs" lang="js"/>
+    The `dotenv` library loads the variables from your `.env` file. The `jose` library retrieves FusionAuth's public signing keys from the `/.well-known/jwks.json` endpoint. This JSON file allows any application to verify that a client claiming to possess a token authenticated by FusionAuth really has a valid signature. The `verifyJWT` middleware uses `jose.jwtVerify` to verify each token's signature and validate its issuer and audience. The `hasRole` middleware checks whether the token has the required `free` or `premium` role.
+
+1. Create a file called `api.mjs` in the `api` directory and insert the content below:
+    <ExtractedCode src="quickstart-javascript-express-api/complete-application/api.mjs" lang="js"/>
+    This Express server has one endpoint each for reading and writing, protected by `hasRole('free', 'premium')` or `hasRole('premium')` imported from the `security.mjs` file. If a client tries to call an endpoint without the necessary authentication and role it will be rejected before the code inside the endpoint function is even reached.
+
+1. In the same terminal, start the Express server:
+    ```shell-session
+    node api.mjs
+    ```
+</Steps>
+
+## Use the API
+
+There are [several ways to acquire a token](/docs/authentication/oauth/) in FusionAuth, but for this example, you will use the [Login API](/docs/apis/login).
+
+<Steps>
+
+1. Get an access token for `free@example.com` by making the following request in a new terminal.
+    ```shell-session
+    curl --location 'http://localhost:9011/api/login' \
+    --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{
+      "loginId": "free@example.com",
+      "password": "password",
+      "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
+    }'
+    ```
+    Here you are submitting your Id and password and getting a temporary access token in return. The API clients will never need to submit their real password anywhere except FusionAuth.
+
+1. Copy the `token` value from the response above, which should look like a longer version of `"token": "eyJhbGciOiJSUz"`. Call the `/read` endpoint, replacing the placeholder `eyJhbGciOiJSUz` token with your token value that you just copied:
+    ```shell-session
+    curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUz'
+    ```
+    The API returns the only stored message `[ {"uuid":"00000000-0000-0000-0000-000000000001","userId":"00000000-0000-0000-0000-222222222222","text":"Welcome to the forum."} ]`.
+
+1. Call the `/write` endpoint, replacing the placeholder with your token value again:
+    ```shell-session
+    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"uuid":"00000000-0000-0000-0000-444444444444","text":"Hello from Freda"}' --header 'Authorization: Bearer eyJhbGciOiJSUz'
+    ```
+    The API returns `{"error":"You do not have a role with permissions to do this."}` because you are trying to access the endpoint while having the free role but not the premium role. The endpoint is secure.
+
+1. Use the command from step one to get a token for the premium user, by replacing `free@example.com` with `premium@example.com`:
+    ```shell-session
+    curl --location 'http://localhost:9011/api/login' \
+    --header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{
+      "loginId": "premium@example.com",
+      "password": "password",
+      "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
+    }'
+    ```
+
+1. Now use the new premium token returned to call the write endpoint again:
+    ```shell-session
+    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"uuid":"00000000-0000-0000-0000-444444444444","text":"Hello from Peter"}' --header 'Authorization: Bearer eyJhbGciOiJSUz'
+    ```
+    This time the API should return `"Write successful"`.
+
+1. Finally, call the read endpoint again with the free token:
+    ```shell-session
+    curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUz'
+    ```
+    The API now returns the two messages.
+
+1. If you want to experiment more, call the `write` endpoint again with the same message Id but a different text to test message editing. You could also log in with the second premium user, `premium2@example.com` and try to edit another user's message to test user-level security.
+
+</Steps>
+
+## Summary
 
-* Your client Id is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.applicationId" /></code>.
-* Your client secret is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.requests[?(@.url == '/api/application/#{applicationId}')].body.application.oauthConfiguration.clientSecret" /></code>.
-* Your example teller username is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.tellerEmail" /></code> and the password is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.tellerPassword" /></code>. They will have the role of `teller`.
-* Your example customer username is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.customerEmail" /></code> and the password is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.customerPassword" /></code>. They will have the role of `customer`.
-* Your admin username is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.adminEmail" /></code> and the password is <code><LocalValue path="fusionauth-quickstart-javascript-express-api/kickstart/kickstart.json" selector="$.variables.adminPassword" /></code>.
-* The base URL of FusionAuth is `http://localhost:9011/`.
+In this tutorial you learnt how to add FusionAuth to a web server in the simplest way possible.
 
-You can log in to the [FusionAuth Admin UI](http://localhost:9011/admin) and look around if you want to, but with Docker and [[Kickstart]], everything will already be configured correctly.
+At login, clients submit their username and password directly to FusionAuth, so your server doesn't need to handle low-level protocols.
 
-<Aside type="note">
-  If you want to see where the FusionAuth values came from, they can be found in the [FusionAuth app](http://localhost:9011/admin). The tenant Id is found on the Tenants page. To see the Client Id and Client Secret, go to the Applications page and click the `View` icon under the actions for the ChangeBank application. You'll find the Client Id and Client Secret values in the `OAuth configuration` section.
-</Aside>
+Thereafter, by using the `jose` library to handle tokens, your `security.mjs` file needs only two functions to guarantee security:
+- `verifyJWT` to check the user is authenticated by FusionAuth and
+- `hasRole` to check if the user is authorized for the endpoint they are calling.
 
-<Aside type="caution">
-  The `.env` file contains passwords. In a real application, always add this file to your `.gitignore` file and never commit secrets to version control.
-</Aside>
-
-### Create A Basic Express Application
-
-Now, you are going to create an Express API application. While this section builds a simple API, you can use the same configuration to integrate an existing API with FusionAuth.
-
-You are going to be building an API backend for a banking application called ChangeBank. This API will have two endpoints.
-- `make-change`: This endpoint will allow you to call GET with a `total` amount and receive a response indicating how many nickels and pennies are needed to make change. Valid roles are `customer` and `teller`.
-- `panic`: Tellers may call this POST endpoint to call the police in case of an incident. The only valid role is `teller`.
-
-Both endpoints will be protected such that a valid JSON web token (JWT) will be required in a cookie or Authorization header in order for the endpoints to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
-
-Create the starter app called `your-application` for this API. Accept all the defaults.
-
-```shell-session
-npx express-generator@latest your-application --no-view && \
-cd your-application && \
-npm install && \
-npm audit fix --force
-```
-
-```shell-session
-npm install dotenv && \
-npm install jose@4
-```
-
-Here you set up your application and add project dependencies. The [`dotenv`](https://www.npmjs.com/package/dotenv) library allows the code to read your `.env` environment variable file. Additionally, the [`jose`](https://www.npmjs.com/package/jose) library allows you to validate the authenticity of the JWT.
-
-Now, create the `.env` file in your `your-application` folder and add the following to it.
-
-<Aside type="note">
-This is a different environment file to the one in the root folder used by Docker for FusionAuth
-</Aside>
-
-<ExtractedCode src="fusionauth-quickstart-javascript-express-api/complete-application/.env" lang="shell" />
-
- ## Authentication
-
-Before you configure authentication, you need to change the default `app.js` file created by Express to add an authentication check to every call made to the API.
-
-Add the following lines in `app.js` just above `app.use('/', indexRouter);`.
-
-<ExtractedCode src="fusionauth-quickstart-javascript-express-api/app.snippet.verifyToken.js" lang="javascript" />
-
-The line, `const verifyJWT = require('./services/verifyJWT');`, imports middleware to add authentication to the app. Let's create that file now.
-
-First create the `services` directory under `your-application`.
-
-```shell-session
-mkdir services
-```
-
-In this `services` folder, add the file `verifyJWT.js`, and copy in the following code.
-
-<ExtractedCode src="fusionauth-quickstart-javascript-express-api/complete-application/services/verifyJWT.js" lang="javascript" />
-
-The first line, `require('dotenv/config');`, tells the application to use the settings from `.env` you created earlier.
-
-The function `verifyJWT` gets the JWT access token from a cookie or the `Authorization` header in the request, and it uses `jose.js` to check the signature is correct for your installation of FusionAuth. If either the token is missing or it is not signed correctly, an error is returned. Otherwise, the next function in the Express middleware stack is called.
-
-Now, you'll add one more file that will check if the user has a role with permissions necessary to call an API endpoint.
-
-In the `services` folder, add the file `hasRole.js` and copy in the following code.
-
-<ExtractedCode src="fusionauth-quickstart-javascript-express-api/complete-application/services/hasRole.js" lang="javascript" />
-
-This function is given a list of roles, any of which allow the user's request. It returns a middleware function that checks if the JWT contains one of the required roles, and either returns an error or allows the next function in the middleware stack to proceed.
-
-<Aside type="note">
-You do not need to check for the existence of a token in a cookie here because the previous middleware function you wrote already did that.
-</Aside>
-
-### Create The Routes
-
-All that's left to do is write the two endpoints that will demonstrate your authentication.
-
-Overwrite `routes/index.js` with the following code.
-
-<ExtractedCode src="fusionauth-quickstart-javascript-express-api/complete-application/routes/index.js" lang="javascript" />
-
-The POST `panic` route uses the `hasRole` function with the `'teller'` parameter to disallow non-tellers.
-
-The GET `make-change` route uses `hasRole` function with the `['customer', 'teller']` array as a parameter to allow either customers or tellers to make change. This route checks that the user has supplied a number for `total`, then either returns change as JSON or an error if the total was invalid.
-
-## Run The Application
-
-Start the API server by running the command below in the `your-application` directory:
-
-```shell-session
-npm run start
-```
-
-### Get A Token
-
-There are [several ways to acquire a token](/docs/authentication/oauth/) in FusionAuth, but for this example, you will use the [Login API](/docs/apis/login) to keep things simple.
-
-First, let's try the requests as the `teller@example.com` user. Based on the configuration, this user has the `teller` role and should be able to use both `/make-change` and `/panic`.
-
-Acquire an access token for `teller@example.com` by making the following request in a new terminal window.
-
-```shell-session
-curl --location 'http://localhost:9011/api/login' \
---header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
---header 'Content-Type: application/json' \
---data-raw '{
-  "loginId": "teller@example.com",
-  "password": "password",
-  "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
-}'
-```
-
-Copy the `token` from the response, which should look like this:
-
-```json
-{
-  "token": "eyJhbGciOiJSUzI1NiIs...bbkipjKq2peSjG7qA",
-  "tokenExpirationInstant": 1689353059670,
-  "user": {
-      ...
-  }
-}
-```
-
-### Make The Request
-
-<Aside type="note">
-The code is set up to extract the token from either a cookie or the `Authorization` header so depending on your preference you can replace `--cookie 'app.at=<your_token>'` with `--header 'Authorization: Bearer <your_token>'` when making requests to the API.
-
-If you use a cookie, make sure you store it in a secure, HttpOnly cookie to avoid exfiltration attacks. See [Storing OAuth Tokens](/articles/oauth/oauth-token-storage) for more information.
-</Aside>
-
-Make a request to `/make-change` with a query parameter `total=1.02`. Use the `token` as the `app.at` cookie.
-
-```shell-session
-curl --cookie 'app.at=<your_token>' 'http://localhost:3000/make-change?total=1.02'
-```
-
-Alternatively you can make the same request by passing your token in the `Authorization` header.
-
-```shell-session
-curl --location 'http://localhost:3000/make-change?total=1.02' \
---header 'Authorization: Bearer <your_token>'
-```
-
-Your response should look like this:
-
-```json
-{
-  "total":1.02,
-  "nickels":20,
-  "pennies":2
-}
-```
-
-You were successfully authorized. You can try making the request without the JWT or with a different string rather than a valid token, and see that you are denied access.
-
-Next, call the `/panic` endpoint because you are in trouble!
-
-```shell-session
-curl --location --request POST 'http://localhost:3000/panic' --cookie 'app.at=<your_token>'
-```
-
-This is a `POST` not a `GET` because you want all your emergency calls to be non-idempotent.
-
-Your response should look like this:
-
-```json
-{
-  "message": "We've called the police!"
-}
-```
-
-Nice, help is on the way!
-
-Now, let's try as `customer@example.com`, which has the role `customer`. Acquire a token for `customer@example.com`.
-
-```shell-session
-curl --location 'http://localhost:9011/api/login' \
---header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
---header 'Content-Type: application/json' \
---data-raw '{
-  "loginId": "customer@example.com",
-  "password": "password",
-  "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
-}'
-```
-
-Now, use the token in that response to call `/make-change` with a query parameter `total=3.24`.
-
-```shell-session
-curl --cookie 'app.at=<your_token>' 'http://localhost:3000/make-change?total=3.24'
-```
-
-Your response should look like this:
-
-```json
-{
-  "total": 3.24,
-  "nickels": 64,
-  "pennies": 4
-}
-```
-
-So far so good. Now, let's try to call the `/panic` endpoint. (We're adding the `-i` flag to see the headers of the response.)
-
-```shell-session
-curl -i --request POST 'http://localhost:3000/panic' --cookie 'app.at=<your_token>'
-```
-
-Your response should look like:
-
-```
-HTTP/1.1 403 Forbidden
-X-Powered-By: Express
-Content-Type: application/json; charset=utf-8
-Content-Length: 63
-ETag: W/"3f-eBPCxvxzYQmL0BG1KPuKqm5VcP4"
-Date: Tue, 12 Sep 2023 09:46:52 GMT
-Connection: keep-alive
-Keep-Alive: timeout=5
-
-{"error":"You do not have a role with permissions to do this."}
-```
-
-Uh oh, I guess you are not allowed to do that.
-
-Enjoy your secured resource server!
-
-<QuickstartTshirtCTA/>
+In your main `api.mjs` endpoints, you can use the `hasRole` middleware to check if a user is authenticated and authorized, and if you need to work with a unique unchanging user Id in your database, use `jose.decodeJwt(req.verifiedToken).sub` to get the user UUID provided by FusionAuth.
 
 ## Next Steps
 
 <NextStepsApi />
-
-## Troubleshooting
-
-* I get `Failed to connect to localhost port 9011: Couldn't connect to server` when I call the [[Login API]].
-
-Ensure FusionAuth is running in the Docker container. You should be able to log in as the admin user, `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
-
-* The `/panic` endpoint doesn't work when I call it.
-
-Make sure you are making a `POST` call and using a token with the `teller` role.
-
-* `docker compose` command is not found.
-
-Ensure you have the latest version of Docker, or try `docker-compose` instead. If on Linux, install `docker.ce` instead of `docker.io`.
-
-* It still doesn't work.
-
-You can always pull down a complete running application and compare what's different.
-
-```shell-session
-git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api.git && \
-cd fusionauth-quickstart-javascript-express-api && \
-docker compose up -d && \
-cd complete-application && \
-npm install && \
-npm run start
-```
