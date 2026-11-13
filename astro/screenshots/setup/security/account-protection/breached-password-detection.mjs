@@ -46,7 +46,8 @@ const requireChangeState = {
   apply: async page => {
     await waitForDetection(page);
     await setDetection(true, 'RequireChange');
-    await apiRequest(`/api/user/${erlichId}`, 'PATCH', { user: { breachedPasswordStatus: 'CommonPassword' } });
+    // a login check can come back clean, so set what a breached login records
+    await apiRequest(`/api/user/${erlichId}`, 'PATCH', { user: { breachedPasswordStatus: 'CommonPassword', passwordChangeRequired: true, passwordChangeReason: 'Breached' } });
     return async () => {
       await apiRequest(`/api/user/${erlichId}`, 'PATCH', { user: { breachedPasswordStatus: null, passwordChangeRequired: false } });
       await setDetection(false);
