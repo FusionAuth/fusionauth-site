@@ -12,7 +12,25 @@ This guide shows you how to send FusionAuth data to Segment. Specifically, when 
 
 Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below (you might also run OpenSearch in another Docker container).
 
-![Running FusionAuth architecture](/img/docs/extend/examples/segment/Diagram1.png)
+```mermaid title="A typical setup runs your app, FusionAuth, and PostgreSQL in separate Docker containers on your server."
+flowchart LR
+    User
+    subgraph Server [Your server]
+        subgraph D1 [Docker]
+            App[Your App]
+        end
+        subgraph D2 [Docker]
+            FA[FusionAuth]
+        end
+        subgraph D3 [Docker]
+            DB[(PostgreSQL)]
+        end
+    end
+    User --> App
+    User --> FA
+    App --> FA
+    FA --> DB
+```
 
 In this guide, you will use [webhooks](/docs/events) to send data from FusionAuth to Segment. Unfortunately, FusionAuth does not allow you to set which events trigger which webhooks. Instead, any event will trigger **all** webhooks. So you have to write an adapter web service that receives the webhook call from FusionAuth, checks what event caused the call, and forwards the appropriate information to Segment.
 
@@ -20,7 +38,33 @@ While Segment stores all the events you send, you can't query Segment's store to
 
 This design looks like the diagram below.
 
-![System design with Segment ](/img/docs/extend/examples/segment/Diagram2.png)
+```mermaid title="FusionAuth sends webhooks to a filtering web service, which forwards events to Segment and on to a PostgreSQL warehouse."
+flowchart LR
+    User
+    subgraph Server [Your server]
+        subgraph D1 [Docker]
+            App[Your App]
+        end
+        subgraph D2 [Docker]
+            FA[FusionAuth]
+        end
+        subgraph D3 [Docker]
+            DB[(PostgreSQL)]
+        end
+        subgraph D4 [Docker]
+            Filter[Filtering web service]
+        end
+    end
+    Segment
+    Warehouse[(PostgreSQL)]
+    User --> App
+    User --> FA
+    App --> FA
+    FA --> DB
+    FA -->|Webhook| Filter
+    Filter -->|API call| Segment
+    Segment --> Warehouse
+```
 
 If you already use Segment, you will have your own data warehouse configured, and that's fine. Once you've finished following this guide, using a fresh warehouse for testing, you can add your production warehouse as a destination for the new FusionAuth source.
 

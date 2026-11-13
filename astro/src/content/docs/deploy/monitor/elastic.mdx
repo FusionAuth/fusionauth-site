@@ -51,11 +51,40 @@ The options for sending data to Elastic Cloud include:
 
 Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below (you might also run OpenSearch in another Docker container).
 
-![FusionAuth with Postgres Database](/img/docs/operate/secure-and-monitor/elastic/secure-and-monitor-monitor-with-elastic.png)
+```mermaid title="FusionAuth and PostgreSQL each run in a Docker container on your server."
+flowchart LR
+    subgraph Server[Your server]
+        direction LR
+        subgraph D1[Docker]
+            FA[FusionAuth]
+        end
+        subgraph D2[Docker]
+            DB[(PostgreSQL)]
+        end
+        FA --> DB
+    end
+```
 
 In this section, you will install Elastic Agent in the same container as FusionAuth. The aim is to have a design like the diagram below.
 
-![FusionAuth with Elastic Agent running in Docker sending data to Elastic Server that has Kibana with Elasticsearch and Fleet](/img/docs/operate/secure-and-monitor/elastic/secure-and-monitor-monitor-with-elastic-in-same-container-docker.png)
+```mermaid title="Elastic Agent runs in the FusionAuth Docker container and sends data to the Elastic server."
+flowchart LR
+    subgraph Server[Your server]
+        subgraph D1[Docker]
+            FA[FusionAuth]
+            Agent[Elastic Agent]
+        end
+        subgraph D2[Docker]
+            DB[(PostgreSQL)]
+        end
+        FA --> DB
+    end
+    subgraph Elastic[Elastic server]
+        Kibana --> ES[(Elasticsearch)]
+        Kibana --> Fleet
+    end
+    Agent ----> ES
+```
 
 FusionAuth and PostgreSQL are unchanged. Elastic Agent in the FusionAuth container monitors the container (not the FusionAuth app) and uploads the data to Elasticsearch, where it is indexed and saved.
 
@@ -67,7 +96,18 @@ This design is useful when you don't have full control over the Docker environme
 
 Running Elastic Agent on the same server as FusionAuth is also useful when you aren't using Docker (that is, running FusionAuth directly on your server). In this case, your system will look like the diagram below.
 
-![FusionAuth running directly on server with Elastic Agent sending data to Elastic Server that has Kibana with Elasticsearch and Fleet running](/img/docs/operate/secure-and-monitor/elastic/secure-and-monitor-monitor-with-elastic-in-same-container-directly-on-your-server.png)
+```mermaid title="Elastic Agent runs directly on the FusionAuth server and sends data to the Elastic server."
+flowchart LR
+    subgraph Server[Your server]
+        FA[FusionAuth] --> DB[(PostgreSQL)]
+        Agent[Elastic Agent]
+    end
+    subgraph Elastic[Elastic server]
+        Kibana --> ES[(Elasticsearch)]
+        Kibana --> Fleet
+    end
+    Agent ----> ES
+```
 
 Here's how to implement this design.
 
@@ -229,7 +269,27 @@ Running Elastic Agent in a separate container will avoid this problem, but you n
 
 Running Elastic Agent in a separate container to FusionAuth is shown in the diagram below.
 
-![Elastic Agent running in Docker talking with FusionAuth on the same server in Docker. The Elastic Agent is also talking to an external Elastic Server.](/img/docs/operate/secure-and-monitor/elastic/secure-and-monitor-monitor-with-elastic-in-another-container-docker.png)
+```mermaid title="Elastic Agent runs in its own Docker container, monitors the FusionAuth container, and sends data to the Elastic server."
+flowchart LR
+    subgraph Server[Your server]
+        subgraph D0[Docker]
+            Agent[Elastic Agent]
+        end
+        subgraph D1[Docker]
+            FA[FusionAuth]
+        end
+        subgraph D2[Docker]
+            DB[(PostgreSQL)]
+        end
+        Agent --> FA
+        FA --> DB
+    end
+    subgraph Elastic[Elastic server]
+        Kibana --> ES[(Elasticsearch)]
+        Kibana --> Fleet
+    end
+    Agent -----> ES
+```
 
 Below are the instructions to implement this design. They follow from the work you did in the previous section.
 
@@ -295,7 +355,27 @@ This guide will show you how to send FusionAuth metrics to the Elasticsearch API
 
 The design looks like the diagram below.
 
-![Custom metric getter code in Docker calling FusionAuth in a Docker instance and an external Elastic Server API call to Elasticsearch.](/img/docs/operate/secure-and-monitor/elastic/secure-and-monitor-monitor-with-elastic-send-custom-fusionauth-metrics-to-the-elasticsearch-api.png)
+```mermaid title="Custom metric getter code calls the FusionAuth API and sends the metrics to the Elasticsearch API."
+flowchart LR
+    subgraph Server[Your server]
+        subgraph D0[Docker]
+            Getter[Custom metric getter code]
+        end
+        subgraph D1[Docker]
+            FA[FusionAuth]
+        end
+        subgraph D2[Docker]
+            DB[(PostgreSQL)]
+        end
+        Getter -->|API call| FA
+        FA --> DB
+    end
+    subgraph Elastic[Elastic server]
+        Kibana --> ES[(Elasticsearch)]
+        Kibana --> Fleet
+    end
+    Getter ----->|API call| ES
+```
 
 ### Which Metrics To Monitor
 
@@ -509,7 +589,31 @@ You now have a dashboard to monitor the health of FusionAuth. Following the proc
 
 A relatively simple but adequate monitoring architecture with Elastic might look as follows.
 
-![Elastic Agent monitors all Docker infrastructure and the FusionAuth logs, while the custom metric service provides fine-grained FusionAuth data to Elastic to monitor the app itself.](/img/docs/operate/secure-and-monitor/elastic/secure-and-monitor-monitor-with-elastic-final-system-architecture.png)
+```mermaid title="Elastic Agent and the custom metric getter code both send FusionAuth monitoring data to the Elastic server."
+flowchart LR
+    subgraph Server[Your server]
+        subgraph D0[Docker]
+            Getter[Custom metric getter code]
+        end
+        subgraph D3[Docker]
+            Agent[Elastic Agent]
+        end
+        subgraph D1[Docker]
+            FA[FusionAuth]
+        end
+        subgraph D2[Docker]
+            DB[(PostgreSQL)]
+        end
+        Getter -->|API call| FA
+        FA --> DB
+    end
+    subgraph Elastic[Elastic server]
+        Kibana --> ES[(Elasticsearch)]
+        Kibana --> Fleet
+    end
+    Getter ----->|API call| ES
+    Agent -----> ES
+```
 
 In this design, Elastic Agent monitors all Docker infrastructure and the FusionAuth logs, while the custom metric service provides fine-grained FusionAuth data to Elastic to monitor the app itself.
 

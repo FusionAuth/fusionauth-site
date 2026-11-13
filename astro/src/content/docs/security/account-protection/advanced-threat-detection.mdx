@@ -62,7 +62,16 @@ Rate limiting applies whether you are accessing FusionAuth through the Admin UI 
 
 An example of how rate limiting is applied for login is represented in the diagram below.
 
-![Diagram showing Advanced Threat Detection and how a User will be blocked.](/img/docs/operate/secure-and-monitor/advanced-threat-detection-diagram.png)
+```mermaid title="FusionAuth rate limiting decides whether a login attempt succeeds, fails, or locks the email address."
+flowchart TD
+    Start[User or attacker attempts to log in] --> Pw{{Is the password correct?}}
+    Pw -->|No| Fifth{{"Is this the fifth failed login in 60 seconds that wasn't part of a lockout?"}}
+    Pw -->|Yes| Locked{{Is a rate limit lockout in effect?}}
+    Fifth -->|Yes| Lock[Login fails. Lock logins for this email address for 60 seconds.]
+    Fifth -->|No| Fail[Login fails]
+    Locked -->|Yes| Fail
+    Locked -->|No| Success[Login succeeds]
+```
 
 If you need to lock an account after several failed logins, consider [user account locking](/docs/security/account-protection/account-lockout). Using the [[account lockout]] feature rather than rate limiting offers additional flexibility in the duration. FusionAuth can also send emails or webhooks when it locks a user's account.
 
@@ -86,7 +95,7 @@ In security, it is good practice to give as little information to potential atta
 
 For example, when the number of incorrect login attempts is exceeded, any further *correct* login attempts within the duration will still fail — but the user won't be told why. Below is an example.
 
-![How rate limiting appears to the user.](/img/docs/operate/secure-and-monitor/user_login_failed.png)
+<Screenshot id="operate-rate-limit-login-failed" url="/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid" height={800} alt="The hosted login page showing the generic Invalid login credentials error." />
 
 This can be extremely confusing to users, who may waste their time resetting their password with the Forgot Password flow, or waste your time making support requests. Note also that an attacker can use rate limiting to completely lock a user out of their account by automating failed login attempts with the victim's email address. FusionAuth does not distinguish between the IP addresses of the callers when applying rate limiting.
 
