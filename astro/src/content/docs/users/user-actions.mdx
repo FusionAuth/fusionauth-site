@@ -41,7 +41,20 @@ Below are the terms you'll encounter when working with Actions.
 Below is a visual reminder of the relationships between [Tenants&#44; Groups&#44; and Applications](/docs/concepts/).
 
 
-![Diagram showing User within FusionAuth Architecture](/img/docs/lifecycle/manage-users/user-actions/manage-users-how-to-use-user-actions-definitions.png)
+```mermaid title="A User belongs to a Tenant, joins Applications through Registrations, and gets Roles directly or through Groups."
+flowchart BT
+    classDef focus stroke:#ff9800,stroke-width:3px;
+    User -->|Belongs to| Tenant
+    User -->|Is in| Group
+    User -->|Assigned| Role
+    Group -->|Belongs to| Tenant
+    Group -->|Assigned| Role
+    Role -->|Defined in| Application
+    Application -->|Belongs to| Tenant
+    Registration -->|Joins| User
+    Registration -->|Joins| Application
+    class User focus
+```
 
 ## Types of Actions and Their Purpose
 
@@ -74,7 +87,17 @@ FusionAuth has no built-in support for payments and no automated subscription fe
 
 Temporal Action instances can be in one of four states. Each state can trigger a webhook or an email to a user.
 
-![Diagram showing four states of Started, Modified, Cancelled, and Ended](/img/docs/lifecycle/manage-users/user-actions/manage-users-how-to-use-user-actions-temporal-actions.png)
+```mermaid title="A temporal Action instance starts, can be modified any number of times, and then ends or is cancelled."
+stateDiagram-v2
+    direction LR
+    Started --> Modified
+    Modified --> Modified
+    Started --> Ended
+    Modified --> Ended
+    Started --> Cancelled
+    Modified --> Cancelled
+    Ended: Ended (expired)
+```
 
 #### Subscription Example
 
@@ -94,7 +117,11 @@ The last option is probably the simplest and most idiomatic way to use FusionAut
 
 An instantaneous Action instance has an Option that can be chosen from a list but no temporal states. Once you set the Action for a User, it either remains or is removed.
 
-![Diagram showing added and removed to represent a temporal state.](/img/docs/lifecycle/manage-users/user-actions/manage-users-how-to-use-user-actions-instantaneous-actions.png)
+```mermaid title="An instantaneous Action is added to a User and can later be removed."
+stateDiagram-v2
+    direction LR
+    Added --> Removed
+```
 
 #### Survey Example
 
@@ -180,7 +207,28 @@ The survey Action will trigger a webhook to Slack.
 
 Below is a diagram of this process.
 
-![Diagram showing how to manage subscriptions in PiedPiper and send webhooks to external applications.](/img/docs/lifecycle/manage-users/user-actions/manage-users-how-to-use-user-actions-using-piedpiper-actions.png)
+```mermaid title="PiedPiper applies subscription and survey Actions, and FusionAuth sends emails and webhooks to Intercom and Slack."
+sequenceDiagram
+    participant U as User Agent
+    participant P as PiedPiper
+    participant F as FusionAuth
+    participant I as Intercom
+    participant S as Slack
+
+    U ->> P : Pay for a one-month subscription
+    P ->> F : Apply subscription Action
+    F ->> U : Send welcome email
+    F ->> I : Send subscription notification
+    Note over U,P : Later
+    U ->> P : Subscription expires
+    F ->> U : Send goodbye email
+    F ->> P : Send expiry notification
+    P ->> F : Apply prevent login Action
+    U ->> P : Complete customer survey form
+    P ->> F : Apply survey Action
+    F ->> S : Send survey notification
+    P ->> F : Retrieve all Actions for the User
+```
 
 ### FusionAuth Setup
 

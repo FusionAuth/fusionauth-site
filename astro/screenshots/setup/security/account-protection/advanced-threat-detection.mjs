@@ -16,6 +16,15 @@ const internalNetworkAcl = {
   },
 };
 
+// a failed login looks the same whether the password is wrong or rate limiting blocked it
+async function failLogin(page) {
+  await page.fill('#loginId', 'richard@piedpiper.com');
+  await page.fill('#password', 'not-the-password');
+  await page.locator('#submit-button').click();
+  await page.waitForLoadState('networkidle');
+  await page.evaluate(() => document.activeElement?.blur());
+}
+
 async function fillCaptcha(page) {
   await fill(page, 'tenant_captchaConfiguration_siteKey', 'pied-piper-recaptcha-site-key');
   await fill(page, 'tenant_captchaConfiguration_secretKey', 'pied-piper-recaptcha-secret-key');
@@ -51,4 +60,5 @@ export const shots = {
     prepare: preparation({ beforeSizing: page => fill(page, 'blockedDomains', 'gmail.com\nyahoo.com\nhotmail.com') }),
   },
   'operate-security-emails-list': { fixedHeight: 'Template settings' },
+  'operate-rate-limit-login-failed': { signedOut: true, keepAlerts: true, prepare: preparation({ afterSignOut: failLogin }) },
 };

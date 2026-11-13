@@ -78,13 +78,40 @@ Instead of sending metrics manually to Splunk, you can send them automatically w
 
 Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below (you might also run OpenSearch in another Docker container).
 
-![FusionAuth in Docker using a Postgresql database in Docker on the same server.](/img/docs/operate/secure-and-monitor/splunk/secure-and-monitor-monitor-splunk-setup.png)
+```mermaid title="FusionAuth and PostgreSQL each run in a Docker container on your server."
+flowchart LR
+    subgraph Server[Your server]
+        subgraph D1[Docker]
+            FA[FusionAuth]
+        end
+        subgraph D2[Docker]
+            DB[(PostgreSQL)]
+        end
+        FA --> DB
+    end
+```
 
 You can also start FusionAuth inside Docker with [OpenTelemetry for Java](https://github.com/open-telemetry/opentelemetry-java-instrumentation). OpenTelemetry sends the metrics it reads to a collector. The OpenTelemetry Collector runs in a separate Docker container and sends the metrics to Splunk for recording. This follows the Docker principle of one process per container.
 
 This architecture is shown in the diagram below.
 
-![FusionAuth in Docker using a Postgresql database in Docker on the same server. OpenTelemetry Collector inside the Docker image Splunk has prepared.](/img/docs/operate/secure-and-monitor/splunk/secure-and-monitor-monitor-splunk-with-opentelemetry-linux-collector.png)
+```mermaid title="OpenTelemetry for Java runs in the FusionAuth container and sends metrics through the Splunk OpenTelemetry Collector to Splunk."
+flowchart LR
+    subgraph Server[Your server]
+        subgraph D1[Docker]
+            OTel[OpenTelemetry for Java] --> FA[FusionAuth]
+        end
+        subgraph D2[Docker]
+            DB[(PostgreSQL)]
+        end
+        subgraph D3[Docker]
+            Collector[Splunk OpenTelemetry Collector]
+        end
+        FA --> DB
+        OTel --> Collector
+    end
+    Collector --> Splunk[Splunk web server]
+```
 
 The Splunk [OpenTelementry Linux Collector tutorial](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/collector-configuration-tutorial/about-collector-config-tutorial.html#about-collector-configuration-tutorial) is designed for a physical machine running systemd. Docker containers don't use systemd, as they are designed to host a single process.
 
@@ -293,7 +320,23 @@ Previously, this guide showed you how to use a new Docker container to run an Op
 
 The system looks like the diagram below.
 
-![FusionAuth in Docker using a Postgresql database in Docker on the same server. Docker container running custom metric getter code to call the FusionAuth API and send the metrics to Splunk via API call.](/img/docs/operate/secure-and-monitor/splunk/secure-and-monitor-monitor-splunk-with-opentelemetry-custom-service.png)
+```mermaid title="Custom metric getter code calls the FusionAuth API and sends the metrics to the Splunk API."
+flowchart LR
+    subgraph Server[Your server]
+        subgraph D0[Docker]
+            Getter[Custom metric getter code]
+        end
+        subgraph D1[Docker]
+            FA[FusionAuth]
+        end
+        subgraph D2[Docker]
+            DB[(PostgreSQL)]
+        end
+        Getter -->|API call| FA
+        FA --> DB
+    end
+    Getter -->|API call| Splunk[Splunk web server]
+```
 
 Let's get the login records every ten seconds and send them to Splunk. All the FusionAuth APIs that give you event data are documented [here](/docs/apis). The login records API is documented [here](/docs/apis/login/export#request). Note that the documentation says the date format is the standard Java type, but some constants like `ISO_LOCAL_DATE_TIME` are not supported. You need to enter the format string you want manually.
 
