@@ -1,81 +1,97 @@
 ---
 title: Swift SDK for iOS
-description: Create iOS mobile apps with FusionAuth-based authentication using the Swift SDK.
+description: Learn how to add OAuth 2.0 and OpenID Connect login to an iOS app with the FusionAuth Swift SDK.
 tags: swift sdk, ios sdk, fusionauth swift, ios authentication, apple, swift client library, cocoapods
 order: 50
 ---
 
 {/* Source: https://github.com/FusionAuth/fusionauth-swift-sdk/blob/acd677511e7a19e7bc86bb4a9bf7a0807cdc30af/README.md — forDocSiteOverview; internal documentation links use current site paths. */}
 
-This SDK allows you to use OAuth 2.0 and OpenId Connect functionality in an iOS app with FusionAuth as the
-[[authorization server]]. It also provides a Token Manager to store, refresh, and retrieve tokens.
+The iOS SDK adds OAuth 2.0 and OpenID Connect login to an iOS app, with FusionAuth as the [[authorization server]]. The SDK also provides a Token Manager that stores, refreshes, and retrieves tokens. The SDK handles the dependencies for you, so you get a standardized starting point for a custom mobile app.
 
-It's a highly standardized and simplified starting point for developers to easily integrate FusionAuth into their own custom mobile apps by taking care of all the dependencies.
+The SDK covers the following functionality:
 
-Following OAuth 2.0 and OpenID Connect functionality are covered:
-- OAuth 2.0 Authorization Code Grant
-- OAuth 2.0 Refresh Token Grant
-- OpenID Connect UserInfo
-- OpenID Connect End Session
+* OAuth 2.0 Authorization Code Grant
+* OAuth 2.0 Refresh Token Grant
+* OpenID Connect UserInfo
+* OpenID Connect End Session
 
-[AppAuth-iOS](https://github.com/openid/AppAuth-iOS) is used for the OAuth 2.0 Authorization Code Grant flow and OpenID Connect functionality.
-
-The SDK is written in Swift and compatible with Object-C.
+The SDK uses [AppAuth-iOS](https://github.com/openid/AppAuth-iOS) for the Authorization Code Grant flow and the OpenID Connect functionality. Swift is the SDK language, and the SDK works with Objective-C.
 
 {/* End source: forDocSiteOverview */}
 
-## Getting Started
+## Get Started
 
-If you are new to iOS development, you may want to start with the QuickStart guide. If you are already familiar with iOS development, skip to the Configuration section.
+When you are new to iOS development, start with the QuickStart. When you already know iOS development, skip to [Configure the SDK](#configure-the-sdk).
 
 ### QuickStart
 
 {/* Source: https://github.com/FusionAuth/fusionauth-swift-sdk/blob/acd677511e7a19e7bc86bb4a9bf7a0807cdc30af/README.md — forDocSiteQuickstart; internal documentation links use current site paths. */}
 
-See the [FusionAuth iOS Quickstart](/docs/quickstarts/app/quickstart-swift-ios-native) for a full tutorial on using FusionAuth and iOS.
+For a full tutorial on using FusionAuth with iOS, see the [FusionAuth iOS QuickStart](/docs/quickstarts/app/quickstart-swift-ios-native).
 
 {/* End source: forDocSiteQuickstart */}
 
-### Configuration
+### Configure the SDK
 
 {/* Source: https://github.com/FusionAuth/fusionauth-swift-sdk/blob/acd677511e7a19e7bc86bb4a9bf7a0807cdc30af/README.md — forDocSiteGettingStarted; internal documentation links use current site paths. */}
 
-To use the FusionAuth iOS SDK, add this repository as a dependency.
+1. Add the SDK repository as a dependency of your app.
 
-By default the SDK uses the `FusionAuth.plist` file in the main bundle to read the configuration. The file should contain the following keys:
+1. Create a `FusionAuth.plist` file in the main bundle. The SDK reads the configuration from this file by default, and the file contains the following keys:
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>additionalScopes</key>
-    <array>
-        <string>profile</string>
-        <string>email</string>
-    </array>
-    <key>fusionAuthUrl</key>
-    <string>http://localhost:9011</string>
-    <key>clientId</key>
-    <string>e9fdb985-9173-4e01-9d73-ac2d60d1dc8e</string>
-</dict>
-</plist>
-```
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+   <plist version="1.0">
+   <dict>
+       <key>additionalScopes</key>
+       <array>
+           <string>profile</string>
+           <string>email</string>
+       </array>
+       <key>fusionAuthUrl</key>
+       <string>http://localhost:9011</string>
+       <key>clientId</key>
+       <string>e9fdb985-9173-4e01-9d73-ac2d60d1dc8e</string>
+   </dict>
+   </plist>
+   ```
 
-Then, initialize the AuthorizationManager in the `init` func of your app:
+1. Initialize the `AuthorizationManager` in the `init` function of your app:
 
-```swift
-@main
-struct QuickstartApp: App {
-    init() {
-        AuthorizationManager.instance.initialize()
-    }
-}
-```
+   ```swift
+   @main
+   struct QuickstartApp: App {
+       init() {
+           AuthorizationManager.instance.initialize()
+       }
+   }
+   ```
 
-By default, the SDK uses the `MemoryStorage for storing tokens. You can use one of the other available mechanisms `KeyChainStorage`or `UserDefaultsStorage` by e.g. adding the `storage` key with the value `keychain` or `userdefaults`.
+1. Handle the callback from the browser:
 
-As a alternative, you can also use the `initialize` function to provide the configuration:
+   ```swift
+   @main
+   struct QuickstartApp: App {
+       init() {
+           AuthorizationManager.instance.initialize()
+       }
+
+       var body: some Scene {
+           WindowGroup {
+               ContentView()
+                   .onOpenURL { url in
+                       OAuthAuthorization.resume(with: url)
+                   }
+           }
+       }
+   }
+   ```
+
+#### Set the Configuration in Code
+
+You can pass the configuration to the `initialize` function instead of using the `FusionAuth.plist` file:
 
 ```swift
 @main
@@ -89,85 +105,65 @@ struct QuickstartApp: App {
 }
 ```
 
-Finally, instruct the app to handle the callback from the browser:
+#### Store Tokens
 
-```swift
-@main
-struct QuickstartApp: App {
-    init() {
-        AuthorizationManager.instance.initialize()
-    }
-
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .onOpenURL { url in
-                    OAuthAuthorization.resume(with: url)
-                }
-        }
-    }
-}
-```
+The SDK stores tokens in `MemoryStorage` by default. To use `KeyChainStorage` or `UserDefaultsStorage` instead, add the **`storage`** key to the `FusionAuth.plist` file with the value `keychain` or `userdefaults`.
 
 {/* End source: forDocSiteGettingStarted */}
 
-## Usage
+## Use the SDK
 
 {/* Source: https://github.com/FusionAuth/fusionauth-swift-sdk/blob/acd677511e7a19e7bc86bb4a9bf7a0807cdc30af/README.md — forDocSiteUsage; internal documentation links use current site paths. */}
 
-To start the OAuth 2.0 Authorization Code Grant, you can use the `oauth()` function on the `AuthorizationManager` to
-retrieve the `OAuthAuthorizationService`:
+The following steps cover the login, token, and logout flow.
 
-```swift
-do {
-    try await AuthorizationManager
-        .oauth()
-        .authorize(options: OAuthAuthorizeOptions())
-} catch let error as NSError {
-    print("Error: \(error.localizedDescription)")
-}
-```
+1. Call the `oauth()` function on the `AuthorizationManager` to get the `OAuthAuthorizationService`, and then call `authorize` to start the OAuth 2.0 Authorization Code Grant:
 
-The `authorize` method will open the Safari browser and redirect to the FusionAuth login page. After successful login, the user will be redirected back to the app with the authorization code. The SDK will exchange the authorization code for an access token and refresh token.
+   ```swift
+   do {
+       try await AuthorizationManager
+           .oauth()
+           .authorize(options: OAuthAuthorizeOptions())
+   } catch let error as NSError {
+       print("Error: \(error.localizedDescription)")
+   }
+   ```
 
-This will retrieve the authorization response, validates the `state` if it was provided, and exchanges the authorization
-code for an access token.
-The result of the exchange will be stored in the `TokenManager`.
+   The `authorize` method opens the Safari browser and redirects to the FusionAuth login page. After a successful login, FusionAuth redirects the user back to the app with the authorization code. The SDK validates the `state` when you provided one, exchanges the authorization code for an access token and a refresh token, and stores the result in the `TokenManager`.
 
-After the user is authorized, you can use `getUserInfo()` to retrieve the [User Info](https://openid.net/specs/openid-connect-core-1_0.html#UserInfo):
+1. Call `userInfo()` to retrieve the [User Info](https://openid.net/specs/openid-connect-core-1_0.html#UserInfo) after the user is authorized:
 
-```swift
-do {
-    self.userInfo = try await AuthorizationManager
-        .oauth()
-        .userInfo()
-} catch let error as NSError {
-    print("JSON decode failed: \(error.localizedDescription)")
-}
-```
+   ```swift
+   do {
+       self.userInfo = try await AuthorizationManager
+           .oauth()
+           .userInfo()
+   } catch let error as NSError {
+       print("JSON decode failed: \(error.localizedDescription)")
+   }
+   ```
 
-To call your API with an access token, you can use the `AuthorizationManager` to retrieve a valid access token:
+1. Call `freshAccessToken` to get a valid access token for your API calls:
 
-```swift
-let accessToken = AuthorizationManager.oauth().freshAccessToken()
-```
+   ```swift
+   let accessToken = AuthorizationManager.oauth().freshAccessToken()
+   ```
 
-This will retrieve a fresh access token from the `TokenManager` and return it. If the access token is expired,
-the `TokenManager` will refresh it automatically.
+   The `TokenManager` returns a fresh access token. When the access token has expired, the `TokenManager` refreshes the access token automatically.
 
-Finally, you can use the `AuthorizationManager` to sign out the user and remove the tokens from the `TokenManager`:
+1. Call `logout` to sign out the user and remove the tokens from the `TokenManager`:
 
-```swift
-do {
-    try await AuthorizationManager
-        .oauth()
-        .logout(options: OAuthLogoutOptions())
-} catch let error as NSError {
-    print("Error: \(error.localizedDescription)")
-}
-```
+   ```swift
+   do {
+       try await AuthorizationManager
+           .oauth()
+           .logout(options: OAuthLogoutOptions())
+   } catch let error as NSError {
+       print("Error: \(error.localizedDescription)")
+   }
+   ```
 
-If the user is signed out, the auth state will be cleared.
+   The SDK clears the auth state after the user signs out.
 
 {/* End source: forDocSiteUsage */}
 
@@ -175,7 +171,7 @@ If the user is signed out, the auth state will be cleared.
 
 {/* Source: https://github.com/FusionAuth/fusionauth-swift-sdk/blob/acd677511e7a19e7bc86bb4a9bf7a0807cdc30af/README.md — forDocSiteExampleApp; internal documentation links use current site paths. */}
 
-See the [FusionAuth iOS SDK Example](https://github.com/FusionAuth/fusionauth-quickstart-swift-ios-native) for a functional example of an iOS client that uses the SDK.
+For a functional example of an iOS client that uses the SDK, see the [FusionAuth iOS SDK Example](https://github.com/FusionAuth/fusionauth-quickstart-swift-ios-native).
 
 {/* End source: forDocSiteExampleApp */}
 
@@ -183,10 +179,10 @@ See the [FusionAuth iOS SDK Example](https://github.com/FusionAuth/fusionauth-qu
 
 {/* Source: https://github.com/FusionAuth/fusionauth-swift-sdk/blob/acd677511e7a19e7bc86bb4a9bf7a0807cdc30af/README.md — forDocSiteDocumentation; internal documentation links use current site paths. */}
 
-See the latest [Full library documentation](https://github.com/FusionAuth/fusionauth-swift-sdk/blob/main/Documentation/Reference/README.md) for the complete documentation of the SDK.
+For the complete documentation of the SDK, see the latest [full library documentation](https://github.com/FusionAuth/fusionauth-swift-sdk/blob/main/Documentation/Reference/README.md).
 
 {/* End source: forDocSiteDocumentation */}
 
 ## Source Code
 
-The source code is available here: https://github.com/FusionAuth/fusionauth-swift-sdk/
+For the source code, see the [Swift SDK repository](https://github.com/FusionAuth/fusionauth-swift-sdk/).
