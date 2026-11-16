@@ -39,12 +39,6 @@ test('copies the core attributes to the user', () => {
   assert.equal(user.fullName, 'Mr. Richard Hendricks III');
 });
 
-test('registers the user with the employee portal', () => {
-  const { options } = run(scimUser);
-  assert.equal(options.applicationId, 'replace-with-your-employee-portal-application-id');
-  assert.equal(options.sendSetPasswordEmail, false);
-});
-
 test('uses the first email and phone when none is primary', () => {
   const { user } = run(fixture('scim-user-request-converter/scim-user', {
     emails: [{ type: 'home', value: 'richard.personal@example.com' }, { type: 'work', value: 'richard@piedpiper.com' }],

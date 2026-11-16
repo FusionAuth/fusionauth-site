@@ -14,9 +14,6 @@ function preferred(entries) {
 }
 
 function convert(user, options, scimUser, context) {
-  // register every provisioned user with the employee portal application
-  options.applicationId = 'replace-with-your-employee-portal-application-id';
-
   var name = scimUser.name || {};
   // SCIM clients may omit active, so treat a missing value as active
   user.active = scimUser.active !== false;

@@ -8,6 +8,7 @@ Readers come to the docs to finish a task. Every rule below serves that goal.
 
 * Address the reader as "you". Write steps in the imperative: "Click **Save**," not "The user should click **Save**."
 * Keep sentences short, with one idea per sentence. Split a sentence that chains clauses with "and", "which", or a semicolon.
+* Lead with a condition that decides whether the reader acts. Write "When the Application requires PKCE, add **`code_challenge`**," not "Add **`code_challenge`** when the Application requires PKCE." A reader can then skip a step that doesn't apply. Keep a timing condition at the end when the step applies to every reader: "Turn off debug logging when you finish."
 * Use active voice. Write "FusionAuth sends an email," not "An email is sent."
 * Repeat the noun instead of using a pronoun. Write "The lambda runs after login," not "It runs after login." Avoid "it", "they", "this", and "these" as subjects, even when the noun is long.
 * Say what happens. Skip filler such as "simply", "just", "easily", "basically", and "note that".
@@ -122,6 +123,7 @@ To make a smoothie:
 
 * Link to other pages on `fusionauth.io` with a root-relative path and no trailing slash: `[Users API](/docs/apis/users)`. Don't use the domain or a relative path such as `./users`.
 * Make link text describe the destination. Write "see [Account Lockout](/docs/security/account-protection/account-lockout)", not "click [here](...)".
+* Describe the subject first, and put the link in a separate sentence at the end: "For more information, see [Account Lockout](/docs/security/account-protection/account-lockout)." When a link points to a list of fields, write "For a full list of fields, see the [Graph API User reference](https://developers.facebook.com/docs/graph-api/reference/user)." Don't write "See X for the fields."
 
 ### Asides
 
@@ -171,7 +173,7 @@ sequenceDiagram
 * "Log in" is the verb, "login" is the noun, and "logged in" has no hyphen.
 * "Self-hosted" is the adjective and "self-hosting" is the noun. When unsure, use "self-hosted".
 * Write "update" for moving to a newer FusionAuth version. Reserve "migration" for moving users or data, and for database migrations.
-* Spell these names exactly as shown: .NET Core, air-gapped, Azure AD, CAPTCHA, client-side, Connector, curl, Defaults, Docker, Docker Compose, e-commerce, ECMAScript, Elasticsearch, esport, first-party, fine-grained authorization, FusionAuth Cloud, Google reCAPTCHA, Identity Provider, IdP, Kickstart, macOS, multi-factor authentication, multi-tenancy, multi-tenant, Node.js, OAuth, OAuth2, one-time password, private-labeled, re-authentication, self-service, server-side, Spring Boot, third-party, two-factor, UserInfo, WebAuthn, webview, X.509.
+* Spell these names exactly as shown: .NET Core, air-gapped, Azure AD, CAPTCHA, client-side, Connector, curl, Defaults, Docker, Docker Compose, e-commerce, ECMAScript, Elasticsearch, esport, first-party, fine-grained authorization, FusionAuth Cloud, Google reCAPTCHA, hCaptcha, Identity Provider, IdP, Kickstart, macOS, multi-factor authentication, multi-tenancy, multi-tenant, Node.js, OAuth, OAuth2, one-time password, private-labeled, re-authentication, self-service, server-side, Spring Boot, third-party, two-factor, UserInfo, WebAuthn, webview, X.509.
 
 ### Glossary Terms
 
@@ -184,7 +186,7 @@ Each [[Tenant::tenant]] has its own settings.
 
 The name can be the term, an alias, or an abbreviation, in any case. Mark a term where a reader might not know the term, usually at the first use on a page. Terms don't work in headings or links. In an `.astro` file, use `<GlossaryTerm term="Default Tenant" />`.
 
-To add a term, add an entry to `astro/src/data/glossary.json`. Key the entry by the full name in title case, such as `JSON Web Token`. Each entry needs a plain-text **`definition`** of one or two sentences and a **`link`** to the page that explains the term. The optional fields are **`abbreviations`**, **`aliases`**, and **`standards`**, an array of `{ "name", "url" }` objects. Add only terms that readers need defined. Add a general tool only when FusionAuth integrates with the tool tightly, such as Elasticsearch or Kafka, not Docker.
+To add a term, add an entry to `astro/src/data/glossary.json`. Key the entry by the full name in title case, such as `JSON Web Token`. Each entry needs a **`definition`** of one or two sentences and a **`link`** to the page that explains the term. A definition can use inline markdown: links, `monospace`, **bold**, and _italics_. Tooltips show the text of a link but not the link, because keyboard focus can't reach a tooltip. The optional fields are **`abbreviations`**, **`aliases`**, **`standards`** (an array of `{ "name", "url" }` objects), and **`plan`**. When the FusionAuth feature behind a term requires a paid plan, set **`plan`** to `licensed`, `starter`, `essentials`, or `enterprise`. The Glossary then shows a plan badge on the entry. Add only terms that readers need defined. Add a general tool only when FusionAuth integrates with the tool tightly, such as Elasticsearch or Kafka, not Docker.
 
 The build fails on an unknown term and suggests the closest matches.
 
@@ -227,6 +229,8 @@ import ReleaseNotification from 'src/content/docs/_shared/_release-notification.
 
 * Name shared files with a leading underscore and dashes: `_login-api-integration.mdx`. Put content shared across sections in `astro/src/content/docs/_shared`.
 * Import each partial explicitly, because partials aren't auto-imported. Then use the partial like a component, and pass values as props: `<ReleaseNotification topic="passkeys" />`. In an MDX partial, read props as `{props.topic}`.
+* The build fails when a bare `{props.topic}` in an MDX partial renders without a value. The error names the page, the partial, and the line. Pass the prop from every caller. When an empty value is intended, write `{props.topic ?? ''}`. Content inside a false `<If>`, or inside a component with a false **`renderif`**, never renders, so the check skips that content.
+* A bare **`renderif`** flag on `APIField` or `Aside`, such as `renderif={props.is_create}`, needs a boolean from every caller: `<Partial is_create />` or `<Partial is_create={false} />`. The build fails when a caller leaves out the flag or passes a string such as `"false"`. When leaving the flag out should mean false, write `renderif={!!props.is_create}`. Other expressions, such as `!props.is_create`, and every `<If condition>` follow JavaScript truthiness, so a missing flag counts as false.
 * Inside a JavaScript expression, use HTML instead of markdown: `{props.show && <>See <a href="/docs/apis">the APIs</a>.</>}`. Coerce values to booleans for conditions: `{!!props.message && <span>{props.message}</span>}`.
 * Reference JSON examples with the [JSON component](astro/src/components/JSON.astro).
 

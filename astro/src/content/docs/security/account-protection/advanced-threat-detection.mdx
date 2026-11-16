@@ -20,7 +20,7 @@ The Advanced Threat Detection feature requires increased RAM on servers running 
 </Aside>
 
 Advanced Threat Detection features include:
-- Rate limiting (too many failed login attempts).
+- [[Rate limiting]] (too many failed login attempts).
 - CAPTCHA to prevent automated logins.
 - Location and IP restriction.
 - Administrator notifications through emails and webhooks.
@@ -62,9 +62,18 @@ Rate limiting applies whether you are accessing FusionAuth through the Admin UI 
 
 An example of how rate limiting is applied for login is represented in the diagram below.
 
-![Diagram showing Advanced Threat Detection and how a User will be blocked.](/img/docs/operate/secure-and-monitor/advanced-threat-detection-diagram.png)
+```mermaid title="FusionAuth rate limiting decides whether a login attempt succeeds, fails, or locks the email address."
+flowchart TD
+    Start[User or attacker attempts to log in] --> Pw{{Is the password correct?}}
+    Pw -->|No| Fifth{{"Is this the fifth failed login in 60 seconds that wasn't part of a lockout?"}}
+    Pw -->|Yes| Locked{{Is a rate limit lockout in effect?}}
+    Fifth -->|Yes| Lock[Login fails. Lock logins for this email address for 60 seconds.]
+    Fifth -->|No| Fail[Login fails]
+    Locked -->|Yes| Fail
+    Locked -->|No| Success[Login succeeds]
+```
 
-If you need to lock an account after several failed logins, consider [user account locking](/docs/security/account-protection/account-lockout). Using the account lockout feature rather than rate limiting offers additional flexibility in the duration. FusionAuth can also send emails or webhooks when it locks a user's account.
+If you need to lock an account after several failed logins, consider [user account locking](/docs/security/account-protection/account-lockout). Using the [[account lockout]] feature rather than rate limiting offers additional flexibility in the duration. FusionAuth can also send emails or webhooks when it locks a user's account.
 
 ### CIMD Client Registration
 
@@ -86,7 +95,7 @@ In security, it is good practice to give as little information to potential atta
 
 For example, when the number of incorrect login attempts is exceeded, any further *correct* login attempts within the duration will still fail — but the user won't be told why. Below is an example.
 
-![How rate limiting appears to the user.](/img/docs/operate/secure-and-monitor/user_login_failed.png)
+<Screenshot id="operate-rate-limit-login-failed" url="/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid" height={800} alt="The hosted login page showing the generic Invalid login credentials error." />
 
 This can be extremely confusing to users, who may waste their time resetting their password with the Forgot Password flow, or waste your time making support requests. Note also that an attacker can use rate limiting to completely lock a user out of their account by automating failed login attempts with the victim's email address. FusionAuth does not distinguish between the IP addresses of the callers when applying rate limiting.
 
@@ -169,7 +178,7 @@ When you enable reCAPTCHA, take care that your keys in FusionAuth are correct an
 
 In the FusionAuth Admin UI, edit a tenant and navigate to the <Breadcrumb>Security</Breadcrumb> tab. Go to <Breadcrumb>CAPTCHA</Breadcrumb> and toggle on <Breadcrumb>Enable CAPTCHA</Breadcrumb>. Enter your chosen reCAPTCHA version and the keys from Google. Leave the threat score at half and adjust it later if necessary. Save the changes.
 
-<Screenshot id="operate-enter-captcha-details" url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#security" alt="Enter CAPTCHA details in FusionAuth" height={900}><Highlight selector="[data-hl='operate-captcha']" /></Screenshot>
+<Screenshot id="operate-enter-captcha-details" url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#security" showHash alt="Enter CAPTCHA details in FusionAuth" height={900}><Highlight selector="[data-hl='operate-captcha']" /></Screenshot>
 
 If you log out and go to the login screen, you'll be given a CAPTCHA puzzle if you specified reCAPTCHA v2. If you specified reCAPTCHA v3, nothing will be shown.
 
@@ -229,7 +238,7 @@ With an ACL applied, a user will be prevented from even accessing an application
 
 You can restrict access on a tenant instead of an application in the same way: Edit the <Breadcrumb>Security</Breadcrumb> tab of the tenant. The ACL restriction will be applied to every application and user belonging to that tenant.
 
-<Screenshot id="operate-ip-acl-application" url="/admin/application/edit?applicationId=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&tenantId=30663132-6464-6665-3032-326466613934#security" alt="Applying an IP ACL to an application." height={1100}><Highlight selector="[data-hl='section-box']" /></Screenshot>
+<Screenshot id="operate-ip-acl-application" url="/admin/application/edit?applicationId=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&tenantId=30663132-6464-6665-3032-326466613934#security" showHash alt="Applying an IP ACL to an application." height={1100}><Highlight selector="[data-hl='section-box']" /></Screenshot>
 
 In addition to restricting users to an IP range, you can also restrict API keys. This is useful if you are managing your FusionAuth configuration via a CI/CD system. You can create an API key to modify configurations, but limit that key to the IP address range of your CI/CD system, increasing security and lowering the risk of the API key being used incorrectly.
 
@@ -253,7 +262,7 @@ If you enable [[self-service registration]], users can provide any email address
 
 In either of these cases, you can block one or more domains from the registration process using Advanced Threat Detection.
 
-<Screenshot id="operate-block-domains" url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#security" alt="Blocking consumer facing domains from registering." height={900}><Highlight selector="[data-hl='section-box']" /></Screenshot>
+<Screenshot id="operate-block-domains" url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#security" showHash alt="Blocking consumer facing domains from registering." height={900}><Highlight selector="[data-hl='section-box']" /></Screenshot>
 
 ## Webhooks And Emails
 
@@ -284,7 +293,7 @@ Here are the security events for which you can send emails:
 
 You can configure emails for tenants in <Breadcrumb>Tenant -> Your Tenant -> Email -> Template Settings</Breadcrumb> or for Applications in <Breadcrumb>Applications -> Your Application -> Email -> Templates</Breadcrumb>.
 
-<Screenshot id="operate-security-emails-list" url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#identities" alt="List of email templates." height={1100} />
+<Screenshot id="operate-security-emails-list" url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#identities" showHash alt="List of email templates." height={1100} />
 
 The easiest way to test security emails is to trigger the "Login with new device" email by logging in to FusionAuth from a private browser window. The image below shows how the "Threat Detected" email template looks to the user.
 

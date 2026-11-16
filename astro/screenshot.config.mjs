@@ -31,10 +31,13 @@ export default {
   browser: 'webkit',
   browserContainer: true,
   chrome: {
-    style: 'golden-gate',
+    style: 'macos',
     renderIn: 'css',
     showUrl: true,
-    url: 'local.fusionauth.io',
+    showHost: false,
+    showQuery: false,
+    showHash: false,
+    shortenIds: true,
     theme: 'light',
   },
   docker: {
