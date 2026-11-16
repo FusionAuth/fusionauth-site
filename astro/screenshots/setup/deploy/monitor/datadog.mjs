@@ -15,12 +15,14 @@ async function createMetricsKey(page) {
   await page.locator('button[type=submit]').click();
   await page.waitForURL(u => u.pathname === '/admin/api-key/');
   runtime.operateMetricsKeyExists = true;
-  await page.evaluate(() => {
-    const row = [...document.querySelectorAll('main tr')].find(tr => tr.textContent.includes('Prometheus metrics'));
-    if (!row) throw new Error('Prometheus API key row not found');
+  const listed = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('main tbody tr')];
+    const row = rows.find(tr => tr.textContent.includes('Prometheus metrics'));
+    if (!row) return rows.map(tr => tr.textContent.replace(/\s+/g, ' ').trim()).join('; ') || 'no rows';
     row.querySelector('td').dataset.hl = 'operate-key';
     row.querySelector('td a[href="#"]')?.click();
   });
+  if (listed) throw new Error(`saved the Prometheus metrics API key, but the API key list doesn't show it. The list shows: ${listed}`);
   await page.waitForTimeout(500);
 }
 

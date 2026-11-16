@@ -54,11 +54,20 @@ async function showForgotPasswordMessage(page) {
   if (!tagged) throw new Error('forgot-your-password message line not found');
 }
 
+// a loading preview can scroll its panel into view at any point, so wait for it and scroll back
+async function settlePreview(page) {
+  const frame = await (await page.locator('el-tab-panels iframe:visible').elementHandle()).contentFrame();
+  await frame.waitForLoadState('load');
+  await frame.evaluate(() => document.fonts.ready);
+  await page.locator('el-tab-panels').evaluate(el => { el.scrollTop = 0; });
+}
+const preview = { fixedHeight: null, legacyVersion: true, prepare: preparation({ finish: settlePreview }) };
+
 export const shots = {
-  'theme-preview-oauth-authorize': { fixedHeight: null, legacyVersion: true },
-  'theme-preview-oauth-logout': { fixedHeight: null, legacyVersion: true },
-  'theme-preview-dark-authorize': { fixedHeight: null, legacyVersion: true },
-  'theme-preview-dark-logout': { fixedHeight: null, legacyVersion: true },
+  'theme-preview-oauth-authorize': preview,
+  'theme-preview-oauth-logout': preview,
+  'theme-preview-dark-authorize': preview,
+  'theme-preview-dark-logout': preview,
   'theme-dark-login': darkLogin(),
   'theme-dark-forgot-password': darkLogin({ prepare: preparation({ afterSignOut: tagForgot }) }),
   'theme-dark-updated-message': darkLogin({ temporaryState: [clickHereState], prepare: preparation({ afterSignOut: tagForgot }) }),
