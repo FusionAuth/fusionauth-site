@@ -73,6 +73,9 @@ async function submitPassword(page) {
   await page.locator('#user_password-form-row .error').first().waitFor();
 }
 
+// the page scroll after the submit varies by run, so center the field
+const centerPasswordRow = page => page.locator('#user_password-form-row').evaluate(el => el.scrollIntoView({ block: 'center' }));
+
 async function openUserMenu(page) {
   await page.locator('header el-dropdown button').click();
   await page.locator('#require-password-change').waitFor({ state: 'visible' });
@@ -111,7 +114,7 @@ export const shots = {
   },
   'breached-password-overview-report': { temporaryState: [breachedState], prepare: preparation({ afterFraming: maskReactor }) },
   'breached-password-user-report': { temporaryState: [breachedState], fixedHeight: null },
-  'breached-password-admin-error': { temporaryState: [breachedState], fixedHeight: null, prepare: preparation({ beforeSizing: submitPassword }) },
+  'breached-password-admin-error': { temporaryState: [breachedState], fixedHeight: null, prepare: preparation({ beforeSizing: submitPassword, finish: centerPasswordRow }) },
   'breached-password-user-actions': {
     temporaryState: [breachedState],
     fixedHeight: null,

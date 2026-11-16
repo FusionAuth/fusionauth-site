@@ -1,9 +1,13 @@
 import { createHmac } from 'crypto';
 import { fileURLToPath } from 'url';
 
-export const baseUrl = 'http://localhost:9011';
+// each parallel shard runs its own stack, 10 ports above the previous shard's
+const portOffset = 10 * Number(process.env.SCREENSHOT_SHARD_INDEX ?? 0);
+export const appPort = 9011 + portOffset;
+export const freshPort = 9012 + portOffset;
+export const baseUrl = `http://localhost:${appPort}`;
 // un-kickstarted instance for first-time setup shots; a different host keeps its cookies apart
-export const freshUrl = 'http://127.0.0.1:9012';
+export const freshUrl = `http://127.0.0.1:${freshPort}`;
 export const apiKey = 'screenshot-dev-key-not-for-production';
 export const projectRoot = fileURLToPath(new URL('../../', import.meta.url));
 // state the hooks share between screenshots
