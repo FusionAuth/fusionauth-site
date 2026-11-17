@@ -15,8 +15,8 @@ export const releaseCategories = [
 export const releaseImpacts = [
   {
     id: 'caution',
-    label: 'Review before updating',
-    chipLabel: 'Review Before Updating',
+    label: 'Requires review',
+    chipLabel: 'Requires Review',
     description: 'This change may affect a small number of installations. Test before you update.',
     color: '#ea580c',
     icon: 'caution',
