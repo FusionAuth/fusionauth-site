@@ -16,12 +16,11 @@ This QuickStart requires:
 
 * [Python](https://www.python.org/downloads/) 3.10 or later
 * [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later
-* On macOS and Windows, one of the following container management tools:
-  * [Docker desktop](https://www.docker.com/products/docker-desktop/)
-  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use Orbstack for `docker compose` commands after install, run `docker context use orbstack`)
-  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
 
-Be sure to open your container management tool to configure and install any dependencies needed by that tool, including Rosetta and Developer Tools on macOS.
+If you use macOS or Windows, you need one of the following container management tools:
+  * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use OrbStack for `docker compose` commands after installation, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
 
 ## Create a Simple Flask App
 
@@ -133,20 +132,18 @@ Now that you have a working instance of FusionAuth and a working Flask app, let'
 
    Most importantly, we're adding [Authlib](https://docs.authlib.org/), which handles communication with our FusionAuth instance (using [Requests](https://pypi.org/project/requests/) to make HTTP calls), and [python-dotenv](https://pypi.org/project/python-dotenv/), which handles reading our configuration from the `.env` file we just created.
 
-1. Replace the contents of `app.py` with the following code, which adds the following functionality:
-
-   * imports libraries needed for authentication
-   * reads configuration from the `.env` file
-   * configures Authlib to communicate with FusionAuth using a URL, client Id, client secret, and [[PKCE]]
-   * uses a `login_required` decorator to redirect users who aren't authenticated to the login URL
-   * adds routes for login, logout, and the OAuth callback that completes login
+1. Replace the contents of `app.py` with the following code:
 
    <ExtractedCode src="quickstart-flask/1-fusionauth-added/app.py" lang="python"/>
 
-1. Take a moment to understand the calls to `oauth.register`, `authorize_redirect`, and `authorize_access_token`, since these are the heart of our FusionAuth integration:
-   * `register` tells Authlib how to talk to FusionAuth, using the OpenID Connect discovery document at `/.well-known/openid-configuration` to find the authorize and token endpoints
-   * `authorize_redirect` sends the user to the FusionAuth login page
-   * `authorize_access_token` exchanges the authorization code that FusionAuth sends to `/oauth-callback` for tokens, and validates the [[Id Token::ID token]]. We then store the user's identity in the Flask session cookie
+   The new code connects the app to FusionAuth:
+
+   * `load_dotenv()` reads the configuration from the `.env` file.
+   * `oauth.register` tells Authlib how to talk to FusionAuth. It uses the client Id, client secret, and [[PKCE]], and finds the login and token endpoints in the OpenID Connect discovery document at `/.well-known/openid-configuration`. With PKCE, Authlib sends a code verifier when it exchanges the authorization code for tokens, so a stolen authorization code is useless on its own.
+   * The `login_required` decorator sends users who aren't logged in to `/login`.
+   * The `/login` route calls `authorize_redirect`, which sends the user to the FusionAuth login page.
+   * The `/oauth-callback` route calls `authorize_access_token`, which exchanges the authorization code from FusionAuth for tokens and validates the [[Id Token::ID token]]. The app then stores the user's Id in the Flask session cookie.
+   * The `/logout` route clears the Flask session, then sends the user to FusionAuth's `/oauth2/logout` endpoint so the FusionAuth session ends too.
 
 1. That's it! Your Flask app should now use FusionAuth login. Run the app:
 
@@ -163,7 +160,7 @@ Now that you have a working instance of FusionAuth and a working Flask app, let'
 
 1. Edit the text file from the safety of an authenticated Flask app.
 
-1. Log out, and find yourself back in the cold, unprivileged world of an anonymous unauthenticated user.
+1. Click **Logout**. FusionAuth ends your session and sends you back to the login page.
 </Steps>
 
 ## Add Independent Notes for Each User
@@ -191,6 +188,7 @@ To see a more realistic example of FusionAuth usage, we can improve the app even
 1. Navigate to <Breadcrumb>Users -> Richard Hendricks -> Manage</Breadcrumb>.
 
 1. In the **Source** tab, look for the `firstName` and `lastName` fields. That's what we'll use to personalize the UI for each user. We'll use the user's `id` field to generate a unique name for each user's note.
+
 1. Click the logout icon in the top right to log out of the Admin UI. We'll use a different user account to access our Flask app.
 
 1. Replace the contents of `app.py` with the following code, which requests the `profile` and `email` scopes, reads the user's name (first and last) and Id from the ID token, and stores each user's note in a separate file:
@@ -214,6 +212,15 @@ To see a more realistic example of FusionAuth usage, we can improve the app even
 </Steps>
 
 Your Flask app now provides unique notes for each user. Each user can independently edit and save their note. To see all of the notes, look for `note-<id>.txt` files in the `user_data` directory. To identify which note corresponds to which user, compare the `id` in the file name with the `id` field in the user's **Source** tab.
+
+## Summary
+
+In this QuickStart, FusionAuth handled login for your Flask app:
+
+* Authlib sent users to the FusionAuth login page and exchanged the authorization code for tokens, so the app never saw their passwords.
+* The `login_required` decorator kept logged-out users away from the notes page.
+* The ID token gave the app each user's unique Id and name. The app used the Id to keep each note separate and the name to greet the user.
+* FusionAuth's self-service registration let new users create their own accounts, with no sign-up code in the app.
 
 ## Next Steps
 
