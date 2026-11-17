@@ -1,0 +1,73 @@
+---
+title: Hosted Login Pages
+htmlTitle: Let Users Reset Passwords on the Hosted Login Pages
+description: Learn how to let users reset a forgotten password by email or text message on the FusionAuth hosted login pages.
+tags: account recovery, forgot password, password reset, hosted login pages, email templates, message templates, messengers, sms
+order: 1
+---
+
+The [[hosted login pages]] show a **Forgot your password?** link on the login page. When a user clicks the link, FusionAuth runs the [forgot password workflow](/docs/users/account-recovery) for you. To make the link work, give the [[Tenant]] a forgot password template for each way your users log in.
+
+## Prerequisites
+
+* For recovery by email, configure an email server on the Tenant. See [Configure Email](/docs/email/configure-email).
+* For recovery by text message, create an SMS [messenger](/docs/messengers). Recovery by text message requires FusionAuth `1.59.0` or later.
+* An [[Application]] that logs users in through the hosted login pages.
+
+## Choose the Forgot Password Templates
+
+FusionAuth ships with a `[FusionAuth Default] Forgot Password` email template. The setup wizard assigns that template to the default Tenant. FusionAuth doesn't ship a forgot password message template, so create one for recovery by text message. See [Message Templates](/docs/messengers/message-templates).
+
+To assign the templates:
+
+1. Navigate to <Breadcrumb>Tenants</Breadcrumb> and click <IconButton icon="edit" /> next to your Tenant.
+1. Select the <Breadcrumb>Identities</Breadcrumb> tab.
+1. For recovery by text message, set **Messenger** in the **Messaging settings** section to your SMS messenger.
+1. In the **Template settings** section, set **Forgot password** in the email column to your email template.
+1. For recovery by text message, set **Forgot password** in the phone column to your message template.
+1. Click <IconButton icon="save" />.
+
+<Screenshot id="account-recovery-tenant-templates" url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#identities" showHash height={700} alt="The Template settings section of the Tenant Identities tab, with the email and phone Forgot password templates highlighted.">
+  <Highlight selector="#tenant_emailConfiguration_forgotPasswordEmailTemplateId" />
+  <Highlight selector="#tenant_phoneConfiguration_forgotPasswordTemplateId" />
+</Screenshot>
+
+Set a template for every identity type your users log in with. If a user enters a phone number and the Tenant has no forgot password message template, FusionAuth shows an error instead of the confirmation page. That error also tells the visitor that an account with the phone number exists.
+
+To brand the message for one Application, set the Application's own **Forgot password** templates on the Application's <Breadcrumb>Identities</Breadcrumb> tab. An Application template replaces the Tenant template for users who start the workflow from that Application. The Tenant template must still be set. See [Application-Specific Email Templates](/docs/email/configuring-application-specific-email-templates).
+
+## Test the Workflow
+
+To confirm that the workflow works:
+
+1. Open the login page for your Application in a private browser window.
+1. Click **Forgot your password?**.
+1. Enter the email address, phone number, or username of a test user, and submit the form.
+1. Open the email or text message, then open the link in the message.
+1. Enter a new password and submit the form.
+
+<Screenshot id="account-recovery-forgot-password-page" url="/password/forgot?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e" alt="The hosted Forgot password page, with a field for the user's login Id." />
+
+When you start from the login page, FusionAuth logs the test user in after the change and redirects the user to your Application. If the test user has MFA enabled, FusionAuth asks for the second factor before the new password form.
+
+To confirm the change, log out and log in with the new password.
+
+## Customize the Pages
+
+To change the text or layout of the forgot password pages, edit the `passwordForgot`, `passwordSent`, `passwordChange`, and `passwordComplete` templates in your [theme](/docs/theme/advanced-themes#templates). To change the messages, edit the email or message template. For the variables each template can use, see the [email template reference](/docs/email/template-reference#forgot-password) and the [message template reference](/docs/messengers/template-reference#forgot-password).
+
+To link to the forgot password page from your own application, use `/password/forgot?client_id={yourClientId}`. Without the client Id, FusionAuth uses the Tenant theme and doesn't log the user in after the change.
+
+## Troubleshooting
+
+### The Page Says Forgot Password Handling Is Not Enabled
+
+The Tenant has no forgot password template for the identity the user entered. Assign the template as shown in [Choose the Forgot Password Templates](#choose-the-forgot-password-templates).
+
+### The User Never Receives the Message
+
+The confirmation page appears even when FusionAuth finds no matching user, so check the login Id first. Then check the email server or the messenger. See [Troubleshooting Email](/docs/deploy/troubleshoot/troubleshooting#troubleshooting-email), or turn on debugging for the [messenger](/docs/messengers).
+
+### The Link Returns the User to the Forgot Password Page
+
+The change password Id expired, or a newer request replaced the Id. Start the workflow again. To give users more time, raise **Change password** in the Tenant's [external identifier durations](/docs/concepts/types/tenants#external-identifier-durations-form-fields).

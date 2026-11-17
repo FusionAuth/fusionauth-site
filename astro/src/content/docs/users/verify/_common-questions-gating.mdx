@@ -1,21 +1,35 @@
 ---
 ---
 
-**Question**: Will all my existing users retroactively get emails or SMS messages for either gate once enabled?
+### Do Existing Users Get Messages When I Enable a Gate?
 
-**Answer**:  No. However, if existing users have unverified identities (meaing `verified: false` with `verifiedReason: "Pending"`), and gating is enabled, then those users will be required to verify those identities at their next login.
+No. Enabling a gate sends no messages. Instead, an existing user with an unverified identity must verify the identity at their next login. An identity is unverified when the identity has `verified: false` and `verifiedReason: "Pending"`. During login, the user clicks a link, and FusionAuth then sends the verification message.
 
-To double-check your users' email verification status, click on <Breadcrumb>Users -> Search Bar</Breadcrumb> and use this Elasticsearch query string: `verified: false`. Note, this will return if either `user` or `user.registrations[x]` is unverified. Users found by this query will be required to verify either their email or application registration once the gate is enabled. However, **they will not be emailed until they log in**. During the login process, they will be required to click on a link to have a verification email sent to them.
+When you use Elasticsearch for search, you can find the users that a gate will affect. Navigate to <Breadcrumb>Users</Breadcrumb> and search for `verified: false`. The search matches users with an unverified email address and users with an unverified registration.
 
-<Aside>
-  As of version 1.59.0, it's not yet possible to search for unverified phone number identities.
+<Aside type="note">
+User search doesn't index the verification status of phone numbers. You can't search for users with an unverified phone number.
 </Aside>
 
-**Question**: What if I have accidentally/inadvertently imported users with a `verified: false` value (either on the user or application registration)?  In other words, can I do this manually.
+### How Do I Mark an Imported User as Verified?
 
-**Answer**: Currently, there is no way to change this. However, there is an [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/2897) adding this functionality. Please upvote if you believe this is needed.
+To verify the email address or phone number of one user in the Admin UI:
 
-**Question**: What does it mean to enable both registration and email gates and verification paths?
+1. Navigate to <Breadcrumb>Users</Breadcrumb> and open the details page of the user.
+1. Click the down arrow next to <Breadcrumb>Edit user</Breadcrumb>, then select <Breadcrumb>Verify identity</Breadcrumb>.
+1. Select the identity and click <Breadcrumb>Confirm</Breadcrumb>.
 
-**Answer**: If you enable both registration verification and email verification, there will be a bit of redundancy (this is fine and expected). Consider the use case of ten applications and one common tenant. Maybe nine of those applications require only email verification, but the tenth application requires an application gate to force user opt-in behaviors.  Specifically, the user on the tenth application will get two emails to verify both their registration and their email.
+The Admin UI can't mark a registration as verified. To verify a registration, or to verify many users at once, use the API:
 
+1. Get a verification Id from the [Resend Verification API](/docs/apis/users/resend-verification) for an email address, or from the [Resend Registration Verification API](/docs/apis/registrations/resend-a-user-registration-verification-email) for a registration. Set **`sendVerifyEmail`** or **`sendVerifyRegistrationEmail`** to `false`, so FusionAuth returns the Id without sending an email.
+1. Send the verification Id to the [Verify Email API](/docs/apis/users/verify-email) or the [Verify Registration API](/docs/apis/registrations/verify-a-user-registration).
+
+To skip this step in future imports, set **`users[x].verified`** and **`users[x].registrations[x].verified`** in the [Import Users API](/docs/apis/users/import).
+
+### What Happens When I Enable Both Email and Registration Verification?
+
+Email verification confirms that the user owns an email address, once per Tenant. Registration verification confirms that the user opted in to one Application. For example, nine Applications in a Tenant might require only email verification, while a tenth Application also requires registration verification.
+
+When a new user signs up for the tenth Application, FusionAuth sends one email: the registration verification email. Completing registration verification also verifies the email address. When an existing user registers for the tenth Application, FusionAuth sends a registration verification email, even if the user already verified their email address.
+
+When you turn off **Allow implicit verification** in the Tenant, registration verification doesn't verify the email address. Users then verify the registration and the email address separately. The setting is on the <Breadcrumb>Identities</Breadcrumb> tab of the Tenant. See [Identity Verification Settings](/docs/concepts/types/tenants#identity-verification-settings).
