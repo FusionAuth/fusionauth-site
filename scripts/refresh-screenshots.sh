@@ -19,7 +19,7 @@
 #
 # Exit codes:
 #   0  no meaningful change; the working tree is left clean
-#   1  something failed
+#   1  something failed; when single screenshots fail, the ones that changed stay in the tree
 #   2  at least one screenshot changed beyond the tolerance; review and commit
 
 set -uo pipefail
@@ -94,7 +94,7 @@ compare() {
 }
 
 if [ "${capture_status:-0}" -ne 0 ]; then
-	echo "ERROR: capture failed; restoring the committed screenshots" >&2
+	echo "ERROR: capture failed" >&2
 	# the CLI ends with "  - <name>: <error>" for each screenshot it couldn't take, after a "[shard i/n] " prefix when sharded
 	failed=$(sed -n '/screenshot(s) failed:/,$s/^\(\[shard [0-9]*\/[0-9]*\] \)\{0,1\}  - \([^:]*\): \(.*\)$/\2\t\3/p' "$BASELINE/capture.log")
 	if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
@@ -113,9 +113,19 @@ if [ "${capture_status:-0}" -ne 0 ]; then
 	while IFS=$'\t' read -r name _; do
 		[ -z "$name" ] || cp "$BASELINE/$name.png" "$SHOTS_DIR/" 2>/dev/null
 	done <<< "$failed"
-	[ -z "$failed" ] || compare
-	rm -f "$SHOTS_DIR"/*.png
-	cp "$BASELINE"/*.png "$SHOTS_DIR"/ 2>/dev/null
+	if [ -z "$failed" ]; then
+		echo "Restoring the committed screenshots." >&2
+		rm -f "$SHOTS_DIR"/*.png
+		cp "$BASELINE"/*.png "$SHOTS_DIR"/ 2>/dev/null
+		exit 1
+	fi
+	compare
+	# keep the changed captures, and restore any image a stopped shard never took
+	for f in "$BASELINE"/*.png; do
+		[ -e "$SHOTS_DIR/$(basename "$f")" ] || cp "$f" "$SHOTS_DIR/"
+	done
+	echo "" >&2
+	echo "Kept the screenshots that changed. Retake the failed ones with --filter, then review $DIFF_DIR." >&2
 	exit 1
 fi
 
