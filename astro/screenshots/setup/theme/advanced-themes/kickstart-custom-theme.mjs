@@ -1,4 +1,37 @@
-import { preparation } from '../../kit.mjs';
+import { preparation, apiRequest, baseUrl, darkThemeId } from '../../kit.mjs';
+
+// the app from the guide's Kickstart, with the dark theme applied; example.com since an SSO login redirects before sign out
+const kickstartAppId = '404e516b-06b8-49da-9c68-c1cd1928c81d';
+const kickstartApp = {
+  order: 43,
+  paths: [`/api/application/${kickstartAppId}`],
+  create: async api => {
+    await api(`/api/application/${kickstartAppId}`, 'POST', { application: {
+      name: 'Kickstart App',
+      themeId: darkThemeId,
+      oauthConfiguration: { authorizedRedirectURLs: ['http://localhost:3000/oauth-redirect', 'https://example.com'], enabledGrants: ['authorization_code', 'refresh_token'] },
+    } });
+    // a new app renders the tenant theme for a few seconds
+    for (let i = 0; !(await (await fetch(`${baseUrl}/oauth2/authorize?client_id=${kickstartAppId}&redirect_uri=https%3A%2F%2Fexample.com&response_type=code`)).text()).includes('background-color: black'); i++) {
+      if (i >= 60) throw new Error('dark theme never applied to the Kickstart App');
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  },
+};
+
+// the guide's message change, undone after the shot
+const clickHereState = {
+  order: 93,
+  apply: async () => {
+    const { theme } = await apiRequest(`/api/theme/${darkThemeId}`);
+    const defaultMessages = theme.defaultMessages.replace(/^forgot-your-password=.*$/m, 'forgot-your-password=Forgot your password? Click here.');
+    await apiRequest(`/api/theme/${darkThemeId}`, 'PATCH', { theme: { defaultMessages } });
+    return () => apiRequest(`/api/theme/${darkThemeId}`, 'PATCH', { theme: { defaultMessages: theme.defaultMessages } });
+  },
+};
+
+const darkLogin = extra => ({ temporaryResources: [kickstartApp], signedOut: true, ...extra });
+const tagForgot = (page, ctx, { tag }) => tag('forgot-password', () => document.querySelector('a[href*="/password/forgot"]'));
 
 async function showForgotPasswordMessage(page) {
   await page.locator('main [role=tab]', { hasText: 'Messages' }).first().click();
@@ -21,10 +54,22 @@ async function showForgotPasswordMessage(page) {
   if (!tagged) throw new Error('forgot-your-password message line not found');
 }
 
+// a loading preview can scroll its panel into view at any point, so wait for it and scroll back
+async function settlePreview(page) {
+  const frame = await (await page.locator('el-tab-panels iframe:visible').elementHandle()).contentFrame();
+  await frame.waitForLoadState('load');
+  await frame.evaluate(() => document.fonts.ready);
+  await page.locator('el-tab-panels').evaluate(el => { el.scrollTop = 0; });
+}
+const preview = { fixedHeight: null, legacyVersion: true, prepare: preparation({ finish: settlePreview }) };
+
 export const shots = {
-  'theme-kickstart-app-oauth': { switch: ['application_oauthConfiguration_requireRegistration'], legacyVersion: true },
-  'theme-kickstart-manage-user': { legacyVersion: true },
-  'theme-preview-oauth-authorize': { fixedHeight: null, legacyVersion: true },
-  'theme-preview-oauth-logout': { fixedHeight: null, legacyVersion: true },
+  'theme-preview-oauth-authorize': preview,
+  'theme-preview-oauth-logout': preview,
+  'theme-preview-dark-authorize': preview,
+  'theme-preview-dark-logout': preview,
+  'theme-dark-login': darkLogin(),
+  'theme-dark-forgot-password': darkLogin({ prepare: preparation({ afterSignOut: tagForgot }) }),
+  'theme-dark-updated-message': darkLogin({ temporaryState: [clickHereState], prepare: preparation({ afterSignOut: tagForgot }) }),
   'theme-dark-messages': { fixedHeight: null, prepare: preparation({ afterThemeTab: showForgotPasswordMessage }) },
 };

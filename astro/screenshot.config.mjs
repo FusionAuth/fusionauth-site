@@ -1,6 +1,6 @@
-import { piedPiperAppId, defaultTenantId, projectRoot, baseUrl, freshUrl, apiKey, runtime, makeTag, highlightHelpers, runTemporaryState, selectTab, tabsReady } from './screenshots/setup/kit.mjs';
+import { piedPiperAppId, defaultTenantId, projectRoot, baseUrl, freshUrl, appPort, freshPort, apiKey, runtime, makeTag, highlightHelpers, runTemporaryState, selectTab, tabsReady } from './screenshots/setup/kit.mjs';
 import { join } from 'path';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { modules, resources } from './screenshots/setup/index.mjs';
 
 // load .env from this directory for local development (no-op if file absent)
@@ -24,22 +24,28 @@ for (const module of modules) {
 const temporaryResources = [...new Set(Object.values(shots).flatMap(shot => shot.temporaryResources ?? []))].sort((a, b) => a.order - b.order);
 const temporaryState = [...new Set(Object.values(shots).flatMap(shot => shot.temporaryState ?? []))].sort((a, b) => a.order - b.order);
 
-export default {
+const config = {
   baseUrl,
   outputDir: 'public/img/docs/screenshots',
   window: { width: 1100, height: 800 },
+  // the setup hooks grow windows to 2500, and some shots ask for more than the 1600 default
+  maxWindow: { width: 2560, height: 2500 },
   browser: 'webkit',
   browserContainer: true,
   chrome: {
-    style: 'golden-gate',
+    style: 'macos',
     renderIn: 'css',
     showUrl: true,
-    url: 'local.fusionauth.io',
+    showHost: false,
+    showQuery: false,
+    showHash: false,
+    shortenIds: true,
     theme: 'light',
   },
   docker: {
     compose: 'screenshots/docker-compose.yml',
     service: 'fusionauth fusionauth-fresh',
+    env: { FUSIONAUTH_PORT: String(appPort), FUSIONAUTH_FRESH_PORT: String(freshPort) },
     healthcheck: {
       url: `${baseUrl}/api/health`,
       timeout: 300000,
@@ -51,6 +57,11 @@ export default {
     // 1.70 scrolls smoothly, so the capture's scroll to the crop area hasn't moved yet when it shoots
     await context.addInitScript(() => document.addEventListener('DOMContentLoaded', () => document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important')));
     runtime.leftoversContext = context;
+    // kickstart user pictures and theme fields point here; served from disk so parallel shards need no shared port
+    await context.route('http://localhost:8080/**', route => {
+      const file = join(projectRoot, 'screenshots/images', new URL(route.request().url()).pathname);
+      return existsSync(file) ? route.fulfill({ path: file }) : route.fulfill({ status: 404 });
+    });
     const seed = JSON.parse(readFileSync(join(projectRoot, 'screenshots/kickstart/kickstart.json'), 'utf-8'));
     const seedHeaders = { Authorization: seed.variables.apiKey, 'Content-Type': 'application/json' };
     const seedDeadline = Date.now() + 300_000;
@@ -98,7 +109,13 @@ export default {
   beforeScreenshot: async (page, ctx) => {
     const shot = shots[ctx?.name] ?? {};
     // fresh-instance shots skip the kickstarted instance's setup
-    if (shot.fresh) return shot.prepare?.(page, ctx, { url: ctx?.url ?? page.url(), shot }, 'prepare');
+    if (shot.fresh) {
+      // the Screenshot url is a path, because the fresh instance's port differs per shard
+      const { pathname, search } = new URL(ctx?.url ?? page.url());
+      const freshTarget = `${freshUrl}${pathname}${search}`;
+      await page.goto(freshTarget, { waitUntil: 'networkidle' });
+      return shot.prepare?.(page, ctx, { url: freshTarget, shot }, 'prepare');
+    }
     const url = ctx?.url ?? page.url();
 
     const { pathname, hash } = new URL(url);
@@ -118,14 +135,23 @@ export default {
       await page.goto(url, { waitUntil: 'networkidle' });
     }
 
+    // list searches persist in a cookie per list, so one shot's search would filter the list in later shots
+    if ((await page.context().cookies(baseUrl)).some(c => c.name.endsWith('IndexAction$s'))) {
+      await page.context().clearCookies({ name: /IndexAction\$s$/ });
+      await page.goto(url, { waitUntil: 'networkidle' });
+    }
+
     if (runtime.operateMetricsKeyExists && !shot.keepMetricsKey) {
+      // cleared first so a failed delete fails this shot only, not every later one
+      runtime.operateMetricsKeyExists = false;
       await page.goto(`${baseUrl}/admin/api-key/`, { waitUntil: 'networkidle' });
-      await page.evaluate(() => {
+      const opened = await page.evaluate(() => {
         const a = document.querySelector('a[href*="/ajax/api-key/delete/00000000-0000-0000-0000-f60000000002"]');
-        if (!a) throw new Error('Operate metrics key delete link not found');
-        a.closest('[popover]')?.showPopover();
-        a.click();
+        a?.closest('[popover]')?.showPopover();
+        a?.click();
+        return !!a;
       });
+      if (!opened) throw new Error('could not delete the Prometheus metrics API key that operate-datadog-fusionauth-apikey created, because /admin/api-key/ has no delete link for the key; later API key screenshots will show the extra key');
       await page.locator('.prime-dialog.open').waitFor();
       await page.locator('.prime-dialog.open #apiKeyId').evaluate(el => {
         el.value = '00000000-0000-0000-0000-f60000000002';
@@ -133,7 +159,6 @@ export default {
       await page.locator('.prime-dialog.open button[type=submit]').click({ timeout: 10000 });
       await page.locator('.prime-dialog.open').waitFor({ state: 'hidden', timeout: 10000 });
       await page.waitForLoadState('networkidle');
-      runtime.operateMetricsKeyExists = false;
       await page.goto(url, { waitUntil: 'networkidle' });
     }
 
@@ -539,4 +564,11 @@ export default {
   },
 };
 
+// drop playwright's "page.evaluate: Error:" prefix and say which page the setup was on
+const prepareShot = config.beforeScreenshot;
+config.beforeScreenshot = (page, ctx) => prepareShot(page, ctx).catch(e => {
+  throw new Error(`${e.message.replace(/^\w+\.evaluate: Error: /, '')} (on ${page.url()})`, { cause: e });
+});
+
+export default config;
 export { temporaryResources, temporaryState };

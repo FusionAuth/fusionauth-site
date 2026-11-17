@@ -79,7 +79,15 @@ An in-place rolling update of a three-node cluster looks like this:
 
 Until every node runs the new version, the older nodes serve requests against the migrated schema and may produce errors. See [Downtime and Locking](/docs/update/database-migrations#downtime-and-locking).
 
-![Diagram of a rolling update showing a load balancer between users and FusionAuth nodes moving traffic to each node when ready.](/img/docs/operate/deploy/upgrade-fusionauth-rolling-upgrade-nodes.png)
+```mermaid title="A rolling update sends traffic from the load balancer to each node as the node finishes updating."
+flowchart TD
+    Users --> LB[Load Balancer]
+    LB -->|Update one node at a time| N1[Node 1]
+    LB -->|Switch traffic when ready| N2[Node 2]
+    LB --> N3[Node 3]
+    classDef focus stroke:#ff9800,stroke-width:3px;
+    class N1 focus
+```
 
 ### Blue-Green Deployment
 
@@ -96,7 +104,24 @@ A blue-green update of a three-node cluster looks like this:
 
 The old nodes keep serving requests against the migrated schema until you remove them from the load balancer, so they may produce errors. See [Downtime and Locking](/docs/update/database-migrations#downtime-and-locking).
 
-![Diagram of a Blue-Green Deployment with a load balancer between two deployment versions.](/img/docs/operate/deploy/upgrade-fusionauth-blue-green-deployment-nodes.png)
+```mermaid title="A blue-green deployment puts a load balancer in front of an old set of nodes and a new set of nodes."
+flowchart TD
+    Users --> LB[Load Balancer]
+    LB -->|Switch traffic when ready| Green
+    LB --> Blue
+    subgraph Green[Green deployment, new version]
+        G1[Node 1]
+        G2[Node 2]
+        G3[Node 3]
+    end
+    subgraph Blue[Blue deployment, old version]
+        B1[Node 1]
+        B2[Node 2]
+        B3[Node 3]
+    end
+    style Green stroke:#2e9e6b,stroke-width:2px
+    style Blue stroke:#1e88e5,stroke-width:2px
+```
 
 ## Apply Database Migrations
 

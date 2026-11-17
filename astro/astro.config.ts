@@ -17,6 +17,7 @@ import { openapiSummary } from './src/plugins/openapi-summary.js';
 import { cssPreload } from './src/plugins/css-preload.mjs';
 import { headingLinks } from './src/plugins/satteri-heading-links.mjs';
 import { glossaryTerms } from './src/plugins/satteri-glossary-terms.mjs';
+import { lazyConditionals, requiredProps } from './src/plugins/satteri-required-props.mjs';
 
 function buildSitemap() {
   let siteUrl: string;
@@ -181,6 +182,7 @@ const config = defineConfig({
       tailwindcss(),
       mdxComponentImporter(),
       lightboxProvider(),
+      lazyConditionals(),
       cssPreload(),
     ],
     build: {
@@ -225,6 +227,7 @@ const config = defineConfig({
           mermaidSSR(),         // replaces mermaid blocks with pre-rendered SVGs
           shellSession(),
           glossaryTerms(),
+          requiredProps(),
         ],
         hastPlugins: [
           codeBlocks({ excludeLangs: ['mermaid'] }),

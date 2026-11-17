@@ -11,6 +11,8 @@
 #   scripts/refresh-screenshots.sh                      # regenerate and compare
 #   scripts/refresh-screenshots.sh --threshold 0.005    # looser tolerance
 #   scripts/refresh-screenshots.sh --compare-only       # skip capture, compare what is there
+#   scripts/refresh-screenshots.sh --filter api-key     # regenerate only matching screenshots
+#   scripts/refresh-screenshots.sh --shards 4           # capture in 4 parallel shards
 #
 # Requires Docker and the screenshot CLI (npm ci in astro/screenshots). The browser runs in a
 # pinned container (browserContainer in screenshot.config.mjs), so no local browser install is needed.
@@ -29,11 +31,15 @@ DIFF_DIR="$REPO_ROOT/astro/.screenshot-diffs"
 
 THRESHOLD=0.002
 COMPARE_ONLY=0
+FILTER=""
+SHARDS=1
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--threshold) THRESHOLD="$2"; shift 2 ;;
 		--compare-only) COMPARE_ONLY=1; shift ;;
-		-h|--help) sed -n '3,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+		--filter) FILTER="$2"; shift 2 ;;
+		--shards) SHARDS="$2"; shift 2 ;;
+		-h|--help) sed -n '3,24p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
 		*) echo "Unknown argument: $1" >&2; exit 1 ;;
 	esac
 done
@@ -41,6 +47,8 @@ done
 source "$SCRIPT_DIR/lib/run-locally.sh"
 REPRODUCE="scripts/refresh-screenshots.sh --threshold $THRESHOLD"
 [ "$COMPARE_ONLY" -eq 0 ] || REPRODUCE+=" --compare-only"
+[ -z "$FILTER" ] || REPRODUCE+=" --filter $(printf '%q' "$FILTER")"
+[ "$SHARDS" -eq 1 ] || REPRODUCE+=" --shards $SHARDS"
 # licensed-feature screenshots read the key from the environment, so it never goes in the printed command
 report() {
 	run_locally "$REPRODUCE"
@@ -66,9 +74,11 @@ echo "Baseline: $(ls -1 "$BASELINE" | wc -l | tr -d ' ') committed screenshot(s)
 if [ "$COMPARE_ONLY" -eq 0 ]; then
 	echo "Regenerating (this starts Docker and drives a browser, so it takes a while)"
 	# Removing first means a screenshot whose declaration is gone does not linger,
-	# and the comparison reports it as removed.
-	rm -f "$SHOTS_DIR"/*.png
-	( cd "$REPO_ROOT/astro" && npm run screenshots -- --strict ) 2>&1 | tee "$BASELINE/capture.log"
+	# and the comparison reports it as removed. A filtered run keeps the rest, which compare as unchanged.
+	[ -n "$FILTER" ] || rm -f "$SHOTS_DIR"/*.png
+	capture_args=(--strict --shards "$SHARDS")
+	[ -z "$FILTER" ] || capture_args+=(--filter "$FILTER")
+	( cd "$REPO_ROOT/astro" && npm run screenshots -- "${capture_args[@]}" ) 2>&1 | tee "$BASELINE/capture.log"
 	capture_status=${PIPESTATUS[0]}
 fi
 
@@ -85,8 +95,8 @@ compare() {
 
 if [ "${capture_status:-0}" -ne 0 ]; then
 	echo "ERROR: capture failed; restoring the committed screenshots" >&2
-	# the CLI ends with "  - <name>: <error>" for each screenshot it couldn't take
-	failed=$(sed -n '/screenshot(s) failed:/,$s/^  - \([^:]*\): \(.*\)$/\1\t\2/p' "$BASELINE/capture.log")
+	# the CLI ends with "  - <name>: <error>" for each screenshot it couldn't take, after a "[shard i/n] " prefix when sharded
+	failed=$(sed -n '/screenshot(s) failed:/,$s/^\(\[shard [0-9]*\/[0-9]*\] \)\{0,1\}  - \([^:]*\): \(.*\)$/\2\t\3/p' "$BASELINE/capture.log")
 	if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
 		{
 			printf '## Screenshot capture failed\n\n'

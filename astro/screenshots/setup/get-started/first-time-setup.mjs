@@ -92,7 +92,7 @@ async function fillSetupWizard(page) {
   await page.evaluate(() => document.activeElement?.blur());
 }
 
-async function showSetupWizard(page) {
+export async function showSetupWizard(page) {
   if (!new URL(page.url()).pathname.startsWith('/admin/setup-wizard')) {
     throw new Error('the fresh instance is past the Setup Wizard; run `docker compose -f screenshots/docker-compose.yml rm -sf fusionauth-fresh db-fresh` and retry');
   }

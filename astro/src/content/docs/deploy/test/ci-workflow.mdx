@@ -21,7 +21,18 @@ You will need Docker and Node.js installed to run the example application accomp
 
 FusionAuth provides login functionality for your web application. Users are stored in the FusionAuth database, separate from the database your app uses to keep its data. Assuming you have built a login page that redirects a user to FusionAuth, your system will have the components shown below.
 
-![Diagram showing external websites using FusionAuth.](/img/docs/cloud/github_actions/get-started-run-in-the-cloud-prerequisites.png)
+```mermaid title="Your app website and FusionAuth each have their own database and communicate with each other."
+flowchart LR
+    subgraph AppSide[ ]
+        direction LR
+        App[App website] --> AppDB[(Database)]
+    end
+    subgraph FASide[ ]
+        direction LR
+        FA[FusionAuth website] --> FADB[(Database)]
+    end
+    AppSide <--> FASide
+```
 
 You might have the following questions:
 - How do I deploy these components to production?
@@ -38,13 +49,38 @@ GitHub provides a tool for automating workflows called GitHub Actions. It provid
 
 The flow looks like the diagram below.
 
-![Diagram showing how GitHub Actions are created, triggered, and run inside GitHub.](/img/docs/cloud/github_actions/get-started-run-in-the-cloud-some-definitions-and-goals.png)
+```mermaid title="A push to GitHub triggers a GitHub Action that compiles, tests, and deploys your app."
+flowchart TD
+    Programmer --> Push[Push to branch on GitHub]
+    Push --> Trigger[GitHub Action triggers]
+    Trigger --> Compile
+    subgraph Action[Inside the GitHub Action]
+        Compile[Compile app in a virtual machine] --> Test[Test that the app can log in with FusionAuth]
+        Test -->|Deploy| AWS
+        Test -->|Deploy| Azure
+        Test -->|Deploy| VS[Virtual server]
+    end
+```
 
 ## Minimal Example Using GitHub Actions
 
 There is a minimal but complete CI/CD example in this [repository](https://github.com/FusionAuth/fusionauth-example-github-actions). An overview of the setup is shown below.
 
-![A CI/CD diagram showing how to use GitHub actions with FusionAuth.](/img/docs/cloud/github_actions/get-started-run-in-the-cloud-github-actions.png)
+```mermaid title="The GitHub Action workflow uses the FusionAuth Action and runs Playwright tests against the app and FusionAuth."
+flowchart LR
+    subgraph App
+        Workflow[GitHub Action workflow] --> Tests[Playwright tests]
+        Tests --> Site[App website]
+    end
+    subgraph FusionAuth
+        Admin[FusionAuth Admin UI] --> DB[(Database)]
+    end
+    subgraph Marketplace[GitHub Action Marketplace]
+        FAAction[FusionAuth Action]
+    end
+    Site --> Admin
+    Workflow --> FAAction
+```
 
 In GitHub, click <Breadcrumb>Fork</Breadcrumb> and add the repository to your GitHub account. Then run `git clone https://github.com/<your_username>/fusionauth-example-github-actions.git` in a terminal to download it. Remember to replace `<your_username>` with your GitHub username.
 

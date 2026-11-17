@@ -1,33 +1,32 @@
+### Choose a Use Case
 
-FusionAuth client libraries are a thin wrapper around the REST API. Client libraries are typically used in two different ways.
+Client libraries wrap the [REST API](/docs/apis). You can use a client library for two tasks.
 
-First, they can be used to access the FusionAuth [APIs](/docs/apis/) in a familiar format, leveraging language features like auto-completion.
-When used for this, they can be helpful to script FusionAuth configuration, automate common tasks, and create copies of existing applications, groups and more.
+The main task is calling the FusionAuth APIs from code. You get auto-completion and typed objects, which helps when you script configuration, automate common tasks, or copy existing Applications and Groups. The API documentation lists the JSON structure of every request and which fields each call requires. When you need the details, read the API documentation and the library source code.
 
-To use the client libraries effectively in this way, it is helpful to review the source code of the client library and the API documentation, which contains the JSON structure.
-The API documentation is very thorough about the JSON objects it expects as part of the payload as well as what parameters are required when.
+The secondary task is exchanging an authorization code for tokens in the Authorization Code grant. For this task, use an OAuth library for your language instead. For a list of libraries, see the [community curated list](https://oauth.net/code/).
 
-Second, client libraries can exchange a token to let a user to log in via the Authorization Code Grant.
-This is a secondary use of these libraries.
-This process is best done by using a language specific OAuth library, which will work with FusionAuth.
-Here is a [community curated list of such libraries](https://oauth.net/code/).
+Client libraries don't provide higher level functionality such as token management. To request that functionality, comment on or upvote the [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/1674).
 
-Client libraries do not currently provide higher level functionality such as token management.
-Here is an [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/1674) detailing some requested higher level functionality.
-Please feel free to file an issue or upvote this one if you desire it.
+When a client library doesn't fit your needs, call the REST API directly.
 
-You can always directly call the REST API if the client library functionality doesn't work for you.
-All the client libraries use the [REST API](/docs/apis/).
+### Requests and Responses
 
-In general, the request object will either be string parameters or a complex object depending on the type of API call being made.
-Any request object will be mapped by the library to a JSON object required by the corresponding API method.
-Examining the API documents for the operations you're trying to call will therefore be useful, especially if you are using language without static typing.
+Each library maps a request object to the JSON that the matching API method requires. Depending on the API call, the request object is a set of string parameters or a complex object. When you use a language without static typing, read the API documentation for the operation to learn the expected fields.
 
-The response object will typically contain:
+Each library returns a response object with these fields:
 
-* a status corresponding to the HTTP status code returned by the API. It may also be -1 if no HTTP request was successfully made
-* a JSON success object if the call succeeded.
-* a JSON error object with an intelligible message if the status code is `4xx` or `5xx`.
-* an exception object if there was no HTTP request sent or there was no reasonable response from the server.
+* A status that matches the HTTP status code from the API. The status is `-1` when no HTTP request succeeded.
+* A JSON success object when the call succeeds.
+* A JSON error object with a message when the status is `4xx` or `5xx`.
+* An exception object when the library sent no request or the server returned no usable response.
 
+### Use Separate Clients for API Key Scopes
 
+When a script calls endpoints with different API key scopes, create one client instance per scope. For example, Entities accept a tenant-scoped API key, but Entity Types and Lambdas require a global API key.
+
+Follow these rules when your library lets you set a Tenant Id on the client instance:
+
+* Set the Tenant Id on the tenant-scoped client only.
+* Don't change the Tenant Id on a shared client between calls.
+* Don't send a tenant header to a global-only endpoint. The endpoint [fails with a `401`](/docs/apis/authentication#global-api-key-authentication).
