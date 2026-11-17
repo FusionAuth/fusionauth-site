@@ -9,7 +9,7 @@ import { RouterLink } from '@angular/router';
       <a class="button" routerLink="/">Logout</a>
     </header>
     <main class="centerContainer">
-      <p>User info will display here</p>
+      <p>Your note will display here</p>
     </main>
   `,
 })

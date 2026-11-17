@@ -35,7 +35,7 @@ To install and run FusionAuth locally:
 
 To run any step of the QuickStart:
 
-1. Navigate into a `frontend_steps` folder, such as `frontend_steps/3_fetch_user_data`.
+1. Navigate into a `frontend_steps` folder, such as `frontend_steps/3_user_notes`.
 1. Run the following command to install dependencies:
    ```shell-session
    npm install

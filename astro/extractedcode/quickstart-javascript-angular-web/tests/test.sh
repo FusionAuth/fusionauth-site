@@ -42,8 +42,8 @@ done'
 echo "FusionAuth is ready."
 
 # But test only the final step, 3.
-echo "Starting Angular app (final step: 3_fetch_user_data)..."
-docker run --network host --name angular-app-test --rm -v "$PROJECT_DIR/frontend_steps/3_fetch_user_data":/app -w /app node:26 sh -c "npm ci && npx @angular/cli@22.2.6 serve --host=0.0.0.0 --port=3000" &
+echo "Starting Angular app (final step: 3_user_notes)..."
+docker run --network host --name angular-app-test --rm -v "$PROJECT_DIR/frontend_steps/3_user_notes":/app -w /app node:26 sh -c "npm ci && npx @angular/cli@22.2.6 serve --host=0.0.0.0 --port=3000" &
 APP_PID=$!
 
 echo "Waiting for Angular app to be ready..."

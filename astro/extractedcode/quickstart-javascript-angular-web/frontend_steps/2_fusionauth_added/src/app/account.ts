@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
         <button class="button" type="button" (click)="logout()">Logout</button>
       </header>
       <main class="centerContainer">
-        <p>User info will display here</p>
+        <p>Your note will display here</p>
       </main>
     }
   `,

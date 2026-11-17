@@ -11,7 +11,7 @@ This QuickStart adds login and a protected page to an Angular web app using a pr
 1. Create a new Angular app.
 1. Customize the app with home and account pages.
 1. Add login to protect the account page.
-1. Add a button to the account page to fetch the user's information.
+1. Give each user their own note on the account page.
 
 ## Prerequisites
 
@@ -20,16 +20,10 @@ This QuickStart requires:
 * [Node.js](https://nodejs.org/en/download) 22.22.3 or later, or 24.15 or later
 * [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later
 
-<Aside type="tip">
 If you use macOS or Windows, you need one of the following container management tools:
   * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
   * [OrbStack](https://docs.orbstack.dev/quick-start) (to use OrbStack for `docker compose` commands after installation, run `docker context use orbstack`)
   * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
-
-Be sure to open your container management tool to configure and install any dependencies needed by that tool, including Rosetta and Developer Tools on macOS.
-
-If you use Windows, replace `/` with `\` in all file paths.
-</Aside>
 
 ## Install and Run FusionAuth
 
@@ -206,39 +200,47 @@ Open `src/app/account.ts` and replace the file contents with the following code 
 
 FusionAuth validates the credentials, then redirects back to the `redirectUri` set in `src/app/app.config.ts`. The home page checks whether the user is logged in. After a successful login, the app navigates to the account page.
 
-Right now, you should see the account page containing the placeholder text `User info will display here`:
+Right now, you should see the account page containing the placeholder text `Your note will display here`:
 
-![The account page, not yet populated with user data.](/img/quickstarts/react/home-sans-data.png)
+![The account page, showing placeholder text.](/img/quickstarts/angular/account-placeholder.png)
 
-Let's use the FusionAuth `/app/me` endpoint to fetch and display that user data instead of placeholder text.
+Next, you'll replace the placeholder with a note for each user.
 
-## Fetch User Data
+## Add a Note for Each User
 
-In this section, you'll use the [FusionAuth API](/docs/apis/hosted-backend#me) to retrieve and display user data.
+FusionAuth gives every user a unique Id. In this section, you use that Id to keep a separate note for each user.
 
-### Call the FusionAuth API
+### Update the Account Page
 
-1. Open `src/app/account.ts` and update the `Account` component to:
+Open `src/app/account.ts` and replace the file contents with the following code to:
 
-   * add a signal for the user's name and birthdate
-   * fetch the user's profile from `/app/me` when the button is clicked
-   * display the fetched name and birthdate
+* read the user's Id from the `sub` field of the user info the SDK fetches from FusionAuth
+* load the user's saved note, or start a new note with a greeting
+* save the note under a key that contains the user's Id
 
-   <ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/3_fetch_user_data/src/app/account.ts" lang="ts"/>
+<ExtractedCode src="quickstart-javascript-angular-web/frontend_steps/3_user_notes/src/app/account.ts" lang="ts"/>
 
-<Aside type="note">
-`showUserInfo()` fetches the [`/app/me` endpoint](/docs/apis/hosted-backend#me) and stores the returned name and birthdate in an Angular signal. The request uses `credentials: 'include'` to send the cookie set by FusionAuth during login.
-</Aside>
+The app saves notes in the browser's `localStorage`, so they stay in this browser only. A production app would save them in a database, using the same user Id to look them up.
 
-### Test User Data Functionality
+### Test the Notes
 
-1. Browse to the account page at [http://localhost:3000/account](http://localhost:3000/account).
+1. Browse to the account page at [http://localhost:3000/account](http://localhost:3000/account). The note starts with a greeting that uses your first name.
 
-   ![The account page, ready to show user data.](/img/quickstarts/react/home-with-data-not-shown.png)
+   ![The account page, showing Richard's note.](/img/quickstarts/angular/account-note.png)
 
-1. Click the <Breadcrumb>Show your info</Breadcrumb> button to fetch and display the latest user data.
+1. Edit the note, click <Breadcrumb>Save note</Breadcrumb>, and reload the page. Your note is still there.
 
-   ![The account page, displaying user data.](/img/quickstarts/react/home-with-data-shown.png)
+1. Click <Breadcrumb>Logout</Breadcrumb>, then <Breadcrumb>Login</Breadcrumb>. On the FusionAuth login page, click <Breadcrumb>Create an account</Breadcrumb> and register a second user with any email address and password.
+
+1. The second user gets a new note, without Richard's text. The registration form doesn't ask for a name, so the greeting uses the email address instead. Log out and log in as `richard@example.com` again to see Richard's note.
+
+## Summary
+
+In this QuickStart, FusionAuth handled login for your Angular app:
+
+* The Angular SDK sent users to the FusionAuth login page and brought them back to the app after login, so the app never saw their passwords.
+* The account page used the SDK to send logged-out users back to the homepage.
+* After login, the account page used the SDK to fetch the user's details from FusionAuth, including the unique user Id that keeps each note separate.
 
 ## Next Steps
 

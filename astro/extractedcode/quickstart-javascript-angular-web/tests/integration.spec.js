@@ -95,12 +95,17 @@ test('redirects logged-in users from / to /account', async ({ page }) => {
   }
 });
 
-test('fetches user info from the account page', async ({ page }) => {
+test('saves a personal note on the account page', async ({ page }) => {
   const dumpDiagnostics = trackPageDiagnostics(page);
   try {
     await loginAsRichard(page);
-    await page.getByRole('button', { name: 'Show your info' }).click();
-    await expect(page.getByText('Richard Hendricks')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Your note' })).toBeVisible();
+    await expect(page.locator('textarea')).toHaveValue('Hello Richard! This note is yours alone.');
+    await page.locator('textarea').fill('Pied Piper ideas');
+    await page.getByRole('button', { name: 'Save note' }).click();
+    await expect(page.getByText('Saved')).toBeVisible();
+    await page.reload();
+    await expect(page.locator('textarea')).toHaveValue('Pied Piper ideas');
   } catch (error) {
     await dumpDiagnostics();
     throw error;
