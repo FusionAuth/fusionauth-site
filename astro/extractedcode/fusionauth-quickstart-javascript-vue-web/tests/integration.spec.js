@@ -45,7 +45,7 @@ test('FusionAuth admin login', async ({ page }) => {
   }
 });
 
-test('Vue app login, fetch user info, and logout via FusionAuth', async ({ page }) => {
+test('Vue app login, save a note, and logout via FusionAuth', async ({ page }) => {
   const dumpDiagnostics = trackPageDiagnostics(page);
 
   try {
@@ -62,11 +62,13 @@ test('Vue app login, fetch user info, and logout via FusionAuth', async ({ page 
     await page.waitForURL(/localhost:3000\/account/, { timeout: 15000 });
     await expect(page.getByText('richard@example.com')).toBeVisible();
 
-    // fetch and display user data from the /me endpoint. Assert on the text
-    // itself rather than sleeping for a fixed interval, so the wait is as long
-    // as the request actually takes and no longer.
-    await page.getByRole('button', { name: 'Show your info' }).click();
-    await expect(page.getByText('Richard Hendricks')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Your note' })).toBeVisible();
+    await expect(page.locator('textarea')).toHaveValue('Hello Richard! This note is yours alone.');
+    await page.locator('textarea').fill('Pied Piper ideas');
+    await page.getByRole('button', { name: 'Save note' }).click();
+    await expect(page.getByText('Saved')).toBeVisible();
+    await page.reload();
+    await expect(page.locator('textarea')).toHaveValue('Pied Piper ideas');
 
     await page.getByRole('button', { name: 'Logout' }).click();
     await page.waitForURL('http://localhost:3000/', { timeout: 15000 });

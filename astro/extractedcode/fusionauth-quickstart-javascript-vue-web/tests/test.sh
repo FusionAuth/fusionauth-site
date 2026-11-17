@@ -40,8 +40,8 @@ timeout 480 bash -c 'until curl -sfL http://localhost:9011/admin/ 2>/dev/null | 
 done'
 echo "FusionAuth is ready."
 
-echo "Starting Vue app (final step: 3-fetch-user-data)..."
-docker run --network host --name vue-app-test --rm -v "$PROJECT_DIR/vue-frontend-steps/3-fetch-user-data":/app -w /app node:26 sh -c "npm install && npx vite --port 3000" &
+echo "Starting Vue app (final step: 3-user-notes)..."
+docker run --network host --name vue-app-test --rm -v "$PROJECT_DIR/vue-frontend-steps/3-user-notes":/app -w /app node:26 sh -c "npm install && npx vite --port 3000" &
 VUE_PID=$!
 
 echo "Waiting for Vue app to be ready..."

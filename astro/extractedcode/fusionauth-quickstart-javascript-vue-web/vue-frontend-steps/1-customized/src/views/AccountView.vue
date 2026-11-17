@@ -10,7 +10,7 @@ const router = useRouter()
       <button class="button" @click="router.push('/')">Logout</button>
     </div>
     <div class="centerContainer">
-      <p>User info will display here</p>
+      <p>Your note will display here</p>
     </div>
   </div>
 </template>

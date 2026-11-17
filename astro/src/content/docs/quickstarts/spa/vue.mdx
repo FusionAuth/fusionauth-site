@@ -12,7 +12,7 @@ This QuickStart adds login and a protected page to a Vue.js web app using a prec
 1. Create a new Vue app.
 1. Customize the app with home and account pages.
 1. Add login to protect the account page.
-1. Add a button to the account page to fetch the user's information.
+1. Give each user their own note on the account page.
 
 ## Prerequisites
 
@@ -20,12 +20,11 @@ This QuickStart requires:
 
 * [Node.js](https://nodejs.org/en/download) 22.22.2 or later, or 24.15 or later
 * [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later
-* On macOS and Windows, one of the following container management tools:
-  * [Docker desktop](https://www.docker.com/products/docker-desktop/)
-  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use Orbstack for `docker compose` commands after install, run `docker context use orbstack`)
-  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
 
-Be sure to open your container management tool to configure and install any dependencies needed by that tool, including Rosetta and Developer Tools on macOS.
+If you use macOS or Windows, you need one of the following container management tools:
+  * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use OrbStack for `docker compose` commands after installation, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
 
 ## Install and Run FusionAuth
 
@@ -266,40 +265,47 @@ Open `src/views/AccountView.vue` and replace the file contents with the followin
 
 FusionAuth validates the credentials, then redirects back to the `redirectUri` set in `src/main.ts`. The `onRedirect` callback then navigates to the account page.
 
-Right now, you should see an account page with your email and a logout button in the title bar, and the stub text `User info will display here`:
+Right now, you should see an account page with your email and a logout button in the title bar, and the placeholder text `Your note will display here`:
 
-![The account page, not yet populated with user data.](/img/quickstarts/react/home-sans-data.png)
+![The account page, showing placeholder text.](/img/quickstarts/vue/account-placeholder.png)
 
-Let's fetch and display that user data instead of stub text.
+Next, you'll replace the placeholder with a note for each user.
 
-## Fetch User Data
+## Add a Note for Each User
 
-In this section you use the [FusionAuth API](/docs/apis/hosted-backend#me) to refresh and display detailed user data.
+FusionAuth gives every user a unique Id. In this section, you use that Id to keep a separate note for each user.
 
-### Call the FusionAuth API
+### Update the Account Page
 
-1. Open `src/views/AccountView.vue` and replace the file contents with the following code to:
+Open `src/views/AccountView.vue` and replace the file contents with the following code to:
 
-   * import `ref` from Vue
-   * add a `getUserInfo()` function that gets user data from FusionAuth and saves it in `newUserInfo`
-   * display current user data from `newUserInfo`
-   * add a button that calls `getUserInfo()`
+* read the user's Id from `userInfo.sub`, which the SDK fetched from FusionAuth after login
+* load the user's saved note, or start a new note with a greeting
+* save the note under a key that contains the user's Id
 
-   <ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/3-fetch-user-data/src/views/AccountView.vue" lang="markup"/>
+<ExtractedCode src="fusionauth-quickstart-javascript-vue-web/vue-frontend-steps/3-user-notes/src/views/AccountView.vue" lang="markup"/>
 
-<Aside type="note">
-`getUserInfo()` sets `newUserInfo` to the result of an asynchronous call to the [`/me` endpoint](/docs/apis/hosted-backend#me). The API call uses `credentials: include` to authorize the API call with a cookie set by FusionAuth during login.
-</Aside>
+The app saves notes in the browser's `localStorage`, so they stay in this browser only. A production app would save them in a database, using the same user Id to look them up.
 
-### Test User Data Functionality
+### Test the Notes
 
-1. Browse to the account page at [http://localhost:3000/account](http://localhost:3000/account).
+1. Browse to the account page at [http://localhost:3000/account](http://localhost:3000/account). The note starts with a greeting that uses your first name.
 
-   ![The account page, now ready to show user data.](/img/quickstarts/react/home-with-data-not-shown.png)
+   ![The account page, showing Richard's note.](/img/quickstarts/vue/account-note.png)
 
-1. Click the **Show your info** button to fetch and display the latest user data.
+1. Edit the note, click **Save note**, and reload the page. Your note is still there.
 
-   ![The account page, showing user data.](/img/quickstarts/react/home-with-data-shown.png)
+1. Click **Logout**, then **Login**. On the FusionAuth login page, click **Create an account** and register a second user with any email address and password.
+
+1. The second user gets a new note, without Richard's text. The registration form doesn't ask for a name, so the greeting uses the email address instead. Log out and log in as `richard@example.com` again to see Richard's note.
+
+## Summary
+
+In this QuickStart, FusionAuth handled login for your Vue app:
+
+* The Vue SDK sent users to the FusionAuth login page and brought them back to the app after login, so the app never saw their passwords.
+* The route guard used the SDK to keep logged-out users away from the account page.
+* After login, the SDK fetched the user's details from FusionAuth, including the unique user Id that keeps each note separate.
 
 ## Next Steps
 
