@@ -1,6 +1,6 @@
 ---
 import { ReleaseNotesItem as BaseItem } from 'astro-better-release-notes';
-import { categories } from 'src/components/docs/release-notes/ReleaseNotes.astro';
+import { getReleaseCategory } from 'src/tools/docs/releaseCategories';
 
 export interface Props {
   issue?: string;
@@ -11,18 +11,52 @@ export interface Props {
   since?: string;
   resolvedIn?: string;
   viaIssue?: string;
+  breaking?: boolean;
 }
 
-const { category, ...rest } = Astro.props as Props;
-const cat = categories.find(c => c.id === category);
+const { category, breaking, ...rest } = Astro.props as Props;
+const cat = getReleaseCategory(category);
 ---
 
 <BaseItem
   {...rest}
   {category}
-  categoryColor={cat?.color}
-  categoryLabel={cat?.label}
+  categoryColor={cat.color}
+  categoryLabel={cat.label}
   issueBaseUrl="https://github.com/FusionAuth/fusionauth-issues/issues/"
 >
+  {breaking && <span class="rn-breaking sr-only">Breaking change</span>}
   <slot />
 </BaseItem>
+
+<style>
+  :global(.issue-row:has(.rn-breaking)) {
+    min-height: 4.5rem;
+  }
+
+  :global(.issue-row:has(.rn-breaking) .issue-badge) {
+    position: relative;
+  }
+
+  /* visual label under the category badge; the sr-only span carries the text for screen readers */
+  :global(.issue-row:has(.rn-breaking) .issue-badge::after) {
+    content: 'Breaking change';
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    font-style: italic;
+    font-weight: 600;
+    text-transform: none;
+    color: #dc2626;
+  }
+
+  :global(.dark .issue-row:has(.rn-breaking) .issue-badge::after) {
+    color: #f87171;
+  }
+
+  /* breaking-change filter chip matches the flag, not a category */
+  :global(.release-container:has(#toggle-breaking-change:checked) .issue-row:has(.rn-breaking)) {
+    display: flex !important;
+  }
+</style>

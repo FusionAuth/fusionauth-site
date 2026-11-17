@@ -8,9 +8,10 @@ async function itemsToHtml(body: string): Promise<string> {
   const items = parseReleaseItems(body);
   if (!items.length) return '';
   const parts = await Promise.all(
-    items.map(async ({ category, body: rawBody }) => {
+    items.map(async ({ category, breaking, body: rawBody }) => {
       const html = await md.parse(rawBody);
-      return `<section data-category="${category}"><h4>${categoryLabel(category)}</h4>${html}</section>`;
+      const label = breaking ? `${categoryLabel(category)} (Breaking Change)` : categoryLabel(category);
+      return `<section data-category="${category}"><h4>${label}</h4>${html}</section>`;
     })
   );
   return parts.join('\n');
