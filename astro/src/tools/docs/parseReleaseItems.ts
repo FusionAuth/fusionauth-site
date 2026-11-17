@@ -1,4 +1,4 @@
-import { getReleaseCategory } from './releaseCategories';
+import { getReleaseCategory, getReleaseImpact, rejectBreakingFlag } from './releaseCategories';
 
 export interface ReleaseItem {
   category: string;
@@ -7,7 +7,7 @@ export interface ReleaseItem {
   since?: string;
   resolvedIn?: string;
   viaIssue?: string;
-  breaking?: boolean;
+  impact?: string;
   body: string;
 }
 
@@ -41,13 +41,14 @@ export function parseReleaseItems(body: string): ReleaseItem[] {
     }
     if (!props.category) continue;
     getReleaseCategory(props.category);
+    rejectBreakingFlag(props);
     const item: ReleaseItem = { category: props.category, body: rawBody };
     if (props.issue      !== undefined) item.issue      = props.issue;
     if (props.bonusIssue !== undefined) item.bonusIssue = props.bonusIssue;
     if (props.since      !== undefined) item.since      = props.since;
     if (props.resolvedIn !== undefined) item.resolvedIn = props.resolvedIn;
     if (props.viaIssue   !== undefined) item.viaIssue   = props.viaIssue;
-    if (props.breaking   !== undefined) item.breaking   = true;
+    if (props.impact     !== undefined) item.impact     = getReleaseImpact(props.impact).id;
     items.push(item);
   }
   return items;
