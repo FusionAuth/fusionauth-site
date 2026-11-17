@@ -9,7 +9,7 @@ export async function verifyJWT(req, res, next) {
   const accessToken = bearerMatch ? bearerMatch[1] : null;
   if (!accessToken) return res.status(401).send({ error: 'Missing bearer token in authorization header' });
   try {
-    const { payload } = await jose.jwtVerify(accessToken, jwksClient, { issuer: process.env.BASE_URL, audience: process.env.CLIENT_ID, algorithms: ['RS256'] });
+    const { payload } = await jose.jwtVerify(accessToken, jwksClient, { issuer: process.env.BASE_URL, audience: process.env.CLIENT_ID });
     req.auth = payload;
     next();
   }

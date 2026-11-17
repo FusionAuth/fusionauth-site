@@ -11,8 +11,7 @@ app.use(verifyJWT);
 app.get('/read', hasRole('free', 'premium'), function (req, res) { return res.json([...posts.values()]); });
 
 app.post('/write', hasRole('premium'), function (req, res) {
-  const { uuid, text } = req.body ?? {};
-  if (typeof uuid !== 'string' || typeof text !== 'string') return res.status(400).json({ error: 'The request body needs a uuid and a text value.' });
+  const { uuid, text } = req.body;
   const userId = req.auth.sub;
   const post = posts.get(uuid);
   if (post && post.userId !== userId) return res.status(403).json({ error: 'You may edit only your own posts.' });

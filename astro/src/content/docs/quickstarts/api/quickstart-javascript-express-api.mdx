@@ -45,7 +45,8 @@ The repository contains two directories:
 To start a local instance of FusionAuth, run the following command:
 
 ```shell-session
-cd fusionauth-quickstart-javascript-express-api/fusionauth && docker compose up
+cd fusionauth-quickstart-javascript-express-api/fusionauth
+docker compose up
 ```
 
 <Aside type="note">
@@ -74,7 +75,9 @@ In the steps below, you will create three files to form an Express.js API server
 
 1. Open a new terminal in the repository folder, `fusionauth-quickstart-javascript-express-api`, and run the commands below:
     ```shell-session
-    mkdir api && cd api && npm install express@5.3.0 jose@6.2.16 dotenv@18.0.10
+    mkdir api
+    cd api
+    npm install express@5.3.0 jose@6.2.16 dotenv@18.0.10
     ```
     This creates a new directory to hold the API and installs Express.js, jose, and dotenv. Later versions might work, but we tested with these.
 
@@ -116,17 +119,17 @@ There are [several ways to acquire a token](/docs/authentication/oauth) in Fusio
       "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
     }'
     ```
-    This sends the user's email and password to FusionAuth and returns a temporary access token. API clients only ever send their password to FusionAuth.
+    This sends the user's email and password to FusionAuth and returns a temporary access token. API clients send their password only to FusionAuth.
 
-1. Copy the `token` value from the response. It starts with `eyJ`. Call the `/read` endpoint, replacing `<free_token>` with the token you copied:
+1. Copy the `token` value from the response above, which should look like a longer version of `"token": "eyJhbGciOiJSUz"`. Call the `/read` endpoint, replacing the placeholder `eyJhbGciOiJSUz` token with your token value that you just copied:
     ```shell-session
-    curl localhost:3000/read --header 'Authorization: Bearer <free_token>'
+    curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
     The API returns the only stored message `[{"uuid":"00000000-0000-0000-0000-000000000001","userId":"00000000-0000-0000-0000-222222222222","text":"Welcome to the forum."}]`.
 
-1. Call the `/write` endpoint with the same token:
+1. Call the `/write` endpoint, replacing the placeholder with your token value again:
     ```shell-session
-    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"uuid":"00000000-0000-0000-0000-444444444444","text":"Hello from Freda"}' --header 'Authorization: Bearer <free_token>'
+    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"uuid":"00000000-0000-0000-0000-444444444444","text":"Hello from Freda"}' --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
     The API returns `{"error":"You do not have a role with permissions to do this."}` because the free user doesn't have the `premium` role.
 
@@ -142,19 +145,19 @@ There are [several ways to acquire a token](/docs/authentication/oauth) in Fusio
     }'
     ```
 
-1. Call the `/write` endpoint again, replacing `<premium_token>` with the new token:
+1. Now use the new premium token returned to call the write endpoint again:
     ```shell-session
-    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"uuid":"00000000-0000-0000-0000-444444444444","text":"Hello from Peter"}' --header 'Authorization: Bearer <premium_token>'
+    curl -X POST http://localhost:3000/write -H 'Content-Type: application/json' -d '{"uuid":"00000000-0000-0000-0000-444444444444","text":"Hello from Peter"}' --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
     This time the API should return `"Write successful"`.
 
 1. Call the `/read` endpoint again with the free token:
     ```shell-session
-    curl localhost:3000/read --header 'Authorization: Bearer <free_token>'
+    curl localhost:3000/read --header 'Authorization: Bearer eyJhbGciOiJSUz'
     ```
     The API now returns the two messages.
 
-1. If you want to experiment more, call the `write` endpoint again with the same message Id but a different text to test message editing. You can also get a token for the second premium user, `premium2@example.com`, and try to edit Peter's message. The API returns `{"error":"You may edit only your own posts."}`.
+1. If you want to experiment more, call the `write` endpoint again with the same message Id but a different text to test message editing. You could also log in with the second premium user, `premium2@example.com` and try to edit another user's message to test user-level security.
 
 </Steps>
 
