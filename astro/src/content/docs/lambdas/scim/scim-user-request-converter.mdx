@@ -22,15 +22,16 @@ The lambda must contain a function named `convert` that accepts the following pa
 
 * `user`: the FusionAuth user. You can modify this object. FusionAuth passes a new user with an empty **`data`** object. The lambda sets every user field that comes from the SCIM request.
 * `options`: the request options. You can modify this object. The object has the following properties:
-  * `options.applicationId`: the Id of an application to register the user with.
   * `options.disableDomainBlock`
   * `options.sendSetPasswordEmail`: applies only when FusionAuth creates a user.
-  * `options.sendSetPasswordIdentityType`
+  * `options.sendSetPasswordIdentityType`: applies only when FusionAuth creates a user.
   * `options.skipVerification`
 * `scimUser`: the SCIM request. This object is read-only.
 * `context`: <AvailableSince since="1.64.0"/> the context of the request, including access to [secrets](/docs/lambdas#secrets). This object is read-only.
 
 The [User API](/docs/apis/users) documents the FusionAuth user. The `options` properties match the Create User API parameters outside the user object, such as `disableDomainBlock`.
+
+FusionAuth ignores any other `options` property, including `options.applicationId`. The lambda can't register the user with an application. To add registrations to provisioned users, see [Adding Registrations](/docs/users/provision/scim#adding-registrations).
 
 The `scimUser` object holds the SCIM User request JSON, plus the SCIM EnterpriseUser extension when the client sends one. See [SCIM User](https://datatracker.ietf.org/doc/html/rfc7643#section-4.1) and [SCIM EnterpriseUser extension](https://datatracker.ietf.org/doc/html/rfc7643#section-4.3).
 
@@ -52,7 +53,6 @@ The following lambda extends the default lambda for a SCIM client that sends the
 * The lambda stores the manager Id and display name in **`user.data.managerId`** and **`user.data.managerName`**.
 * The lambda falls back to the first email and phone number when the SCIM client marks none as primary.
 * The lambda treats a missing **`active`** value as active, because SCIM clients may omit **`active`**.
-* The lambda sets **`options.applicationId`**, so FusionAuth registers each provisioned user with an employee portal application. Replace the `replace-with-` value with the Id of your application.
 
 <ExtractedCode src="example-lambdas/lambdas/scim-user-request-converter/enterprise-fields.js" lang="javascript" title="A lambda that stores enterprise extension attributes in user data." />
 

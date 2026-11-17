@@ -9,6 +9,11 @@ export const authors = {
     linkUrl: 'https://x.com/codercatdev',
     description: `Discover Alex Patterson's insights on product updates and tech guides.`
   },
+  'Andrew Hatfield': {
+    linkText: '@andrewhatfield',
+    linkUrl: 'https://www.linkedin.com/in/andrewhatfield',
+    description: `Read Andrew Hatfield's posts on FusionAuth product releases, AI identity security, and company news.`
+  },
   "Brad McCarty": {
     linkText: '@bradhmccarty',
     linkUrl: 'https://www.linkedin.com/in/bradhmccarty/',

@@ -1,12 +1,13 @@
 import { preparation } from '../../kit.mjs';
 
 async function tickExampleWebhook(page) {
-  const selected = await page.evaluate(() => {
-    const box = [...document.querySelectorAll('#webhooks input[type=checkbox]')].find(i => !i.id.startsWith('tenant_eventConfiguration'));
+  const missing = await page.evaluate(() => {
+    const boxes = [...document.querySelectorAll('#webhooks input[type=checkbox]')];
+    const box = boxes.find(i => !i.id.startsWith('tenant_eventConfiguration'));
     if (box && !box.checked) box.click();
-    return !!box;
+    return !box && (boxes.length ? `${boxes.length} event checkbox(es)` : `no checkboxes, text: ${document.querySelector('#webhooks')?.textContent.replace(/\s+/g, ' ').trim().slice(0, 300) ?? 'no #webhooks tab'}`);
   });
-  if (!selected) throw new Error('example webhook checkbox not found');
+  if (missing) throw new Error(`the tenant Webhooks tab has no checkbox for the example webhook that the events resources create; the tab has ${missing}`);
 }
 
 async function openConnectorPolicyDialog(page) {

@@ -1,9 +1,12 @@
 import { slug } from 'github-slugger';
+import { Marked } from 'marked';
 import glossary from '../data/glossary.json' with { type: 'json' };
 
 export const GLOSSARY_PATH = '/docs/concepts/glossary';
 
-const FIELDS = new Set(['definition', 'link', 'abbreviations', 'aliases', 'standards']);
+const FIELDS = new Set(['definition', 'link', 'abbreviations', 'aliases', 'standards', 'plan']);
+// same values as PlanBlurb
+const PLANS = new Set(['licensed', 'starter', 'essentials', 'enterprise']);
 
 function validate(id, entry) {
   const fail = (msg) => { throw new Error(`[glossary] "${id}" in src/data/glossary.json: ${msg}`); };
@@ -16,6 +19,7 @@ function validate(id, entry) {
   if (entry.standards !== undefined && !(Array.isArray(entry.standards) && entry.standards.every(s => s?.name && s?.url))) {
     fail('"standards" must be an array of { name, url }');
   }
+  if (entry.plan !== undefined && !PLANS.has(entry.plan)) fail(`"plan" must be one of: ${[...PLANS].join(', ')}`);
 }
 
 // lowercased name, alias, or abbreviation -> canonical id
@@ -32,11 +36,22 @@ for (const [id, entry] of Object.entries(glossary)) {
   }
 }
 
+// definitions allow inline markdown: links, code, bold, and italics
+const inline = new Marked();
+// keyboard focus can't reach a tooltip, so tooltips show link text only
+const inlineNoLinks = new Marked({ renderer: { link({ tokens }) { return this.parser.parseInline(tokens); } } });
+
 const sortKey = (id) => id.replace(/[^a-z0-9]/gi, '').toLowerCase();
 
 /** all entries as { id, anchor, ...entry }, sorted alphabetically, ignoring punctuation */
 export const glossaryEntries = Object.entries(glossary)
-  .map(([id, entry]) => ({ id, anchor: slug(id), ...entry }))
+  .map(([id, entry]) => ({
+    id,
+    anchor: slug(id),
+    ...entry,
+    definitionHtml: inline.parseInline(entry.definition),
+    tooltipHtml: inlineNoLinks.parseInline(entry.definition),
+  }))
   .sort((a, b) => sortKey(a.id).localeCompare(sortKey(b.id)));
 
 const byId = new Map(glossaryEntries.map(e => [e.id, e]));
