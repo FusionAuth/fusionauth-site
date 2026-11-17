@@ -9,19 +9,20 @@ export async function verifyJWT(req, res, next) {
   const accessToken = bearerMatch ? bearerMatch[1] : null;
   if (!accessToken) return res.status(401).send({ error: 'Missing bearer token in authorization header' });
   try {
-    await jose.jwtVerify(accessToken, jwksClient, {issuer: process.env.BASE_URL, audience: process.env.CLIENT_ID,});
-    req.verifiedToken = accessToken;
+    const { payload } = await jose.jwtVerify(accessToken, jwksClient, { issuer: process.env.BASE_URL, audience: process.env.CLIENT_ID, algorithms: ['RS256'] });
+    req.auth = payload;
     next();
   }
   catch (e) {
     if (e instanceof jose.errors.JOSEError) res.status(401).send({ error: e.message, code: e.code });
-    else res.status(500).send({ error: JSON.stringify(e) });
+    else res.status(500).send({ error: 'Could not verify token: ' + e.message });
   }
 }
 
 export function hasRole(...roles) {
   return (req, res, next) => {
-    if (jose.decodeJwt(req.verifiedToken).roles?.some(role => roles.includes(role))) return next();
+    const userRoles = Array.isArray(req.auth.roles) ? req.auth.roles : [];
+    if (userRoles.some(role => roles.includes(role))) return next();
     res.status(403).send({ error: 'You do not have a role with permissions to do this.' });
   };
 }

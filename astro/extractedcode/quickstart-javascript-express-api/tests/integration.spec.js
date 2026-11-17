@@ -39,11 +39,26 @@ test('Free user can read but cannot write', async ({ request }) => {
   const freeToken = await getToken(request, 'free@example.com');
   const readResponse = await request.get(`${apiUrl}/read`, { headers: bearerHeaders(freeToken), });
   expect(readResponse.ok()).toBeTruthy();
+  expect(await readResponse.json()).toContainEqual({
+    uuid: '00000000-0000-0000-0000-000000000001',
+    userId: '00000000-0000-0000-0000-222222222222',
+    text: 'Welcome to the forum.',
+  });
   const writeResponse = await request.post(`${apiUrl}/write`, {
     headers: bearerHeaders(freeToken),
     data: { uuid: 'free-post', text: 'Freda cannot write' },
   });
   expect(writeResponse.status()).toBe(403);
+  expect(await writeResponse.json()).toEqual({ error: 'You do not have a role with permissions to do this.' });
+});
+
+test('A user with no roles is refused, and a write without a body is a bad request', async ({ request }) => {
+  const adminToken = await getToken(request, 'admin@example.com');
+  const adminRead = await request.get(`${apiUrl}/read`, { headers: bearerHeaders(adminToken), });
+  expect(adminRead.status()).toBe(403);
+  const premiumToken = await getToken(request, 'premium@example.com');
+  const emptyWrite = await request.post(`${apiUrl}/write`, { headers: bearerHeaders(premiumToken), });
+  expect(emptyWrite.status()).toBe(400);
 });
 
 test('Premium users can write and edit only their own posts, and free users can read them', async ({ request }) => {
@@ -56,6 +71,7 @@ test('Premium users can write and edit only their own posts, and free users can 
     data: { uuid, text: 'First post' },
   });
   expect(writeResponse.ok()).toBeTruthy();
+  expect(await writeResponse.json()).toBe('Write successful');
   const editResponse = await request.post(`${apiUrl}/write`, {
     headers: bearerHeaders(premiumToken),
     data: { uuid, text: 'Edited post' },
