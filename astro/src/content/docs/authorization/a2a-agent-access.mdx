@@ -1,0 +1,331 @@
+---
+title: Control A2A Agent Access
+htmlTitle: Control A2A Agent Access With FusionAuth
+description: Learn how to issue and validate tokens for Agent2Agent (A2A) agents with the client credentials grant and token exchange.
+tags: a2a, agent2agent, ai agents, agent authentication, client credentials, token exchange, entities, delegation
+order: 51
+---
+
+Agent2Agent (A2A) lets AI agents discover each other and hand off tasks. Each agent publishes an Agent Card that names the authentication schemes the agent accepts. A2A doesn't define how a caller gets a token, so the card points to an authorization server. This guide configures FusionAuth as that authorization server, for agents that call each other directly and for agents that act on behalf of a user.
+
+<Aside type="note">
+FusionAuth issues and governs the tokens. FusionAuth doesn't implement the A2A protocol, host or sign Agent Cards, or proxy agent traffic. Each receiving agent enforces the audience, scopes, and permissions in the token.
+</Aside>
+
+To protect an MCP server instead, see [Control MCP Server Access](/docs/authorization/mcp-server-access).
+
+## Prerequisites
+
+To follow this guide, you need:
+
+* FusionAuth `1.70.0` or later.
+* An Enterprise license for the token exchange sections. The client credentials sections work on every plan.
+* Two or more A2A agents that you control, built with any A2A SDK.
+
+The examples use `https://auth.example.com` as the FusionAuth URL.
+
+## Choose a Pattern
+
+Pick the pattern by whether a user is involved:
+
+* When an agent acts on its own authority, such as a nightly reconciliation agent that calls an invoice agent, use the [[Client Credentials Grant]].
+* When an agent acts for a user who logged in, such as an assistant that books a flight for the user, use [[Token Exchange]]. The downstream agent then sees both the user and the agent acting for the user.
+
+In both patterns, an agent never forwards the token the agent received. The agent gets a new token whose audience is the next agent.
+
+The following diagram shows the token exchange pattern:
+
+```mermaid title="A booking assistant exchanges a user's token before calling a flight agent."
+sequenceDiagram
+    participant User
+    participant Assistant as Booking Assistant
+    participant FusionAuth
+    participant Flight as Flight Agent
+    User ->> Assistant : Request with the user's access token
+    Assistant ->> FusionAuth : Exchange the user's token, audience is the flight agent
+    FusionAuth ->> Assistant : New token: sub is the user, act is the assistant
+    Assistant ->> Flight : A2A request with the new token
+    Flight ->> Flight : Validate the token, then run the skill
+```
+
+The user's token reaches only the booking assistant. The flight agent receives a token that names the flight agent as the audience, carries fewer scopes, and expires sooner.
+
+## Model Agents as Entities
+
+Both patterns represent each agent as an [[Entity]], and each A2A skill as a permission.
+
+1. Navigate to <Breadcrumb>Entity Management -> Entity Types</Breadcrumb> and add an Entity Type named `A2A Agent`.
+1. Add one permission for each skill to control, such as `summarize-invoice`. Use the skill's **`id`** from the Agent Card as the permission name, so the two stay in sync.
+1. Navigate to <Breadcrumb>Entity Management -> Entities</Breadcrumb> and add one Entity of type `A2A Agent` for each agent.
+
+Each Entity has an Id, a client Id, and a client secret. The client Id defaults to the Entity Id. An agent authenticates to FusionAuth with the agent's client Id and client secret, so store the secret in a secrets manager.
+
+To script this setup, use the [Entity Type API](/docs/apis/entities/entity-types) and the [Entity API](/docs/apis/entities/entities).
+
+## Declare FusionAuth in the Agent Card
+
+The Agent Card lists accepted schemes in **`securitySchemes`**, in the same shape as OpenAPI security schemes. Point the scheme at your FusionAuth [[Token endpoint]], and list one scope for each skill:
+
+```json title="Agent Card for an invoice agent, abridged"
+{
+  "name": "Invoice Agent",
+  "description": "Looks up and summarizes invoices.",
+  "version": "1.0.0",
+  "skills": [
+    {
+      "id": "summarize-invoice",
+      "name": "Summarize invoice",
+      "description": "Returns a short summary of one invoice."
+    }
+  ],
+  "securitySchemes": {
+    "fusionauth": {
+      "type": "oauth2",
+      "flows": {
+        "clientCredentials": {
+          "tokenUrl": "https://auth.example.com/oauth2/token",
+          "scopes": {
+            "target-entity:INVOICE_AGENT_ENTITY_ID:summarize-invoice": "Call the summarize-invoice skill"
+          }
+        }
+      }
+    }
+  },
+  "security": [{ "fusionauth": [] }]
+}
+```
+
+Replace `INVOICE_AGENT_ENTITY_ID` with the invoice agent's Entity Id. Each scope is the exact string a caller sends to FusionAuth, so a caller can request only the skills the caller needs.
+
+To let callers discover the endpoints instead, declare an `openIdConnect` scheme and set **`openIdConnectUrl`** to `https://auth.example.com/.well-known/openid-configuration`.
+
+<Aside type="caution">
+The example uses the A2A `0.3.0` card format. Later A2A versions rename the security fields, so check which version your A2A SDK targets.
+</Aside>
+
+Agent Cards are public. Never put a client secret or a token in an Agent Card.
+
+## Call an Agent With the Client Credentials Grant
+
+In this pattern, the calling agent asks for specific permissions on the receiving agent, and FusionAuth checks the request against an [[Entity Grant]].
+
+### Grant the Caller Access
+
+Open the receiving agent's Entity and add a Grant for the calling agent's Entity. Select only the permissions the caller needs. FusionAuth refuses a token to a caller with no Grant, and to a caller that requests a permission the Grant doesn't include.
+
+### Request a Token
+
+The calling agent requests a token with a scope in the format `target-entity:<entity_id>:<permission>`:
+
+```shell-session title="Request a token for the summarize-invoice skill"
+curl -X POST https://auth.example.com/oauth2/token \
+  -u "$CALLER_CLIENT_ID:$CALLER_CLIENT_SECRET" \
+  -d "grant_type=client_credentials" \
+  -d "scope=target-entity:$INVOICE_AGENT_ENTITY_ID:summarize-invoice"
+```
+
+FusionAuth sets the **`aud`** claim from the target Entity Ids, and lists the granted permissions for each target in **`permissions`**:
+
+```json title="Claims in a client credentials token, abridged"
+{
+  "iss": "https://auth.example.com",
+  "sub": "CALLER_ENTITY_ID",
+  "aud": ["INVOICE_AGENT_ENTITY_ID"],
+  "permissions": {
+    "INVOICE_AGENT_ENTITY_ID": ["summarize-invoice"]
+  }
+}
+```
+
+When the request has no `scope` parameter, the token has no **`aud`** or **`permissions`** claim. Receiving agents must reject such a token. For multiple targets and other scope formats, see [Client Credentials Scopes](/docs/authentication/oauth/client-credentials#client-credentials-scopes).
+
+### Call the Agent
+
+The calling agent sends the token in the `Authorization` header of the A2A request:
+
+```plaintext
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+Cache the token, and request a new token shortly before the old one expires.
+
+## Act on Behalf of a User With Token Exchange
+
+<PlanBlurb plan="enterprise" />
+
+In this pattern, the delegating agent trades the user's access token for a new token. The new token names the next agent as the audience, keeps the user as the subject, and records the delegating agent as the actor. The new token can narrow the user's scopes, but never widen them.
+
+A2A SDKs don't perform token exchange. Your agent code holds the user's access token and calls the Token endpoint before each call to another agent.
+
+For a full walkthrough of token exchange with the Entity policy engine, see [Delegate Access With Token Exchange](/docs/authorization/token-exchange-delegation).
+
+### Enable Token Exchange on the Tenant
+
+1. Navigate to <Breadcrumb>Tenants</Breadcrumb> and click <IconButton icon="edit" /> on your Tenant.
+1. Select the <Breadcrumb>OAuth</Breadcrumb> tab.
+1. In the <Breadcrumb>Token exchange settings</Breadcrumb> section, enable **Enable token exchange grant**.
+1. Set **Token exchange policy engine** to `Lambda`.
+1. Click <IconButton icon="save" />.
+
+Use the Lambda policy engine for agents. The Entity policy engine passes every scope from the user's token through, so the Entity engine can't limit a downstream agent to the scopes of one skill.
+
+Then open the delegating agent's Entity and enable **Act as token exchange client**. FusionAuth accepts exchange requests only from Entities with **Act as token exchange client** enabled.
+
+### Write the Policy Lambda
+
+The [Token Exchange Policy lambda](/docs/lambdas/token-exchange/token-exchange-policy) decides whether to allow each exchange. The following lambda lets each delegating agent call one downstream agent, with only the scopes that agent's skill needs, for two minutes:
+
+```javascript title="Token exchange policy for A2A agents"
+var BOOKING_ASSISTANT = '9e4c1a7b-2f6d-4b3e-8a1c-5d2f7e9b4c01';
+var EXPENSE_ASSISTANT = '5c8e2b1d-7a4f-4e3c-9b6d-2f1a8c7e5d93';
+var FLIGHT_AGENT = '3b1f2e4a-6c2d-4e9a-9a1f-4f6d2b7c8e10';
+var RECEIPT_AGENT = '7a2d9e1c-5b3a-4f6e-8c2d-1a9b4e7f3c62';
+
+// exchanger client Id -> the one agent it may call, and the scopes that agent needs
+var rules = {};
+rules[BOOKING_ASSISTANT] = { audience: FLIGHT_AGENT, scopes: ['flights:search', 'flights:book'] };
+rules[EXPENSE_ASSISTANT] = { audience: RECEIPT_AGENT, scopes: ['receipts:read'] };
+
+function policy(result, exchange, context) {
+  var rule = rules[exchange.clientId];
+  if (!rule) {
+    deny(result, 'unauthorized_client', 'This agent may not exchange tokens.');
+    return;
+  }
+
+  if (exchange.requestedAudiencesAndResources.indexOf(rule.audience) === -1) {
+    deny(result, 'invalid_target', 'This agent may not call the requested audience.');
+    return;
+  }
+
+  // no scope param means all of the rule's scopes
+  var requested = exchange.requestedScopes.length ? exchange.requestedScopes : rule.scopes;
+  var scopes = requested.filter(function(scope) {
+    return rule.scopes.indexOf(scope) !== -1;
+  });
+
+  result.decision = 'ALLOW';
+  result.granted = {
+    aud: [rule.audience],
+    scope: scopes,
+    expires_in: 120
+  };
+}
+
+function deny(result, code, description) {
+  result.decision = 'DENY';
+  result.denial = { error_code: code, error_description: description };
+}
+```
+
+The client Id of each Entity defaults to the Entity Id, so the lambda keys the rules by Entity Id. FusionAuth also limits what the lambda grants. FusionAuth drops scopes the user's token doesn't contain, and uses the shorter of `expires_in` and the default token lifetime. For the full rules, see [Limits on the Grant](/docs/lambdas/token-exchange/token-exchange-policy#limits-on-the-grant).
+
+The user's token must carry the skill scopes, such as `flights:search`. To define custom scopes on the Application the user logs in to, see [OAuth Scopes](/docs/authorization/oauth-scopes).
+
+To assign the lambda, return to the Tenant's <Breadcrumb>OAuth</Breadcrumb> tab and select the lambda in **Token exchange policy lambda**.
+
+### Exchange the Token
+
+The delegating agent authenticates with the agent's own credentials and sends the user's access token as the subject token:
+
+```shell-session title="Exchange the user's token for a flight agent token"
+curl -X POST https://auth.example.com/oauth2/token \
+  -u "$ASSISTANT_CLIENT_ID:$ASSISTANT_CLIENT_SECRET" \
+  -d "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
+  -d "subject_token=$USER_ACCESS_TOKEN" \
+  -d "subject_token_type=urn:ietf:params:oauth:token-type:access_token" \
+  -d "audience=$FLIGHT_AGENT_ENTITY_ID" \
+  -d "scope=flights:search"
+```
+
+The delegating agent sends the new access token in the `Authorization` header of the A2A request, the same way as a client credentials token. The new token contains claims like the following:
+
+```json title="Claims in an exchanged token, abridged"
+{
+  "sub": "USER_ID",
+  "aud": ["3b1f2e4a-6c2d-4e9a-9a1f-4f6d2b7c8e10"],
+  "scope": "flights:search",
+  "auth_time": 1792680000,
+  "act": {
+    "sub": "9e4c1a7b-2f6d-4b3e-8a1c-5d2f7e9b4c01",
+    "sub_profile": "fusionauth:A2A Agent"
+  }
+}
+```
+
+The **`sub`** claim still identifies the user. The **`act`** claim identifies the booking assistant. When the flight agent exchanges the token again, FusionAuth nests the booking assistant's **`act`** claim inside a new one. The Tenant's **Max act claim depth** setting limits the length of the chain, and defaults to `2`. For details, see [The Actor Chain](/docs/authorization/token-exchange#the-actor-chain).
+
+FusionAuth copies only a few claims from the user's token, such as **`auth_time`** and **`sid`**. To carry other claims to the next agent, add a [Token Exchange Populate lambda](/docs/lambdas/token-exchange/token-exchange-populate).
+
+### Handle Tasks That Need User Approval
+
+A2A lets an agent pause a task in the `auth-required` state. Send the user to FusionAuth with the [Authorization Code grant](/docs/authentication/oauth/authorization-code), or with the [Device Authorization grant](/docs/authentication/oauth/device) for an agent with no browser. When the agent has the user's access token, the agent exchanges the token as shown above.
+
+When an approval requires a recent login, add `max_age` or `prompt=login` to the authorize request. For details, see [OIDC Prompt](/docs/authentication/oauth/prompt). A user can remove those parameters from the URL, so the receiving agent should also check **`auth_time`** before running a sensitive skill.
+
+## Validate Tokens in the Receiving Agent
+
+FusionAuth issues the token, and the receiving agent decides whether to honor the token. For each request, the receiving agent should:
+
+1. Verify the signature with the keys from the Tenant's [[JSON Web Key Set]] at `https://auth.example.com/.well-known/jwks.json`.
+1. Check that **`iss`** matches the FusionAuth issuer and that **`exp`** is in the future.
+1. Check that **`aud`** contains the receiving agent's own Entity Id. Reject a token with no **`aud`**.
+1. For a client credentials token, check that **`permissions`** lists the skill under the receiving agent's Entity Id.
+1. For an exchanged token, check that **`scope`** covers the skill, and that the top-level **`act.sub`** is an agent you expect.
+
+RFC 8693 recommends that access decisions use the subject and the top-level actor only. Treat nested actors as audit information.
+
+<Aside type="note">
+The following example assumes RS256 access tokens. To sign access tokens with an RSA key, navigate to <Breadcrumb>Tenants -> Edit -> JWT</Breadcrumb> and set **Access token signing key** to an RSA key.
+</Aside>
+
+The following Python example uses the PyJWT library:
+
+```python title="Validate a token in the receiving agent"
+import jwt
+from jwt import PyJWKClient
+
+ISSUER = "https://auth.example.com"
+MY_ENTITY_ID = "3b1f2e4a-6c2d-4e9a-9a1f-4f6d2b7c8e10"
+TRUSTED_ACTORS = {"9e4c1a7b-2f6d-4b3e-8a1c-5d2f7e9b4c01"}
+SKILL_SCOPES = {"search-flights": {"flights:search"}}
+jwks_client = PyJWKClient(f"{ISSUER}/.well-known/jwks.json")
+
+
+def authorize(token: str, skill: str) -> dict:
+    signing_key = jwks_client.get_signing_key_from_jwt(token)
+    claims = jwt.decode(
+        token,
+        signing_key.key,
+        algorithms=["RS256"],
+        audience=MY_ENTITY_ID,  # rejects a missing or wrong aud
+        issuer=ISSUER,
+        options={"require": ["exp", "aud", "iss"]},
+    )
+
+    if "act" in claims:
+        # exchanged token: user in sub, calling agent in act.sub
+        if claims["act"]["sub"] not in TRUSTED_ACTORS:
+            raise PermissionError("unexpected calling agent")
+        if not SKILL_SCOPES[skill] <= set(claims.get("scope", "").split()):
+            raise PermissionError(f"token does not grant {skill}")
+    elif skill not in claims.get("permissions", {}).get(MY_ENTITY_ID, []):
+        raise PermissionError(f"token does not grant {skill}")
+
+    return claims
+```
+
+To skip signature verification in the agent, call the [Validate a JWT API](/docs/apis/jwt/validate-a-jwt) instead. The API checks the signature and expiration, and the agent still checks **`aud`**, the permissions, and the scopes.
+
+FusionAuth records every exchange in the [Token Exchange audit log](/docs/authorization/token-exchange#auditing). FusionAuth doesn't log what an agent does with a token, so log the skill, **`sub`**, and **`act`** in each receiving agent.
+
+## Limitations
+
+FusionAuth has the following limitations for A2A deployments:
+
+* Agents authenticate with client secrets. FusionAuth doesn't support `private_key_jwt` client authentication.
+* You must create every agent Entity in advance. FusionAuth doesn't support RFC 7591 Dynamic Client Registration.
+* Clients registered with a [Client ID Metadata Document](/docs/authentication/oauth/client-registration) are public clients. Such a client can log a user in, but can't use the client credentials grant or token exchange.
+* The client credentials grant doesn't accept the `resource` parameter. Name the target agent with a `target-entity:` scope instead.
+* The **Max act claim depth** setting allows at most `10` actors in a chain.
+* FusionAuth doesn't host, sign, or verify Agent Cards, and isn't an agent registry. Callers need another way to find and trust an agent's card.
