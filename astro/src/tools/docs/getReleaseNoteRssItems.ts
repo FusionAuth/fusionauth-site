@@ -1,5 +1,6 @@
 import { getCollection } from 'astro:content';
 import { Marked } from 'marked';
+import { getReleaseImpact } from './releaseCategories';
 import { parseReleaseItems, categoryLabel, FALLBACK_DESCRIPTION, releaseUrl } from './parseReleaseItems';
 
 const md = new Marked();
@@ -8,9 +9,9 @@ async function itemsToHtml(body: string): Promise<string> {
   const items = parseReleaseItems(body);
   if (!items.length) return '';
   const parts = await Promise.all(
-    items.map(async ({ category, breaking, body: rawBody }) => {
+    items.map(async ({ category, impact, body: rawBody }) => {
       const html = await md.parse(rawBody);
-      const label = breaking ? `${categoryLabel(category)} (Breaking Change)` : categoryLabel(category);
+      const label = impact ? `${categoryLabel(category)} (${getReleaseImpact(impact).chipLabel})` : categoryLabel(category);
       return `<section data-category="${category}"><h4>${label}</h4>${html}</section>`;
     })
   );

@@ -1,6 +1,7 @@
 ---
 import { ReleaseNotesItem as BaseItem } from 'astro-better-release-notes';
-import { getReleaseCategory } from 'src/tools/docs/releaseCategories';
+import { DEFAULT_TYPES } from 'astro-better-admonitions';
+import { getReleaseCategory, getReleaseImpact, rejectBreakingFlag } from 'src/tools/docs/releaseCategories';
 
 export interface Props {
   issue?: string;
@@ -11,11 +12,22 @@ export interface Props {
   since?: string;
   resolvedIn?: string;
   viaIssue?: string;
-  breaking?: boolean;
+  impact?: 'caution' | 'breaking';
 }
 
-const { category, breaking, ...rest } = Astro.props as Props;
+rejectBreakingFlag(Astro.props);
+const { category, impact, ...rest } = Astro.props as Props;
 const cat = getReleaseCategory(category);
+const imp = impact ? getReleaseImpact(impact) : undefined;
+const icon = imp && DEFAULT_TYPES[imp.icon].icon;
+
+// ids only need to be unique within a page; Astro.locals is per page
+const locals = Astro.locals as { releaseImpactCount?: number };
+let tipId = '';
+if (imp) {
+  locals.releaseImpactCount = (locals.releaseImpactCount ?? 0) + 1;
+  tipId = `rn-impact-tip-${locals.releaseImpactCount}`;
+}
 ---
 
 <BaseItem
@@ -25,38 +37,92 @@ const cat = getReleaseCategory(category);
   categoryLabel={cat.label}
   issueBaseUrl="https://github.com/FusionAuth/fusionauth-issues/issues/"
 >
-  {breaking && <span class="rn-breaking sr-only">Breaking change</span>}
+  {imp && icon && (
+    <p class="rn-impact not-prose" data-impact={imp.id} style={`--impact-color: ${imp.color}`}>
+      <span class="rn-impact-label" aria-describedby={tipId} tabindex="0" style={`anchor-name: --${tipId}`}>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox={icon.viewBox} width="16" height="16" aria-hidden="true">
+          <path fill-rule="evenodd" d={icon.d} />
+        </svg>
+        {imp.label}
+      </span>
+      <span id={tipId} role="tooltip" class="glossary-tooltip" style={`position-anchor: --${tipId}`} data-markdown-ignore>
+        <span class="glossary-tooltip-body">{imp.description}</span>
+      </span>
+    </p>
+  )}
   <slot />
 </BaseItem>
 
+<script>
+  // WCAG 1.4.13: Esc hides the open tooltip until the pointer or focus leaves the icon
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll<HTMLElement>('.rn-impact:is(:hover, :focus-within)').forEach((el) => {
+      el.dataset.dismissed = '';
+      const reset = () => delete el.dataset.dismissed;
+      el.addEventListener('pointerleave', reset, { once: true });
+      el.addEventListener('focusout', reset, { once: true });
+    });
+  });
+</script>
+
 <style>
-  :global(.issue-row:has(.rn-breaking)) {
-    min-height: 4.5rem;
-  }
-
-  :global(.issue-row:has(.rn-breaking) .issue-badge) {
+  :global(.issue-row:has(.rn-impact)) {
     position: relative;
+    min-height: 5.5rem;
   }
 
-  /* visual label under the category badge; the sr-only span carries the text for screen readers */
-  :global(.issue-row:has(.rn-breaking) .issue-badge::after) {
-    content: 'Breaking change';
+  /* under the badge; the badge aligns to the first text baseline, so it starts ~1.4rem down */
+  .rn-impact {
     position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
+    top: 3.6rem;
+    left: 8px;
+    width: 7rem;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+  }
+
+  .rn-impact-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 0.25rem;
+    color: var(--impact-color);
+    font-size: 0.75rem;
     font-style: italic;
     font-weight: 600;
-    text-transform: none;
-    color: #dc2626;
+    white-space: nowrap;
+    cursor: help;
   }
 
-  :global(.dark .issue-row:has(.rn-breaking) .issue-badge::after) {
-    color: #f87171;
+  .rn-impact-label svg {
+    flex: none;
+    fill: currentColor;
   }
 
-  /* breaking-change filter chip matches the flag, not a category */
-  :global(.release-container:has(#toggle-breaking-change:checked) .issue-row:has(.rn-breaking)) {
+  .rn-impact-label:focus-visible {
+    outline: 2px solid var(--impact-color);
+    outline-offset: 2px;
+  }
+
+  :global(.dark) .rn-impact-label {
+    color: color-mix(in srgb, var(--impact-color) 65%, white);
+  }
+
+  @media (hover: hover) {
+    .rn-impact:hover:not([data-dismissed]) > :global(.glossary-tooltip) {
+      display: block;
+    }
+  }
+
+  .rn-impact:has(> .rn-impact-label:focus-visible):not([data-dismissed]) > :global(.glossary-tooltip) {
+    display: block;
+  }
+
+  /* impact filter chips match the `impact` prop, not a category */
+  :global(.release-container:has(#toggle-impact-caution:checked) .issue-row:has(.rn-impact[data-impact="caution"])),
+  :global(.release-container:has(#toggle-impact-breaking:checked) .issue-row:has(.rn-impact[data-impact="breaking"])) {
     display: flex !important;
   }
 </style>
