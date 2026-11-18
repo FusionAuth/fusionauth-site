@@ -1,0 +1,265 @@
+---
+title: Next.js
+htmlTitle: FusionAuth QuickStart for Next.js
+description: Integrate FusionAuth with an example Next.js website.
+tags: next.js quickstart, nextjs authentication, next.js login, nextjs oauth, react server authentication
+icon: /img/icons/nextjs.svg
+---
+
+This QuickStart explains how to add a login page and authentication to a website built with [Next.js](https://nextjs.org/). You'll begin with a simple Next.js app that allows visitors to edit a file. Then, you'll add authentication to the app with a FusionAuth instance. Finally, you'll extend the app to handle multiple independent users with user data provided by FusionAuth.
+
+This tutorial should take between 5 and 15 minutes; less if you already have prerequisites like Docker installed.
+
+## Prerequisites
+
+This QuickStart requires:
+
+* [Node.js](https://nodejs.org/en/download) 22.13 or later
+* [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later
+
+If you use macOS or Windows, you need one of the following container management tools:
+  * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use OrbStack for `docker compose` commands after installation, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
+
+## Create a Simple Next.js App
+
+For this QuickStart, we'll use a Next.js app that reads and writes data to a text file:
+
+<Steps>
+1. Create a folder for the app and navigate into it:
+
+   ```shell-session
+   mkdir nextjs-quickstart && cd nextjs-quickstart
+   ```
+
+1. Create a `package.json` file and set the project to use JavaScript modules:
+
+   ```shell-session
+   npm init -y
+   ```
+
+   ```shell-session
+   npm pkg set type=module
+   ```
+
+1. Install dependencies:
+
+   ```shell-session
+   npm install next@16.4.6 react@19.3.1 react-dom@19.3.1
+   ```
+
+1. In the `nextjs-quickstart` folder, create a folder named `app`. In the `app` folder, create a file named `layout.js` with the following contents:
+
+   <ExtractedCode src="quickstart-nextjs/0-start/app/layout.js" lang="jsx"/>
+
+1. In the `app` folder, create a file named `page.js` with the following contents:
+
+   <ExtractedCode src="quickstart-nextjs/0-start/app/page.js" lang="jsx"/>
+
+   The page reads `note.txt` and shows it in a form. When you submit the form, the `save` [server action](https://nextjs.org/docs/app/getting-started/updating-data) writes the new text to the file.
+
+1. Run the app:
+
+   ```shell-session
+   npx next dev
+   ```
+
+1. Open the app at [http://localhost:3000](http://localhost:3000).
+
+1. Replace the text area text with "Hello Next.js", then click the **Save Changes** button.
+
+1. In a file browser or terminal, look in the `nextjs-quickstart` folder. You should see a new file named `note.txt`, with text content "Hello Next.js".
+
+1. Congratulations, you have a working Next.js app that lets you edit a local text file through your web browser. Press **Ctrl+C** on your keyboard to stop the Next.js server.
+</Steps>
+
+## Install and Run FusionAuth
+
+Before we can add authentication to our Next.js app, we need a local FusionAuth instance:
+
+<Steps>
+1. Open your container management tool (listed in the prerequisites above).
+
+1. From the `nextjs-quickstart` folder, clone the [GitHub repository for the FusionAuth instance you'll use with this QuickStart](https://github.com/FusionAuth/fusionauth-quickstart-app):
+
+   ```shell-session
+   git clone https://github.com/FusionAuth/fusionauth-quickstart-app.git
+   ```
+
+1. Navigate into the cloned directory:
+
+   ```shell-session
+   cd fusionauth-quickstart-app
+   ```
+
+1. To start a local instance of FusionAuth, run the following command (omit the `-d` flag to see all Docker logs):
+
+   ```shell-session
+   docker compose up -d
+   ```
+
+1. Wait until all networks, volumes, and containers show a green status of **Healthy**, **Started**, or **Created**. This may take a few minutes, depending on your network speed and cached dependencies.
+
+1. Open [http://localhost:9011/admin](http://localhost:9011/admin) to access the FusionAuth Admin UI.
+
+1. Log in with these credentials:
+
+   * username: `admin@example.com`
+   * password: `password`
+
+1. Navigate to <Breadcrumb>Applications -> QuickStart App -> Edit -> OAuth</Breadcrumb>. On this page, you can find your client ID, your client secret, and specify redirect and logout URLs. In the next part of this QuickStart, we'll use these values to connect our Next.js app with FusionAuth.
+
+1. Click the logout icon in the top right to log out of the Admin UI. We'll use a different user account to access our Next.js app, and because FusionAuth supports SSO, we need to log out of our admin account before we can log in as a normal user.
+</Steps>
+
+## Add FusionAuth to the Next.js App
+
+Now that you have a working instance of FusionAuth and a working Next.js app, let's use FusionAuth to add login to your Next.js app:
+
+<Steps>
+1. Navigate out of the `fusionauth-quickstart-app` folder, back to the `nextjs-quickstart` folder that contains `app` and `note.txt`:
+
+   ```shell-session
+   cd ..
+   ```
+
+1. Create a file named `.env` with the following contents (we provided the same configuration for the local FusionAuth instance, and then viewed it in the Admin UI):
+
+   <ExtractedCode src="quickstart-nextjs/1-fusionauth-added/.env" lang="plaintext"/>
+
+   Next.js reads the `.env` file automatically when the server starts.
+
+1. Install the dependencies we'll need to authenticate with FusionAuth:
+
+   ```shell-session
+   npm install openid-client@6.9.0 iron-session@9.1.0
+   ```
+
+   We're adding [openid-client](https://github.com/panva/openid-client), which handles communication with our FusionAuth instance, and [iron-session](https://github.com/vvo/iron-session), which stores the logged-in user in an encrypted cookie.
+
+1. In the `nextjs-quickstart` folder, create a file named `auth.js` with the following contents:
+
+   <ExtractedCode src="quickstart-nextjs/1-fusionauth-added/auth.js" lang="js"/>
+
+   * `getConfig` uses `client.discovery` to find the login and token endpoints in FusionAuth's OpenID Connect discovery document at `/.well-known/openid-configuration`.
+   * `getSession` reads the session cookie, which iron-session encrypts with the `SESSION_SECRET` from the `.env` file.
+
+1. In the `app` folder, create a folder named `login`. In the `login` folder, create a file named `route.js` with the following contents:
+
+   <ExtractedCode src="quickstart-nextjs/1-fusionauth-added/app/login/route.js" lang="js"/>
+
+   The `/login` route creates a [[PKCE]] code verifier, saves it in the session, and sends the user to the FusionAuth login page. With PKCE, the app sends the code verifier when it exchanges the authorization code for tokens, so a stolen authorization code is useless on its own.
+
+1. In the `app` folder, create a folder named `oauth-callback`. In the `oauth-callback` folder, create a file named `route.js` with the following contents:
+
+   <ExtractedCode src="quickstart-nextjs/1-fusionauth-added/app/oauth-callback/route.js" lang="js"/>
+
+   The `/oauth-callback` route calls `authorizationCodeGrant`, which exchanges the authorization code from FusionAuth for tokens and validates the [[Id Token::ID token]]. The app then stores the user's Id in the session.
+
+1. In the `app` folder, create a folder named `logout`. In the `logout` folder, create a file named `route.js` with the following contents:
+
+   <ExtractedCode src="quickstart-nextjs/1-fusionauth-added/app/logout/route.js" lang="js"/>
+
+   The `/logout` route clears the session, then sends the user to FusionAuth's `/oauth2/logout` endpoint so the FusionAuth session ends too.
+
+1. Replace the contents of `app/page.js` with the following code:
+
+   <ExtractedCode src="quickstart-nextjs/1-fusionauth-added/app/page.js" lang="jsx"/>
+
+   The `requireLogin` function sends users who aren't logged in to `/login`. The page and the `save` action both call it, because Next.js runs server actions as separate requests.
+
+1. That's it! Your Next.js app should now use FusionAuth login. Run the app:
+
+   ```shell-session
+   npx next dev
+   ```
+
+1. Open the app at [http://localhost:3000](http://localhost:3000).
+
+1. Log in with the following credentials:
+
+   * username: `richard@example.com`
+   * password: `password`
+
+1. Edit the text file from the safety of an authenticated Next.js app.
+
+1. Click **Logout**. FusionAuth ends your session and sends you back to the login page.
+</Steps>
+
+## Add Independent Notes for Each User
+
+To see a more realistic example of FusionAuth usage, we can improve the app even more, so every user gets a unique note to edit. To accomplish this, we'll use FusionAuth's user data:
+
+<Steps>
+1. Open the FusionAuth Admin UI at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+1. Log in with the following credentials:
+
+   * username: `admin@example.com`
+   * password: `password`
+
+1. Navigate to <Breadcrumb>Applications -> QuickStart App -> Edit -> Registration</Breadcrumb>.
+
+   * Under **Self-service registration**, check that **Registration mode** is set to **Create registration**. The QuickStart configuration has already turned on self-service registration.
+   * In the **Registration field** list, turn on the **Enabled** and **Required** switches for the following rows:
+     * **Birthdate**
+     * **First name**
+     * **Last name**
+
+1. Click the **Save** button in the top right of the page to save your changes to self-service registration.
+
+1. Navigate to <Breadcrumb>Users -> Richard Hendricks -> Manage</Breadcrumb>.
+
+1. In the **Source** tab, look for the `firstName` and `lastName` fields. That's what we'll use to personalize the UI for each user. We'll use the user's `id` field to generate a unique name for each user's note.
+
+1. Click the logout icon in the top right to log out of the Admin UI. We'll use a different user account to access our Next.js app.
+
+1. Replace the contents of `app/login/route.js` with the following code, which also requests the `profile` and `email` scopes:
+
+   <ExtractedCode src="quickstart-nextjs/2-multi-user/app/login/route.js" lang="js"/>
+
+1. Replace the contents of `app/oauth-callback/route.js` with the following code, which reads the user's name (first and last) and email from the ID token and stores them in the session:
+
+   <ExtractedCode src="quickstart-nextjs/2-multi-user/app/oauth-callback/route.js" lang="js"/>
+
+   openid-client validates the ID token and `tokens.claims()` returns its claims, so we don't need a separate JWT library.
+
+1. Replace the contents of `app/logout/route.js` with the following code, which passes a `post_logout_redirect_uri` to send the user back to the login page after FusionAuth ends their session:
+
+   <ExtractedCode src="quickstart-nextjs/2-multi-user/app/logout/route.js" lang="js"/>
+
+1. Replace the contents of `app/page.js` with the following code, which stores each user's note in a separate file:
+
+   <ExtractedCode src="quickstart-nextjs/2-multi-user/app/page.js" lang="jsx"/>
+
+1. Open the app at [http://localhost:3000](http://localhost:3000). The Next.js server reloads the changed files, so you don't need to restart it.
+
+1. Log in with the following credentials:
+
+   * username: `richard@example.com`
+   * password: `password`
+
+1. _In a separate private/incognito window_, open the app at [http://localhost:3000](http://localhost:3000).
+
+1. Click **Create an account** and create an account using your personal email address, name, and birthdate.
+
+1. Enjoy using your unique user note! You should see your name at the top of the page, and in the default note text.
+</Steps>
+
+Your Next.js app now provides unique notes for each user. Each user can independently edit and save their note. To see all of the notes, look for `note-<id>.txt` files in the `user_data` directory. To identify which note corresponds to which user, compare the `id` in the file name with the `id` field in the user's **Source** tab.
+
+## Summary
+
+In this QuickStart, FusionAuth handled login for your Next.js app:
+
+* openid-client sent users to the FusionAuth login page and exchanged the authorization code for tokens, so the app never saw their passwords.
+* The `requireLogin` function kept logged-out users away from the notes page and the `save` action.
+* The ID token gave the app each user's unique Id and name. The app used the Id to keep each note separate and the name to greet the user.
+* FusionAuth's self-service registration let new users create their own accounts, with no sign-up code in the app.
+
+## Next Steps
+
+This was a quick introduction to using FusionAuth for user authentication. To learn more about integrating FusionAuth with your product, see [Get Started](/docs/get-started).
+
+FusionAuth has many features (including [Social Login](/docs/authentication/identity-providers/#social-identity-providers), [Single Sign-On](/docs/authentication/sessions/single-sign-on), [Passkeys](/docs/authentication/passkeys/configure), [Multi-factor Authentication](/docs/authentication/multi-factor-authentication)), most of which are free. This example app is a great starting point for learning about FusionAuth features.
