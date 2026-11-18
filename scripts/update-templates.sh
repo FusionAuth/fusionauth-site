@@ -75,7 +75,7 @@ dest_for() {
 reference_page_for() {
 	case "$1" in
 		email) echo "a page in astro/src/content/docs/email/template-reference/" ;;
-		messengers) echo "astro/src/content/docs/messengers/template-reference.mdx" ;;
+		messengers) echo "a page in astro/src/content/docs/messengers/template-reference/" ;;
 	esac
 }
 
