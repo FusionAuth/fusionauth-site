@@ -185,7 +185,7 @@ FusionAuth creates the [[Default Tenant]] during installation.
 Each [[Tenant::tenant]] has its own settings.
 ```
 
-The name can be the term, an alias, or an abbreviation, in any case. Mark a term where a reader might not know the term, usually at the first use on a page. Terms don't work in headings or links. In an `.astro` file, use `<GlossaryTerm term="Default Tenant" />`.
+The name can be the term, an alias, or an abbreviation, in any case. Mark a term where a reader might not know the term, usually at the first use on a page. Terms don't work in headings or links. In an `.astro` file, import `GlossaryTerm` from `astro-better-glossary/GlossaryTerm.astro` and use `<GlossaryTerm term="Default Tenant" />`. For the full syntax and options, see the [astro-better-glossary docs](https://better-static-sites.github.io/content/glossary).
 
 To add a term, add an entry to `astro/src/data/glossary.json`. Key the entry by the full name in title case, such as `JSON Web Token`. Each entry needs a **`definition`** of one or two sentences and a **`link`** to the page that explains the term. A definition can use inline markdown: links, `monospace`, **bold**, and _italics_. Tooltips show the text of a link but not the link, because keyboard focus can't reach a tooltip. The optional fields are **`abbreviations`**, **`aliases`**, **`standards`** (an array of `{ "name", "url" }` objects), and **`plan`**. When the FusionAuth feature behind a term requires a paid plan, set **`plan`** to `licensed`, `starter`, `essentials`, or `enterprise`. The Glossary then shows a plan badge on the entry. Add only terms that readers need defined. Add a general tool only when FusionAuth integrates with the tool tightly, such as Elasticsearch or Kafka, not Docker.
 
@@ -269,5 +269,6 @@ Blog posts follow the rest of this guide, plus the following:
 * When you update a post, add `updated_date: YYYY-MM-DD` to the front matter instead of changing the date.
 * Give every post at least one category. Add comma-separated tags. The first tag drives related posts unless the post sets `featuredTag`.
 * Put images in `/astro/public/img/blogs/<post-name>/` and use markdown image syntax.
+* The front matter `image` is also the social preview image. The build makes a 1200x630 copy of a PNG, JPEG, or WebP image, and generates a title card for an SVG image. To use a different preview image, set `ogImage`.
 * Reuse docs components instead of building components for one post. To request a new component, ask in `#devsuccess` on Slack.
 * Code blocks use Prism language names. See the [Prism language list](https://prismjs.com/docs/prism.languages).

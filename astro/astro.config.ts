@@ -1,5 +1,5 @@
 import {defineConfig, fontProviders} from 'astro/config';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import mdx from "@astrojs/mdx";
 import { satteri } from '@astrojs/markdown-satteri';
@@ -16,8 +16,28 @@ import astroToc from 'astro-better-toc';
 import { openapiSummary } from './src/plugins/openapi-summary.js';
 import { cssPreload } from './src/plugins/css-preload.mjs';
 import { headingLinks } from './src/plugins/satteri-heading-links.mjs';
-import { glossaryTerms } from './src/plugins/satteri-glossary-terms.mjs';
+import glossary from 'astro-better-glossary';
+import { glossaryTerms } from 'astro-better-glossary/satteri';
+import ogImages from 'astro-better-og-images';
 import { lazyConditionals, requiredProps } from './src/plugins/satteri-required-props.mjs';
+
+// same values as PlanBlurb
+const PLANS = ['licensed', 'starter', 'essentials', 'enterprise'];
+const glossaryOptions = {
+  file: 'src/data/glossary.json',
+  path: '/docs/concepts/glossary',
+  fields: ['plan'],
+  linkPattern: /^(\/docs\/|https:\/\/)/,
+  validateEntry: (id: string, entry: { plan?: string }) =>
+    entry.plan !== undefined && !PLANS.includes(entry.plan) ? `"plan" must be one of: ${PLANS.join(', ')}` : undefined,
+  help: 'See "Glossary Terms" in CONTRIBUTING.md.',
+};
+
+// the nav logo as plain SVG: no frontmatter, no class expression, white for the dark card
+const ogLogo = readFileSync(new URL('./src/components/FusionAuthLogo.astro', import.meta.url), 'utf-8')
+  .replace(/^---[\s\S]*?---\s*/, '')
+  .replace(/\s+class=\{[^}]*\}/, '')
+  .replaceAll('currentColor', '#ffffff');
 
 function buildSitemap() {
   let siteUrl: string;
@@ -71,7 +91,6 @@ const mdxComponentImports =
   "import If from 'src/components/If.astro';\n" +
   "import Icon from 'src/components/icon/Icon.astro';\n" +
   "import IconButton from 'src/components/IconButton.astro';\n" +
-  "import GlossaryTerm from 'src/components/GlossaryTerm.astro';\n" +
   "import ChildCards from 'astro-better-cards/ChildCards.astro';\n" +
   "import Card from 'astro-better-cards/Card.astro';\n" +
   "import CardGrid from 'astro-better-cards/CardGrid.astro';\n" +
@@ -206,6 +225,15 @@ const config = defineConfig({
   },
   integrations: [
     contentChecks(),
+    glossary(glossaryOptions),
+    ogImages({
+      route: '/img/og/pages',
+      siteName: 'FusionAuth',
+      wordmark: [{ text: 'Fusion' }, { text: 'Auth', color: '#f58320' }],
+      logo: ogLogo,
+      footer: 'fusionauth.io',
+      colors: { background: '#0f172a', label: '#f58320', bar: '#f58320' },
+    }),
     extractedCodeSnippets({
       plugin: 'bluehawk-languages.js',
       // Step 7 displays snippets from a Playwright spec in tests/.
@@ -226,7 +254,7 @@ const config = defineConfig({
           mermaidTitle(),       // inserts title nodes before we transform code blocks
           mermaidSSR(),         // replaces mermaid blocks with pre-rendered SVGs
           shellSession(),
-          glossaryTerms(),
+          glossaryTerms(glossaryOptions),
           requiredProps(),
         ],
         hastPlugins: [
