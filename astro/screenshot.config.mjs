@@ -1,4 +1,5 @@
-import { piedPiperAppId, defaultTenantId, projectRoot, baseUrl, freshUrl, appPort, freshPort, apiKey, runtime, makeTag, highlightHelpers, runTemporaryState, selectTab, tabsReady } from './screenshots/setup/kit.mjs';
+import { piedPiperAppId, defaultTenantId, projectRoot, baseUrl, freshUrl, appPort, freshPort, maintenancePort, apiKey, runtime, makeTag, highlightHelpers, runTemporaryState, selectTab, tabsReady } from './screenshots/setup/kit.mjs';
+import * as docs_deploy_production_install from './screenshots/setup/deploy/production/install/fusionauth-app.mjs';
 import { join } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { modules, resources } from './screenshots/setup/index.mjs';
@@ -44,8 +45,8 @@ const config = {
   },
   docker: {
     compose: 'screenshots/docker-compose.yml',
-    service: 'fusionauth fusionauth-fresh',
-    env: { FUSIONAUTH_PORT: String(appPort), FUSIONAUTH_FRESH_PORT: String(freshPort) },
+    service: 'fusionauth fusionauth-fresh fusionauth-maintenance',
+    env: { FUSIONAUTH_PORT: String(appPort), FUSIONAUTH_FRESH_PORT: String(freshPort), FUSIONAUTH_MAINTENANCE_PORT: String(maintenancePort) },
     healthcheck: {
       url: `${baseUrl}/api/health`,
       timeout: 300000,
@@ -107,6 +108,8 @@ const config = {
   },
 
   beforeScreenshot: async (page, ctx) => {
+    if (await docs_deploy_production_install.beforeScreenshot(page, ctx)) return;
+
     const shot = shots[ctx?.name] ?? {};
     // fresh-instance shots skip the kickstarted instance's setup
     if (shot.fresh) {
@@ -561,6 +564,10 @@ const config = {
     await shot.prepare?.(page, ctx, info, 'afterDates');
 
     await shot.prepare?.(page, ctx, info, 'finish');
+  },
+
+  afterScreenshot: async (page, ctx) => {
+    await docs_deploy_production_install.afterScreenshot(page, ctx);
   },
 };
 

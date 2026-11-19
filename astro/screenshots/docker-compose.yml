@@ -98,3 +98,34 @@ services:
       SEARCH_TYPE: database
     ports:
       - "${FUSIONAUTH_FRESH_PORT:-9012}:9011"
+
+  # an isolated app and database for Maintenance Mode screenshots
+  # the app's localhost database URL keeps it in Maintenance Mode until setup; tmpfs resets the database between runs
+  db-maintenance:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hacking_is_not_cool
+      POSTGRES_DB: postgres
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  fusionauth-maintenance:
+    image: ${FUSIONAUTH_IMAGE:-fusionauth/fusionauth-app:1.71.0}
+    depends_on:
+      db-maintenance:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://localhost:5432/fusionauth
+      FUSIONAUTH_APP_MEMORY: 512M
+      FUSIONAUTH_APP_RUNTIME_MODE: development
+      FUSIONAUTH_APP_URL: http://127.0.0.1:${FUSIONAUTH_MAINTENANCE_PORT:-9013}
+      SEARCH_TYPE: elasticsearch
+      SEARCH_SERVERS: http://localhost:9200
+    ports:
+      - "${FUSIONAUTH_MAINTENANCE_PORT:-9013}:9011"
