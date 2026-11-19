@@ -34,7 +34,7 @@ In the non-incognito window, log into the admin UI using the credentials above. 
 
 If you log out of ChangeBank Forum, you are only logged out of that application. If you log out of ChangeBank, the user is logged out of everything (all refresh tokens are revoked).
 
-[Learn more about Logout and Session Management in FusionAuth](https://fusionauth.io/docs/authentication/sessions/logout-session-management)
+[Learn more about Logout and Session Management in FusionAuth](https://fusionauth.io/docs/authentication/sessions/how-sessions-work)
 
 ## Last updated
 

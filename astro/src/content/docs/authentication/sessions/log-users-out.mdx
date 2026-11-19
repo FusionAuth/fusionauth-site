@@ -1,0 +1,94 @@
+---
+title: Log Users Out
+htmlTitle: Log Users Out of FusionAuth and Your Applications
+description: Learn how to log users out of one application or every application, and where to send users after logout.
+tags: logout, sign out, log out, sessions, sso, front-channel logout, post_logout_redirect_uri, logout url, identity providers
+relatedPinFirst: authentication/sessions/how-logout-works
+order: 40
+---
+
+Logout ends the user's application session and the FusionAuth [[SSO session]]. For what each logout method ends, see [How Logout Works](/docs/authentication/sessions/how-logout-works).
+
+## Log Out of Every Application
+
+The following steps use Express code from the [SSO example repository](https://github.com/FusionAuth/fusionauth-example-node-sso). The same steps apply in any framework.
+
+### Add a Route That Ends the Application Session
+
+FusionAuth calls this route with a `GET` request when the user logs out of any application in the Tenant. FusionAuth may call the route more than once, and for a user with no session, so return success either way:
+
+<ExtractedCode lang="javascript" src="example-node-sso/index.snippet.endsessionroute.js" title="End the application session at the Logout URL" />
+
+To also revoke the user's refresh tokens, call the [Revoke Refresh Tokens API](/docs/apis/jwt/revoke-refresh-tokens) from the route. `/oauth2/logout` leaves refresh tokens in place.
+
+### Let the Session Cookie Reach the Route
+
+FusionAuth loads each application's route in a hidden cross-site iframe. The browser sends the application's session cookie to the iframe only when the cookie uses `SameSite=None; Secure`, and `Secure` cookies require HTTPS. Without the cookie, the route can't find the session to end:
+
+<ExtractedCode lang="javascript" src="example-node-sso/app.snippet.sessioncookie.js" title="A session cookie that works in the logout iframe" />
+
+Browsers that block third-party cookies can still drop the cookie. For a logout that doesn't depend on cookies in iframes, use [centralized sessions](/docs/authentication/sessions/centralized-sessions).
+
+### Set the Logout URL
+
+Navigate to <Breadcrumb>Applications -> Your Application -> OAuth</Breadcrumb> for each Application. Set **Logout URL** to the route, such as `https://app.example.com/endsession`. Leave **Logout behavior** set to `All applications`. Click <Breadcrumb>Save</Breadcrumb>.
+
+### Redirect to FusionAuth on Logout
+
+When the user clicks your logout button, end the application session, then redirect the browser to the [Logout endpoint](/docs/apis/oauth/logout) with the Application's client Id. In the example, `logoutUrl` is `https://auth.example.com/oauth2/logout?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`:
+
+<ExtractedCode lang="javascript" src="example-node-sso/index.snippet.logoutpageroute.js" title="Redirect to FusionAuth on logout" />
+
+FusionAuth ends the SSO session, loads every **Logout URL** in the Tenant in hidden iframes, and redirects to the **Logout URL** of the Application that started the logout.
+
+## Log Out of One Application
+
+Set the Application's **Logout behavior** to `Redirect only`. Logout from that Application then ends the SSO session and redirects, without loading the other applications' **Logout URL**.
+
+<Screenshot id="authenticate-application-oauth-logout-behavior" url="/admin/application/edit?applicationId=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&tenantId=30663132-6464-6665-3032-326466613934#oauth" crop="#screenshot-band" cropPadding={0} alt="The Logout behavior field on the Application OAuth tab.">
+  <Highlight selector="#application_oauthConfiguration_logoutBehavior-form-row" />
+</Screenshot>
+
+The other applications keep their sessions until the sessions expire. Because the SSO session ended, the next login redirect from any application shows the login form.
+
+To end only the application session and keep the SSO session, end the application session without redirecting to `/oauth2/logout`. FusionAuth then logs the user back in at the next login redirect.
+
+For finer control, such as logging out of two applications but not a third, use [centralized sessions](/docs/authentication/sessions/centralized-sessions) and revoke the refresh tokens you choose.
+
+## Send Users to a Different Page After Logout
+
+Add `post_logout_redirect_uri` to the logout request, URL-encoded. The value must match one of the Application's **Authorized redirect URLs**:
+
+```plaintext title="A logout redirect with a custom destination"
+https://auth.example.com/oauth2/logout?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&post_logout_redirect_uri=https%3A%2F%2Fexample.com%2Fgoodbye
+```
+
+Without `post_logout_redirect_uri`, FusionAuth redirects to the Application's **Logout URL**, then the Tenant's **Logout URL**, then `/`.
+
+## Log Out of an Identity Provider
+
+FusionAuth logout doesn't end the user's session at an upstream [Identity Provider](/docs/authentication/identity-providers), such as Google. Users usually expect to stay logged in to Google. When users must log out of the Identity Provider too, set `post_logout_redirect_uri` to the Identity Provider's logout URL, and add that URL to **Authorized redirect URLs**.
+
+To know which Identity Provider a user logged in with, record the Identity Provider from the [`user.login.success`](/docs/events/reference/user/login/user-login-success) event at login.
+
+## Log Out of the Account Management Pages
+
+The [self-service account management](/docs/users/account-management) pages keep their own session. To end the session, redirect the browser to `/account/logout` with the client Id of the Application that hosts account management:
+
+```plaintext title="An account management logout redirect"
+https://auth.example.com/account/logout?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
+```
+
+FusionAuth ends the account management session, then continues to `/oauth2/logout`.
+
+## Log Out From a Shared Device
+
+On kiosks and shared computers, the next user must not inherit a session. Remove the **Keep me signed in** checkbox from the theme of the kiosk Application, or set the hidden **`rememberDevice`** field to `false`, so FusionAuth creates no SSO session. Then end the application session on logout and after a short idle period.
+
+## Confirm the Result
+
+1. Log in to two applications in the same browser.
+1. Log out of the first application.
+1. Reload the second application. With `All applications`, the second application sends you to the login form.
+
+When the second application stays logged in, see [Troubleshoot Sessions and Logout](/docs/authentication/sessions/troubleshooting#other-applications-stay-logged-in).

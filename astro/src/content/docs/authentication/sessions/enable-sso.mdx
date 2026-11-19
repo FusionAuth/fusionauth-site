@@ -1,0 +1,100 @@
+---
+title: Enable SSO
+htmlTitle: Enable SSO Across Applications
+description: Learn how to let users log in once and reach every application in a FusionAuth tenant without logging in again.
+tags: sso, single sign-on, sessions, sso session, keep me signed in, app suite, multiple applications, dashboard, prompt
+relatedPinFirst: authentication/sessions/how-sessions-work
+order: 30
+---
+
+Single sign-on (SSO) lets a user log in to one application and then open your other applications without entering credentials again. FusionAuth provides SSO through the [[SSO session]] on the [[hosted login pages]]. For how the SSO session relates to your application sessions, see [How Sessions Work](/docs/authentication/sessions/how-sessions-work).
+
+## Prerequisites
+
+* Two or more applications that log users in with the [Authorization Code grant](/docs/authentication/oauth/authorization-code) and the hosted login pages. For the setup, see [Add Login to Your App](/docs/authentication/oauth/add-login-to-your-app).
+* All of the applications in the same [[Tenant]]. SSO doesn't span Tenants.
+* A different host name for each application. Browsers share cookies across ports on the same host, so `localhost:3000` and `localhost:3001` overwrite each other's session cookies. For local development, add names such as `app-a.local` and `app-b.local` to your hosts file, pointing to `127.0.0.1`.
+
+## Configure Each Application
+
+For each application, navigate to <Breadcrumb>Applications -> Your Application -> OAuth</Breadcrumb> and set the following fields:
+
+* **Authorized redirect URLs** to the application's OAuth callback URL.
+* **Logout URL** to a route in the application that ends the application session. FusionAuth loads this URL during logout. For more information, see [Log Users Out](/docs/authentication/sessions/log-users-out).
+
+Without **Require registration to complete OAuth authorization**, SSO logs a user in to every Application in the Tenant, even without a registration. The access token for an unregistered user has no **`applicationId`** or **`roles`** claims, so check those claims in your application. To block unregistered users, turn on **Require registration to complete OAuth authorization** and register the users who need access.
+
+## Create the SSO Session at Login
+
+FusionAuth creates the SSO session only when the user checks **Keep me signed in** on the login page. To create the SSO session for every login, replace the checkbox with a hidden field. In your theme, edit the <Breadcrumb>OAuth authorize</Breadcrumb> template and replace the **`rememberDevice`** checkbox with the following field:
+
+```ftl title="Create the SSO session at every login"
+[@helpers.hidden name="rememberDevice" value="true"/]
+```
+
+For how to edit theme templates, see [Advanced Theme Editor](/docs/theme/advanced-themes). Leave the checkbox in place on shared or public computers, where users shouldn't stay logged in.
+
+To change how long an idle SSO session lasts, see [Configure Session Lifetimes](/docs/authentication/sessions/configure-session-lifetimes).
+
+## Redirect Users Without a Session to FusionAuth
+
+When a request reaches an application and the user has no application session, redirect the browser to the FusionAuth authorize endpoint, as for any login. When the SSO session exists, FusionAuth redirects straight back with an authorization code, and the user sees no login form.
+
+Don't wait for the user to click a login link. An application that shows a login link instead of redirecting still works with SSO, but the user has to click the link before FusionAuth logs the user in.
+
+## Confirm the Result
+
+1. Open application A in a private browser window. Log in with **Keep me signed in** checked, unless your theme sets the hidden field.
+1. Open application B in the same window. Application B logs you in without a login form.
+1. Log out of application A. Reload application B, and application B sends you to the login form.
+
+When the last step leaves you logged in to application B, see [Troubleshoot Sessions and Logout](/docs/authentication/sessions/troubleshooting#other-applications-stay-logged-in).
+
+## Link to Your Applications From One Page
+
+To give users one page that lists your applications, edit the <Breadcrumb>Index</Breadcrumb> template in your theme. FusionAuth shows the Index template at the root URL of your FusionAuth instance. Add a link to a protected page in each application:
+
+```html title="Application links for the Index template"
+<a href="https://app-a.example.com/account">App A</a>
+<a href="https://app-b.example.com/account">App B</a>
+```
+
+Each link opens the application, which redirects to FusionAuth when the user has no application session. SSO then logs the user in. Link to the application, not to the FusionAuth authorize URL, so each application starts its own login with its own `state` and PKCE values. Avoid IdP-initiated login, where FusionAuth sends an unrequested login to the application. For a runnable version with two applications and a custom theme, see the [dashboard example repository](https://github.com/FusionAuth/fusionauth-example-multiapp-dashboard).
+
+## Require a Fresh Login for One Application
+
+SSO applies to every Application in the Tenant. To make one Application, such as an admin tool, ask for credentials even when the SSO session exists, add `prompt=login` to that application's authorize request. To ask for credentials only when the last login is older than a limit, add `max_age` with the limit in seconds, such as `max_age=900`. After the code exchange, check that the `auth_time` claim is recent. For more information, see [OIDC Prompt](/docs/authentication/oauth/prompt).
+
+To keep an Application out of SSO entirely, put the Application in a separate Tenant. Users then need a separate account in that Tenant.
+
+For an extra factor before a sensitive action, rather than a full login, see [Step-Up Authentication](/docs/authentication/multi-factor-authentication/step-up).
+
+## Create an SSO Session From an Access Token
+
+<AvailableSince since="1.56.0" />
+
+When your application logs a user in outside the hosted login pages, such as with the Login API, the browser has no SSO session. FusionAuth can create the SSO session from a valid access token, so the user can then reach your other applications through SSO.
+
+### Allow Access Token Bootstrap
+
+Navigate to <Breadcrumb>Tenants -> Your Tenant -> OAuth</Breadcrumb> and turn on **Allow access token bootstrap to create SSO session**. Click <Breadcrumb>Save</Breadcrumb>. With the API, set **`tenant.ssoConfiguration.allowAccessTokenBootstrap`** to `true` with the [Tenant API](/docs/apis/tenants).
+
+<Screenshot id="authenticate-tenant-oauth-access-token-bootstrap" url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#oauth" showHash alt="The access token bootstrap setting on the Tenant OAuth tab." height={1200} />
+
+### Send the Access Token to the Authorize Endpoint
+
+Send a normal `GET` request to the [Authorize endpoint](/docs/apis/oauth/authorize), with the access token in an `Authorization` header:
+
+```plaintext title="Authorization header for an SSO bootstrap request"
+Authorization: Bearer <access token>
+```
+
+A browser can't add the header to a redirect, so put a reverse proxy in front of FusionAuth. For example, when your application keeps the access token in an [[HttpOnly cookie]], the proxy copies the cookie value into the `Authorization` header on requests to `/oauth2/authorize`.
+
+FusionAuth accepts an access token that meets the following requirements:
+
+* The token belongs to the same Tenant, and the `iss` claim matches the Tenant issuer.
+* The token includes the `auth_time` claim. FusionAuth adds `auth_time` to every access token FusionAuth issues, so don't remove the claim in a JWT populate lambda.
+* The token isn't sender-constrained with [DPoP](/docs/authentication/oauth/dpop).
+
+When the token is valid, FusionAuth creates the SSO session and completes the authorize request with a redirect to the `redirect_uri`. When the token is invalid, or belongs to a different user than an existing SSO session, FusionAuth ends the existing SSO session.
