@@ -36,7 +36,7 @@ Readers notice these patterns, and the patterns make a page read as generated. _
 Decide what kind of page you're writing, and keep the page to that job. Link to other pages instead of mixing types.
 
 * A tutorial teaches by building something end to end. Tutorials live in Get Started and QuickStarts.
-* A how-to guide gets the reader through one task. Start with the goal and the prerequisites, then give the steps, then show how to confirm the result.
+* A how-to guide gets the reader through one task. Start with the goal and the prerequisites, then give the steps in a `<Steps>` component, then show how to confirm the result.
 * A concept page explains what a feature is and how the feature behaves. Concept pages don't contain step lists.
 * A reference page lists facts to look up, such as fields, options, or limits. Keep reference terse and complete.
 * A section overview orients the reader and links to the pages in the section. Set `sectionIndex: true` in the overview's front matter to list the section's pages after the content. `sectionIndex` only lists pages directly in the folder, so a section whose pages all live in subfolders needs `<ChildCards depth={2} />` at the end of the body instead. Otherwise, use a `<ChildCards />` component in the body only when the list belongs mid-page.
@@ -98,6 +98,7 @@ The Related section at the bottom of every page comes from front matter `tags`. 
 
 * Use an ordered list only when order matters, such as steps. Use an unordered list for options, prerequisites, and features.
 * Number every ordered item `1.`, and Astro renders the real numbers. Start unordered items with `*`.
+* Wrap the steps of a high-level task in the `<Steps>` component, especially the main task of a how-to guide or tutorial. `<Steps>` renders the ordered list as numbered blocks that readers can follow at a glance. Put only the ordered list inside `<Steps>`, and indent code blocks and images under their step. Leave short lists, such as a two-step aside, as a plain ordered list.
 * Introduce a list with a sentence that ends in a colon.
 * Don't count the items in a list introduction. Write "the following options", not "three options", because the count drifts when someone edits the list.
 * Keep items parallel: all full sentences or all fragments, starting the same way.
