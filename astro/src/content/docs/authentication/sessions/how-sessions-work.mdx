@@ -30,13 +30,15 @@ The solid arrows show sessions that every SSO integration has. The dashed arrows
 | Application session | Your application | Your application finishes the token exchange after login | Your application ends the session | Your application |
 | Centralized session | FusionAuth, checked by your application | Login with the `offline_access` scope, or a Login API call | An admin or API call revokes the refresh token, or the refresh token expires | Tenant or Application refresh token settings |
 
-For every setting, unit, and default, see [Session Settings](/docs/authentication/sessions/session-settings).
+An access token can outlive the session that issued the token. A service that verifies access tokens keeps accepting a token until the token expires, even after you revoke the session.
+
+The [self-service account management](/docs/users/account-management) pages keep a separate session. For the cookie behind each session, see [Login Page Cookies](/docs/authentication/sessions/cookies). For every setting, unit, and default, see [Session Settings](/docs/authentication/sessions/session-settings).
 
 ## The SSO Session
 
 The [[SSO session]] lets a user log in once and then reach every other Application in the same [[Tenant]] without entering credentials again. When an application without a session redirects the user to FusionAuth, FusionAuth finds the SSO session and redirects back with an authorization code right away. The user sees a brief redirect.
 
-FusionAuth creates the SSO session only when the login form submits **`rememberDevice`** as `true`. The default theme shows **`rememberDevice`** as the **Keep me signed in** checkbox. When the user leaves the checkbox clear, FusionAuth creates no SSO session, and the user enters credentials at every login redirect. To create the SSO session for every user, see [Enable SSO Across Applications](/docs/authentication/sessions/enable-sso).
+FusionAuth creates the SSO session only when the user checks **Keep me signed in** on the login form. Without the SSO session, the user enters credentials at every login redirect. The SSO session is a refresh token with no Application, so the Admin UI lists the SSO session as `single-sign-on` on the user's <Breadcrumb>Sessions</Breadcrumb> tab. To create the SSO session at every login, see [Enable SSO Across Applications](/docs/authentication/sessions/enable-sso).
 
 The SSO session uses an idle timeout. Each time FusionAuth uses the SSO session to log the user in to an application, the timeout starts over. Activity inside your applications doesn't reset the timeout, because your applications don't contact FusionAuth on each request. A user who stays in one application all day can find the SSO session expired when switching to a second application.
 
@@ -66,33 +68,14 @@ The following table compares the approaches:
 
 | Capability | Application-managed | Centralized |
 |---|---|---|
-| Effort | Low | Medium |
 | Log out of every application in the Tenant | Yes | Yes |
 | Log out of some applications but not others | No | Yes |
 | Revoke a session from the Admin UI or API | No | Yes |
 | Set the session lifetime in FusionAuth | No | Yes |
-| See sessions in the Admin UI | SSO session only | Yes |
-| Works without a browser, such as for an API or a mobile app | No | Yes |
-| Works with the Login API | No | Yes |
+| Works without a browser, or with the Login API | No | Yes |
 | Sends a webhook when a session ends | No | Yes |
 | Calls FusionAuth on every request | No | Yes |
 
 You can combine the approaches. An application-managed session can revoke refresh tokens in the code at the **Logout URL**.
 
 Most applications start with application-managed sessions. Choose centralized sessions when you need to end a session from a server, such as for a support tool, a suspicious login, or a device limit.
-
-## Refresh Tokens and Access Tokens
-
-A refresh token plays two roles in FusionAuth. The refresh token represents a session for one user, one Application, and one device. The refresh token also lets a client get new access tokens with the [Refresh Token grant](/docs/authentication/oauth/refresh-token). The SSO session is a refresh token too, with no Application. The Admin UI lists the SSO session as `single-sign-on` on the user's <Breadcrumb>Sessions</Breadcrumb> tab.
-
-An access token (JWT) works as a session that other services verify without calling FusionAuth. A service that trusts the access token keeps accepting the token until the token expires, even after you revoke the refresh token. Keep the **JWT duration** short when you need revocation to take effect quickly. For revocation strategies, see [Revoking JWTs](/articles/tokens/revoking-jwts).
-
-## Other Sessions
-
-FusionAuth keeps the following sessions apart from the SSO session:
-
-* The [self-service account management](/docs/users/account-management) pages keep their own session. To end the session, see [Log Users Out](/docs/authentication/sessions/log-users-out#log-out-of-the-account-management-pages).
-* MFA trust lets a user skip MFA on a device for a period after a successful challenge. Trust doesn't create or extend an SSO session.
-* Device trust records a device that recently logged in. While the trust lasts, FusionAuth can skip the CAPTCHA and MFA prompts that the Tenant requires for untrusted devices.
-
-For the cookie behind each session, see [Login Page Cookies](/docs/authentication/sessions/cookies).

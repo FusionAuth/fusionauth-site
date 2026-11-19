@@ -34,51 +34,53 @@ sequenceDiagram
 * An API key with `GET` and `DELETE` permissions on `/api/jwt/refresh`.
 * An application that logs users in with the [Authorization Code grant](/docs/authentication/oauth/authorization-code) or the [Login API](/docs/apis/login).
 
-## Turn On Refresh Tokens
+## Set Up Centralized Sessions
 
-For the hosted login pages, navigate to <Breadcrumb>Applications -> Your Application -> OAuth</Breadcrumb>. Turn on **Generate refresh tokens**, and select `Refresh Token` in **Enabled grants**.
+The first three steps set up login. The last two steps add a check to every request and a revoke to logout:
 
-For the Login API, navigate to <Breadcrumb>Applications -> Your Application -> Security</Breadcrumb>. Turn on **Generate refresh tokens** and **Enable JWT refresh**.
+<Steps>
+1. ### Turn On Refresh Tokens
 
-Click <Breadcrumb>Save</Breadcrumb>.
+   For the hosted login pages, navigate to <Breadcrumb>Applications -> Your Application -> OAuth</Breadcrumb>. Turn on **Generate refresh tokens**, and select `Refresh Token` in **Enabled grants**.
 
-## Request a Refresh Token at Login
+   For the Login API, navigate to <Breadcrumb>Applications -> Your Application -> Security</Breadcrumb>. Turn on **Generate refresh tokens** and **Enable JWT refresh**.
 
-When your application builds the authorization URL, include `offline_access` in the **`scope`** parameter: `scope=openid%20offline_access`. Without `offline_access`, FusionAuth doesn't issue a refresh token.
+   Click <Breadcrumb>Save</Breadcrumb>.
 
-The Login API returns a refresh token whenever the Application allows refresh tokens.
+1. ### Request a Refresh Token at Login
 
-## Store the Refresh Token Id
+   When your application builds the authorization URL, include `offline_access` in the **`scope`** parameter: `scope=openid%20offline_access`. Without `offline_access`, FusionAuth doesn't issue a refresh token.
 
-The token endpoint response includes **`refresh_token_id`**. Store the Id in your application session or in an [[HttpOnly cookie]]. Store the Id rather than the token value, because the Id stays the same when FusionAuth rotates a one-time use refresh token.
+   The Login API returns a refresh token whenever the Application allows refresh tokens.
 
-## Check the Refresh Token on Each Request
+1. ### Store the Refresh Token Id
 
-Add middleware that retrieves the refresh token by Id with the [Retrieve Refresh Tokens API](/docs/apis/jwt/retrieve-refresh-tokens). When FusionAuth returns an error, the session ended in FusionAuth, so end the application session. Skip the check for public routes such as login and the OAuth callback:
+   The token endpoint response includes **`refresh_token_id`**. Store the Id in your application session or in an [[HttpOnly cookie]]. Store the Id rather than the token value, because the Id stays the same when FusionAuth rotates a one-time use refresh token.
 
-<ExtractedCode lang="js" src="example-node-centralized-sessions/redirectMiddleware.snippet.redirectFunction.js" title="Check the refresh token on each request" />
+1. ### Check the Refresh Token on Each Request
 
-Retrieving a refresh token doesn't extend the refresh token's lifetime. When the Tenant uses a sliding window expiration policy and you want activity to keep the session alive, call the [Refresh Token grant](/docs/authentication/oauth/refresh-token) instead, and discard the new access token. For the expiration policies, see [Session Settings](/docs/authentication/sessions/session-settings#refresh-tokens).
+   Add middleware that retrieves the refresh token by Id with the [Retrieve Refresh Tokens API](/docs/apis/jwt/retrieve-refresh-tokens). When FusionAuth returns an error, the session ended in FusionAuth, so end the application session. Skip the check for public routes such as login and the OAuth callback:
 
-## Revoke the Session on Logout
+   <ExtractedCode lang="js" src="example-node-centralized-sessions/redirectMiddleware.snippet.redirectFunction.js" title="Check the refresh token on each request" />
 
-When a user logs out, revoke refresh tokens with the [Revoke Refresh Tokens API](/docs/apis/jwt/revoke-refresh-tokens), then end the application session. Choose what to revoke for each application:
+   Retrieving a refresh token doesn't extend the refresh token's lifetime. When the Tenant uses a sliding window expiration policy and you want activity to keep the session alive, call the [Refresh Token grant](/docs/authentication/oauth/refresh-token) instead, and discard the new access token. For the expiration policies, see [Session Settings](/docs/authentication/sessions/session-settings#refresh-tokens).
 
-* Revoke the one refresh token to log the user out of this device only.
-* Revoke every refresh token for the user and Application to log the user out of this application on all devices.
-* Revoke every refresh token for the user to log the user out of all applications on all devices, including the [[SSO session]].
+1. ### Revoke the Session on Logout
 
-The following route logs the user out of everything:
+   When a user logs out, revoke the user's refresh tokens with the [Revoke Refresh Tokens API](/docs/apis/jwt/revoke-refresh-tokens), then end the application session. The following route revokes every refresh token for the user, which also ends the [[SSO session]]:
 
-<ExtractedCode lang="ts" src="example-node-centralized-sessions/index.snippet.endsession.ts" title="Revoke all of the user's sessions on logout" />
+   <ExtractedCode lang="ts" src="example-node-centralized-sessions/index.snippet.endsession.ts" title="Revoke all of the user's sessions on logout" />
 
-The following route logs the user out of this device only:
+   To revoke a narrower set, such as the tokens for one Application, see [Revoke Sessions](/docs/authentication/sessions/revoke-sessions#revoke-sessions).
+</Steps>
+
+## Log Out of One Device
+
+To log the user out of the current device only, revoke the one refresh token by Id:
 
 <ExtractedCode lang="ts" src="example-node-centralized-sessions/index.snippet.endsessionForum.ts" title="Revoke one session on logout" />
 
-When the user has an SSO session and you revoke only one refresh token, also redirect the browser to the [Logout endpoint](/docs/apis/oauth/logout). Otherwise, FusionAuth logs the user back in on the next login redirect. For more information, see [Log Users Out](/docs/authentication/sessions/log-users-out).
-
-Your application can revoke refresh tokens at any time, not only at logout. For more examples, see [View and Revoke Sessions](/docs/authentication/sessions/revoke-sessions).
+The SSO session survives a single revoke, so also redirect the browser to the [Logout endpoint](/docs/apis/oauth/logout). Otherwise, FusionAuth logs the user back in on the next login redirect. For more information, see [Log Users Out](/docs/authentication/sessions/log-users-out).
 
 ## Confirm the Result
 
