@@ -309,6 +309,25 @@ If you make an API request when the Tenant Id is required, you will receive a `4
 }
 ```
 
+{/* remove when fusionauth-issues#2812 changes the validation */}
+When a request is scoped to a tenant, the User Search, Entity Search, and User Bulk Delete APIs reject a **`query`** or **`queryString`** that contains `tenantId`. A tenant-scoped API key or the `X-FusionAuth-TenantId` header scopes a request to a tenant. When FusionAuth has only one tenant, FusionAuth scopes every request to that tenant, even with a global API key and no header. FusionAuth returns a `400` response code with the following response body.
+
+```json title="Tenant Id in Search Query Error"
+{
+  "fieldErrors" : {
+    "queryString" : [ {
+      "code" : "[invalidTenant]queryString",
+      "message" : "You may not provide the tenantId in the [queryString] property when the request is scoped to a specific tenant by API key or the X-FusionAuth-TenantId HTTP header."
+    } ]
+  },
+  "generalErrors" : [ ]
+}
+```
+
+For a **`query`** request, the error appears under **`query`** with the code `[invalidTenant]query`. The check applies only to the Elasticsearch search engine.
+
+To filter by tenant on a single-tenant instance, remove `tenantId` from the query. FusionAuth already limits the results to the one tenant.
+
 You could make a request to retrieve a User or Application by Id but provide the incorrect Tenant Id. If the Tenant Id provided does not correspond to the Tenant in which the User or Application exists, the API will return an error indicating the object could not be found, either by returning a `404` status code, or some sort of validation error.
 
 ## API Key Permissions
