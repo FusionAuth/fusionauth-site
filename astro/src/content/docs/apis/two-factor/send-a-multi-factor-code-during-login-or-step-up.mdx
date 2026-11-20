@@ -8,25 +8,25 @@ order: 600
 import StandardPostResponseCodes from 'src/content/docs/apis/_shared/_standard-post-response-codes.mdx';
 import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_shared/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
 
-This operation allows you to send a message with a code to finish a Multi-Factor flow, and requires an existing **twoFactorId**. No API key is required.
+Send a code to finish a multi-factor login or step-up flow. The request requires an existing **`twoFactorId`** and no API key.
 
-This should only be used if you want FusionAuth to send the code. Do not use this if you are sending a code out of band or are using a TOTP based authentication method.
+Use this API only when you want FusionAuth to send the code. When you send the code out of band, or the user authenticates with a TOTP method, skip this API.
 
-You can use this to re-send a code with the same or a different method. Using this API will invalidate all other codes previously associated with the provided **twoFactorId**.
+To re-send a code, call this API again with the same method or a different method. Each send invalidates every earlier code for the **`twoFactorId`**.
 
-Sending a code invalidates all previous codes for the provided `twoFactorId`.
+<Aside type="caution" title="Don't send a JWT with this request">
+  When the request includes a JWT, FusionAuth looks up **`methodId`** on the user in the JWT instead of the user in the multi-factor flow. FusionAuth reads the JWT from the `Authorization` header or from the `access_token` cookie. When the JWT belongs to a different user, FusionAuth returns a `400` response code with the `[invalid]methodId` error. A browser sends the `access_token` cookie automatically on same-origin requests, so a stale session from another user can cause the error. When you call this API from a browser, clear the `access_token` cookie or send the request without credentials.
+</Aside>
 
 ## Request
 
-Send a multi-factor code to the User by providing the **`twoFactorId`** and the method to deliver it with.
-
-<API method="POST" uri="/api/two-factor/send/{twoFactorId}" authentication={["none"]} title="Send a multi-factor code to complete Multi-Factor Login"/>
+<API method="POST" uri="/api/two-factor/send/{twoFactorId}" authentication={["none"]} title="Send a multi-factor code to complete a multi-factor login"/>
 
 ### Path Parameters
 
 <APIBlock>
   <APIField name="twoFactorId" type="String" required>
-    The **twoFactorId** returned by the Login API or the Start multi-factor request.
+    The **`twoFactorId`** that the Login API or the Start Multi-Factor API returns.
   </APIField>
 </APIBlock>
 
@@ -38,17 +38,15 @@ Send a multi-factor code to the User by providing the **`twoFactorId`** and the 
 
 <APIBlock>
   <APIField name="messageType" type="String" optional since="1.65.0" defaults="SMS">
-    The message type used when sending a code for a phone-based MFA method.
+    The message type for a phone-based MFA method. FusionAuth reads **`messageType`** only when the selected MFA method is `sms`.
 
-    This value is only used when the selected MFA method is `sms`.
-
-    Valid values are:
+    The valid values are:
 
     * `SMS`
     * `Voice`
   </APIField>
   <APIField name="methodId" type="String" required>
-    The Id of the MFA method to be used.
+    The Id of the MFA method that FusionAuth sends the code with.
   </APIField>
 </APIBlock>
 
@@ -56,6 +54,6 @@ Send a multi-factor code to the User by providing the **`twoFactorId`** and the 
 
 ## Response
 
-This API does not return a JSON response body.
+The API doesn't return a JSON response body.
 
 <StandardPostResponseCodes success_code="200" success_message="The request was successful." />
