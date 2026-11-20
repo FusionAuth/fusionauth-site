@@ -1,4 +1,4 @@
-import { piedPiperAppId, twoFactorTemplateIds, apiRequest, defaultTenantId, baseUrl, selfServiceFormId, apiKey } from '../../kit.mjs';
+import { piedPiperAppId, twoFactorTemplateIds, apiRequest, defaultTenantId, baseUrl, selfServiceFormId, apiKey, richardId, removeTwoFactor } from '../../kit.mjs';
 
 // email and SMS two-factor templates, enabled on the default tenant
 const twoFactorMessaging = {
@@ -40,4 +40,22 @@ async function configureAccountManagement() {
 
 export const resources = [configureAccountManagement];
 
-export { twoFactorMessaging };
+// richard logs in and lands on the two-factor challenge
+async function signIn(page) {
+  await page.fill('#loginId', 'richard@piedpiper.com');
+  await page.fill('#password', 'password');
+  await page.locator('#submit-button').click();
+  await page.waitForURL(/\/oauth2\/two-factor/);
+  await page.waitForLoadState('networkidle');
+}
+
+// a two-factor method on richard, removed afterward
+const richardMethod = method => ({
+  order: 6,
+  apply: async () => {
+    await apiRequest(`/api/user/${richardId}`, 'PATCH', { user: { twoFactor: { methods: [method] } } });
+    return removeTwoFactor;
+  },
+});
+
+export { twoFactorMessaging, signIn, richardMethod };
