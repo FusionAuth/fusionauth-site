@@ -13,8 +13,13 @@ cleanup() {
     cd "$FA_REPO_DIR" && docker compose down -v 2>/dev/null || true
   fi
   rm -rf "$(dirname "$FA_REPO_DIR")" 2>/dev/null || true
-  rm -rf "$TEST_APP_DIR" 2>/dev/null || true
+  if [ -n "$TEST_APP_DIR" ]; then
+    docker run --rm -v "$TEST_APP_DIR:/app" node:24-slim find /app -mindepth 1 -delete 2>/dev/null || true
+    rm -rf "$TEST_APP_DIR" 2>/dev/null || true
+  fi
 }
+APP_PID=""
+TEST_APP_DIR=""
 trap cleanup EXIT
 
 DEPS="next@16.4.6 react@19.3.1 react-dom@19.3.1 openid-client@6.9.0 iron-session@9.1.0"
@@ -26,6 +31,7 @@ for STAGE_DIR in "$PROJECT_DIR"/0-start "$PROJECT_DIR"/1-fusionauth-added "$PROJ
   BUILD_DIR="$(mktemp -d)"
   cp -R "$STAGE_DIR"/. "$BUILD_DIR"/
   docker run --rm -v "$BUILD_DIR:/app" -w /app node:24-slim sh -c "npm init -y > /dev/null && npm pkg set type=module && npm install --silent $DEPS && npx next build"
+  docker run --rm -v "$BUILD_DIR:/app" node:24-slim find /app -mindepth 1 -delete
   rm -rf "$BUILD_DIR"
 done
 
