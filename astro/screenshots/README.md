@@ -41,7 +41,7 @@ To capture faster, split the run into shards that run in parallel:
 npm run screenshots -- --shards 4
 ```
 
-Each shard takes whole pages and runs its own FusionAuth stack, so 4 shards need about 10 GB of Docker memory. Only the shard with the [fresh-instance screenshots](#fresh-instance-screenshots) starts the second FusionAuth instance, so the other shards use less. Shard 1 uses ports 9011 and 9012, shard 2 uses ports 9021 and 9022, and so on. Every output line starts with its shard, such as `[shard 2/4]`.
+Each shard takes whole pages and runs its own FusionAuth stack, so 4 shards need about 10 GB of Docker memory. Shard 1 uses ports 9011 and 9012, shard 2 uses ports 9021 and 9022, and so on. Every output line starts with its shard, such as `[shard 2/4]`.
 
 To regenerate the screenshots and keep only the ones that changed beyond a pixel tolerance, run the refresh script from the repository root. The script reverts images within the tolerance to the committed version, and accepts `--filter` and `--shards`:
 
@@ -141,7 +141,7 @@ The `-v` flag removes the named volumes so FusionAuth starts fresh and re-runs t
 
 A few screenshots show what a new FusionAuth installation looks like before any setup, such as the Setup Wizard in [First Time Setup](../src/content/docs/get-started/first-time-setup.mdx). The kickstarted instance can't show these pages, so the Docker Compose file also runs `fusionauth-fresh`: a second instance with no Kickstart file, at `http://127.0.0.1:9012` in an unsharded run. Its database lives in memory, so every run starts at the Setup Wizard.
 
-These screenshots are part of the normal suite. A run starts `fusionauth-fresh` only when the run includes a fresh-instance screenshot, so a filtered run or a shard without one skips the second instance. To retake only the fresh-instance screenshots, filter on their paths:
+These screenshots are part of the normal suite. `npm run screenshots` and `npm run check-screenshots` start both instances and capture both sets. To retake only the fresh-instance screenshots, filter on their paths:
 
 ```sh
 npm run screenshots -- --filter /admin/setup-wizard
