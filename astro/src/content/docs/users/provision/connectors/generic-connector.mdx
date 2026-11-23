@@ -104,9 +104,11 @@ Your API should return a valid FusionAuth `user` object with status code `200` i
 While you may return any of the attributes of the user object, including nested objects such as application registrations with roles, only the required ones must be present. The only other status code FusionAuth will accept from your connector is a `404`.
 
 <Aside type="caution">
-A valid user object must be returned with a FusionAuth compatible UUID in the **user.id**. This is a requirement whether you are [authenticating but not migrating a user](/docs/users/provision/connectors/#required-fields) or [migrating a user](/docs/users/provision/connectors/#required-fields-1).
+A valid user object must be returned with a FusionAuth compatible UUID in the **user.id**. This is a requirement whether you are [authenticating but not migrating a user](/docs/users/provision/connectors#required-fields) or [migrating a user](/docs/users/provision/connectors#required-fields-1).
 
 When you are authenticating but not migrating a user, the **user.id** must be the same across subsequent logins.
+
+For the errors that a non-UUID value causes, see [Response Parsing Errors](#response-parsing-errors).
 </Aside>
 
 If the user cannot be authenticated, then you should return a `404`.
@@ -116,6 +118,31 @@ If the user cannot be authenticated, then you should return a `404`.
 <StandardPostResponseCodes never_search_error missing_message="To prevent enumeration attacks, a 404 is returned for any non 200 status code returned from your connector." omit_internal_error omit_missing_header omit_error_malformed />
 
 <JSON title="Example Successful Response JSON" src="users/login-migrated-response.json" />
+
+### Response Parsing Errors
+
+FusionAuth reads the response into a FusionAuth User object. When a field in the response has the wrong type or format, FusionAuth can't read the response, and the Login API returns a `404`. FusionAuth also writes an error to <Breadcrumb>System -> Event Log</Breadcrumb>, even when **Enable debug logging** is off.
+
+The error says that FusionAuth failed to parse the HTTP response as JSON, even when the response body is valid JSON. The `Cause` part of the error names the field that failed and the type that FusionAuth expected. For example, an OIDC-style identifier in **`user.id`** produces the following error:
+
+```plaintext
+com.inversoft.rest.JSONException : Message: Failed to parse the HTTP response as JSON. Actual HTTP response body:
+{"user":{"id":"auth0|5f1b2c3d4e","email":"richard@piedpiper.com","fullName":"Richard Hendricks"}}
+Cause: com.fasterxml.jackson.databind.exc.InvalidFormatException
+Message: Cannot deserialize value of type `java.util.UUID` from String "auth0|5f1b2c3d4e": UUID has to be represented by standard 36-char representation
+ at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 15] (through reference chain: io.fusionauth.domain.api.LoginResponse["user"]->io.fusionauth.domain.User["id"])
+```
+
+The following values cause this error:
+
+* A value other than a [UUID](/docs/apis/data-types#uuids) in an Id field, such as **`user.id`** or **`user.registrations[].applicationId`**.
+* A date in **`user.birthDate`** in a format other than `YYYY-MM-DD`.
+* A date string in an [instant](/docs/apis/data-types#instants) field, such as **`user.insertInstant`**. Instants are numbers of milliseconds.
+* A value other than an object in **`user.data`**.
+
+When the response has no **`user.id`**, FusionAuth discards the user, and the Login API returns a `404`. FusionAuth logs the reason only when **Enable debug logging** is on.
+
+For the type of each field, see the [User response body](/docs/apis/users/retrieve#response-body).
 
 ### Using the Generic Connector as the System of Record
 
