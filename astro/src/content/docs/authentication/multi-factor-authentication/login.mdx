@@ -1,0 +1,123 @@
+---
+title: MFA at Login
+htmlTitle: Multi-Factor Authentication at Login
+description: Learn how users complete an MFA challenge on the hosted login pages or on your own pages with the Login API, including recovery codes.
+tags: mfa, multi-factor authentication, two-factor, mfa login, mfa challenge, recovery code, hosted login pages, login api, two-factor login, mfa troubleshooting
+order: 48
+---
+import MfaTroubleshooting from 'src/content/docs/authentication/_mfa-troubleshooting.mdx';
+
+When FusionAuth decides to challenge a user, the user enters a code after the password. The [[hosted login pages]] handle the challenge for you. When you build your own login pages, your pages handle the challenge with the [[Login API]].
+
+To decide when FusionAuth challenges a user, see [Configure MFA](/docs/authentication/multi-factor-authentication/configure).
+
+## Hosted Login Pages
+
+The hosted login pages use the following pages for the MFA challenge:
+
+* The method picker lists the user's MFA methods. The OAuth two-factor methods template renders the method picker.
+* The code page asks for the code. The OAuth two-factor template renders the code page.
+
+### Choose the Method
+
+After the password, FusionAuth either shows the method picker or picks a method and goes straight to the code page. The following diagram shows how FusionAuth decides:
+
+```mermaid title="How the hosted login pages decide whether to show the MFA method picker."
+flowchart TD
+    password[User enters a password] --> lastUsed{Does the user have a last used method?}
+    lastUsed --> |Yes| voice{Is the method SMS, and does the Tenant turn on SMS and voice?}
+    lastUsed --> |No| authOnly{Are all of the user's methods authenticators?}
+    authOnly --> |Yes| codePage[Code page]
+    authOnly --> |No| picker[Method picker]
+    voice --> |Yes| picker
+    voice --> |No| send[Send a code for an email or SMS method]
+    picker --> |User chooses a method| send
+    send --> codePage
+```
+
+The last used method is the method from the user's last successful MFA login. A user with one method always has a last used method, so FusionAuth skips the method picker. Adding a method doesn't make the method the last used method. A user with two methods sees the method picker until the first login with one of the methods.
+
+When the user has one SMS method and the Tenant turns on both SMS and voice, FusionAuth shows the method picker anyway. The user then chooses between a text message and a voice call.
+
+For an email or SMS method, FusionAuth sends the code before the code page appears. For an authenticator method, the user reads the code from the app.
+
+The method picker lists each method by name, or by type when the method has no name. When the user has recovery codes left, the method picker also lists a recovery code option with the number of codes left:
+
+<Screenshot id="authenticate-mfa-challenge-methods" url="/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&response_type=code&redirect_uri=https%3A%2F%2Fexample.com&prompt=login" alt="The MFA method picker on the hosted login pages, listing an email method, an authenticator method, and recovery codes." />
+
+### Enter the Code
+
+The code page asks the user to enter the verification code or a recovery code. The code page accepts a recovery code for every method, so the user doesn't need to choose the recovery code option first:
+
+<Screenshot id="authenticate-mfa-code-sent" url="/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&response_type=code&redirect_uri=https%3A%2F%2Fexample.com&prompt=login" alt="The MFA code page on the hosted login pages, after FusionAuth sent a code by SMS." />
+
+When the user has an email or SMS method, the code page shows a link back to the method picker. The user follows the link to resend a code, to choose another method, or to choose the recovery code option. A user with only authenticator methods never sees the method picker.
+
+When the user selects the option to trust the computer, FusionAuth skips the challenge on the same browser until the trust expires. The Tenant's **Two-Factor trust** duration controls how long the trust lasts.
+
+### Customize the Pages
+
+To change the MFA pages, edit the OAuth two-factor methods and OAuth two-factor templates in an [advanced theme](/docs/theme/advanced-themes). For email, SMS, and voice methods, also edit the templates for the messages that carry the code. For more information, see [Email Templates](/docs/email/email-templates) and [Message Templates](/docs/messengers/message-templates).
+
+When you customize the pages, keep the following behavior in mind:
+
+* The recovery code option on the method picker is only a hint. Removing the option doesn't stop users from entering a recovery code on the code page.
+* The `code` message sets the text in the code field. When you change the message, keep the mention of recovery codes, because the text is the only hint for a user with only authenticator methods.
+* The **`recoverCodesAvailable`** variable holds the number of recovery codes the user has left.
+
+For the variables on each page, see [OAuth Two-Factor Methods](/docs/theme/advanced-themes/template-variables#oauth-two-factor-methods) and [OAuth Two-Factor](/docs/theme/advanced-themes/template-variables#oauth-two-factor) in the template variables reference. To change the text without an advanced theme, see [Messages](/docs/theme/localization#messages).
+
+## Build Your Own Login Pages
+
+When you build your own login pages, handle the MFA challenge with the Login API and the Two-Factor APIs.
+
+<Steps>
+1. Call the [Login API](/docs/apis/login) with the user's login Id and password:
+
+   ```shell title="Log the user in"
+   API_KEY=...
+   REQUEST_PAYLOAD='{...}'
+
+   curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/login' -d $REQUEST_PAYLOAD
+   ```
+
+   <JSON title="Login request" src="login/request.json" />
+
+   When FusionAuth challenges the user, the Login API returns a `242` status code. The response contains a **`twoFactorId`** and the user's **`methods`**:
+
+   <JSON title="Login response when FusionAuth challenges the user" src="login/login-two-factor-response.json" />
+
+   Store the **`twoFactorId`** for the next steps. The **`twoFactorId`** expires after the Tenant's **Two-Factor login** duration, five minutes by default.
+1. When the user has more than one method, show the **`methods`** and ask the user to choose one. Also offer a recovery code.
+1. When the user chooses an email or SMS method, send a code with the [Send a Multi-Factor Code During Login or Step Up API](/docs/apis/two-factor/send-a-multi-factor-code-during-login-or-step-up). Set **`methodId`** to the method's **`id`**:
+
+   ```shell title="Send a code"
+   REQUEST_PAYLOAD='{...}'
+   TWO_FACTOR_ID=... # from the login response
+
+   curl -XPOST -H 'Content-type: application/json' 'https://local.fusionauth.io/api/two-factor/send?twoFactorId='$TWO_FACTOR_ID -d $REQUEST_PAYLOAD
+   ```
+
+   <JSON title="Send a code request" src="two-factor/send/twoFactorId-request.json" />
+
+   FusionAuth sends the code to the email address or phone number of the method, which can differ from the user's login Id. To resend a code, call the API again. Each send cancels the codes sent before.
+1. Build a page that collects the code. Accept a recovery code in the same field.
+1. Call the [Complete Multi-Factor Authentication API](/docs/apis/login/complete-mfa) with the **`twoFactorId`** and the code:
+
+   ```shell title="Complete the login"
+   API_KEY=...
+   REQUEST_PAYLOAD='{...}'
+
+   curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/login' -d $REQUEST_PAYLOAD
+   ```
+
+   <JSON title="Complete the login request" src="login/two-factor/request.json" />
+
+   The API returns `200` and the user's tokens when the code is valid, and `421` when the code is wrong.
+</Steps>
+
+To skip the challenge at later logins from the same device, set **`trustComputer`** to `true` in the complete request. The response then contains a **`twoFactorTrustId`**. Send the **`twoFactorTrustId`** with later Login API requests. For more information, see the [Login API](/docs/apis/login).
+
+## Troubleshooting
+
+<MfaTroubleshooting />

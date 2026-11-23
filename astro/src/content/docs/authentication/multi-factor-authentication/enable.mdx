@@ -1,0 +1,133 @@
+---
+title: Enable MFA for a User
+htmlTitle: Enable Multi-Factor Authentication for a User
+description: Learn how to add MFA methods to a user with the account pages, the Admin UI, the Two-Factor APIs, or the User API.
+tags: mfa, multi-factor authentication, two-factor, enable mfa, add mfa method, totp, authenticator, recovery codes, mfa enrollment, import mfa
+order: 47
+---
+import MfaMigration from 'src/content/docs/authentication/_mfa-migration.mdx';
+
+FusionAuth asks for a second factor only from a user who has an MFA method, unless the login policy is `Required`. Before you add methods, turn on each method on the Tenant. For more information, see [Configure MFA](/docs/authentication/multi-factor-authentication/configure).
+
+Add MFA methods to a user in one of the following ways:
+
+* The self-service account pages let users add and remove their own methods. The account pages require the Starter plan or higher. For more information, see [Enable or Disable MFA](/docs/users/account-management#enable-or-disable-mfa) in the account pages guide.
+* When the login policy is `Required`, the [[hosted login pages]] ask a user without a method to add one during login.
+* The Admin UI adds methods to your own account only.
+* The Two-Factor APIs let you build your own enrollment pages. The user proves access to the method with a code.
+* The User API writes methods to a user directly, with no code. Use the User API to import methods from another system.
+
+## Add a Method to Your Own Admin Account
+
+The Admin UI can't add a method to another user, because adding a method requires a code from the user's device, email, or phone.
+
+<Steps>
+1. Navigate to <Breadcrumb>Users</Breadcrumb> and open your own user.
+1. Click the <Breadcrumb>Multi-Factor</Breadcrumb> tab.
+1. Click <Breadcrumb>Add two-factor</Breadcrumb>.
+
+   <Screenshot id="authenticate-mfa-admin-add-method" url="/admin/user/manage/00000000-0000-0000-0000-100000000001#multi-factor" showHash alt="The Multi-Factor tab of a user in the Admin UI, with the Add two-factor button outlined." height={1200}>
+     <Highlight selector="#multi-factor a[href$='/enable']" />
+   </Screenshot>
+1. Select a method and enter the code that FusionAuth sends or that your authenticator app shows.
+1. When the method is your first method, store the recovery codes that FusionAuth shows.
+</Steps>
+
+The Multi-Factor tab then lists the method:
+
+<Screenshot id="authenticate-mfa-admin-one-method" url="/admin/user/manage/00000000-0000-0000-0000-100000000001#multi-factor" showHash alt="The Multi-Factor tab of a user in the Admin UI, with one email method." height={1200} />
+
+## Build Your Own Enrollment Pages
+
+The Two-Factor APIs add a method only after the user enters a valid code. The check confirms that the user controls the authenticator app, email address, or phone.
+
+<Steps>
+1. For an authenticator method, create a shared secret. Call the [Generate a Secret API](/docs/apis/two-factor/generate-a-secret), or generate a random secret yourself:
+
+   ```shell title="Generate a shared secret"
+   API_KEY=...
+
+   curl -XGET -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/secret'
+   ```
+
+   <JSON title="Generate a shared secret response" src="two-factor/secret/response.json" />
+
+   Show the secret to the user as a QR code or as text. The user adds the secret to an authenticator app, such as Google Authenticator or Authy.
+1. For an email or SMS method, send a code with the [Send a Multi-Factor Code When Enabling MFA API](/docs/apis/two-factor/send-a-multi-factor-code-when-enabling-mfa):
+
+   ```shell title="Send a code"
+   API_KEY=...
+   REQUEST_PAYLOAD='{...}'
+
+   curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/send' -d $REQUEST_PAYLOAD
+   ```
+
+   <JSON title="Send a code request" src="two-factor/send/enable-userId-request.json" />
+
+   The Tenant's **Two-Factor one-time code** duration controls how long the code stays valid.
+1. Build a page that collects the code. An email or SMS user enters the code from the message. An authenticator user enters the code that the app shows.
+1. Call the [Enable Multi-Factor API](/docs/apis/two-factor/enable-multi-factor) with the **`method`** and the **`code`**. For an email method, include the **`email`**:
+
+   ```shell title="Enable an email method"
+   API_KEY=...
+   USER_ID=...
+   REQUEST_PAYLOAD='{...}'
+
+   curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/two-factor/'$USER_ID -d $REQUEST_PAYLOAD
+   ```
+
+   <JSON title="Enable an email method request" src="two-factor/enable-email-request.json" />
+
+   For an authenticator method, include the **`secret`** from the first step:
+
+   <JSON title="Enable an authenticator method request" src="two-factor/enable-authenticator-request.json" />
+
+   In FusionAuth `1.68.0` and later, set **`name`** to give the method a label that the user recognizes, such as `Work email`. The hosted login pages show the name in the list of methods.
+1. When the method is the user's first method, the response contains the user's [recovery codes](/docs/authentication/multi-factor-authentication#recovery-codes). Show the codes to the user once, and ask the user to store the codes:
+
+   <JSON title="Enable response with recovery codes" src="two-factor/response-with-recovery-codes.json" />
+</Steps>
+
+To add another method, repeat the steps. The response for a second method has no body, and the recovery codes don't change.
+
+The user's Multi-Factor tab in the Admin UI then lists each method:
+
+<Screenshot id="authenticate-mfa-admin-two-methods" url="/admin/user/manage/00000000-0000-0000-0000-100000000001#multi-factor" showHash alt="The Multi-Factor tab of a user in the Admin UI, with an email method and an authenticator method." height={1200}>
+  <Highlight selector="#multi-factor table" />
+</Screenshot>
+
+## Add Methods With the User API
+
+The [User API](/docs/apis/users) adds methods without a code, so FusionAuth never checks that the user controls the email address, phone, or authenticator app. When the email address or phone number is wrong, the user never receives a code and can't log in with the method. Use the User API when you already trust the method, such as during an import.
+
+Send a `PATCH` request with the new methods in **`twoFactor.methods`**:
+
+```shell title="Add two email methods to a user"
+API_KEY=...
+
+curl -XPATCH -H 'Content-type: application/json' -H "Authorization: $API_KEY" \
+'https://local.fusionauth.io/api/user/00000000-0000-0000-0000-000000000004' \
+-d '{
+  "user": {
+    "twoFactor": {
+      "methods": [{
+        "method": "email",
+        "email": "dinesh@aol.com"
+      }, {
+        "method": "email",
+        "email": "dinesh@gmail.com"
+      }]
+    }
+  }
+}'
+```
+
+A `PATCH` request adds the methods to the user's existing methods. To replace the methods, retrieve the user, change **`twoFactor.methods`**, and send the user back with a `PUT` request. For more information, see [The PATCH HTTP Method](/docs/apis/#the-patch-http-method).
+
+For an authenticator method, set **`secret`** to a base64-encoded secret, and give the secret to the user for the authenticator app.
+
+FusionAuth generates recovery codes for the first method, but the User API doesn't return the codes. To give the user codes, call the [Generate Recovery Codes API](/docs/apis/two-factor/generate-recovery-codes) after you add the method.
+
+## Import MFA Methods
+
+<MfaMigration />
