@@ -264,6 +264,14 @@ import ReleaseNotification from 'src/content/docs/_shared/_release-notification.
 
 Code examples in guides come from tested projects in `astro/extractedcode`, shown with the `ExtractedCode` component. See [Tested code examples](README.md#tested-code-examples) in the README.
 
+Mark commands that the reader runs in a terminal as `shell-session`, including `curl` requests, and leave out the `$` prompt. Use `shell` or `bash` only for the contents of a script file:
+
+````plaintext
+```shell-session
+npm install @fusionauth/cli
+```
+````
+
 ### Screenshots
 
 Screenshots come from a headless browser pointed at a local FusionAuth instance. Declare each screenshot where the image belongs:
