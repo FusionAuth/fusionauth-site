@@ -1,0 +1,87 @@
+---
+version: "1.71.0"
+date: 2026-11-17
+description: "FusionAuth <code>1.71.0</code> adds a rate limit for passwordless one-time codes, adds support for passkeys in native Android apps, rejects redirect URLs that contain a fragment, improves performance for users with many group roles, and fixes security issues. We recommend that all customers update."
+---
+import Item from 'src/components/docs/release-notes/ReleaseNotesItem.astro';
+
+<Item category="known-issue" issue="3600" resolvedIn="1.71.1">
+Logins through some SAML v2 Identity Providers, such as Google Workspace, fail with the error `The SAML AuthnResponse object could not be parsed or verified`. The error details mention a namespace prefix, such as `xsd`. The failure affects signed SAML responses from IdPs that use exclusive canonicalization without `InclusiveNamespaces`.
+</Item>
+
+<Item category="fix" issue="3570" impact="caution">
+*FusionAuth now rejects an authorized redirect URL that contains a fragment* when you create or update an Application and on requests to [`/oauth2/authorize`](/docs/apis/oauth/authorize). *If an Application has an authorized redirect URL with a fragment, remove the fragment before you update.*
+
+Previously, FusionAuth accepted URLs containing fragments, appending the authorization code after the fragment where OAuth clients can't read the code. However, [RFC 6749](https://datatracker.ietf.org/doc/rfc6749) does not allow fragments in redirect URLs.
+</Item>
+
+<Item category="security" impact="caution">
+Improved SAML request and response parsing security. Test your SAML integrations as part of the upgrade process, and contact support if you experience any issues.
+</Item>
+
+<Item category="enhancement">
+Added a tenant rate limit for passwordless one-time codes. The rate limit caps how many one-time codes a user can submit to the [Complete a Passwordless Login API](/docs/apis/passwordless/complete-a-passwordless-login) within the configured period. Beyond the limit, FusionAuth returns a `429` status code, even for the correct code. The rate limit applies only to applications that use the `FormField` passwordless login strategy.
+
+The rate limit is disabled by default and requires an Enterprise plan. To enable the rate limit, set **`tenant.rateLimitConfiguration.passwordlessLogin`** with the [Tenant API](/docs/apis/tenants), or go to <Breadcrumb>Tenants -> Your Tenant -> Security -> Rate limit settings</Breadcrumb> in the Admin UI. For more information, see [Customizable Rate Limiting](/docs/security/account-protection/advanced-threat-detection#customizable-rate-limiting).
+</Item>
+
+<Item category="enhancement">
+Renamed the Reactor page in the Admin UI to <Breadcrumb>Plan & Features</Breadcrumb> and moved the page above <Breadcrumb>Help</Breadcrumb> in the sidebar. The page now groups features by category, shows the plan each feature requires, and links to the settings and docs for each feature. The **License key** field now ignores whitespace before and after the key.
+</Item>
+
+<Item category="enhancement">
+Added help text, tooltips, and links to the docs throughout [entity management](/docs/concepts/types/entity-management) in the Admin UI.
+</Item>
+
+<Item category="enhancement">
+Changed "requests" to "permissions" in the `scope-consent-optional` and `scope-consent-agreement` [theme messages](/docs/theme/localization) on the OAuth consent page. Translated message files keep the previous wording until they are updated.
+</Item>
+
+<Item category="enhancement">
+Updated the section and field labels for [[CIMD]] client registration settings in the Admin UI.
+</Item>
+
+<Item category="enhancement" issue="3576">
+Added support for passkeys in native Android apps that use the Android Credential Manager API. FusionAuth now accepts `android:apk-key-hash:<hash>` origins that you list in **Allowed Android origins** on the <Breadcrumb>Tenants -> Your Tenant -> WebAuthn</Breadcrumb> tab, or in **`tenant.webAuthnConfiguration.allowedOrigins`** with the [Tenant API](/docs/apis/tenants). When you configure Android origins, you must also set a **Relying party Id**. For more information, see [Native Android Apps](/docs/authentication/passkeys/#native-android-apps).
+</Item>
+
+<Item category="fix" issue="3476">
+Fixed slow responses from the [Registration API](/docs/apis/registrations) and the [User API](/docs/apis/users) when a user belongs to a Group that grants many application roles. Removing the user from such a Group now also clears the Group's roles from the user's registration.
+</Item>
+
+<Item category="fix" issue="3580">
+Fixed an issue where the [Import Users API](/docs/apis/users/import) returned a `500` error when an imported user's Id already existed. The API now returns a `400` error with details when **`validateDbConstraints`** is `true`.
+</Item>
+
+<Item category="fix">
+Fixed an issue where the entity search on the <Breadcrumb>Entity grants</Breadcrumb> tab of a user and of an entity in the Admin UI returned no results.
+</Item>
+
+<Item category="fix">
+Fixed an issue where malformed requests to `/.well-known` logged an error with a stack trace.
+</Item>
+
+<Item category="security">
+FusionAuth now verifies the signature of the Java runtime that the startup scripts download for ZIP, RPM, and DEB installations. The Docker image already verified the Java runtime when FusionAuth built the image.
+</Item>
+
+<Item category="security">
+Fixed multiple issues in passwordless login and MFA enrollment.
+</Item>
+
+<Item category="security">
+Fixed multiple issues in the OAuth Device Authorization Grant.
+</Item>
+
+<Item category="security">
+Fixed an issue with Tenant isolation when retrieving refresh tokens with a Tenant-scoped API key.
+</Item>
+
+<Item category="internal" issue="3585">
+Updated the following dependencies:
+
+Java:
+
+* JVM `25.0.4.1_1` -> `25.0.5_8`
+* `io.fusionauth:fusionauth-samlv2` `2.0.3` -> `2.1.0`
+</Item>

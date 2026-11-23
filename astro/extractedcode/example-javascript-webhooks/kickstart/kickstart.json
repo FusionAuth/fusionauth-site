@@ -1,0 +1,68 @@
+{
+  "variables": {
+    "apiKey": "33052c8a-c283-4e96-9d2a-eb1215c69f8f",
+    "adminEmail": "admin@example.com",
+    "password": "password",
+    "webhookId": "c8f5a3d4-6f1e-4b8a-9e2d-7a1b3c5d9e01",
+    "webhookSecret": "a3c1f0e2b9d84c7e8f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c"
+  },
+  "apiKeys": [
+    {
+      "key": "#{apiKey}",
+      "description": "Unrestricted API key"
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "url": "/api/user/registration",
+      "body": {
+        "user": {
+          "email": "#{adminEmail}",
+          "password": "#{password}"
+        },
+        "registration": {
+          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+          "roles": [
+            "admin"
+          ]
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/tenant/#{FUSIONAUTH_TENANT_ID}",
+      "body": {
+        "tenant": {
+          "eventConfiguration": {
+            "events": {
+              "user.create": {
+                "enabled": true,
+                "transactionType": "None"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/webhook/#{webhookId}",
+      "body": {
+        "webhook": {
+          "connectTimeout": 1000,
+          "readTimeout": 2000,
+          "description": "Local event context listener",
+          "eventsEnabled": {
+            "user.create": true
+          },
+          "global": true,
+          "url": "http://host.docker.internal:3030/webhook",
+          "headers": {
+            "Authorization": "#{webhookSecret}"
+          }
+        }
+      }
+    }
+  ]
+}

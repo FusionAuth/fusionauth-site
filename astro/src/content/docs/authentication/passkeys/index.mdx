@@ -39,6 +39,9 @@ The settings in this first section are applied to all applications in the tenant
   <APIField name="Relying party name">
     The Relying Party name is a human-readable name that may be displayed by the browser or operating system during a WebAuthn ceremony. The value should be something that your users will recognize such as the name of your company or service. If the field is left blank, FusionAuth will default the value to **Issuer** from the <Breadcrumb>General</Breadcrumb> tab during WebAuthn ceremonies.
   </APIField>
+  <APIField name="Allowed Android origins" since="1.71.0">
+    The origins of native Android apps that are allowed to perform WebAuthn ceremonies with this tenant. For more information, see [Native Android Apps](#native-android-apps).
+  </APIField>
   <APIField name="Enable debug logging">
     Enable this toggle to create event logs with detailed information on WebAuthn failures. This can be useful for troubleshooting WebAuthn integration issues.
   </APIField>
@@ -85,6 +88,27 @@ There are a couple of options to override the Relying Party Id to improve the fl
 
 * `auth.piedpiper.com` - this value would allow users to share the same passkey between `auth.piedpiper.com` and `m.auth.piedpiper.com`, but it would prevent users from registering or using passkeys on the `login.piedpiper.com` legacy domain
 * `piedpiper.com` - this value functions the same as using `auth.piedpiper.com` with the added benefit that users would be allowed to register and use passkeys on `login.piedpiper.com` _and_ continue using those same passkeys once they are migrated to the new `auth.piedpiper.com` domain
+
+### Native Android Apps
+
+<AvailableSince since="1.71.0" />
+
+Native Android apps can register and use passkeys with the [Android Credential Manager API](https://developer.android.com/identity/sign-in/credential-manager). Native apps don't run on a website, so Android doesn't send a browser request origin during the WebAuthn ceremony. Instead, Android sends an origin derived from the app's signing certificate in the format `android:apk-key-hash:<hash>`. FusionAuth rejects an Android origin unless the origin is listed in **Allowed Android origins**.
+
+To allow a native Android app:
+
+1. Find the SHA-256 fingerprint of each certificate used to sign your app. To print the fingerprint of a keystore, run `keytool -list -v -keystore <keystore-file>`. When Google Play signs your app, the Google Play Console shows the fingerprints of the app signing key and the upload key.
+1. Convert each fingerprint from hex to base64url without padding, and add the `android:apk-key-hash:` prefix. The following command converts a fingerprint in the colon-separated format that `keytool` prints:
+
+   ```shell-session
+   echo "14:6D:E9:83:C5:73:24:C8:A4:A0:B6:89:24:3C:01:30:B3:8F:1F:1B:A9:8E:7B:69:97:F0:3C:E6:1A:44:5F:F8" \
+     | tr -d ':' | xxd -r -p | base64 | tr '+/' '-_' | tr -d '=' \
+     | sed 's/^/android:apk-key-hash:/'
+   ```
+
+   The command prints `android:apk-key-hash:FG3pg8VzJMikoLaJJDwBMLOPHxupjntpl_A85hpEX_g`.
+1. Add each value to **Allowed Android origins**. Add a separate entry for every signing certificate in use, such as debug, upload, and Google Play app signing keys.
+1. When **Allowed Android origins** has any entries, set **Relying party Id**. FusionAuth requires the **Relying party Id** in this case, because FusionAuth can't derive a Relying Party Id from an Android origin. Use a domain that is associated with your app through [Digital Asset Links](https://developer.android.com/identity/sign-in/credential-manager#add-support-dal) so that passkeys are shared between your app and your website.
 
 ### Workflow settings
 

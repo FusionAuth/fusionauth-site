@@ -1,0 +1,68 @@
+---
+title: Session Settings
+htmlTitle: Session and Token Lifetime Settings
+description: Reference for every FusionAuth setting that controls session, token, and logout behavior.
+tags: sessions, session timeout, session lifetime, refresh tokens, jwt duration, sso session, logout url, logout behavior, reference
+relatedPinFirst: authentication/sessions/configure-session-lifetimes
+order: 80
+---
+
+FusionAuth applies lifetime changes to existing sessions and tokens at the next check, not only to new ones. For how to choose values, see [Configure Session Lifetimes](/docs/authentication/sessions/configure-session-lifetimes).
+
+## SSO Session
+
+| Setting | Location | API field | Unit | Default | Behavior |
+|---|---|---|---|---|---|
+| **Session timeout** | <Breadcrumb>Tenants -> OAuth</Breadcrumb> | **`tenant.httpSessionMaxInactiveInterval`** | Seconds | `3600` | Idle timeout. Each SSO login to an Application resets the timeout. No absolute maximum. No Application override. |
+| **Keep me signed in** | Login form | **`rememberDevice`** form field | Boolean | Unchecked | FusionAuth creates the SSO session only when the value is `true`. |
+| **Allow access token bootstrap to create SSO session** | <Breadcrumb>Tenants -> OAuth</Breadcrumb> | **`tenant.ssoConfiguration.allowAccessTokenBootstrap`** | Boolean | `false` | Lets an authorize request with an access token create an SSO session. For more information, see [Create an SSO Session From an Access Token](/docs/authentication/sessions/enable-sso#create-an-sso-session-from-an-access-token). |
+
+## Refresh Tokens
+
+Refresh tokens bound [[centralized session::centralized sessions]] and decide how long a client can get new access tokens. Set the values on the Tenant. To override the values for one Application, turn on **Enable application-level JWT override** on the Application's <Breadcrumb>JWT</Breadcrumb> tab. Application values never apply to the SSO session.
+
+| Setting | Location | API field | Unit | Default | Behavior |
+|---|---|---|---|---|---|
+| **Duration** | <Breadcrumb>JWT</Breadcrumb> tab | **`jwtConfiguration.refreshTokenTimeToLiveInMinutes`** | Minutes | `43200` | Lifetime of the refresh token, measured as the policy describes. |
+| **Expiration policy** | <Breadcrumb>JWT</Breadcrumb> tab | **`jwtConfiguration.refreshTokenExpirationPolicy`** | `Fixed`, `SlidingWindow`, or `SlidingWindowWithMaximumLifetime` | `Fixed` | `Fixed` counts from login. `SlidingWindow` counts from the last refresh grant. `SlidingWindowWithMaximumLifetime` counts from the last refresh grant, up to **Maximum lifetime** after login. |
+| **Maximum lifetime** | <Breadcrumb>JWT</Breadcrumb> tab | **`jwtConfiguration.refreshTokenSlidingWindowConfiguration.maximumTimeToLiveInMinutes`** | Minutes | None | Absolute limit for `SlidingWindowWithMaximumLifetime`. Must be at least **Duration**. |
+| **Refresh token usage** | <Breadcrumb>JWT</Breadcrumb> tab | **`jwtConfiguration.refreshTokenUsagePolicy`** | `Reusable` or `OneTimeUse` | `Reusable` | `OneTimeUse` issues a new refresh token value at each refresh grant. The refresh token Id stays the same. |
+| **Refresh token revocation** | <Breadcrumb>Tenants -> JWT</Breadcrumb> | **`tenant.jwtConfiguration.refreshTokenRevocationPolicy`** | Booleans | On password change, on action preventing login | Revokes all of a user's refresh tokens on the selected events. Tenant only. For the events, see [Revoke Sessions Automatically](/docs/authentication/sessions/revoke-sessions#revoke-sessions-automatically). |
+
+A refresh grant counts as use for the sliding window. Retrieving a refresh token with the API doesn't. For every refresh token field, including the one-time use grace period, see [Refresh Token Settings](/docs/concepts/types/tenants#refresh-token-settings).
+
+## Access Tokens
+
+| Setting | Location | API field | Unit | Default | Behavior |
+|---|---|---|---|---|---|
+| **JWT duration** | <Breadcrumb>JWT</Breadcrumb> tab of the Tenant or Application | **`jwtConfiguration.timeToLiveInSeconds`** | Seconds | `3600` | Lifetime of access tokens and Id tokens. Fixed from issue. Revoking a refresh token doesn't shorten the lifetime. |
+
+## Logout
+
+| Setting | Location | API field | Behavior |
+|---|---|---|---|
+| **Logout URL** | <Breadcrumb>Applications -> OAuth</Breadcrumb> | **`application.oauthConfiguration.logoutURL`** | FusionAuth loads the URL in an iframe during front-channel logout, and redirects to the URL after logout when the request has no `post_logout_redirect_uri`. |
+| **Logout behavior** | <Breadcrumb>Applications -> OAuth</Breadcrumb> | **`application.oauthConfiguration.logoutBehavior`** | `AllApplications` (default) loads every **Logout URL** in the Tenant. `RedirectOnly` loads none. |
+| **Logout URL** | <Breadcrumb>Tenants -> OAuth</Breadcrumb> | **`tenant.logoutURL`** | Fallback redirect for Applications without a **Logout URL**. |
+
+## Request Parameters
+
+| Parameter | Endpoint | Behavior |
+|---|---|---|
+| `offline_access` scope | `/oauth2/authorize` | Requests a refresh token, which a centralized session needs. |
+| `prompt=login` | `/oauth2/authorize` | Shows the login form even when the SSO session exists. |
+| `prompt=none` | `/oauth2/authorize` | Never shows a form. Returns `login_required` when no SSO session exists. |
+| `max_age` | `/oauth2/authorize` | Shows the login form when the last login is older than the value, in seconds. `0` always shows the form. |
+| `post_logout_redirect_uri` | `/oauth2/logout` | Redirect after logout. Must match an **Authorized redirect URL** of the Application. |
+| `id_token_hint` | `/oauth2/logout` | Identifies the Application and session in place of `client_id`. FusionAuth accepts an expired Id token. |
+
+For every parameter, see the [Authorize endpoint](/docs/apis/oauth/authorize) and the [Logout endpoint](/docs/apis/oauth/logout).
+
+## Related Trust Settings
+
+The following settings let a user skip a login step on a known device. Neither setting creates or extends an SSO session.
+
+| Setting | Location | API field | Unit | Default | Behavior |
+|---|---|---|---|---|---|
+| **Two-Factor Trust** | <Breadcrumb>Tenants -> Advanced</Breadcrumb> | **`tenant.externalIdentifierConfiguration.twoFactorTrustIdTimeToLiveInSeconds`** | Seconds | `2592000` | How long a user can skip MFA on a device after a successful challenge. |
+| **Device trust duration** | <Breadcrumb>Tenants -> Security</Breadcrumb> | **`tenant.ssoConfiguration.deviceTrustTimeToLiveInSeconds`** | Seconds | `31536000` | How long FusionAuth trusts a device before the user must complete CAPTCHA again. |

@@ -1,0 +1,1 @@
+1. The application running in the browser moves the JWT from the URI to local storage

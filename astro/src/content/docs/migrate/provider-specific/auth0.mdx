@@ -66,7 +66,7 @@ Here's a brief video walking through the export process, which is further docume
 * [Tenants](https://auth0.com/docs/get-started/auth0-overview/create-tenants) are a high level construct which groups other entities such as users and applications together. FusionAuth calls these [Tenants](/docs/concepts/types/tenants) as well. FusionAuth supports a multi-tenant configuration by default.
 * [Organizations](https://auth0.com/docs/manage-users/organizations) allow admin users within an Auth0 Tenant to manage a separate set of users and functionality. In FusionAuth, you'd model this with tenants and use the API or SDKs. 
 * For Auth0, [Roles and Permissions](https://auth0.com/docs/manage-users/access-control/rbac) provide information about what your users can do in your custom or off the shelf applications. FusionAuth has [Roles](/docs/concepts/types/roles) and they are defined on an Application by Application basis.
-* Refresh tokens allow JWTs to be refreshed without a user logging in. These can be migrated using the [Import Refresh Tokens API](/docs/apis/users/import-refresh-tokens).
+* Refresh tokens allow JWTs to be refreshed without a user logging in. Auth0 doesn't export refresh tokens, so you collect the tokens from your clients. For more information, see [Migrating Refresh Tokens](#migrating-refresh-tokens).
 
 <Aside type="note">
 In FusionAuth, users are explicitly mapped to applications with a [Registration](/docs/concepts/types/registrations).
@@ -298,6 +298,45 @@ You may also want to assign Roles, or associate users with Groups, by creating t
 ### The Final Destination of Imported Users
 
 <FinalDestination migration_source_dir={migration_source_dir} />
+
+## Migrating Refresh Tokens
+
+Auth0 doesn't export refresh tokens. The [Auth0 Management API](https://auth0.com/docs/api/management/v2/users/get-refresh-tokens-for-user) returns refresh token metadata, such as the expiration, but not the token value. Without the token values, every user logs in again after the cutover. When a forced login is costly, such as for a TV app or for users who rarely log in, collect each refresh token from the client that holds the token.
+
+The [Import Refresh Tokens API](/docs/apis/users/import-refresh-tokens) stores the token string you send. A client can then present the Auth0 refresh token to FusionAuth in a [refresh token grant](/docs/apis/oauth/token#refresh-token-grant-request), and FusionAuth returns FusionAuth tokens.
+
+```mermaid title="A client moves an Auth0 refresh token to FusionAuth on first use."
+sequenceDiagram
+    participant Client
+    participant Service as Migration Service
+    participant Auth0
+    participant FusionAuth
+    Client ->> FusionAuth : Refresh token grant with the Auth0 refresh token
+    FusionAuth ->> Client : invalid_grant, because FusionAuth doesn't know the token
+    Client ->> Service : Send the Auth0 refresh token
+    Service ->> Auth0 : Refresh token grant
+    Auth0 ->> Service : Auth0 tokens, with the Auth0 user Id in sub
+    Service ->> FusionAuth : Import the Auth0 refresh token for the matching User
+    Service ->> Client : Import complete
+    Client ->> FusionAuth : Refresh token grant with the Auth0 refresh token
+    FusionAuth ->> Client : FusionAuth access token
+```
+
+The client tries FusionAuth first, so the client calls the migration service only once per token. The client sends the refresh token grant with the client Id of the FusionAuth Application that the service imported the token for.
+
+The migration service is a backend you build, and the service holds a FusionAuth API key. Never call the Import Refresh Tokens API from the client.
+
+The migration service runs the following checks before the import:
+
+* The service confirms the token with Auth0. Without this check, anyone could send any string, and FusionAuth would accept the string as a refresh token for any User. The Auth0 response also identifies the user.
+* The service finds the FusionAuth User. The import script stores the original Auth0 user Id in **user.data**, so the service can look up the User by that value.
+* The service sets **`validateDbConstraints`** to `true` on the import request. FusionAuth then returns a `400` response code with details for a duplicate token or a missing registration, instead of a `500` response code.
+
+Import the Users and their registrations before you import any refresh tokens. FusionAuth calculates the expiration of an imported token from **`startInstant`** and the refresh token settings of the Tenant or Application, not from the Auth0 expiration.
+
+The confirmation step needs Auth0. Deploy the client changes before you shut down Auth0, and leave the migration service running for the lifetime of your Auth0 refresh tokens. A user who doesn't open the client during that window logs in again after Auth0 shuts down.
+
+Importing a refresh token doesn't create a FusionAuth SSO session. A user who reaches the FusionAuth login page still logs in. For more information, see [Migrating Refresh Tokens](/docs/migrate#migrating-refresh-tokens).
 
 ## MFA Enrollments
 

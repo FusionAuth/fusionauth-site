@@ -8,6 +8,51 @@ export const releaseCategories = [
   { id: 'security',            label: 'Security',            color: '#566f98' },
   { id: 'internal',            label: 'Internal',            color: '#71717a' },
   { id: 'sdk',                 label: 'SDK',                 color: '#d98fd9' },
-  { id: 'breaking-change',     label: 'Breaking Change',     color: '#aaaa33' },
   { id: 'database-migration',  label: 'Database Migration',  color: '#aa1d48' },
 ];
+
+// `impact` prop on <Item>; icon names match the Aside caution and danger types
+export const releaseImpacts = [
+  {
+    id: 'caution',
+    label: 'Requires review',
+    chipLabel: 'Requires Review',
+    description: 'This change may affect a small number of installations. Test before you update.',
+    color: '#ea580c',
+    icon: 'caution',
+  },
+  {
+    id: 'breaking',
+    label: 'Breaking change',
+    chipLabel: 'Breaking Change',
+    description: 'This change requires action in some installations. Read the note before you update.',
+    color: '#dc2626',
+    icon: 'danger',
+  },
+];
+
+// filter chips only, match items by `impact` instead of category
+export const impactFilters = releaseImpacts.map(i => ({ id: `impact-${i.id}`, label: i.chipLabel, color: i.color }));
+
+const impactHint = 'impact="breaking" or impact="caution"';
+
+export function getReleaseCategory(id: string) {
+  const cat = releaseCategories.find(c => c.id === id);
+  if (!cat) {
+    const hint = id === 'breaking-change' ? ` Use a regular category and add ${impactHint}.` : '';
+    throw new Error(`Unknown release note category "${id}".${hint}`);
+  }
+  return cat;
+}
+
+export function getReleaseImpact(id: string) {
+  const impact = releaseImpacts.find(i => i.id === id);
+  if (!impact) {
+    throw new Error(`Unknown release note impact "${id}". Use ${impactHint}.`);
+  }
+  return impact;
+}
+
+export function rejectBreakingFlag(props: Record<string, unknown>) {
+  if ('breaking' in props) throw new Error(`The release note \`breaking\` flag was removed. Use ${impactHint} instead.`);
+}

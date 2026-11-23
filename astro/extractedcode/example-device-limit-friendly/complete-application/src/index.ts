@@ -1,71 +1,56 @@
 // :snippet-start: top
 import FusionAuthClient from "@fusionauth/typescript-client";
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import cookieParser from 'cookie-parser';
 import pkceChallenge from 'pkce-challenge';
-import { GetPublicKeyOrSecret, verify } from 'jsonwebtoken';
+import { GetPublicKeyOrSecret, JwtPayload, verify } from 'jsonwebtoken';
 import jwksClient, { RsaSigningKey } from 'jwks-rsa';
 import * as path from 'path';
+import { randomBytes } from 'crypto';
 
-// Add environment variables
 import * as dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-const port = 8080; // default port to listen
+const port = 8080;
 
-if (!process.env.clientId) {
-  console.error('Missing clientId from .env');
-  process.exit();
-}
-if (!process.env.clientSecret) {
-  console.error('Missing clientSecret from .env');
-  process.exit();
-}
-if (!process.env.fusionAuthURL) {
-  console.error('Missing clientSecret from .env');
-  process.exit();
-}
-const clientId = process.env.clientId;
-const clientSecret = process.env.clientSecret;
-const fusionAuthURL = process.env.fusionAuthURL;
-const fusionAPIKey = process.env.fusionAuthAPIKey;
-const maxDeviceCount: number = parseInt(process.env.maxDeviceCount || '2');
-
-// Validate the token signature, make sure it wasn't expired
-const validateUser = async (userTokenCookie: { access_token: string }) => {
-  // Make sure the user is authenticated.
-  if (!userTokenCookie || !userTokenCookie?.access_token) {
-    return false;
-  }
-  try {
-    let decodedFromJwt;
-    await verify(userTokenCookie.access_token, await getKey, undefined, (err, decoded) => {
-      decodedFromJwt = decoded;
-    });
-    return decodedFromJwt;
-  } catch (err) {
-    console.error(err);
-    return false;
+for (const name of ['clientId', 'clientSecret', 'fusionAuthURL', 'fusionAuthAPIKey']) {
+  if (!process.env[name]) {
+    console.error(`Missing ${name} from .env`);
+    process.exit(1);
   }
 }
+const clientId = process.env.clientId as string;
+const clientSecret = process.env.clientSecret as string;
+const fusionAuthURL = process.env.fusionAuthURL as string;
+const fusionAPIKey = process.env.fusionAuthAPIKey as string;
+const maxDeviceCount = parseInt(process.env.maxDeviceCount || '2');
 
+const jwks = jwksClient({ jwksUri: `${fusionAuthURL}/.well-known/jwks.json` });
 
-const getKey: GetPublicKeyOrSecret = async (header, callback) => {
-  const jwks = jwksClient({
-    jwksUri: `${fusionAuthURL}/.well-known/jwks.json`
+const getKey: GetPublicKeyOrSecret = (header, callback) => {
+  jwks.getSigningKey(header.kid)
+    .then((key) => callback(null, (key as RsaSigningKey).getPublicKey()))
+    .catch((err) => callback(err));
+};
+
+// resolves to the decoded token, or false when the token is missing, expired, or badly signed
+const validateUser = (userTokenCookie?: { access_token?: string }): Promise<JwtPayload | string | false> => {
+  if (!userTokenCookie?.access_token) {
+    return Promise.resolve(false);
+  }
+  return new Promise((resolve) => {
+    verify(userTokenCookie.access_token as string, getKey, undefined, (err, decoded) => resolve(err || !decoded ? false : decoded));
   });
-  const key = await jwks.getSigningKey(header.kid) as RsaSigningKey;
-  var signingKey = key?.getPublicKey() || key?.rsaPublicKey;
-  callback(null, signingKey);
-}
+};
 
-//Cookies
 const userSession = 'userSession';
 const userToken = 'userToken';
-const userDetails = 'userDetails'; //Non Http-Only with user info (not trusted)
+// not HttpOnly, so the page script can read it; never trust it on the server
+const userDetails = 'userDetails';
 
 const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
+const apiClient = new FusionAuthClient(fusionAPIKey, fusionAuthURL);
 
 // :snippet-start: views-hbs
 app.set('views', path.join(__dirname, '../templates'));
@@ -73,76 +58,59 @@ app.set('view engine', 'hbs');
 // :snippet-end:
 
 app.use(cookieParser());
-/** Decode Form URL Encoded & json data */
-app.use(express.urlencoded());
+// extended parsing turns the picker's deviceIds[] checkboxes into an array
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // :snippet-end:
 
-// Static Files
 // :snippet-start: static
 app.use('/static', express.static(path.join(__dirname, '../static/')));
 // :snippet-end:
 
 // :snippet-start: security
-
-async function validateUserToken(req: any, res: any, next: any) {
-  const userTokenCookie = req.cookies[userToken];
-  const decodedUser = await validateUser(userTokenCookie);
-  if (!decodedUser) {
+async function validateUserToken(req: Request, res: Response, next: NextFunction) {
+  const decoded = await validateUser(req.cookies[userToken]);
+  if (!decoded || typeof decoded === 'string' || !decoded.sub) {
     res.redirect(302, '/');
-  } else {
-    next();
+    return;
   }
+  res.locals.userId = decoded.sub;
+  next();
 }
 // :snippet-end:
-
 
 // :snippet-start: get-active-devicelist
-/**
-  Middleware to check if the user has exceeded the device limit. Redirects to the device-limit page if so.
- */
-async function checkDeviceLimit(req: any, res: any, next: any) {
-  const deviceLimit = await getActiveDeviceList(req);
-  if (deviceLimit.length >= maxDeviceCount) {
-    return res.redirect(302, '/device-limit');
-  } else {
-    next();
-  }
+interface Device {
+  id: string;
+  deviceName: string;
+  startInstant: string;
+  ipAddress: string;
 }
 
+async function checkDeviceLimit(req: Request, res: Response, next: NextFunction) {
+  const otherDevices = await getActiveDeviceList(req, res);
+  if (otherDevices.length >= maxDeviceCount) {
+    res.redirect(302, '/device-limit');
+    return;
+  }
+  next();
+}
 
-async function getActiveDeviceList(req: any): Promise<any> {
-
-  const userDetailsCookie = req.cookies[userDetails];
-  const userTokenCookie = req.cookies[userToken];
-  const userId = userDetailsCookie.id;
-  const tokenResponse = await fetch(`${fusionAuthURL}/api/jwt/refresh?userId=${userId}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `${fusionAPIKey}`
-    }
-  });
-  const tokens: any = await tokenResponse.json();
-
-  // Filter tokens that are for this application:
-  tokens.refreshTokens = tokens.refreshTokens.filter((t: any) => t.applicationId && t.applicationId === clientId);
-  // remove the current session token
-  tokens.refreshTokens = tokens.refreshTokens.filter((t: any) => t.token !== userTokenCookie.refresh_token);
-
-  // Map to a simple object for display, removing token values etc.
-  return tokens.refreshTokens.map((t: any) => ({
-    id: t.id,
-    deviceName: t.metaData.device.name,
-    startInstant: new Date(t.startInstant).toUTCString(),
-    ipAddress: t.metaData.lastAccessedAddress
-  }));
-
+// the user's other sessions for this application, without token values
+async function getActiveDeviceList(req: Request, res: Response): Promise<Device[]> {
+  const currentRefreshTokenId = req.cookies[userToken]?.refresh_token_id;
+  const { refreshTokens = [] } = (await apiClient.retrieveRefreshTokens(res.locals.userId)).response;
+  return refreshTokens
+    .filter((t) => t.applicationId === clientId && t.id !== currentRefreshTokenId)
+    .map((t) => ({
+      id: t.id as string,
+      deviceName: t.metaData?.device?.name ?? 'Unknown device',
+      startInstant: new Date(t.startInstant as number).toUTCString(),
+      ipAddress: t.metaData?.device?.lastAccessedAddress ?? ''
+    }));
 }
 // :snippet-end:
-
-
 
 // :snippet-start: homepage
 app.get("/", async (req, res) => {
@@ -150,77 +118,63 @@ app.get("/", async (req, res) => {
   if (await validateUser(userTokenCookie)) {
     res.redirect(302, '/account');
   } else {
-    const stateValue = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const stateValue = randomBytes(32).toString('base64url');
     const pkcePair = await pkceChallenge();
     res.cookie(userSession, { stateValue, verifier: pkcePair.code_verifier, challenge: pkcePair.code_challenge }, { httpOnly: true });
-
     res.sendFile(path.join(__dirname, '../templates/home.html'));
   }
 });
 // :snippet-end:
 
 // :snippet-start: login
-app.get('/login', (req, res, next) => {
+app.get('/login', (req, res) => {
   const userSessionCookie = req.cookies[userSession];
-
-  // Cookie was cleared, just send back (hacky way)
+  // the home page sets the state and PKCE cookie
   if (!userSessionCookie?.stateValue || !userSessionCookie?.challenge) {
     res.redirect(302, '/');
+    return;
   }
 
   res.redirect(302, `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&scope=offline_access&redirect_uri=http://localhost:${port}/oauth-redirect&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256`)
-  //res.redirect(302, `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=http://localhost:${port}/oauth-redirect&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256`);
 });
 // :snippet-end:
 
 // :snippet-start: oauth-redirect
-app.get('/oauth-redirect', async (req, res, next) => {
-  // Capture query params
+app.get('/oauth-redirect', async (req, res) => {
   const stateFromFusionAuth = `${req.query?.state}`;
   const authCode = `${req.query?.code}`;
 
-  // Validate cookie state matches FusionAuth's returned state
   const userSessionCookie = req.cookies[userSession];
   if (stateFromFusionAuth !== userSessionCookie?.stateValue) {
-    console.log("State doesn't match. uh-oh.");
-    console.log("Saw: " + stateFromFusionAuth + ", but expected: " + userSessionCookie?.stateValue);
+    console.error('state mismatch, restarting login');
     res.redirect(302, '/');
     return;
   }
 
   try {
-    // Exchange Auth Code and Verifier for Access Token
     const accessToken = (await client.exchangeOAuthCodeForAccessTokenUsingPKCE(authCode,
       clientId,
       clientSecret,
       `http://localhost:${port}/oauth-redirect`,
       userSessionCookie.verifier)).response;
 
-    if (!accessToken.access_token) {
-      console.error('Failed to get Access Token')
+    const decoded = await validateUser(accessToken);
+    if (!decoded || typeof decoded === 'string' || !decoded.sub) {
+      res.redirect(302, '/');
       return;
     }
-    res.cookie(userToken, accessToken, { httpOnly: true })
+    res.cookie(userToken, accessToken, { httpOnly: true });
 
-    //TODO: Remove this logging line:
-    console.log(`Access Token: ${accessToken.access_token.substring(0, 10)} ...`);
-    console.log(`Refresh Token: ${accessToken.refresh_token?.substring(0, 10)} ...`);
-
-    // user api no longer accepts JWTs, so look the user up by the token sub
-    const { sub } = JSON.parse(Buffer.from((accessToken.access_token as string).split('.')[1], 'base64url').toString());
-    const userResponse = (await new FusionAuthClient(fusionAPIKey as string, fusionAuthURL).retrieveUser(sub)).response;
+    const userResponse = (await apiClient.retrieveUser(decoded.sub)).response;
     if (!userResponse?.user) {
-      console.error('Failed to get User from access token, redirecting home.');
       res.redirect(302, '/');
+      return;
     }
     res.cookie(userDetails, userResponse.user);
-
     res.redirect(302, '/account');
-  } catch (err: any) {
+  } catch (err) {
     console.error(err);
-    res.status(err?.statusCode || 500).json(JSON.stringify({
-      error: err
-    }))
+    res.status(500).json({ error: 'login failed' });
   }
 });
 // :snippet-end:
@@ -228,20 +182,19 @@ app.get('/oauth-redirect', async (req, res, next) => {
 
 
 // :snippet-start: account
-app.get("/account", validateUserToken, checkDeviceLimit, async (req: any, res: any) => {
+app.get("/account", validateUserToken, checkDeviceLimit, (req, res) => {
   res.sendFile(path.join(__dirname, '../templates/account.html'));
 });
 // :snippet-end:
 
 // :snippet-start: make-change
 // :snippet-start: make-change-check-devicelimit
-app.get("/make-change", validateUserToken, checkDeviceLimit, async (req, res) => {
+app.get("/make-change", validateUserToken, checkDeviceLimit, (req, res) => {
   res.sendFile(path.join(__dirname, '../templates/make-change.html'));
 });
 // :snippet-end:
 
-// This endpoint is called by Javascript as an API call, so the security is handled a bit differently,
-// as we don't want to redirect the user, we just want to block the request.
+// the page script calls this route, so answer 403 instead of redirecting
 app.post("/make-change", async (req, res) => {
   const userTokenCookie = req.cookies[userToken];
   if (!await validateUser(userTokenCookie)) {
@@ -271,9 +224,9 @@ app.post("/make-change", async (req, res) => {
 
       message = `${message} ${count} ${name}`;
     }
-    `${message}!`;
-  } catch (ex: any) {
-    error = `There was a problem converting the amount submitted. ${ex.message}`;
+    message = `${message}!`;
+  } catch (ex) {
+    error = `There was a problem converting the amount submitted. ${(ex as Error).message}`;
   }
   res.json(JSON.stringify({
     error,
@@ -284,27 +237,19 @@ app.post("/make-change", async (req, res) => {
 // :snippet-end:
 
 // :snippet-start: logout
-app.get('/logout', (req, res, next) => {
+app.get('/logout', (req, res) => {
   res.redirect(302, `${fusionAuthURL}/oauth2/logout?client_id=${clientId}`);
 });
 // :snippet-end:
 
 // :snippet-start: oauth-logout
-app.get('/oauth2/logout', async (req, res, next) => {
-  console.log('Logging out...')
+app.get('/oauth2/logout', async (req, res) => {
+  const refreshTokenId = req.cookies[userToken]?.refresh_token_id;
+  // a revoked refresh token no longer counts toward the device limit
+  if (refreshTokenId) {
+    await apiClient.revokeRefreshTokenById(refreshTokenId).catch((err) => console.error(err));
+  }
 
-  const userTokenCookie = req.cookies[userToken];
-  const refreshTokenId = userTokenCookie?.refresh_token_id;
-  // Revoke the refresh token
-  const result = await fetch(`${fusionAuthURL}/api/jwt/refresh/${refreshTokenId}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `${fusionAPIKey}`
-    }
-  });
-
-  // Clear all cookies. 
   res.clearCookie(userSession);
   res.clearCookie(userToken);
   res.clearCookie(userDetails);
@@ -314,42 +259,30 @@ app.get('/oauth2/logout', async (req, res, next) => {
 
 // :snippet-start: device-limiting
 // :snippet-start: device-limiting-maxcount
-app.get("/device-limit", validateUserToken,  async (req, res) => {
-
-    const devices = await getActiveDeviceList(req);
-    res.render('device-limit', { devices, maxDeviceCount });
+app.get("/device-limit", validateUserToken, async (req, res) => {
+  const devices = await getActiveDeviceList(req, res);
+  res.render('device-limit', { devices, maxDeviceCount });
 });
 // :snippet-end:
 
 // :snippet-start: device-limiting-validatetoken
 app.post("/device-limit", validateUserToken, async (req, res) => {
-
-  // Get the refresh token id from the form
-  const refreshTokenIds = req.body.deviceIds;
-  if (!refreshTokenIds) return res.redirect('/device-limit');
-
-  // revoke the refresh tokens for the selected devices
-  for (const refreshTokenId of refreshTokenIds) {
-    try {
-      const result = await fetch(`${fusionAuthURL}/api/jwt/refresh/${refreshTokenId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `${fusionAPIKey}`
-        }
-      });
-    }
-    catch (err) {
-      console.error(err);
-    }
+  const refreshTokenIds: string[] = [].concat(req.body.deviceIds ?? []);
+  if (refreshTokenIds.length === 0) {
+    res.redirect(302, '/device-limit');
+    return;
   }
 
-  res.redirect('/account');
+  // only revoke tokens that belong to this user and application
+  const ownDeviceIds = new Set((await getActiveDeviceList(req, res)).map((device) => device.id));
+  for (const refreshTokenId of refreshTokenIds.filter((id) => ownDeviceIds.has(id))) {
+    await apiClient.revokeRefreshTokenById(refreshTokenId).catch((err) => console.error(err));
+  }
+  res.redirect(302, '/account');
 });
 // :snippet-end:
 // :snippet-end:
 
-// start the Express server
 // :snippet-start: app
 app.listen(port, () => {
   console.log(`server started at http://localhost:${port}`);

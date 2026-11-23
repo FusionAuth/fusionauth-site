@@ -4,19 +4,63 @@ description: Learn how FusionAuth delegates login to external identity providers
 tags: identity providers, social login, federation, external login, oauth providers, saml, oidc, google login, facebook login
 order: 200
 ---
-import { YouTube } from '@astro-community/astro-embed-youtube';
 
-Identity providers allow you to defer authentication to third party services. A user can log in with an existing account at a third party and create an account within FusionAuth. Users don't have to create a new identity within FusionAuth, but can instead leverage their existing identity at the third party. This is often called [[identity federation]].
+An Identity Provider lets users log in to FusionAuth with an account from a third party, such as Google, Okta, or a corporate SAML server. The third party checks the user's credentials. FusionAuth then logs the user in to your application and issues FusionAuth tokens. This approach is often called [[identity federation]].
 
-FusionAuth supports social identity providers, such as Apple, Facebook, Google and Twitter. Other providers implementing OpenID Connect or SAMLv2 are supported as well. As a fail safe, if the IdP you want to use does not fall into one of the previously mentioned types, if the IdP can produce a JWT, you can integrate using the External JWT Identity Provider.
+Users don't create a password in FusionAuth. Your application still integrates with FusionAuth only, so your application code stays the same for every provider.
 
-You may use the [[hosted login pages]] to provide <Breadcrumb>Sign In</Breadcrumb> buttons or build your own integrations and complete the login with a token from the provider. The latter option works well if you are writing your own login pages.
+To set up a provider, see [Add an Identity Provider](/docs/authentication/identity-providers).
 
-Identity providers are assigned on an application by application basis and can be managed from the Admin UI or the [identity provider API](/docs/apis/identity-providers/).
+## How Login Works
 
-Learn more about the various [identity providers](/docs/authentication/identity-providers/), including which ones are supported and how to integrate this functionality into your site.
+The following diagram shows a login through an Identity Provider on the [[hosted login pages]]:
 
-Here's a brief video covering some aspects of identity providers:
+```mermaid title="Login with an external Identity Provider through the FusionAuth hosted login pages."
+sequenceDiagram
+    participant User as User's Browser
+    participant App as Application
+    participant FusionAuth
+    participant IdP as Identity Provider
+    User ->> App : Requests login
+    App ->> User : Redirects to FusionAuth
+    User ->> FusionAuth : Clicks the Identity Provider button
+    FusionAuth ->> User : Redirects to the Identity Provider
+    User ->> IdP : Logs in
+    IdP ->> User : Redirects to FusionAuth with a code or assertion
+    User ->> FusionAuth : Sends the code or assertion
+    FusionAuth ->> FusionAuth : Validates the response
+    FusionAuth ->> FusionAuth : Links or creates the FusionAuth user
+    FusionAuth ->> User : Redirects to the Application with an authorization code
+    User ->> App : Sends the authorization code
+    App ->> FusionAuth : Exchanges the code for tokens
+```
 
-<YouTube id="5oycV6LYXTM" />
+The application sends the user to FusionAuth, and the user picks a provider on the FusionAuth login page. The provider authenticates the user and sends the user back to FusionAuth. FusionAuth validates the response. For an OpenID Connect or OAuth provider, FusionAuth exchanges the code for tokens at the provider. FusionAuth then finds or creates the FusionAuth user. Finally, FusionAuth completes a standard OAuth login with the application. The application never talks to the provider.
 
+## How FusionAuth Links Users
+
+FusionAuth stores a [[Account Link::link]] between the user's identity at the provider and a FusionAuth user. On later logins, FusionAuth uses the link to find the same FusionAuth user.
+
+A linking strategy decides how FusionAuth matches a new external identity to a FusionAuth user. For example, FusionAuth can link on a matching email address, or create a new user for every new identity. For the full list, see [Linking Strategies](/docs/authentication/identity-providers#linking-strategies).
+
+## Integration Options
+
+You can use an Identity Provider in the following ways:
+
+* On the hosted login pages, FusionAuth shows a button for each provider and handles the redirects. You enable each provider per Application.
+* On your own login page, your application calls the provider directly. Your application then sends the provider's code or token to the Complete Login API, and FusionAuth returns the user and tokens. For the API for each provider, see [Identity Providers APIs](/docs/apis/identity-providers).
+
+The External JWT Identity Provider works only through the API. When your application already has a JWT from a third party, the External JWT Identity Provider exchanges that JWT for a FusionAuth login.
+
+## Provider Types
+
+FusionAuth supports the following types of Identity Providers:
+
+<CardGrid>
+  <Card href="/docs/authentication/identity-providers#social-identity-providers" icon="/img/icons/social-sign-on.svg" title="Social" description="Google, Apple, Facebook, and other consumer and gaming accounts." />
+  <Card href="/docs/authentication/identity-providers#enterprise-identity-providers" icon="/img/icons/enterprise-sign-on.svg" title="Enterprise" description="Okta, Azure AD, ADFS, and other corporate login systems." />
+  <Card href="/docs/authentication/identity-providers/overview-oidc" icon="/img/icons/what-is-oidc.svg" darkIcon="/img/icons/what-is-oidc-dark.svg" title="OpenID Connect" description="Any provider that supports OpenID Connect." />
+  <Card href="/docs/authentication/identity-providers/overview-samlv2" icon="/img/icons/saml-vs-oauth.svg" darkIcon="/img/icons/saml-vs-oauth-dark.svg" title="SAML v2" description="Any provider that supports SAML v2." />
+  <Card href="/docs/authentication/identity-providers/external-jwt" icon="/img/icons/building-secure-signed-jwts.svg" darkIcon="/img/icons/building-secure-signed-jwts-dark.svg" title="External JWT" description="Any third party that issues a signed JWT." />
+  <Card href="/docs/authentication/identity-providers" icon="/img/icons/identity-authentication.svg" title="Add an Identity Provider" description="Configure a provider and enable the provider for an Application." />
+</CardGrid>

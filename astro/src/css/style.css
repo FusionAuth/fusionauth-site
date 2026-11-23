@@ -4,6 +4,7 @@
 @import "astro-better-release-notes/style.css";
 @import "astro-better-steps/style.css";
 @import "astro-better-nav-bar/style.css";
+@import "astro-better-glossary/styles.css";
 @plugin "@tailwindcss/typography";
 @source "../../node_modules/astro-better-toc/src/index.js";
 @source "../../node_modules/astro-better-toc/src/InlineTOC.astro";
@@ -140,7 +141,7 @@
       prose-li:text-sm prose-p:text-sm prose-p:font-normal prose-p:leading-6 
       dark:prose-p:text-slate-300 prose-p:text-slate-800
       /* Tables */
-      prose-table:w-full prose-table:table-fixed prose-table:rounded
+      prose-table:w-full prose-table:table-auto prose-table:rounded
       prose-th:border prose-th:border-slate-400/75 dark:prose-th:border-slate-700
       prose-th:bg-slate-200/70 dark:prose-th:bg-slate-700/50
       prose-th:px-4 prose-th:py-4 prose-th:text-base prose-th:font-semibold prose-th:leading-5
@@ -153,11 +154,10 @@
       @apply text-slate-800 dark:text-slate-300;
     }
 
-    @media (max-width: 767px) {
-      table {
-        display: block;
-        overflow-x: auto;
-      }
+    /* auto layout sizes columns by content; a markdown table wider than the column scrolls, a narrow one shrinks to fit */
+    table:not(.abt-table, .abt-grid-table) {
+      display: block;
+      overflow-x: auto;
     }
 
     td code,
@@ -642,6 +642,8 @@ foreignObject { overflow: visible; }
   .plan-badge-essentials       { @apply bg-purple-200 text-purple-800 dark:bg-purple-800  dark:text-purple-200; }
   .plan-badge-enterprise     { @apply bg-purple-300 text-purple-900 dark:bg-purple-700  dark:text-purple-100; }
   .plan-badge-licensed       { @apply bg-slate-100  text-slate-700  dark:bg-slate-700   dark:text-slate-200;  }
+  /* linked badges (glossary, event types) darken on hover instead of taking link styles */
+  a.plan-badge               { @apply transition-[filter] motion-reduce:transition-none hover:brightness-90 dark:hover:brightness-125; }
 
   /* --- Details / Disclosure (uses astro-better-details) --- */
   .abt-details {
@@ -693,31 +695,8 @@ foreignObject { overflow: visible; }
 #sidebar-toggle:checked ~ #layout-outer #side-nav { display: block; }
 
 /* --- Glossary terms --- */
-/* body-color dotted underline sets terms apart from links; span is not-prose */
-.glossary-term { @apply relative; }
-.glossary-term > a { @apply underline decoration-dotted decoration-2 underline-offset-4 decoration-indigo-700 dark:decoration-indigo-400; }
-
-.glossary-tooltip {
-  /* display:none, not visibility, so a hidden tooltip can't widen the page */
-  @apply hidden absolute bottom-full left-1/2 -translate-x-1/2 z-100 py-2;
-  /* transparent py-2 bridges the gap, so the pointer can move onto the tooltip */
-  width: max-content;
-  max-width: min(24rem, calc(100vw - 2rem));
-
-  @supports (position-area: top) {
-    @apply fixed inset-auto translate-x-0;
-    position-area: top;
-    position-try-fallbacks: flip-block;
-  }
-}
-
-.glossary-tooltip-body {
-  /* transparent border shows as an outline in forced-colors mode */
-  @apply block px-3 py-2 rounded border border-transparent shadow-xl bg-slate-900 text-white text-sm text-left leading-relaxed not-italic font-normal;
-  @apply dark:bg-slate-700 dark:ring-1 dark:ring-white/10;
-}
-
-@media (hover: hover) {
-  .glossary-term:hover:not([data-dismissed]) > .glossary-tooltip { @apply block; }
-}
-.glossary-term:has(> a:focus-visible):not([data-dismissed]) > .glossary-tooltip { @apply block; }
+/* the package styles load globally, because release notes reuse the tooltip */
+html.dark .glossary-tooltip-body { @apply ring-1 ring-white/10; }
+:is(.glossary-entry-term, .glossary-entry-definition, .glossary-entry-meta) a { @apply hover:text-orange-800 dark:hover:text-orange-200; }
+/* dl. outranks the package rule, which the component also loads later in the cascade */
+dl.glossary-list { @apply grid-cols-1 sm:grid-cols-2 xl:grid-cols-3; }

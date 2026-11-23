@@ -24,7 +24,7 @@ const modifiedAccountTheme = {
   order: 4,
   apply: async () => {
     const change = readFileSync(join(projectRoot, 'src/content/docs/users/account-management/customizing-account-management.mdx'), 'utf-8')
-      .match(/```ftl\n(<p>This is now modified[\s\S]*?)```/)[1];
+      .match(/```ftl\n([\s\S]*?user\.birthDate[\s\S]*?)```/)[1];
     const { theme: source } = await apiRequest(`/api/theme/${defaultThemeId}`);
     const accountIndex = source.templates.accountIndex.replace(/(\n\s*<\/div>\n\n\s*\[#-- Edit button)/, `\n${change}$1`);
     await apiRequest(`/api/theme/${accountThemeId}`, 'POST', { sourceThemeId: defaultThemeId, theme: { name: 'Account' } });

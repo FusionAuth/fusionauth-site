@@ -7,24 +7,23 @@ There are two groups of Identity Providers.  The first group are all very simila
 - OAuth IdPs: Epic, Google, Sony, Steam, Twitch, Xbox
 - Others: Apple, External JWT, Facebook, HYPR, LinkedIn, OpenId, SAML V2
 
-For the OAuth group they each have an "Overview" and then include the following tree (only the first 2 levels are listed, there are other, but you will find them as you go) of `adoc` files:
+Every IdP page holds its own headings and operations (Create, Retrieve, Update, Delete, and Complete Login), and includes partials for the request and response bodies. Partials don't contain headings.
 
-- _oauth-idp-operations.mdx
-  - _oauth-idp-request-body.mdx
-  - _oauth-idp-response-body.mdx
-  - _identity-provider-login-request-body.mdx
-  - _identity-provider-login-response-body.mdx
-    
-Before including the `_oauth-idp-operations.mdx` all the needed `idp_` attributes are defined and they carry through into all the sub-includes.
+The OAuth group pages (for example, `steam.mdx`) include:
 
-For the "others" group the basic structure of the `_oauth-idp-operations.mdx` is defined in the top level `mdx` (e.g. `apple.mdx`) and then IdP specific request and response `mdx` files are included.
+- _oauth-idp-request-body.mdx
+- _oauth-idp-response-body.mdx
+- _identity-provider-login-request-body.mdx
+- _identity-provider-login-response-codes.mdx
+- _identity-provider-login-response-cookies.mdx
 
-For example:
-- apple.mdx
-  - _apple-request-body.mdx
-  - _apple-response-body.mdx
-  - _identity-provider-login-request-body.mdx
-  - _identity-provider-login-response-body.mdx
+The "others" group pages include IdP-specific partials instead. For example, `apple.mdx` includes:
+
+- _apple-request-body.mdx
+- _apple-response-body.mdx
+- _identity-provider-login-request-body.mdx
+- _identity-provider-login-response-codes.mdx
+- _identity-provider-login-response-cookies.mdx
 
 However, you must define `idp_display_name` for these providers.
     
