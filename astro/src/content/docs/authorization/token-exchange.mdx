@@ -42,6 +42,61 @@ sequenceDiagram
 
 Token exchange also accepts JWTs from other issuers. A service that receives a token from a trusted external Identity Provider can exchange it for a FusionAuth access token, so downstream services only need to validate tokens from FusionAuth.
 
+## Use Cases
+
+RFC 8693 supports designs beyond the to-do example. The following sections describe two designs that customers build with token exchange.
+
+### Exchange Tokens at an MCP Gateway
+
+An MCP client, such as Claude, calls a tool on your MCP server with a FusionAuth access token. The token's audience is the MCP server. An API gateway in front of your internal services accepts the MCP token, and no internal service sees the MCP token. For each internal call, the gateway exchanges the MCP token for a token scoped to the target service. When an internal service calls another service, the internal service exchanges its own token again. Each exchange adds an actor to the `act` claim, so every service sees the User and each service in the chain:
+
+```mermaid title="An API gateway exchanges an MCP token, and an internal service exchanges the result again."
+sequenceDiagram
+    participant Client as MCP Client
+    participant Gateway as API Gateway
+    participant FA as FusionAuth
+    participant Invoice as Invoice Service
+    participant Payment as Payment Service
+
+    Client->>Gateway: Call the invoice tool<br/>aud: MCP server
+    Gateway->>FA: Exchange the token<br/>audience=invoice-service
+    FA->>Gateway: aud: invoice, sub: User, act: gateway
+    Gateway->>Invoice: Read invoice status
+    Invoice->>FA: Exchange the token<br/>audience=payment-service
+    FA->>Invoice: aud: payment, sub: User<br/>act: invoice, nested act: gateway
+    Invoice->>Payment: Request invoice payment
+    Payment->>Invoice: Payment status
+    Invoice->>Gateway: Invoice status
+    Gateway->>Client: Tool result
+```
+
+The gateway validates the MCP token before the first exchange. The gateway verifies the signature with FusionAuth's public keys at `/.well-known/jwks.json`, or with the [JWT validation API](/docs/apis/jwt/validate-a-jwt). The gateway also confirms that `aud` names the MCP server.
+
+The gateway and the invoice service each need an Entity with **Act as token exchange client** enabled. The chain in this example contains two actors, which matches the default **Max act claim depth** of `2`. To control which services the gateway can reach, use Entity Grants or a policy lambda. For how to protect an MCP server with FusionAuth, see [MCP Server Access](/docs/authorization/mcp-server-access).
+
+### Normalize Cloud Workload Identities
+
+A service that runs in a cloud provider can get a workload identity token from that provider. Services in other clouds can't validate that token unless they trust each provider. Instead, the service exchanges the cloud token for a FusionAuth access token. Downstream services then validate tokens from one issuer:
+
+```mermaid title="A service exchanges a cloud workload identity token for a FusionAuth access token."
+sequenceDiagram
+    participant Invoice as Invoice Service
+    participant Cloud as Cloud Identity Provider
+    participant FA as FusionAuth
+    participant Authz as Authorization Service
+    participant Payment as Payment Service
+
+    Invoice->>Cloud: Request a workload identity token
+    Cloud->>Invoice: JWT, sub: workload
+    Invoice->>FA: Exchange the token<br/>subject_token_type=jwt<br/>audience=payment-service
+    FA->>Authz: Policy lambda asks whether<br/>the workload can call the payment service
+    Authz->>FA: Allow
+    FA->>Invoice: aud: payment, sub: workload, act: invoice
+    Invoice->>Payment: Request with the FusionAuth token
+```
+
+To accept the cloud provider's tokens, add the provider's issuer to the Tenant's **Allowed issuers**. Then send the token with the `urn:ietf:params:oauth:token-type:jwt` subject token type. FusionAuth finds the issuer's signing keys through OpenID Connect discovery, so the provider must publish a discovery document. The issued token keeps the workload's `sub`, and FusionAuth doesn't require a matching User. Set **Token exchange policy engine** to `Lambda`, because the Entity policy engine only accepts FusionAuth access tokens. The exchanging service still authenticates to FusionAuth with the client credentials of its Entity. To consult an external authorization service before FusionAuth issues the token, call the service from a [Token Exchange Policy lambda](/docs/lambdas/token-exchange/token-exchange-policy) with [Lambda HTTP Connect](/docs/lambdas/lambda-remote-api-calls).
+
 ## Delegation and Impersonation
 
 RFC 8693 describes two kinds of exchange. With impersonation, the issued token is indistinguishable from a token issued directly to the subject. With delegation, the issued token identifies the actor separately from the subject.
@@ -158,7 +213,9 @@ A [Token Exchange Populate lambda](/docs/lambdas/token-exchange/token-exchange-p
 
 ## Auditing
 
-FusionAuth records every token exchange attempt, successful or not, in the Token Exchange audit log. Each entry includes the exchanger, the subject token's `jti`, `sub`, and `iss`, the requested and granted values, the policy decision, the outcome, and the actor chain of the issued token.
+FusionAuth records every token exchange attempt, successful or not, in the Token Exchange audit log. Each entry includes the exchanger, the subject token's `jti`, `sub`, and `iss`, the requested and granted values, the policy decision, the outcome, the `intent` request parameter, and the actor chain of the issued token.
+
+An exchanger can describe the purpose of an exchange in the `intent` request parameter. FusionAuth records the value for allowed and denied exchanges, but the policy engine never receives `intent`. When an AI agent or another automated client requests an exchange, `intent` captures what the client tried to do. When the policy engine denies an exchange, review the intent to decide whether the exchanger needs broader access.
 
 Find these entries in the Admin UI under <Breadcrumb>System -> Token Exchange Log</Breadcrumb>. Users need the `admin` or `token_exchange_log_viewer` role to view them. To search entries, use the [Search the Token Exchange Audit Log](/docs/apis/system/search-the-token-exchange-audit-log) API. To trace the full chain of exchanges behind an issued token, use the [Retrieve a Token Exchange Chain](/docs/apis/system/retrieve-a-token-exchange-chain) API.
 

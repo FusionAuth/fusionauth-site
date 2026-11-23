@@ -36,7 +36,7 @@ Readers notice these patterns, and the patterns make a page read as generated. _
 Decide what kind of page you're writing, and keep the page to that job. Link to other pages instead of mixing types.
 
 * A tutorial teaches by building something end to end. Tutorials live in Get Started and QuickStarts.
-* A how-to guide gets the reader through one task. Start with the goal and the prerequisites, then give the steps, then show how to confirm the result.
+* A how-to guide gets the reader through one task. Start with the goal and the prerequisites, then give the steps in a `<Steps>` component, then show how to confirm the result.
 * A concept page explains what a feature is and how the feature behaves. Concept pages don't contain step lists.
 * A reference page lists facts to look up, such as fields, options, or limits. Keep reference terse and complete.
 * A section overview orients the reader and links to the pages in the section. Set `sectionIndex: true` in the overview's front matter to list the section's pages after the content. `sectionIndex` only lists pages directly in the folder, so a section whose pages all live in subfolders needs `<ChildCards depth={2} />` at the end of the body instead. Otherwise, use a `<ChildCards />` component in the body only when the list belongs mid-page.
@@ -98,7 +98,9 @@ The Related section at the bottom of every page comes from front matter `tags`. 
 
 * Use an ordered list only when order matters, such as steps. Use an unordered list for options, prerequisites, and features.
 * Number every ordered item `1.`, and Astro renders the real numbers. Start unordered items with `*`.
+* Wrap the steps of a high-level task in the `<Steps>` component, especially the main task of a how-to guide or tutorial. `<Steps>` renders the ordered list as numbered blocks that readers can follow at a glance. Put only the ordered list inside `<Steps>`, and indent code blocks and images under their step. When partials supply the steps, put the partials inside one `<Steps>`, and the numbering continues across the partials. Leave short lists, such as a two-step aside, as a plain ordered list.
 * Introduce a list with a sentence that ends in a colon.
+* Don't count the items in a list introduction. Write "the following options", not "three options", because the count drifts when someone edits the list.
 * Keep items parallel: all full sentences or all fragments, starting the same way.
 * End an item with a period when the item is a sentence.
 
@@ -184,7 +186,7 @@ FusionAuth creates the [[Default Tenant]] during installation.
 Each [[Tenant::tenant]] has its own settings.
 ```
 
-The name can be the term, an alias, or an abbreviation, in any case. Mark a term where a reader might not know the term, usually at the first use on a page. Terms don't work in headings or links. In an `.astro` file, use `<GlossaryTerm term="Default Tenant" />`.
+The name can be the term, an alias, or an abbreviation, in any case. Mark a term where a reader might not know the term, usually at the first use on a page. Terms don't work in headings or links. In an `.astro` file, import `GlossaryTerm` from `astro-better-glossary/GlossaryTerm.astro` and use `<GlossaryTerm term="Default Tenant" />`. For the full syntax and options, see the [astro-better-glossary docs](https://better-static-sites.github.io/content/glossary).
 
 To add a term, add an entry to `astro/src/data/glossary.json`. Key the entry by the full name in title case, such as `JSON Web Token`. Each entry needs a **`definition`** of one or two sentences and a **`link`** to the page that explains the term. A definition can use inline markdown: links, `monospace`, **bold**, and _italics_. Tooltips show the text of a link but not the link, because keyboard focus can't reach a tooltip. The optional fields are **`abbreviations`**, **`aliases`**, **`standards`** (an array of `{ "name", "url" }` objects), and **`plan`**. When the FusionAuth feature behind a term requires a paid plan, set **`plan`** to `licensed`, `starter`, `essentials`, or `enterprise`. The Glossary then shows a plan badge on the entry. Add only terms that readers need defined. Add a general tool only when FusionAuth integrates with the tool tightly, such as Elasticsearch or Kafka, not Docker.
 
@@ -210,6 +212,17 @@ The schema lives in `astro/src/content.config.js`. `title` and `description` are
 
 The sidebar builds itself from the folder structure. A folder's title and order come from the folder's `index.mdx`.
 
+### Content and Logic
+
+Put content in `.mdx` files and logic in `.astro` components. A component renders data, such as a JSON file, handles interactivity, or computes values from props. Prose, field descriptions, and tables of facts belong in `.mdx`, so writers can edit the text without reading JSX.
+
+* When a page needs both, keep the text in the `.mdx` page or partial. Pass values to the component as props or children.
+* When a partial varies by caller, have the caller pass the varying text as a prop. Don't build a lookup table of text inside the partial.
+* Write partials in markdown, not HTML. For a table with conditional rows, use `TableGrid`, `Row`, and `Cell` from `astro-better-tables`, and wrap each conditional `Row` in `<If>`.
+* Don't put headings in partials. Put the heading on the page that includes the partial, so the heading level fits the page and the heading appears in the table of contents.
+* When only one page uses a partial, inline the content on that page.
+* Put `.mdx` and `.md` partials in `astro/src/content`, next to the pages that use them, not in `astro/src/components`. Folders and files that start with an underscore don't build pages, so use `_shared` folders for partials.
+
 ### Components
 
 Common components are auto-imported into every MDX file, so don't import them. The list includes `Aside`, `APIField`, `Breadcrumb`, `Card`, `ChildCards`, `Details`, `ExtractedCode`, `PlanBlurb`, `Screenshot`, `Steps`, `Table`, `Tabs`, and `TabItem`. The full list is `mdxComponentImports` in `astro/astro.config.ts`. A small Vite plugin, `mdxComponentImporter`, inserts those imports after the front matter.
@@ -231,7 +244,7 @@ import ReleaseNotification from 'src/content/docs/_shared/_release-notification.
 * Import each partial explicitly, because partials aren't auto-imported. Then use the partial like a component, and pass values as props: `<ReleaseNotification topic="passkeys" />`. In an MDX partial, read props as `{props.topic}`.
 * The build fails when a bare `{props.topic}` in an MDX partial renders without a value. The error names the page, the partial, and the line. Pass the prop from every caller. When an empty value is intended, write `{props.topic ?? ''}`. Content inside a false `<If>`, or inside a component with a false **`renderif`**, never renders, so the check skips that content.
 * A bare **`renderif`** flag on `APIField` or `Aside`, such as `renderif={props.is_create}`, needs a boolean from every caller: `<Partial is_create />` or `<Partial is_create={false} />`. The build fails when a caller leaves out the flag or passes a string such as `"false"`. When leaving the flag out should mean false, write `renderif={!!props.is_create}`. Other expressions, such as `!props.is_create`, and every `<If condition>` follow JavaScript truthiness, so a missing flag counts as false.
-* Inside a JavaScript expression, use HTML instead of markdown: `{props.show && <>See <a href="/docs/apis">the APIs</a>.</>}`. Coerce values to booleans for conditions: `{!!props.message && <span>{props.message}</span>}`.
+* Write conditional content in markdown inside `<If condition={props.show}>` or a component with **`renderif`**. Markdown inside a JavaScript expression, such as `{props.show && <>...</>}`, doesn't render, so avoid expressions for content. Coerce values to booleans for conditions: `<If condition={!!props.message}>`.
 * Reference JSON examples with the [JSON component](astro/src/components/JSON.astro).
 
 ### Versions and Plans
@@ -268,5 +281,6 @@ Blog posts follow the rest of this guide, plus the following:
 * When you update a post, add `updated_date: YYYY-MM-DD` to the front matter instead of changing the date.
 * Give every post at least one category. Add comma-separated tags. The first tag drives related posts unless the post sets `featuredTag`.
 * Put images in `/astro/public/img/blogs/<post-name>/` and use markdown image syntax.
+* The front matter `image` is also the social preview image. The build makes a 1200x630 copy of a PNG, JPEG, or WebP image, and generates a title card for an SVG image. To use a different preview image, set `ogImage`.
 * Reuse docs components instead of building components for one post. To request a new component, ask in `#devsuccess` on Slack.
 * Code blocks use Prism language names. See the [Prism language list](https://prismjs.com/docs/prism.languages).

@@ -6,9 +6,10 @@ tags: fusionauth api, rest api, http api, json web token, jwt, refresh token, re
 order: 400
 ---
 import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_shared/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
-import StandardGetResponseCodes from 'src/content/docs/apis/_shared/_standard-get-response-codes.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_shared/_standard-get-response-codes.mdx';
+import EventInfoRequestBody from 'src/content/docs/apis/_shared/_event-info-request-body.mdx';
 
-This can be used to extend a centrally managed session when a refresh token represents a user session. [Learn more about using refresh tokens to model sessions](/docs/authentication/sessions/logout-session-management).
+This can be used to extend a centrally managed session when a refresh token represents a user session. For more information, see [Centralized Sessions](/docs/authentication/sessions/centralized-sessions).
 
 <Aside type="note" title="RFC 8707 Resource Indicator behavior (since 1.67.0)">
   This endpoint does not accept a `resource` parameter. However, if the application's **oauthConfiguration.authorizedResourceUris** is non-empty and the refresh token carries resource URIs in its `metaData.resources` field (set during the original authorization code exchange), those resources are automatically applied to the newly issued access token. The `aud` claim of the new token will be an array `["client_id", "https://resource1.example.com", ...]` when resources are present, or a plain UUID string when they are not.
@@ -21,7 +22,13 @@ Present a valid Refresh Token to receive a new Access Token in exchange.
 
 <API method="POST" uri="/api/jwt/refresh" authentication={["none"]} title="Request a new Access Token by presenting a valid Refresh Token."/>
 
-The refresh token may be provided either in the HTTP request body or as a cookie. If both are provided, the cookie will take precedence.
+Send the refresh token in the request body or as a cookie.
+
+<Aside type="caution" title="The cookie takes precedence over the request body">
+  When a request contains both a `refresh_token` cookie and a **`refreshToken`** in the body, FusionAuth uses the cookie and ignores the body. A browser can keep a `refresh_token` cookie from an earlier session after the session ends, for example after a password change. The refresh then fails, even when the body contains a valid refresh token.
+
+  To send only the body token from the [TypeScript client library](/docs/sdks/typescript) in a browser, call `client.setRequestCredentials('omit')` before the request.
+</Aside>
 
 #### Request Headers
 
@@ -43,6 +50,7 @@ The refresh token may be provided either in the HTTP request body or as a cookie
 ### Request Body
 
 <APIBlock>
+  <EventInfoRequestBody />
   <APIField name="refreshToken" type="String" optional>
     The refresh token to be used to obtain a new access token.
 

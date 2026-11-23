@@ -62,6 +62,14 @@ The URL uses the following parameters:
 
 For every parameter, see the [Authorize endpoint](/docs/apis/oauth/authorize).
 
+### Link Users to a Login URL in Your App
+
+Each authorize URL belongs to one login attempt. The URL holds the **`state`** and the code challenge for that attempt. Your app keeps the matching values only until the login finishes.
+
+FusionAuth renders the login page at the authorize URL, so the browser address bar shows the full URL. A user who bookmarks the login page saves an old login attempt. The bookmark fails when FusionAuth redirects back, because your app no longer has the matching **`state`** and code verifier. The bookmark also fails with an `invalid_redirect_uri` error after you remove the old **`redirect_uri`** from **Authorized redirect URLs**.
+
+Give your app a login URL, such as `https://www.piedpiper.com/login`, that builds a new authorize URL on every visit. Use the app login URL in every link that you send to users, such as a link in an email. Never send users a link to `/oauth2/authorize`.
+
 ## Handle the Redirect
 
 After the user logs in, FusionAuth redirects the browser to the **`redirect_uri`**. The **`code`** parameter holds the authorization code:
@@ -77,6 +85,8 @@ Location: https://www.piedpiper.com/callback?
 ```
 
 Before you use the code, check that **`state`** matches the value your app stored. Check that **`iss`** matches the Tenant **Issuer**, as described in [Issuer Validation](/docs/authentication/oauth/issuer-validation). For the other parameters, see [Redirect Parameters](/docs/apis/oauth/authorize#redirect-parameters).
+
+When **`state`** doesn't match, a bookmarked or reused authorize URL is the usual cause. Discard the code, and redirect the browser to your app's login URL to start a new login instead of showing an error. For more information, see [Link Users to a Login URL in Your App](#link-users-to-a-login-url-in-your-app).
 
 ## Exchange the Code for Tokens
 
