@@ -1,0 +1,81 @@
+---
+title: Configure MFA
+htmlTitle: Configure Multi-Factor Authentication
+description: Learn how to turn on MFA methods for a Tenant and set when FusionAuth asks users for a second factor.
+tags: mfa, multi-factor authentication, two-factor, mfa policy, login policy, tenant mfa, application mfa, mfa methods, sms mfa, email mfa, totp
+order: 46
+---
+import ApplicationMfaPlans from 'src/content/docs/_shared/_application-mfa-plans.mdx';
+
+Each Tenant controls which MFA methods users can add and when FusionAuth asks for a second factor. An Application can override when FusionAuth asks.
+
+Before you start, set up delivery for each message-based method that you plan to use:
+
+* For email, configure an SMTP server and create an email template that contains the code. For more information, see [Configure Email](/docs/email/configure-email) and [Email Templates](/docs/email/email-templates).
+* For SMS or voice, add a messenger and create a message template that contains the code. For more information, see [Messengers](/docs/messengers/) and [Message Templates](/docs/messengers/message-templates).
+
+Authenticator apps need no delivery setup. The authenticator method is on by default.
+
+## Turn On MFA Methods
+
+<Steps>
+1. Navigate to <Breadcrumb>Tenants</Breadcrumb> and click <IconButton icon="edit" /> on the Tenant.
+1. Click the <Breadcrumb>Multi-Factor</Breadcrumb> tab.
+1. Turn on each method that users can add:
+   * For authenticator apps, turn on **Enable authenticator (TOTP) MFA**.
+   * For email, turn on **Enable email MFA** and select the **Template**.
+   * For SMS, turn on **Enable SMS MFA** and select the **SMS messenger** and the **SMS template**.
+   * For voice calls, turn on **Enable voice MFA** and select the **Voice messenger** and the **Voice template**.
+
+   <Screenshot id="authenticate-tenant-mfa-methods" url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#multi-factor" showHash alt="The Multi-Factor tab of a Tenant, with the authenticator, email, SMS, and voice methods turned on." height={1200} />
+1. Click <IconButton icon="save" />.
+</Steps>
+
+Email, SMS, and voice require a paid plan. When the Tenant turns on both SMS and voice, a user with a phone method chooses SMS or voice at each login.
+
+When you use only step-up authentication, turn on at least one method anyway. Without a method on the Tenant, the MFA Status API never requires a step-up.
+
+To configure the Tenant with the API, set the **`tenant.multiFactorConfiguration`** fields on the [Tenant API](/docs/apis/tenants). For a full list of fields, see [Multi-Factor](/docs/concepts/types/tenants#multi-factor) in the Tenant reference.
+
+## Set the Login Policy
+
+The **On login policy** on the Tenant's <Breadcrumb>Multi-Factor</Breadcrumb> tab controls when FusionAuth asks for a second factor at login. The policy has the following values:
+
+* `Enabled`: FusionAuth asks for MFA when the user has an MFA method. `Enabled` is the default.
+* `Disabled`: FusionAuth never asks for MFA at login, even when the user has an MFA method.
+* `Required`: FusionAuth always asks for MFA. A user without an MFA method must add one before the login completes. Available in FusionAuth `1.42.0` and later.
+* `Challenge On Medium Risk` and `Challenge On High Risk`: FusionAuth asks for MFA when [Intelligent MFA](/docs/authentication/multi-factor-authentication/contextual#intelligent-mfa) rates the login as risky. Available in FusionAuth `1.68.0` and later, on a paid plan.
+
+With the API, set **`tenant.multiFactorConfiguration.loginPolicy`** to `Enabled`, `Disabled`, `Required`, `ChallengeOnMediumRisk`, or `ChallengeOnHighRisk`.
+
+Except under a risk-based policy, FusionAuth also skips the challenge for a device that the user trusted at an earlier login. While the policy isn't `Disabled`, the Tenant must keep at least one MFA method on. For the full decision logic, see [Contextual Multi-Factor Authentication](/docs/authentication/multi-factor-authentication/contextual).
+
+## Set an Application Policy
+
+<ApplicationMfaPlans />
+
+An Application policy overrides the Tenant policy for logins to the Application. For example, an Application for administrators can require MFA, while an Application for customers turns MFA off.
+
+<Steps>
+1. Navigate to <Breadcrumb>Applications</Breadcrumb> and click <IconButton icon="edit" /> on the Application.
+1. Click the <Breadcrumb>Multi-Factor</Breadcrumb> tab.
+1. Select the **On login policy**.
+1. When the policy is `Enabled` or `Required`, select the **Trust policy**. The trust policy decides whether an MFA challenge in another Application counts for this Application.
+1. Optionally, select templates to send codes for this Application instead of the Tenant templates.
+
+   <Screenshot id="application-mfa" url="/admin/application/edit?applicationId=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&tenantId=30663132-6464-6665-3032-326466613934#multi-factor" showHash alt="The Multi-Factor tab of an Application, with the login policy, trust policy, and template fields." />
+1. Click <IconButton icon="save" />.
+</Steps>
+
+For a full list of fields, see [Multi-Factor](/docs/concepts/types/applications#multi-factor) in the Application reference. For examples of each trust policy, see [Application MFA Configuration](/docs/authentication/multi-factor-authentication/contextual#application-mfa-configuration).
+
+## Change Code Lifetimes
+
+The Tenant sets how long each MFA code and identifier stays valid. Navigate to <Breadcrumb>Tenants</Breadcrumb>, click <IconButton icon="edit" /> on the Tenant, and click the <Breadcrumb>Advanced</Breadcrumb> tab. The following durations apply to MFA:
+
+* **Two-Factor login**: how long a user has to finish the MFA challenge at login.
+* **Two-Factor one-time code**: how long a code to add or remove an MFA method stays valid.
+* **Two-Factor trust**: how long a trusted device skips the MFA challenge.
+* **Trust token**: how long a [trust token](/docs/authentication/multi-factor-authentication#trust-tokens-and-trust-challenges) stays valid.
+
+The **External identifier generation** section on the same tab sets the length and character type of each code. For more information, see [Advanced](/docs/concepts/types/tenants#advanced) in the Tenant reference.
