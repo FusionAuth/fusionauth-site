@@ -1,0 +1,161 @@
+---
+title: Heroku
+htmlTitle: Deploy FusionAuth to Heroku
+description: Learn how to deploy FusionAuth to Heroku with the FusionAuth Docker image and Heroku Postgres.
+tags: heroku, heroku postgres, docker, container, paas, cloud deployment, silent mode
+---
+
+You can run the FusionAuth Docker image on [Heroku](https://www.heroku.com/) with a Heroku Postgres database. The image needs a small wrapper on Heroku for the following reasons:
+
+* Heroku Postgres sets `DATABASE_URL` to a `postgres://` URL. FusionAuth reads the same variable, but expects a JDBC URL, with the username and password in separate variables.
+* Heroku assigns the HTTP port at runtime in the `PORT` variable. The web process must listen on that port.
+* Heroku ignores the `USER` in a Dockerfile and runs the container as a different non-root user. By default, that user can't write to the FusionAuth install directory.
+
+## Prerequisites
+
+* A Heroku account with a payment method. Heroku Postgres and the dyno sizes that FusionAuth needs aren't free.
+* The [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli), logged in to your account.
+* Git.
+
+<Aside type="caution" title="Use a Cedar-generation app">
+Heroku builds Docker images from `heroku.yml` only in Cedar-generation apps. Fir-generation apps don't support Docker builds. Apps in the Common Runtime run on Cedar. For more information, see [Heroku Generations](https://devcenter.heroku.com/articles/generations).
+</Aside>
+
+## Create the Project
+
+<Steps>
+
+1. Create a folder for the project:
+
+   ```shell
+   mkdir fusionauth-heroku
+   cd fusionauth-heroku
+   ```
+
+1. Create a file named `heroku-start.sh` with the following content:
+
+   ```shell title="heroku-start.sh"
+   #!/bin/sh
+   set -e
+   # heroku sets DATABASE_URL to postgres://user:password@host:port/dbname
+   url="${DATABASE_URL#*://}"
+   export DATABASE_USERNAME="${url%%:*}"
+   url="${url#*:}"
+   export DATABASE_PASSWORD="${url%%@*}"
+   export DATABASE_URL="jdbc:postgresql://${url#*@}?sslmode=require"
+   export DATABASE_ROOT_USERNAME="$DATABASE_USERNAME"
+   export DATABASE_ROOT_PASSWORD="$DATABASE_PASSWORD"
+   # the heroku user may have no writable home directory
+   export HOME=/usr/local/fusionauth
+   exec env "fusionauth-app.http.port=$PORT" /usr/local/fusionauth/fusionauth-app/bin/start.sh
+   ```
+
+   The script reads `DATABASE_URL` at every start, because Heroku changes the URL when Heroku rotates the database credentials or fails over. The script adds `sslmode=require`, because Heroku Postgres accepts only SSL connections.
+
+   The script also sets the Heroku database user as the root database user. FusionAuth then runs in [Silent Mode](/docs/deploy/production/install/silent-mode), which creates the database schema on the first start and applies database migrations after an update.
+
+1. Create a file named `Dockerfile` with the following content:
+
+   ```dockerfile title="Dockerfile"
+   FROM fusionauth/fusionauth-app:1.71.1
+   USER root
+   COPY heroku-start.sh /usr/local/fusionauth/heroku-start.sh
+   # heroku ignores USER and runs the container as a different user
+   RUN chmod -R a+rwX /usr/local/fusionauth /opt/openjdk/conf/security && chmod a+x /usr/local/fusionauth/heroku-start.sh
+   USER fusionauth
+   CMD ["/usr/local/fusionauth/heroku-start.sh"]
+   ```
+
+   The FusionAuth start script writes to the install directory and to the Java security directory, so the Dockerfile makes both directories writable for any user.
+
+1. Create a file named `heroku.yml` with the following content:
+
+   ```yaml title="heroku.yml"
+   build:
+     docker:
+       web: Dockerfile
+   ```
+
+1. Commit the files to a Git repository:
+
+   ```shell
+   git init
+   git add .
+   git commit -m "Deploy FusionAuth to Heroku"
+   ```
+
+</Steps>
+
+## Deploy to Heroku
+
+<Steps>
+
+1. Create a Heroku app that builds from Docker. Replace `<app-name>` with a name for the app:
+
+   ```shell
+   heroku create <app-name> --stack container
+   ```
+
+   The command also adds a Git remote named `heroku` to the repository.
+
+1. Add a Heroku Postgres database to the app:
+
+   ```shell
+   heroku addons:create heroku-postgresql:essential-0 --app <app-name>
+   ```
+
+   The `essential-0` plan is the smallest Heroku Postgres plan. For the other plans, see [Heroku Postgres Plans](https://devcenter.heroku.com/articles/heroku-postgres-plans).
+
+1. Set the FusionAuth configuration:
+
+   ```shell
+   heroku config:set SEARCH_TYPE=database FUSIONAUTH_APP_RUNTIME_MODE=production --app <app-name>
+   ```
+
+   `SEARCH_TYPE=database` uses the database for user search, so the app doesn't need Elasticsearch or OpenSearch. For more information, see [Search](/docs/users/search).
+
+1. Push the repository to Heroku:
+
+   ```shell
+   git push heroku HEAD:main
+   ```
+
+   Heroku builds the image and starts a web dyno.
+
+1. Change the web dyno size to Standard-2X:
+
+   ```shell
+   heroku ps:type web=standard-2x --app <app-name>
+   ```
+
+   FusionAuth uses a 512 MB Java heap by default, and Basic and Standard-1X dynos have 512 MB of memory in total. A Standard-2X dyno has 1 GB. For the heap setting, see `fusionauth-app.memory` in [Configuration](/docs/deploy/production/configuration).
+
+1. Open the app:
+
+   ```shell
+   heroku open --app <app-name>
+   ```
+
+</Steps>
+
+## Confirm the Deployment
+
+The app opens the FusionAuth setup wizard. Complete the setup wizard to create an admin user. For more information, see [First-Time Setup](/docs/get-started/first-time-setup).
+
+When the app doesn't load, read the logs:
+
+```shell
+heroku logs --tail --app <app-name>
+```
+
+The log line `HTTP server listening on port` shows that FusionAuth started and listens on the Heroku port.
+
+## Proxy Headers
+
+The Heroku router handles HTTPS and forwards requests to FusionAuth over HTTP. The router sets `X-Forwarded-Proto`, `X-Forwarded-Port`, and `X-Forwarded-For`, and keeps the original `Host` header. For more information, see [Proxy Setup](/docs/deploy/production/proxy-setup).
+
+## Update FusionAuth
+
+To update FusionAuth, change the version in the `FROM` line of the `Dockerfile`. Commit the change, and push the repository to Heroku again. Silent Mode applies the database migrations when the new dyno starts.
+
+FusionAuth applies the database migrations before FusionAuth listens on the Heroku port. Heroku restarts a web dyno that doesn't listen on the port within 60 seconds. When an update fails with an R10 error, see [Boot Timeout](https://devcenter.heroku.com/articles/limits#boot-timeout).
