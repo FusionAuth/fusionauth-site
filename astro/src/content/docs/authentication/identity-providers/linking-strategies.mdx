@@ -1,0 +1,173 @@
+---
+title: Linking Strategies
+description: Learn how FusionAuth links a user from an Identity Provider to a FusionAuth user.
+order: 12
+tags: idp, identity provider, linking strategy, link, pending link, anonymous link, link on email, link on username, create registration
+---
+
+A linking strategy decides how FusionAuth links a user from an Identity Provider to a user in FusionAuth. You choose the linking strategy in the **Linking strategy** field when you configure the Identity Provider.
+
+<Screenshot id="idp-linking-strategy" url="/admin/identity-provider/add/OpenIDConnect?identityProvider.tenantId=30663132-6464-6665-3032-326466613934&global=false" crop="#screenshot-band" cropPadding={0} alt="The Linking strategy field on the form to add an Identity Provider." />
+
+<Aside type="version">
+In FusionAuth `1.65.0` and later, you can change the linking strategy only while the Identity Provider is disabled. To change the linking strategy of an enabled Identity Provider, disable the Identity Provider, change the value, and enable the Identity Provider again.
+</Aside>
+
+## Compare Linking Strategies
+
+The following table compares the linking strategies:
+
+| Strategy | User must exist | User linked on | Use when |
+| --- | --- | --- | --- |
+| `Create a pending link` | Depends on the Application. See [Pending Link](#pending-link). | The user chooses the account | The Identity Provider shares an email address or username that differs from the user's FusionAuth account, and users know enough to link the accounts. |
+| `Linking disabled` | Not applicable | Not applicable | You want to manage every link yourself with the Link API. Available in FusionAuth `1.37.0` and later. |
+| `Anonymous link` | No | The Identity Provider's user Id | The Identity Provider shares neither a username nor an email address. |
+| `Link on email. Create the user if they do not exist.` | No | Email address | The Identity Provider shares the user's email address, and users who don't exist in FusionAuth can have access. |
+| `Link on email. Do not create the user if they do not exist.` | Yes | Email address | The Identity Provider shares the user's email address, and only users who exist in FusionAuth can have access. Provision those users beforehand. |
+| `Link on username. Create the user if they do not exist.` | No | Username | The Identity Provider shares the user's username, and users who don't exist in FusionAuth can have access. |
+| `Link on username. Do not create the user if they do not exist.` | Yes | Username | The Identity Provider shares the user's username, and only users who exist in FusionAuth can have access. Provision those users beforehand. |
+
+Some Identity Providers don't return a username or an email address. For those Identity Providers, use a pending link or an anonymous link. Both strategies link the user without a username or email address from the Identity Provider.
+
+Every linking strategy except `Anonymous link` can use a reconcile lambda. An anonymous link has no user information to pass to a lambda.
+
+## Linking and Create Registration
+
+**Linking strategy** and **Create registration** are related, but distinct, settings. **Linking strategy** decides how FusionAuth finds or creates the user from the information that the Identity Provider returns. **Create registration** decides whether FusionAuth registers the user for an Application. For more information, see [Applications and Overrides](/docs/authentication/identity-providers/applications-and-overrides).
+
+## Linking Strategy Examples
+
+The following examples show each linking strategy on the FusionAuth hosted login pages. In each example, Richard logs in to the Pied Piper application through an Identity Provider named Hooli. The behavior is the same for a social Identity Provider, such as Facebook, and for an enterprise Identity Provider, such as an OpenID Connect or SAML v2 server. The [Identity Providers API](/docs/apis/identity-providers/) offers similar behavior.
+
+### Disabled
+
+<AvailableSince since="1.37.0"/>
+
+With `Linking disabled`, FusionAuth doesn't link users automatically. You create every link with the Link API, which gives you the most control over which users get a link.
+
+The strategy requires the `identityProviderUserId`, the immutable Id of the user in the Identity Provider. Without access to that Id, the strategy may not work. For more information, see [Link a User](/docs/apis/identity-providers/links#link-a-user).
+
+### Pending Link
+
+Use `Create a pending link` when a user's email address or username in the Identity Provider differs from the user's FusionAuth account. The user must remember the FusionAuth account to link the accounts.
+
+<Aside type="note">
+When the Application allows self-service registration, the pending link page offers <Breadcrumb>Create a new user</Breadcrumb> as well as <Breadcrumb>Link to an existing user</Breadcrumb>. Otherwise, the page offers only <Breadcrumb>Link to an existing user</Breadcrumb>, and the user must already exist in FusionAuth.
+</Aside>
+
+Richard has a FusionAuth account with the email address `richard@piedpiper.com`, and a Hooli account with the email address `richard@hooli.com`:
+
+1. Richard clicks <Breadcrumb>Login With Hooli</Breadcrumb> on the login page.
+1. Richard logs in to Hooli with `richard@hooli.com`.
+1. Hooli redirects Richard to FusionAuth.
+1. FusionAuth asks Richard to log in with a Pied Piper email address and password.
+1. Richard logs in with `richard@piedpiper.com`.
+1. FusionAuth links the FusionAuth account `richard@piedpiper.com` to the Hooli account `richard@hooli.com`.
+
+![The FusionAuth login page asking a user to log in to link an account from an Identity Provider.](/img/docs/lifecycle/authenticate-users/identity-providers/idp-linking-pending-link.png)
+
+### Anonymous Link
+
+Use `Anonymous link` when you don't want a full user account in FusionAuth. For the limits of an anonymous account, see [Anonymous Account Limitations](#anonymous-account-limitations).
+
+#### Anonymous Link, IdP Provides Email
+
+Richard has no FusionAuth account:
+
+1. Richard clicks <Breadcrumb>Login With Hooli</Breadcrumb> on the login page.
+1. Richard logs in to Hooli with `richard@hooli.com`.
+1. Hooli redirects Richard to FusionAuth.
+1. FusionAuth creates an account with no username or email address. The account isn't a full account.
+1. Richard can use Pied Piper, and FusionAuth issues a JWT. Richard can't use FusionAuth workflows such as forgot password.
+
+![The Admin UI view of a user who linked anonymously.](/img/docs/lifecycle/authenticate-users/identity-providers/idp-linking-anonymous-account.png)
+
+#### Anonymous Link, IdP Returns No Email or Username
+
+Richard has no FusionAuth account. The Identity Provider is the Hooli XYZ server, which doesn't return a username or an email address:
+
+1. Richard clicks <Breadcrumb>Login With Hooli XYZ</Breadcrumb> on the login page.
+1. Richard logs in with `richard@hoolixyz.com`.
+1. Hooli XYZ redirects Richard to FusionAuth.
+1. FusionAuth creates an account with no username or email address. The account isn't a full account.
+1. Richard can use Pied Piper, and FusionAuth issues a JWT. Richard can't use FusionAuth workflows such as forgot password.
+
+#### Anonymous Account Limitations
+
+A user with an anonymous account can log in to applications with the credentials from the Identity Provider. An anonymous account has no email address, so the user can't use the email workflows of FusionAuth, such as forgot password.
+
+You can't modify an anonymous user through the FusionAuth APIs. A request to modify the user must include a username or an email address.
+
+An anonymous link provides no information about the user, so `Anonymous link` can't call a reconcile lambda.
+
+### Link on Email
+
+The following strategies link on an email address:
+
+* `Link on email. Create the user if they do not exist.` creates a user when no matching account exists in FusionAuth.
+* `Link on email. Do not create the user if they do not exist.` doesn't create a user. When no matching account exists, the login fails. When a matching account exists, the login succeeds.
+
+#### Link on Email, Matching Account Must Exist and Does
+
+The Identity Provider uses `Link on email. Do not create the user if they do not exist.`. Richard has a FusionAuth account with the email address `richard@piedpiper.com`:
+
+1. Richard clicks <Breadcrumb>Login With Hooli</Breadcrumb> on the login page.
+1. Richard logs in to Hooli with the account `richard@piedpiper.com`.
+1. Hooli redirects Richard to FusionAuth, and the login succeeds.
+1. FusionAuth links the FusionAuth account `richard@piedpiper.com` to the Hooli account `richard@piedpiper.com`.
+
+#### Link on Email, Matching Account Must Exist but Doesn't
+
+The Identity Provider uses `Link on email. Do not create the user if they do not exist.`. Richard has no FusionAuth account:
+
+1. Richard clicks <Breadcrumb>Login With Hooli</Breadcrumb> on the login page.
+1. Richard logs in to Hooli with the account `richard@piedpiper.com`.
+1. Hooli redirects Richard to FusionAuth, and FusionAuth shows an error. Richard gets no access.
+
+FusionAuth shows the following error page:
+
+![The FusionAuth error page for a login when the linking strategy requires an existing user and none exists.](/img/docs/lifecycle/authenticate-users/identity-providers/idp-linking-user-must-exist.png)
+
+#### Link on Email, User Account Is Created If Needed
+
+The Identity Provider uses `Link on email. Create the user if they do not exist.`. Richard has no FusionAuth account:
+
+1. Richard clicks <Breadcrumb>Login With Hooli</Breadcrumb> on the login page.
+1. Richard logs in to Hooli with the account `richard@piedpiper.com`.
+1. Hooli redirects Richard to FusionAuth.
+1. FusionAuth creates an account with the email address `richard@piedpiper.com`.
+1. FusionAuth links the new account to the Hooli account `richard@piedpiper.com`.
+
+### Link on Username
+
+The following strategies link on a username:
+
+* `Link on username. Create the user if they do not exist.` creates a user when no matching account exists in FusionAuth.
+* `Link on username. Do not create the user if they do not exist.` doesn't create a user. When no matching account exists, the login fails. When a matching account exists, the login succeeds.
+
+#### Link on Username, Matching Account Must Exist and Does
+
+The Identity Provider uses `Link on username. Do not create the user if they do not exist.`. Richard has a FusionAuth account with the username `richard`:
+
+1. Richard clicks <Breadcrumb>Login With Hooli</Breadcrumb> on the login page.
+1. Richard logs in to Hooli with the account `richard`.
+1. Hooli redirects Richard to FusionAuth, and the login succeeds.
+1. FusionAuth links the FusionAuth account `richard` to the Hooli account `richard`.
+
+#### Link on Username, Matching Account Must Exist but Doesn't
+
+The Identity Provider uses `Link on username. Do not create the user if they do not exist.`. Richard has no FusionAuth account:
+
+1. Richard clicks <Breadcrumb>Login With Hooli</Breadcrumb> on the login page.
+1. Richard logs in to Hooli with the account `richard`.
+1. Hooli redirects Richard to FusionAuth, and FusionAuth shows an error. Richard gets no access.
+
+#### Link on Username, User Account Is Created If Needed
+
+The Identity Provider uses `Link on username. Create the user if they do not exist.`. Richard has no FusionAuth account:
+
+1. Richard clicks <Breadcrumb>Login With Hooli</Breadcrumb> on the login page.
+1. Richard logs in to Hooli with the account `richard`.
+1. Hooli redirects Richard to FusionAuth.
+1. FusionAuth creates an account with the username `richard`.
+1. FusionAuth links the new account to the Hooli account `richard`.
