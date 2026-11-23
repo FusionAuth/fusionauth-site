@@ -5,6 +5,9 @@ import { fileURLToPath } from 'url';
 const portOffset = 10 * Number(process.env.SCREENSHOT_SHARD_INDEX ?? 0);
 export const appPort = 9011 + portOffset;
 export const freshPort = 9012 + portOffset;
+export const maintenancePort = 9013 + portOffset;
+export const maintenanceUrl = `http://127.0.0.1:${maintenancePort}`;
+export const maintenanceDatabasePassword = 'postgres';
 export const baseUrl = `http://localhost:${appPort}`;
 // un-kickstarted instance for first-time setup shots; a different host keeps its cookies apart
 export const freshUrl = `http://127.0.0.1:${freshPort}`;
