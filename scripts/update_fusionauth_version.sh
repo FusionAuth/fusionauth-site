@@ -16,6 +16,7 @@ case "${1:-}" in
     printf '  astro/screenshots/docker-compose.yml (retake screenshots after changing it)\n'
     printf '  astro/src/content/docs/deploy/production/install/fusionauth-app.mdx (the production Docker examples)\n'
     printf '  astro/extractedcode/example-lambdas/docker-compose.yml (the lambda conformance check)\n'
+    printf '  astro/src/content/docs/deploy/production/marketplaces/heroku.mdx (the Heroku Dockerfile)\n'
     printf 'Set FUSIONAUTH_VERSION to pin a specific version. With --check, report copies that differ from fusionauth-version without changing files, and fail if the pinned image is not on Docker Hub.\n'
     printf 'With --check-latest, fail when fusionauth-version pins a release other than the latest one.\n'
     printf 'With --unreleased, pin FUSIONAUTH_VERSION even if its image is not on Docker Hub yet, to prepare a release branch. Requires FUSIONAUTH_VERSION.\n'
@@ -28,7 +29,7 @@ source "$repo_root/scripts/lib/run-locally.sh"
 source "$repo_root/scripts/lib/fusionauth-version.sh"
 pin_file=fusionauth-version
 copies=(astro/public/docs/docker-compose.yml astro/screenshots/docker-compose.yml astro/src/content/docs/deploy/production/install/fusionauth-app.mdx
-        astro/extractedcode/example-lambdas/docker-compose.yml)
+        astro/extractedcode/example-lambdas/docker-compose.yml astro/src/content/docs/deploy/production/marketplaces/heroku.mdx)
 pinned="$(pinned_fusionauth_version)"
 
 latest_release() {
