@@ -16,7 +16,7 @@ const path = require('node:path');
       const login = new URL(home.headers.get('location'));
       assert.equal(login.pathname, '/oauth2/authorize');
       assert.equal(login.searchParams.get('response_type'), 'code');
-      assert.equal(login.searchParams.get('scope'), 'offline_access openid profile email');
+      assert.equal(login.searchParams.get('scope'), 'openid profile email');
       assert.equal(login.searchParams.get('client_id'), process.env.clientId);
       assert.equal(login.searchParams.get('redirect_uri'), 'http://' + (appName === 'hooli' ? 'hooli.local:3001' : 'piedpiper.local:3000') + '/oauth-redirect');
       const page = await fetch(base + '/login');

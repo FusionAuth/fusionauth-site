@@ -1,0 +1,70 @@
+---
+title: Configure Session Lifetimes
+htmlTitle: Configure Session and Token Lifetimes
+description: Learn how to set how long users stay logged in to FusionAuth and to your applications.
+tags: sessions, session timeout, session lifetime, sso session, refresh tokens, jwt duration, idle timeout, sliding window
+relatedPinFirst: authentication/sessions/session-settings
+order: 35
+---
+
+Several settings decide how long a user stays logged in. Each setting controls a different session, so set each one with the others in mind. For what each session does, see [How Sessions Work](/docs/authentication/sessions/how-sessions-work). For every field, unit, and default, see [Session Settings](/docs/authentication/sessions/session-settings).
+
+## Choose Lifetimes by Risk
+
+Match lifetimes to what a stolen session could do. A banking or admin application needs short sessions and frequent logins. A content or community application can keep users logged in for weeks. When applications with different risk share a Tenant, set the Tenant values for the most common case and override the values on the riskier Applications. You can also require a fresh login for one application with `prompt=login` or `max_age`. For more information, see [Require a Fresh Login for One Application](/docs/authentication/sessions/enable-sso#require-a-fresh-login-for-one-application).
+
+Keep the lifetimes in the following order, from shortest to longest:
+
+1. **JWT duration**, so a revoked session stops working soon.
+1. Refresh token **Duration**, which bounds a [[centralized session]].
+1. Your application session, so the application doesn't end a session that FusionAuth still considers valid.
+
+FusionAuth applies lifetime changes to existing sessions and refresh tokens at the next check, not only to new ones. Shortening a lifetime can end sessions right away.
+
+## Set the SSO Session Timeout
+
+The **Session timeout** decides how long an idle [[SSO session]] lasts. Each SSO login to an application starts the timeout over. The timeout has no absolute maximum, so a user who logs in to an application through SSO at least once per timeout period stays logged in indefinitely.
+
+<Steps>
+1. Navigate to <Breadcrumb>Tenants -> Your Tenant -> OAuth</Breadcrumb>.
+1. Set **Session timeout** in seconds.
+1. Click <Breadcrumb>Save</Breadcrumb>.
+</Steps>
+
+<Screenshot id="authenticate-tenant-oauth-session-timeout" url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#oauth" showHash alt="The Session timeout field on the Tenant OAuth tab." height={1200} fullPage>
+  <Highlight selector="#tenant_httpSessionMaxInactiveInterval-form-row" />
+</Screenshot>
+
+The SSO session spans every Application in the Tenant, so Applications can't override the timeout. To turn off SSO, change the theme rather than setting **Session timeout** to `0`. For more information, see [Create the SSO Session at Login](/docs/authentication/sessions/enable-sso#create-the-sso-session-at-login).
+
+## Set the Refresh Token Lifetime
+
+Refresh tokens bound centralized sessions and decide how long a client can get new access tokens.
+
+<Steps>
+1. Navigate to <Breadcrumb>Tenants -> Your Tenant -> JWT</Breadcrumb>.
+1. Under **Refresh Token settings**, set **Duration** in minutes.
+1. Set **Expiration policy**:
+   * `Fixed` ends the refresh token a fixed time after login. Use `Fixed` to force a login on a schedule.
+   * `Sliding window` ends the refresh token after a period without use. Use `Sliding window` for an idle timeout.
+   * `Sliding window with a maximum lifetime` adds an absolute limit to the sliding window. Use this policy for an idle timeout plus a forced login, such as 1 hour idle and 12 hours maximum.
+1. Click <Breadcrumb>Save</Breadcrumb>.
+</Steps>
+
+The sliding window counts only refresh grants. Retrieving a refresh token with the API doesn't count as use. For a centralized session that stays alive while the user is active, see [Check the Refresh Token on Each Request](/docs/authentication/sessions/centralized-sessions#check-the-refresh-token-on-each-request).
+
+To override the Tenant values for one Application, navigate to <Breadcrumb>Applications -> Your Application -> JWT</Breadcrumb>, turn on **Enable application-level JWT override**, and set the refresh token fields. The Application values don't apply to the SSO session.
+
+## Set the Access Token Lifetime
+
+Set **JWT duration** in seconds on the <Breadcrumb>JWT</Breadcrumb> tab of the Tenant, or of the Application to override the Tenant. Access tokens stay valid until the tokens expire, even after you revoke the refresh token, so keep the duration short. Many applications use 5 to 60 minutes.
+
+## Set Your Application Session Lifetime
+
+Configure your application's own session timeout in your framework. Without centralized sessions, the application session lifetime is the main control over how long a user stays logged in to that application. FusionAuth can't change the application session lifetime.
+
+## Confirm the Result
+
+To check the SSO session timeout, set **Session timeout** to a short value such as `120`. Log in to an application with **Keep me signed in** checked, wait past the timeout, and open a second application. FusionAuth shows the login form. Restore the timeout when you finish.
+
+To see each session's expiration, navigate to <Breadcrumb>Users -> The User -> Sessions</Breadcrumb>.

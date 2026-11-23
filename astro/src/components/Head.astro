@@ -1,6 +1,7 @@
 ---
 import Font from 'astro/components/Font.astro';
 import SchemaMarkup from './SchemaMarkup.astro';
+import { getOgImage } from 'src/tools/ogImage';
 
 interface Props {
   description?: string;
@@ -33,7 +34,9 @@ const {
   isIndexPage = false,
 } = Astro.props;
 
-const openGraphImageUrl = openGraphImage ? new URL(openGraphImage, Astro.url): new URL("/img/og/articles-developers-v1.png", Astro.url);
+// the card shows the page title without the site suffix
+const ogImage = await getOgImage(Astro.url.pathname, (title ?? '').replace(/\s*\|\s*FusionAuth.*$/, ''), openGraphImage);
+const openGraphImageUrl = new URL(ogImage.url, Astro.url);
 const normalizedUrl = Astro.url.toString().replace(/\.html$/, '');
 const isProd = import.meta.env.PROD as boolean;
 
@@ -158,7 +161,10 @@ const slug = Astro.params.slug;
   <meta property="og:type" content={ogType}/>
   <meta property="og:locale" content="en_US"/>
   <meta property="og:image" content={openGraphImageUrl}/>
-  <meta property="og:image:alt" content={title}/>
+  {ogImage.type && <meta property="og:image:type" content={ogImage.type}/>}
+  {ogImage.width && <meta property="og:image:width" content={String(ogImage.width)}/>}
+  {ogImage.height && <meta property="og:image:height" content={String(ogImage.height)}/>}
+  <meta property="og:image:alt" content={ogImage.alt}/>
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
@@ -167,6 +173,7 @@ const slug = Astro.params.slug;
   <meta name="twitter:title" content={title}>
   <meta name="twitter:description" content={description}>
   <meta name="twitter:image" content={openGraphImageUrl}>
+  <meta name="twitter:image:alt" content={ogImage.alt}>
 
   {isProd && enableGTM &&
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-MZ9FDPFDF0" is:inline></script>

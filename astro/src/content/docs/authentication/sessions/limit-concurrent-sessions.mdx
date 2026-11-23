@@ -1,0 +1,66 @@
+---
+title: Limit Concurrent Sessions
+htmlTitle: Limit How Many Devices a User Can Log In From
+description: Learn how to cap the number of devices a user can stay logged in on at the same time.
+tags: sessions, concurrent sessions, device limiting, concurrent login, refresh tokens, webhooks, account sharing
+relatedPinFirst: authentication/sessions/centralized-sessions
+order: 70
+---
+
+FusionAuth has no built-in limit on concurrent sessions. You can build one with refresh tokens, which FusionAuth issues once per login on each browser or device. Count a user's refresh tokens for an Application, and act when the count reaches your limit. A user who logs in from Chrome and Firefox on one computer has two sessions.
+
+Choose what happens when a user goes over the limit:
+
+| Outcome | How | Tradeoff |
+|---|---|---|
+| Block the new login | A `user.login.success` webhook returns an error. | Simple. The user has to find and log out of another device, and the error message applies to every failed webhook. |
+| Let the user pick a session to end | Middleware in your application checks the count after login and shows a list of sessions. | More code. The user stays in control, and each request makes an extra API call. |
+
+Both approaches require [centralized sessions](/docs/authentication/sessions/centralized-sessions). Each login must create a refresh token, and each logout must revoke the refresh token. Otherwise, logged out devices still count toward the limit.
+
+## Prerequisites
+
+* An Application with **Generate refresh tokens** turned on and the `Refresh Token` grant enabled, on the <Breadcrumb>OAuth</Breadcrumb> tab.
+* A login request that includes the `offline_access` scope.
+* A logout route that revokes the session's refresh token. For an example, see [Log Out of One Device](/docs/authentication/sessions/centralized-sessions#log-out-of-one-device).
+* An API key with `GET` and `DELETE` permissions on `/api/jwt/refresh`.
+
+## Count a User's Sessions
+
+Call the [Retrieve Refresh Tokens API](/docs/apis/jwt/retrieve-refresh-tokens) with the user's Id. The response includes refresh tokens for every Application, plus the user's [[SSO session]], which has no **`applicationId`**. Keep only the tokens for your Application:
+
+<ExtractedCode src="example-device-limit-simple/index.snippet.active-session-count.ts" lang="typescript" title="Count the user's sessions for one Application" />
+
+## Block the New Login
+
+FusionAuth sends the `user.login.success` event after the user enters valid credentials and before FusionAuth completes the login. When the webhook transaction requires the webhook to succeed, a non-`2xx` response stops the login.
+
+<Steps>
+1. Navigate to <Breadcrumb>Tenants -> Your Tenant -> Webhooks</Breadcrumb>. Enable `user.login.success`, and set the transaction level for the event to `Any single webhook must succeed`.
+1. Navigate to <Breadcrumb>Settings -> Webhooks</Breadcrumb> and add a webhook. Set **URL** to your endpoint, such as `https://app.example.com/user-login-success`, and select `user.login.success`. In production, secure the webhook. For more information, see [Secure Webhooks](/docs/events/webhooks/securing).
+1. In the endpoint, ignore events for other Applications, count the sessions, and return `403` when the user is at the limit:
+
+   <ExtractedCode src="example-device-limit-simple/index.snippet.device-limiting.ts" lang="typescript" title="Block a login over the limit" />
+</Steps>
+
+FusionAuth shows the user a generic webhook error. To explain the limit, edit the `[WebhookTransactionException]` message in your theme's messages. For more information, see [Theme Localization](/docs/theme/localization). The message applies to every webhook failure during a transaction, so reword the message to cover your other webhooks too.
+
+To test the limit, log in as the same user from more browsers or private windows than the limit allows.
+
+## Let the User Pick a Session to End
+
+The session picker always lets the login finish. Your application then checks the session count on each protected request. When the user is over the limit, your application shows the other sessions and revokes the ones the user picks.
+
+<Steps>
+1. Shorten the access token lifetime. A revoked refresh token doesn't end the access token that the other device already holds. Set **JWT duration** on the Application's <Breadcrumb>JWT</Breadcrumb> tab to a few minutes, such as `300` seconds, so the other device loses access soon after you revoke the session.
+
+1. Add middleware after your authentication middleware. The middleware lists the user's other sessions for the Application and redirects to a session picker when the count reaches the limit. The session list leaves out the current session, so the user can't end the session in use:
+
+   <ExtractedCode src="example-device-limit-friendly/index.snippet.get-active-devicelist.ts" lang="typescript" title="Check the session count on each request" />
+
+1. Render the list on the picker page, with the device name, start time, and IP address from each refresh token. When the user submits the form, revoke each selected refresh token with the [Revoke Refresh Tokens API](/docs/apis/jwt/revoke-refresh-tokens):
+
+   <ExtractedCode src="example-device-limit-friendly/index.snippet.device-limiting-validatetoken.ts" lang="typescript" title="Revoke the selected sessions" />
+</Steps>
+
+For the full application, including the session picker template, see the [example repository](https://github.com/FusionAuth/fusionauth-example-device-limit-friendly). For the webhook approach, see the [webhook example repository](https://github.com/FusionAuth/fusionauth-example-device-limit-simple).

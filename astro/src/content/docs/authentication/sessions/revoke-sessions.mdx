@@ -1,0 +1,58 @@
+---
+title: View and Revoke Sessions
+htmlTitle: View and Revoke User Sessions
+description: Learn how to list a user's sessions and end the sessions from the Admin UI, the API, or automatically.
+tags: sessions, revoke sessions, refresh tokens, logout, session management, revoke access, webhooks, admin ui
+relatedPinFirst: authentication/sessions/centralized-sessions
+order: 45
+---
+
+FusionAuth tracks each user's [[SSO session]] and refresh tokens. You can list and revoke both. Revoking a refresh token ends a [[centralized session]] at the application's next check. Applications that keep their own sessions without checking FusionAuth keep running until those sessions expire.
+
+## View a User's Sessions
+
+Navigate to <Breadcrumb>Users</Breadcrumb>, select the user, and open the <Breadcrumb>Sessions</Breadcrumb> tab. Each row is one refresh token, with the Application, device, IP address, and expiration. The SSO session appears with an Application of `single-sign-on`.
+
+<Screenshot id="user-session" url="/admin/user/manage/00000000-0000-0000-0000-100000000004#sessions" showHash width={1600} fullPage={true} alt="The Sessions tab for a user in the Admin UI." />
+
+With the API, call the [Retrieve Refresh Tokens API](/docs/apis/jwt/retrieve-refresh-tokens) with the user's Id. Each refresh token includes **`metaData.device`** and **`startInstant`**.
+
+## Revoke Sessions
+
+In the Admin UI, click <Breadcrumb>Delete</Breadcrumb> on a row to revoke one session. To revoke every session for the user, click <Breadcrumb>Delete all sessions</Breadcrumb>.
+
+With the API, call the [Revoke Refresh Tokens API](/docs/apis/jwt/revoke-refresh-tokens) with an API key. Choose the scope:
+
+* A refresh token Id, to end one session.
+* A user Id and an Application Id, to log the user out of one Application on every device.
+* A user Id, to log the user out of every Application on every device. Revoking by user also ends the SSO session.
+* An Application Id, to log every user out of one Application.
+
+To revoke from a browser or a client without an API key, call [`/api/logout`](/docs/apis/login/logout) with the refresh token. Set **`global`** to `true` to revoke all of the user's refresh tokens and the SSO session.
+
+Revoking a refresh token doesn't end access tokens already issued. The access tokens work until the tokens expire. For how to keep that window short, see [Configure Session Lifetimes](/docs/authentication/sessions/configure-session-lifetimes#set-the-access-token-lifetime).
+
+Your code can revoke sessions in response to events. For example:
+
+* Revoke all of a user's sessions after a [suspicious login](/docs/events/reference/user/login/user-login-suspicious).
+* Add a "Log out everywhere" button to your account page.
+* Revoke the sessions of every user in a group when the group loses access.
+
+## Revoke Sessions Automatically
+
+FusionAuth revokes all of a user's refresh tokens on some account changes. Navigate to <Breadcrumb>Tenants -> Your Tenant -> JWT</Breadcrumb> and set **Refresh token revocation** under **Refresh Token settings**:
+
+* **On password change** revokes after the user's password changes. On by default.
+* **On action preventing login** revokes when a [user action](/docs/users/user-actions) locks the account. On by default.
+* **On multi-factor enable** revokes when the user turns on MFA. Off by default.
+* **On reuse of a one-time use token** revokes the token chain when a rotated one-time use token comes back. Off by default.
+
+## Track Session Activity
+
+To record when sessions start, extend, and end, subscribe a webhook to the following events:
+
+* [`user.login.success`](/docs/events/reference/user/login/user-login-success), when a user logs in.
+* [`jwt.refresh`](/docs/events/reference/jwt/jwt-refresh), when a client uses a refresh token.
+* [`jwt.refresh-token.revoke`](/docs/events/reference/jwt/jwt-refresh-token-revoke), when a refresh token gets revoked.
+
+Correlate the events by user Id to measure session length or count active sessions. For past logins, including logins through application-managed sessions, use the [Search Login Records API](/docs/apis/login/search).
