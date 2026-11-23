@@ -1,11 +1,10 @@
 ---
 title: External JWT
 htmlTitle: External JWT API
-description: Learn about the APIs for creating, retrieving, updating and deleting external JWT identity providers.
+description: API documentation for the External JWT Identity Provider API.
 tags: fusionauth api, rest api, http api, identity provider, external jwt, jwt federation, federated identity, token-based login, external login
 ---
 import ExternalJwtProviderWarning from 'src/content/docs/_shared/_external-jwt-provider-warning.mdx';
-import TokenStorageNote from 'src/content/docs/apis/identity-providers/_shared/_token-storage-note.mdx';
 import ExternalJwtRequestBody from 'src/content/docs/apis/identity-providers/_shared/_external-jwt-request-body.mdx';
 import StandardPostResponseCodes from 'src/content/docs/apis/_shared/_standard-post-response-codes.mdx';
 import ExternalJwtResponseBody from 'src/content/docs/apis/identity-providers/_shared/_external-jwt-response-body.mdx';
@@ -18,6 +17,7 @@ import XFusionauthTenantIdHeaderScopedOperationRowOnly from 'src/content/docs/ap
 import IdentityProviderLoginRequestBody from 'src/content/docs/apis/identity-providers/_shared/_identity-provider-login-request-body.mdx';
 import IdentityProviderLoginResponseCodes from 'src/content/docs/apis/identity-providers/_shared/_identity-provider-login-response-codes.mdx';
 import IdentityProviderLoginResponseCookies from 'src/content/docs/apis/identity-providers/_shared/_identity-provider-login-response-cookies.mdx';
+import ExternalJwtLoginFailures from 'src/content/docs/apis/identity-providers/_shared/_external-jwt-login-failures.mdx';
 
 export const idp_display_name = 'External JWT';
 export const idp_enforce_email_verified_claim = true;
@@ -26,37 +26,33 @@ export const idp_linking_strategy = 'LinkByEmail';
 
 <AvailableSince since="1.1.0"/>
 
-This is a special type of identity provider that is only used via the [JWT Reconcile](/docs/apis/jwt/reconcile-a-jwt-using-the-external-jwt-provider) API. This identity provider defines the claims inside the incoming JWT and how they map to fields in the FusionAuth User object.
+An External JWT Identity Provider logs in users with JWTs that an external system issues. The Identity Provider defines the claims in the JWT, and how the claims map to fields of the FusionAuth User. The Identity Provider has no login page. To log in a user, send the JWT to [Complete the External JWT Login](#complete-the-external-jwt-login) or to the [Reconcile API](/docs/apis/jwt/reconcile-a-jwt-using-the-external-jwt-provider). Both APIs take the same request and return the same response.
 
 <ExternalJwtProviderWarning />
 
-In order for this identity provider to use the JWT, it also needs the public key or HMAC secret that the JWT was signed with. FusionAuth will verify that the JWT is valid and has not expired. Once the JWT has been validated, FusionAuth will reconcile it to ensure that the User exists and is up-to-date.
+FusionAuth validates the JWT signature with the verification keys of the Identity Provider, and checks that the JWT hasn't expired. FusionAuth then reconciles the user that the JWT represents, so the user exists in FusionAuth and has current data.
 
-[//]: # (idp_display_name blank on purpose reads better)
-<TokenStorageNote idp_display_name idp_linking_strategy="LinkByEmail" token_name="token provided in the refresh_token field" return_text="request" />
-
+When the login request includes **`data.refresh_token`**, FusionAuth stores the value in the **`token`** field of the user's link to the Identity Provider. Use the value to call the external system on behalf of the user. For more information, see the [Link API](/docs/apis/identity-providers/links).
 
 ## Create an External JWT Identity Provider
 
 ### Request
 
-Create an External JWT Identity Provider with either a randomly generated Id or one you provide on the URI.
+Create an External JWT Identity Provider with a random Id, or with an Id that you provide in the URI. Set **`identityProvider.type`** to `ExternalJWT`.
 
-<API method="POST" uri="/api/identity-provider" authentication={["api-key"]} title="Create an Identity Provider using a randomly generated id"/>
+<API method="POST" uri="/api/identity-provider" authentication={["api-key"]} title="Create an Identity Provider with a random Id"/>
 
-<API method="POST" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} title="Create an Identity Provider with the provided unique id"/>
-
-The **type** property in the request JSON is used to determine that you are managing an External JWT identity provider.
+<API method="POST" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} title="Create an Identity Provider with a provided Id"/>
 
 #### Path Parameters
 
 <APIBlock>
   <APIField name="identityProviderId" type="UUID" optional immutable defaults="secure random UUID">
-    The Id to use for the new Identity Provider. If an id is not provided, a secure random UUID is generated.
+    The Id of the new Identity Provider. When you leave out the Id, FusionAuth generates a secure random UUID.
   </APIField>
 </APIBlock>
 
-##### Request Body
+#### Request Body
 
 <ExternalJwtRequestBody idp_since={idp_since} idp_display_name={idp_display_name} idp_linking_strategy={idp_linking_strategy} idp_enforce_email_verified_claim={idp_enforce_email_verified_claim} />
 
@@ -72,9 +68,9 @@ The **type** property in the request JSON is used to determine that you are mana
 
 ### Request
 
-Retrieve the External JWT Identity Provider by its Id.
+Retrieve an External JWT Identity Provider by Id.
 
-<API method="GET" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} title="Retrieve an external JWT Identity Provider by Id"/>
+<API method="GET" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} title="Retrieve an External JWT Identity Provider by Id"/>
 
 #### Path Parameters
 
@@ -103,10 +99,6 @@ Send the full External JWT Identity Provider with your changes applied.
 
 <API method="PUT" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} showPatch={true} title="Update an Identity Provider"/>
 
-#### Request Body
-
-<ExternalJwtRequestBody idp_since={idp_since} idp_display_name={idp_display_name} idp_linking_strategy={idp_linking_strategy} idp_enforce_email_verified_claim={idp_enforce_email_verified_claim} />
-
 #### Path Parameters
 
 <APIBlock>
@@ -115,13 +107,13 @@ Send the full External JWT Identity Provider with your changes applied.
   </APIField>
 </APIBlock>
 
-##### Request Body
+#### Request Body
 
 <ExternalJwtRequestBody idp_since={idp_since} idp_display_name={idp_display_name} idp_linking_strategy={idp_linking_strategy} idp_enforce_email_verified_claim={idp_enforce_email_verified_claim} />
 
 ### Response
 
-The response for this API contains the external JWT Identity Provider that was updated.
+The response contains the updated External JWT Identity Provider.
 
 <StandardPutResponseCodes conflict_detection never_search_error />
 
@@ -133,7 +125,7 @@ The response for this API contains the external JWT Identity Provider that was u
 
 ### Request
 
-Delete the External JWT Identity Provider by its Id.
+Delete an External JWT Identity Provider by Id.
 
 <API method="DELETE" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} title="Delete an Identity Provider by Id"/>
 
@@ -147,25 +139,21 @@ Delete the External JWT Identity Provider by its Id.
 
 ### Response
 
-This API does not return a JSON response body.
+The response has no body.
 
 <StandardDeleteResponseCodes never_search_error />
 
 ## Complete the External JWT Login
 
-This API allows you to complete an External JWT login after retrieving the external JWT and processing it.
+Log in a user with a JWT that an external system issued. The [Reconcile API](/docs/apis/jwt/reconcile-a-jwt-using-the-external-jwt-provider) takes the same request and returns the same response.
 
-For example, if you have a JWT representing a user, using this API you can pass that JWT returned from an external service to FusionAuth and we will complete the login workflow and reconcile the user to FusionAuth.
+The user doesn't need to exist in FusionAuth before the login. The [linking strategy](/docs/authentication/identity-providers/linking-strategies) decides whether FusionAuth creates the user from the JWT claims.
 
-The user does not need to exist yet in FusionAuth to utilize this API, depending on the configured [linking strategy](/docs/authentication/identity-providers/linking-strategies). The token returned will be used to retrieve the user's email address or username and if that user does not yet exist in FusionAuth the user may be created.
-
-If **createRegistration** has been enabled for this identity provider and the user does not yet have a registration for this application, a registration will be automatically created for the user. The user will be assigned any default roles configured for the application.
-
-If **createRegistration** has not been enabled, a registration will not be created if one does not yet exist. This is useful if you wish to manually provision users and then subsequently allow them to login.
+When **`createRegistration`** is enabled for the Application in the Identity Provider, FusionAuth registers a user who has no [[Registration]] for the Application. FusionAuth then assigns the default roles of the Application. When **`createRegistration`** is disabled, FusionAuth doesn't register the user, and the response has a `202` status code. To let only users that you register in advance log in, disable **`createRegistration`**.
 
 ### Request
 
-Complete the External JWT login by providing the JWT issued by the external service.
+Send the JWT in **`data.token`**.
 
 <API method="POST" uri="/api/identity-provider/login" authentication={["none"]} title="Complete External JWT Login"/>
 
@@ -182,9 +170,13 @@ Complete the External JWT login by providing the JWT issued by the external serv
 
 ### Response
 
-The response for this API contains the User object.
+The response contains the User object.
 
 <IdentityProviderLoginResponseCodes />
+
+#### Login Failures
+
+<ExternalJwtLoginFailures />
 
 #### Response Cookies
 
