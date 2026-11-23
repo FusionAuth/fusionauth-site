@@ -1,66 +1,55 @@
 ---
 title: Reconcile a JWT Using the External JWT Provider
 htmlTitle: Reconcile a JWT Using the External JWT Provider API
-description: API documentation for the FusionAuth Reconcile a JWT Using the External JWT Provider API.
+description: API documentation for the Reconcile a JWT Using the External JWT Provider API.
 tags: fusionauth api, rest api, http api, json web token, jwt, reconcile jwt, external jwt provider, identity provider
 order: 200
 ---
-import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_shared/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
 import ExternalJwtProviderWarning from 'src/content/docs/_shared/_external-jwt-provider-warning.mdx';
+import XForwardedForHeader from 'src/content/docs/apis/identity-providers/_shared/_x-forwarded-for-header.mdx';
 import XFusionauthTenantIdHeaderScopedOperationRowOnly from 'src/content/docs/apis/_shared/_x-fusionauth-tenant-id-header-scoped-operation-row-only.mdx';
-import ReconcileRequestBody from 'src/content/docs/apis/jwt/_reconcile-request-body.mdx';
+import IdentityProviderLoginRequestBody from 'src/content/docs/apis/identity-providers/_shared/_identity-provider-login-request-body.mdx';
+import IdentityProviderLoginResponseCodes from 'src/content/docs/apis/identity-providers/_shared/_identity-provider-login-response-codes.mdx';
+import IdentityProviderLoginResponseCookies from 'src/content/docs/apis/identity-providers/_shared/_identity-provider-login-response-cookies.mdx';
+import ExternalJwtLoginFailures from 'src/content/docs/apis/identity-providers/_shared/_external-jwt-login-failures.mdx';
 import UserResponseBody from 'src/content/docs/apis/_shared/_user-response-body.mdx';
 
-The Reconcile API is used to take a JWT issued by a third party identity provider as described by an [External JWT Identity Provider](/docs/apis/identity-providers/external-jwt) configuration and reconcile the User represented by the JWT to FusionAuth.
+The Reconcile API logs in a user with a JWT that an external system issued. FusionAuth validates the JWT with an [External JWT Identity Provider](/docs/apis/identity-providers/external-jwt), then reconciles the user that the JWT represents. FusionAuth creates or updates the user, depending on the linking strategy of the Identity Provider.
+
+The Reconcile API takes the same request and returns the same response as [Complete the External JWT Login](/docs/apis/identity-providers/external-jwt#complete-the-external-jwt-login). The Reconcile API accepts only External JWT Identity Providers.
 
 <ExternalJwtProviderWarning />
 
+When **`createRegistration`** is enabled for the Application in the Identity Provider, FusionAuth registers a user who has no [[Registration]] for the Application. FusionAuth then assigns the default roles of the Application. When **`createRegistration`** is disabled, FusionAuth doesn't register the user, and the response has a `202` status code.
 
 ## Request
 
-Provide the third party JWT in the request body so FusionAuth can reconcile the User it represents.
+Send the JWT in **`data.token`**.
 
 <API method="POST" uri="/api/jwt/reconcile" authentication={["none"]} title="Reconcile a JWT"/>
 
 ### Request Headers
 
 <APIBlock>
-  <APIField name="X-Forwarded-For" type="String" optional>
-    The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used if available, the request body value will take precedence.
-  </APIField>
+  <XForwardedForHeader />
   <XFusionauthTenantIdHeaderScopedOperationRowOnly />
 </APIBlock>
 
-#### Request Body
+### Request Body
 
-<ReconcileRequestBody />
+<IdentityProviderLoginRequestBody idp_display_name="External JWT" />
 
 ## Response
 
-The response for this API contains the User object.
+The response contains the User object.
 
-_Response Codes_
+<IdentityProviderLoginResponseCodes />
 
-| Code | Description |
-|------|-------------|
-| 200  | The reconcile was successful. The response will contain the User object that was authenticated. |
-| 232  | The Identity Provider uses the `CreatePendingLink` linking strategy, and the user has no link to the Identity Provider. The response contains only the `pendingIdPLinkId`. To link the user, call the [Complete a Pending Link](/docs/apis/identity-providers/links#complete-a-pending-link) endpoint of the Link API. After the user has a link, a reconcile request succeeds. <br/><JSON title="Example Response JSON" src="login/login-pending-link-response.json" /> |
-| 400  | The request was invalid and/or malformed, or the `identityProviderId` doesn't match an Identity Provider. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors. |
-| 401  | The request cannot be completed. For the causes, see [Reconcile Failures](#reconcile-failures). When the response has a body, the body contains an [Errors](/docs/apis/errors) JSON Object with the specific errors. |
-| 404  | The user was not found or the password was incorrect. The response will be empty. |
-| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty. |
-| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body. |
+When the **`applicationId`** or the **`identityProviderId`** doesn't exist, the response has a `400` status code. The response also has a `400` status code when the **`identityProviderId`** belongs to an Identity Provider of another type.
 
-### Reconcile Failures
+### Login Failures
 
-The Reconcile API returns a `401` for the following causes:
-
-* The JWT signature can't be validated.
-* The JWT is missing a claim that the Identity Provider configuration requires. FusionAuth always requires the unique Id claim. The email claim or the username claim is required when the linking strategy links on that claim.
-* The email verified claim is `false`, and the linking strategy links on email.
-* The email address isn't in a managed domain of the Identity Provider.
-* The linking strategy is `LinkByEmailForExistingUser`, and no user has the email address.
-* The linking strategy links on email, and the user with the email address already has a link to the Identity Provider with a different unique Id.
+<ExternalJwtLoginFailures />
 
 ### Response Body
 
@@ -68,11 +57,4 @@ The Reconcile API returns a `401` for the following causes:
 
 ### Response Cookies
 
-<APIBlock>
-  <APIField name="access_token" type="String">
-    The encoded access token. This cookie is written in the response as an `HttpOnly` session cookie.
-  </APIField>
-  <APIField name="refresh_token" type="String">
-    The refresh token. This cookie is written in the response as an `HttpOnly` persistent cookie. The cookie expiration is configured in the JWT configuration for the application or the global JWT configuration.
-  </APIField>
-</APIBlock>
+<IdentityProviderLoginResponseCookies />
