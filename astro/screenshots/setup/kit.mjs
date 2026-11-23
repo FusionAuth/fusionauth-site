@@ -1,9 +1,13 @@
 import { createHmac } from 'crypto';
 import { fileURLToPath } from 'url';
 
-export const baseUrl = 'http://localhost:9011';
+// each parallel shard runs its own stack, 10 ports above the previous shard's
+const portOffset = 10 * Number(process.env.SCREENSHOT_SHARD_INDEX ?? 0);
+export const appPort = 9011 + portOffset;
+export const freshPort = 9012 + portOffset;
+export const baseUrl = `http://localhost:${appPort}`;
 // un-kickstarted instance for first-time setup shots; a different host keeps its cookies apart
-export const freshUrl = 'http://127.0.0.1:9012';
+export const freshUrl = `http://127.0.0.1:${freshPort}`;
 export const apiKey = 'screenshot-dev-key-not-for-production';
 export const projectRoot = fileURLToPath(new URL('../../', import.meta.url));
 // state the hooks share between screenshots
@@ -184,6 +188,9 @@ export function highlightHelpers(page, fragment) {
   return { box, mark, showTab, addTokens, setClientSecret, freezeMenu, openView, row, hostedLogin };
 }
 
+// whether each temporary resource exists, as of this run's last change to it; saves an API call per resource per shot
+const resourceExists = new Map();
+
 // Creates the resources and applies the state the shot asks for, and removes the rest.
 export async function runTemporaryState(page, url, shot, temporaryResources, temporaryState) {
   const wantedState = new Set(shot.temporaryState ?? []);
@@ -195,12 +202,17 @@ export async function runTemporaryState(page, url, shot, temporaryResources, tem
     }
   }
 
+  let changed = false;
+  let tenantChanged = false;
   const exists = async path => (await fetch(`${baseUrl}${path}`, { headers: { Authorization: apiKey } })).ok;
   // deletes come first, since a second tenant makes creating an application need a tenant Id
   const unwantedFirst = [...temporaryResources].sort((a, b) => wantedResources.has(a) - wantedResources.has(b));
   for (const resources of unwantedFirst) {
     const wanted = wantedResources.has(resources);
-    if (wanted === (await exists(resources.paths[0])) && !(wanted && shot.recreateResources)) continue;
+    if (!resourceExists.has(resources)) resourceExists.set(resources, await exists(resources.paths[0]));
+    if (wanted === resourceExists.get(resources) && !(wanted && shot.recreateResources)) continue;
+    // forgotten until the change succeeds, so a failed shot leaves the next shot to check the API
+    resourceExists.delete(resources);
     // clears what a failed create left behind too
     for (const path of resources.paths) {
       if (!(await exists(path))) continue;
@@ -219,22 +231,36 @@ export async function runTemporaryState(page, url, shot, temporaryResources, tem
       for (let i = 0; i < 60 && (await exists(path)); i++) await page.waitForTimeout(500);
     }
     if (wanted) await resources.create(apiRequest, ...(shot.resourceArgs?.[resources.order] ?? []));
-    // the admin UI caches the tenant count; two tenants adds a Tenant field to some forms
-    if (resources.paths[0].startsWith('/api/tenant/')) await page.waitForTimeout(5000);
-    // goto alone keeps the loaded page when only the fragment differs
-    await page.goto(url, { waitUntil: 'networkidle' });
-    await page.reload({ waitUntil: 'networkidle' });
+    resourceExists.set(resources, wanted);
+    changed = true;
+    tenantChanged ||= resources.paths[0].startsWith('/api/tenant/');
   }
 
   for (const state of temporaryState) {
     const wanted = wantedState.has(state);
     if (wanted === !!state.undo) continue;
+    // resource changes load the page once, before the first state change
+    if (changed) {
+      if (tenantChanged) await page.waitForTimeout(5000);
+      await loadFresh(page, url);
+      changed = tenantChanged = false;
+    }
     if (wanted) state.undo = await state.apply(page);
     else {
       await state.undo();
       state.undo = undefined;
     }
-    await page.goto(url, { waitUntil: 'networkidle' });
-    await page.reload({ waitUntil: 'networkidle' });
+    // a load after each state change gives FusionAuth time to apply it; the device grant and MFA shots failed when these were batched
+    await loadFresh(page, url);
   }
+
+  // the admin UI caches the tenant count; two tenants adds a Tenant field to some forms
+  if (tenantChanged) await page.waitForTimeout(5000);
+  if (changed) await loadFresh(page, url);
+}
+
+// goto alone keeps the loaded page when only the fragment differs, and the reload also gives FusionAuth time to pick up config changes
+export async function loadFresh(page, url) {
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'networkidle' });
 }

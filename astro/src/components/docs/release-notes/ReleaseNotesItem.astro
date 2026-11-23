@@ -1,6 +1,7 @@
 ---
 import { ReleaseNotesItem as BaseItem } from 'astro-better-release-notes';
-import { categories } from 'src/components/docs/release-notes/ReleaseNotes.astro';
+import { DEFAULT_TYPES } from 'astro-better-admonitions';
+import { getReleaseCategory, getReleaseImpact, rejectBreakingFlag } from 'src/tools/docs/releaseCategories';
 
 export interface Props {
   issue?: string;
@@ -11,18 +12,101 @@ export interface Props {
   since?: string;
   resolvedIn?: string;
   viaIssue?: string;
+  impact?: 'caution' | 'breaking';
 }
 
-const { category, ...rest } = Astro.props as Props;
-const cat = categories.find(c => c.id === category);
+rejectBreakingFlag(Astro.props);
+const { category, impact, ...rest } = Astro.props as Props;
+const cat = getReleaseCategory(category);
+const imp = impact ? getReleaseImpact(impact) : undefined;
+const icon = imp && DEFAULT_TYPES[imp.icon].icon;
+
+// ids only need to be unique within a page; Astro.locals is per page
+const locals = Astro.locals as { releaseImpactCount?: number };
+let tipId = '';
+if (imp) {
+  locals.releaseImpactCount = (locals.releaseImpactCount ?? 0) + 1;
+  tipId = `rn-impact-tip-${locals.releaseImpactCount}`;
+}
 ---
 
 <BaseItem
   {...rest}
   {category}
-  categoryColor={cat?.color}
-  categoryLabel={cat?.label}
+  categoryColor={cat.color}
+  categoryLabel={cat.label}
   issueBaseUrl="https://github.com/FusionAuth/fusionauth-issues/issues/"
+  tags={imp ? [`impact-${imp.id}`] : undefined}
 >
+  {imp && icon && (
+    <p slot="badge" class="rn-impact not-prose" data-impact={imp.id} style={`--impact-color: ${imp.color}`}>
+      <span class="rn-impact-label" aria-describedby={tipId} tabindex="0" style={`anchor-name: --${tipId}`}>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox={icon.viewBox} width="16" height="16" aria-hidden="true">
+          <path fill-rule="evenodd" d={icon.d} />
+        </svg>
+        {imp.label}
+      </span>
+      <span id={tipId} role="tooltip" class="glossary-tooltip" style={`position-anchor: --${tipId}`} data-markdown-ignore>
+        <span class="glossary-tooltip-body">{imp.description}</span>
+      </span>
+    </p>
+  )}
   <slot />
 </BaseItem>
+
+<script>
+  // WCAG 1.4.13: Esc hides the open tooltip until the pointer or focus leaves the icon
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll<HTMLElement>('.rn-impact:is(:hover, :focus-within)').forEach((el) => {
+      el.dataset.dismissed = '';
+      const reset = () => delete el.dataset.dismissed;
+      el.addEventListener('pointerleave', reset, { once: true });
+      el.addEventListener('focusout', reset, { once: true });
+    });
+  });
+</script>
+
+<style>
+  /* positioned, so the fallback tooltip (no anchor positioning) centers on the label */
+  .rn-impact {
+    position: relative;
+  }
+
+  .rn-impact-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 0.25rem;
+    color: var(--impact-color);
+    font-size: 0.75rem;
+    font-style: italic;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: help;
+  }
+
+  .rn-impact-label svg {
+    flex: none;
+    fill: currentColor;
+  }
+
+  .rn-impact-label:focus-visible {
+    outline: 2px solid var(--impact-color);
+    outline-offset: 2px;
+  }
+
+  :global(.dark) .rn-impact-label {
+    color: color-mix(in srgb, var(--impact-color) 65%, white);
+  }
+
+  @media (hover: hover) {
+    .rn-impact:hover:not([data-dismissed]) > :global(.glossary-tooltip) {
+      display: block;
+    }
+  }
+
+  .rn-impact:has(> .rn-impact-label:focus-visible):not([data-dismissed]) > :global(.glossary-tooltip) {
+    display: block;
+  }
+</style>

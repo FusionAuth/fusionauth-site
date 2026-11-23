@@ -1,6 +1,6 @@
-import { piedPiperAppId, defaultTenantId, projectRoot, baseUrl, freshUrl, apiKey, runtime, makeTag, highlightHelpers, runTemporaryState, selectTab, tabsReady } from './screenshots/setup/kit.mjs';
+import { piedPiperAppId, defaultTenantId, projectRoot, baseUrl, freshUrl, appPort, freshPort, apiKey, runtime, makeTag, highlightHelpers, runTemporaryState, loadFresh, selectTab, tabsReady } from './screenshots/setup/kit.mjs';
 import { join } from 'path';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { modules, resources } from './screenshots/setup/index.mjs';
 
 // load .env from this directory for local development (no-op if file absent)
@@ -24,10 +24,15 @@ for (const module of modules) {
 const temporaryResources = [...new Set(Object.values(shots).flatMap(shot => shot.temporaryResources ?? []))].sort((a, b) => a.order - b.order);
 const temporaryState = [...new Set(Object.values(shots).flatMap(shot => shot.temporaryState ?? []))].sort((a, b) => a.order - b.order);
 
-export default {
+// list searches persist in a cookie per list, so one shot's search would filter the list in later shots
+const clearListSearches = context => context.clearCookies({ name: /IndexAction\$s$/ });
+
+const config = {
   baseUrl,
   outputDir: 'public/img/docs/screenshots',
   window: { width: 1100, height: 800 },
+  // the setup hooks grow windows to 2500, and some shots ask for more than the 1600 default
+  maxWindow: { width: 2560, height: 2500 },
   browser: 'webkit',
   browserContainer: true,
   chrome: {
@@ -42,7 +47,9 @@ export default {
   },
   docker: {
     compose: 'screenshots/docker-compose.yml',
-    service: 'fusionauth fusionauth-fresh',
+    // only the first-time setup shots use the fresh instance, so other shards skip its two containers
+    service: specs => (specs.some(spec => shots[spec.name]?.fresh) ? 'fusionauth fusionauth-fresh' : 'fusionauth'),
+    env: { FUSIONAUTH_PORT: String(appPort), FUSIONAUTH_FRESH_PORT: String(freshPort) },
     healthcheck: {
       url: `${baseUrl}/api/health`,
       timeout: 300000,
@@ -50,10 +57,15 @@ export default {
     },
   },
 
-  beforeAll: async context => {
+  beforeAll: async (context, { specs } = {}) => {
     // 1.70 scrolls smoothly, so the capture's scroll to the crop area hasn't moved yet when it shoots
     await context.addInitScript(() => document.addEventListener('DOMContentLoaded', () => document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important')));
     runtime.leftoversContext = context;
+    // kickstart user pictures and theme fields point here; served from disk so parallel shards need no shared port
+    await context.route('http://localhost:8080/**', route => {
+      const file = join(projectRoot, 'screenshots/images', new URL(route.request().url()).pathname);
+      return existsSync(file) ? route.fulfill({ path: file }) : route.fulfill({ status: 404 });
+    });
     const seed = JSON.parse(readFileSync(join(projectRoot, 'screenshots/kickstart/kickstart.json'), 'utf-8'));
     const seedHeaders = { Authorization: seed.variables.apiKey, 'Content-Type': 'application/json' };
     const seedDeadline = Date.now() + 300_000;
@@ -91,6 +103,8 @@ export default {
     runtime.adminLocale = (await context.cookies(`${baseUrl}`)).find(c => c.name === 'fusionauth.locale')?.value;
     await page.close();
     for (const resource of resources) await resource(context);
+    await clearListSearches(context);
+    if (!specs?.some(spec => shots[spec.name]?.fresh)) return;
     const freshDeadline = Date.now() + 300_000;
     while (!(await fetch(`${freshUrl}/api/status`, { signal: AbortSignal.timeout(5000) }).then(r => r.ok, () => false))) {
       if (Date.now() >= freshDeadline) throw new Error('Fresh FusionAuth instance did not become ready');
@@ -98,37 +112,61 @@ export default {
     }
   },
 
+  // cleaning up after each shot means the next shot's first load is already clean
+  afterScreenshot: page => clearListSearches(page.context()),
+
   beforeScreenshot: async (page, ctx) => {
+    // with SCREENSHOT_TIMING=1, each stage adds h.<stage>=<ms> to the progress line
+    let stageStart = Date.now();
+    const stage = name => {
+      if (!ctx?.timings) return;
+      const now = Date.now();
+      ctx.timings[`h.${name}`] = (ctx.timings[`h.${name}`] ?? 0) + now - stageStart;
+      stageStart = now;
+    };
     const shot = shots[ctx?.name] ?? {};
     // fresh-instance shots skip the kickstarted instance's setup
-    if (shot.fresh) return shot.prepare?.(page, ctx, { url: ctx?.url ?? page.url(), shot }, 'prepare');
+    if (shot.fresh) {
+      // the Screenshot url is a path, because the fresh instance's port differs per shard
+      const { pathname, search } = new URL(ctx?.url ?? page.url());
+      const freshTarget = `${freshUrl}${pathname}${search}`;
+      await page.goto(freshTarget, { waitUntil: 'networkidle' });
+      return shot.prepare?.(page, ctx, { url: freshTarget, shot }, 'prepare');
+    }
     const url = ctx?.url ?? page.url();
 
     const { pathname, hash } = new URL(url);
 
     const fragment = hash.slice(1);
 
+    // cookie resets load the page once, after the last reset
+    let cookiesChanged = false;
+
     if (runtime.multiTenantCookies) {
       await page.context().clearCookies();
       await page.context().addCookies(runtime.multiTenantCookies);
       runtime.multiTenantCookies = undefined;
-      await page.goto(url, { waitUntil: 'networkidle' });
+      cookiesChanged = true;
     }
 
     if (runtime.savedSso && !shot.signedOut) {
       await page.context().addCookies([runtime.savedSso]);
       runtime.savedSso = undefined;
-      await page.goto(url, { waitUntil: 'networkidle' });
+      cookiesChanged = true;
     }
 
+
     if (runtime.operateMetricsKeyExists && !shot.keepMetricsKey) {
+      // cleared first so a failed delete fails this shot only, not every later one
+      runtime.operateMetricsKeyExists = false;
       await page.goto(`${baseUrl}/admin/api-key/`, { waitUntil: 'networkidle' });
-      await page.evaluate(() => {
+      const opened = await page.evaluate(() => {
         const a = document.querySelector('a[href*="/ajax/api-key/delete/00000000-0000-0000-0000-f60000000002"]');
-        if (!a) throw new Error('Operate metrics key delete link not found');
-        a.closest('[popover]')?.showPopover();
-        a.click();
+        a?.closest('[popover]')?.showPopover();
+        a?.click();
+        return !!a;
       });
+      if (!opened) throw new Error('could not delete the Prometheus metrics API key that operate-datadog-fusionauth-apikey created, because /admin/api-key/ has no delete link for the key; later API key screenshots will show the extra key');
       await page.locator('.prime-dialog.open').waitFor();
       await page.locator('.prime-dialog.open #apiKeyId').evaluate(el => {
         el.value = '00000000-0000-0000-0000-f60000000002';
@@ -136,8 +174,8 @@ export default {
       await page.locator('.prime-dialog.open button[type=submit]').click({ timeout: 10000 });
       await page.locator('.prime-dialog.open').waitFor({ state: 'hidden', timeout: 10000 });
       await page.waitForLoadState('networkidle');
-      runtime.operateMetricsKeyExists = false;
       await page.goto(url, { waitUntil: 'networkidle' });
+      cookiesChanged = false;
     }
 
     if (runtime.adminLocale && pathname.startsWith('/admin')) {
@@ -145,7 +183,7 @@ export default {
       const locale = (await context.cookies(`${baseUrl}`)).find(c => c.name === 'fusionauth.locale');
       if (locale?.value !== runtime.adminLocale) {
         await context.addCookies([{ name: 'fusionauth.locale', value: runtime.adminLocale, url: `${baseUrl}` }]);
-        await page.reload({ waitUntil: 'networkidle' });
+        cookiesChanged = true;
       }
     }
 
@@ -153,9 +191,12 @@ export default {
       await page.context().clearCookies();
       await page.context().addCookies(runtime.registerCookies);
       runtime.registerCookies = undefined;
-      await page.goto(url, { waitUntil: 'networkidle' });
+      cookiesChanged = true;
     }
 
+    if (cookiesChanged) await loadFresh(page, url);
+
+    stage('reset');
     const oauthAppId = piedPiperAppId;
 
     const oauthTenantId = defaultTenantId;
@@ -177,8 +218,9 @@ export default {
       ...highlightHelpers(page, fragment),
     };
     await runTemporaryState(page, url, shot, temporaryResources, temporaryState);
+    stage('temporary');
 
-    await shot.prepare?.(page, ctx, info, 'prepare');
+    await shot.prepare?.(page, ctx, info, 'prepare'); stage('prepare');
 
     if (pathname.startsWith('/account')) {
       const modified = !!shot.modifiedAccount;
@@ -188,7 +230,7 @@ export default {
       }
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterAccount');
+    await shot.prepare?.(page, ctx, info, 'afterAccount'); stage('afterAccount');
 
     for (const [id, value] of Object.entries(shot.select ?? {})) {
       const selected = await page.evaluate(
@@ -213,7 +255,7 @@ export default {
       if (!switched) throw new Error(`switch not found: ${id}`);
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterControls');
+    await shot.prepare?.(page, ctx, info, 'afterControls'); stage('afterControls');
 
     if (pathname.startsWith('/admin/theme/view/') && fragment) {
       const tab = page.locator(`main button[data-tab="${fragment}"]`);
@@ -225,7 +267,7 @@ export default {
       await page.waitForTimeout(1500);
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterThemeTab');
+    await shot.prepare?.(page, ctx, info, 'afterThemeTab'); stage('afterThemeTab');
 
     if (/^\/admin\/(webhook\/(add|edit)|system-configuration\/edit)/.test(pathname) && fragment) {
       const label = await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`)?.textContent.trim(), fragment);
@@ -233,7 +275,7 @@ export default {
       await selectTab(page, label);
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterSystemTab');
+    await shot.prepare?.(page, ctx, info, 'afterSystemTab'); stage('afterSystemTab');
 
     if (shot.signedOut) {
       const context = page.context();
@@ -242,9 +284,9 @@ export default {
       await page.goto(url, { waitUntil: 'networkidle' });
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterSignOut');
+    await shot.prepare?.(page, ctx, info, 'afterSignOut'); stage('afterSignOut');
 
-    await shot.prepare?.(page, ctx, info, 'beforeUserTabs');
+    await shot.prepare?.(page, ctx, info, 'beforeUserTabs'); stage('beforeUserTabs');
 
     if (url.includes('00000000-0000-0000-0000-10000000000') && pathname.startsWith('/admin/user/manage/') && !shot.skipUserWait) {
       try {
@@ -273,12 +315,11 @@ export default {
       if (fragment === 'entity-grants') await page.locator('#entity-grants td').first().waitFor();
     }
 
-    await shot.prepare?.(page, ctx, info, 'normalizeUser');
+    await shot.prepare?.(page, ctx, info, 'normalizeUser'); stage('normalizeUser');
 
-    await shot.prepare?.(page, ctx, info, 'afterUserTabs');
+    await shot.prepare?.(page, ctx, info, 'afterUserTabs'); stage('afterUserTabs');
 
     if (pathname.includes('/admin/application/edit') || (pathname.includes('/admin/application/add') && fragment)) {
-      await page.waitForTimeout(500);
       try {
         await tabsReady(page);
         const appTab = !fragment
@@ -287,7 +328,6 @@ export default {
         if (!appTab) throw new Error(`no tab for #${fragment}`);
         await selectTab(page, appTab);
         await page.locator('button').filter({ hasText: appTab }).first().click({ timeout: 3000 });
-        await page.waitForTimeout(1000);
         await selectTab(page, appTab);
       } catch (e) {
         throw new Error(`application/edit tab failed: ${e.message}`, { cause: e });
@@ -320,6 +360,7 @@ export default {
             return { clicked: false, available: allLabels };
           }, tabLabel);
           if (!result.clicked) throw new Error(`tab "${tabLabel}" not found; available: ${JSON.stringify(result.available)}`);
+          // the tab draws its fields after the click; without this pause, the capture misses them
           await page.waitForTimeout(1000);
           await selectTab(page, tabLabel);
         } catch (e) {
@@ -328,7 +369,7 @@ export default {
       }
 
       // send-test-email screenshot: tag and scroll to the test email control
-      await shot.prepare?.(page, ctx, info, 'tenantTab');
+      await shot.prepare?.(page, ctx, info, 'tenantTab'); stage('tenantTab');
 
       // webauthn tab: click enable toggle only if workflow fieldsets aren't already visible
       // (beforeAll enables WebAuthn when a license key is present; clicking again would disable it)
@@ -343,7 +384,7 @@ export default {
         await page.waitForTimeout(400);
       }
 
-      await shot.prepare?.(page, ctx, info, 'afterTenantWorkflow');
+      await shot.prepare?.(page, ctx, info, 'afterTenantWorkflow'); stage('afterTenantWorkflow');
     }
 
     if (pathname.includes('/admin/email/template/edit/') && fragment === 'localization') {
@@ -369,7 +410,7 @@ export default {
       }
     }
 
-    await shot.prepare?.(page, ctx, info, 'beforeSizing');
+    await shot.prepare?.(page, ctx, info, 'beforeSizing'); stage('beforeSizing');
 
     if (shot.skipSizing) await shot.prepare?.(page, ctx, info, 'size');
     else {
@@ -446,7 +487,7 @@ export default {
       if (!boxed) throw new Error(`section not found: ${shot.sectionBox}`);
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterSections');
+    await shot.prepare?.(page, ctx, info, 'afterSections'); stage('afterSections');
 
     if (shot.band) {
       const height = await page.evaluate(sel => {
@@ -478,7 +519,7 @@ export default {
       await page.waitForTimeout(300);
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterFraming');
+    await shot.prepare?.(page, ctx, info, 'afterFraming'); stage('afterFraming');
 
     if (shot.legacyVersion) {
       await page.evaluate(() => {
@@ -536,10 +577,17 @@ export default {
       );
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterDates');
+    await shot.prepare?.(page, ctx, info, 'afterDates'); stage('afterDates');
 
-    await shot.prepare?.(page, ctx, info, 'finish');
+    await shot.prepare?.(page, ctx, info, 'finish'); stage('finish');
   },
 };
 
+// drop playwright's "page.evaluate: Error:" prefix and say which page the setup was on
+const prepareShot = config.beforeScreenshot;
+config.beforeScreenshot = (page, ctx) => prepareShot(page, ctx).catch(e => {
+  throw new Error(`${e.message.replace(/^\w+\.evaluate: Error: /, '')} (on ${page.url()})`, { cause: e });
+});
+
+export default config;
 export { temporaryResources, temporaryState };

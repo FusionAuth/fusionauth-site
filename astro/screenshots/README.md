@@ -35,6 +35,22 @@ To re-take a single screenshot:
 npm run screenshots -- --filter admin-group-add
 ```
 
+To capture faster, split the run into shards that run in parallel:
+
+```sh
+npm run screenshots -- --shards 4
+```
+
+Each shard takes whole pages and runs its own FusionAuth stack, so 4 shards need about 10 GB of Docker memory. Only the shard with the [fresh-instance screenshots](#fresh-instance-screenshots) starts the second FusionAuth instance, so the other shards use less. Shard 1 uses ports 9011 and 9012, shard 2 uses ports 9021 and 9022, and so on. Every output line starts with its shard, such as `[shard 2/4]`.
+
+To regenerate the screenshots and keep only the ones that changed beyond a pixel tolerance, run the refresh script from the repository root. The script reverts images within the tolerance to the committed version, and accepts `--filter` and `--shards`:
+
+```sh
+scripts/refresh-screenshots.sh --shards 4
+```
+
+The weekly Update screenshots workflow runs the refresh script with 4 shards. To change the count for one run, set the **`shards`** input when you start the workflow by hand.
+
 To check whether screenshots have drifted from the committed references (CI use):
 
 ```sh
@@ -123,18 +139,19 @@ The `-v` flag removes the named volumes so FusionAuth starts fresh and re-runs t
 
 ## Fresh-instance screenshots
 
-A few screenshots show what a new FusionAuth installation looks like before any setup, such as the Setup Wizard in [First Time Setup](../src/content/docs/get-started/first-time-setup.mdx). The kickstarted instance can't show these pages, so the Docker Compose file also runs `fusionauth-fresh`: a second instance with no Kickstart file, at `http://127.0.0.1:9012`. Its database lives in memory, so every run starts at the Setup Wizard.
+A few screenshots show what a new FusionAuth installation looks like before any setup, such as the Setup Wizard in [First Time Setup](../src/content/docs/get-started/first-time-setup.mdx). The kickstarted instance can't show these pages, so the Docker Compose file also runs `fusionauth-fresh`: a second instance with no Kickstart file, at `http://127.0.0.1:9012` in an unsharded run. Its database lives in memory, so every run starts at the Setup Wizard.
 
-These screenshots are part of the normal suite. `npm run screenshots` and `npm run check-screenshots` start both instances and capture both sets. To retake only the fresh-instance screenshots, filter on the port in their URLs:
+These screenshots are part of the normal suite. A run starts `fusionauth-fresh` only when the run includes a fresh-instance screenshot, so a filtered run or a shard without one skips the second instance. To retake only the fresh-instance screenshots, filter on their paths:
 
 ```sh
-npm run screenshots -- --filter 9012
+npm run screenshots -- --filter /admin/setup-wizard
+npm run screenshots -- --filter /admin/first-time-setup
 ```
 
 To add a fresh-instance screenshot:
 
-1. Point the `Screenshot` component's `url` at `http://127.0.0.1:9012`. The `127.0.0.1` host keeps the fresh instance's cookies apart from the kickstarted instance at `localhost`.
-1. Give the shot `fresh: true` in its setup module, with a `prepare` function that gets the page into the right state. The usual normalization for the kickstarted instance doesn't run for fresh shots. See `setup/get-started/first-time-setup.mjs` for an example that completes the Setup Wizard and logs in.
+1. Set the `Screenshot` component's `url` to the page path, such as `/admin/setup-wizard`.
+1. Give the shot `fresh: true` in its setup module, with a `prepare` function that gets the page into the right state. The screenshot config then opens the path on the fresh instance, at `http://127.0.0.1` and the shard's port. The `127.0.0.1` host keeps the fresh instance's cookies apart from the kickstarted instance at `localhost`. The usual normalization for the kickstarted instance doesn't run for fresh shots. See `setup/get-started/first-time-setup.mjs` for an example that completes the Setup Wizard and logs in.
 
 If a run stops partway, the fresh instance can be left past the Setup Wizard. Remove it before you retry:
 

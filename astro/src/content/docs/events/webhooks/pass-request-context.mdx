@@ -1,0 +1,57 @@
+---
+title: Pass Request Context
+htmlTitle: Pass Context From API Requests to Webhooks
+description: Learn how to send a trace Id or other context with a FusionAuth API request and read the same values in the webhook the request triggers.
+tags: webhook, event info, eventInfo, event context, trace id, correlation id, audit, fusionauth webhook, webhook payload
+order: 5
+---
+
+You can attach your own data to a FusionAuth API request, such as a trace Id or the name of the service that made the call. FusionAuth copies the data into the events the request triggers. Your webhook can then tie each event back to the API call that caused the event, without a second API call.
+
+The data travels in the **`eventInfo.data`** field of the request body. FusionAuth delivers the data, without changes, as **`event.info.data`** in the webhook payload.
+
+```mermaid title="FusionAuth copies eventInfo.data from an API request into the event that the request triggers."
+sequenceDiagram
+    participant Service as Your service
+    participant FusionAuth
+    participant Webhook as Your webhook
+    Service ->> FusionAuth : POST /api/user with eventInfo.data
+    FusionAuth -->> Service : 200 OK
+    FusionAuth ->> Webhook : user.create event with event.info.data
+```
+
+## Prerequisites
+
+* A FusionAuth API key with permission to call the API you use.
+* A webhook that listens for the events the request triggers, with those events enabled on the Tenant. For more information, see [Write a Webhook](/docs/events/webhooks/writing-a-webhook).
+* A shared secret in the webhook's `Authorization` header, so your webhook can reject events that don't come from FusionAuth. For more information, see [Secure Webhooks](/docs/events/webhooks/securing).
+
+## Send and Read the Context
+
+The following example creates a user and reads the trace Id from the `user.create` event. The code comes from the [webhooks example repository](https://github.com/FusionAuth/fusionauth-example-javascript-webhooks), which includes a Docker Compose file and a Kickstart that configure the webhook.
+
+<Steps>
+1. Add **`eventInfo.data`** to the API request body. The object can hold any JSON:
+
+   <ExtractedCode title="Create a user with context" lang="javascript" src="example-javascript-webhooks/create-user.snippet.sendcontext.js" />
+
+1. In your webhook, check the `Authorization` header, then read **`event.info.data`**:
+
+   <ExtractedCode title="Read the context in the webhook" lang="javascript" src="example-javascript-webhooks/app.snippet.readcontext.js" />
+</Steps>
+
+To confirm the result, send the request and check your webhook's output. The webhook logs the same **`traceId`** that the request sent. You can also find the event, with **`event.info.data`**, in the [Webhook Event Log](/docs/events/webhooks/webhook-event-log).
+
+## Which Requests Accept Context
+
+Most calls to the User, Registration, Login, Logout, JWT, and Two Factor APIs carry **`eventInfo`** into events. A call carries the field when the call's request body reference lists **`eventInfo`**. For example, the Tenant and Application APIs list **`eventInfo`** for updates, but not for creates.
+
+The following requests don't carry **`eventInfo.data`** into events:
+
+* The Group and Entity APIs don't accept **`eventInfo`**. Events from those APIs never include **`event.info.data`**.
+* The Identity Provider Link API ignores **`eventInfo`** in the request.
+* Logins through the hosted login pages don't take **`eventInfo`** from your application. FusionAuth fills in **`event.info`** from the browser request instead.
+
+## Other Event Info Fields
+
+**`eventInfo`** also accepts details about the end user, such as **`ipAddress`**, **`userAgent`**, and **`deviceName`**. When your server calls FusionAuth on behalf of an end user, set those values from the end user's request. Otherwise, events and login records show the address of your server. FusionAuth always sets **`event.info.location`** from the IP address, and ignores a **`location`** in the request. For the full list of fields, see the [Create a User](/docs/apis/users/create) request body.

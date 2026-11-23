@@ -6,6 +6,7 @@ import TenantApplicationPhoneConfiguration from 'src/content/docs/apis/_shared/_
 import TenantGeneratorLengthConfigRules from 'src/content/docs/apis/_shared/_tenant-generator-length-config-rules.mdx';
 import TenantGeneratorTypeConfigRules from 'src/content/docs/apis/_shared/_tenant-generator-type-config-rules.mdx';
 import TransactionTypes from 'src/content/docs/apis/_shared/_transaction-types.mdx';
+import EventInfoRequestBody from 'src/content/docs/apis/_shared/_event-info-request-body.mdx';
 
 <APIBlock>
   <APIField name="tenant.accessControlConfiguration.uiIPAccessControlListId" type="UUID" optional since="1.30.0">
@@ -463,7 +464,7 @@ import TransactionTypes from 'src/content/docs/apis/_shared/_transaction-types.m
   </APIField>
 
   <APIField name="tenant.httpSessionMaxInactiveInterval" type="Integer" optional defaults="3600" since="1.8.0">
-    Time in seconds until an inactive session will be invalidated. Used when creating a new session in the FusionAuth OAuth frontend.
+    The number of seconds an SSO session can be inactive before FusionAuth closes the session. FusionAuth creates the SSO session only when the user checks **Keep me signed in** on the login page, so this timeout has no effect for other logins. For more information, see [Create the SSO Session at Login](/docs/authentication/sessions/enable-sso#create-the-sso-session-at-login).
   </APIField>
 
   <APIField name="tenant.issuer" type="String" optional since="1.8.0" defaults="acme.com">
@@ -879,6 +880,31 @@ import TransactionTypes from 'src/content/docs/apis/_shared/_transaction-types.m
 
   </APIField>
 
+  <APIField name="tenant.rateLimitConfiguration.passwordlessLogin.enabled" type="Boolean" optional defaults="false" since="1.71.0">
+    Whether rate limiting is enabled for submitting passwordless one-time codes. This rate limit applies only to applications that use the `FormField` passwordless login strategy. When a user reaches the limit, FusionAuth rejects further codes for that user, including the correct code.
+
+    <PlanBlurbApi plan="enterprise" feature="rate limiting" />
+
+  </APIField>
+
+  <APIField name="tenant.rateLimitConfiguration.passwordlessLogin.limit" type="Integer" optional defaults="5" since="1.71.0">
+    The number of times a user can submit a passwordless one-time code within the configured **timePeriodInSeconds** duration.
+
+    Required when **enabled** is set to `true`.
+
+    <PlanBlurbApi plan="enterprise" feature="rate limiting" />
+
+  </APIField>
+
+  <APIField name="tenant.rateLimitConfiguration.passwordlessLogin.timePeriodInSeconds" type="Integer" optional defaults="60" since="1.71.0">
+    The duration for the number of times a user can submit a passwordless one-time code before being rate limited.
+
+    Required when **enabled** is set to `true`.
+
+    <PlanBlurbApi plan="enterprise" feature="rate limiting" />
+
+  </APIField>
+
   <APIField name="tenant.rateLimitConfiguration.sendEmailVerification.enabled" type="Boolean" optional defaults="false" since="1.30.0">
     Whether rate limiting is enabled for send email verification.
 
@@ -1171,6 +1197,12 @@ import TransactionTypes from 'src/content/docs/apis/_shared/_transaction-types.m
     * `OnCollision` - Only append a unique suffix when the requested username is in use.
   </APIField>
 
+  <APIField name="tenant.webAuthnConfiguration.allowedOrigins" type="Array<String>" optional since="1.71.0">
+    The allowed origins for native Android apps that use the Android Credential Manager API to perform WebAuthn ceremonies. Each value must use the format `android:apk-key-hash:<hash>`, where `<hash>` is the base64url-encoded SHA-256 fingerprint of the app's signing certificate.
+
+    When this value contains one or more origins, `tenant.webAuthnConfiguration.relyingPartyId` is required.
+  </APIField>
+
   <APIField name="tenant.webAuthnConfiguration.bootstrapWorkflow.authenticatorAttachmentPreference" type="String" optional defaults="crossPlatform" since="1.41.0">
     Determines the authenticator attachment requirement for WebAuthn passkey registration when using the bootstrap workflow. The possible values are:
 
@@ -1275,6 +1307,9 @@ import TransactionTypes from 'src/content/docs/apis/_shared/_transaction-types.m
 
   </APIField>
 
+  <If condition={props.is_update}>
+    <EventInfoRequestBody />
+  </If>
   <APIField name="webhookIds" type="Array<UUID>" optional since="1.37.0">
     An array of Webhook Ids. For Webhooks that are not already configured for All Tenants, specifying an Id on this request will indicate the associated Webhook should handle events for this tenant.
   </APIField>

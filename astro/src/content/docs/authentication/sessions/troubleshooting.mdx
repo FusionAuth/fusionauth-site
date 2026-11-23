@@ -1,0 +1,61 @@
+---
+title: Troubleshooting
+htmlTitle: Troubleshoot Sessions and Logout
+description: Learn how to fix common problems with FusionAuth SSO, session lifetimes, and logout.
+tags: sessions, sso, logout, troubleshooting, session timeout, cookies, samesite, third-party cookies, refresh tokens
+order: 90
+---
+
+Each section below starts with a symptom, then gives the cause and the fix. For how the sessions relate, see [How Sessions Work](/docs/authentication/sessions/how-sessions-work).
+
+## A User Logs Back In Right After Logout
+
+The application ended the application session, but the [[SSO session]] still exists. The next login redirect finds the SSO session and logs the user in without a form.
+
+Redirect the browser to `/oauth2/logout` after ending the application session. For the steps, see [Log Users Out](/docs/authentication/sessions/log-users-out).
+
+## Other Applications Stay Logged In
+
+Front-channel logout ended the SSO session, but another application kept the application session. Check the following causes:
+
+* The Application that started the logout has **Logout behavior** set to `Redirect only`. Set the value to `All applications`.
+* The other Application has no **Logout URL**. FusionAuth only loads the URLs that exist.
+* The code at the **Logout URL** didn't receive the session cookie. FusionAuth loads each **Logout URL** in a cross-site iframe, and the browser leaves `SameSite=Lax` and `SameSite=Strict` cookies off the request. Set the application's session cookie to `SameSite=None; Secure`, and serve the application over HTTPS. Browsers accept `SameSite=None` only on `Secure` cookies, so front-channel logout fails over plain HTTP, including in local development without TLS.
+* The browser blocks third-party cookies, including `SameSite=None` cookies. Switch the application to [centralized sessions](/docs/authentication/sessions/centralized-sessions), so the application finds out about the logout from FusionAuth instead of from the iframe.
+
+To debug, open the browser developer tools on the FusionAuth logout page and watch the iframe requests to each **Logout URL**.
+
+## SSO Doesn't Work Between Local Applications
+
+Applications on the same host share cookies, even on different ports. Two applications at `localhost:3000` and `localhost:3001` overwrite each other's session cookies. Give each application its own host name in your hosts file, such as `app-a.local` and `app-b.local`.
+
+## FusionAuth Shows the Login Form When the User Expected SSO
+
+Check the following causes:
+
+* The user didn't check **Keep me signed in**, so FusionAuth created no SSO session. To create the SSO session at every login, see [Create the SSO Session at Login](/docs/authentication/sessions/enable-sso#create-the-sso-session-at-login).
+* The SSO session sat idle past the Tenant **Session timeout**. Only SSO logins reset the timeout. Activity inside an application doesn't.
+* The applications belong to different Tenants. SSO doesn't span Tenants.
+* The authorize request includes `prompt=login`, or a `max_age` shorter than the time since the last login.
+
+## Users Get Logged Out Sooner Than Expected
+
+Check the following causes:
+
+* The application session expires before the refresh token. Make the application session outlive the [[centralized session]].
+* The refresh token **Expiration policy** is `Fixed`, so activity doesn't extend the session. Use `Sliding window` or `Sliding window with a maximum lifetime`.
+* A centralized session check retrieves the refresh token, which doesn't count as use for the sliding window. Use the Refresh Token grant to extend the session.
+* Someone shortened a lifetime setting. FusionAuth applies lifetime changes to existing sessions.
+* A password change, a login-blocking user action, or another revocation event ended the sessions. For the events, see [Revoke Sessions Automatically](/docs/authentication/sessions/revoke-sessions#revoke-sessions-automatically).
+
+## A User's Session List Keeps Growing
+
+Each login that requests `offline_access` creates a refresh token, and logout doesn't revoke refresh tokens unless your code does. Automated tests that log in repeatedly often cause long session lists. Revoke refresh tokens at logout and at the end of each test run. For the steps, see [View and Revoke Sessions](/docs/authentication/sessions/revoke-sessions).
+
+## Silent Authentication Fails
+
+A request with `prompt=none` runs in a hidden iframe or a popup on another site, so the browser treats the FusionAuth cookies as third-party cookies. Safari and other browsers that block third-party cookies leave the SSO session cookie off the request, and FusionAuth returns `login_required`. Serve FusionAuth from a host on the same site as the application, such as `auth.example.com` for `app.example.com`. Or use refresh tokens to renew access tokens instead of silent authentication.
+
+## Login Restarts After the Consent Screen
+
+In versions before `1.53.0`, a short **Session timeout** combined with a consent screen or another post-login step could restart the login. Update FusionAuth to `1.53.0` or later. For more information, see the [release notes](/docs/release-notes#version-1-53-0).

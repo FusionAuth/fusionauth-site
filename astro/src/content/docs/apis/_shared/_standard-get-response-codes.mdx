@@ -1,0 +1,50 @@
+import TableGrid from 'astro-better-tables/TableGrid.astro';
+import Row from 'astro-better-tables/Row.astro';
+import Cell from 'astro-better-tables/Cell.astro';
+
+{/* message props accept a plain string, or a named slot (slot="success_message") for markdown */}
+
+<TableGrid caption="Response Codes" widths="1 6">
+  <Row slot="head">
+    <Cell header>Code</Cell>
+    <Cell header>Description</Cell>
+  </Row>
+  <Row>
+    <Cell>{props.success_code ? props.success_code : 200}</Cell>
+    <Cell>{props.success_code ? (props.success_message ?? props.successMessage) : 'The request succeeded. The response contains a JSON body.'}</Cell>
+  </Row>
+  <If condition={props.not_registered}>
+    <Row>
+      <Cell>202</Cell>
+      <Cell>The request succeeded. The response contains a JSON body. The user authenticated but isn't registered for the requested Application, so the access token contains no Application claims.</Cell>
+    </Row>
+  </If>
+  <If condition={!props.no_errors}>
+    <Row>
+      <Cell>400</Cell>
+      <Cell>{props.errors_message ?? props.errorsMessage ?? ''}<If condition={!(props.errors_message ?? props.errorsMessage)}>The request was invalid or malformed. The response contains an [Errors](/docs/apis/errors) JSON object with the specific errors. FusionAuth also returns a `400` when the request needs a paid FusionAuth license and no license is present.</If></Cell>
+    </Row>
+  </If>
+  <If condition={!props.no_authorization}>
+    <Row>
+      <Cell>401</Cell>
+      <Cell>{props.authorization_message ?? props.authorizationMessage ?? ''}<If condition={!(props.authorization_message ?? props.authorizationMessage)}>The request has no valid Authorization header. The header is missing, or the API key isn't valid. The response is empty. For more information, see [Authentication](/docs/apis/authentication).</If></Cell>
+    </Row>
+  </If>
+  <If condition={!props.never_missing}>
+    <Row>
+      <Cell>404</Cell>
+      <Cell>{props.missing_message ?? props.missingMessage ?? ''}<If condition={!(props.missing_message ?? props.missingMessage)}>The object you requested doesn't exist. The response is empty.</If></Cell>
+    </Row>
+  </If>
+  <Row>
+    <Cell>500</Cell>
+    <Cell>FusionAuth had an internal error and logged a stack trace in the FusionAuth log files. The response is empty.</Cell>
+  </Row>
+  <If condition={!props.never_search_error}>
+    <Row>
+      <Cell>503</Cell>
+      <Cell>The search index is unavailable or returned an error, so FusionAuth can't complete the request. The response contains a JSON body.</Cell>
+    </Row>
+  </If>
+</TableGrid>
