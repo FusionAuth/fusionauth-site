@@ -1,4 +1,5 @@
 import { pinTotp, preparation, apiRequest, richardId, totpSecret, totpCode, removeTwoFactor } from '../../kit.mjs';
+import { signIn } from './_shared.mjs';
 
 const richardAuthenticator = {
   order: 6,
@@ -13,14 +14,6 @@ async function pinnedSecret(page) {
   await pinTotp(page);
   await page.reload({ waitUntil: 'networkidle' });
   await page.unrouteAll();
-}
-
-async function signIn(page) {
-  await page.fill('#loginId', 'richard@piedpiper.com');
-  await page.fill('#password', 'password');
-  await page.locator('#submit-button').click();
-  await page.waitForURL(/\/oauth2\/two-factor/);
-  await page.waitForLoadState('networkidle');
 }
 
 export const shots = {

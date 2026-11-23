@@ -44,14 +44,18 @@ const path = require('node:path');
           let query = '?code=fixture-code';
           
           const response = await fetch(base + '/oauth-redirect' + query, {
-            redirect: 'manual', headers: cookie ? {Cookie: cookie} : {}, signal: AbortSignal.timeout(5000)
+            redirect: 'manual', headers: {'X-Forwarded-Proto': 'https', ...(cookie ? {Cookie: cookie} : {})}, signal: AbortSignal.timeout(5000)
           });
           assert.deepEqual(calls, ['/oauth2/token', '/oauth2/userinfo']);
           if (scenario === 'success') {
             assert.equal(response.status, 302);
             assert.equal(response.headers.get('location'), '/');
-            const session = response.headers.get('set-cookie').split(';')[0];
-            const home = await fetch(base, {headers: {Cookie: session}});
+            const setCookie = response.headers.get('set-cookie');
+            // logout iframes need a cross-site cookie
+            assert.match(setCookie, /SameSite=None/i);
+            assert.match(setCookie, /Secure/);
+            const session = setCookie.split(';')[0];
+            const home = await fetch(base, {headers: {Cookie: session, 'X-Forwarded-Proto': 'https'}});
             assert.equal(home.status, 200);
             assert.match(await home.text(), /Hello Richard/);
           } else {

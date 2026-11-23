@@ -1,0 +1,74 @@
+---
+title: Signing Key Rotation
+description: Learn how to rotate the keys FusionAuth uses to sign JWTs, SAML responses, and webhook events.
+tags: key rotation, jwt signing key, signing key rotation, key master, verification keys, security, defense in depth, cryptography
+---
+
+FusionAuth signs JWTs with keys stored in [Key Master](/docs/security/tokens-and-keys/key-master). Your applications verify the signature to confirm that FusionAuth issued the token. FusionAuth also signs SAML responses and webhook events with Key Master keys. To rotate a signing key, create a new key, switch your configuration to the new key, and keep the old key for verification until the tokens the old key signed expire.
+
+For API keys, see [API Key Rotation](/docs/security/tokens-and-keys/api-key-rotation). For more information about JWT signing, see [Tokens](/articles/tokens).
+
+## Find Keys Due for Rotation
+
+Since `1.45.0`, the [Key Search API](/docs/apis/keys/search-for-keys) accepts a wildcard search ordered by expiration. A script can then find every key that expires within a set period.
+
+The following script uses `jq` and `bash` to list the keys that expire in the next 30 days. The script is in the [FusionAuth example scripts GitHub repository](https://github.com/FusionAuth/fusionauth-example-scripts).
+
+<ExtractedCode src="example-scripts/key-expiration-check/find-expiring-keys.sh" lang="shell" title="Script to query for keys expiring in 30 days" />
+
+Run the script on a schedule, such as a `cron` job, then rotate the returned keys.
+
+Before `1.45.0`, the Key Search API doesn't exist. Retrieve every key with the [Retrieve a Key API](/docs/apis/keys/retrieve-a-key), then filter the response on **`expirationInstant`**. HMAC keys have no expiration, so track the age of an HMAC key with **`insertInstant`**.
+
+## Rotate a Signing Key
+
+Suppose FusionAuth signs JWTs with key `JS1`. To rotate key `JS1`:
+
+<Steps>
+
+1. Create key `JS2` in Key Master. Use the same algorithm and key length as key `JS1`.
+1. Switch every Tenant and Application that signs with key `JS1` to key `JS2`. At the same time, add key `JS1` to **Access token verification keys**, **Id token verification keys**, or both. Make the change at the Tenant level, or at the Application level when the Application overrides the JWT settings. FusionAuth `1.69.0` and later support verification keys.
+1. Wait until every token signed by key `JS1` expires. The wait depends on the JWT lifetime. For example, with a five-minute JWT lifetime, wait ten minutes to allow for clock skew.
+1. Delete key `JS1`.
+
+</Steps>
+
+The steps assume that only FusionAuth uses keys `JS1` and `JS2`. When another system holds the private key, such as an externally managed RSA key, import key `JS2` instead of creating key `JS2`. Then update the other system to use key `JS2` before you delete key `JS1`.
+
+## Find Every Use of a Key
+
+To switch every configuration to the new key, retrieve each object and look for the Id of the old key. Check the following fields:
+
+* JWT configuration
+  * `tenant.jwtConfiguration.accessTokenKeyId`
+  * `tenant.jwtConfiguration.accessTokenVerificationKeyIds`
+  * `tenant.jwtConfiguration.idTokenKeyId`
+  * `tenant.jwtConfiguration.idTokenVerificationKeyIds`
+  * `application.jwtConfiguration.accessTokenKeyId`
+  * `application.jwtConfiguration.accessTokenVerificationKeyIds`
+  * `application.jwtConfiguration.idTokenKeyId`
+  * `application.jwtConfiguration.idTokenVerificationKeyIds`
+* [[Entity Type]] JWT configuration
+  * `entityType.jwtConfiguration.accessTokenKeyId`
+* External JWT IdP
+  * `identityProvider.defaultKeyId`
+  * `identityProvider.verificationKeyIds`
+* Application SAML v2
+  * `application.samlv2Configuration.assertionEncryptionConfiguration.keyTransportEncryptionKeyId`
+  * `application.samlv2Configuration.defaultVerificationKeyId`
+  * `application.samlv2Configuration.keyId`
+  * `application.samlv2Configuration.logout.defaultVerificationKeyId`
+  * `application.samlv2Configuration.logout.singleLogout.keyId`
+  * `application.samlv2Configuration.logout.keyId`
+  * `application.samlv2Configuration.logout.verificationKeyIds`
+  * `application.samlv2Configuration.verificationKeyIds`
+* SAML v2 IdP
+  * `identityProvider.keyId`
+  * `identityProvider.requestSigningKeyId`
+  * `identityProvider.verificationKeyIds`
+* Webhook signature
+  * `webhook.signatureConfiguration.signingKeyId`
+
+## Confirm the Rotation
+
+Log in to an Application that used key `JS1`. Decode the new access token, and confirm that the `kid` header matches the **Kid** of key `JS2` in Key Master.

@@ -1,0 +1,1 @@
+1. The application renders the login form

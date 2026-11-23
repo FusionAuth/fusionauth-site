@@ -1,0 +1,52 @@
+---
+title: Two-Factor Authentication
+htmlTitle: Two-Factor Authentication Message Template
+description: Learn when FusionAuth sends the message with a multi-factor code, and which variables the template receives.
+tags: two-factor template, mfa code, multi-factor authentication, voice code, freemarker
+---
+import Variable from 'src/content/docs/_shared/_template-variable.mdx';
+
+<PlanBlurb plan="starter" />
+
+FusionAuth sends this message with a code when a user completes a multi-factor login with the `sms` method, or enables or disables the `sms` method. FusionAuth renders the text template by default, and the voice template when the request sets **`messageType`** to `Voice`. Assign the templates in **SMS template** and **Voice template** under <Breadcrumb>Tenants -> Your Tenant -> Multi-Factor -> Phone settings</Breadcrumb>. To override the templates for one Application, set **SMS template** and **Voice template** on the Application's <Breadcrumb>Multi-Factor</Breadcrumb> tab.
+
+## Default Templates
+
+FusionAuth ships a default text template and a default voice template. The voice template uses **`spokenCode`**, so a voice service reads the digits one at a time:
+
+<Tabs>
+  <TabItem label="Text">
+    <ExtractedCode src="templates-messengers/sms-two-factor-request.txt.ftl" lang="ftl" />
+  </TabItem>
+  <TabItem label="Voice">
+    <ExtractedCode src="templates-messengers/voice-two-factor-request.txt.ftl" lang="ftl" />
+  </TabItem>
+</Tabs>
+
+## Replacement Variables
+
+<APIBlock>
+  <Variable kind="message" name="application" />
+  <Variable kind="message" name="baseUrl" />
+  <APIField name="code" type="String">
+    The code the user enters to complete multi-factor authentication.
+  </APIField>
+  <APIField name="email" type="String">
+    The email address on the two-factor method. A method that sends messages usually has no email address, so check for the variable before you use it.
+  </APIField>
+  <Variable kind="message" name="phoneNumber" description={<>The <strong><code>mobilePhone</code></strong> of the two-factor method. Before <code>1.59.0</code>, the variable was named <strong><code>mobilePhone</code></strong>.</>} />
+  <APIField name="spokenCode" type="String" since="1.65.0">
+    The code with the digits separated, so a voice service reads them one at a time. The variable is present only in the voice template.
+  </APIField>
+  <Variable kind="message" name="tenant" />
+  <Variable kind="message" name="user" />
+  <APIField name="userId" type="UUID">
+    The Id of the user. The [Generic messenger](/docs/messengers/generic-messenger) request has the same value in **`userId`**.
+  </APIField>
+</APIBlock>
+
+The **`application`** variable is missing when a request that sends the code has no **`applicationId`**. The requests are the following:
+
+* [Start Multi-Factor](/docs/apis/two-factor/start-multi-factor).
+* The [Login API](/docs/apis/login/authenticate), when multi-factor authentication is required. A production login request should always include **`applicationId`**.
+* The requests that send a code to [enable](/docs/apis/two-factor/send-a-multi-factor-code-when-enabling-mfa) or [disable](/docs/apis/two-factor/send-a-multi-factor-code-when-disabling-mfa) a method.
