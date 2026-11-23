@@ -41,14 +41,26 @@ The response for this API contains the User object.
 
 _Response Codes_
 
-| Code | Description                                                                                                                                                                                                                                                                                                                                       |
-|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 200  | The reconcile was successful. The response will contain the User object that was authenticated.                                                                                                                                                                                                                                                   |
-| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                                                                                                                                                                                          |
-| 401  | The request cannot be completed. The `identityProviderId` is invalid, the JWT signature cannot be validated, the JWT does not contain a claim identified by the `uniqueIdentityClaim` property in the Identity Provider configuration, or the domain of the email address claim in the JWT is not managed by the Identity Provider Configuration. |
-| 404  | The user was not found or the password was incorrect. The response will be empty.                                                                                                                                                                                                                                                                 |
-| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                                                                                                                                                                                        |
-| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                                                                                                                                                          |
+| Code | Description |
+|------|-------------|
+| 200  | The reconcile was successful. The response will contain the User object that was authenticated. |
+| 232  | The Identity Provider uses the `CreatePendingLink` linking strategy, and the user has no link to the Identity Provider. The response contains only the `pendingIdPLinkId`. To link the user, call the [Complete a Pending Link](/docs/apis/identity-providers/links#complete-a-pending-link) endpoint of the Link API. After the user has a link, a reconcile request succeeds. <br/><JSON title="Example Response JSON" src="login/login-pending-link-response.json" /> |
+| 400  | The request was invalid and/or malformed, or the `identityProviderId` doesn't match an Identity Provider. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors. |
+| 401  | The request cannot be completed. For the causes, see [Reconcile Failures](#reconcile-failures). When the response has a body, the body contains an [Errors](/docs/apis/errors) JSON Object with the specific errors. |
+| 404  | The user was not found or the password was incorrect. The response will be empty. |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty. |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body. |
+
+### Reconcile Failures
+
+The Reconcile API returns a `401` for the following causes:
+
+* The JWT signature can't be validated.
+* The JWT is missing a claim that the Identity Provider configuration requires. FusionAuth always requires the unique Id claim. The email claim or the username claim is required when the linking strategy links on that claim.
+* The email verified claim is `false`, and the linking strategy links on email.
+* The email address isn't in a managed domain of the Identity Provider.
+* The linking strategy is `LinkByEmailForExistingUser`, and no user has the email address.
+* The linking strategy links on email, and the user with the email address already has a link to the Identity Provider with a different unique Id.
 
 ### Response Body
 

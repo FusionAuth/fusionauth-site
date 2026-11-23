@@ -1,0 +1,47 @@
+---
+title: Attribute Mappings
+description: Learn how to map claims from an Identity Provider response to FusionAuth user and registration fields without a lambda.
+order: 15
+tags: idp, identity provider, attribute mappings, claims, reconcile lambda, tenant manager, json pointer
+---
+
+<AvailableSince since="1.65.0"/>
+
+<Aside type="note">
+Saving an Identity Provider in Tenant Manager reapplies the values that Tenant Manager manages. By design, Tenant Manager replaces `attributeMappings` and `applicationConfiguration`. For more information, see [Tenant Manager Identity Provider Restrictions](/docs/users/tenant-manager#tenant-manager-identity-provider-restrictions).
+</Aside>
+
+Attribute mappings copy claims from an Identity Provider response to fields on the FusionAuth user or registration. Attribute mappings are a declarative alternative to reconcile lambdas. Each attribute mapping is a key and a value. Configure attribute mappings with the [Identity Providers API](/docs/apis/identity-providers/) or in [Tenant Manager](/docs/users/tenant-manager#attribute-mappings).
+
+## Keys
+
+A key names a field on the FusionAuth user or registration. A key must start with `user.` or `registration.`. For example:
+
+* `user.email` is the user's email address. The linking strategy can use the email address to link the user.
+* `registration.data.subscription` is custom registration data about the user's subscription.
+
+## Values
+
+A value names a field or claim in the Identity Provider response. The response has the same shape as the parameter of the matching reconcile lambda type.
+
+<Aside type="note">
+The OpenID Connect reconcile lambda has two parameters, `jwt` and `id_token`. An OpenID Connect attribute mapping value must start with one of the parameter names, to name the parameter that the value reads.
+</Aside>
+
+Write values in dot notation or in JSON pointer notation. To refer to a field whose name contains `.` or `/`, use JSON pointer notation. JSON pointer notation requires the following escapes:
+
+* Write a literal `~` as `~0`.
+* Write a literal `/` as `~1`.
+
+For example:
+
+* `id_token.preferred_username` reads the `preferred_username` claim of the OpenID Connect ID token, in dot notation.
+* `/jwt/https:~1~1example.com~1favorite_color` reads the custom claim `https://example.com/favorite_color` of the OpenID Connect access token, in JSON pointer notation.
+* `assertion.attributes.email.0` reads the first email attribute value of a SAML response, in dot notation. Every SAML attribute is an array, so a single value needs an index. The value doesn't include the `samlResponse` lambda parameter name. Only OpenID Connect values include the parameter name.
+* `/assertion/attributes/email/0` reads the first email attribute value of a SAML response, in JSON pointer notation.
+
+## Reconciliation
+
+During reconciliation, FusionAuth reads each value from the Identity Provider response, and assigns the value to the key's field on the user or registration. Every attribute mapping is optional. When FusionAuth can't read a value or set a key, FusionAuth skips the mapping and continues reconciliation.
+
+Reconcile lambdas and attribute mappings are mutually exclusive. An Identity Provider can't have both.

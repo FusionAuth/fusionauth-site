@@ -1,34 +1,26 @@
+The following diagram shows a login through {props.identity_provider_name ?? 'an Identity Provider'} on the FusionAuth hosted login pages:
 
-Here's a diagram of the login flow between:
-
-* the user
-* your application
-* FusionAuth and
-* a remote identity provider
-
-
-```mermaid
+```mermaid title="A user logs in through an Identity Provider on the FusionAuth hosted login pages."
 sequenceDiagram
     participant User as User/Browser
-    participant App
+    participant App as Your Application
     participant FusionAuth
-    participant IdentityProvider as Provider
+    participant IdP as Identity Provider
 
-    User ->> App : View Initial Page<br/>Click Login
-    App ->> User : Displays Login Page<br/>Including Link To 'Login With Provider'
-    User ->> App : Clicks On 'Login With Provider'
-    App ->> User : Redirect To Provider Authorization URL
-    User ->> IdentityProvider : Enters Credentials
-    IdentityProvider ->> IdentityProvider : Validate Credentials
-    IdentityProvider ->> User : Redirect to App With Authorization Code
-    User ->> App : Requests Page, Has Authorization Code
-    App ->> FusionAuth : Calls Complete Login<br/>With Code And Redirect URI
-    FusionAuth ->> IdentityProvider : Exchanges Code And<br/>Redirect URI For Provider Token
-    IdentityProvider ->> FusionAuth : Returns Provider Token
-    FusionAuth ->> FusionAuth : Stores Provivider Token, Calls Lambda, Creates User And Registrations (If Needed), Generates FusionAuth Tokens
-    FusionAuth ->> App : Return FusionAuth Tokens
-    App ->> App : Create Session Or<br/>Otherwise Log User In
-    Note over User, IdentityProvider: User Is Logged In And App Can Proceed<br/>Delivering Data And Functionality
+    User ->> App : Click Login
+    App ->> User : Redirect to the FusionAuth login page
+    User ->> FusionAuth : Click the Identity Provider button
+    FusionAuth ->> User : Redirect to the Identity Provider
+    User ->> IdP : Log in
+    IdP ->> User : Redirect to FusionAuth with the login result
+    User ->> FusionAuth : Follow the redirect to the FusionAuth callback URL
+    FusionAuth ->> IdP : Request the user's tokens or profile
+    IdP ->> FusionAuth : Return the tokens or profile
+    FusionAuth ->> FusionAuth : Reconcile, link, and create the user and registration as needed
+    FusionAuth ->> User : Redirect to your application with an authorization code
+    User ->> App : Follow the redirect
+    App ->> FusionAuth : Exchange the authorization code for tokens
+    FusionAuth ->> App : Return FusionAuth tokens
 ```
 
-Although this looks complex, the user only sees a few screens, such as the FusionAuth login screen, the provider login screen, and your application.
+The user sees only the FusionAuth login page, the login page of {props.identity_provider_name ?? 'the Identity Provider'}, and your application. Your application completes a standard OAuth authorization code grant with FusionAuth, and FusionAuth handles the exchange with {props.identity_provider_name ?? 'the Identity Provider'}.
