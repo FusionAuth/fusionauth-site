@@ -264,6 +264,14 @@ const config = {
       }, id);
       if (!switched) throw new Error(`switch not found: ${id}`);
     }
+    // switches and selects open sections with a scripted slide; wait for the heights to settle
+    if (shot.switch || shot.select) {
+      await page.waitForFunction(() => new Promise(resolve => {
+        const heights = () => [...document.querySelectorAll('.slide-open')].map(e => e.offsetHeight).join();
+        const before = heights();
+        setTimeout(() => resolve(heights() === before), 300);
+      }), null, { timeout: 10000 });
+    }
 
     await shot.prepare?.(page, ctx, info, 'afterControls'); stage('afterControls');
 
