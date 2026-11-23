@@ -1,0 +1,162 @@
+---
+title: Bulk Migration
+htmlTitle: Migrate Users to FusionAuth in Bulk
+description: Learn how to import every user into FusionAuth at once with the Import Users API, including password hashes, social logins, and MFA.
+tags: bulk user import, import users, migrate users, user migration, import api, password rehashing, segment migration
+order: 3
+---
+import RehashingUserPasswords from 'src/content/docs/_shared/_rehashing-user-passwords.mdx';
+import SocialLoginMigration from 'src/content/docs/migrate/provider-specific/_social-login-migration.mdx';
+import MfaMigration from 'src/content/docs/authentication/_mfa-migration.mdx';
+import PerformanceTips from 'src/content/docs/migrate/_performance-tips.mdx';
+
+A bulk migration imports every user with the [Import Users API](/docs/apis/users/import) and switches your applications to FusionAuth in one cutover. To decide whether a bulk migration fits, see [Migration Types](/docs/migrate/migration-types).
+
+Before you start, complete the following:
+
+* Plan the migration and set up FusionAuth. For more information, see [Plan a Migration](/docs/migrate/plan-a-migration).
+* Create the Tenants, Applications, and Groups that the users belong to. The import doesn't create them.
+
+## Tune Performance
+
+A bulk migration includes an outage, so the import should run fast. Apply the following settings and tasks:
+
+<PerformanceTips />
+
+## Write the Import Scripts
+
+<Steps>
+
+1. Run a FusionAuth instance for testing. To start the instance in a known state every time, configure [Kickstart](/docs/get-started/develop/kickstart). A Kickstart file can also create the Tenants, Applications, and Groups, and later serves developers and CI.
+1. Create an API key with the `POST` method on the `/api/user/import` endpoint. For more information, see [Managing API Keys](/docs/apis/authentication#managing-api-keys).
+
+    <Screenshot id="migration-api-key-details" url="/admin/api-key/" crop="[data-migration-window]" cropPadding={0} chrome={true} alt="The details of an API key that can import users." />
+
+1. Write a script that reads every user from the old system and builds an import request body. Add a Registration for each Application that the user needs. Write the scripts in any language that sends HTTP requests, or with a [client library](/docs/sdks).
+1. Set **`encryptionScheme`**, **`factor`**, and **`salt`** on each user to match the old hashing scheme. The field name says "encryption" for backward compatibility, but the value names a hashing scheme. When FusionAuth doesn't support the scheme, write and install a plugin first. For more information, see [Password Hashing Algorithms](/docs/migrate/password-hashes/algorithms) and [Custom Password Hashing](/docs/migrate/password-hashes/custom-password-hashing).
+1. Send the request bodies to the Import Users API, either with the `importUsers` method of a client library or with a direct HTTP request.
+
+</Steps>
+
+The following example request body imports one user. Add more objects to the **`users`** array to import more users in one request:
+
+<JSON title="Example User Import JSON Request Body" src="users/import-request.json" />
+
+The best batch size depends on the size of your deployment. On a production-ready deployment, 100,000 users per request is a reasonable batch size.
+
+Build the request bodies as files when you can. Files make a failed batch easy to inspect and retry. When you merge two data sources on the fly, you can build the request bodies in memory instead, at the cost of harder troubleshooting.
+
+The following shell script sends every JSON file in a directory to the Import Users API. The script allows each request 10 minutes, and stops at the first response with a status other than `200`:
+
+```shell title="Example User Import Shell Script"
+#!/bin/sh
+
+API_KEY=...
+JSON_FILE_DIR=...
+FA_HOST=...
+
+for file in $JSON_FILE_DIR/*.json; do
+  echo "Processing $file";
+  RES=`curl --max-time 600 \
+       -s -o /dev/null -w "%{http_code}" \
+       -H "Authorization: $API_KEY" \
+       -H "Content-type: application/json" \
+       -XPOST \
+       $FA_HOST/api/user/import \
+       -d@$file`
+  if [ "$RES" -ne "200" ]; then
+    echo "Error: $RES";
+    exit 1;
+  fi
+done
+```
+
+For the full list of fields, see the [Import Users API](/docs/apis/users/import).
+
+## Handle Duplicate Email Addresses
+
+FusionAuth doesn't allow two users with the same email address in one Tenant. Remove or merge duplicates before you import. By default, the Import Users API checks no constraints in advance, and a duplicate fails the whole request with a general error:
+
+```json title="Import Error Message When validateDbConstraints is false"
+{
+  "generalErrors": [{
+    "code": "[ImportRequestFailed]",
+    "message": "An error occurred during the import request. This is most likely due to a unique key constraint which would indicate one or more of the users in the import request already exist in FusionAuth. Re-attempt the request with additional validation by using the [validateDbConstraints] property. If you have already enabled the additional validation and you still receive this error, please open a bug report."
+  }]
+}
+```
+
+To find the duplicates, set **`validateDbConstraints`** to `true` in the request body. The Import Users API then names the duplicate:
+
+```json title="Import Error Message When validateDbConstraints is true"
+{
+  "fieldErrors": {
+    "user.email": [{
+      "code": "[duplicate]user.email",
+      "message": "A user with email [example@piedpiper.com] already exists."
+    }]
+  },
+  "generalErrors": []
+}
+```
+
+The extra validation slows the import. Run the import once with **`validateDbConstraints`** set to `true` to find and fix the duplicates. Then run the real import with **`validateDbConstraints`** set to `false`.
+
+## Rehash User Passwords
+
+<RehashingUserPasswords />
+
+## Users Without Passwords
+
+In FusionAuth `1.59.0` and later, the Import Users API accepts users without passwords. Leave out **`password`** for these users. A user without a password can log in with a passwordless method or an Identity Provider. To let these users set a password, send each user an email with the [Forgot Password API](/docs/apis/users/forgot-password).
+
+In FusionAuth versions earlier than `1.59.0`, the Import Users API requires a password for every user. Give each of these users a high-entropy password, such as a UUID, and then send each user an email with the [Forgot Password API](/docs/apis/users/forgot-password). Alternatively, create these users one at a time with the [Create a User API](/docs/apis/users/create), which can send a set password email.
+
+Both approaches send one email per user. Count the users without passwords, and confirm that your email infrastructure can handle the volume.
+
+## Users With Social Logins
+
+<SocialLoginMigration />
+
+## Users With MFA
+
+<MfaMigration />
+
+## Test the Import
+
+Test the import with as much data as possible, ideally every user. A full-size test shows how long the import takes. Real data also reveals edge cases, such as duplicate email addresses and malformed attributes.
+
+Import into a separate Tenant, such as a `Testing` Tenant, even when production uses one Tenant. Deleting a Tenant deletes the Tenant's users, Applications, Groups, and settings, so you can rerun the scripts from a clean state. You can't delete the Default Tenant, which contains the FusionAuth Application.
+
+After the import works, point your applications at the test instance and log in with real migrated users. The prototype from the evaluation used test data, so this test checks your assumptions against the real data.
+
+To remove the imported users between test runs, use one of the following:
+
+* Delete the test Tenant. Settings outside the Tenant, such as Identity Providers, email templates, and themes, stay in place.
+* Drop the database, and create a new one with [Kickstart](/docs/get-started/develop/kickstart) or [Terraform](/docs/deploy/production/terraform).
+* Delete users with the [Bulk Delete API](/docs/apis/users/bulk-delete). Start with batches of 5,000 to 10,000 users, and grow the batches with each call. Bulk deletion is the slowest option, but leaves the rest of the instance untouched.
+
+## Run the Migration
+
+<Steps>
+
+1. Tell internal stakeholders about the migration and the outage. Your test runs show how long the outage lasts. You can avoid the outage only when your applications can run with the old user store read-only.
+1. Run the import against the production data.
+1. Release the application changes that send users to FusionAuth for login, registration when applicable, forgot password, and password changes.
+
+</Steps>
+
+To roll back, revert the application changes. When users changed profile data in FusionAuth, copy the changes back to the old system. A script that searches the [Users API](/docs/apis/users) for recent updates is a starting point, but the details depend on your applications.
+
+## Migrate Segment by Segment
+
+A segment-by-segment migration repeats the bulk procedure for each segment of users, such as the users of one Application or the users with one role. The planning, mapping, and import work the same way, for a smaller group each time.
+
+The cutover differs, because FusionAuth doesn't have every user yet. How you route users depends on the segments:
+
+* When you segment by Application, update one Application at a time to send users to FusionAuth.
+* When you segment by another attribute, add logic to your applications that decides where to send each user at login.
+
+## Import From Another FusionAuth Instance
+
+FusionAuth has no built-in way to copy users from one FusionAuth instance to another. Treat the other instance as any other data source. Follow the [Generic Migration Tutorial](/docs/migrate/genericmigration), and adapt the [export and import scripts](https://github.com/FusionAuth/fusionauth-import-scripts/tree/main/generic/src) from the example repository.

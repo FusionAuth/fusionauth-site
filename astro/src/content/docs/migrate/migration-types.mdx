@@ -1,0 +1,108 @@
+---
+title: Migration Types
+htmlTitle: User Migration Types
+description: Learn about bulk, segment-by-segment, and slow user migrations, and how to choose between them.
+tags: migrate users, user migration, bulk user import, slow migration, segment migration, cutover, connectors
+order: 1
+---
+
+Every migration has a backfill and a cutover. During the backfill, data moves from the old system to FusionAuth. At the cutover, users start to authenticate with FusionAuth instead of the old system.
+
+FusionAuth supports the following migration types:
+
+* A bulk migration, also called an offline or big bang migration, moves every user at once, with one cutover.
+* A segment-by-segment migration splits users into segments and moves each segment with its own cutover.
+* A slow migration, also called a rolling, gradual, online, or phased migration, moves each user at the user's first login.
+
+The following flowchart picks a migration type from the data you have:
+
+```mermaid title="Choose a migration type based on access to password hashes and natural user segments."
+graph TD
+hashes(Do you have the password hashes and salts?) -- Yes --> supported(Does FusionAuth support the hashing scheme?)
+supported -- No --> writeplugin[Write a password hashing plugin]
+supported -- Yes --> segmentchoice(Do users split into natural segments?)
+writeplugin --> segmentchoice
+segmentchoice -- No --> bulk[Bulk migration with the Import Users API]
+segmentchoice -- Yes --> segment[Segment-by-segment migration with the Import Users API]
+hashes -- No --> passwordreset(Is a password reset for every user acceptable?)
+passwordreset -- No --> slowmigration[Slow migration with a Connector]
+passwordreset -- Yes --> segmentchoice2(Do users split into natural segments?)
+segmentchoice2 -- No --> bulk2[Bulk migration with the Import Users API]
+segmentchoice2 -- Yes --> segment2[Segment-by-segment migration with the Import Users API]
+bulk2 --> reset[Send password reset emails]
+segment2 --> reset
+```
+
+With password hashes, a bulk or segment-by-segment import keeps every password. When FusionAuth doesn't support the old hashing scheme, a plugin teaches FusionAuth the scheme. Without the hashes, either every user resets a password after the import, or a slow migration captures each password at the user's next login.
+
+## Bulk Migration
+
+A bulk migration moves every user in one operation. You map the old data to FusionAuth, write and test import scripts, and then run the scripts during one cutover window. During the window, authentication on the old system is read-only or unavailable. The [Import Users API](/docs/apis/users/import) loads the users with their password hashes, including hashes from a [custom scheme](/docs/migrate/password-hashes/custom-password-hashing). The [Import Refresh Tokens API](/docs/apis/users/import-refresh-tokens) keeps users logged in to applications that refresh tokens.
+
+A bulk migration has the following strengths:
+
+* With a well-timed outage, users barely notice the migration.
+* The migration has a fixed end. After the migration, you can retire the old system, which helps when a license renewal or another deadline is coming.
+* You run two authentication systems only for a short time, usually while you keep the old system for a rollback.
+* Customer service representatives and other internal users switch to FusionAuth once, after the migration.
+
+A bulk migration has the following challenges:
+
+* Testing misses problems that only production data reveals, because you run the procedure once.
+* A problem in the migration affects every user.
+* The import scripts run once and then go unused, but still need thorough testing.
+* Users keep their passwords only when FusionAuth supports the old hashing scheme or a plugin implements the scheme. Otherwise, every user resets a password.
+* Users can't register or change data in the old system during the migration, or the changes miss the import. Keep the migration short. Alternatively, keep the old system running and sync the changes after the cutover.
+
+A bulk migration fits when the following apply:
+
+* You want to move every user at once.
+* You're moving users into a new FusionAuth instance.
+* You have the password hashes from the old system.
+
+A bulk migration carries high risk and a short outage. For the procedure, see [Bulk Migration](/docs/migrate/bulk-migration).
+
+## Segment-By-Segment Migration
+
+A segment-by-segment migration runs a series of small bulk migrations. Natural segments include the type of user, the source of the user data, and the applications that users log in to.
+
+Move a less critical or more forgiving segment first, such as your own engineering team, to test the process in production. The import scripts carry over from segment to segment. A segment-by-segment migration also suits a move from more than one old system. Overall, the risk is lower than a bulk migration.
+
+A segment-by-segment migration has the following challenges:
+
+* Each segment adds a project, an outage, and a cutover to manage.
+* Your users may not split into natural segments.
+* When most users belong to one segment, segments add work without reducing risk. For example, with one popular application and a few new ones, the real test comes only with the popular application.
+* The migration takes longer, so you run both systems for longer.
+* Each cutover needs routing. For example, when you move administrators first, a proxy must send administrators to FusionAuth and everyone else to the old system.
+
+A segment-by-segment migration lowers the risk of each cutover and lengthens the overall timeline. For the procedure, see [Migrate Segment by Segment](/docs/migrate/bulk-migration#migrate-segment-by-segment).
+
+## Slow Migration
+
+A slow migration treats each user as a segment of one. You keep the old system running, connect FusionAuth to the old system with a [Connector](/docs/users/provision/connectors), and point your applications at FusionAuth. At each user's first login, FusionAuth passes the credentials to the old system. The old system returns the user's data, and FusionAuth creates the user. From then on, FusionAuth is the system of record for that user. A slow migration doesn't need the password hashes. Connectors require the Starter plan or higher.
+
+A slow migration has the following strengths:
+
+* A mistake affects only the users who log in while the mistake exists.
+* FusionAuth hashes each password with the Tenant's scheme at the first login, so a slow migration upgrades weak hashes without password resets.
+* Inactive users never move, which cleans up the user base.
+* The migration is a reason to contact dormant users and invite them to log in.
+* The application cutover is short, because no data moves at the cutover.
+* You don't need to understand the old system's internals or business logic.
+
+A slow migration has the following challenges:
+
+* FusionAuth sends each user's plaintext password to the old system. Secure the connection, and keep the traffic off the public internet if possible.
+* The old system must support LDAP or offer an authentication API that you can build. You need to understand the old system's user attributes.
+* You run FusionAuth and the old system for the whole migration.
+* Customer service representatives may need to search both systems for a user.
+* A rollback is harder, because migrated users and remaining users have different systems of record.
+
+A slow migration fits when the following apply:
+
+* You can't get the password hashes or other data from the old system.
+* You can run two authentication systems for a while.
+* You're moving users into a FusionAuth instance that already has users.
+
+A slow migration carries low risk and takes a long time. For the procedure, see [Slow Migration](/docs/migrate/slow-migration). For more background, see the [Slow Migration of User Data](/articles/identity-basics/slow-migration) article.
