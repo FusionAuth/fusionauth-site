@@ -1,0 +1,148 @@
+---
+title: Special Considerations
+htmlTitle: Special Considerations for User Migrations
+description: Learn how to migrate refresh tokens and SAML configuration, import very large numbers of users, and keep applications working with the old system's tokens.
+tags: migrate users, user migration, refresh tokens, saml migration, large migration, token migration, jwt populate
+order: 6
+---
+
+Some migrations move more than users. This page covers data and dependencies that need extra planning. For the overall process, see [Plan a Migration](/docs/migrate/plan-a-migration).
+
+## Migrate Refresh Tokens
+
+Token-based systems often pair short-lived access tokens with long-lived refresh tokens, so users don't log in again for every new access token. Import the old refresh tokens to keep users logged in after the cutover. At the next access token expiry, each client presents its refresh token to FusionAuth, and FusionAuth issues a new access token.
+
+Refresh token import applies only to bulk migrations. A slow migration issues a new refresh token at each user's first login. For more information, see the [Import Refresh Tokens API](/docs/apis/users/import-refresh-tokens).
+
+JWTs from the old system can keep working, especially for APIs, when token producers and consumers share the signing keys. Import the old keys with [Key Master](/docs/apis/keys), or let clients look up keys from both systems at a [JSON Web Key Set (JWKS) endpoint](/docs/apis/oauth/jwks).
+
+## Migrate SAML Configuration
+
+Your old system may act as a SAML Service Provider (SP) for upstream SAML Identity Providers (IdPs). This setup is common when each customer organization has a SAML IdP that is the system of record for the organization's users. After the migration, FusionAuth becomes the SP, so every upstream IdP configuration that points at the old SP must change.
+
+Choose one of the following approaches.
+
+### Update the Upstream Configuration
+
+Ask each upstream IdP's administrators to point their configuration at FusionAuth instead of the old SP. Load the IdPs' certificates in advance with [Key Master](/docs/security/tokens-and-keys/key-master) or the APIs. Configure each [SAMLv2 Identity Provider](/docs/authentication/identity-providers) in FusionAuth with the same values as the old SP, such as the audience.
+
+FusionAuth recommends this approach. Add time for communication and testing to the migration plan.
+
+### Relax the Destination Assertion
+
+<AvailableSince since="1.43.0" />
+
+Each upstream IdP must change its [[Assertion Consumer Service]] (ACS) URL to FusionAuth's URL. IdP administrators may not prioritize the change, and your applications can't move to FusionAuth until the IdPs send SAML responses to the new ACS URL. To move sooner, let FusionAuth accept [[SAML assertions]] addressed to the old SP:
+
+<Steps>
+
+1. Load the IdPs' certificates in advance, and tell the IdP administrators that they need to update their ACS URLs eventually.
+1. Configure a [SAMLv2 Identity Provider](/docs/authentication/identity-providers) with the same values as the old SP.
+1. In the Admin UI, navigate to <Breadcrumb>Identity Providers -> Your SAMLv2 Identity Provider -> Options</Breadcrumb>.
+1. Set **Destination assertion policy** to `Allow alternates`, and add the old SP's ACS URL to **Alternate destinations**. FusionAuth then accepts a SAML response whose **Destination** is FusionAuth's ACS URL or one of the alternates.
+1. Redirect the old ACS URL to FusionAuth's ACS URL with a proxy, such as nginx.
+1. Point your applications at the FusionAuth hosted login pages. To skip the login page and send users straight to the IdP, use an `idp_hint`.
+1. Shut down the old SP, since all traffic now goes through FusionAuth.
+
+</Steps>
+
+<Aside type="caution">
+`Allow alternates` weakens SAML security. Keep the list of alternate destinations as short as possible, and work with the IdP administrators to point their configuration at FusionAuth's ACS URL soon.
+</Aside>
+
+After every upstream IdP points at FusionAuth's ACS URL, set **Destination assertion policy** back to `Enabled`, the most secure setting. For more information, see [SAMLv2 Identity Providers](/docs/authentication/identity-providers/overview-samlv2).
+
+## Migrate Large Numbers of Users
+
+Migrating tens or hundreds of millions of users takes more time and planning than migrating a thousand. For guidance on a specific migration, [contact FusionAuth](/contact).
+
+Load the data in phases, each with its own goal. Start with a local FusionAuth instance, which iterates fast:
+
+* Confirm that the hashing scheme, salt, and factor work. Load a test user, and log in with the user's known password.
+* Set **`validateDbConstraints`** to `true`, so the Import Users API reports constraint violations, such as duplicate usernames in one Tenant.
+* Confirm the JSON structure, the profile data, the Group memberships, and the Registrations.
+* Drop the database after each test load. Dropping the database is faster than deleting a Tenant.
+
+When the data loads cleanly, test against production or a production replica. A test environment with less CPU, memory, or network bandwidth gives misleading timings. Load a subset of 100,000 or 1,000,000 users into a separate Tenant to estimate the total time.
+
+<Aside type="note">
+Deleting a test Tenant takes at least as long as loading the Tenant. Plan for the deletion in the timeline. For more information, see the [GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/2151).
+</Aside>
+
+With the estimate, split the users into groups, such as 1, 5, or 10 million users per group. To tune the import, see [Tune Performance](/docs/migrate/bulk-migration#tune-performance).
+
+### Import to FusionAuth Cloud
+
+On FusionAuth Cloud, the following also apply:
+
+* You can't run import code inside the FusionAuth Cloud network. To reduce latency, run the code on an EC2 instance in the same AWS region.
+* Give the FusionAuth team a static IP address to allow-list, so FusionAuth doesn't rate-limit your requests.
+* A `429` status code means FusionAuth rate-limited the request. Confirm that the requests come from the allow-listed IP address.
+* A `504` status code means the import exhausted the deployment's resources. Increase the deployment size, or pause between requests.
+
+### Handle Changes During a Long Import
+
+When a full load takes days, users sign up and change profiles during the load. Split the load by timestamp:
+
+<Steps>
+
+1. Complete the local tests with most of your users.
+1. Record the current time as `BULK_TIMESTAMP`.
+1. Load every user last modified before `BULK_TIMESTAMP`.
+1. Load every user created after `BULK_TIMESTAMP`.
+1. Process every user created before `BULK_TIMESTAMP` and modified after `BULK_TIMESTAMP`, and update changed profile data. When a password changed, start a password reset for the user, or let the user reset the password.
+
+</Steps>
+
+Depending on the load time, repeat the cycle a few times.
+
+Without timestamps, split users into deterministic groups, track processed users in a separate datastore, or add a `processed_timestamp` column to the old user store.
+
+## Keep Downstream Applications Working
+
+When many applications depend on the old identity provider's token format, switching every application at once can be impractical. Different teams or organizations may own the applications. The following options reduce the effort. The options cover only access token differences. To route clients to FusionAuth's hostname and paths, a proxy usually works.
+
+| Option | Changes to the old identity provider | Extra infrastructure | Token size impact | Complexity |
+|---|---|---|---|---|
+| Customize the FusionAuth token | None | None | None | Low |
+| Identity swap | Delegate authentication to FusionAuth | None | None | Medium |
+| Wrap the old token | Add a token retrieval endpoint | Possibly a proxy | High | Medium |
+| Exchange the token | Add a token exchange endpoint | A proxy | None | Medium |
+
+With most options, you eventually update each application to accept FusionAuth tokens, retire the old identity provider, and remove the temporary changes.
+
+### Customize the FusionAuth Token
+
+A [JWT populate lambda](/docs/lambdas/tokens/jwt-populate) adds custom claims, calls APIs, and changes most claims, including `iss` (issuer) and `aud` (audience). When FusionAuth's token matches the old provider's token, applications work without changes.
+
+When applications already use OIDC discovery at `/.well-known/openid-configuration`, importing the old signing keys can make the switch invisible. The old provider must allow exporting private keys.
+
+This option is the simplest, because the other options change the old identity provider or other parts of your system. This option doesn't work when a [reserved claim](/docs/lambdas/tokens/jwt-populate#the-jwt-object) has a format that your applications can't accept, or when the migration should change the token's structure or content.
+
+### Identity Swap
+
+Change the old identity provider to authenticate users through the FusionAuth [Login API](/docs/apis/login). First, move all identity data into FusionAuth. FusionAuth then holds the user data, while the old identity provider still issues the tokens.
+
+Over the following weeks, months, or years, update each application to accept FusionAuth tokens and to send users to FusionAuth for authentication. After the last application moves, retire the old identity provider.
+
+### Wrap the Old Token
+
+Users authenticate with FusionAuth. FusionAuth requests the user's token from the old identity provider, and a [JWT populate lambda](/docs/lambdas/tokens/jwt-populate) adds the old token to a custom claim, such as `legacyToken`.
+
+The old identity provider needs an endpoint that issues the token. Anyone who can call the endpoint can log in as any user, so allow only FusionAuth to call the endpoint. Consider limiting the endpoint to certain applications or users.
+
+Before an application receives the token, a proxy or the client extracts the `legacyToken` claim and forwards the old token. Unwrap at a proxy or the client, so the applications don't change.
+
+Wrapping avoids changes to applications, but adds complexity and enlarges FusionAuth's token. A large old token may slow transmission and storage.
+
+Over time, update each application to accept FusionAuth tokens. Then retire the old identity provider, and remove the code that adds `legacyToken`.
+
+### Exchange the Token
+
+Users authenticate with FusionAuth, and a proxy exchanges the FusionAuth access token for an old token for the same user.
+
+The old identity provider needs an endpoint that takes a FusionAuth access token and returns an old token. Secure the endpoint. Validate both the access token and the caller, and consider limiting the exchange to certain applications or users. Run the exchange at a proxy, because clients shouldn't make complex token exchange requests.
+
+An exchange keeps FusionAuth's token small, unlike wrapping. Getting the old token takes a server-side network call instead of a claim lookup.
+
+Over time, update each application to accept FusionAuth tokens. Then retire the old identity provider, and remove the exchange endpoint.
