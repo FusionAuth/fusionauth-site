@@ -71,4 +71,4 @@ docker run --network host --name playwright-test --rm -e NODE_PATH=/usr/lib/node
   mcr.microsoft.com/playwright:v1.62.0 bash -c "npm install -g @playwright/test@1.62.0 && playwright test /tests/integration.spec.js"
 
 echo "Checking the login webhook refused the third device..."
-docker logs device-limit-app 2>&1 | grep "User is not allowed to log in." > /dev/null
+docker logs device-limit-app 2>&1 | grep "blocked login for user" > /dev/null

@@ -1,5 +1,5 @@
 import { preparation } from '../../kit.mjs';
-import { twoFactorMessaging } from './_shared.mjs';
+import { twoFactorMessaging, signIn, richardMethod } from './_shared.mjs';
 
 async function chooseEmail(page) {
   await page.locator('#select-method').selectOption('email');
@@ -10,4 +10,6 @@ async function chooseEmail(page) {
 export const shots = {
   'account-tenant-mfa-email': { fixedHeight: null, sectionBox: 'email-settings', legacyVersion: true, temporaryState: [twoFactorMessaging] },
   'account-two-factor-email': { prepare: preparation({ beforeUserTabs: chooseEmail }), temporaryState: [twoFactorMessaging] },
+  // email and phone challenges look the same, so both pages share this shot
+  'account-two-factor-challenge-code-sent': { prepare: preparation({ beforeUserTabs: signIn }), temporaryState: [twoFactorMessaging, richardMethod({ method: 'email', email: 'richard@piedpiper.com' })] },
 };

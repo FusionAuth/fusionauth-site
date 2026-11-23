@@ -1,0 +1,66 @@
+---
+title: Register
+htmlTitle: Register API
+description: API documentation for the FusionAuth Register OAuth2 endpoint, which starts self-service user registration on the hosted pages.
+tags: fusionauth api, rest api, http api, oauth, oauth 2.0, registration, self-service registration, sign up, hosted login pages
+relatedPinFirst: apis/oauth/authorize
+order: 150
+---
+import AuthorizeQueryParameters from 'src/content/docs/apis/oauth/_authorize-query-parameters.mdx';
+import OauthAuthorizeRedirectParameters from 'src/content/docs/_shared/_oauth-authorize-redirect-parameters.mdx';
+
+The Register endpoint shows the self-service registration form on the [[Hosted Login Pages::hosted login pages]]. After the user registers, FusionAuth completes the OAuth flow the same way the [Authorize](/docs/apis/oauth/authorize) endpoint does, and redirects the browser to the **redirect_uri**.
+
+To build a Register request, take an Authorize request and replace `/oauth2/authorize` with `/oauth2/register`. The Application must have self-service registration enabled. For more information, see [Basic Registration Forms](/docs/users/register/basic-registration-forms).
+
+The Register endpoint registers users. To register OAuth clients, see [Client Registration](/docs/authentication/oauth/client-registration).
+
+## Request
+
+Redirect the browser to the Register endpoint from your application:
+
+<API method="GET" uri="/oauth2/register?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&tenantId={tenantId}&scope=openid%20offline_access%20profile%20email" />
+
+The Register endpoint doesn't accept the Tenant Id as a URL segment. Pass the **tenantId** as a query parameter.
+
+### Query Parameters
+
+<AuthorizeQueryParameters register />
+
+The Register endpoint ignores the **idp_hint** and **login_hint** parameters. The registration form lists the Application's Identity Providers that create registrations, so the user can choose one.
+
+## Response
+
+FusionAuth shows the registration form only when the user has no SSO session. In the following cases, FusionAuth redirects the browser to the [Authorize](/docs/apis/oauth/authorize) endpoint instead:
+
+* The Application doesn't have self-service registration enabled.
+* The user already has an SSO session. Authorize then logs the user in and redirects to the **redirect_uri**.
+
+The redirect keeps the OAuth parameters from the request, except **locale**, **idp_hint**, and **login_hint**.
+
+_Response Codes_
+
+| Code | Description |
+|------|-------------|
+| 200  | The request was successful, and the response contains the registration form. When the **client_id** or **redirect_uri** is invalid, the response is an HTML error page instead. |
+| 302  | The Application doesn't have self-service registration enabled, or the user has an SSO session. The request redirects to `/oauth2/authorize`. When the request has another error, such as a missing **response_type**, the request redirects to the **redirect_uri** with an error. For more information, see [OAuth Error](/docs/apis/oauth/oauth-error). |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files. |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body. |
+
+When the user completes the registration form, FusionAuth redirects the browser to the **redirect_uri**. The following is an example redirect for the Authorization Code Grant, with line breaks added for readability:
+
+```plaintext title="Example HTTP Redirect Response"
+HTTP/1.1 302 Found
+Location: https://piedpiper.com/callback?
+           code=pU2DHOWjSCVh6NJKi1ClhBYNKfuqbZVT
+           &iss=https%3A%2F%2Fpiedpiper.fusionauth.io
+           &locale=en_US
+           &state=abc123
+           &userState=Authenticated
+```
+
+Exchange the code for tokens with the [Token](/docs/apis/oauth/token) endpoint, the same as after a login. For the Implicit Grant, FusionAuth returns the tokens in the redirect. For the Implicit Grant parameters, see the [Authorize Implicit Grant Request](/docs/apis/oauth/authorize#implicit-grant-request).
+
+### Redirect Parameters
+
+<OauthAuthorizeRedirectParameters />

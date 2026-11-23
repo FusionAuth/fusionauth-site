@@ -1,0 +1,56 @@
+---
+title: Template Reference
+htmlTitle: Message Template Reference
+description: Learn about the message templates FusionAuth sends through messengers and the replacement variables each template receives.
+tags: message template variables, messenger templates, replacement variables, freemarker, message customization, multi-factor authentication
+---
+
+Each page in this section covers one message template: when FusionAuth sends the message, where you assign the template, an example, and every replacement variable the template receives. To write and manage templates, see [Create a Message Template](/docs/messengers/message-templates).
+
+## How FusionAuth Delivers Messages
+
+FusionAuth renders the template to text and hands the text to a [messenger](/docs/messengers). The [Generic messenger](/docs/messengers/generic-messenger) posts the text to an HTTP endpoint that you run, so you can forward the message to any service that reaches users by phone number. FusionAuth addresses every message to a phone number, and sends a message only when the recipient has one.
+
+Set the messenger for account and security messages in <Breadcrumb>Tenants -> Your Tenant -> Identities -> Messaging settings</Breadcrumb>. The Admin UI lists the message templates in the Phone column on the same tab. Two-factor messages use their own messenger and templates on the <Breadcrumb>Multi-Factor</Breadcrumb> tab.
+
+## Default and Example Templates
+
+FusionAuth ships default templates for many workflows. A new FusionAuth instance lists the defaults in <Breadcrumb>Customizations -> Message Templates</Breadcrumb>, with names that start with `[FusionAuth Default]`. An instance set up with [Kickstart](/docs/get-started/develop/kickstart) has no defaults, so add the templates you need in the Kickstart file. The page for each of those templates shows the default.
+
+FusionAuth ships no default for the other templates, such as Identity Update and Password Update. FusionAuth sends those messages only after you create a template and assign the template. The page for each of those templates shows an example to start from.
+
+## Retrieve the Templates as Files
+
+The default templates live in [`extractedcode/templates-messengers`](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/templates-messengers) in the docs repository, and the examples live in [`extractedcode/templates-messengers-examples`](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/extractedcode/templates-messengers-examples). To download every default template at once:
+
+```shell-session
+npx degit FusionAuth/fusionauth-site/astro/extractedcode/templates-messengers templates-messengers
+```
+
+Without Node, pull the same folder out of a repository tarball:
+
+```shell-session
+curl -L https://github.com/FusionAuth/fusionauth-site/archive/refs/heads/main.tar.gz \
+  | tar -xz --strip-components=4 fusionauth-site-main/astro/extractedcode/templates-messengers
+```
+
+Either command writes the templates into a `templates-messengers` directory. To download the examples, replace `templates-messengers` with `templates-messengers-examples` in either command.
+
+## Replacement Variables
+
+Every template receives **`tenant`**, **`baseUrl`**, and **`phoneNumber`**, the phone number of the recipient. Most templates also receive **`user`**. Templates receive **`application`** when the request that sends the message identifies an Application. Templates that FusionAuth sends for an event also receive **`event`**, the same object a webhook receives for that event.
+
+A variable can be missing or `null`, so check optional values with the FreeMarker `??` operator, or give a default with `!`:
+
+```ftl
+[#if application??]
+  Welcome to ${application.name}.
+[/#if]
+Hello ${user.firstName!'there'}.
+```
+
+The template preview in the Admin UI renders with sample data. The sample data has no **`phoneNumber`**, and the sample **`event`** is a User Login New Device event. A template that uses **`phoneNumber`** or other event fields shows an error in the preview but renders when FusionAuth sends the message. The examples in this section use **`user.phoneNumber`** where the value matches, so the examples preview cleanly.
+
+## Templates
+
+<ChildCards depth={2} />

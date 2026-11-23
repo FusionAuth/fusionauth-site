@@ -1,4 +1,4 @@
-import { piedPiperAppId, defaultTenantId, projectRoot, baseUrl, freshUrl, appPort, freshPort, apiKey, runtime, makeTag, highlightHelpers, runTemporaryState, selectTab, tabsReady } from './screenshots/setup/kit.mjs';
+import { piedPiperAppId, defaultTenantId, projectRoot, baseUrl, freshUrl, appPort, freshPort, apiKey, runtime, makeTag, highlightHelpers, runTemporaryState, loadFresh, selectTab, tabsReady } from './screenshots/setup/kit.mjs';
 import { join } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { modules, resources } from './screenshots/setup/index.mjs';
@@ -24,6 +24,9 @@ for (const module of modules) {
 const temporaryResources = [...new Set(Object.values(shots).flatMap(shot => shot.temporaryResources ?? []))].sort((a, b) => a.order - b.order);
 const temporaryState = [...new Set(Object.values(shots).flatMap(shot => shot.temporaryState ?? []))].sort((a, b) => a.order - b.order);
 
+// list searches persist in a cookie per list, so one shot's search would filter the list in later shots
+const clearListSearches = context => context.clearCookies({ name: /IndexAction\$s$/ });
+
 const config = {
   baseUrl,
   outputDir: 'public/img/docs/screenshots',
@@ -44,7 +47,8 @@ const config = {
   },
   docker: {
     compose: 'screenshots/docker-compose.yml',
-    service: 'fusionauth fusionauth-fresh',
+    // only the first-time setup shots use the fresh instance, so other shards skip its two containers
+    service: specs => (specs.some(spec => shots[spec.name]?.fresh) ? 'fusionauth fusionauth-fresh' : 'fusionauth'),
     env: { FUSIONAUTH_PORT: String(appPort), FUSIONAUTH_FRESH_PORT: String(freshPort) },
     healthcheck: {
       url: `${baseUrl}/api/health`,
@@ -53,7 +57,7 @@ const config = {
     },
   },
 
-  beforeAll: async context => {
+  beforeAll: async (context, { specs } = {}) => {
     // 1.70 scrolls smoothly, so the capture's scroll to the crop area hasn't moved yet when it shoots
     await context.addInitScript(() => document.addEventListener('DOMContentLoaded', () => document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important')));
     runtime.leftoversContext = context;
@@ -99,6 +103,8 @@ const config = {
     runtime.adminLocale = (await context.cookies(`${baseUrl}`)).find(c => c.name === 'fusionauth.locale')?.value;
     await page.close();
     for (const resource of resources) await resource(context);
+    await clearListSearches(context);
+    if (!specs?.some(spec => shots[spec.name]?.fresh)) return;
     const freshDeadline = Date.now() + 300_000;
     while (!(await fetch(`${freshUrl}/api/status`, { signal: AbortSignal.timeout(5000) }).then(r => r.ok, () => false))) {
       if (Date.now() >= freshDeadline) throw new Error('Fresh FusionAuth instance did not become ready');
@@ -106,7 +112,18 @@ const config = {
     }
   },
 
+  // cleaning up after each shot means the next shot's first load is already clean
+  afterScreenshot: page => clearListSearches(page.context()),
+
   beforeScreenshot: async (page, ctx) => {
+    // with SCREENSHOT_TIMING=1, each stage adds h.<stage>=<ms> to the progress line
+    let stageStart = Date.now();
+    const stage = name => {
+      if (!ctx?.timings) return;
+      const now = Date.now();
+      ctx.timings[`h.${name}`] = (ctx.timings[`h.${name}`] ?? 0) + now - stageStart;
+      stageStart = now;
+    };
     const shot = shots[ctx?.name] ?? {};
     // fresh-instance shots skip the kickstarted instance's setup
     if (shot.fresh) {
@@ -122,24 +139,22 @@ const config = {
 
     const fragment = hash.slice(1);
 
+    // cookie resets load the page once, after the last reset
+    let cookiesChanged = false;
+
     if (runtime.multiTenantCookies) {
       await page.context().clearCookies();
       await page.context().addCookies(runtime.multiTenantCookies);
       runtime.multiTenantCookies = undefined;
-      await page.goto(url, { waitUntil: 'networkidle' });
+      cookiesChanged = true;
     }
 
     if (runtime.savedSso && !shot.signedOut) {
       await page.context().addCookies([runtime.savedSso]);
       runtime.savedSso = undefined;
-      await page.goto(url, { waitUntil: 'networkidle' });
+      cookiesChanged = true;
     }
 
-    // list searches persist in a cookie per list, so one shot's search would filter the list in later shots
-    if ((await page.context().cookies(baseUrl)).some(c => c.name.endsWith('IndexAction$s'))) {
-      await page.context().clearCookies({ name: /IndexAction\$s$/ });
-      await page.goto(url, { waitUntil: 'networkidle' });
-    }
 
     if (runtime.operateMetricsKeyExists && !shot.keepMetricsKey) {
       // cleared first so a failed delete fails this shot only, not every later one
@@ -160,6 +175,7 @@ const config = {
       await page.locator('.prime-dialog.open').waitFor({ state: 'hidden', timeout: 10000 });
       await page.waitForLoadState('networkidle');
       await page.goto(url, { waitUntil: 'networkidle' });
+      cookiesChanged = false;
     }
 
     if (runtime.adminLocale && pathname.startsWith('/admin')) {
@@ -167,7 +183,7 @@ const config = {
       const locale = (await context.cookies(`${baseUrl}`)).find(c => c.name === 'fusionauth.locale');
       if (locale?.value !== runtime.adminLocale) {
         await context.addCookies([{ name: 'fusionauth.locale', value: runtime.adminLocale, url: `${baseUrl}` }]);
-        await page.reload({ waitUntil: 'networkidle' });
+        cookiesChanged = true;
       }
     }
 
@@ -175,9 +191,12 @@ const config = {
       await page.context().clearCookies();
       await page.context().addCookies(runtime.registerCookies);
       runtime.registerCookies = undefined;
-      await page.goto(url, { waitUntil: 'networkidle' });
+      cookiesChanged = true;
     }
 
+    if (cookiesChanged) await loadFresh(page, url);
+
+    stage('reset');
     const oauthAppId = piedPiperAppId;
 
     const oauthTenantId = defaultTenantId;
@@ -199,8 +218,9 @@ const config = {
       ...highlightHelpers(page, fragment),
     };
     await runTemporaryState(page, url, shot, temporaryResources, temporaryState);
+    stage('temporary');
 
-    await shot.prepare?.(page, ctx, info, 'prepare');
+    await shot.prepare?.(page, ctx, info, 'prepare'); stage('prepare');
 
     if (pathname.startsWith('/account')) {
       const modified = !!shot.modifiedAccount;
@@ -210,7 +230,7 @@ const config = {
       }
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterAccount');
+    await shot.prepare?.(page, ctx, info, 'afterAccount'); stage('afterAccount');
 
     for (const [id, value] of Object.entries(shot.select ?? {})) {
       const selected = await page.evaluate(
@@ -235,7 +255,7 @@ const config = {
       if (!switched) throw new Error(`switch not found: ${id}`);
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterControls');
+    await shot.prepare?.(page, ctx, info, 'afterControls'); stage('afterControls');
 
     if (pathname.startsWith('/admin/theme/view/') && fragment) {
       const tab = page.locator(`main button[data-tab="${fragment}"]`);
@@ -247,7 +267,7 @@ const config = {
       await page.waitForTimeout(1500);
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterThemeTab');
+    await shot.prepare?.(page, ctx, info, 'afterThemeTab'); stage('afterThemeTab');
 
     if (/^\/admin\/(webhook\/(add|edit)|system-configuration\/edit)/.test(pathname) && fragment) {
       const label = await page.evaluate(id => document.querySelector(`el-tab-list button[aria-controls="${id}"]`)?.textContent.trim(), fragment);
@@ -255,7 +275,7 @@ const config = {
       await selectTab(page, label);
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterSystemTab');
+    await shot.prepare?.(page, ctx, info, 'afterSystemTab'); stage('afterSystemTab');
 
     if (shot.signedOut) {
       const context = page.context();
@@ -264,9 +284,9 @@ const config = {
       await page.goto(url, { waitUntil: 'networkidle' });
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterSignOut');
+    await shot.prepare?.(page, ctx, info, 'afterSignOut'); stage('afterSignOut');
 
-    await shot.prepare?.(page, ctx, info, 'beforeUserTabs');
+    await shot.prepare?.(page, ctx, info, 'beforeUserTabs'); stage('beforeUserTabs');
 
     if (url.includes('00000000-0000-0000-0000-10000000000') && pathname.startsWith('/admin/user/manage/') && !shot.skipUserWait) {
       try {
@@ -295,12 +315,11 @@ const config = {
       if (fragment === 'entity-grants') await page.locator('#entity-grants td').first().waitFor();
     }
 
-    await shot.prepare?.(page, ctx, info, 'normalizeUser');
+    await shot.prepare?.(page, ctx, info, 'normalizeUser'); stage('normalizeUser');
 
-    await shot.prepare?.(page, ctx, info, 'afterUserTabs');
+    await shot.prepare?.(page, ctx, info, 'afterUserTabs'); stage('afterUserTabs');
 
     if (pathname.includes('/admin/application/edit') || (pathname.includes('/admin/application/add') && fragment)) {
-      await page.waitForTimeout(500);
       try {
         await tabsReady(page);
         const appTab = !fragment
@@ -309,7 +328,6 @@ const config = {
         if (!appTab) throw new Error(`no tab for #${fragment}`);
         await selectTab(page, appTab);
         await page.locator('button').filter({ hasText: appTab }).first().click({ timeout: 3000 });
-        await page.waitForTimeout(1000);
         await selectTab(page, appTab);
       } catch (e) {
         throw new Error(`application/edit tab failed: ${e.message}`, { cause: e });
@@ -342,6 +360,7 @@ const config = {
             return { clicked: false, available: allLabels };
           }, tabLabel);
           if (!result.clicked) throw new Error(`tab "${tabLabel}" not found; available: ${JSON.stringify(result.available)}`);
+          // the tab draws its fields after the click; without this pause, the capture misses them
           await page.waitForTimeout(1000);
           await selectTab(page, tabLabel);
         } catch (e) {
@@ -350,7 +369,7 @@ const config = {
       }
 
       // send-test-email screenshot: tag and scroll to the test email control
-      await shot.prepare?.(page, ctx, info, 'tenantTab');
+      await shot.prepare?.(page, ctx, info, 'tenantTab'); stage('tenantTab');
 
       // webauthn tab: click enable toggle only if workflow fieldsets aren't already visible
       // (beforeAll enables WebAuthn when a license key is present; clicking again would disable it)
@@ -365,7 +384,7 @@ const config = {
         await page.waitForTimeout(400);
       }
 
-      await shot.prepare?.(page, ctx, info, 'afterTenantWorkflow');
+      await shot.prepare?.(page, ctx, info, 'afterTenantWorkflow'); stage('afterTenantWorkflow');
     }
 
     if (pathname.includes('/admin/email/template/edit/') && fragment === 'localization') {
@@ -391,7 +410,7 @@ const config = {
       }
     }
 
-    await shot.prepare?.(page, ctx, info, 'beforeSizing');
+    await shot.prepare?.(page, ctx, info, 'beforeSizing'); stage('beforeSizing');
 
     if (shot.skipSizing) await shot.prepare?.(page, ctx, info, 'size');
     else {
@@ -468,7 +487,7 @@ const config = {
       if (!boxed) throw new Error(`section not found: ${shot.sectionBox}`);
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterSections');
+    await shot.prepare?.(page, ctx, info, 'afterSections'); stage('afterSections');
 
     if (shot.band) {
       const height = await page.evaluate(sel => {
@@ -500,7 +519,7 @@ const config = {
       await page.waitForTimeout(300);
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterFraming');
+    await shot.prepare?.(page, ctx, info, 'afterFraming'); stage('afterFraming');
 
     if (shot.legacyVersion) {
       await page.evaluate(() => {
@@ -558,9 +577,9 @@ const config = {
       );
     }
 
-    await shot.prepare?.(page, ctx, info, 'afterDates');
+    await shot.prepare?.(page, ctx, info, 'afterDates'); stage('afterDates');
 
-    await shot.prepare?.(page, ctx, info, 'finish');
+    await shot.prepare?.(page, ctx, info, 'finish'); stage('finish');
   },
 };
 

@@ -19,7 +19,6 @@ const refreshToken = 'refreshTokenCBF';
  * @param {import('express').NextFunction} next - The next middleware function
  */
 function redirectFunction(req, res, next) {
-  // console.log('url:', req.originalUrl);
   if (alwaysAllowed.indexOf(req.originalUrl) > -1 ) {
     // always allow this
     next();
@@ -37,24 +36,14 @@ function redirectFunction(req, res, next) {
 
   const refreshTokenId = req.cookies[refreshToken];
   if (!refreshTokenId) {
-    // console.log("no refresh token");
     res.redirect(302, "/login");
     return;
   }
 
   client.retrieveRefreshTokenById(refreshTokenId)
-    .then(clientResponse => {
-      // console.log("valid session found");
-      next();
-      return;
-    }).catch(clientResponse => {
-      if (clientResponse.statusCode !== 200) {
-        // console.log("session revoked");
-        res.redirect(302, "/logout");
-        next();
-        return;
-      }
-    });
+    .then(() => next())
+    // revoked or expired token: end the app session
+    .catch(() => res.redirect(302, "/logout"));
 }
 
 module.exports = { redirectFunction };
