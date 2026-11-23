@@ -1,32 +1,39 @@
 ---
 title: Search for Users
 htmlTitle: Search for Users API
-description: API documentation for the FusionAuth Search for Users API.
-tags: fusionauth api, rest api, http api, user management, user api, user search, search users, elasticsearch
+description: API documentation for the Search for Users API.
+tags: fusionauth api, rest api, http api, user management, user api, user search, search users, list users, elasticsearch
 order: 1000
 ---
 import StandardGetResponseCodes from 'src/content/docs/apis/_shared/_standard-get-response-codes.mdx';
-import UserSearchRequestBodyDatabaseExamples from 'src/content/docs/apis/users/_user-search-request-body-database-examples.mdx';
 import UserSearchRequestParameters from 'src/content/docs/apis/users/_user-search-request-parameters.mdx';
 import UsersResponseBody from 'src/content/docs/apis/users/_users-response-body.mdx';
 import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_shared/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
 
-This API is used to search for Users.
-This API may be called using the `GET` or `POST` HTTP methods, examples of each are provided below.
-The `POST` method is provided to allow for a richer request object without worrying about exceeding the maximum length of a URL.
-Calling this API with either the `GET` or `POST` HTTP method will provide the same search results given the same query parameters.
-
+Use this API to search for Users. You can call the API with either the `GET` or the `POST` HTTP method. Both methods return the same results for the same search parameters. Use `POST` when the search parameters might exceed the maximum length of a URL.
 
 ## Request
 
-Which search query parameters are available and how they behave depends on the search engine type. Read more about [the different types of search engines](/docs/concepts/types/users#user-search).
+The available search parameters and their behavior depend on the search engine. For more information, see [User Search](/docs/concepts/types/users#user-search).
+
+Every request must include one of the following parameters:
+
+* **ids**
+* **queryString**
+* **query**, with the Elasticsearch search engine only
+* **nextResults**, with the Elasticsearch search engine only
+
+When a request includes none of these parameters, FusionAuth returns a `400` response. To list all Users, set **queryString** to `*`, and page through the results with **startRow** and **numberOfResults**:
+
+```http
+GET /api/user/search?queryString=*&numberOfResults=25&startRow=0
+```
 
 ## Database Search Engine
 
-This is a good choice for [smaller installs, embedded scenarios, or other places where the additional capability of Elasticsearch is not required](/docs/concepts/types/users#database-search-engine).
-
 <AvailableSince since="1.16.0"/>
 
+The database search engine suits smaller and embedded installations that don't need the capabilities of Elasticsearch. For more information, see [Database Search Engine](/docs/concepts/types/users#database-search-engine).
 
 <API method="GET" uri="/api/user/search?ids={uuid}&ids={uuid}" authentication={["api-key"]} title="Search for Users by Id"/>
 
@@ -34,9 +41,9 @@ This is a good choice for [smaller installs, embedded scenarios, or other places
 
 <API method="GET" uri="/api/user/search?queryString={queryString}&sortFields[0].name={name}&sortFields[0].order={order}" authentication={["api-key"]} title="Search for Users by a query string and sort the response"/>
 
-Use a `POST` call to instead send search parameters in the request body.
+To send the search parameters in the request body, use `POST`.
 
-<API method="POST" uri="/api/user/search" authentication={["api-key"]} title="Search for Users using a JSON request body. This allows for larger requests than are possible using query parameters."/>
+<API method="POST" uri="/api/user/search" authentication={["api-key"]} title="Search for Users with a JSON request body"/>
 
 ### Query Parameters
 
@@ -50,13 +57,23 @@ Use a `POST` call to instead send search parameters in the request body.
 
 <UserSearchRequestParameters database_search_engine_type parameter_prefix="search." />
 
-#### Request Body Examples
+### Request Body Examples
 
-<UserSearchRequestBodyDatabaseExamples />
+<JSON title="Example request JSON that retrieves Users by Id" src="users/search-ids-request.json" />
+
+<JSON title="Example request JSON that searches by queryString for Users with an email address containing @fusionauth.io" src="users/search-queryString-email-database-request.json" />
+
+<JSON title="Example request JSON that searches by queryString for Users with a firstName, lastName, fullName, email, or username containing piper" src="users/search-queryString-match-example-database-request.json" />
+
+<JSON title="Example request JSON that searches by queryString for Users with a phone number"
+      since="1.59.0"
+      src="users/search-queryString-phoneNumber-example-database-request.json" />
+
+<JSON title="Example request JSON that retrieves the first 25 Users, sorted by email address in ascending order" src="users/search-queryString-all-users-database-request.json" />
 
 ## Elasticsearch Search Engine
 
-The Elasticsearch engine has [advanced querying capabilities and better performance](/docs/concepts/types/users#elasticsearch-search-engine). You can also review the [Elasticsearch search guide](/docs/users/search/user-search-with-elasticsearch) for more examples.
+The Elasticsearch search engine offers advanced queries and better performance. For more information, see [Elasticsearch Search Engine](/docs/concepts/types/users#elasticsearch-search-engine). For more examples, see [Searching Users With Elasticsearch](/docs/users/search/user-search-with-elasticsearch).
 
 <API method="GET" uri="/api/user/search?ids={uuid}&ids={uuid}" authentication={["api-key"]} title="Search for Users by Id"/>
 
@@ -68,9 +85,9 @@ The Elasticsearch engine has [advanced querying capabilities and better performa
 
 <API method="GET" uri="/api/user/search?nextResults={nextResults}" authentication={["api-key"]} title="Search for Users with a nextResults token"/>
 
-Use a `POST` call to instead send search parameters in the request body.
+To send the search parameters in the request body, use `POST`.
 
-<API method="POST" uri="/api/user/search" authentication={["api-key"]} title="Search for Users using a JSON request body. This allows for larger requests than are possible using query parameters."/>
+<API method="POST" uri="/api/user/search" authentication={["api-key"]} title="Search for Users with a JSON request body"/>
 
 ### Query Parameters
 
@@ -84,104 +101,107 @@ Use a `POST` call to instead send search parameters in the request body.
 
 <UserSearchRequestParameters elasticsearch_search_engine_type parameter_prefix="search." />
 
-#### Request Body Examples
+### Request Body Examples
 
-### Search Using Ids
+#### Search by Ids
 
-<JSON title="Example Request JSON searching by ids" src="users/search-ids-request.json" />
+<JSON title="Example request JSON that retrieves Users by Id" src="users/search-ids-request.json" />
 
-###### Search Using A Query String
+#### Search by Query String
 
-<JSON title="Example Request JSON searching by queryString for users with an email address matching a pattern" src="users/search-queryString-email-request.json" />
+<JSON title="Example request JSON that retrieves the first 25 Users with an accurate total, sorted by email address in ascending order" src="users/search-queryString-all-users-elasticsearch-request.json" />
 
-<JSON title="Example Request JSON searching by queryString for users with a phone number matching a pattern"
+<JSON title="Example request JSON that searches by queryString for Users with an email address matching a pattern" src="users/search-queryString-email-request.json" />
+
+<JSON title="Example request JSON that searches by queryString for Users with a phone number matching a pattern"
       since="1.59.0"
       src="users/search-queryString-phoneNumber-example-elastic-request.json" />
 
-<JSON title="Example Request JSON searching by queryString for users belonging to a specific group" src="users/search-queryString-group-request.json" />
+<JSON title="Example request JSON that searches by queryString for Users in a specific Group" src="users/search-queryString-group-request.json" />
 
-<JSON title="Example Request JSON searching by queryString for users of a specific tenant. Requires more than one tenant, a global API key, and no X-FusionAuth-TenantId header" src="users/search-queryString-tenant-request.json" />
+<JSON title="Example request JSON that searches by queryString for Users in a specific Tenant. Requires more than one Tenant, a global API key, and no X-FusionAuth-TenantId header" src="users/search-queryString-tenant-request.json" />
 
-When FusionAuth has only one tenant, remove `tenantId` from the query. For more information, see [Tenant Errors](/docs/apis/authentication#tenant-errors).
+When FusionAuth has only one Tenant, remove `tenantId` from the query. For more information, see [Tenant Errors](/docs/apis/authentication#tenant-errors).
 
-<JSON title="Example Request JSON searching by queryString for active users with a certain email address without MFA enabled" src="users/search-queryString-complex-request.json" />
+<JSON title="Example request JSON that searches by queryString for active Users with a certain email address and without MFA enabled" src="users/search-queryString-complex-request.json" />
 
-###### Search Using A Query
+#### Search by Query
 
-Searches using `query` have two parts. You must build the JSON **query** parameter, then escape it and include it in a request.
+A search with **query** takes two steps. First, build the JSON Elasticsearch query. Then escape the query and set the escaped string as **query** in the request JSON.
 
-A request includes not only a query, but also additional search parameters, such as sorting or pagination. For more, see the [Searching Users With Elasticsearch](/docs/users/search/user-search-with-elasticsearch) guide.
+The request JSON can also include other search parameters, such as sorting and pagination. For more information, see [Searching Users With Elasticsearch](/docs/users/search/user-search-with-elasticsearch).
 
-###### Unverified Registrations
+##### Unverified Registrations
 
-To search for users with unverified Registrations for a specific Application, you'd use this JSON for the query:
+The following query matches Users with unverified Registrations for a specific Application:
 
-<JSON title="Query JSON " src="users/unverified-registrations-query.json" />
+<JSON title="Query JSON" src="users/unverified-registrations-query.json" />
 
-And then escape and include it in this request JSON:
+Escape the query and include the escaped query in the request JSON:
 
 <JSON title="Request JSON" src="users/search-query-request.json" />
 
-###### Specific Role
+##### Specific Role
 
-To search for users with a Role in an Application, you'd use this JSON for the query:
+The following query matches Users with a specific Role in an Application:
 
-<JSON title="Query JSON " src="users/role-query.json" />
+<JSON title="Query JSON" src="users/role-query.json" />
 
-And then escape and include it in this request JSON:
+Escape the query and include the escaped query in the request JSON:
 
 <JSON title="Request JSON" src="users/search-role-query-request.json" />
 
-###### Specific Email Address
+##### Specific Email Address
 
-To search for users with a certain email address, you'd use this JSON for the query:
+The following query matches Users with a specific email address:
 
 <JSON title="Query JSON" src="users/search-email-address-query.json" />
 
-And then escape and include it in this request JSON:
+Escape the query and include the escaped query in the request JSON:
 
 <JSON title="Request JSON" src="users/search-email-address-query-request.json" />
 
-###### Specific Phone Number
+##### Specific Phone Number
 
 <AvailableSince since="1.59.0"/>
 
-To search for users with a certain phone number that:
-* Has any country code
-* Begins with the 303 area code
-* Has a local number portion beginning with 555
+The following query matches Users with a phone number that meets the following conditions:
 
-You'd use this JSON for the query:
+* The phone number has any country code.
+* The phone number starts with the 303 area code.
+* The local portion of the phone number starts with 555.
 
 <JSON title="Query JSON" src="users/search-phoneNumber-query.json" />
 
-And then escape and include it in this request JSON:
+Escape the query and include the escaped query in the request JSON:
 
 <JSON title="Request JSON" src="users/search-phoneNumber-query-request.json" />
 
-###### Boolean User Data Attribute
+##### Boolean User Data Attribute
 
-To search for users with custom user data attribute of **dataMigrated** with a value equal to `true`, you'd use this JSON for the query:
+The following query matches Users with a custom **dataMigrated** user data attribute set to `true`:
 
 <JSON title="Query JSON" src="users/search-user-data-query.json" />
 
-And then escape and include it in this request JSON:
+Escape the query and include the escaped query in the request JSON:
 
 <JSON title="Request JSON" src="users/search-user-data-query-request.json" />
 
-###### Additional Query Examples
+##### Other Query Examples
 
-Below are additional **query** examples. The request JSON, in which the **query** must be escaped and included, is omitted.
+The following examples show only the query. Escape each query and include the escaped query in the request JSON, as in the previous examples.
 
-<JSON title="Example JSON for the query parameter to search for users with a price range in their registration data" src="users/search-registration-data-range-query.json" />
+<JSON title="Example query JSON that searches for Users with a price range in their Registration data" src="users/search-registration-data-range-query.json" />
 
-<JSON title="Example JSON for the query parameter to search for users with any value for userMigrated" src="users/search-data-exists-query.json" />
+<JSON title="Example query JSON that searches for Users with any value for userMigrated" src="users/search-data-exists-query.json" />
 
-<JSON title="Example Request JSON searching by nextResults for users using a token returned in a previous search response" src="users/search-nextResults-request.json" />
+#### Search by nextResults
+
+<JSON title="Example request JSON that retrieves the next page of Users with a nextResults token from a previous search response" src="users/search-nextResults-request.json" />
 
 ## Response
 
-The response contains the User objects that were found as part of the lookup or search. Both the database and Elasticsearch search engines return the response in the same format.
+The response contains the Users that match the search. The database and Elasticsearch search engines return the same response format.
 
 <StandardGetResponseCodes />
 

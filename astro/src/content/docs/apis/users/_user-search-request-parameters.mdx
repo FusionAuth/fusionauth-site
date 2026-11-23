@@ -1,197 +1,170 @@
 import SearchPreprocessingWarning from "src/content/docs/_shared/_search-preprocessing-warning.mdx";
 import RepeatedParameterLimit from 'src/content/docs/_shared/_repeated-parameter-limit.mdx';
 
-{/*  parameter_prefix is either blank for parameters or "search." for body */}
-{/*  query_string_request is set to anything for query string requests */}
-{/*  query_string_request is undefined for body requests */}
-{/*  database_search_engine_type is defined if this is a database search engine entry */}
-{/*  elasticsearch_search_engine_type is defined if this is a elasticsearch search engine entry */}
+{/* parameter_prefix: '' for query params, 'search.' for the request body */}
+{/* query_string_request: set for GET query params, unset for the request body */}
+{/* database_search_engine_type or elasticsearch_search_engine_type: set one per engine */}
 
 <APIBlock>
 
-  {/* On a GET request this is does not have a prefix. */}
-  <If condition={props.query_string_request}>
+  {/* query params sort accurateTotal before expand, the body sorts search.accurateTotal after */}
+  <If condition={props.query_string_request && props.elasticsearch_search_engine_type}>
     <APIField name={props.parameter_prefix + 'accurateTotal'} type="Boolean" optional defaults="false" since="1.24.0">
-      Set this value equal to `true` to receive an accurate hit count on the API response.
+      Set to `true` to return an accurate **total** when more than 10,000 Users match the search.
 
-      By default the search engine will limit the hit count to 10,000 users. This means that even if your query may match more than 10,000 users, the returned total count will be 10,000. This is adequate for many use cases such as pagination and general purpose queries.
-
-      If you are looking for an accurate user count that can exceed 10,000 matches, you will want to set this value equal to `true`.
+      By default, the search engine stops counting at 10,000 matches. A search that matches more Users returns a **total** of `10000`. The default count works for pagination and most queries.
     </APIField>
   </If>
 
   <APIField name="expand" type="Array<String>" optional defaults="[memberships, registrations]" since="1.48.0">
-    This parameter allows you to optionally remove the `memberships` and `registrations` from the API response. Removing these fields from the response may improve performance on large search requests, specifically when you are managing application roles through User Registrations and Group Memberships.
+    The User fields to include in the response. Removing `memberships` and `registrations` from the response can improve performance on large searches, especially when you manage Application Roles through Registrations and Group Memberships.
 
-    For backwards compatibility, the default behavior will be to return both `memberships` and `registrations`.
-
-    To request only the `registrations` but omit the `memberships` from the response, provide a value of `[registrations]`. To omit both the `memberships` and `registrations` from the response, provide a value of `[]`.
+    To return `registrations` without `memberships`, set **expand** to `[registrations]`. To return neither field, set **expand** to `[]`.
   </APIField>
 
-  {/* On a POST request this does have a prefix. */}
-  <If condition={!props.query_string_request}>
+  <If condition={!props.query_string_request && props.elasticsearch_search_engine_type}>
     <APIField name={props.parameter_prefix + 'accurateTotal'} type="Boolean" optional defaults="false" since="1.24.0">
-      Set this value equal to `true` to receive an accurate hit count on the API response.
+      Set to `true` to return an accurate **total** when more than 10,000 Users match the search.
 
-      By default the search engine will limit the hit count to 10,000 users. This means that even if your query may match more than 10,000 users, the returned total count will be 10,000. This is adequate for many use cases such as pagination and general purpose queries.
-
-      If you are looking for an accurate user count that can exceed 10,000 matches, you will want to set this value equal to `true`.
+      By default, the search engine stops counting at 10,000 matches. A search that matches more Users returns a **total** of `10000`. The default count works for pagination and most queries.
     </APIField>
   </If>
 
-  {/* The only field with a different definition between body and query string is ids */}
-  <If condition={props.query_string_request}>
-    <APIField name={props.parameter_prefix + 'ids'} type="UUID" optional>
+  {/* ids is the only field whose type differs between query params and the body */}
+  <APIField name={props.parameter_prefix + 'ids'} type={props.query_string_request ? 'UUID' : 'Array<UUID>'} optional>
+    <If condition={props.query_string_request}>
+      A User Id to retrieve. Repeat the parameter to retrieve multiple Users.
+    </If>
 
-      A User Id to retrieve. By specifying this URL parameter multiple times you can lookup multiple Users.
+    <If condition={!props.query_string_request}>
+      A list of User Ids to retrieve.
+    </If>
 
-      <If condition={props.database_search_engine_type}>
-        Using this parameter is mutually exclusive with the **queryString** field and is not paginated or sorted using the **sortFields** field.
-      </If>
+    <If condition={props.database_search_engine_type}>
+      When you set **{props.parameter_prefix}ids**, FusionAuth ignores **queryString**. FusionAuth doesn't paginate or sort the results.
+    </If>
 
-      <If condition={props.elasticsearch_search_engine_type}>
-        Using this parameter is mutually exclusive with the **query** and **queryString** fields and is not paginated or sorted using **sortFields** field.
+    <If condition={props.elasticsearch_search_engine_type}>
+      When you set **{props.parameter_prefix}ids**, FusionAuth ignores **query** and **queryString**. FusionAuth retrieves the Users by Id without searching the Elasticsearch index, and doesn't paginate or sort the results.
+    </If>
 
-        Using this parameter will not hit the Elasticsearch index, instead it will cause users to be retrieved by Id only.
-      </If>
-
+    <If condition={props.query_string_request}>
       <RepeatedParameterLimit />
-    </APIField>
-  </If>
-
-  <If condition={!props.query_string_request}>
-    <APIField name={props.parameter_prefix + 'ids'} type="Array<UUID>" optional>
-      A list of User Ids to retrieve. When using this parameter, the results are not paginated or sorted using the **sortFields**.
-
-      <If condition={props.database_search_engine_type}>
-        The **{props.parameter_prefix}ids** and **queryString** parameters are mutually exclusive, they are listed here in order of precedence.
-      </If>
-
-      <If condition={props.elasticsearch_search_engine_type}>
-        The **{props.parameter_prefix}ids**, **query**, and **queryString** parameters are mutually exclusive, they are listed here in order of precedence.
-
-        Using this parameter will not hit the Elasticsearch index, instead it will cause users to be retrieved by Id only.
-      </If>
-    </APIField>
-  </If>
+    </If>
+  </APIField>
 
   <APIField name={props.parameter_prefix + 'nextResults'} type="String" optional since="1.48.0" renderif={!!props.elasticsearch_search_engine_type}>
-    The encoded token returned in the **nextResults** field of a previous search response. Providing this token will return a result set for the page following the last result from the previous search response.
+    The token from the **nextResults** field of a previous search response. FusionAuth returns the page that follows the last result of the previous response. Use **nextResults** to page past the Elasticsearch `max_result_window` limit.
 
-    This parameter can be used to successfully page past the `max_result_window` limitation.
+    Don't combine **nextResults** with **ids**, **query**, **queryString**, or **sortFields**. Omit **startRow** or set **startRow** to `0`.
 
-    This parameter cannot be used with the **ids**, **query**, **queryString**, or **sortFields** parameters. The **startRow** parameter must be 0 or omitted.
-
-    See [Extended Pagination](/docs/users/search#extended-pagination) for more information.
+    For more information, see [Extended Pagination](/docs/users/search#extended-pagination).
   </APIField>
 
   <APIField name={props.parameter_prefix + 'numberOfResults'} type="Integer" optional defaults="25">
-    The number of search results to return. Used for pagination.
+    The number of results to return. Used for pagination.
+
+    <If condition={props.elasticsearch_search_engine_type}>
+      The sum of **startRow** and **numberOfResults** can't exceed the Elasticsearch `max_result_window` setting, which defaults to 10,000. To page further, use **nextResults**.
+    </If>
   </APIField>
 
-  <If condition={props.elasticsearch_search_engine_type}>
-    <APIField name={props.parameter_prefix + 'query'} type="String" optional since="1.13.0">
-      The raw JSON Elasticsearch query that is used to search for Users. The **ids**, **query**, and **queryString** parameters are mutually exclusive, they are listed here in order of precedence.
+  <APIField name={props.parameter_prefix + 'query'} type="String" optional since="1.13.0" renderif={!!props.elasticsearch_search_engine_type}>
+    The raw JSON Elasticsearch query to search for Users. When you set **ids**, FusionAuth ignores **query**. When you set **query**, FusionAuth ignores **queryString**.
 
-      It is necessary to use the **{props.parameter_prefix}query** parameter when querying against `registrations` in order to achieve expected results, as this field is defined as a [nested datatype](https://www.elastic.co/guide/en/elasticsearch/reference/6.3/nested.html) in the Elasticsearch mapping.
-    </APIField>
-  </If>
+    To search on `registrations`, use **{props.parameter_prefix}query**. The Elasticsearch mapping defines `registrations` as a [nested data type](https://www.elastic.co/guide/en/elasticsearch/reference/6.3/nested.html), so a **queryString** search on `registrations` returns unexpected results.
+  </APIField>
 
   <If condition={props.database_search_engine_type}>
     <APIField name={props.parameter_prefix + 'queryString'} type="String" optional>
-      A query string that is used to search for Users. Using this parameter is mutually exclusive with the **ids** field.
+      A search term to match against the following User fields:
 
-      Database search limits effective queries to single search terms that may match the following fields on the User:
+      * `firstName`
+      * `lastName`
+      * `fullName`
+      * `email`
+      * `phoneNumber` <AvailableSince since="1.59.0" />
+      * `username`
 
-      - `firstName`
-      - `lastName`
-      - `fullName`
-      - `email`
-      - `phoneNumber` <AvailableSince since="1.59.0" />
-      - `username`
+      FusionAuth returns every User with a field that contains the search term, ignoring case. Use `*` to match any characters, including none. A value of `*` matches all Users. The database search engine doesn't support regular expressions or field-specific queries.
 
-      The search matches against all of these fields and any user with a matching field will be returned. The match is case-insensitive, and you may not search by prefix or suffix. Whitespace is not allowed in the search. Regular expressions may not be used. A value of `*` will match all records.
+      When you set **ids**, FusionAuth ignores **queryString**.
     </APIField>
   </If>
 
   <If condition={props.elasticsearch_search_engine_type}>
     <APIField name={props.parameter_prefix + 'queryString'} type="String" optional>
-      The Elasticsearch query string that is used to search for Users. The **ids**, **query**, and **queryString** parameters are mutually exclusive, they are listed here in order of precedence.
+      The Elasticsearch query string to search for Users. When you set **ids** or **query**, FusionAuth ignores **queryString**.
 
-      The match is case-insensitive. Whitespace is allowed in the search, but must be URL escaped; for example, using `%20` for a space character. Elasticsearch compatible regular expressions may be used, so you may search by prefix or suffix using the `*` wildcard.
+      The match ignores case. Use the `*` wildcard to search by prefix or suffix. A value of `*` matches all Users. To use an Elasticsearch regular expression, wrap the expression in forward slashes, such as `email:/.*example.com/`.
 
-      You may search against specific fields like so: `email:*fusionauth.io`. This will match only users with a `fusionauth.io` email address. Here are [the available fields for matching](/docs/users/search/user-fields).
+      <If condition={props.query_string_request}>
+        URL-encode whitespace in the query string, such as `%20` for a space.
+      </If>
+
+      To search one field, put the field name and a colon before the search term. For example, `email:*fusionauth.io` matches only Users with a `fusionauth.io` email address. For a full list of fields, see [User Search Fields](/docs/users/search/user-fields).
 
       <SearchPreprocessingWarning/>
     </APIField>
   </If>
 
   <APIField name={props.parameter_prefix + 'startRow'} type="Integer" optional defaults="0">
-    The start row within the search results to return. Used for pagination.
+    The offset of the first result to return. Used for pagination.
   </APIField>
 
   <APIField name={props.parameter_prefix + 'sortFields'} type="Array" optional>
-    An array of sort fields used to sort the result. The order the sort fields are provided will be maintained in the sorted output.
+    The fields to sort the results by. FusionAuth applies the sort fields in the order you list them.
   </APIField>
 
-  <If condition={props.elasticsearch_search_engine_type}>
-    <APIField name={props.parameter_prefix + 'sortFields[x].missing'} type="String" optional defaults="_last">
-      The value to substitute if this field is not defined. Two special values may be used:
+  <APIField name={props.parameter_prefix + 'sortFields[x].missing'} type="String" optional defaults="_last" renderif={!!props.elasticsearch_search_engine_type}>
+    The value to use when a User has no value for this field. The following special values set the position of those Users:
 
-      - `_first` When the field is not defined sort this record first.
-      - `_last` When the field is not defined sort this record last.
-    </APIField>
-  </If>
+    * `_first` sorts Users without the field first.
+    * `_last` sorts Users without the field last.
+  </APIField>
 
-  <If condition={props.database_search_engine_type}>
-    <APIField name={props.parameter_prefix + 'sortFields[x].name'} type="String" required>
-      The name of the field to sort.
+  <APIField name={props.parameter_prefix + 'sortFields[x].name'} type="String" optional>
+    The name of the field to sort by. This field is required when you set **sortFields**.
 
-      Required if **sortFields** is provided.
+    <If condition={props.database_search_engine_type}>
+      The database search engine supports the following fields:
 
-      The following field names are supported for the database search engine:
+      * `birthDate`
+      * `email`
+      * `fullName`
+      * `id`
+      * `insertInstant`
+      * `lastLoginInstant`
+      * `login`
+      * `phoneNumber` <AvailableSince since="1.59.0" />
+      * `tenantId`
+      * `username`
+    </If>
 
-      - `birthDate`
-      - `email`
-      - `fullName`
-      - `id`
-      - `insertInstant`
-      - `lastLoginInstant`
-      - `login`
-      - `phoneNumber` <AvailableSince since="1.59.0" />
-      - `tenantId`
-      - `username`
-    </APIField>
-  </If>
+    <If condition={props.elasticsearch_search_engine_type}>
+      The search index doesn't support sorting on every User field. The Elasticsearch search engine supports the following fields:
 
-  <If condition={props.elasticsearch_search_engine_type}>
-    <APIField name={props.parameter_prefix + 'sortFields[x].name'} type="String" optional>
-      The name of the field to sort.
-
-      Required if **sortFields** is provided.
-
-      Due to how the search index is structured not all fields on the user are sortable. The following field names are currently supported.
-
-      - `birthDate`
-      - `email`
-      - `fullName`
-      - `id" since="1.13.0`
-      - `insertInstant`
-      - `lastLoginInstant" since="1.13.0`
-      - `login`
-      - `phoneNumber`
-      - `registrations.applicationId`
-      - `registrations.id`
-      - `registrations.insertInstant`
-      - `registrations.lastLoginInstant`
-      - `registrations.roles`
-      - `tenantId`
-      - `username`
-    </APIField>
-  </If>
+      * `birthDate`
+      * `email`
+      * `fullName`
+      * `id` <AvailableSince since="1.13.0" />
+      * `insertInstant`
+      * `lastLoginInstant` <AvailableSince since="1.13.0" />
+      * `login`
+      * `phoneNumber`
+      * `registrations.applicationId`
+      * `registrations.id`
+      * `registrations.insertInstant`
+      * `registrations.lastLoginInstant`
+      * `registrations.roles`
+      * `tenantId`
+      * `username`
+    </If>
+  </APIField>
 
   <APIField name={props.parameter_prefix + 'sortFields[x].order'} type="String" optional defaults="asc">
-    The order to sort the specified field. Possible values are:
+    The sort order. The possible values are:
+
     * `asc`
     * `desc`
   </APIField>
