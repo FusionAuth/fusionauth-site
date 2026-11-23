@@ -5,7 +5,7 @@ These are snapshots of the files displayed on a few documentation pages. The ext
 | Local directory | Upstream source | Revision |
 | --- | --- | --- |
 | `containers/` | https://github.com/FusionAuth/fusionauth-containers/tree/631e1aed1d62106dc92327211d57a2dfb49f6ed8 | `631e1aed1d62106dc92327211d57a2dfb49f6ed8` |
-| `contrib/` | https://github.com/FusionAuth/fusionauth-contrib/tree/d389f622f4a3e87415e556c60ea5df81e2e689de | `d389f622f4a3e87415e556c60ea5df81e2e689de` |
+| `contrib/` | https://github.com/FusionAuth/fusionauth-contrib/tree/9b9691f7890265d972a0dbf781b8b80f7d6e6607 | `9b9691f7890265d972a0dbf781b8b80f7d6e6607` |
 | `example-docker-compose/` | https://github.com/FusionAuth/fusionauth-example-docker-compose/tree/7f87c0343ae88e51439b9ee91f753d69872ff872 | `7f87c0343ae88e51439b9ee91f753d69872ff872` |
 
 Only files rendered by the documentation were copied. Three local paths avoid repository-wide ignore rules: `sample.env` corresponds to upstream `docker/fusionauth/.env`, and `example-docker-compose/plugin-build/` corresponds to upstream `build/`. If an upstream example changes, review the affected guide before updating its snapshot. The Customize Docker Images page shows the full `fusionauth-containers` compose file and tells readers to download the current copy; the Docker installation page instead serves a trimmed file from `astro/public/docs/docker-compose.yml`.
