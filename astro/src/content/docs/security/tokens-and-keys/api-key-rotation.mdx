@@ -1,0 +1,75 @@
+---
+title: API Key Rotation
+description: Learn how to rotate FusionAuth API keys without interrupting the scripts and servers that use them.
+tags: key rotation, api key rotation, api key expiration, secret rotation, security, defense in depth
+---
+
+API keys authenticate scripts, servers, and admin tools that call the FusionAuth APIs. End users never see API keys. To rotate an API key, create a new key, move every client to the new key, then expire and delete the old key. FusionAuth accepts both keys during the move, so clients switch over without downtime.
+
+For JWT signing keys, see [Signing Key Rotation](/docs/security/tokens-and-keys/signing-key-rotation). For more information about API keys, see [API Key Authentication](/docs/apis/authentication#api-key-authentication).
+
+## Set an Expiration on Every Key
+
+Since `1.55.0`, each API key can store an expiration instant. FusionAuth rejects an expired key with a `401` response code. Set **`apiKey.expirationInstant`** when you create a key, so a forgotten key stops working on schedule. In the Admin UI, set the expiration under <Breadcrumb>Settings -> API Keys</Breadcrumb> when you add or edit a key.
+
+An expired key still exists until you delete the key. For the API, see the [API Keys API](/docs/apis/api-keys).
+
+## Find Keys Due for Rotation
+
+The API Keys API has no search or list operation. The [Key Search API](/docs/apis/keys/search-for-keys) searches signing keys in Key Master, not API keys.
+
+To find expiring keys by hand, go to <Breadcrumb>Settings -> API Keys</Breadcrumb> in the Admin UI. Open the advanced search controls, then set **Expiration start** and **Expiration end**.
+
+To find expiring keys with a script, record the Id of each API key when you create the key. Store the Ids in a secrets manager, a database, or a FusionAuth **data** field. On a schedule, such as a `cron` job, retrieve each key with the [Retrieve an API Key API](/docs/apis/api-keys/retrieve-an-api-key). Compare **`apiKey.expirationInstant`** with the current time, then rotate each key that expires soon.
+
+### Before 1.55
+
+Before `1.55.0`, API keys have no expiration. Store the creation and expiration data yourself, with the following attributes:
+
+* `id`: the Id of the API key, used to retrieve and delete the key.
+* `inserted`: the instant FusionAuth created the key.
+* `expires`: the instant the key expires. Storing this value per key lets different keys last for different durations.
+* `deleteAfter`: the instant to delete the key. Set `deleteAfter` later than `expires` to give clients a grace period.
+
+The following example stores the data as JSON in a **data** field, on an object such as the Tenant:
+
+```json title="Storing key rotation data"
+{
+  "apikeys" : [
+    {
+      "id" : "41e6deca-0e39-46e7-804b-68b0bc94a761",
+      "inserted" : 1628022201033,
+      "expires" : 1628022205033,
+      "deleteAfter" : 1628022208033
+    },
+    {
+      "id" : "5b56deca-0e39-46e7-804b-68b0bc94a981",
+      "inserted" : 1628022202033,
+      "expires" : 1628022207033,
+      "deleteAfter" : 1628022209033
+    }
+  ]
+}
+```
+
+On a schedule, have a script walk the entries. Delete each key with a `deleteAfter` value in the past. Replace each key with an `expires` value in the past, then set `deleteAfter` on the old entry.
+
+## Rotate an API Key
+
+Suppose your clients use API key `A`. To rotate key `A`:
+
+<Steps>
+
+1. Create key `B` with the same permissions as key `A`. To copy the permissions, call the [Create an API Key API](/docs/apis/api-keys/create-an-api-key) with **`sourceKeyId`** set to the Id of key `A`. The API can't copy a key manager key, so create a replacement key manager key in the Admin UI.
+1. Set a new **`apiKey.expirationInstant`** on key `B`. A copied key inherits the expiration instant of the source key, so key `B` otherwise expires at the same time as key `A`.
+1. Store key `B` in your secrets manager, and update every client that uses key `A`.
+1. Set **`apiKey.expirationInstant`** on key `A` to the end of the grace period. The grace period gives clients you missed a short window before key `A` stops working.
+1. After the grace period, delete key `A` with the [Delete an API Key API](/docs/apis/api-keys/delete-an-api-key) or in the Admin UI.
+
+</Steps>
+
+To update the expiration instant with the [Update an API Key API](/docs/apis/api-keys/update-an-api-key), retrieve the key first, change **`apiKey.expirationInstant`**, and send the full key in a `PUT` request. A `PUT` request without **`apiKey.expirationInstant`** clears the expiration.
+
+## Confirm the Rotation
+
+Call any API with key `A` after key `A` expires. FusionAuth returns a `401` response code. Then call the same API with key `B`, and confirm the request succeeds.

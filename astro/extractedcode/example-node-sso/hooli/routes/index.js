@@ -21,13 +21,12 @@ const clientId = process.env.clientId;
 const clientSecret = process.env.clientSecret;
 const fusionAuthURL = process.env.fusionAuthURL;
 
-const hostName = 'hooli.local';
-
-const port = 3001;
+// set appURL in .env when a TLS proxy serves the app, such as https://hooli.local
+const appURL = process.env.appURL || 'http://hooli.local:3001';
 const title = 'Hooli';
 
 const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
-const loginUrl = fusionAuthURL+'/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2F'+hostName+'%3A'+port+'%2Foauth-redirect&scope=offline_access%20openid%20profile%20email';
+const loginUrl = fusionAuthURL+'/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri='+encodeURIComponent(appURL+'/oauth-redirect')+'&scope=openid%20profile%20email';
 const logoutUrl = fusionAuthURL+'/oauth2/logout?client_id='+clientId;
 
 /* GET home page. */
@@ -63,7 +62,7 @@ router.get('/oauth-redirect', function (req, res, next) {
   client.exchangeOAuthCodeForAccessToken(req.query.code,
                                          clientId,
                                          clientSecret,
-                                         'http://'+hostName+':'+port+'/oauth-redirect')
+                                         appURL+'/oauth-redirect')
       .then((response) => {
         return client.retrieveUserInfoFromAccessToken(response.response.access_token);
       })

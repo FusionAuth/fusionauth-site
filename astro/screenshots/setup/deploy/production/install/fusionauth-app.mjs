@@ -1,7 +1,7 @@
 import { maintenanceDatabasePassword, maintenanceUrl } from '../../../kit.mjs';
 import { waitForMaintenanceDatabaseToStart } from '../../../_shared.mjs';
 
-const screenshotIds = ['docs_deploy_production_install_1', 'docs_deploy_production_install_2'];
+export const screenshotIds = ['docs_deploy_production_install_1', 'docs_deploy_production_install_2'];
 
 export async function beforeScreenshot(page, ctx) {
   if (!screenshotIds.includes(ctx?.name)) return false;
