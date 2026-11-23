@@ -1,15 +1,21 @@
-When you enable self-service registration for an application and a user who does not have a registration for that application successfully logs in to that application, the user will automatically be registered for that application, and have a registration added.
+When an Application has **Registration mode** set to `Create registration`, a user without a [[Registration]] for the Application can log in through the [[hosted login pages]]. FusionAuth creates the Registration during the login and assigns the default roles of the Application.
 
-Let's walk through a scenario. Suppose you have three applications:
+Self-service registration applies only to the hosted login pages. The following logins don't create a Registration, even when **Registration mode** is `Create registration`:
 
-* Hooli Jobs
-* Pied Piper Video Chat, which has self-service registration enabled
-* Pied Piper Email Service, which **does not** have self-service registration enabled
+* A login with the [Login API](/docs/apis/login). The Login API returns a `202` status code and no refresh token.
+* A login with the [[Password Grant]]. FusionAuth returns tokens, but the user stays unregistered.
 
-User `richard@piedpiper.com` has a valid account, and has a registration for the Hooli Jobs.
+To register a user who logs in with an API, create the Registration from your server with the [Registrations API](/docs/apis/registrations/create-a-user-registration-for-an-existing-user). For more information, see [Register a User and Log In](/docs/users/register/register-user-login-api).
 
-When Richard tries to log into Pied Piper Video Chat, he is able to log in. He is automatically registered for this application, since self service registration is turned on for it. Therefore the `applicationId` claim is present in the token and any default roles are associated with his account.
+A login through an [[Identity Provider]] can also create a Registration. When **Create registration** is on for the Application in the Identity Provider, FusionAuth creates the Registration for both hosted and API logins, with any **Registration mode**. When **Create registration** is off, only a hosted login to an Application in `Create registration` mode creates the Registration. For more information, see [Applications and Overrides](/docs/authentication/identity-providers/applications-and-overrides).
 
-When Richard tries to log into Pied Piper Email Service, he is able to log in, since he has a valid account in the tenant. But Richard is not registered for the application. Therefore no roles are associated with him and the `applicationId` claim is not present.
+For example, a Tenant has the following Applications:
 
-You can read more about [authentication vs authorization and registrations](/docs/concepts/authentication-authorization).
+* Pied Piper Video Chat, with **Registration mode** set to `Create registration`
+* Pied Piper Email Service, with self-service registration disabled
+
+The user `richard@piedpiper.com` has an account in the Tenant, with no Registration for either Application. Richard logs in to Pied Piper Video Chat through the hosted login pages. FusionAuth creates a Registration for Pied Piper Video Chat. The access token contains the **`applicationId`** claim and the default roles.
+
+Richard then logs in to Pied Piper Email Service. The login succeeds, because Richard has an account in the Tenant. FusionAuth creates no Registration, so the access token contains no roles and no **`applicationId`** claim.
+
+For more information, see [Authentication and Authorization](/docs/concepts/authentication-authorization).
