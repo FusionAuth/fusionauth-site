@@ -14,13 +14,19 @@ On the <Breadcrumb>OAuth</Breadcrumb> tab of the Application, enable `Device` in
 
 Set **Device Verification URL** to a page in your app, so your app can pass the Tenant Id through the flow. The page can host your own form. The page can also redirect to the themed FusionAuth device page at `/oauth2/device`, which requires the `client_id` and `tenantId` query parameters. After the user submits the code on the FusionAuth device page, FusionAuth logs the user in with an Authorization Code grant and redirects to the **`redirect_uri`**. FusionAuth approves the device when your app exchanges the authorization code for tokens.
 
+A device can't keep a client secret. To let the device poll the Token endpoint without a client secret, set **Client Authentication** to `Not required`. When **Client Authentication** is `Required` or `Not required when using PKCE`, the device must send the client secret. For more information, see the [Client Secret table](/docs/apis/oauth/client-secret).
+
+<Aside type="version">
+Before FusionAuth `1.71.0`, the Token endpoint didn't apply **Client Authentication** to the Device Authorization grant. After you update to `1.71.0` or later, a device that polls without a client secret fails with an `invalid_client` error unless **Client Authentication** is `Not required`.
+</Aside>
+
 To change how long the device code and user code stay valid, or how FusionAuth generates user codes, use the <Breadcrumb>Advanced</Breadcrumb> tab of the [Tenant](/docs/concepts/types/tenants#advanced).
 
 ## Start the Flow on the Device
 
 The device sends a request to the [Device Authorize endpoint](/docs/apis/oauth/device). The [OpenID Configuration](/docs/apis/oauth/openid-configuration) also lists the endpoint.
 
-To request scopes on the tokens, send **`scope`**. To get a refresh token, add `offline_access`. FusionAuth applies the scopes when the user enters the code, as described in [Pass the User Code to FusionAuth](#pass-the-user-code-to-fusionauth). For scope policies, custom scopes, and consent, see [Scopes](/docs/authorization/oauth-scopes).
+To request scopes on the tokens, send **`scope`**. To get a refresh token, add `offline_access`, and enable **Generate refresh tokens** on the <Breadcrumb>OAuth</Breadcrumb> tab of the Application. FusionAuth applies the scopes when the user enters the code, as described in [Pass the User Code to FusionAuth](#pass-the-user-code-to-fusionauth). For scope policies, custom scopes, and consent, see [Scopes](/docs/authorization/oauth-scopes).
 
 ![The device prompts the user to connect.](/img/docs/lifecycle/authenticate-users/oauth/oauth-device-connect.png)
 
@@ -67,7 +73,7 @@ While the user hasn't approved the device, FusionAuth returns the following erro
 ```json title="Example Pending JSON Error Response"
 {
   "error": "authorization_pending",
-  "error_description": "The authorization request is still pending"
+  "error_description": "The authorization request is still pending."
 }
 ```
 
@@ -102,11 +108,73 @@ The user visits the URL and enters the code:
 
 ## Pass the User Code to FusionAuth
 
-When your app hosts the code form, validate the code with the [Device Validate endpoint](/docs/apis/oauth/device#device-validate). For a valid code, the endpoint returns a `200` response with no body.
+FusionAuth approves the device after the user enters the code and logs in. Collect the code in one of the following ways:
 
-After validating the code, log the user in with the [Authorization Code grant](/docs/authentication/oauth/authorization-code). The Implicit and Password grants also work. Send the code in the **`user_code`** parameter, and FusionAuth approves the device when the login completes. See the [Authorize endpoint](/docs/apis/oauth/authorize) and the [Token endpoint](/docs/apis/oauth/token).
+* Send the user to the FusionAuth device page at `/oauth2/device`.
+* Host the code form in your app. Log the user in, then approve the device with the [Device Approve endpoint](/docs/apis/oauth/device#device-approve). For more information, see [Approve the Device From Your App](#approve-the-device-from-your-app).
+
+<Aside type="version">
+Before FusionAuth `1.71.0`, an app that hosted the code form could send the code in the **`user_code`** parameter of the Authorization Code or Implicit grant. FusionAuth approved the device when the login completed. In `1.71.0` and later, those grants approve the device only when the user entered the code on the FusionAuth device page. The Password grant still approves the device from the **`user_code`** parameter. For more information, see the [Token endpoint](/docs/apis/oauth/token#resource-owner-password-credentials-grant-request).
+</Aside>
 
 ![The device confirms that the user connected.](/img/docs/lifecycle/authenticate-users/oauth/oauth-device-success.png)
+
+## Approve the Device From Your App
+
+When your app hosts the code form, validate the code with the [Device Validate endpoint](/docs/apis/oauth/device#device-validate). For a valid code, the endpoint returns a `200` response with no body. Then log the user in with any FusionAuth login method, and send the user's access token and the user code to the [Device Approve endpoint](/docs/apis/oauth/device#device-approve). The access token must belong to the same Application as the device. An access token from the [Login API](/docs/apis/login) or the [Passwordless API](/docs/apis/passwordless) works when the login request includes the Application Id.
+
+The following example approves a device after a [[passwordless login]]:
+
+```mermaid title="A device grant that your app approves after a passwordless login."
+sequenceDiagram
+    participant Device
+    participant User
+    participant App as Your App
+    participant FusionAuth
+    Device ->> FusionAuth : POST /oauth2/device_authorize
+    FusionAuth ->> Device : device_code and user_code
+    Device ->> User : Show the user_code
+    User ->> App : Enter the user_code
+    App ->> FusionAuth : GET /oauth2/device/validate
+    App ->> FusionAuth : POST /api/passwordless/start
+    FusionAuth ->> App : Passwordless code
+    App ->> User : Send the code by email or SMS
+    User ->> App : Return with the code
+    App ->> FusionAuth : POST /api/passwordless/login
+    FusionAuth ->> App : Access token
+    App ->> FusionAuth : POST /oauth2/device/approve
+    Device ->> FusionAuth : POST /oauth2/token
+    FusionAuth ->> Device : Tokens
+```
+
+The device starts the flow and polls the Token endpoint as usual. Your app handles the rest of the flow:
+
+<Steps>
+
+1. Collect the user code and the user's login Id, such as an email address. Validate the code with the Device Validate endpoint.
+1. Call the [Start Passwordless endpoint](/docs/apis/passwordless/start-passwordless-login) with the user's login Id and the **`applicationId`** of the device's Application. FusionAuth returns a passwordless code.
+1. Deliver the code to the user. To have FusionAuth send the code by email or SMS, call the [Send Passwordless endpoint](/docs/apis/passwordless/send-passwordless-login).
+1. When the user returns with the code, call the [Complete Passwordless endpoint](/docs/apis/passwordless/complete-a-passwordless-login). The response holds the access token in the **`token`** field.
+1. Call the Device Approve endpoint with the access token and the user code. When **Client Authentication** is `Required` or `Not required when using PKCE`, also send the client secret. Your app runs on a server, so your app can keep the secret. The example adds line breaks for readability.
+
+   ```plaintext title="Example HTTP Request"
+   POST /oauth2/device/approve HTTP/1.1
+   Host: piedpiper.fusionauth.io
+   Content-Type: application/x-www-form-urlencoded
+
+   client_id=06494b74-a796-4723-af44-1bdb96b48875
+       &client_secret=f6MNmsHhGbqn2Ew1PU3BXsEu6lfpj7hW3w2Y2Yd5Uvc
+       &token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+       &user_code=SFYNPV
+   ```
+
+   For a successful request, the response holds a **`deviceGrantStatus`** of `Approved`.
+
+</Steps>
+
+The next poll from the device returns the tokens. The tokens carry the scopes that the device requested from the Device Authorize endpoint. For a third-party Application, FusionAuth keeps only the scopes in the **`scope`** claim of the approving access token, plus `openid` and `offline_access`.
+
+When another user already entered the code on the FusionAuth device page, the Device Approve endpoint rejects the request with an `invalid_user_code` error.
 
 ## Receive the Tokens
 
