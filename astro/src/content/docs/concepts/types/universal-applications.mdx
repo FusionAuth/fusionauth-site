@@ -1,0 +1,133 @@
+---
+title: Universal Applications
+description: Learn about universal Applications, which every Tenant can use, and how universal Applications differ from Applications that belong to one Tenant.
+tags: universal application, fusionauth application, fusionauth tenants, multi-tenancy, saas, tenant id, b2b
+order: 2.5
+relatedPinFirst: concepts/types/applications, concepts/types/tenants
+---
+
+<PlanBlurb plan="licensed" version="1.58.0" />
+
+A universal Application belongs to no Tenant, and every Tenant can use the universal Application. One universal Application has one client Id, one client secret, and one set of Application settings for every Tenant. Each request names a Tenant, and FusionAuth runs the request with that Tenant's users and settings.
+
+A universal Application fits when one application serves many Tenants. A B2B SaaS product that gives each customer a Tenant is a common example. Without a universal Application, you create and maintain a copy of the Application in every Tenant.
+
+```mermaid title="One universal Application serves users from several Tenants."
+flowchart LR
+    App[Your application] -->|client_id + Tenant A Id| UA[Universal Application]
+    App -->|client_id + Tenant B Id| UA
+    UA --> TA[Tenant A users and settings]
+    UA --> TB[Tenant B users and settings]
+```
+
+In the diagram, your application sends the same client Id for both customers. The Tenant Id in each request decides which users can log in and which Tenant settings apply.
+
+The [Tenant Manager](/docs/users/tenant-manager) is a universal Application.
+
+## Create a Universal Application
+
+You choose whether an Application is universal when you create the Application. In the Admin UI, enable **Universal** on the Add Application page. With the [Application API](/docs/apis/applications/create-an-application), set **`application.universalConfiguration.universal`** to `true` and leave out **`application.tenantId`**. A create request with both values fails with a validation error.
+
+The following rules apply after creation:
+
+* An Application can't become universal, and a universal Application can't become tenant-scoped. An update request that changes **`application.universalConfiguration.universal`** succeeds, but FusionAuth keeps the original value.
+* The name of a universal Application must be unique across all Tenants. An Application in any Tenant can't reuse the name of a universal Application.
+* Every Tenant can use a universal Application. FusionAuth has no setting that limits a universal Application to some Tenants.
+
+Without a license, FusionAuth rejects requests to create or update a universal Application. When a license lapses, existing universal Applications keep working, but updates fail until you renew the license.
+
+## How FusionAuth Picks the Tenant
+
+A universal Application has no Tenant of its own, so every login and user workflow must name a Tenant. FusionAuth accepts any Tenant in the instance. The Tenant decides which users can log in, which settings apply, and which issuer signs the tokens.
+
+### OAuth and OpenID Connect
+
+Every OAuth endpoint needs a Tenant Id for a universal Application, even on an instance with one Tenant. The following ways name the Tenant:
+
+* The **`tenantId`** parameter, on the [Authorize](/docs/apis/oauth/authorize), [Token](/docs/apis/oauth/token), [Device](/docs/apis/oauth/device), [Logout](/docs/apis/oauth/logout), and [Introspect](/docs/apis/oauth/introspect) endpoints.
+* A Tenant Id URL segment, such as `/oauth2/token/{tenantId}`, in FusionAuth `1.70.0` and later. When a request includes both the URL segment and the **`tenantId`** parameter, FusionAuth uses the parameter.
+* The `X-FusionAuth-TenantId` header, on the Token and Introspect endpoints.
+
+When a request leaves out the Tenant, FusionAuth returns an `invalid_request` error with the `missing_tenant_id` reason. FusionAuth shows the error instead of sending the error to the **`redirect_uri`**, so the user sees an error page. An unknown Tenant Id returns the `invalid_tenant_id` reason.
+
+When an OpenID Connect library builds the endpoint URLs from a discovery document, use the Tenant's discovery URL: `/.well-known/openid-configuration/{tenantId}`. In FusionAuth `1.70.0` and later, the endpoints in the Tenant's discovery document end with the Tenant Id, so the library names the Tenant on every request. The discovery URL without a Tenant Id describes the default Tenant. For more information, see the [OpenID Configuration API](/docs/apis/oauth/openid-configuration).
+
+The following rules apply to tokens:
+
+* FusionAuth signs tokens with the issuer of the Tenant in the request, and sets the **`tid`** claim to that Tenant's Id.
+* A user can redeem an authorization code only with the Tenant that issued the code.
+* A user can refresh a token only with the Tenant the user belongs to.
+* The [UserInfo endpoint](/docs/apis/oauth/userinfo) reads the Tenant from the **`tid`** claim of the access token, so the request doesn't need a Tenant Id.
+* A logout request with only an **`id_token_hint`** uses the **`tid`** claim of the token. A logout request with a **`client_id`** needs a Tenant Id.
+
+### Hosted Login Pages
+
+The first request to the [[hosted login pages]] must name the Tenant, usually with the **`tenantId`** parameter. FusionAuth then carries the Tenant through the rest of the workflow, including identity provider redirects and the callback to your application. Links in emails, such as email verification and password reset links, include an identifier for the Tenant, so the links work without a Tenant Id.
+
+To link to the [account management pages](/docs/users/account-management) for a universal Application, include both the client Id and the Tenant Id:
+
+```
+/account?client_id=APPLICATION_ID&tenantId=TENANT_ID
+```
+
+### APIs
+
+APIs that log users in or start a user workflow, such as the [Login API](/docs/apis/login), the [Passwordless API](/docs/apis/passwordless), and the [Forgot Password API](/docs/apis/users/forgot-password), find the Tenant in the following order:
+
+1. The `X-FusionAuth-TenantId` header.
+1. The Tenant of a tenant-scoped API key.
+1. The only Tenant, when the instance has exactly one Tenant.
+
+When no source names a Tenant, the request fails with a `[TenantIdRequired]` error. A request that includes an identifier from FusionAuth, such as a passwordless code or a one-time password, takes the Tenant from the identifier.
+
+## Settings
+
+A universal Application uses the settings of the Tenant in each request. You can give each Tenant different password rules, email servers, connectors, and other Tenant settings, and the universal Application follows the settings of each Tenant.
+
+An override on a universal Application applies in every Tenant. For example, when a universal Application sets a theme or JWT signing keys, every Tenant uses that theme or those keys for the universal Application. Leave an override empty to use the setting of each Tenant instead. For the settings an Application can override, see [Tenant and Application Settings](/docs/concepts/types/tenants#tenant-and-application-settings).
+
+Themes, keys, email templates, forms, and lambdas don't belong to a Tenant, so a universal Application can use any of them.
+
+## Registrations, Roles, and Groups
+
+A user from any Tenant can register for a universal Application. [[self-service registration::Self-service registration]] creates the user in the Tenant from the request. When you add a registration for an existing user with the [Registration API](/docs/apis/registrations), FusionAuth uses the user's Tenant, so the request doesn't need a Tenant Id.
+
+The roles of a universal Application are the same in every Tenant. A Group in any Tenant can grant the roles of a universal Application.
+
+## Identity Providers
+
+On the hosted login pages, a universal Application shows the global identity providers and the identity providers that belong to the Tenant in the request. Identity providers that belong to other Tenants don't appear. A tenant-scoped identity provider can enable universal Applications as well as the Applications in the identity provider's own Tenant. For more information, see [Identity Provider Scope](/docs/authentication/identity-providers/identity-provider-scope).
+
+Tenant-scoped identity providers are available in FusionAuth `1.62.0` and later.
+
+## API Keys
+
+A universal Application affects every Tenant, so only a global API key can change a universal Application. A request with a tenant-scoped API key or the `X-FusionAuth-TenantId` header returns a `403` status code for the following requests:
+
+* Create, update, reactivate, or delete a universal Application with the [Application API](/docs/apis/applications).
+* Create, update, or delete the roles of a universal Application.
+* Create, update, or delete the OAuth scopes of a universal Application with the [Scopes API](/docs/apis/scopes).
+
+A tenant-scoped API key can retrieve a universal Application by Id, and a request for all Applications includes universal Applications. A tenant-scoped API key can also manage registrations and refresh tokens for the users in the key's Tenant.
+
+[Search for Applications](/docs/apis/applications/search-for-applications) with a Tenant returns only the Applications that belong to the Tenant. A search with a tenant-scoped API key, the `X-FusionAuth-TenantId` header, or a **`tenantId`** criterion leaves out universal Applications. To find universal Applications, search with a global API key and set **`universal`** to `true`.
+
+## SAML v2
+
+FusionAuth can't act as a SAML v2 identity provider for a universal Application. FusionAuth matches a SAML v2 request from a service provider to an Application in the Tenant from the login URL, and a universal Application belongs to no Tenant. The Tenant's SAML v2 metadata also leaves out universal Applications. To use FusionAuth as a SAML v2 identity provider, create the Application in a Tenant. For more information, see [Host a SAML IdP](/docs/authentication/act-as-an-idp/host-saml-idp).
+
+A universal Application can still use a SAML v2 identity provider, such as Okta or Microsoft Entra ID, for login.
+
+## Delete a Tenant or a Universal Application
+
+Deleting a Tenant doesn't delete universal Applications. FusionAuth deletes the Tenant's users, along with the users' registrations for universal Applications.
+
+Deleting or deactivating a universal Application affects every Tenant. Deleting a universal Application removes the registrations, roles, and refresh tokens for the universal Application in every Tenant.
+
+## Admin UI
+
+The Admin UI shows the following differences for a universal Application:
+
+* The Applications list shows a dash in the Tenant column.
+* The edit page shows no Tenant, and you can't change the **Universal** toggle.
+* The view dialog shows a **Universal application** row. The dialog leaves out the Tenant, the JWT issuer, the OpenID Connect discovery URL, and the SAML integration details, because those values depend on the Tenant in each request.
