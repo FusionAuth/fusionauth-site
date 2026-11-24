@@ -9,20 +9,17 @@ import TroubleshootingApiCalls from 'src/content/docs/_shared/_troubleshooting-a
 import NewApiKey401 from 'src/content/docs/apis/_shared/_new-api-key-401.mdx';
 import { YouTube } from '@astro-community/astro-embed-youtube';
 
-The core of FusionAuth is a set of RESTful APIs that allow you to quickly integrate login, registration and advanced User management features into your application. The FusionAuth web UI is built upon these APIs. Everything in the user interface is available through an API.
+FusionAuth provides REST APIs for login, registration, and User management. The Admin UI uses the same APIs, so you can do anything in the Admin UI through an API.
 
-On this page you will find links to each of the API groups and a general overview of the API status codes you can expect back from each API. Each API will also document specific status codes and the specific meaning of the status code.
+Before you call an API, read about [API Authentication](/docs/apis/authentication) and [API Errors](/docs/apis/errors).
 
-* [API Authentication](/docs/apis/authentication)
-* [API Errors](/docs/apis/errors)
-* [API Status Codes](#status-codes)
-Here's a brief video showing how to use an API:
+The following video shows how to call an API:
 
 <YouTube id="Ia3pKcX7WlA" />
 
 ## APIs
 
-Unless stated otherwise, all of the FusionAuth APIs will expect to receive a JSON request body. Ensure you have added the `Content-Type` HTTP header to your request.
+Unless an API documents otherwise, the API expects a JSON request body. Set the `Content-Type` header on every request with a body:
 
 ```plaintext options="wrap" title="Content-Type Header"
 Content-Type: application/json
@@ -34,46 +31,48 @@ Content-Type: application/json
 
 ## Status Codes
 
-Each API may document specific status codes and provide a specific reason for returning that status code. This is a general overview of the status codes you may expect from an API and what they will mean to you.
+Each API page lists the status codes that the API returns, with a reason for each code. The following status codes apply to most APIs:
 
-_Response Codes_
-
-| Code | Description                                                                                                                                                                                                                                                                                                     |
-|------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 200  | The request was successful. Generally the response body will contain JSON unless documented otherwise.                                                                                                                                                                                                          |
-| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                                                                                                                                                        |
+| Code | Description |
+|------|-------------|
+| 200  | The request succeeded. The response body contains JSON unless the API documents otherwise. |
+| 400  | The request isn't valid. The response contains an [Errors](/docs/apis/errors) JSON object with the specific errors. |
 | 401  | FusionAuth didn't authorize the request. The Authorization header is missing, the API key isn't valid, or the API key doesn't have permission for this endpoint and method. The response is empty. For more information, see [Unauthorized Responses](/docs/apis/authentication#unauthorized-responses). |
-| 404  | The object you requested doesn't exist. The response will be empty.                                                                                                                                                                                                                                             |
-| 405  | The HTTP method you requested is not allowed for the URI. This is a user error in making the HTTP request to the API. For example, if `POST` is the only supported way to call a particular API and you make the HTTP request with `GET`, you will receive a `405` status code. No body will be returned.       |
-| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty. This is generally a FusionAuth error condition. If possible open a [GitHub Issue](https://github.com/FusionAuth/fusionauth-issues/issues) so we can help you resolve the issue.      |
-| 501  | The HTTP method you requested is not implemented. This is a user error in making the HTTP request to the API.                                                                                                                                                                                                   |
-| 503  | The requested action cannot be completed due the current rate of requests. Retry the request later.                                                                                                                                                                                                             |
-| 512  | A lambda invocation failed during this API request. An event log will have been created with details of the exception. See <Breadcrumb>System -> Event Log</Breadcrumb>.                                                                                                                                                |
+| 404  | The requested object doesn't exist. The response is empty. |
+| 405  | The URI doesn't allow the HTTP method of the request. For example, when an API supports only `POST` and you send a `GET` request, FusionAuth returns `405`. The response is empty. |
+| 413  | The request body is larger than the maximum request size, which is 128 MB by default. The response is empty. For more information, see `fusionauth-app.http.max-request-size` in the [Configuration reference](/docs/deploy/production/configuration). |
+| 500  | FusionAuth had an internal error and logged a stack trace in the FusionAuth log files. The response usually contains an [Errors](/docs/apis/errors) JSON object with the `[Exception]` general error code. On MySQL, a **`data`** field larger than the database column also returns `500`. For more information, see [Data Field Sizes](/docs/concepts/plans-and-limits/limitations#data-field-sizes). For any other `500` response, open a [GitHub Issue](https://github.com/FusionAuth/fusionauth-issues/issues). |
+| 501  | FusionAuth doesn't implement the HTTP method of the request. |
+| 503  | FusionAuth can't complete the request because of the current rate of requests. Retry the request later. |
+| 512  | A lambda invocation failed during the API request. FusionAuth creates an Event Log with details of the exception. To view the Event Log, navigate to <Breadcrumb>System -> Event Log</Breadcrumb>. |
 
 ## The PATCH HTTP Method
 
-There are three options for using `PATCH` operations. You choose between them by specifying a particular `Content-Type` on the request.
+FusionAuth supports the following `PATCH` options. To choose an option, set the `Content-Type` header of the request:
 
-_PATCH options_
+| Option | Content-Type | Array Behavior | Available Since |
+|--------|--------------|----------------|-----------------|
+| Original | `application/json` | Varies by API and field. Some arrays append, and others replace. For example, FusionAuth appends to **`user.preferredLanguages`** but replaces **`registration.roles`**. | `1.12.0` |
+| [JSON Patch (RFC 6902)](https://www.rfc-editor.org/rfc/rfc6902) | `application/json-patch+json` | Operations in the request describe each change. | `1.39.0` |
+| [JSON Merge Patch (RFC 7396)](https://www.rfc-editor.org/rfc/rfc7396) | `application/merge-patch+json` | An array in the request replaces the existing array. | `1.39.0` |
 
-| Name             | Content-Type                   | Array Behavior                                                                                                                     | Available Since | RFC Link                                           | Client Library Support | Notes                                                                     |
-|------------------|--------------------------------|------------------------------------------------------------------------------------------------------------------------------------|-----------------|----------------------------------------------------|------------------------|---------------------------------------------------------------------------|
-| Original         | `application/json`             | Varies, sometimes a merge, other times an append. Read the documentation and test before using. Safest option is `GET` then `PUT`. | 1.12.0          | N/A                                                | Yes                    | May be deprecated in the future.                                          |
-| JSON Patch       | `application/json-patch+json`  | Uses operations to specify JSON modifications.                                                                                     | 1.39.0          | [RFC 6902](https://www.rfc-editor.org/rfc/rfc6902) | No                     | [Useful patch builder tool](https://json-patch-builder-online.github.io/) |
-| JSON Merge Patch | `application/merge-patch+json` | If target value is an array, overwrite the existing value with what is provided.                                                   | 1.39.0          | [RFC 7396](https://www.rfc-editor.org/rfc/rfc7396) | No                     | N/A                                                                       |
+The client libraries support only the original option. FusionAuth may deprecate the original option in the future. Before you rely on the array behavior of the original option for an API, read the API documentation and test the request. To change an array predictably without JSON Patch or JSON Merge Patch, `GET` the object, then `PUT` the full object.
 
+When a request changes only object fields, and no arrays, all `PATCH` options produce the same result.
 
 ### PATCH Example
 
-Here's an example of how the different options work when used to modify the roles of a [Group](/docs/apis/groups) which has roles of `ceo` and `dev` to remove the `dev` role.
+The following examples remove the `dev` role from a [Group](/docs/apis/groups) that has the roles `ceo` and `dev`. Each example starts from the following Group:
 
-If you are only modifying specific object fields, all three `PATCH` methods are equivalent.
+<JSON title="Original Group JSON" src="groups/patch/original.json" />
+
+Each example produces the following Group:
+
+<JSON title="Resulting Group JSON" src="groups/patch/response.json" />
 
 #### Original
 
-With the original, pre 1.39.0 `PATCH` method, the correct way to remove the `dev` role is to request the group JSON, find the `ceo` role from the `roleIds` array, and use `PUT` to update the group object.
-
-<JSON title="Original Group JSON" src="groups/patch/original.json" />
+With the original `PATCH` method, from before `1.39.0`, the safest way to remove the `dev` role is to `GET` the Group, remove the role from the **`roleIds`** array, and `PUT` the full Group:
 
 ```json title="PUT Request JSON"
 {
@@ -87,17 +86,11 @@ With the original, pre 1.39.0 `PATCH` method, the correct way to remove the `dev
 }
 ```
 
-After you make this `PUT` request, the group JSON will look like this.
-
-<JSON title="Resulting Group JSON" src="groups/patch/response.json" />
-
 #### JSON Patch
 
-With JSON Patch, you have a flexible set of operations that can update, remove or move fields in a JSON object. Please review [RFC 6902](https://www.rfc-editor.org/rfc/rfc6902) for the full list of operations. Here's the original JSON again:
+JSON Patch uses operations to add, remove, replace, move, copy, and test values in a JSON object. For the full list of operations, see [RFC 6902](https://www.rfc-editor.org/rfc/rfc6902). To build a request, try the [JSON Patch builder](https://json-patch-builder-online.github.io/).
 
-<JSON title="Original Group JSON" src="groups/patch/original.json" />
-
-If you make a `PATCH` request with a `Content-Type` of `application/json-patch+json` and a body like below:
+Send a `PATCH` request with a `Content-Type` of `application/json-patch+json` and the following body:
 
 ```json title="JSON Patch Request JSON"
 [
@@ -108,21 +101,17 @@ If you make a `PATCH` request with a `Content-Type` of `application/json-patch+j
 ]
 ```
 
-This call removes the second value of the `roleIds` array, which corresponds to the "devs" role. You'll need to find what array element you want to delete, perhaps with a separate request. After you make this `PATCH` request, the group JSON will look like this.
+The `remove` operation deletes the second value of the **`roleIds`** array, which holds the `dev` role. To find the index of the value, you might need a separate `GET` request first.
 
-<JSON title="Resulting Group JSON" src="groups/patch/response.json" />
-
-This approach is precise and can make multiple changes to a given object with one call. It also requires you to learn a new set of operations. Additionally, the data is sent in format (an array of operations) which is only vaguely related to the structure of the object being changed.
+One JSON Patch request can make several precise changes to an object. The request body is a list of operations, so the body doesn't match the structure of the object you change.
 
 #### JSON Merge Patch
 
-JSON Merge Patch is a more straightforward way to update complex JSON objects. Please review [RFC 7386](https://www.rfc-editor.org/rfc/rfc7386) for a full description of the patch behavior. Here's the original JSON again:
+JSON Merge Patch updates an object with a body that matches the structure of the object. For the full merge behavior, see [RFC 7396](https://www.rfc-editor.org/rfc/rfc7396).
 
-<JSON title="Original Group JSON" src="groups/patch/original.json" />
+Send a `PATCH` request with a `Content-Type` of `application/merge-patch+json` and the following body:
 
-If you make a `PATCH` request with a `Content-Type` of `application/merge-patch+json` and a body like below:
-
-```json title="JSON Patch Request JSON"
+```json title="JSON Merge Patch Request JSON"
 {
   "roleIds": [
     "0a15cfdd-e231-4de4-9411-6d1015e05d99"
@@ -130,19 +119,15 @@ If you make a `PATCH` request with a `Content-Type` of `application/merge-patch+
 }
 ```
 
-After you make this `PATCH` request, the group JSON will look like this.
+The **`roleIds`** array in the request replaces the existing array, which removes the `dev` role.
 
-<JSON title="Resulting Group JSON" src="groups/patch/response.json" />
+## Explore the APIs
 
-## Exploring The APIs
-
-You can explore our APIs using a self hosted instance, one you run yourself on a remote server, or using the [Sandbox](https://sandbox.fusionauth.io).
-
-You can use the samples in our [API Reference](/docs/apis) or our [Postman collection](https://www.postman.com/fusionauth).
+To try the APIs, use a self-hosted instance or the [Sandbox](https://sandbox.fusionauth.io). For sample requests, see the [FusionAuth Postman collection](https://www.postman.com/fusionauth).
 
 ## Backwards Compatibility
 
-FusionAuth strives to maintain backwards compatibility when making changes to APIs and features. Occasionally, FusionAuth will deprecate APIs or features in preparation for removal. Please see our [Deprecation Policy](/docs/update/deprecation-policy) for more.
+FusionAuth keeps APIs and features backwards compatible when possible. Before FusionAuth removes an API or feature, FusionAuth deprecates the API or feature first. For more information, see the [Deprecation Policy](/docs/update/deprecation-policy).
 
 ## Troubleshooting
 
