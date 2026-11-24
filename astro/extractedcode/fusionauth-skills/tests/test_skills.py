@@ -1,5 +1,6 @@
-"""Cheap checks for every skills/<name>/SKILL.md: frontmatter, line length, and no pinned FusionAuth version."""
+"""Cheap checks for every skills/<name>/SKILL.md (frontmatter, line length, no pinned FusionAuth version) and the plugin manifests."""
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -60,6 +61,32 @@ def check(skill):
     return errors
 
 
+def server_urls(servers):
+    return {name: server.get("url") for name, server in servers.items()}
+
+
+def check_manifests():
+    errors = []
+    try:
+        claude = json.loads(Path(".claude-plugin/plugin.json").read_text())
+        openai = json.loads(Path("plugin.json").read_text())
+        claude_mcp = json.loads(Path(".mcp.json").read_text())["mcpServers"]
+        openai_mcp = json.loads(Path("mcp.json").read_text())["mcpServers"]
+    except (OSError, ValueError, KeyError) as error:
+        return [f"can't read a manifest: {error}"]
+    for key in ("name", "description", "license", "repository"):
+        if claude.get(key) != openai.get(key):
+            errors.append(f'"{key}" differs between .claude-plugin/plugin.json and plugin.json')
+    # without a version, Claude Code tracks the commit, so each publish reaches users
+    if "version" in claude:
+        errors.append('remove "version" from .claude-plugin/plugin.json; the directory tracks commits')
+    if "version" not in openai:
+        errors.append('plugin.json needs a "version"; raise it for each OpenAI ZIP')
+    if server_urls(claude_mcp) != server_urls(openai_mcp):
+        errors.append("MCP servers differ between .mcp.json and mcp.json")
+    return errors
+
+
 def main():
     skills = sorted(Path("skills").glob("*/SKILL.md"))
     if not skills:
@@ -75,6 +102,14 @@ def main():
                 print(f"  {error}")
         else:
             print(f"ok   {skill}")
+    errors = check_manifests()
+    if errors:
+        failed = True
+        print("FAIL plugin manifests")
+        for error in errors:
+            print(f"  {error}")
+    else:
+        print("ok   plugin manifests")
     return 1 if failed else 0
 
 

@@ -85,6 +85,33 @@ For projects that benefit from a cloneable repository, the `/astro/extractedcode
 
 Astro builds automatically generate code snippets before rendering pages.
 
+### Publish the FusionAuth plugin
+
+The [`fusionauth-skills`](astro/extractedcode/fusionauth-skills) folder is the FusionAuth plugin for the Claude and OpenAI plugin directories. The plugin bundles the agent skills and the [Docs MCP server](https://fusionauth.io/docs/get-started/develop/docs-mcp-server). Each directory reads a different manifest:
+
+* Claude reads `.claude-plugin/plugin.json` and `.mcp.json`.
+* OpenAI reads `plugin.json` and `mcp.json`.
+
+When you change a skill or the shared metadata, change both manifests. `tests/test.sh` fails when the name, description, license, repository, or MCP server URLs drift apart.
+
+The Claude directory publishes automatically. A merge to `main` exports the folder to [FusionAuth/fusionauth-skills](https://github.com/FusionAuth/fusionauth-skills), and the Claude directory scans each new commit on that repository's `main` branch. The scans start after a one-time submission at [claude.ai/directory/manage](https://claude.ai/directory/manage) with the **GitHub push webhook** update option. `.claude-plugin/plugin.json` has no `version`, so Claude Code tracks the commit and every published change reaches users. To check the plugin locally, run `claude plugin validate astro/extractedcode/fusionauth-skills`.
+
+The OpenAI directory needs a ZIP upload for each change to a skill or to the metadata:
+
+1. Raise `version` in `plugin.json`, and merge the change.
+1. Build the ZIP from the repository root. The ZIP holds only the files OpenAI reads, and lands outside the repository so nobody commits the ZIP by mistake:
+
+   ```console
+   cd astro/extractedcode/fusionauth-skills
+   rm -f ~/fusionauth-plugin.zip
+   zip -r ~/fusionauth-plugin.zip plugin.json mcp.json skills assets README.md LICENSE -x '*.DS_Store'
+   ```
+
+1. Open the plugin at [platform.openai.com/plugins](https://platform.openai.com/plugins), select **Upload plugin to make changes**, and upload the ZIP.
+1. Resolve the findings in **Metadata & Skills**, submit the version for review, and publish the version after approval.
+
+For the first OpenAI submission, choose **With MCP**. OpenAI doesn't support adding an MCP server to a skills-only plugin later. The submitter needs a verified FusionAuth business identity in the OpenAI organization settings, and must complete the domain verification challenge for `ai.fusionauth.io`. In `plugin.json`, `interface.defaultPrompt` supplies the starter prompts, and the `review` object supplies the review test cases.
+
 ## Refresh external content
 
 Docker, Kubernetes, and Kafka configuration examples remain owned by their external repositories. To refresh only the files displayed in the docs, run this from the repository root (requires Bash, Git, and curl):
