@@ -1,191 +1,170 @@
 ---
 title: Angular SDK
+htmlTitle: Add Login to an Angular App with the FusionAuth Angular SDK
 description: Learn how to add login, logout, and registration to your Angular application with the FusionAuth Angular SDK.
 tags: angular sdk, fusionauth angular, typescript sdk, angular client library, spa authentication, angular auth
 order: 30
 ---
-import HostedBackendWarning from 'src/content/docs/_shared/_hosted-backend-warning.md';
-import SdkUpdatePolicy from 'src/content/docs/sdks/_update-policy.mdx';
 import WebSdkOverview from 'src/content/docs/sdks/_web-sdk-overview.mdx';
+import WebSdkPrerequisites from 'src/content/docs/sdks/_web-sdk-prerequisites.mdx';
 
-{/* Source: https://github.com/FusionAuth/fusionauth-javascript-sdk/blob/db7d152eb45837bb9a6a4a0b1d1cd41874539e7d/packages/sdk-angular/README.md — forDocSite; internal documentation links use current site paths. */}
-
-The Angular SDK manages authentication state for your Angular application. The SDK provides functions to log in, register, and log out users, and you can configure the SDK to refresh tokens automatically.
+The Angular SDK adds login, registration, and logout to an Angular application, and tracks whether the user is logged in. To build a complete application step by step, see the [Angular QuickStart](/docs/quickstarts/spa/quickstart-javascript-angular-web).
 
 <WebSdkOverview framework="Angular" />
 
-## Install
+## Prerequisites
 
-For a full tutorial on FusionAuth and Angular, see the [FusionAuth Angular Quickstart](/docs/quickstarts/spa/quickstart-javascript-angular-web).
+<WebSdkPrerequisites framework="Angular" version="22.0.0" />
 
-To install the SDK with npm, run:
+## Add Login to Your Application
 
-```shell-session
-npm install @fusionauth/angular-sdk
-```
+<Steps>
 
-To install the SDK with Yarn, run:
+1. Install the SDK:
 
-```shell-session
-yarn add @fusionauth/angular-sdk
-```
+   ```shell-session
+   npm install @fusionauth/angular-sdk
+   ```
 
-## Configure the SDK
+1. Add the SDK providers to `src/app/app.config.ts`. Set **`clientId`** to the client Id of your FusionAuth Application, **`serverUrl`** to the URL of your FusionAuth instance, and **`redirectUri`** to the URL you added to **Authorized redirect URLs**:
 
-Add `FusionAuthModule.forRoot()` to the imports of your application module:
+   ```typescript
+   import { ApplicationConfig, importProvidersFrom } from '@angular/core';
+   import { FusionAuthModule } from '@fusionauth/angular-sdk';
 
+   export const appConfig: ApplicationConfig = {
+     providers: [
+       importProvidersFrom(
+         FusionAuthModule.forRoot({
+           clientId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
+           serverUrl: 'http://localhost:9011',
+           redirectUri: 'http://localhost:4200',
+           shouldAutoRefresh: true,
+         }),
+       ),
+     ],
+   };
+   ```
 
-```typescript
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
+   **`shouldAutoRefresh`** refreshes the access token before the token expires. For every option, see [Web SDK Configuration](/docs/sdks/web-sdk-configuration). In an application that uses NgModules, add `FusionAuthModule.forRoot()` to the **`imports`** of the root module instead.
 
-import { AppRoutingModule } from './app-routing.module';
-import { FusionAuthModule } from '@fusionauth/angular-sdk';
+1. Inject `FusionAuthService` in a component to add login, registration, and logout buttons:
 
-@NgModule({
-  declarations: [],
-  imports: [
-    FusionAuthModule.forRoot({
-      clientId: '', // Your FusionAuth client Id
-      serverUrl: '', // The base URL of the server that performs the token exchange
-      redirectUri: '', // The URI that the user is directed to after the login/register/logout action
-      shouldAutoRefresh: true // option to configure the SDK to automatically handle token refresh. Defaults to false if not specified here.
-      // useDpop: true, // Opt-in to DPoP mode. See "Use DPoP Mode" below. Defaults to false.
-    }),
-  ],
-  providers: [],
-  bootstrap: []
-})
-export class AppModule { }
-```
+   ```typescript
+   import { Component, inject, OnInit, signal } from '@angular/core';
+   import { FusionAuthService, UserInfo } from '@fusionauth/angular-sdk';
 
-For a full list of configuration options, see [Web SDK Configuration](/docs/sdks/web-sdk-configuration).
+   @Component({
+     selector: 'app-auth-buttons',
+     template: `
+       @if (isLoggedIn()) {
+         @if (userInfo()?.given_name) {
+           <p>Welcome {{ userInfo()?.given_name }}!</p>
+         }
+         <button (click)="fusionAuth.logout()">Log Out</button>
+       } @else {
+         <button (click)="fusionAuth.startLogin()">Log In</button>
+         <button (click)="fusionAuth.startRegistration()">Register</button>
+       }
+     `,
+   })
+   export class AuthButtonsComponent implements OnInit {
+     fusionAuth = inject(FusionAuthService);
+     isLoggedIn = this.fusionAuth.isLoggedInSignal;
+     userInfo = signal<UserInfo | null>(null);
 
-## Usage
+     async ngOnInit() {
+       if (this.fusionAuth.isLoggedIn()) {
+         this.userInfo.set(await this.fusionAuth.getUserInfo<UserInfo>());
+       }
+     }
+   }
+   ```
 
-### Use FusionAuthService
+   `startLogin` and `startRegistration` send the browser to the FusionAuth login and registration pages. `logout` ends the session and returns the browser to **`redirectUri`**. To return users to a different page after logout, set **`postLogoutRedirectUri`** and add the URL to **Authorized redirect URLs**.
 
-The injectable `FusionAuthService` class provides observable properties that components can subscribe to. To build your own observables, use the non-observable `getUserInfo` method instead.
+1. Start your application and click <Breadcrumb>Log In</Breadcrumb>. The browser opens the FusionAuth login page. After you log in, FusionAuth returns you to your application, and the component shows <Breadcrumb>Log Out</Breadcrumb>.
 
-```typescript
-class AppComponent implements OnInit, OnDestroy {
-  private fusionAuthService: FusionAuthService = inject(FusionAuthService);
+</Steps>
 
-  isLoggedIn: boolean = this.fusionAuthService.isLoggedIn();
-  userInfo: UserInfo | null = null;
-  isGettingUserInfo: boolean = false;
-  subscription?: Subscription;
+To load the profile as an RxJS observable, call `getUserInfoObservable` instead of `getUserInfo`. For every method on `FusionAuthService`, see the [Angular SDK reference](https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-angular/docs).
 
-  ngOnInit(): void {
-    if (this.isLoggedIn) {
-      this.subscription = this.fusionAuthService
-        .getUserInfoObservable({
-          onBegin: () => (this.isGettingUserInfo = true),
-          onDone: () => (this.isGettingUserInfo = false),
-        })
-        .subscribe({
-          next: (userInfo) => (this.userInfo = userInfo),
-          error: (error) => console.error(error),
-        });
-    }
-  }
+## Use the Pre-Built Buttons
 
-  ngOnDestroy(): void {
-    this.subscription?.unsubscribe();
-  }
-}
-```
-
-### Use the Pre-Built Buttons
-
-The SDK includes pre-styled login, logout, and registration buttons. Place the buttons anywhere in your application without further configuration:
+Instead of writing your own buttons, use the styled buttons from the SDK. Import `FusionAuthModule` in the component, then place the `fa-login`, `fa-register`, and `fa-logout` elements in the template:
 
 ```typescript
 import { Component } from '@angular/core';
+import { FusionAuthModule } from '@fusionauth/angular-sdk';
 
 @Component({
-  selector: 'app-login',
-  template: `<fa-login></fa-login>`,
-  styleUrls: []
+  selector: 'app-header',
+  imports: [FusionAuthModule],
+  template: `
+    <fa-login></fa-login>
+    <fa-register></fa-register>
+    <fa-logout></fa-logout>
+  `,
 })
-export class LoginComponent {}
-
-@Component({
-  selector: 'app-logout',
-  template: `<fa-logout></fa-logout>`,
-  styleUrls: []
-})
-export class LogoutComponent {}
-
-@Component({
-  selector: 'app-register',
-  template: `<fa-register></fa-register>`,
-  styleUrls: []
-})
-export class RegisterComponent {}
+export class HeaderComponent {}
 ```
 
-### Pass State Through Login
+## Return Users to a Page After Login
 
-The `startLogin` and `startRegistration` functions accept an optional string parameter named `state`. The login and register components accept `state` as an input. FusionAuth returns the value in the `state` query parameter of the callback URI that you set in `redirectUri` on the `FusionAuthConfig`. You can pass any value. A common choice is the page the user was on before login, so your application can return the user to that page after authentication.
-
-### Use Server-Side Rendering
-
-The SDK supports Angular applications that use server-side rendering. The SDK needs no additional configuration.
-
-## Use DPoP Mode
-
-By default, the SDK calls a hosted backend that stores tokens in [[HttpOnly cookies]]. In DPoP mode, the SDK calls FusionAuth endpoints directly and binds tokens to a private key that the browser generates. To enable DPoP mode, set `useDpop` to `true` on `FusionAuthConfig`. The default is `false`.
-
-The following configuration enables DPoP mode:
+To return users to the page they started from, pass a string to `startLogin` or `startRegistration`. The SDK passes the string to the **`onRedirect`** function when the browser returns from FusionAuth. Set **`onRedirect`** in the `FusionAuthModule.forRoot()` options:
 
 ```typescript
 FusionAuthModule.forRoot({
-  clientId: '',
-  serverUrl: '',
-  redirectUri: '',
-  useDpop: true, // Opt-in to DPoP mode.
-  dpopTokenStorage: 'localStorage', // 'localStorage' (default, persists across reloads) or 'memory'.
+  // ...
+  onRedirect: (state?: string) => {
+    if (state) window.location.assign(state);
+  },
 }),
 ```
 
-When `useDpop` is `true`, `FusionAuthService` also exposes `dpopFetch()`, `generateProof()`, and `getAccessToken()`. These methods throw a descriptive error when `useDpop` is not enabled.
-
-The following code calls an API with each method:
-
 ```typescript
-class AppComponent {
-  private fusionAuthService: FusionAuthService = inject(FusionAuthService);
-
-  async callApi() {
-    // Recommended: attaches DPoP headers and retries nonce errors automatically.
-    const response = await this.fusionAuthService.dpopFetch('https://api.example.com/data', { method: 'GET' });
-
-    // For axios or other HTTP libraries that can't use dpopFetch.
-    const accessToken = this.fusionAuthService.getAccessToken();
-    const proof = await this.fusionAuthService.generateProof('https://api.example.com/data', 'GET', accessToken ?? undefined);
-    // axios.get('https://api.example.com/data', {
-    //   headers: { Authorization: `DPoP ${accessToken}`, DPoP: proof }
-    // });
-  }
-}
+this.fusionAuth.startLogin(window.location.pathname);
 ```
 
-## Library Documentation
+The `fa-login` and `fa-register` elements accept the same string in the **`state`** input.
 
-For more information, see the [full library documentation](https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-angular/docs).
+## Use Server-Side Rendering
 
-{/* End source: forDocSite */}
+The SDK works in Angular applications that use server-side rendering, with no extra configuration. During server rendering, the SDK reports the user as logged out until the application runs in the browser.
 
+## Call APIs in DPoP Mode
 
-## Use the SDK with FusionAuth Cloud
+In [[DPoP]] mode, the SDK calls FusionAuth directly instead of the hosted backend, and binds each token to a key that the browser generates. A stolen DPoP token doesn't work without the key. DPoP mode requires Angular SDK `2.1.0` and FusionAuth `1.63.0` or later. To configure FusionAuth for DPoP, see [Use DPoP in a Browser App](/docs/authentication/oauth/dpop/browser-app).
 
-<HostedBackendWarning />
+To enable DPoP mode, set **`useDpop`** to `true`:
 
-## Source Code
+```typescript
+FusionAuthModule.forRoot({
+  clientId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
+  serverUrl: 'http://localhost:9011',
+  redirectUri: 'http://localhost:4200',
+  useDpop: true,
+  dpopTokenStorage: 'localStorage',
+}),
+```
 
-The SDK source code is on [GitHub](https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-angular/).
+With `localStorage`, the user stays logged in across page reloads. With `memory`, a reload logs the user out.
 
-## Update Policy
+In DPoP mode, `FusionAuthService` also provides `dpopFetch`, `generateProof`, and `getAccessToken`. Call `dpopFetch` like `fetch`. `dpopFetch` adds the DPoP headers and retries when the server asks for a new nonce:
 
-<SdkUpdatePolicy/>
+```typescript
+const response = await this.fusionAuth.dpopFetch('https://api.example.com/data', { method: 'GET' });
+```
+
+When you use an HTTP library such as axios, build the headers with `getAccessToken` and `generateProof`:
+
+```typescript
+const accessToken = this.fusionAuth.getAccessToken();
+const proof = await this.fusionAuth.generateProof('https://api.example.com/data', 'GET', accessToken ?? undefined);
+
+await axios.get('https://api.example.com/data', {
+  headers: { Authorization: `DPoP ${accessToken}`, DPoP: proof },
+});
+```
+
+The three methods throw an error when **`useDpop`** is `false`.

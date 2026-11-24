@@ -1,231 +1,228 @@
 ---
 title: React SDK
+htmlTitle: Add Login to a React App with the FusionAuth React SDK
 description: Learn how to add login, logout, and registration to your React application with the FusionAuth React SDK.
-tags: react sdk, fusionauth react, react authentication, react hooks, spa authentication, react client library
+tags: react sdk, fusionauth react, react authentication, react hooks, spa authentication, react client library, next.js
 order: 10
 ---
-import HostedBackendWarning from 'src/content/docs/_shared/_hosted-backend-warning.md';
-import SdkUpdatePolicy from 'src/content/docs/sdks/_update-policy.mdx';
 import WebSdkOverview from 'src/content/docs/sdks/_web-sdk-overview.mdx';
+import WebSdkPrerequisites from 'src/content/docs/sdks/_web-sdk-prerequisites.mdx';
 
-{/* Source: https://github.com/FusionAuth/fusionauth-javascript-sdk/blob/db7d152eb45837bb9a6a4a0b1d1cd41874539e7d/packages/sdk-react/README.md — forDocSite; internal documentation links use current site paths. */}
-
-The React SDK manages authentication state for your React application. The SDK provides functions to log in, register, and log out users, and you can configure the SDK to refresh tokens and fetch user information automatically.
+The React SDK adds login, registration, and logout to a React application, and tracks whether the user is logged in. To build a complete application step by step, see the [React QuickStart](/docs/quickstarts/spa/react).
 
 <WebSdkOverview framework="React" />
 
-## Install
+## Prerequisites
 
-For a full tutorial on FusionAuth and React, see the [FusionAuth React Quickstart](/docs/quickstarts/spa/react).
+<WebSdkPrerequisites framework="React" version="18.2.0" />
 
-To install the SDK with npm, run:
+## Add Login to Your Application
 
-```shell-session
-npm install @fusionauth/react-sdk
-```
+<Steps>
 
-To install the SDK with Yarn, run:
+1. Install the SDK:
 
-```shell-session
-yarn add @fusionauth/react-sdk
-```
+   ```shell-session
+   npm install @fusionauth/react-sdk
+   ```
 
-## Configure the SDK
+1. Wrap your application in `FusionAuthProvider`. Set **`clientId`** to the client Id of your FusionAuth Application, **`serverUrl`** to the URL of your FusionAuth instance, and **`redirectUri`** to the URL you added to **Authorized redirect URLs**:
 
-Wrap your application with `FusionAuthProvider`:
+   ```tsx
+   import ReactDOM from 'react-dom/client';
+   import { FusionAuthProvider, FusionAuthProviderConfig } from '@fusionauth/react-sdk';
 
-```jsx
-import ReactDOM from 'react-dom/client';
-import { FusionAuthProviderConfig, FusionAuthProvider } from '@fusionauth/react-sdk';
+   const config: FusionAuthProviderConfig = {
+     clientId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
+     serverUrl: 'http://localhost:9011',
+     redirectUri: 'http://localhost:3000',
+     shouldAutoFetchUserInfo: true,
+     shouldAutoRefresh: true,
+   };
 
-const config: FusionAuthProviderConfig = {
-  clientId: "", // Your application's FusionAuth client Id
-  redirectUri: "", // The URI that the user is directed to after the login/register/logout action
-  serverUrl: "", // The url of the server that performs the token exchange
-  shouldAutoFetchUserInfo: true, // Automatically fetch userInfo when logged in. Defaults to false.
-  shouldAutoRefresh: true, // Enables automatic token refresh. Defaults to false.
-  onRedirect: (state?: string) => { }, // Optional callback invoked upon redirect back from login or register.
-  // useDpop: true, // Opt-in to DPoP mode. See "Use DPoP Mode" below. Defaults to false.
-};
+   ReactDOM.createRoot(document.getElementById('root')!).render(
+     <FusionAuthProvider {...config}>
+       <App />
+     </FusionAuthProvider>
+   );
+   ```
 
-ReactDOM.createRoot(document.getElementById("my-app")).render(
-  <FusionAuthProvider {...config}>
-    <App />
-  </FusionAuthProvider>
-)
-```
+   **`shouldAutoFetchUserInfo`** loads the user's profile after login, and **`shouldAutoRefresh`** refreshes the access token before the token expires. For every option, see [Web SDK Configuration](/docs/sdks/web-sdk-configuration).
 
-For a full list of configuration options, see [Web SDK Configuration](/docs/sdks/web-sdk-configuration).
+1. Call the `useFusionAuth` hook in a component to add login, registration, and logout buttons:
 
-### Configure with Next.js
+   ```tsx
+   import { useFusionAuth } from '@fusionauth/react-sdk';
 
-When you use [Next.js](https://nextjs.org/), install [`next-client-cookies`](https://github.com/moshest/next-client-cookies?tab=readme-ov-file#install). Then pass `useCookies` in the config object as `nextCookieAdapter`:
+   export function AuthButtons() {
+     const {
+       isLoggedIn,
+       isFetchingUserInfo,
+       startLogin,
+       startLogout,
+       startRegister,
+       userInfo,
+     } = useFusionAuth();
 
-```jsx
-'use client'
+     if (isFetchingUserInfo) {
+       return <p>Loading...</p>;
+     }
 
-import { useCookies } from 'next-client-cookies';
+     if (!isLoggedIn) {
+       return (
+         <div>
+           <button onClick={() => startLogin()}>Log In</button>
+           <button onClick={() => startRegister()}>Register</button>
+         </div>
+       );
+     }
 
-export default function Providers({ children }) {
-  return (
-    <FusionAuthProvider {...config} nextCookieAdapter={useCookies}>
-      {children}
-    </FusionAuthProvider>
-  );
-}
-```
+     return (
+       <div>
+         {userInfo?.given_name && <p>Welcome {userInfo.given_name}!</p>}
+         <button onClick={() => startLogout()}>Log Out</button>
+       </div>
+     );
+   }
+   ```
 
-Wrap your layout in the `<CookiesProvider/>` from `next-client-cookies/server`. For more information about context providers in Next.js, see the Vercel guide to [rendering third-party context providers in server components](https://vercel.com/guides/react-context-state-management-nextjs#rendering-third-party-context-providers-in-server-components).
+   `startLogin` and `startRegister` send the browser to the FusionAuth login and registration pages. `startLogout` ends the session and returns the browser to **`redirectUri`**. To return users to a different page after logout, set **`postLogoutRedirectUri`** and add the URL to **Authorized redirect URLs**.
 
-## Usage
+1. Start your application and click <Breadcrumb>Log In</Breadcrumb>. The browser opens the FusionAuth login page. After you log in, FusionAuth returns you to your application, and the component shows <Breadcrumb>Log Out</Breadcrumb>.
 
-### Use the useFusionAuth Hook
+</Steps>
 
-After you wrap your application in `FusionAuthProvider`, call `useFusionAuth` in any component:
+For every value that `useFusionAuth` returns, see the [FusionAuthProviderContext reference](https://github.com/FusionAuth/fusionauth-javascript-sdk/blob/main/packages/sdk-react/docs/interfaces/providers_FusionAuthProviderContext.FusionAuthProviderContext.md). For class components, wrap the component in the `withFusionAuth` higher-order component. The component then receives the same values in the **`fusionAuth`** prop.
 
-```jsx
-import { useFusionAuth } from '@fusionauth/react-sdk';
+## Use the Pre-Built Buttons
 
-function MyComponent() {
-  const {
-    isLoggedIn,
-    isFetchingUserInfo,
-    startLogin,
-    startRegister,
-    userInfo
-  } = useFusionAuth()
+Instead of writing your own buttons, use the styled buttons from the SDK. Each button calls the matching `useFusionAuth` function:
 
-  if (isFetchingUserInfo) {
-    return <p>Loading...</p>
-  }
-
-  if (!isLoggedIn) {
-    return (
-      <div>
-        <button onClick={startLogin}>Login</button>
-        <p>or</p>
-        <button onClick={startRegister}>Register</button>
-      </div>
-    );
-  }
-
-  if (userInfo?.given_name) {
-    return <p>Welcome {userInfo.given_name}!</p>
-  }
-}
-```
-
-You can also use the `withFusionAuth` higher-order component to access the SDK.
-
-### Pass State Through Login
-
-The `startLogin` and `startRegister` functions accept an optional string parameter named `state`. The SDK passes the value to the `onRedirect` callback on your `FusionAuthProviderConfig`. You can pass any value. A common choice is the page the user was on before login, so your application can return the user to that page after authentication.
-
-### Protect Content
-
-The `RequireAuth` component hides content from unauthorized users. Set the optional `withRole` prop to require a specific role. When you pass an array of roles, the user needs at least one of the roles. The `Unauthenticated` component shows content only to users who are not logged in.
-
-```jsx
-import { RequireAuth, useFusionAuth } from '@fusionauth/react-sdk';
-
-const UserNameDisplay = () => {
-  const { userInfo } = useFusionAuth();
-
-  return (
-    <>
-      <RequireAuth>
-        <p>User: {userInfo.given_name}</p> // Only displays if user is authenticated
-      </RequireAuth>
-
-      <Unauthenticated>
-        <p>Please log in to view this page</p>
-      </Unauthenticated>
-    </>
-  );
-};
-
-const AdminPanel = () => (
-  <RequireAuth withRole="admin">
-    <button>Delete User</button> // Only displays if user is authenticated and has 'admin' role
-  </RequireAuth>
-);
-```
-
-### Use the Pre-Built Buttons
-
-The SDK includes pre-built login, logout, and registration buttons:
-
-```jsx
+```tsx
 import {
   FusionAuthLoginButton,
   FusionAuthLogoutButton,
-  FusionAuthRegisterButton
+  FusionAuthRegisterButton,
 } from '@fusionauth/react-sdk';
 
 export const LoginPage = () => (
   <>
-    <h1>Welcome, please log in or register</h1>
     <FusionAuthLoginButton />
     <FusionAuthRegisterButton />
   </>
 );
 
-export const AccountPage = () => (
+export const AccountPage = () => <FusionAuthLogoutButton />;
+```
+
+## Show Content by Login State and Role
+
+Wrap content in `RequireAuth` to show the content only to logged-in users. Set **`withRole`** to a role name, or to an array of role names, to require at least one of the roles. Wrap content in `Unauthenticated` to show the content only to logged-out users:
+
+```tsx
+import { RequireAuth, Unauthenticated } from '@fusionauth/react-sdk';
+
+export const AdminPanel = () => (
   <>
-    <h1>Hello, user!</h1>
-    <FusionAuthLogoutButton />
+    <RequireAuth withRole={['admin', 'editor']}>
+      <button>Delete User</button>
+    </RequireAuth>
+    <Unauthenticated>
+      <p>Log in to manage users.</p>
+    </Unauthenticated>
   </>
 );
 ```
 
-## Use DPoP Mode
+`RequireAuth` reads the roles from the user's profile. When you set **`withRole`**, set **`shouldAutoFetchUserInfo`** to `true`, or call `fetchUserInfo` from `useFusionAuth`.
 
-By default, the SDK calls a hosted backend that stores tokens in [[HttpOnly cookies]]. In DPoP mode, the SDK calls FusionAuth endpoints directly and binds tokens to a private key that the browser generates, per [RFC 9449](https://datatracker.ietf.org/doc/html/rfc9449). To enable DPoP mode, set `useDpop` to `true` on `FusionAuthProviderConfig`. The default is `false`.
+These components only change what the browser shows. Check the access token on your server before you return protected data.
 
-The following configuration enables DPoP mode:
+## Return Users to a Page After Login
 
-```jsx
+To return users to the page they started from, pass a string to `startLogin` or `startRegister`. The SDK passes the string to the **`onRedirect`** function when the browser returns from FusionAuth:
+
+```tsx
 const config: FusionAuthProviderConfig = {
-  clientId: "",
-  redirectUri: "",
-  serverUrl: "",
-  useDpop: true, // Opt-in to DPoP mode.
-  dpopTokenStorage: 'localStorage', // 'localStorage' (default, persists across reloads) or 'memory'.
+  // ...
+  onRedirect: (state?: string) => {
+    if (state) window.location.assign(state);
+  },
+};
+
+startLogin(window.location.pathname);
+```
+
+The pre-built login and register buttons accept the same string in the **`state`** prop.
+
+## Use the SDK with Next.js
+
+To read the token cookies during server rendering in [Next.js](https://nextjs.org/), pass the `useCookies` function from [`next-client-cookies`](https://www.npmjs.com/package/next-client-cookies) as **`nextCookieAdapter`**:
+
+<Steps>
+
+1. Install `next-client-cookies`:
+
+   ```shell-session
+   npm install next-client-cookies
+   ```
+
+1. Create a client component that wraps your application in `FusionAuthProvider`:
+
+   ```tsx
+   'use client';
+
+   import { FusionAuthProvider } from '@fusionauth/react-sdk';
+   import { useCookies } from 'next-client-cookies';
+
+   export default function Providers({ children }: { children: React.ReactNode }) {
+     return (
+       <FusionAuthProvider {...config} nextCookieAdapter={useCookies}>
+         {children}
+       </FusionAuthProvider>
+     );
+   }
+   ```
+
+1. In your root layout, wrap `Providers` in the `CookiesProvider` from `next-client-cookies/server`. For more information, see the Vercel guide to [rendering third-party context providers in server components](https://vercel.com/guides/react-context-state-management-nextjs#rendering-third-party-context-providers-in-server-components).
+
+</Steps>
+
+## Call APIs in DPoP Mode
+
+In [[DPoP]] mode, the SDK calls FusionAuth directly instead of the hosted backend, and binds each token to a key that the browser generates. A stolen DPoP token doesn't work without the key. DPoP mode requires React SDK `2.7.0` and FusionAuth `1.63.0` or later. To configure FusionAuth for DPoP, see [Use DPoP in a Browser App](/docs/authentication/oauth/dpop/browser-app).
+
+To enable DPoP mode, set **`useDpop`** to `true`:
+
+```tsx
+const config: FusionAuthProviderConfig = {
+  clientId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
+  serverUrl: 'http://localhost:9011',
+  redirectUri: 'http://localhost:3000',
+  useDpop: true,
+  dpopTokenStorage: 'localStorage',
 };
 ```
 
-When `useDpop` is `true`, `useFusionAuth()` also returns `dpopFetch`, `generateProof`, and `getAccessToken`. These values are `undefined` when `useDpop` is `false` or missing.
+With `localStorage`, the user stays logged in across page reloads. With `memory`, a reload logs the user out.
 
-The following code calls an API with each function:
+In DPoP mode, `useFusionAuth` also returns `dpopFetch`, `generateProof`, and `getAccessToken`. Call `dpopFetch` like `fetch`. `dpopFetch` adds the DPoP headers and retries when the server asks for a new nonce:
 
-```jsx
+```tsx
 const { dpopFetch, generateProof, getAccessToken } = useFusionAuth();
 
-// Recommended: attaches DPoP headers DPoP headers and retries nonce errors automatically.
 const response = await dpopFetch('https://api.example.com/data', { method: 'GET' });
-
-// Advanced: for axios or other HTTP libraries that can't use dpopFetch.
-const accessToken = getAccessToken();
-const proof = await generateProof('https://api.example.com/data', 'GET', accessToken);
-// axios.get('https://api.example.com/data', {
-//   headers: { Authorization: `DPoP ${accessToken}`, DPoP: proof }
-// });
 ```
 
-## Library Documentation
+When you use an HTTP library such as axios, build the headers with `getAccessToken` and `generateProof`:
 
-The SDK repository hosts the full library documentation, which [typedoc](https://typedoc.org/) generates with [typedoc-plugin-markdown](https://www.npmjs.com/package/typedoc-plugin-markdown). For more information, see the [full library documentation](https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-react/docs).
+```tsx
+const accessToken = getAccessToken();
+const proof = await generateProof('https://api.example.com/data', 'GET', accessToken);
 
-{/* End source: forDocSite */}
+await axios.get('https://api.example.com/data', {
+  headers: { Authorization: `DPoP ${accessToken}`, DPoP: proof },
+});
+```
 
-## Use the SDK with FusionAuth Cloud
-
-<HostedBackendWarning />
-
-## Source Code
-
-The SDK source code is on [GitHub](https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-react/).
-
-## Update Policy
-
-<SdkUpdatePolicy/>
+The three functions are `undefined` when **`useDpop`** is `false`.

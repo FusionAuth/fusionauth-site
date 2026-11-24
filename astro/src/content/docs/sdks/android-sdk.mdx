@@ -1,50 +1,43 @@
 ---
 title: Kotlin SDK for Android
+htmlTitle: Add Login to an Android App with the FusionAuth Kotlin SDK
 description: Learn how to add OAuth 2.0 and OpenID Connect login to an Android app with the FusionAuth Kotlin SDK.
 tags: android sdk, fusionauth android, kotlin sdk, java android sdk, mobile authentication, android client library
 order: 40
 ---
 
-{/* Source: https://github.com/FusionAuth/fusionauth-android-sdk/blob/033f1165b604c0c181100ef1e40354c026bd6a4e/README.md — forDocSiteOverview; internal documentation links use current site paths. */}
+The Kotlin SDK adds login and logout to an Android app, with FusionAuth as the [[authorization server]]. The SDK runs the OAuth 2.0 Authorization Code grant with [[PKCE]] through [AppAuth-Android](https://github.com/openid/AppAuth-Android), then stores and refreshes the tokens for you. The SDK works from Kotlin and Java. To build a complete app step by step, see the [Android QuickStart](/docs/quickstarts/app/quickstart-kotlin-android-native).
 
-The Android SDK adds OAuth 2.0 and OpenID Connect login to an Android app, with FusionAuth as the [[authorization server]]. The SDK also provides a Token Manager that stores, refreshes, and retrieves tokens. The SDK handles the dependencies for you, so you get a standardized starting point for a custom mobile app.
+## Prerequisites
 
-The SDK covers the following functionality:
+* Android 7.0 (API level 24) or later.
+* A FusionAuth [[Application]] configured as a [[public client]]. On the <Breadcrumb>OAuth</Breadcrumb> tab of the Application:
+  * Set **Client Authentication** to `Not required when using PKCE`, because an Android app can't keep a client secret.
+  * Add `io.fusionauth.app:/oauth2redirect` to **Authorized redirect URLs**. The SDK uses this URL after login and after logout.
 
-* OAuth 2.0 Authorization Code Grant
-* OAuth 2.0 Refresh Token Grant
-* OpenID Connect UserInfo
-* OpenID Connect End Session
+## Add Login to Your App
 
-The SDK uses [AppAuth-Android](https://github.com/openid/AppAuth-Android) for the Authorization Code Grant flow and the OpenID Connect functionality. Kotlin is the SDK language, and the SDK works with Java.
+The SDK functions in the following steps are `suspend` functions. Call the functions from a coroutine, such as `lifecycleScope.launch { }` in an activity.
 
-{/* End source: forDocSiteOverview */}
+<Steps>
 
-## Get Started
-
-When you are new to Android development, start with the QuickStart. When you already know Android development, skip to [Configure the SDK](#configure-the-sdk).
-
-### QuickStart
-
-{/* Source: https://github.com/FusionAuth/fusionauth-android-sdk/blob/033f1165b604c0c181100ef1e40354c026bd6a4e/README.md — forDocSiteQuickstart; internal documentation links use current site paths. */}
-
-For a full tutorial on using FusionAuth with Android, see the [FusionAuth Android QuickStart](/docs/quickstarts/app/quickstart-kotlin-android-native).
-
-{/* End source: forDocSiteQuickstart */}
-
-### Configure the SDK
-
-{/* Source: https://github.com/FusionAuth/fusionauth-android-sdk/blob/033f1165b604c0c181100ef1e40354c026bd6a4e/README.md — forDocSiteGettingStarted; internal documentation links use current site paths. */}
-
-1. Add the SDK dependency to your `build.gradle.kts` file:
+1. Add the SDK to `app/build.gradle.kts`, and register the redirect URL scheme:
 
    ```kotlin
+   android {
+       defaultConfig {
+           manifestPlaceholders["appAuthRedirectScheme"] = "io.fusionauth.app"
+       }
+   }
+
    dependencies {
-       implementation('io.fusionauth:fusionauth-android-sdk:<latest-version>')
+       implementation("io.fusionauth:fusionauth-android-sdk:1.2.0")
    }
    ```
 
-1. Initialize the `AuthorizationManager` with an `AuthorizationConfiguration`:
+   AppAuth reads **`appAuthRedirectScheme`** to send the redirect from FusionAuth back to your app. The scheme must match the scheme of the redirect URL. For newer versions of the SDK, see [fusionauth-android-sdk on Maven Central](https://central.sonatype.com/artifact/io.fusionauth/fusionauth-android-sdk).
+
+1. Initialize the `AuthorizationManager` when your app starts. Set **`fusionAuthUrl`** to the URL of your FusionAuth instance and **`clientId`** to the client Id of your FusionAuth Application. Pass `DataStoreStorage` to keep the tokens when the app restarts:
 
    ```kotlin
    AuthorizationManager.initialize(
@@ -52,45 +45,14 @@ For a full tutorial on using FusionAuth with Android, see the [FusionAuth Androi
            fusionAuthUrl = "http://10.0.2.2:9011",
            clientId = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
            allowUnsecureConnection = true
-       )
+       ),
+       DataStoreStorage(this)
    )
    ```
 
-The `AuthorizationManager` is a singleton, so you can access the `AuthorizationManager` from anywhere in your app. The example `fusionAuthUrl` is the default address that the Android Emulator uses for your local machine. When FusionAuth runs on a different machine, replace **`fusionAuthUrl`** with the correct URL.
+   `10.0.2.2` is the address of your computer from the Android Emulator. **`allowUnsecureConnection`** allows the `http` URL. Remove **`allowUnsecureConnection`** when FusionAuth uses `https`. Without a storage argument, the SDK keeps the tokens in memory, and the user logs in again each time the app starts.
 
-#### Read the Configuration from a Resource File
-
-You can read the `AuthorizationConfiguration` from a resource file instead of setting the configuration in code:
-
-```kotlin
-AuthorizationManager.initialize(
-    AuthorizationConfiguration.fromResources(this, R.raw.fusionauth_config)
-)
-```
-
-Put the `fusionauth_config.json` file in the `res/raw` directory. The file looks like this:
-
-```json
-{
-  "fusionAuthUrl": "http://10.0.2.2:9011",
-  "clientId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
-  "allowUnsecureConnection": true
-}
-```
-
-#### Store Tokens
-
-The SDK stores tokens in `MemoryStorage` by default, so the app loses the tokens when the app closes. To keep tokens across restarts, use `DataStoreStorage` or implement your own `TokenStorage`.
-
-{/* End source: forDocSiteGettingStarted */}
-
-## Use the SDK
-
-{/* Source: https://github.com/FusionAuth/fusionauth-android-sdk/blob/033f1165b604c0c181100ef1e40354c026bd6a4e/README.md — forDocSiteUsage; internal documentation links use current site paths. */}
-
-The following steps cover the login, token, and logout flow.
-
-1. Call the `oAuth()` function on the `AuthorizationManager` to get the `OAuthAuthorizationService`, and then call `authorize` to start the OAuth 2.0 Authorization Code Grant:
+1. Call `authorize` to start login. Pass the activity to open after login:
 
    ```kotlin
    AuthorizationManager
@@ -99,38 +61,24 @@ The following steps cover the login, token, and logout flow.
            Intent(this@LoginActivity, TokenActivity::class.java),
            OAuthAuthorizeOptions(
                cancelIntent = Intent(this@LoginActivity, LoginActivity::class.java)
-                   .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
-               state = "state-${System.currentTimeMillis()}"
+                   .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
            )
        )
    ```
 
-   The `authorize` function opens the provided `Intent` when the flow completes. Use `OAuthAuthorizeOptions` to set additional options, such as **`cancelIntent`** and **`state`**.
+   `authorize` opens the FusionAuth login page in a browser. **`cancelIntent`** sets the activity to open when the user cancels login.
 
-1. Handle the redirect in the `TokenActivity`. The SDK opens the `TokenActivity` when the user completes the flow:
+1. Call `handleRedirect` in the activity that opens after login:
 
    ```kotlin
-   AuthorizationManager.oAuth(this@TokenActivity)
+   AuthorizationManager
+       .oAuth(this@TokenActivity)
        .handleRedirect(intent)
    ```
 
-   The `handleRedirect` function retrieves the authorization response, validates the `state` when you provided one, and exchanges the authorization code for an access token. The SDK stores the result of the exchange in the `TokenManager`.
+   `handleRedirect` exchanges the authorization code for an access token and a refresh token, and stores the tokens.
 
-1. Call `getUserInfo()` to retrieve the [User Info](https://openid.net/specs/openid-connect-core-1_0.html#UserInfo) after the user is authorized:
-
-   ```kotlin
-   AuthorizationManager.oAuth(this@TokenActivity).getUserInfo()
-   ```
-
-1. Call `freshAccessToken` to get a valid access token for your API calls:
-
-   ```kotlin
-   val accessToken = AuthorizationManager.freshAccessToken(this@TokenActivity)
-   ```
-
-   The `TokenManager` returns a fresh access token. When the access token has expired, the `TokenManager` refreshes the access token automatically.
-
-1. Call `logout` to sign out the user and remove the tokens from the `TokenManager`:
+1. Call `logout` to log the user out. Pass the activity to open after logout:
 
    ```kotlin
    AuthorizationManager
@@ -141,18 +89,55 @@ The following steps cover the login, token, and logout flow.
        )
    ```
 
-   The SDK opens the `LoginActivity` after the user signs out.
+   `logout` ends the FusionAuth session and removes the stored tokens.
 
-{/* End source: forDocSiteUsage */}
+1. Run the app and start login. The FusionAuth login page opens. After you log in, FusionAuth returns you to `TokenActivity`.
 
-## Example App
+</Steps>
 
-{/* Source: https://github.com/FusionAuth/fusionauth-android-sdk/blob/033f1165b604c0c181100ef1e40354c026bd6a4e/README.md — forDocSiteExampleApp; internal documentation links use current site paths. */}
+## Get the User's Profile
 
-For a functional example of an Android client that uses the SDK, see the [FusionAuth Android SDK Example](https://github.com/FusionAuth/fusionauth-quickstart-kotlin-android-native).
+Call `getUserInfo` to load the user's [UserInfo](https://openid.net/specs/openid-connect-core-1_0.html#UserInfo) claims, such as the email address:
 
-{/* End source: forDocSiteExampleApp */}
+```kotlin
+val userInfo = AuthorizationManager
+    .oAuth(this@TokenActivity)
+    .getUserInfo()
+```
 
-## Documentation and Source Code
+## Call Your APIs with an Access Token
 
-For the latest full library documentation, see the [Android SDK documentation](https://fusionauth.github.io/fusionauth-android-sdk/). For the source code, see the [Android SDK repository](https://github.com/FusionAuth/fusionauth-android-sdk/).
+Call `freshAccessToken` before each API call. The SDK returns the stored access token, and refreshes the token first when the token has expired:
+
+```kotlin
+val accessToken = AuthorizationManager.freshAccessToken(this@TokenActivity)
+```
+
+Send the token in the `Authorization` header as `Bearer <token>`.
+
+## Use a Different Redirect URL
+
+To use a redirect URL with your own scheme, set **`appAuthRedirectScheme`** to the scheme. Then pass the URL as **`redirectUri`** in `OAuthAuthorizeOptions`, and as **`postLogoutRedirectUri`** in `OAuthLogoutOptions`. Add the URL to **Authorized redirect URLs** on the Application.
+
+## Read the Configuration from a File
+
+To keep the configuration out of your code, put a `fusionauth_config.json` file in the `res/raw` directory:
+
+```json
+{
+  "fusionAuthUrl": "http://10.0.2.2:9011",
+  "clientId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+  "allowUnsecureConnection": true
+}
+```
+
+Then read the file with `fromResources`:
+
+```kotlin
+AuthorizationManager.initialize(
+    AuthorizationConfiguration.fromResources(this, R.raw.fusionauth_config),
+    DataStoreStorage(this)
+)
+```
+
+For every class and option in the SDK, see the [Android SDK reference](https://fusionauth.github.io/fusionauth-android-sdk/).
