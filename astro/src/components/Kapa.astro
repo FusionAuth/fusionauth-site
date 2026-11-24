@@ -31,13 +31,45 @@ if (!enableKapa) return '';
     var btn = document.getElementById('kapa-button');
     if (!btn) return;
 
+    // true when the modal, or one of its ancestors in the shadow root, is painted on screen
+    function modalVisible() {
+      var host = document.getElementById('kapa-widget-container');
+      var modal = host && host.shadowRoot && host.shadowRoot.querySelector('.mantine-Modal-content');
+      if (!modal) return false;
+      var r = modal.getBoundingClientRect();
+      if (r.width < 100 || r.height < 100 || r.bottom <= 0 || r.top >= window.innerHeight) return false;
+      for (var el = modal; el && el !== host.shadowRoot; el = el.parentNode) {
+        var cs = getComputedStyle(el);
+        if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return false;
+      }
+      return true;
+    }
+
+    // a content blocker can hide the modal but leave its scroll lock, which freezes the tab; undo the lock
+    function releaseIfHidden() {
+      setTimeout(function() {
+        if (!document.body.hasAttribute('data-scroll-locked') || modalVisible()) return;
+        try { window.Kapa('close'); } catch (e) {}
+        try { window.Kapa('unmount'); } catch (e) {}
+        document.body.removeAttribute('data-scroll-locked');
+        var host = document.getElementById('kapa-widget-container');
+        if (host) host.remove();
+        console.warn('Kapa opened but its modal is not visible, so the page lock was released.');
+      }, 2000);
+    }
+
+    function openKapa() {
+      window.Kapa('open');
+      releaseIfHidden();
+    }
+
     btn.addEventListener('click', function() {
       // Bundle already loaded — render+open if no root yet, or just open.
       if (window.Kapa) {
         if (document.getElementById('kapa-widget-container')) {
-          window.Kapa('open');
+          openKapa();
         } else {
-          window.Kapa('render', { onRender: function() { window.Kapa('open'); } });
+          window.Kapa('render', { onRender: openKapa });
         }
         return;
       }
@@ -66,8 +98,10 @@ if (!enableKapa) return '';
       s.setAttribute('data-color-scheme',
         document.documentElement.classList.contains('dark') ? 'dark' : 'light');
       s.onload = function() {
-        window.Kapa('render', { onRender: function() { window.Kapa('open'); } });
+        window.Kapa('render', { onRender: openKapa });
       };
+      // blocked or failed load: drop the tag so the next click retries
+      s.onerror = function() { s.remove(); };
       document.head.appendChild(s);
     });
   })();
