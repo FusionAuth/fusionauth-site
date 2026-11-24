@@ -36,6 +36,7 @@ const config = {
   maxWindow: { width: 2560, height: 2500 },
   browser: 'webkit',
   browserContainer: true,
+  lightbox: true,
   chrome: {
     style: 'macos',
     renderIn: 'css',
