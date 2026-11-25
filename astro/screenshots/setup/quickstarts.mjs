@@ -32,7 +32,7 @@ const quickstartApp = {
   paths: [`/api/application/${quickstartAppId}`],
   create: async api => {
     await api(`/api/application/${quickstartAppId}`, 'POST', { application: {
-      name: 'Quick Start App',
+      name: 'QuickStart App',
       oauthConfiguration: { authorizedRedirectURLs: ['http://localhost:3000/oauth-redirect'], enabledGrants: ['authorization_code', 'refresh_token'] },
       registrationConfiguration: { enabled: true, type: 'basic', loginIdType: 'email' },
       webAuthnConfiguration: { enabled: true, bootstrapWorkflow: { enabled: false }, reauthenticationWorkflow: { enabled: false } },
