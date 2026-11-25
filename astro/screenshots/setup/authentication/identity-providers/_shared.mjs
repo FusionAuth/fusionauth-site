@@ -15,9 +15,9 @@ const idpDefinitions = {
   101: idpOidc('Okta', 'Login with Okta', 'https://piedpiper.okta.com/oauth2/v1', { client_id: '0oa3xfv009bZYlCp4697', client_secret: 'd8DthWkNRBRQhkGxp', scope: 'openid email' }),
   102: idpOidc('Pied Piper with Azure AD', 'Login with Azure AD', 'https://login.microsoftonline.com/4b5d74a0-c612-459d-91ac-26fbff2b27bc/oauth2/v2.0', { client_id: '7bbfc733-5f74-4ed2-a54c-c2b4f2098cac', client_secret: 'oV-Zch01m2UjgdB.x5_yJjF9_wNl0pVga_' }),
   103: idpOidc('Cognito', 'Login with Cognito', 'https://piedpiper.auth.us-east-2.amazoncognito.com/oauth2', { client_id: '1dejfipvspjcghttmle', client_secret: '19i51qiit5r6fqme8d09srhgmdoq1kpjev' }),
-  104: idpOidc('Discord OIDC', 'Login with Discord', 'https://discord.com/api/oauth2', {
+  104: idpOidc('Discord OIDC', 'Login with Discord', 'https://discord.com/api/v10/oauth2', {
     client_id: '869975291286683692', client_secret: 'sB7UbnirswU1USOuJRs_HiYGwoW2kkNx', clientAuthenticationMethod: 'client_secret_post',
-    userinfo_endpoint: 'https://discord.com/api/users/@me', scope: 'identify email', uniqueIdClaim: 'id', emailVerifiedClaim: 'verified',
+    authorization_endpoint: 'https://discord.com/oauth2/authorize', userinfo_endpoint: 'https://discord.com/api/v10/users/@me', scope: 'identify email', uniqueIdClaim: 'id', emailVerifiedClaim: 'verified',
   }, { debug: true }),
   105: idpOidc('GitHub', 'Login with GitHub', 'https://github.com/login/oauth', {
     client_id: 'Iv1.ad9ec654d44e5a75', client_secret: '08fba234c621eb3aa84ac7112a18073fc92bc030',
@@ -35,12 +35,12 @@ const idpDefinitions = {
   133: { type: 'Google', name: 'Google', enabled: true, buttonText: 'Sign in with Google', client_id: '718294035516-piperchat-login.apps.googleusercontent.com', client_secret: 'PiedPiper-Google-S3cret-7Kq9Lm2Nx5', scope: 'profile email openid', loginMethod: 'UseRedirect', debug: true, tenantConfiguration: { '30663132-6464-6665-3032-326466613934': { limitUserLinkCount: { enabled: true, maximumLinks: 2 } } }, applicationConfiguration: idpApps() },
   134: { type: 'LinkedIn', name: 'LinkedIn', enabled: true, buttonText: 'Sign in with LinkedIn', client_id: '86xq2a8kvyj4wz', client_secret: 'Wd8xV2k9Lp3TnQ7r', scope: 'openid profile email', applicationConfiguration: idpApps() },
   135: { type: 'Twitter', name: 'Twitter', enabled: true, buttonText: 'Login with Twitter', consumerKey: 'Gq5LwYp2k8XnT3vR9cZb1Mh7d', consumerSecret: 'pK4rT8yW2nB6vX1qL9mJ3fH7sD5gA0zC8eU2iO4tR6wY1nM3', applicationConfiguration: idpApps() },
-  141: { type: 'EpicGames', name: 'Epic Games', enabled: true, buttonText: 'Login with Epic Games', client_id: 'xyza7891PiedPiperEpic0123', client_secret: 'Ep1cS3cretPiedPiper7Kq9Lm2Nx5', applicationConfiguration: idpApps() },
+  141: { type: 'EpicGames', name: 'Epic Games', enabled: true, buttonText: 'Login with Epic Games', client_id: 'xyza7891PiedPiperEpic0123', client_secret: 'Ep1cS3cretPiedPiper7Kq9Lm2Nx5', scope: 'basic_profile', applicationConfiguration: idpApps() },
   142: { type: 'Nintendo', name: 'Nintendo', enabled: true, buttonText: 'Login with Nintendo', client_id: '3d4f6a8b1c2e5f70', client_secret: 'N1ntend0S3cretPiedPiper9xQ2', uniqueIdClaim: 'id', emailClaim: 'email', usernameClaim: 'preferred_username', applicationConfiguration: idpApps() },
-  143: { type: 'SonyPSN', name: 'Sony PlayStation Network', enabled: true, buttonText: 'Login with PlayStation Network', client_id: '8f2a6c4e-1b3d-4e5f-9a7b-2c4d6e8f0a1b', client_secret: 'PsnS3cretPiedPiper4Rt7Yu2', scope: 'psn:s2s openid id_token:psn.basic_claims', applicationConfiguration: idpApps() },
+  143: { type: 'SonyPSN', name: 'Sony PlayStation Network', enabled: true, buttonText: 'Login with Playstation Network', client_id: '8f2a6c4e-1b3d-4e5f-9a7b-2c4d6e8f0a1b', client_secret: 'PsnS3cretPiedPiper4Rt7Yu2', scope: 'psn:s2s', applicationConfiguration: idpApps() },
   144: { type: 'Steam', name: 'Steam', enabled: true, buttonText: 'Login with Steam', client_id: 'pied-piper-steam', webAPIKey: '3F9A1C7E5B2D8F4A6C0E9B1D7F3A5C2E', scope: 'openid', applicationConfiguration: idpApps() },
   145: { type: 'Twitch', name: 'Twitch', enabled: true, buttonText: 'Login with Twitch', client_id: 'gp762nuuoqcoxypju8c569th9wz7q5', client_secret: 'k7s0w2x9q4v1m8n3b6c5z2l0p9o8i7', scope: 'openid user:read:email', applicationConfiguration: idpApps() },
-  146: { type: 'Xbox', name: 'Xbox', enabled: true, buttonText: 'Login with Xbox', client_id: 'b4f8e2a6-3c1d-4e9f-8a7b-6c5d4e3f2a10', client_secret: 'Xb0x~S3cretPiedPiper.9Kq2Lm', scope: 'Xboxlive.signin Xboxlive.offline_access', applicationConfiguration: idpApps() },
+  146: { type: 'Xbox', name: 'Xbox', enabled: true, buttonText: 'Login with Xbox', client_id: 'b4f8e2a6-3c1d-4e9f-8a7b-6c5d4e3f2a10', client_secret: 'Xb0x~S3cretPiedPiper.9Kq2Lm', scope: 'XboxLive.signin XboxLive.offline_access', applicationConfiguration: idpApps() },
   151: { type: 'HYPR', name: 'HYPR', enabled: true, relyingPartyApplicationId: 'piedpiper-hypr', relyingPartyURL: 'https://piedpiper.hypr.com', applicationConfiguration: idpApps(piperNetId) },
   161: { type: 'ExternalJWT', name: 'Pied Piper Mobile', enabled: true, headerKeyParameter: 'kid', oauth2: { uniqueIdClaim: 'sub', emailClaim: 'email', emailVerifiedClaim: 'email_verified', usernameClaim: 'preferred_username' }, verificationKeyIds: [idpId(206)], claimMap: {}, domains: ['mobile.piedpiper.com'], linkingStrategy: 'LinkAnonymously', applicationConfiguration: idpApps(piperNetId) },
 };
