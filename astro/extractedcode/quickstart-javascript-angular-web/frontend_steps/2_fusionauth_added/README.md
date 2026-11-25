@@ -14,7 +14,7 @@ Once the server is running, open your browser and navigate to `http://localhost:
 
 ## Code scaffolding
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+To generate a new component with Angular CLI, run:
 
 ```bash
 ng generate component component-name
@@ -34,7 +34,7 @@ To build the project run:
 ng build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+This will compile your project and store the build artifacts in the `dist/` directory.
 
 ## Running unit tests
 
@@ -52,7 +52,7 @@ For end-to-end (e2e) testing, run:
 ng e2e
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Angular CLI does not come with an end-to-end testing framework by default.
 
 ## Additional Resources
 
