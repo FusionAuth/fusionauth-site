@@ -10,6 +10,9 @@ import LoginApplicationidParameter from 'src/content/docs/apis/login/_login-appl
 import LoginMetadataDevice from 'src/content/docs/apis/_shared/_login-metadata-device.mdx';
 import UserResponseBody from 'src/content/docs/apis/_shared/_user-response-body.mdx';
 import EventInfoRequestBody from 'src/content/docs/apis/_shared/_event-info-request-body.mdx';
+import TableGrid from 'astro-better-tables/TableGrid.astro';
+import Row from 'astro-better-tables/Row.astro';
+import Cell from 'astro-better-tables/Cell.astro';
 
 The Multi-Factor Login API is used to complete the authentication process when a `242` status code is returned by the [Login](/docs/apis/login/authenticate) API or as the last step of a [step-up](/docs/authentication/multi-factor-authentication/step-up-api).
 
@@ -64,23 +67,92 @@ Complete a login request when a User has Multi-Factor authentication enabled.
 
 The response for this API contains the User object. If authentication succeeds, the **token** field contains the JWT you'll use to identify the user on subsequent requests, see the [JWTs & Refresh Token API](/docs/apis/jwt) for how to validate and refresh it. To end the session, see [Logout a User](/docs/apis/login/logout).
 
-_Response Codes_
+<TableGrid caption="Response Codes" widths="1 6">
+  <Row slot="head">
+    <Cell header>Code</Cell>
+    <Cell header>Description</Cell>
+  </Row>
+  <Row>
+    <Cell>200</Cell>
+    <Cell>
+      The authentication was successful. The response will contain the User object that was authenticated.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>202</Cell>
+    <Cell>
+      The user was authenticated successfully. The user is not registered for the application specified by `applicationId` on the request. The response will contain the User object that was authenticated.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>203</Cell>
+    <Cell>
+      The user was authenticated successfully. The user is required to change their password, the response will contain the `changePasswordId` to be used on the [Change Password](/docs/apis/users/change-password) API. Since version `1.15.0`, the response will also contain a `changePasswordReason` field which can have one of the following values:<ul><li>`Administrative` - An administrator has required this user to change their password.</li><li>`Breached` - The password has been found to have belonged to a breached dataset and must be changed, per the Reactor configuration.</li><li>`Expired` - The password has expired, per the expiration setting in the tenant configuration. </li><li>`Validation` - The password fails the validation rules configured in the tenant password settings. </li></ul> <JSON title="Example Response JSON" src="login/login-change-password-response.json" />
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>212</Cell>
+    <Cell>
+      The user's email address (if an email address or username was used to authenticate) or phone number has not yet been verified. The response will contain the User object that was authenticated. If the tenant verification strategy has been set to `FormField`, the response will contain the verification Id that was generated for the user.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>213</Cell>
+    <Cell>
+      The user's registration has not yet been verified. The response will contain the User object that was authenticated. If the verification strategy has been set to `FormField`, the response will contain the **registrationVerificationId** that was generated for the user.
 
-| Code | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 200  | The authentication was successful. The response will contain the User object that was authenticated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| 202  | The user was authenticated successfully. The user is not registered for the application specified by `applicationId` on the request. The response will contain the User object that was authenticated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| 203  | The user was authenticated successfully. The user is required to change their password, the response will contain the `changePasswordId` to be used on the [Change Password](/docs/apis/users/change-password) API. Since version `1.15.0`, the response will also contain a `changePasswordReason` field which can have one of the following values:<ul><li>`Administrative` - An administrator has required this user to change their password.</li><li>`Breached` - The password has been found to have belonged to a breached dataset and must be changed, per the Reactor configuration.</li><li>`Expired` - The password has expired, per the expiration setting in the tenant configuration. </li><li>`Validation` - The password fails the validation rules configured in the tenant password settings. </li></ul> <JSON title="Example Response JSON" src="login/login-change-password-response.json" /> { } |
-| 212  | The user's email address (if an email address or username was used to authenticate) or phone number has not yet been verified. The response will contain the User object that was authenticated. If the tenant verification strategy has been set to `FormField`, the response will contain the verification Id that was generated for the user.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| 213  | The user's registration has not yet been verified. The response will contain the User object that was authenticated. If the verification strategy has been set to `FormField`, the response will contain the **registrationVerificationId** that was generated for the user.<br/>Prior to version `1.27.0`, this status code was not returned, and you will see a `200` instead. { }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| 404  | The `twoFactorId` was invalid or expired. You will need to authenticate again using the [Login](/docs/apis/login/authenticate) API. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| 409  | The user is currently in an action that has prevented login. The response will contain the actions that prevented login. <JSON title="Example Response JSON" src="login/login-prevented-response.json" />                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| 410  | The user has expired. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| 421  | The `code` request parameter is not valid. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| 504  | One or more Webhook endpoints returned an invalid response or were unreachable. Based on the transaction configuration for this event your action cannot be completed. A stack trace is provided and logged in the FusionAuth log files.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+      Prior to version `1.27.0`, this status code was not returned, and you will see a `200` instead.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>400</Cell>
+    <Cell>
+      The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>404</Cell>
+    <Cell>
+      The `twoFactorId` was invalid or expired. You will need to authenticate again using the [Login](/docs/apis/login/authenticate) API. The response will be empty.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>409</Cell>
+    <Cell>
+      The user is currently in an action that has prevented login. The response will contain the actions that prevented login. <JSON title="Example Response JSON" src="login/login-prevented-response.json" />
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>410</Cell>
+    <Cell>
+      The user has expired. The response will be empty.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>421</Cell>
+    <Cell>
+      The `code` request parameter is not valid. The response will be empty.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>500</Cell>
+    <Cell>
+      There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>503</Cell>
+    <Cell>
+      The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>504</Cell>
+    <Cell>
+      One or more Webhook endpoints returned an invalid response or were unreachable. Based on the transaction configuration for this event your action cannot be completed. A stack trace is provided and logged in the FusionAuth log files.
+    </Cell>
+  </Row>
+</TableGrid>
 
 ### Response Body
 

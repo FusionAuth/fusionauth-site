@@ -1,20 +1,118 @@
-_Response Codes_
+import TableGrid from 'astro-better-tables/TableGrid.astro';
+import Row from 'astro-better-tables/Row.astro';
+import Cell from 'astro-better-tables/Cell.astro';
 
-| Code | Description                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-|------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 200  | The authentication was successful. The response will contain the User object that was authenticated.                                                                                                                                                                                                                                                                                                                                           |
-| 202  | The user was authenticated successfully. The user is not registered for the application specified by `applicationId` on the request.<br/>The response will contain the User object that was authenticated.                                                                                                                                                                                                                                    | { }
-| 203  | The user was authenticated successfully. The user is required to change their password, the response will contain the `changePasswordId` to be used on the [Change Password](/docs/apis/users/change-password) API.<br/><JSON title="Example Response JSON" src="login/login-change-password-response.json" /><br/>                                                                                                               |   { }
-| 204  | The login is pending action by the end user. Wait and try the request again.                                                                                                                                                                                                                                                                                                                                                                   |
-| 212  | The user's email address has not yet been verified. The response will contain the User object that was authenticated. If the verification strategy has been set to `FormField`, the response will contain the **emailVerificationId** that was generated for the user.                                                                                                                                                  |
-| 213  | The user's registration has not yet been verified. The response will contain the User object that was authenticated. If the verification strategy has been set to `FormField`, the response will contain the **registrationVerificationId** that was generated for the user.<br/>Prior to version `1.27.0`, this status code was not returned, and you will see a `200` instead.                                    |    { }
-| 232  | The user is completing a login with an Identity Provider configured to use the `Create a pending link` linking strategy and this user does not have a link established. The API response will only contain the `pendingIdPLinkId` and, possibly, `threatsDetected`. A call to the Link API's [Complete a Pending Link](/docs/apis/identity-providers/links#complete-a-pending-link) endpoint is required. Once the user is linked, calling this API again will allow login to succeed. <br/><JSON title="Example Response JSON" src="login/login-pending-link-response.json" />| { }
-| 242  | The user was authenticated successfully. The user has two-factor authentication enabled. Since version `1.42.0`, this status code is also returned when two-factor authentication is required. The response will contain the `twoFactorId` to be used on the [Complete Two-Factor Authentication](/docs/apis/login/complete-mfa).<br/><JSON title="Example Response JSON" src="login/login-two-factor-response.json" /> | { }
-| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                                                                                                                                                                                                                                                                                       |
-| 401  | Unable to complete the login request. The user cannot be reconciled or logged in using the external identity provider.                                                                                                                                                                                                                                                                                                                         |
-| 404  | The user was not found, the password was incorrect, the linking strategy is set to `disabled`, or the value `noLink: true` is passed on the linking request.  The response will be empty.                                                                                                                                                                                                                                                      |
-| 409  | The user is currently in an action that has prevented login. The response will contain the actions that prevented login.<br/><JSON title="Example Response JSON" src="login/login-prevented-response.json" />                                                                                                                                                                                                                |      { }
-| 410  | The user has expired. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                              |
-| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                                                                                                                                                                                                                                                                                     |
-| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                                                                                                                                                                                                                                                       |
-| 504  | One or more Webhook endpoints returned an invalid response or were unreachable. Based on the transaction configuration for this event your action cannot be completed. A stack trace is provided and logged in the FusionAuth log files.                                                                                                                                                                                                       |
+<TableGrid caption="Response Codes" widths="1 6">
+  <Row slot="head">
+    <Cell header>Code</Cell>
+    <Cell header>Description</Cell>
+  </Row>
+  <Row>
+    <Cell>200</Cell>
+    <Cell>
+      The authentication succeeded. The response contains the authenticated User object.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>202</Cell>
+    <Cell>
+      The authentication succeeded, but the user isn't registered for the Application in the **`applicationId`** of the request.
+
+      The response contains the authenticated User object.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>203</Cell>
+    <Cell>
+      The authentication succeeded, but the user must change the password. The response contains the **`changePasswordId`** for the [Change Password](/docs/apis/users/change-password) API.
+
+      <JSON title="Example Response JSON" src="login/login-change-password-response.json" />
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>204</Cell>
+    <Cell>
+      The login waits on an action by the user. Wait, and then send the request again.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>212</Cell>
+    <Cell>
+      The identity that the user logged in with, such as an email address or phone number, isn't verified yet. The response contains the authenticated User object. When the verification strategy is `FormField`, the response also contains the **`emailVerificationId`** that FusionAuth generated for the user. The response can also contain an **`identityVerificationId`**.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>213</Cell>
+    <Cell>
+      The Registration of the user isn't verified yet. The response contains the authenticated User object. When the verification strategy is `FormField`, the response also contains the **`registrationVerificationId`** that FusionAuth generated for the user.
+
+      Before version `1.27.0`, FusionAuth returned `200` instead of this status code.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>232</Cell>
+    <Cell>
+      The Identity Provider uses the `CreatePendingLink` linking strategy, and the user has no link. The response contains only the **`pendingIdPLinkId`**, and possibly **`threatsDetected`**. To link the user, call the [Complete a Pending Link](/docs/apis/identity-providers/links#complete-a-pending-link) API. After FusionAuth links the user, call this API again to log in.
+
+      <JSON title="Example Response JSON" src="login/login-pending-link-response.json" />
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>242</Cell>
+    <Cell>
+      The authentication succeeded, and the user has two-factor authentication enabled. In `1.42.0` and later, FusionAuth also returns this status code when two-factor authentication is required. The response contains the **`twoFactorId`** for the [Complete Two-Factor Authentication](/docs/apis/login/complete-mfa) API.
+
+      <JSON title="Example Response JSON" src="login/login-two-factor-response.json" />
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>400</Cell>
+    <Cell>
+      The request was invalid or malformed, or a login validation lambda rejected the login. The response contains an [Errors](/docs/apis/errors) JSON object with the specific errors.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>401</Cell>
+    <Cell>
+      FusionAuth couldn't complete the login. For example, the Identity Provider isn't enabled for the Application, FusionAuth couldn't verify the response from the Identity Provider, or FusionAuth couldn't reconcile the user.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>404</Cell>
+    <Cell>
+      FusionAuth didn't find the user, or no Link to the user exists and either the linking strategy is `Disabled` or the request set **`noLink`** to `true`. The response is empty.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>409</Cell>
+    <Cell>
+      An action on the user prevents login. The response contains the actions that prevent login.
+
+      <JSON title="Example Response JSON" src="login/login-prevented-response.json" />
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>410</Cell>
+    <Cell>
+      The user has expired. The response is empty.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>500</Cell>
+    <Cell>
+      FusionAuth had an internal error and logged a stack trace in the FusionAuth log files. The response is empty.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>503</Cell>
+    <Cell>
+      The search index is unavailable or returned an error, so FusionAuth can't complete the request. The response contains a JSON body.
+    </Cell>
+  </Row>
+  <Row>
+    <Cell>504</Cell>
+    <Cell>
+      One or more webhook endpoints returned an invalid response or were unreachable. Because of the transaction configuration for the event, FusionAuth can't complete the request. FusionAuth logs a stack trace in the FusionAuth log files.
+    </Cell>
+  </Row>
+</TableGrid>
