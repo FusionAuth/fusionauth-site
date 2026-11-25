@@ -61,7 +61,8 @@ follow it wherever it differs from this skill.
 1. Tell the user that FusionAuth is running, and that they can open the Admin UI
    at http://localhost:9011/admin to create their admin account. To set up
    login for an application, point them to
-   https://fusionauth.io/docs/get-started/first-time-setup.md.
+   https://fusionauth.io/docs/get-started/first-time-setup.md. For follow-up
+   questions, use the FusionAuth Docs MCP server when it is available.
 
 To stop FusionAuth, run `docker compose down`. To also delete its data, run
 `docker compose down -v`, but only when the user asks for that.

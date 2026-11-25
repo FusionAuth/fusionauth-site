@@ -77,13 +77,29 @@ def check_manifests():
     for key in ("name", "description", "license", "repository"):
         if claude.get(key) != openai.get(key):
             errors.append(f'"{key}" differs between .claude-plugin/plugin.json and plugin.json')
-    # without a version, Claude Code tracks the commit, so each publish reaches users
+    # no version means the Claude directory and GitHub installs track commits, so nobody has to bump it
     if "version" in claude:
         errors.append('remove "version" from .claude-plugin/plugin.json; the directory tracks commits')
     if "version" not in openai:
         errors.append('plugin.json needs a "version"; raise it for each OpenAI ZIP')
     if server_urls(claude_mcp) != server_urls(openai_mcp):
         errors.append("MCP servers differ between .mcp.json and mcp.json")
+    return errors + check_openai_limits(openai.get("extensions", {}).get("com.openai", {}))
+
+
+def check_openai_limits(extension):
+    # limits the OpenAI portal enforces, which otherwise only show up after an upload
+    errors = []
+    interface, review = extension.get("interface", {}), extension.get("review", {})
+    for key in ("displayName", "shortDescription"):
+        if len(interface.get(key, "")) > 30:
+            errors.append(f'interface "{key}" in plugin.json is longer than 30 characters')
+    prompts = interface.get("defaultPrompt", [])
+    if len(prompts) > 3 or any(len(prompt) > 128 for prompt in prompts):
+        errors.append('interface "defaultPrompt" in plugin.json needs at most 3 prompts of at most 128 characters')
+    cases = review.get("test_cases", {})
+    if len(cases.get("positive", [])) != 5 or len(cases.get("negative", [])) != 3:
+        errors.append('review "test_cases" in plugin.json needs exactly 5 positive and 3 negative cases')
     return errors
 
 
