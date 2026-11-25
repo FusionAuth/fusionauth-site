@@ -85,6 +85,54 @@ For projects that benefit from a cloneable repository, the `/astro/extractedcode
 
 Astro builds automatically generate code snippets before rendering pages.
 
+### Publish the FusionAuth plugin
+
+The [`fusionauth-skills`](astro/extractedcode/fusionauth-skills) folder is the FusionAuth plugin for the Claude and OpenAI plugin directories. The plugin bundles the agent skills and the [Docs MCP server](https://fusionauth.io/docs/get-started/develop/docs-mcp-server). Each directory reads a different manifest:
+
+* Claude reads `.claude-plugin/plugin.json` and `.mcp.json`.
+* OpenAI reads `plugin.json` and `mcp.json`.
+
+Both MCP manifests use `https://ai.fusionauth.io/mcp/docs?client=plugin`, and the server ignores the query string. Keep the query string. Every FusionAuth claude.ai account has a "Kapa AI - FusionAuth" connector at the plain URL, and Claude Code hides a plugin's MCP server when the server's URL matches a connector, even a disabled connector.
+
+When you change a skill or the shared metadata, change both manifests. `tests/test.sh` fails when the name, description, license, repository, or MCP server URLs drift apart, or when `plugin.json` breaks an OpenAI field limit.
+
+#### Claude
+
+A merge to `main` exports the folder to [FusionAuth/fusionauth-skills](https://github.com/FusionAuth/fusionauth-skills), and the Claude directory scans each new commit on that repository's `main` branch. By default, an Anthropic reviewer approves each scanned version before the directory publishes the version. `.claude-plugin/plugin.json` has no `version`, so the directory tracks commits and nobody has to raise a version number. To check the plugin locally, run `claude plugin validate astro/extractedcode/fusionauth-skills`. To try the plugin in Claude Code, run `claude --plugin-dir astro/extractedcode/fusionauth-skills`.
+
+The scans start after a one-time submission:
+
+1. Give the `EXAMPLE_PUBLISH_TOKEN` personal access token write access to `FusionAuth/fusionauth-skills`, so the export can push.
+1. At [claude.ai/directory/manage](https://claude.ai/directory/manage), select **Submit new**, then **Plugin bundle**. On a Team or Enterprise account, only an Owner, or a member with the Directory permission, can submit.
+1. Connect a GitHub account with push access to `FusionAuth/fusionauth-skills`, and choose the **GitHub push webhook** update option. The webhook needs admin access to the repository.
+
+#### OpenAI
+
+The OpenAI directory needs a ZIP upload for each change to a skill or to the metadata. Changes to the MCP server's tools need no upload, because OpenAI scans the server daily. The uploader needs the **Apps Management Write** permission in the FusionAuth OpenAI organization, and the organization needs business verification.
+
+1. Raise `version` in `plugin.json`, and merge the change.
+1. Run the following commands from the repository root. The ZIP holds only the files OpenAI reads, and lands outside the repository so nobody commits the ZIP by mistake:
+
+   ```console
+   cd astro/extractedcode/fusionauth-skills
+   rm -f ~/fusionauth-plugin.zip
+   zip -r ~/fusionauth-plugin.zip plugin.json mcp.json skills assets README.md LICENSE -x '*.DS_Store'
+   ```
+
+1. Open the plugin at [platform.openai.com/plugins](https://platform.openai.com/plugins), select **Upload plugin to make changes**, and upload the ZIP.
+1. Resolve the findings in **Metadata & Skills**, submit the version for review, and publish the version after approval.
+
+For the first submission, select **Upload new or existing plugin**, choose the verified FusionAuth developer identity, and choose **With MCP**. OpenAI doesn't support adding an MCP server to a skills-only plugin later. The first submission also asks for the following values. `plugin.json` supplies the starter prompts, the test cases, and the commerce declaration, so the portal only asks for the rest:
+
+* MCP server URL: `https://ai.fusionauth.io/mcp/docs?client=plugin`, with no authentication. Use the same URL as `mcp.json`.
+* Domain verification: the portal generates a token. Set `openaiAppsChallenge` in `docs/src/index.ts` of the [fusionauth-mcp](https://github.com/fusionauth-eng/fusionauth-mcp) repository to the token, and deploy. The server then returns the token at `https://ai.fusionauth.io/.well-known/openai-apps-challenge`. Select **Verify Domain**, and leave the token in place after verification.
+* Demo recording: `review.demo_recording_url` in `plugin.json` points to [`fusionauth-plugin-demo.webm`](astro/public/img/docs/fusionauth-plugin-demo.webm), a Claude Code session that runs the install skill and a Docs MCP server question. OpenAI requires a recording for MCP review. Record a new demo when a skill changes what the agent does.
+* Tool annotation justifications, for both `ask_fusionauth_question` and `search_fusionauth_sources`:
+  * Read-only: "The tool searches the FusionAuth docs, GitHub issues, and videos and returns text. The tool creates, changes, and deletes nothing."
+  * Not destructive: "The tool performs no writes, so the tool can't destroy data."
+  * Not open world: "The tool only queries the kapa.ai index of FusionAuth docs, GitHub issues, and videos. The tool doesn't browse the web or reach arbitrary sites."
+* Reviewer credentials: none. The server needs no sign-in.
+
 ## Refresh external content
 
 Docker, Kubernetes, and Kafka configuration examples remain owned by their external repositories. To refresh only the files displayed in the docs, run this from the repository root (requires Bash, Git, and curl):
