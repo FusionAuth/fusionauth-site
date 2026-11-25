@@ -22,7 +22,7 @@ The install skill downloads the Docker Compose file from `fusionauth.io` and pul
 
 The integration skill reads QuickStarts from `fusionauth.io` and installs the libraries each QuickStart names from your language's package registry.
 
-The MCP server sends your questions to `https://ai.fusionauth.io/mcp/docs`. The MCP server needs no account or sign-in.
+The MCP server sends your questions to `https://ai.fusionauth.io/mcp/docs?client=plugin`. The MCP server needs no account or sign-in.
 
 ## Source
 

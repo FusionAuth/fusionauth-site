@@ -92,6 +92,8 @@ The [`fusionauth-skills`](astro/extractedcode/fusionauth-skills) folder is the F
 * Claude reads `.claude-plugin/plugin.json` and `.mcp.json`.
 * OpenAI reads `plugin.json` and `mcp.json`.
 
+Both MCP manifests use `https://ai.fusionauth.io/mcp/docs?client=plugin`, and the server ignores the query string. Keep the query string. Every FusionAuth claude.ai account has a "Kapa AI - FusionAuth" connector at the plain URL, and Claude Code hides a plugin's MCP server when the server's URL matches a connector, even a disabled connector.
+
 When you change a skill or the shared metadata, change both manifests. `tests/test.sh` fails when the name, description, license, repository, or MCP server URLs drift apart, or when `plugin.json` breaks an OpenAI field limit.
 
 #### Claude
@@ -122,8 +124,8 @@ The OpenAI directory needs a ZIP upload for each change to a skill or to the met
 
 For the first submission, select **Upload new or existing plugin**, choose the verified FusionAuth developer identity, and choose **With MCP**. OpenAI doesn't support adding an MCP server to a skills-only plugin later. The first submission also asks for the following values. `plugin.json` supplies the starter prompts, the test cases, and the commerce declaration, so the portal only asks for the rest:
 
-* MCP server URL: `https://ai.fusionauth.io/mcp/docs`, with no authentication.
-* Domain verification: the portal generates a token. The owner of the Docs MCP server serves the token as plain text at `https://ai.fusionauth.io/.well-known/openai-apps-challenge`, and then you select **Verify Domain**. Leave the token in place after verification.
+* MCP server URL: `https://ai.fusionauth.io/mcp/docs?client=plugin`, with no authentication. Use the same URL as `mcp.json`.
+* Domain verification: the portal generates a token. Set `openaiAppsChallenge` in `docs/src/index.ts` of the [fusionauth-mcp](https://github.com/fusionauth-eng/fusionauth-mcp) repository to the token, and deploy. The server then returns the token at `https://ai.fusionauth.io/.well-known/openai-apps-challenge`. Select **Verify Domain**, and leave the token in place after verification.
 * Demo recording: `review.demo_recording_url` in `plugin.json` points to [`fusionauth-plugin-demo.webm`](astro/public/img/docs/fusionauth-plugin-demo.webm), a Claude Code session that runs the install skill and a Docs MCP server question. OpenAI requires a recording for MCP review. Record a new demo when a skill changes what the agent does.
 * Tool annotation justifications, for both `ask_fusionauth_question` and `search_fusionauth_sources`:
   * Read-only: "The tool searches the FusionAuth docs, GitHub issues, and videos and returns text. The tool creates, changes, and deletes nothing."
