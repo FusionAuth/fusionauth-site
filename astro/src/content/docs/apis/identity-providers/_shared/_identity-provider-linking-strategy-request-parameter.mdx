@@ -1,21 +1,27 @@
 import LinkingStrategyEditLimit from 'src/content/docs/_shared/_idp-linking-strategy-edit-limits.mdx';
 
 <APIField name="identityProvider.linkingStrategy" type="String" optional defaults={props.idp_linking_strategy} since={ props.idp_since < 12800 ?"1.28.0" : ''}>
-  The linking strategy to use when creating the link between the {props.idp_display_name} Identity Provider and the user.
+  The strategy that FusionAuth uses to link the {props.idp_display_name} Identity Provider to the User.
 
+  <If condition={props.idp_display_name === 'HYPR'}>
+  The HYPR Identity Provider doesn't support linking strategies. FusionAuth always sets this field to `Unsupported`, and ignores the value in the request.
+  </If>
+
+  <If condition={props.idp_display_name !== 'HYPR'}>
   <LinkingStrategyEditLimit />
 
   The possible values are:
 
-    * `CreatePendingLink` - Do not automatically link, instead return a pending link identifier that can be used to link to an existing user.
-    * `Disabled` - Disables linking automatically. You must use the API to create links. <AvailableSince since="1.37.0" />
-    * `LinkAnonymously` - Always create a link based upon the unique Id returned by the identify provider. A username or email is not required and will not be used to link the user. A reconcile lambda will not be used in this configuration.
-    * `LinkByEmail` - Link to an existing user based upon email. A user will be created with the email returned by the identity provider if one does not already exist.
-    * `LinkByEmailForExistingUser` - Only link to an existing user based upon email. A user will not be created if one does not already exist with email returned by the identity provider.
-    * `LinkByUsername` - Link to an existing user based upon username. A user will be created with the username returned by the identity provider if one does not already exist.
-    * `LinkByUsernameForExistingUser` - Only link to an existing user based upon username. A user will not be created if one does not already exist with username returned by the identity provider.
+    * `CreatePendingLink`: FusionAuth doesn't link automatically. FusionAuth returns a pending link Id. Use the pending link Id to link to an existing User.
+    * `Disabled`: FusionAuth doesn't link automatically. You must create Links with the API. <AvailableSince since="1.37.0" />
+    * `LinkAnonymously`: FusionAuth always creates a Link based on the unique Id that the IdP returns. FusionAuth doesn't require a username or email address, and doesn't use a username or email address to link the User. FusionAuth doesn't run a reconcile Lambda.
+    * `LinkByEmail`: FusionAuth links to an existing User by email address. When no User has the email address that the IdP returns, FusionAuth creates a User with that email address.
+    * `LinkByEmailForExistingUser`: FusionAuth links only to an existing User by email address. When no User has the email address that the IdP returns, FusionAuth doesn't create a User.
+    * `LinkByUsername`: FusionAuth links to an existing User by username. When no User has the username that the IdP returns, FusionAuth creates a User with that username.
+    * `LinkByUsernameForExistingUser`: FusionAuth links only to an existing User by username. When no User has the username that the IdP returns, FusionAuth doesn't create a User.
 
    <If condition={!!props.idp_enforce_email_verified_claim}>
-    When the **identityProvider.linkingStrategy** is equal to `LinkByEmail` or `LinkByEmailForExistingUser` and the `email_verified` claim is present on the response from the {props.idp_display_name} Identity Provider and the value is `false` a link will not be established and an error will be returned indicating a link cannot be established using an unverified email address.
+    When **`identityProvider.linkingStrategy`** is `LinkByEmail` or `LinkByEmailForExistingUser`, and the response from the {props.idp_display_name} Identity Provider has an `email_verified` claim of `false` and no Link exists yet, FusionAuth doesn't create a Link. FusionAuth returns an error that says FusionAuth can't create a Link with an unverified email address.
    </If>
+  </If>
 </APIField>
