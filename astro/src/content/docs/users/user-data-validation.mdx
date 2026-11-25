@@ -53,7 +53,7 @@ FusionAuth checks **`registration.username`** for length and moderation, and ret
 
 ## Phone Numbers
 
-FusionAuth parses phone numbers with [libphonenumber](https://github.com/google/libphonenumber). When a number has no country code, FusionAuth treats the number as a US number, so `303-555-1212` becomes `+13035551212`. FusionAuth checks only that libphonenumber can parse the value. FusionAuth doesn't check that the number belongs to a real line.
+FusionAuth parses phone numbers with [libphonenumber](https://github.com/google/libphonenumber). When a number has no country code, FusionAuth treats the number as a US number, so `303-555-1212` becomes `+13035551212`. FusionAuth checks only that libphonenumber can parse the value. FusionAuth doesn't check that the number belongs to a real line, so FusionAuth accepts `123` and stores the value as `+1123`.
 
 FusionAuth handles the two phone number fields of a user differently:
 
@@ -98,15 +98,15 @@ FusionAuth skips the password rules for users from the [Import Users API](/docs/
 | **`user.birthDate`** | The API requires the `YYYY-MM-DD` format. FusionAuth doesn't check for dates in the future or for an age range. | `[invalidJSON]` from the API, `[couldNotConvert]user.birthDate` on the hosted pages |
 | **`user.preferredLanguages`** | The list holds at most 20 locales. Each locale must be shorter than 24 characters. | `[tooMany]user.preferredLanguages`, `[invalid]user.preferredLanguages` |
 | **`user.timezone`** | The value must be a time zone Id, such as `America/Denver`. | `[invalidJSON]` |
-| **`user.imageUrl`** | The value must parse as a URI. FusionAuth doesn't check the scheme. | `[invalidJSON]` |
+| **`user.imageUrl`** | The value must parse as a URI. FusionAuth doesn't check the scheme, so FusionAuth accepts `javascript:alert(1)`. Check the scheme before you render the URL. | `[invalidJSON]` |
 | **`user.legacyIdentifier`** | The value is at most 191 characters, and is unique in the tenant. | `[tooLong]user.legacyIdentifier`, `[duplicate]user.legacyIdentifier` |
-| **`user.firstName`**, **`user.middleName`**, **`user.lastName`**, **`user.fullName`** | FusionAuth trims whitespace, and checks no other rules. The basic registration form returns an error for a required name field that the user leaves empty. | `[blank]user.firstName`, and the same code for each name field |
+| **`user.firstName`**, **`user.middleName`**, **`user.lastName`**, **`user.fullName`** | FusionAuth trims whitespace, and doesn't check the length. With PostgreSQL, a name longer than 255 characters returns a `500` status code instead of a validation error. The basic registration form returns an error for a required name field that the user leaves empty. | `[blank]user.firstName`, and the same code for each name field |
 
 For the maximum length of each database column, see [Field Lengths](/docs/concepts/plans-and-limits/limitations#field-lengths). For the maximum size of **`user.data`** and **`registration.data`**, see [Data Field Sizes](/docs/concepts/plans-and-limits/limitations#data-field-sizes).
 
 ## Custom Form Fields
 
-Advanced registration forms and self-service account forms run the checks of each Form Field. The error code uses the key of the Form Field, such as `user.data.favoriteColor`.
+Advanced registration forms and self-service account forms run the checks of each Form Field. The error code ends with the key of the Form Field. In the following table, `user.data.favoriteColor` stands for the key of your Form Field.
 
 | Check | Error code |
 |---|---|
