@@ -1,0 +1,286 @@
+---
+title: Ruby on Rails
+htmlTitle: FusionAuth QuickStart for Ruby on Rails
+description: Integrate FusionAuth with an example Ruby on Rails website.
+tags: rails quickstart, ruby on rails authentication, rails login, rails oauth, ruby web authentication
+icon: /img/icons/ruby-on-rails.svg
+---
+
+This QuickStart explains how to add a login page and authentication to a website built with [Ruby on Rails](https://rubyonrails.org/). You'll begin with a simple Rails app that allows visitors to edit a file. Then, you'll add authentication to the app with a FusionAuth instance. Finally, you'll extend the app to handle multiple independent users with user data provided by FusionAuth.
+
+This tutorial should take between 5 and 15 minutes; less if you already have prerequisites like Docker installed.
+
+## Prerequisites
+
+This QuickStart requires:
+
+* [Ruby](https://www.ruby-lang.org/en/documentation/installation/) 3.2 or later
+* [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later
+
+If you use macOS or Windows, you need one of the following container management tools:
+  * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use OrbStack for `docker compose` commands after installation, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
+
+## Create a Simple Rails App
+
+For this QuickStart, we'll use a Rails app that reads and writes data to a text file:
+
+<Steps>
+1. Install Rails:
+
+   ```shell-session
+   gem install rails -v 8.1.4.1
+   ```
+
+1. Create a Rails app named `rails-quickstart` and navigate into its folder:
+
+   ```shell-session
+   rails new rails-quickstart --minimal --skip-active-record
+   ```
+
+   ```shell-session
+   cd rails-quickstart
+   ```
+
+   The `--minimal` flag leaves out the optional Rails frameworks, and `--skip-active-record` leaves out the database, because the app stores its data in a text file.
+
+1. In the `app/controllers` folder, create a file named `notes_controller.rb` with the following contents:
+
+   <ExtractedCode src="quickstart-rails/0-start/app/controllers/notes_controller.rb" lang="ruby"/>
+
+1. In the `app/views` folder, create a folder named `notes`. In the `notes` folder, create a file named `show.html.erb` with the following contents:
+
+   <ExtractedCode src="quickstart-rails/0-start/app/views/notes/show.html.erb" lang="erb"/>
+
+   `form_with` adds a CSRF token to the form, because Rails rejects form submissions without one.
+
+1. Replace the contents of `config/routes.rb` with the following code, which connects the URLs to the controller:
+
+   <ExtractedCode src="quickstart-rails/0-start/config/routes.rb" lang="ruby"/>
+
+1. Run the app:
+
+   ```shell-session
+   bin/rails server
+   ```
+
+1. Open the app at [http://localhost:3000](http://localhost:3000).
+
+1. Replace the text area text with "Hello Rails", then click the **Save Changes** button.
+
+1. In a file browser or terminal, look in the `rails-quickstart` folder. You should see a new file named `note.txt`, with text content "Hello Rails".
+
+1. Congratulations, you have a working Rails app that lets you edit a local text file through your web browser. Press **Ctrl+C** on your keyboard to stop the Rails server.
+</Steps>
+
+## Install and Run FusionAuth
+
+Before we can add authentication to our Rails app, we need a local FusionAuth instance:
+
+<Steps>
+1. Open your container management tool (listed in the prerequisites above).
+
+1. From the `rails-quickstart` folder, clone the [GitHub repository for the FusionAuth instance you'll use with this QuickStart](https://github.com/FusionAuth/fusionauth-quickstart-app):
+
+   ```shell-session
+   git clone https://github.com/FusionAuth/fusionauth-quickstart-app.git
+   ```
+
+1. Navigate into the cloned directory:
+
+   ```shell-session
+   cd fusionauth-quickstart-app
+   ```
+
+1. To start a local instance of FusionAuth, run the following command (omit the `-d` flag to see all Docker logs):
+
+   ```shell-session
+   docker compose up -d
+   ```
+
+1. Wait until all networks, volumes, and containers show a green status of **Healthy**, **Started**, or **Created**. This may take a few minutes, depending on your network speed and cached dependencies.
+
+1. Open [http://localhost:9011/admin](http://localhost:9011/admin) to access the FusionAuth Admin UI.
+
+1. Log in with these credentials:
+
+   * username: `admin@example.com`
+   * password: `password`
+
+1. Navigate to <Breadcrumb>Applications -> QuickStart App -> Edit -> OAuth</Breadcrumb>. On this page, you can find your client ID, your client secret, and specify redirect and logout URLs. In the next part of this QuickStart, we'll use these values to connect our Rails app with FusionAuth.
+
+1. Click the logout icon in the top right to log out of the Admin UI. We'll use a different user account to access our Rails app, and because FusionAuth supports SSO, we need to log out of our admin account before we can log in as a normal user.
+</Steps>
+
+## Add FusionAuth to the Rails App
+
+Now that you have a working instance of FusionAuth and a working Rails app, let's use FusionAuth to add login to your Rails app:
+
+<Steps>
+1. Navigate out of the `fusionauth-quickstart-app` folder, back to the `rails-quickstart` folder that contains `app` and `note.txt`:
+
+   ```shell-session
+   cd ..
+   ```
+
+1. Create a file named `.env` with the following contents (we provided the same configuration for the local FusionAuth instance, and then viewed it in the Admin UI):
+
+   <ExtractedCode src="quickstart-rails/1-fusionauth-added/.env" lang="plaintext"/>
+
+1. Install the dependencies we'll need to authenticate with FusionAuth:
+
+   ```shell-session
+   bundle add omniauth_openid_connect --version 0.8.0
+   ```
+
+   ```shell-session
+   bundle add omniauth-rails_csrf_protection --version 2.0.1
+   ```
+
+   ```shell-session
+   bundle add dotenv --version 3.2.0
+   ```
+
+   Most importantly, we're adding [omniauth_openid_connect](https://github.com/omniauth/omniauth_openid_connect), which handles communication with our FusionAuth instance through [OmniAuth](https://github.com/omniauth/omniauth). We're also adding [omniauth-rails_csrf_protection](https://github.com/cookpad/omniauth-rails_csrf_protection), which checks the CSRF token when a user starts the login, and [dotenv](https://github.com/bkeepers/dotenv), which reads our configuration from the `.env` file we just created.
+
+1. In the `config/initializers` folder, create a file named `omniauth.rb` with the following contents:
+
+   <ExtractedCode src="quickstart-rails/1-fusionauth-added/config/initializers/omniauth.rb" lang="ruby"/>
+
+   The new code tells OmniAuth how to talk to FusionAuth:
+
+   * `SWD.url_builder = URI::HTTP` lets OmniAuth fetch the discovery document over http, which the local FusionAuth instance uses.
+   * `OmniAuth.config.allowed_hosts` stops OmniAuth from building callback URLs for any host except `localhost`.
+   * `provider :openid_connect` uses the client Id, client secret, and [[PKCE]], and finds the login and token endpoints in the OpenID Connect discovery document at `/.well-known/openid-configuration`. With PKCE, OmniAuth sends a code verifier when it exchanges the authorization code for tokens, so a stolen authorization code is useless on its own.
+
+   OmniAuth adds an `/auth/fusionauth` route, which sends the user to the FusionAuth login page. It also handles the `/oauth-callback` route: it exchanges the authorization code from FusionAuth for tokens, validates the [[Id Token::ID token]], and passes the user's details to the app.
+
+1. Replace the contents of `app/controllers/application_controller.rb` with the following code:
+
+   <ExtractedCode src="quickstart-rails/1-fusionauth-added/app/controllers/application_controller.rb" lang="ruby"/>
+
+   The `require_login` filter runs before every controller action and sends users who aren't logged in to `/login`.
+
+1. In the `app/controllers` folder, create a file named `sessions_controller.rb` with the following contents:
+
+   <ExtractedCode src="quickstart-rails/1-fusionauth-added/app/controllers/sessions_controller.rb" lang="ruby"/>
+
+   * `skip_before_action` lets users who aren't logged in reach these actions.
+   * The `create` action runs after OmniAuth handles `/oauth-callback`, and stores the user's Id in the Rails session.
+   * The `destroy` action clears the Rails session, then sends the user to FusionAuth's `/oauth2/logout` endpoint so the FusionAuth session ends too.
+
+1. In the `app/views` folder, create a folder named `sessions`. In the `sessions` folder, create a file named `new.html.erb` with the following contents:
+
+   <ExtractedCode src="quickstart-rails/1-fusionauth-added/app/views/sessions/new.html.erb" lang="erb"/>
+
+   OmniAuth only starts a login from a `POST` request with a CSRF token, so the login page uses `button_to` instead of a link.
+
+1. Replace the contents of `config/routes.rb` with the following code, which adds the `/login`, `/oauth-callback`, and `/logout` routes:
+
+   <ExtractedCode src="quickstart-rails/1-fusionauth-added/config/routes.rb" lang="ruby"/>
+
+1. Replace the contents of `app/views/notes/show.html.erb` with the following code, which adds a **Logout** button:
+
+   <ExtractedCode src="quickstart-rails/1-fusionauth-added/app/views/notes/show.html.erb" lang="erb"/>
+
+1. That's it! Your Rails app should now use FusionAuth login. Run the app:
+
+   ```shell-session
+   bin/rails server
+   ```
+
+1. Open the app at [http://localhost:3000](http://localhost:3000) and click **Log in with FusionAuth**.
+
+1. Log in with the following credentials:
+
+   * username: `richard@example.com`
+   * password: `password`
+
+1. Edit the text file from the safety of an authenticated Rails app.
+
+1. Click **Logout**. FusionAuth ends your session and sends you back to the app's login page.
+</Steps>
+
+## Add Independent Notes for Each User
+
+To see a more realistic example of FusionAuth usage, we can improve the app even more, so every user gets a unique note to edit. To accomplish this, we'll use FusionAuth's user data:
+
+<Steps>
+1. Open the FusionAuth Admin UI at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+1. Log in with the following credentials:
+
+   * username: `admin@example.com`
+   * password: `password`
+
+1. Navigate to <Breadcrumb>Applications -> QuickStart App -> Edit -> Registration</Breadcrumb>.
+
+   * Under **Self-service registration**, check that **Registration mode** is set to **Create registration**. The QuickStart configuration has already turned on self-service registration.
+   * In the **Registration field** list, turn on the **Enabled** and **Required** switches for the following rows:
+     * **Birthdate**
+     * **First name**
+     * **Last name**
+
+1. Click the **Save** button in the top right of the page to save your changes to self-service registration.
+
+1. Navigate to <Breadcrumb>Users -> Richard Hendricks -> Manage</Breadcrumb>.
+
+1. In the **Source** tab, look for the `firstName` and `lastName` fields. That's what we'll use to personalize the UI for each user. We'll use the user's `id` field to generate a unique name for each user's note.
+
+1. Click the logout icon in the top right to log out of the Admin UI. We'll use a different user account to access our Rails app.
+
+1. Replace the contents of `config/initializers/omniauth.rb` with the following code, which also requests the `profile` and `email` scopes:
+
+   <ExtractedCode src="quickstart-rails/2-multi-user/config/initializers/omniauth.rb" lang="ruby"/>
+
+1. Replace the contents of `app/controllers/sessions_controller.rb` with the following code, which reads the user's name (first and last) and email and stores them in the session:
+
+   <ExtractedCode src="quickstart-rails/2-multi-user/app/controllers/sessions_controller.rb" lang="ruby"/>
+
+   OmniAuth validates the ID token and puts the user's details in `auth.info`, so we don't need a separate JWT library. The `destroy` action also passes a `post_logout_redirect_uri`, which sends the user back to the login page after FusionAuth ends their session.
+
+1. Replace the contents of `app/controllers/notes_controller.rb` with the following code, which stores each user's note in a separate file:
+
+   <ExtractedCode src="quickstart-rails/2-multi-user/app/controllers/notes_controller.rb" lang="ruby"/>
+
+1. Replace the contents of `app/views/notes/show.html.erb` with the following code, which shows the user's name:
+
+   <ExtractedCode src="quickstart-rails/2-multi-user/app/views/notes/show.html.erb" lang="erb"/>
+
+1. Rails doesn't reload files in `config/initializers`, so restart the server. Press **Ctrl+C**, then run:
+
+   ```shell-session
+   bin/rails server
+   ```
+
+1. Open the app at [http://localhost:3000](http://localhost:3000) and click **Log in with FusionAuth**.
+
+1. Log in with the following credentials:
+
+   * username: `richard@example.com`
+   * password: `password`
+
+1. _In a separate private/incognito window_, open the app at [http://localhost:3000](http://localhost:3000) and click **Log in with FusionAuth**.
+
+1. Click **Create an account** and create an account using your personal email address, a password, your name, and your birthdate.
+
+1. Enjoy using your unique user note! You should see your name at the top of the page, and in the default note text.
+</Steps>
+
+Your Rails app now provides unique notes for each user. Each user can independently edit and save their note. To see all of the notes, look for `note-<id>.txt` files in the `user_data` directory. To identify which note corresponds to which user, compare the `id` in the file name with the `id` field in the user's **Source** tab.
+
+## Summary
+
+In this QuickStart, FusionAuth handled login for your Rails app:
+
+* OmniAuth sent users to the FusionAuth login page and exchanged the authorization code for tokens, so the app never saw their passwords.
+* The `require_login` filter kept logged-out users away from the notes page.
+* The ID token gave the app each user's unique Id and name. The app used the Id to keep each note separate and the name to greet the user.
+* FusionAuth's self-service registration let new users create their own accounts, with no sign-up code in the app.
+
+## Next Steps
+
+This was a quick introduction to using FusionAuth for user authentication. To learn more about integrating FusionAuth with your product, see [Get Started](/docs/get-started).
+
+FusionAuth has many features (including [Social Login](/docs/authentication/identity-providers/#social-identity-providers), [Single Sign-On](/docs/authentication/sessions/enable-sso), [Passkeys](/docs/authentication/passkeys/configure), [Multi-factor Authentication](/docs/authentication/multi-factor-authentication)), most of which are free. This example app is a great starting point for learning about FusionAuth features.
