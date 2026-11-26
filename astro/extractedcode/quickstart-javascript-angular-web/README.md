@@ -28,8 +28,8 @@ To install and run FusionAuth locally:
    ```shell-session
    docker compose up -d
    ```
-2. Once Docker Compose completes startup, you should see the `backend_fusionauth` container group in your container management tool. This group contains containers called `fusionauth` and `db`. To access FusionAuth, visit [http://localhost:9011/admin](http://localhost:9011/admin).
-3. You can access your FusionAuth admin dashboard with the username `admin@example.com` and the password `password`.
+1. Once Docker Compose completes startup, you should see the `backend_fusionauth` container group in your container management tool. This group contains containers called `fusionauth` and `db`. To access FusionAuth, visit [http://localhost:9011/admin](http://localhost:9011/admin).
+1. You can access your FusionAuth admin dashboard with the username `admin@example.com` and the password `password`.
 
 ## Set Up the Angular App
 
@@ -44,4 +44,4 @@ To run any step of the QuickStart:
    ```shell-session
    npx @angular/cli@22.2.6 serve --host=0.0.0.0 --port=3000
    ```
-2. To use the app, visit http://localhost:3000.
+1. To use the app, visit http://localhost:3000.

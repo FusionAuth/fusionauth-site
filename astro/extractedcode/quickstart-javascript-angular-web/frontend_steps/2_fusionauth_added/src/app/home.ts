@@ -28,6 +28,7 @@ export class Home {
   ) {
     effect(() => {
       if (!this.fusionAuth.isLoggedInSignal()) return;
+
       void this.loadUserInfo();
       void this.router.navigateByUrl('/account');
     });
