@@ -1,8 +1,21 @@
 import { generateKeyPairSync, createPublicKey } from 'crypto';
-import { monicaId, gilfoyleId, familyId, printersTypeId, gavinId, dineshId, defaultTenantId, piedPiperAppId, richardId, projectRoot, baseUrl, apiKey } from './kit.mjs';
+import { monicaId, gilfoyleId, familyId, printersTypeId, gavinId, dineshId, defaultTenantId, piedPiperAppId, richardId, projectRoot, baseUrl, maintenanceUrl, apiKey } from './kit.mjs';
 
 import { readFileSync } from 'fs';
 import { join } from 'path';
+
+export async function waitForMaintenanceDatabaseToStart() {
+  const deadline = Date.now() + 60_000;
+  while (Date.now() < deadline) {
+    const response = await fetch(`${maintenanceUrl}/`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
+    if (response?.ok) {
+      const html = await response.text();
+      if (html.includes('Database type') && html.includes('maintenance-mode-database-configuration')) return;
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  throw new Error(`FusionAuth Maintenance Mode did not become ready at ${maintenanceUrl}`);
+}
 
 const leftoversAppId = '00000000-0000-0000-0000-f70000000001';
 

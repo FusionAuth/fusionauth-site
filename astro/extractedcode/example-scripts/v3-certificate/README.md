@@ -1,6 +1,6 @@
 # X.509 v3 Certificate Generator
 
-This sample script automatically generates an X.509 v3 Certificate using RSA and uploads it to the [Key Master](https://fusionauth.io/docs/v1/tech/core-concepts/key-master) in your FusionAuth instance. You can use this tool when doing integration with other services that require this specific version as the [Key Master](https://fusionauth.io/docs/v1/tech/core-concepts/key-master) uses a different one.
+This sample script automatically generates an X.509 v3 Certificate using RSA and uploads it to the [Key Master](https://fusionauth.io/docs/security/tokens-and-keys/key-master) in your FusionAuth instance. Use this tool to integrate with services that require X.509 v3 certificates, such as Aiven. Key Master generates X.509 v2 certificates.
 
 ## Prerequisites
 
@@ -10,7 +10,7 @@ This sample script automatically generates an X.509 v3 Certificate using RSA and
 
 ## Usage
 
-* Create an [API Key](https://fusionauth.io/docs/v1/tech/apis/authentication#api-key-authentication) in your FusionAuth instance that has permission to `POST` to `/api/key/import`.
+* Create an [API Key](https://fusionauth.io/docs/apis/authentication#api-key-authentication) in your FusionAuth instance that has permission to `POST` to `/api/key/import`.
 * Run `generate-certificate`.
 
 The script will ask for three values:

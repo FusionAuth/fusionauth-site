@@ -61,12 +61,12 @@ The first step of implementing RBAC in Kubernetes is to deploy FusionAuth to Kub
 
 To begin, start the minikube cluster. You'll use the VirtualBox driver to make modifying the virtual machine (VM) easier in future steps.
 
-```bash
+```shell-session
 minikube start --cpus 4 --memory 5g --driver=virtualbox
 ```
 Deploy PostgreSQL to the cluster using Helm:
 
-```bash
+```shell-session
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install pg-minikube bitnami/postgresql \
   --set postgresqlPassword=password
@@ -76,7 +76,7 @@ This command deploys PostgreSQL to the minikube cluster and creates a user named
 
 List all the pods and make sure the PostgreSQL pod is ready:
 
-```bash
+```shell-session
 kubectl get pods -n default -o wide
 ```
 
@@ -91,25 +91,25 @@ If it doesn't show `1/1` in the `Ready` column, wait a bit longer for it to star
 
 The next step is to deploy [Elasticsearch](https://www.elastic.co) using Helm. First, add the repo:
 
-```bash
+```shell-session
 helm repo add elastic https://helm.elastic.co
 ```
 
 Download the recommended configuration using curl:
 
-```bash
+```shell-session
 curl -O https://raw.githubusercontent.com/elastic/Helm-charts/master/elasticsearch/examples/minikube/values.yaml
 ```
 
 Finally, install Elasticsearch:
 
-```bash
+```shell-session
 helm install es-minikube elastic/elasticsearch -f values.yaml
 ```
 
 Just like you did previously, list the pods:
 
-```bash
+```shell-session
 kubectl get pods -n default -o wide
 ```
 
@@ -125,13 +125,13 @@ pg-minikube-postgresql-0   1/1     Running   0          5m48s   172.17.0.3   min
 
 Finally, it's time to deploy FusionAuth. First, add the Helm repo:
 
-```bash
+```shell-session
 helm repo add fusionauth https://fusionauth.github.io/charts
 ```
 
 Download the configuration file:
 
-```bash
+```shell-session
 curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/main/chart/values.yaml
 ```
 
@@ -145,13 +145,13 @@ Now, edit `values.yaml` and set the following values:
 
 Now install FusionAuth with the following command:
 
-```bash
+```shell-session
 helm install my-release fusionauth/fusionauth -f values.yaml
 ```
 
 List all the deployments and ensure the `my-release-fusionauth` deployment is ready.
 
-```bash
+```shell-session
 kubectl get deployments -o wide
 ```
 
@@ -227,7 +227,7 @@ Finally, another file named `fusionauth.json` needs to be created:
 Run the following commands to generate the certificates:
 
 
-```bash
+```shell-session
 mkdir -p ssl
 cfssl gencert -initca "ca-csr.json" | cfssljson -bare "ssl/fusionauth-ca" -
 cfssl gencert \
@@ -256,14 +256,14 @@ fusionauth.pem
 
 The next step is to upload the certificates to the cluster:
 
-```bash
+```shell-session
  tar -c -C ssl fusionauth-ca.pem | ssh -t -q -o StrictHostKeyChecking=no \
     -i "$(minikube ssh-key)" "docker@$(minikube ip)" 'sudo tar -x --no-same-owner -C /var/lib/minikube/certs'
 ```
 
 Create a Kubernetes secret using the certificates:
 
-```bash
+```shell-session
 kubectl create secret tls fusionauth-cert --cert="ssl/fusionauth.pem" --key="ssl/fusionauth-key.pem"
 ```
 
@@ -299,7 +299,7 @@ spec:
 
 Create the ingress:
 
-```bash
+```shell-session
 kubectl create -f ingress.yaml
 ```
 
@@ -309,7 +309,7 @@ Next, let's give our ingress a nice domain name, accessible from our host machin
 
 Run the following command to get the IP of the minikube cluster:
 
-```bash
+```shell-session
 minikube ip
 ```
 
@@ -394,18 +394,18 @@ Finally, click the view icon next to the `Kubernetes` application on the applica
 
 To set up Kubernetes correctly, first stop the minikube cluster:
 
-```bash
+```shell-session
 minikube stop
 ```
 Then, turn on [natdnshostresolver](https://www.virtualbox.org/manual/ch09.html#nat_host_resolver_proxy) on the minikube VM:
 
-```bash
+```shell-session
 VBoxManage modifyvm minikube --natdnshostresolver1 on
 ```
 
 Restart the minikube cluster with additional API server flags. Replace `<YOUR_CLIENT_ID>` with the client Id of the application you obtained from FusionAuth above.
 
-```bash
+```shell-session
  minikube start --driver=virtualbox \
             --extra-config=apiserver.oidc-issuer-url=https://fusionauth.local \
             --extra-config=apiserver.oidc-client-id=<YOUR_CLIENT_ID> \
@@ -474,7 +474,7 @@ This uses the `view` `ClusterRole` and gives the FusionAuth-managed `viewer` rol
 
 Next, create the two `ClusterRoleBindings`:
 
-```bash
+```shell-session
 kubectl create -f crb-admin.yaml
 kubectl create -f crb-viewer.yaml
 ```
@@ -490,13 +490,13 @@ The latter approach is what you'll be using today.
 
 First, install [Krew](https://krew.sigs.k8s.io/) following the instructions in the [docs](https://krew.sigs.k8s.io/docs/user-guide/setup/install/), then install the `kubelogin` plugin:
 
-```bash
+```shell-session
 kubectl krew install oidc-login
 ```
 
 When you run the following command, a new browser window will open and take you to the FusionAuth login page. Use the `admin@fusionauth.local` user to log in. Remember to substitute `<YOUR_CLIENT_ID>` and `<YOUR_CLIENT_SECRET>` when running the command below.
 
-```bash
+```shell-session
  kubectl oidc-login setup \
          --oidc-issuer-url=https://fusionauth.local \
          --oidc-client-id=<YOUR_CLIENT_ID> \
@@ -532,7 +532,7 @@ Verify that the **email** field is correct, and that the **roles** array contain
 
 Finally, set up the `kubeconfig` with the following command. Make sure to replace `<YOUR_CLIENT_ID>` and `<YOUR_CLIENT_SECRET>`.
 
-```bash
+```shell-session
 kubectl config set-credentials oidc \
           --exec-api-version=client.authentication.k8s.io/v1beta1 \
           --exec-command=kubectl \
@@ -546,7 +546,7 @@ kubectl config set-credentials oidc \
 
 Now you can use this context to run kubectl commands. Let's go big, by deleting one of the Elasticsearch cluster nodes:
 
-```bash
+```shell-session
 kubectl --user=oidc delete po elasticsearch-master-0
 ```
 
@@ -554,7 +554,7 @@ Use the `admin@fusionauth.local` account to log in.
 
 The pod will be deleted. You can test with this command if you'd like.
 
-```bash
+```shell-session
 kubectl get pods -n default -o wide
 ```
 
@@ -562,13 +562,13 @@ Don't worry about the pod! It will come back since it's part of a replica. If th
 
 Let's try the other user, with only `view` privileges. First, log yourself out by deleting the cache:
 
-```bash
+```shell-session
 rm -rf ~/.kube/cache/oidc-login
 ```
 
 Then rerun the command which sets up the credentials. 
 
-```bash
+```shell-session
 kubectl config set-credentials oidc \
           --exec-api-version=client.authentication.k8s.io/v1beta1 \
           --exec-command=kubectl \
@@ -582,7 +582,7 @@ kubectl config set-credentials oidc \
 
 Try to delete the same Elasticsearch pod:
 
-```bash
+```shell-session
 kubectl --user=oidc delete po elasticsearch-master-0
 ```
 
@@ -594,7 +594,7 @@ Error from server (Forbidden): pods "elasticsearch-master-0" is forbidden: User 
 
 Voila! RBAC is working as intended. If you feel confident with the RBAC implementation, you can set the `oidc` context as default:
 
-```bash
+```shell-session
 kubectl config set-context --current --user=oidc
 ```
 

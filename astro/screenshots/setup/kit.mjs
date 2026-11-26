@@ -5,6 +5,9 @@ import { fileURLToPath } from 'url';
 const portOffset = 10 * Number(process.env.SCREENSHOT_SHARD_INDEX ?? 0);
 export const appPort = 9011 + portOffset;
 export const freshPort = 9012 + portOffset;
+export const maintenancePort = 9013 + portOffset;
+export const maintenanceUrl = `http://127.0.0.1:${maintenancePort}`;
+export const maintenanceDatabasePassword = 'postgres';
 export const baseUrl = `http://localhost:${appPort}`;
 // un-kickstarted instance for first-time setup shots; a different host keeps its cookies apart
 export const freshUrl = `http://127.0.0.1:${freshPort}`;
@@ -195,15 +198,16 @@ const resourceExists = new Map();
 export async function runTemporaryState(page, url, shot, temporaryResources, temporaryState) {
   const wantedState = new Set(shot.temporaryState ?? []);
   const wantedResources = new Set(shot.temporaryResources ?? []);
-  for (const state of temporaryState) {
-    if (state.section === 'register' && state.undo && !wantedState.has(state)) {
-      await state.undo();
-      state.undo = undefined;
-    }
-  }
-
   let changed = false;
   let tenantChanged = false;
+  // reverse order, before resource changes: later state can depend on earlier state, and a copied tenant copies the default tenant's state
+  for (const state of [...temporaryState].reverse()) {
+    if (wantedState.has(state) || !state.undo) continue;
+    await state.undo();
+    state.undo = undefined;
+    changed = true;
+  }
+
   const exists = async path => (await fetch(`${baseUrl}${path}`, { headers: { Authorization: apiKey } })).ok;
   // deletes come first, since a second tenant makes creating an application need a tenant Id
   const unwantedFirst = [...temporaryResources].sort((a, b) => wantedResources.has(a) - wantedResources.has(b));
@@ -237,19 +241,14 @@ export async function runTemporaryState(page, url, shot, temporaryResources, tem
   }
 
   for (const state of temporaryState) {
-    const wanted = wantedState.has(state);
-    if (wanted === !!state.undo) continue;
+    if (!wantedState.has(state) || state.undo) continue;
     // resource changes load the page once, before the first state change
     if (changed) {
       if (tenantChanged) await page.waitForTimeout(5000);
       await loadFresh(page, url);
       changed = tenantChanged = false;
     }
-    if (wanted) state.undo = await state.apply(page);
-    else {
-      await state.undo();
-      state.undo = undefined;
-    }
+    state.undo = await state.apply(page);
     // a load after each state change gives FusionAuth time to apply it; the device grant and MFA shots failed when these were batched
     await loadFresh(page, url);
   }

@@ -1,0 +1,133 @@
+---
+title: Data Validation
+htmlTitle: User Data Validation
+description: Reference for the checks FusionAuth runs on email addresses, usernames, phone numbers, passwords, and other user data, with the error code for each check.
+tags: validation, user data, form validation, error codes, email validation, phone number validation, password rules, registration, themes, messages
+order: 6
+---
+
+FusionAuth validates user data in the User API, the Registration API, and the hosted registration and account pages. The hosted pages run the same checks as the APIs, plus the checks of any [custom form fields](#custom-form-fields). This page lists each check with the error code FusionAuth returns, and the checks FusionAuth leaves to you.
+
+## Error Codes
+
+An error code has the form `[code]field`, such as `[notEmail]user.email`. The API returns error codes in **`fieldErrors`**, keyed by the field name. For the response format, see [Errors](/docs/apis/errors).
+
+The hosted pages look up each error code in the theme messages and show the message next to the field. When a theme has no message for the full error code, the hosted pages fall back to the message for `[code]`, such as `[notEmail]`. To change a message, add the full error code to the theme messages. For more information, see [Theme Localization](/docs/theme/localization#messages).
+
+## Email Addresses
+
+FusionAuth trims and lowercases **`user.email`** before validation, and stores the lowercase value.
+
+| Check | Error code |
+|---|---|
+| The user has no email address, username, or phone number. FusionAuth returns the error for all three fields. | `[blank]user.email`, `[blank]user.username`, `[blank]user.phoneNumber` |
+| The address fails the format check. | `[notEmail]user.email` |
+| The address is longer than 191 characters. | `[tooLong]user.email` |
+| Another user in the tenant has the address. | `[duplicate]user.email` |
+| A locked account in the tenant has the address. | `[inactive]user.email` |
+| The domain of the address is in the **Blocked domains** list of the tenant. | `[blocked]user.email` |
+
+The format check accepts an address with exactly one `@` and the following parts:
+
+* A local part of 1 to 64 characters, with no leading, trailing, or consecutive dots.
+* A domain of ASCII letters, digits, hyphens, and dots, with at least one dot and at least one letter. The domain can't start with a hyphen or a dot. To use an internationalized domain name, send the ASCII form, such as `xn--bcher-kva.example`.
+
+The blocked domain check compares the full domain after the `@`, so blocking `example.com` doesn't block `mail.example.com`. Blocked domains require an Enterprise plan. For more information, see [Blocked domain settings](/docs/concepts/types/tenants#blocked-domain-settings).
+
+When the tenant allows child registrations, FusionAuth also checks the format of **`user.parentEmail`** and returns `[notEmail]user.parentEmail`. When the tenant requires a parent email address for a child, FusionAuth returns `[blank]user.parentEmail` for a missing address.
+
+## Usernames
+
+FusionAuth trims **`user.username`** before validation. FusionAuth has no character rules for usernames, so a username can contain spaces, `@`, and Unicode characters.
+
+| Check | Error code |
+|---|---|
+| The username is longer than 191 characters. | `[tooLong]user.username` |
+| Another user in the tenant has the username, in any case. | `[duplicate]user.username` |
+| A locked account in the tenant has the username. | `[inactive]user.username` |
+| CleanSpeak rejects the username. | `[moderationRejected]user.username` |
+
+FusionAuth stores the username with the case the user entered, and compares usernames without case. When the tenant has **Append unique suffix to usernames** turned on, FusionAuth skips the duplicate check and adds a suffix to a duplicate username. For more information, see [Username settings](/docs/concepts/types/tenants#username-settings). For CleanSpeak moderation, see [CleanSpeak Integration](/docs/users/cleanspeak).
+
+FusionAuth checks **`registration.username`** for length and moderation, and returns `[tooLong]registration.username` or `[moderationRejected]registration.username`.
+
+## Phone Numbers
+
+FusionAuth parses phone numbers with [libphonenumber](https://github.com/google/libphonenumber). When a number has no country code, FusionAuth treats the number as a US number, so `303-555-1212` becomes `+13035551212`. FusionAuth checks only that libphonenumber can parse the value. FusionAuth doesn't check that the number belongs to a real line, so FusionAuth accepts `123` and stores the value as `+1123`.
+
+FusionAuth handles the two phone number fields of a user differently:
+
+* **`user.phoneNumber`** is a login identifier. FusionAuth stores the number in E.164 format, and compares numbers in E.164 format, so `303-555-1212` and `+13035551212` count as the same number.
+* **`user.mobilePhone`** is a contact field. FusionAuth stores the number as the user entered the number, and doesn't check for duplicates.
+
+| Check | Error code |
+|---|---|
+| The phone number identity doesn't parse, or contains `@`. | `[invalidPhone]user.phoneNumber` |
+| Another user in the tenant has the phone number identity. | `[duplicate]user.phoneNumber` |
+| A locked account in the tenant has the phone number identity. | `[inactive]user.phoneNumber` |
+| The mobile phone number doesn't parse. | `[invalid]user.mobilePhone` |
+| The phone number of an SMS two-factor method doesn't parse. | `[invalid]user.twoFactor.methods.mobilePhone` |
+
+## Passwords
+
+The password rules of the tenant decide which password checks run. For the rules, see [Password settings](/docs/concepts/types/tenants#password-settings).
+
+| Check | Error code |
+|---|---|
+| The password is shorter than the minimum length. The default minimum is 8 characters, or 14 characters in FIPS mode. | `[tooShort]user.password` |
+| The password is longer than the maximum length. The maximum is 256 characters, or 50 characters for the bcrypt hashing scheme. | `[tooLong]user.password` |
+| The password doesn't have both upper case and lower case letters. | `[singleCase]user.password` |
+| The password has only letters and digits. | `[onlyAlpha]user.password` |
+| The password has no digit. | `[requireNumber]user.password` |
+| The password contains the email address of the user, without case. | `[containsEmail]user.password` |
+| The password contains the username of the user, without case. | `[containsUsername]user.password` |
+| The password contains the phone number of the user. | `[containsPhoneNumber]user.password` |
+| The user changed the password more recently than the minimum password age. | `[tooYoung]user.password` |
+| The password matches one of the previous passwords of the user. | `[previouslyUsed]user.password` |
+| The password and confirm password fields of the basic registration form don't match. | `[doNotMatch]user.password` |
+| Breached password detection finds the password. | `[breachedExactMatch]user.password`, `[breachedSubAddressMatch]user.password`, `[breachedPasswordOnly]user.password`, `[breachedCommonPassword]user.password` |
+
+The minimum password age and previous password checks run only when a user changes a password. The match mode of breached password detection decides which `breached` error codes FusionAuth returns. Breached password detection requires a Starter plan. For more information, see [Breached Password Detection](/docs/security/account-protection/breached-password-detection).
+
+FusionAuth skips the password rules for users from the [Import Users API](/docs/apis/users/import) and for users that a [Connector](/docs/users/provision/connectors) creates or updates. When the tenant has **Re-validate on login** turned on, FusionAuth checks the password rules at login. A password that fails the rules doesn't block the login. Instead, FusionAuth requires the user to change the password.
+
+## Other User Fields
+
+| Field | What FusionAuth checks | Error code |
+|---|---|---|
+| **`user.birthDate`** | The API requires the `YYYY-MM-DD` format. FusionAuth doesn't check for dates in the future or for an age range. | `[invalidJSON]` from the API, `[couldNotConvert]user.birthDate` on the hosted pages |
+| **`user.preferredLanguages`** | The list holds at most 20 locales. Each locale must be shorter than 24 characters. | `[tooMany]user.preferredLanguages`, `[invalid]user.preferredLanguages` |
+| **`user.timezone`** | The value must be a time zone Id, such as `America/Denver`. | `[invalidJSON]` |
+| **`user.imageUrl`** | The value must parse as a URI. FusionAuth doesn't check the scheme, so FusionAuth accepts `javascript:alert(1)`. Check the scheme before you render the URL. | `[invalidJSON]` |
+| **`user.legacyIdentifier`** | The value is at most 191 characters, and is unique in the tenant. | `[tooLong]user.legacyIdentifier`, `[duplicate]user.legacyIdentifier` |
+| **`user.firstName`**, **`user.middleName`**, **`user.lastName`**, **`user.fullName`** | FusionAuth trims whitespace, and doesn't check the length. With PostgreSQL, a name longer than 255 characters returns a `500` status code instead of a validation error. The basic registration form returns an error for a required name field that the user leaves empty. | `[blank]user.firstName`, and the same code for each name field |
+
+For the maximum length of each database column, see [Field Lengths](/docs/concepts/plans-and-limits/limitations#field-lengths). For the maximum size of **`user.data`** and **`registration.data`**, see [Data Field Sizes](/docs/concepts/plans-and-limits/limitations#data-field-sizes).
+
+## Custom Form Fields
+
+Advanced registration forms and self-service account forms run the checks of each Form Field. The error code ends with the key of the Form Field. In the following table, `user.data.favoriteColor` stands for the key of your Form Field.
+
+| Check | Error code |
+|---|---|
+| A required `email` or `string` field is empty. | `[blank]user.data.favoriteColor` |
+| A required field of another data type is empty. | `[missing]user.data.favoriteColor` |
+| The value isn't one of the options of a `checkbox`, `radio`, or `select` control. | `[invalid]user.data.favoriteColor` |
+| The value doesn't match the confirm field. | `[doNotMatch]user.data.favoriteColor` |
+| The value of an `email` field fails the [email format check](#email-addresses). | `[notEmail]user.data.favoriteColor` |
+| The value of a `phoneNumber` field doesn't parse. | `[invalid]user.data.favoriteColor` |
+| The value doesn't match the regular expression of the validator. | `[invalid]user.data.favoriteColor` |
+| The value doesn't convert to the data type, such as a `date` value outside `YYYY-MM-DD` format. | `[invalid]user.data.favoriteColor` |
+
+The regular expression must match the whole value, so `[0-9]+` rejects `abc123`. Add `.*` to the expression to match part of the value. For more information, see [Form Fields and Validation](/docs/users/register/advanced-registration-forms#form-fields-and-validation).
+
+On self-service account forms, a confirm field mismatch returns the error code for the confirm field instead, such as `[doNotMatch]confirm.user.data.favoriteColor`. A Form Field for a user field, such as `user.email` or `user.password`, also runs the checks for that user field.
+
+## Add Your Own Validation
+
+FusionAuth doesn't check that an email address receives mail, that a phone number belongs to a real line, or that a birth date fits an age range. Add the checks your application needs:
+
+* To check data on the server during hosted registration, write a [Self-Service Registration Validation lambda](/docs/lambdas/login/self-service-registration).
+* To check the format of a custom field, set a regular expression on the Form Field. For the options, see the [Form Fields API](/docs/apis/custom-forms/form-fields).
+* To check data in the browser before the user submits a form, add JavaScript to the theme. For phone numbers, the JavaScript version of [libphonenumber](https://github.com/google/libphonenumber) parses numbers the same way as FusionAuth. For a password example, see [Client-side Password Rule Validation](/docs/theme/advanced-themes/client-side-password-rule-validation).
+* To prove that a user owns an email address or a phone number, require verification. For more information, see [Verify Users](/docs/users/verify).

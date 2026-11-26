@@ -1,0 +1,68 @@
+---
+title: React
+htmlTitle: Match FusionAuth Themes to a React Application
+description: Learn how to make the FusionAuth hosted login pages match a React application.
+tags: react, next.js, server-side rendering, ssr, advanced theme, freemarker, css customization, login page styling
+---
+
+When your application uses React, including server-side rendering frameworks such as Next.js, you can style the [[hosted login pages]] to match the application. FusionAuth renders the hosted login pages from the FreeMarker templates in an [advanced theme](/docs/theme/advanced-themes). A theme holds templates, a stylesheet, and messages, so React components don't run in a theme.
+
+You have the following options:
+
+* Share the application's styles and markup with an advanced theme. The hosted login pages keep every FusionAuth login flow, such as multi-factor authentication, passkeys, and federated login.
+* Build the login pages in React with the Login API. Your application then builds the user interface for every login flow.
+
+## Share Your Application's Styles
+
+Before you start, you need the following:
+
+* An advanced theme. For more information, see [Create a Theme](/docs/theme/advanced-themes#create-a-theme).
+* An API key with `GET` and `PATCH` permissions for `/api/theme/`.
+* Node.js and the [FusionAuth CLI](https://github.com/FusionAuth/fusionauth-node-cli).
+
+To share the styles:
+
+<Steps>
+
+1. Download the theme with the FusionAuth CLI. Replace `<themeId>` and `<apiKey>` with the Id of the theme and the API key:
+
+   ```shell-session
+   npx fusionauth theme:download <themeId> -k <apiKey> -h http://localhost:9011
+   ```
+
+   The CLI writes the templates to `.ftl` files in the `tpl` directory, and the stylesheet to `tpl/stylesheet.css`.
+
+1. Add the application's CSS to the theme. Choose one of the following methods:
+
+   * Configure the React build to write the application's global CSS to `tpl/stylesheet.css`. FusionAuth includes the stylesheet in every hosted login page.
+   * Link to the stylesheet that the application already serves. Add a `link` tag to the `head` macro in `tpl/helpers.ftl`. The hosted login pages then pick up style changes without a theme upload, but the pages depend on the application's host.
+
+     ```html
+     <link rel="stylesheet" href="https://app.example.com/styles.css"/>
+     ```
+
+   Class names that a build generates, such as CSS Modules hashes, change between builds. In the templates, use global class names and CSS custom properties.
+
+1. Copy the markup of the application's layout into the templates. To get the HTML that a React component renders, view the source of a rendered page, or render the component with `renderToStaticMarkup` from `react-dom/server`. Put shared elements, such as the header and footer, in the `header` and `footer` macros in `tpl/helpers.ftl`.
+
+   Keep the `form` tags and the FreeMarker macros, such as `[@helpers.oauthHiddenFields/]` and `[@helpers.input]`. The forms post the hidden fields that FusionAuth needs to complete the login. For more information, see [Themes Helper Macros](/docs/theme/advanced-themes/helpers).
+
+1. When the default FusionAuth styles conflict with the application's styles, remove the `fusionauth-hosted.css` `link` tag from the `head` macro in `tpl/helpers.ftl`.
+
+1. Upload the theme:
+
+   ```shell-session
+   npx fusionauth theme:upload <themeId> -k <apiKey> -h http://localhost:9011
+   ```
+
+   During development, run `theme:watch` with the same options instead. The CLI then uploads each change to a file in the `tpl` directory.
+
+1. Navigate to <Breadcrumb>Customization -> Themes</Breadcrumb>, choose the theme, and click <IconButton icon="view" /> to preview the hosted login pages.
+
+</Steps>
+
+When the application uses Tailwind CSS, the build can scan the templates for class names. For more information, see [Tailwind CSS](/docs/theme/advanced-themes/tailwind).
+
+## Build the Login Pages in React
+
+When the login pages must use the application's React components, skip the hosted login pages and call the Login API from the application. The application then receives the user's credentials and must protect the credentials. The application also needs a user interface for each login flow that the hosted login pages would handle, such as multi-factor authentication, passkeys, and federated login. For more information, see [Build a Login Page with the Login API](/docs/authentication/login-api).

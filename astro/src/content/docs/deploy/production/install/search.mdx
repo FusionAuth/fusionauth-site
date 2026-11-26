@@ -1,123 +1,126 @@
 ---
 title: Install a Search Engine
-description: Learn how to install a search engine for your FusionAuth instance.
-tags: fusionauth search, elasticsearch, opensearch, search configuration, full-text search
+htmlTitle: Install OpenSearch for FusionAuth
+description: Learn how to install OpenSearch and connect FusionAuth to OpenSearch for advanced user and entity search.
+tags: fusionauth search, elasticsearch, opensearch, search engine, search configuration, install, reindex
+relatedPinFirst: users/search
 order: 5
 ---
 import ElasticsearchVersion from 'src/content/docs/_shared/_elasticsearch-version.mdx';
 import ElasticsearchRam from 'src/content/docs/_shared/_elasticsearch-ram.mdx';
 
-This page explains how to install a full-text search engine for your FusionAuth instance. To follow these instructions, you must first configure Docker and Docker Compose.
+FusionAuth doesn't require a search engine service. Install OpenSearch when you need a feature that the database search engine lacks, such as Elasticsearch queries. For the full list, see [Compare the Search Engines](/docs/users/search#compare-the-search-engines).
+
+The [Docker install](/docs/get-started/install) already includes OpenSearch. Follow this guide to add OpenSearch to an install without a search engine, such as a package install.
+
+## Prerequisites
+
+* A FusionAuth instance.
+* Docker and Docker Compose on the host that runs OpenSearch. To install OpenSearch without Docker, see the [OpenSearch installation guide](https://docs.opensearch.org/latest/install-and-configure/).
 
 <ElasticsearchVersion />
 
 <ElasticsearchRam />
 
+## Install OpenSearch
+
 <Steps>
-1. Create a directory named `opensearch`, and use our template `docker-compose.yml` file:
+1. Create a directory named `opensearch`, and save the following file as `opensearch/docker-compose.yml`:
 
-			```yaml
-			---
-			services:
-			  opensearch-node1:
-			    image: opensearchproject/opensearch:2
-			    container_name: opensearch-node1
-			    environment:
-			      - cluster.name=opensearch-cluster
-			      - node.name=opensearch-node1
-			      - discovery.seed_hosts=opensearch-node1,opensearch-node2
-			      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2
-			      - bootstrap.memory_lock=true  # along with the memlock settings below, disables swapping
-			      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m  # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
-			      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}    # Sets the demo admin user password when using demo configuration, required for OpenSearch 2.12 and higher
-			    ulimits:
-			      memlock:
-			        soft: -1
-			        hard: -1
-			      nofile:
-			        soft: 65536  # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
-			        hard: 65536
-			    volumes:
-			      - opensearch-data1:/usr/share/opensearch/data
-			    ports:
-			      - 9200:9200
-			      - 9600:9600  # required for Performance Analyzer
-			    networks:
-			      - opensearch-net
-			  opensearch-node2:
-			    image: opensearchproject/opensearch:2
-			    container_name: opensearch-node2
-			    environment:
-			      - cluster.name=opensearch-cluster
-			      - node.name=opensearch-node2
-			      - discovery.seed_hosts=opensearch-node1,opensearch-node2
-			      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2
-			      - bootstrap.memory_lock=true
-			      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
-			      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
-			    ulimits:
-			      memlock:
-			        soft: -1
-			        hard: -1
-			      nofile:
-			        soft: 65536
-			        hard: 65536
-			    volumes:
-			      - opensearch-data2:/usr/share/opensearch/data
-			    networks:
-			      - opensearch-net
-			  opensearch-dashboards:
-			    image: opensearchproject/opensearch-dashboards:2
-			    container_name: opensearch-dashboards
-			    ports:
-			      - 5601:5601
-			    expose:
-			      - '5601'
-			    environment:
-			      OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]'
-			    networks:
-			      - opensearch-net
+   ```yaml title="A single-node OpenSearch install for development."
+   services:
+     search:
+       image: opensearchproject/opensearch:2
+       environment:
+         discovery.type: single-node
+         # development only, see Run OpenSearch in Production
+         DISABLE_INSTALL_DEMO_CONFIG: "true"
+         DISABLE_SECURITY_PLUGIN: "true"
+         bootstrap.memory_lock: "true"
+         OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+       ulimits:
+         memlock:
+           soft: -1
+           hard: -1
+         nofile:
+           soft: 65536
+           hard: 65536
+       volumes:
+         - search_data:/usr/share/opensearch/data
+       ports:
+         - 9200:9200
+       restart: unless-stopped
 
-			volumes:
-			  opensearch-data1:
-			  opensearch-data2:
-
-			networks:
-			  opensearch-net:
-
-			```
-
-			For installation instructions without using Docker Compose, see the [OpenSearch Install and Configure guide](https://docs.opensearch.org/latest/install-and-configure/) for your platform).
-
-1. To download, install, and start your OpenSearch instance, run the following command:
-
-   ```shell-session
-   docker-compose up
+   volumes:
+     search_data:
    ```
 
-   It may take a few minutes to download and install dependencies.
+   The template turns off the OpenSearch security plugin, so anyone who can reach port `9200` can read your user data. Use the template on a development machine only.
 
-1. Once the service starts, you can find your OpenSearch Dashboard at [http://localhost:5601/](http://localhost:5601/).
+1. Start OpenSearch:
 
-1. Once you have OpenSearch running, stop FusionAuth -- we'll be editing the configuration file.
+   ```shell-session
+   docker compose -f opensearch/docker-compose.yml up -d
+   ```
 
-1. Locate your FusionAuth configuration file named `fusionauth.properties` in the [documented location](/docs/deploy/production/configuration#configuration-file). Make the following changes:
+1. Confirm that OpenSearch responds:
 
-   * Set `fusionauth-app.search-servers` to the URL of your OpenSearch instance:
+   ```shell-session
+   curl http://localhost:9200
+   ```
 
-     ```plaintext
-     fusionauth-app.search-servers=http://localhost:9200
-     ```
-
-   * Set `fusionauth-app.search-engine-type` to `elasticsearch` (this value works for both Elasticsearch and OpenSearch instances):
-
-     ```plaintext
-     fusionauth-app.search-engine-type=elasticsearch
-     ```
-
-1. Restart FusionAuth to test your changes.
+   OpenSearch returns a JSON document with the cluster name and the version number.
 </Steps>
 
-<Aside type="note">
-When configuring multiple Elasticsearch nodes, you will need to modify the service discovery settings in the shipped `elasticsearch.yml`. See [Elasticsearch's Discovery and cluster formation settings](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-discovery-settings.html) documentation in configuring multiple nodes.
-</Aside>
+## Connect FusionAuth
+
+<Steps>
+1. Stop FusionAuth. For instructions, see [Start and Stop FusionAuth](/docs/deploy/production/start-and-stop).
+
+1. Set `search.type` to `elasticsearch`, and set `search.servers` to the URL of OpenSearch. The `elasticsearch` type works with both OpenSearch and Elasticsearch.
+
+   <Tabs>
+   <TabItem label="Configuration file">
+   Add the following lines to `fusionauth.properties`:
+
+   ```properties
+   search.type=elasticsearch
+   search.servers=http://localhost:9200
+   ```
+
+   For the location of the file, see [Configuration File](/docs/deploy/production/configuration#configuration-file).
+   </TabItem>
+   <TabItem label="Environment variables">
+   Set the following environment variables for the FusionAuth process:
+
+   ```shell
+   SEARCH_TYPE=elasticsearch
+   SEARCH_SERVERS=http://localhost:9200
+   ```
+
+   When FusionAuth runs in a Docker container, `localhost` points to the container. Use a host name that the container can reach, such as the Docker Compose service name `search` when both services share a Compose file.
+   </TabItem>
+   </Tabs>
+
+   For every search setting, see the [Configuration Reference](/docs/deploy/production/configuration).
+
+1. Start FusionAuth.
+
+1. In the Admin UI, navigate to <Breadcrumb>System -> About</Breadcrumb>. The **Search** row shows `OpenSearch` and the OpenSearch version, such as `OpenSearch 2.19.8`.
+
+1. When the instance already has Users or Entities, reindex. Navigate to <Breadcrumb>System -> Reindex</Breadcrumb>, set **Select an index** to `User`, type `REINDEX` in **Confirm**, and click <Breadcrumb>Save</Breadcrumb>. When the instance has Entities, repeat with `Entity`. FusionAuth copies existing Users and Entities from the database to OpenSearch. Until the reindex finishes, searches miss existing Users and Entities. For more information, see [Reindex](/docs/users/search#reindex).
+</Steps>
+
+## Run OpenSearch in Production
+
+The template on this page has no security and runs one node. Before you run OpenSearch in production, make the following changes:
+
+* Turn on the OpenSearch security plugin, with TLS and a password. Put the credentials in the URL: `search.servers=https://fusionauth:password@search.example.com:9200`. FusionAuth stores the URL in plain text, so protect the configuration the same way you protect the database password.
+* Use a TLS certificate that FusionAuth trusts. FusionAuth rejects the self-signed demo certificate that OpenSearch generates, and stays in Maintenance Mode with a `PKIX path building failed` error in the log. To trust a private certificate authority, see [Custom Certificate Authority](/docs/deploy/harden#custom-certificate-authority).
+* Run three or more nodes, so the cluster survives the loss of a node. For more information, see the [OpenSearch cluster formation guide](https://docs.opensearch.org/latest/tuning-your-cluster/).
+* Block access to OpenSearch from the internet. Only FusionAuth nodes need to reach OpenSearch.
+* Give OpenSearch enough disk space. OpenSearch makes the index read-only when the disk runs low. For sizing, see [System Requirements](/docs/deploy/production/system-requirements#search-engine).
+
+A managed service, such as [Amazon OpenSearch Service](https://aws.amazon.com/opensearch-service/), handles the nodes, TLS, and backups for you.
+
+FusionAuth can rebuild the index from the database at any time, so you don't need to back up OpenSearch.

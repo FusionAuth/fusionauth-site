@@ -1,160 +1,141 @@
 ---
 title: Gate Users Until They Verify Their Phone
-description: Learn how to gate users' phone numbers until they have been verified.
+description: Learn how to block users from finishing login until they verify their phone number.
 tags: phone verification, gate accounts, verify phone, sms verification, user verification gating
 ---
 import CommonQuestionsGatingIntro from 'src/content/docs/users/verify/_common-questions-gating-intro.mdx';
 import CommonQuestionsGatingExistingUsers from 'src/content/docs/users/verify/_common-questions-gating-existing-users.mdx';
 import CommonQuestionsGatingImportedUsers from 'src/content/docs/users/verify/_common-questions-gating-imported-users.mdx';
 import CommonQuestionsGatingEmailAndRegistration from 'src/content/docs/users/verify/_common-questions-gating-email-and-registration.mdx';
-import TroubleshootingGatingLinks from 'src/content/docs/users/verify/_troubleshooting-gating-links.mdx';
-import TroubleshootingGatingEmailTemplate from 'src/content/docs/users/verify/_troubleshooting-gating-email-template.mdx';
-import TroubleshootingGatingExternalIdentifierTimeouts from 'src/content/docs/users/verify/_troubleshooting-gating-external-identifier-timeouts.mdx';
 
-As of version `1.59.0`, FusionAuth can be configured to gate users' accounts until their phone numbers have been verified. While users can successfully start the login process, they will be blocked from completing it until they have verified possession of the phone number they registered with.
+FusionAuth `1.59.0` and later can gate a user's account until the user verifies a phone number. A gated user can start the login process. The user can't finish login until the user proves ownership of the phone number from registration.
 
-To enable phone verification gating, do the following:
+To turn on phone verification gating:
 
-- Configure a messenger
-- Configure the tenant with your messenger
-- Configure the tenant to enable phone gating
-- Optionally customize the phone verification template
-- Enable [[self-service registration]]
-- Configure your application with a [[redirect URL]]
-
-Let's step through each of these, but first, there are some required prerequisites.
+1. Configure a [[Messenger::messenger]].
+1. Select the messenger in the Tenant.
+1. Turn on phone verification gating in the Tenant.
+1. When you want to change the verification message, customize the phone verification template.
+1. Turn on [[self-service registration]] in the Application.
+1. Add a [[redirect URL]] to the Application.
+1. Test the gate.
 
 ## Prerequisites
 
 <PlanBlurb plan="starter" />
 
-This tutorial assumes you are running FusionAuth version 1.59.0 or greater. If you aren't, head on over to the [installation guide](/docs/get-started/install) or the [update guide](/docs/update) to move to a version with support for this feature.
+You need the following:
 
-This tutorial also assumes you have a paid plan and valid license. If you need to buy a plan, please visit the [pricing page](/pricing). If you need to activate your instance, see [Licensing](/docs/concepts/plans-and-limits/licensing).
+* FusionAuth `1.59.0` or later. To install FusionAuth, see [Install](/docs/get-started/install). To update an instance, see [Update FusionAuth](/docs/update).
+* A paid plan and a license. To buy a plan, see [Pricing](/pricing). To activate an instance, see [Licensing](/docs/concepts/plans-and-limits/licensing).
+* A Twilio account. This guide uses a Twilio Messenger. To use another SMS provider, create a [Generic Messenger](/docs/messengers/generic-messenger) instead.
 
-Although you do not have to use Twilio to send messages, this tutorial assumes you will use Twilio as your SMS messenger. If you want to use a different messenger, you can do so by creating a generic messenger instead of a Twilio messenger.
+## Gating, Verification, and Pre-Verification
 
-### Gating vs Verification vs Pre-Verification
+Phone verification is available on every plan. Gating requires a paid plan.
 
-<Aside type="note">
-Phone Verification is not a premium feature; gating is a premium feature. When you enable gating, users cannot receive a JWT to complete the authentication workflow until they verify their phone number.
-</Aside>
+Phone verification updates **`verified`** and **`verifiedReason`** on the user's phone number identity. Your application code can check these fields and block an unverified user.
 
-FusionAuth ships with phone verification flows. These verification flows update the `verified` and `verifiedReason` attributes on a user identity. You have the option to gate the user (or prevent them from "continuing" auth) based on these attributes when writing your application and integration code.
+With gating, FusionAuth blocks the unverified user instead. The [[hosted login pages]] stop the user after login, and FusionAuth issues no JWT until the user verifies the phone number. Gating applies after FusionAuth creates the user.
 
-With paid FusionAuth plans, you can elect to have _FusionAuth_ "gate" your users based on these verification attributes. Gating in this sense, would prevent the user from authenticating further or obtaining a JWT and _would be enforced by the FusionAuth User Interface_. Gating happens *after* user creation.
-
-[Pre-verification](/docs/users/verify/identity-pre-verification-using-phone) applies the same concept, but user identities must be verified *before* user creation.
+[Pre-verification](/docs/users/verify/identity-pre-verification-using-phone) requires users to verify a phone number before FusionAuth creates the user.
 
 ## Configure the Messenger
 
-Log in to the FusionAuth Admin UI. You could do all of this configuration with the API or kickstart, but for this tutorial you'll use the UI.
+This guide uses the Admin UI. You can also configure everything with the API or with [[Kickstart]].
 
-Navigate to <Breadcrumb>Settings -> Messengers</Breadcrumb> and then click <Breadcrumb>Add Twilio messenger</Breadcrumb> and enter your Twilio account information.
+Log in to the Admin UI. Navigate to <Breadcrumb>Settings -> Messengers</Breadcrumb>, click <Breadcrumb>Add Twilio messenger</Breadcrumb>, and enter your Twilio account details. For more information, see [Twilio Messenger](/docs/messengers/twilio-messenger).
 
-## Configure the Tenant with the Messenger
+## Select the Messenger in the Tenant
 
-Navigate to <Breadcrumb>Tenants -> Your Tenant</Breadcrumb> and then select the <Breadcrumb>Identities</Breadcrumb> tab. Scroll to the <Breadcrumb>Messenger settings</Breadcrumb> section. Configure this with the messenger you just created.
+Navigate to <Breadcrumb>Tenants -> Your Tenant</Breadcrumb> and select the <Breadcrumb>Identities</Breadcrumb> tab. In the <Breadcrumb>Messenger settings</Breadcrumb> section, select the messenger you created.
 
 <Screenshot id="manage-verification-tenant-messenger" url="/admin/tenant/edit/00000000-0000-0000-0000-f40000000001#identities" showHash height={800} alt="The tenant Identities tab with a messenger selected." />
 
-## Enable Phone Verification Gating
+## Turn On Phone Verification Gating
 
-- Under Phone, enable **Verify identity**.
-- Choose your message template. The default template is `Phone Verification`, and that will work fine for this tutorial.
-- Update the **Verification strategy**. This can be either `ClickableLink` or `FormField`. The former sends an SMS message with a link to verify the user's phone number. The latter sends a code which the user will provide to FusionAuth. For this tutorial, keep the default value of `FormField`.
-- Ensure that the **Unverified behavior** value is `Gated`.
+On the same <Breadcrumb>Identities</Breadcrumb> tab, configure the phone settings:
 
-After these steps, you should end up with a configuration screen that looks like this:
+1. Turn on **Verify identity**.
+1. Set **Verification template**. The default `Phone Verification` template works for this guide.
+1. Set **Verification strategy**. `ClickableLink` sends an SMS message with a link that verifies the phone number. `FormField` sends a code that the user enters in FusionAuth. This guide uses the default, `FormField`.
+1. Set **Unverified behavior** to `Gated`.
+
+The phone settings look like the following:
 
 <Screenshot id="manage-verification-tenant-phone-settings" url="/admin/tenant/edit/00000000-0000-0000-0000-f40000000001#identities" showHash height={1300} alt="The tenant Identities tab with gated phone verification." />
 
-Make sure you save the configuration.
+Save the Tenant.
 
 ## Customize the Phone Verification Template
 
-Navigate to <Breadcrumb>Customizations -> Message Templates</Breadcrumb>. Edit the `Phone Verification` template by clicking on the blue <Breadcrumb>Edit</Breadcrumb> button.
+When you want to change the verification message, navigate to <Breadcrumb>Customizations -> Message Templates</Breadcrumb>. Click <IconButton icon="edit" /> on the `Phone Verification` template.
 
-Modify the text template as desired and then save. You can also localize the messages.
+Change the text template, then save the template. You can also localize the message. For more information, see [Message Templates](/docs/messengers/message-templates).
 
 <Screenshot id="manage-verification-phone-template" url="/admin/message/template/edit/00000000-0000-0000-0000-f40000000013" height={1100} alt="The Phone Verification message template." />
 
 ## Configure the Application
 
-Navigate to <Breadcrumb>Applications</Breadcrumb>. Edit your application by clicking on the blue <Breadcrumb>Edit</Breadcrumb> button.
+Navigate to <Breadcrumb>Applications</Breadcrumb> and click <IconButton icon="edit" /> on your Application.
 
-Enable self service registration by selecting the <Breadcrumb>Registration</Breadcrumb> tab, and then scrolling to the <Breadcrumb>Self service registration</Breadcrumb> section.
+On the <Breadcrumb>Registration</Breadcrumb> tab, go to the <Breadcrumb>Self service registration</Breadcrumb> section. Turn on self-service registration, and set **Login type** to `Phone`. Choose the fields that the registration form displays and requires.
 
-<Aside type="note">
-You can create a user with an unverified phone number in other ways than self service registration. However, self service registration is the simplest way to create a user without a verified phone number.
-</Aside>
-
-Enable self service registration and configure the displayed and required fields as desired (in particular, choose `Phone` for the `Login type`).
+Self-service registration is the simplest way to create a user with an unverified phone number. Other ways of creating users also work with the gate.
 
 <Screenshot id="manage-verification-application-self-service-phone" url="/admin/application/edit?applicationId=00000000-0000-0000-0000-f40000000002&tenantId=00000000-0000-0000-0000-f40000000001#registration" crop="#screenshot-band" cropPadding={0} alt="The application Registration tab with self-service registration enabled for phone numbers.">
   <Highlight selector="#selfRegistrationType-form-row" />
   <Highlight selector="[data-hl='login-type-phone']" />
 </Screenshot>
 
-Next, navigate to the <Breadcrumb>OAuth</Breadcrumb> tab. Enable the `Authorization Code` grant.
+On the <Breadcrumb>OAuth</Breadcrumb> tab, turn on the `Authorization Code` grant. Add a URL to **Authorized redirect URLs**. Any valid URL works for this guide. In production, the code at the redirect URL must exchange the authorization code for a token.
 
-In addition, ensure you have entered a valid URL in the **Authorized redirect URLs** field. (The value of this redirect URL doesn't really matter for this tutorial. But for production use, ensure the code at that endpoint can exchange an authorization code for a token.)
+Save the Application. FusionAuth returns to the list of Applications.
 
-Save the application configuration. You'll be returned to the list of applications.
-
-Click on the <Breadcrumb>View</Breadcrumb> button of your application to see the details of your application.
+Click <IconButton icon="view" /> on your Application to see the Application details.
 
 <Screenshot id="manage-verification-application-details" url="/admin/application/" height={1700} alt="The application details dialog with the login and registration URLs highlighted.">
   <Highlight selector="[data-hl='verification-urls']" />
 </Screenshot>
 
-Look for the **Registration URL**. It'll be something like `https://local.fusionauth.io/oauth2/register?client_id=85a03867-dccf-4882-adde-1a79aeec50df&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect`. Copy that value as you'll use it below.
+Copy the **Registration URL** and the **OAuth IdP login URL**. The Registration URL looks like `https://local.fusionauth.io/oauth2/register?client_id=85a03867-dccf-4882-adde-1a79aeec50df&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect`.
 
-At the same time, find the **OAuth IdP login URL**, and copy that as well.
+## Test the Gate
 
-## Test It Out
+Register in a different browser or a private window, so your Admin UI session doesn't interfere with the registration:
 
-Now, test out the functionality. Register a new account. Make sure to use a different browser or incognito mode so that the admin account you logged in with while configuring FusionAuth doesn't interfere with new user registration.
+1. Open the Registration URL. Fill out the form with a valid phone number. After registration, FusionAuth sends a message that asks you to verify the phone number. The browser shows the phone verification gate page:
 
-Visit the registration URL copied above. You'll be prompted to register. Fill out the form with a valid phone number. After registration is complete, you'll receive a message prompting you to verify the phone number.
+    <Screenshot id="manage-verification-phone-gate" url="/oauth2/authorize?client_id=00000000-0000-0000-0000-f40000000002&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid" crop=".bg-panel-bg" alt="The phone verification gate page for the form field strategy." />
 
-This user account will be gated and unable to completely log in if you have registered but not yet verified the phone number. In your browser where you registered, you'll see a screen similar to below:
+1. Open a different browser, not a new window of the same browser. Open the OAuth IdP login URL, and log in with the phone number and password of the new user. FusionAuth shows the same phone verification gate page.
+1. In the Admin UI, open the new user. A question mark next to the phone number shows that the phone number isn't verified.
 
-<Screenshot id="manage-verification-phone-gate" url="/oauth2/authorize?client_id=00000000-0000-0000-0000-f40000000002&redirect_uri=https%3A%2F%2Fexample.com&response_type=code&scope=openid" crop=".bg-panel-bg" alt="The phone verification gate page for the form field strategy." />
+    <Screenshot id="manage-verification-phone-unverified-user" url="/admin/user/manage/00000000-0000-0000-0000-f40000000042" width={1600} alt="The user details page with an unverified phone number.">
+      <Highlight selector="[data-hl='identity']" />
+    </Screenshot>
 
-To test the gating, open a different browser (not a window, but an entirely different browser) and visit the login URL copied above. Enter the phone number and password for the user you just registered.
+1. On the gate page, enter the code from the message. FusionAuth finishes the login and redirects to the redirect URL.
 
-You'll be sent to the same phone verification gate page.
+FusionAuth issues no JWT until the user verifies the phone number, whichever API or hosted login page the user logs in with. Until then, the user sees the gate page at every login. When your application logs users in with the [Login API](/docs/apis/login), the response status code shows that the user hasn't verified the phone number.
 
-No matter which API or hosted login page you use, no JWT will be issued until the user has been verified. The user will continue to see the verification prompt when they log in until then.
-
-If an API is being used to authenticate the user, the API will return a status code indicating phone verification has not yet occurred. Please see the [Login API](/docs/apis/login) for more details.
-
-If you view the user in the Admin UI, you'll see a question mark next to their phone number. This indicates that their phone number has not yet been verified.
-
-<Screenshot id="manage-verification-phone-unverified-user" url="/admin/user/manage/00000000-0000-0000-0000-f40000000042" width={1600} alt="The user details page with an unverified phone number.">
-  <Highlight selector="[data-hl='identity']" />
-</Screenshot>
-
-Once you have verified the phone number by entering the code from the message, you can now log in and will be sent to the configured redirect URL.
+To make the gate page match your application, customize your theme. For more information, see [Themes](/docs/theme).
 
 ## The User Object
 
-The user object changes before, during, and after the phone verification occurs. Let's look at the JSON.
+FusionAuth updates the phone number identity of the User during verification.
 
-If a user is created and phone verification is disabled, the verified attribute of the identity object will be `false` with a reason of `Disabled`.
+When phone verification is off at user creation, **`verified`** is `false` and **`verifiedReason`** is `Disabled`:
 
 <JSON title="User Object With Phone Verification Turned Off Initially JSON" src="registration-gate/user-phone-verification-turned-off-initially.json" />
 
-If a user is created while phone verification is enabled, the verified attribute of the identity object will be `false` with a reason of `Pending`
+When phone verification is on at user creation, **`verified`** is `false` and **`verifiedReason`** is `Pending`:
 
 <JSON title="User Object With Phone Verification Turned On Initially JSON" src="registration-gate/user-phone-verification-turned-on-initially.json" />
 
-Naturally, the user's phone number identity will change to `verified: true` with `verifiedReason: "Completed"` once the user verifies their phone number.
+After the user verifies the phone number, **`verified`** is `true` and **`verifiedReason`** is `Completed`.
 
-<Aside type="note">
-Users imported through the Import API will have whatever attributes are initially imported regardless of verification or gate settings.
-</Aside>
+The [Import Users API](/docs/apis/users/import) keeps the imported verification values, whatever the verification and gate settings.
 
 ## Common Questions
 
@@ -174,33 +155,10 @@ Users imported through the Import API will have whatever attributes are initiall
 
 ## Troubleshooting Phone Verification
 
-### Links Emailed to Users Don't Function As Expected
+### Verification Links and Codes Don't Work
 
-<TroubleshootingGatingLinks />
-
-#### Check the Email Template
-
-<TroubleshootingGatingEmailTemplate />
-
-#### Check External Identifier Timeouts
-
-<TroubleshootingGatingExternalIdentifierTimeouts />
-
-### Links Sent to Users Don't Function As Expected
-
-Users cannot verify their phone number. The link or code does not work (it is expired or there is some other error).
-
-#### Check External Identifier Timeouts
-
-Ensure your external identifier timeouts are appropriate. Reasonable defaults are set, but they can be adjusted (<Breadcrumb>Tenants -> Advanced Tab -> External identifier durations</Breadcrumb>), with particular attention paid to `Phone Verification` duration.
+When a link or code from the verification message has expired, check the external identifier durations. Navigate to <Breadcrumb>Tenants -> Your Tenant -> Advanced</Breadcrumb>. In the <Breadcrumb>External identifier durations</Breadcrumb> section, change **Phone verification**. FusionAuth sets a default duration.
 
 <Screenshot id="manage-verification-tenant-phone-timeout" url="/admin/tenant/edit/30663132-6464-6665-3032-326466613934#advanced" showHash height={1000} alt="The tenant Advanced tab with the phone verification duration highlighted.">
   <Highlight selector="#tenant_externalIdentifierConfiguration_phoneVerificationIdTimeToLiveInSeconds-form-row" />
 </Screenshot>
-
-## Next Steps
-
-Now that you've successfully set up gated phone verification, take the next steps to integrate this functionality into your application:
-
-- Discover how to [modify your theme](/docs/theme) to make the phone verification gate pages look like your application.
-- Learn more about [message templates](/docs/email) and how to customize them.

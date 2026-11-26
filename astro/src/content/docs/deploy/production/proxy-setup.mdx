@@ -174,6 +174,68 @@ If you also want a `Content-Security-Policy`, deploy it as `Content-Security-Pol
 
 When running behind a proxy, FusionAuth uses the `X-Forwarded-For` header to resolve the client's IP address. To prevent man-in-the-middle attacks or IP spoofing via the `X-Forwarded-For` header, FusionAuth allows you to specify a list of trusted proxies. See the [networking configuration](/docs/deploy/harden/networking) section for more information.
 
+## Terminate TLS at FusionAuth
+
+When you self-host FusionAuth without a proxy, FusionAuth can serve HTTPS directly. When a proxy terminates TLS and you also want the connection from the proxy to FusionAuth encrypted, point the proxy at the FusionAuth HTTPS port. The proxy still sets the headers in [Headers To Set](#headers-to-set).
+
+FusionAuth serves HTTPS on port `9013` by default. The HTTP port, `9011` by default, stays open when you enable HTTPS. To force clients onto HTTPS, block port `9011` at your firewall.
+
+To enable HTTPS:
+
+<Steps>
+
+1. Get a certificate with an RSA private key. FusionAuth doesn't accept EC keys, and fails to start with one. Some certificate authorities issue EC keys by default. With Certbot, add `--key-type rsa` to request an RSA key.
+
+1. Make sure the private key is in PKCS#8 PEM format, wrapped in a `-----BEGIN PRIVATE KEY-----` block. When the key starts with `-----BEGIN RSA PRIVATE KEY-----`, convert the key:
+
+   ```shell-session
+   openssl pkcs8 -topk8 -nocrypt -in privkey.pem -out fusionauth-key.pem
+   ```
+
+1. Put the server certificate and every intermediate certificate in one PEM file. Leave out the root certificate. Certbot writes this file as `fullchain.pem`.
+
+1. Set the HTTPS properties in `fusionauth.properties`:
+
+   ```ini title="fusionauth.properties"
+   fusionauth-app.https.enabled=true
+   fusionauth-app.https.port=9013
+   fusionauth-app.https.certificate-file=/usr/local/fusionauth/config/fullchain.pem
+   fusionauth-app.https.private-key-file=/usr/local/fusionauth/config/fusionauth-key.pem
+   ```
+
+   In Docker, set the properties as environment variables, mount the files, and publish the HTTPS port:
+
+   ```yaml title="docker-compose.yml"
+   services:
+     fusionauth:
+       environment:
+         FUSIONAUTH_APP_HTTPS_ENABLED: "true"
+         FUSIONAUTH_APP_HTTPS_CERTIFICATE_FILE: /usr/local/fusionauth/certs/fullchain.pem
+         FUSIONAUTH_APP_HTTPS_PRIVATE_KEY_FILE: /usr/local/fusionauth/certs/fusionauth-key.pem
+       ports:
+         - 443:9013
+       volumes:
+         - ./certs:/usr/local/fusionauth/certs:ro
+   ```
+
+   To pass the PEM content instead of file paths, set **fusionauth-app.https.certificate** and **fusionauth-app.https.private-key**. For every HTTPS property, see the [Configuration Reference](/docs/deploy/production/configuration).
+
+1. Restart FusionAuth. When FusionAuth can't read or parse the certificate or the key, FusionAuth fails to start and logs the error.
+
+1. Check the HTTPS port with the [System Status API](/docs/apis/system/retrieve-system-status):
+
+   ```shell-session
+   curl -v https://auth.example.com:9013/api/status
+   ```
+
+   The response shows your certificate in the TLS handshake. With the Docker example, use port `443`.
+
+</Steps>
+
+FusionAuth reads the certificate and the key only at startup. When you renew the certificate, restart FusionAuth to load the new certificate.
+
+Use FusionAuth `1.50.0` or later for HTTPS. Earlier versions have TLS bugs that make some HTTPS requests hang or fail.
+
 ## Troubleshooting
 
 <ProxyTroubleshooting />

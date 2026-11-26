@@ -4,6 +4,7 @@ description: Learn the minimum system requirements required to install and run F
 tags: system requirements, hardware requirements, memory requirements, cpu requirements, operating system
 order: 1
 ---
+import PostgreSQLVersions from 'src/content/docs/deploy/production/_postgresql-versions.mdx';
 import ElasticsearchVersion from 'src/content/docs/_shared/_elasticsearch-version.mdx';
 import ElasticsearchRam from 'src/content/docs/_shared/_elasticsearch-ram.mdx';
 import HostsToAllowNetworkAccessFor from 'src/content/docs/_shared/_hosts-to-allow-network-access.mdx';
@@ -55,7 +56,7 @@ If you have memory lying around, feel free to throw more at it - but in a multi-
 This memory is required for the FusionAuth application. Other programs as well as the operating system take memory too. If you are going to run another application on the same server or a local database, increase your memory appropriately.
 </Aside>
 
-If you intend to run Elasticsearch and FusionAuth on the same host you will need to ensure the host has adequate memory for both services and ensure you have adequate disk space for the Elasticsearch index to be stored.
+When you run a search engine on the same host as FusionAuth, give the host enough memory and disk space for both services. For more information, see [Search Engine](#search-engine).
 
 Considerations that may require a larger amount of memory:
 
@@ -76,7 +77,7 @@ When using Advanced Threat Detection with version 1.47.0 or after, you can follo
 
 The minimum disk space for a compute node (that is nodes that are running `fusionauth-app`) required to run FusionAuth can generally be minimal. We recommend providing compute nodes with between `10GB` and `50GB` of disk space. The `fusionauth-app` installation is only a few hundred megabytes and the operating system is usually on a gigabyte or two. Therefore, you only need to provide enough space for logging and operations performed on the server.
 
-This recommendation assumes that you aren't running `fusionauth-search` on the node and leveraging Elasticsearch. If you intend to use Elasticsearch, please see the disk space recommendations below.
+This recommendation assumes that the node doesn't also run a search engine. For search engine disk space, see [Search Engine Disk Space](#search-engine-disk-space).
 
 ## Compute CPU
 
@@ -89,15 +90,17 @@ The CPU required for compute nodes (that is nodes that are running `fusionauth-a
 
 ## Database
 
-Recent versions of FusionAuth require PostgreSQL 14 or newer. FusionAuth versions older than `1.43.0` do not support PostgreSQL 15 or newer.
+<PostgreSQLVersions />
 
-You can also run FusionAuth with MySQL 8.0 or newer using MySQL Connector. MariaDB and Percona may also work. However, FusionAuth only tests with PostgreSQL; for the best performance and least chance of issues, use PostgreSQL. Non-PostgreSQL instances of FusionAuth cannot migrate to FusionAuth Cloud.
+FusionAuth also runs on MySQL 8.0 or newer with MySQL Connector/J. MariaDB and Percona may also work. FusionAuth tests only with PostgreSQL, so use PostgreSQL for the best performance and the fewest issues. You can't migrate a FusionAuth instance that uses another database to FusionAuth Cloud.
 
-FusionAuth does not support MySQL platforms that use MySQL Group Replication, such as IBM Compose.
+MySQL limits **`data`** fields to smaller sizes than PostgreSQL. For more information, see [Data Field Sizes](/docs/concepts/plans-and-limits/limitations#data-field-sizes).
+
+FusionAuth doesn't support MySQL platforms that use MySQL Group Replication, such as IBM Compose.
 
 ### Database RAM
 
-The RAM required by the database depends on your login volume and object counts. If you expect to have a few logins per minute and only a few thousand objects, `1GB-2GB` of RAM will be sufficient. If you have hundreds of millions of objects and 1,000 logins per second, you might need `256GB` of RAM. We recommend running load tests of FusionAuth to help determine the amount of RAM that is required for your needs.
+The RAM required by the database depends on your login volume and object counts. If you expect to have a few logins per minute and only a few thousand objects, `1GB-2GB` of RAM will be sufficient. If you have hundreds of millions of objects and 1,000 logins per second, you might need `256GB` of RAM. To find the RAM that your database needs, load test FusionAuth. For more information, see [Load Test](/docs/deploy/test/load-test).
 
 ### Database Disk Space
 
@@ -105,34 +108,32 @@ The amount of disk space required by the database depends on your configuration,
 
 Given thousands of objects and low login volumes, `10GB` of disk space should suffice. For millions of objects and high login volumes, you might need `1TB` of disk or more.
 
-## Elasticsearch
+## Search Engine
 
-Elasticsearch is optional, and may be leveraged for improving user search functionality. See the [Users](/docs/concepts/types/users#user-search) documentation for reference in configuration and usage.
-
-If you will be running Elasticsearch on the same host as FusionAuth, please ensure there is adequate RAM for both services to operate normally. Elasticsearch may also protect the index by moving it to read-only if the underlying host is running low on disk space, ensure you have plenty of free storage for the Elasticsearch index.
-
-You can use the [`fusionauth-search`](/docs/deploy/production/install/packages#fusionauth-search) package or any other Elasticsearch service including a cloud hosted service or just downloading it and installing it yourself from [elastic.co](https://www.elastic.co/products/elasticsearch).
+A search engine service is optional. Without one, FusionAuth searches Users and Entities with the database. Run OpenSearch or Elasticsearch for advanced queries and the other features in [Compare the Search Engines](/docs/users/search#compare-the-search-engines).
 
 <ElasticsearchVersion />
 
-### Elasticsearch RAM
+To install OpenSearch, see [Install a Search Engine](/docs/deploy/production/install/search). You can also use a managed service, such as Amazon OpenSearch Service, or the [FusionAuth Search package](/docs/deploy/production/install/packages#fusionauth-search), which runs Elasticsearch next to FusionAuth.
+
+When the search engine runs on the same host as FusionAuth, give the host enough memory for both services.
+
+### Search Engine RAM
 
 <ElasticsearchRam />
 
-### Elasticsearch Disk Space
+### Search Engine Disk Space
 
-The amount of disk space required by Elasticsearch depends on your total user and entity counts. We recommend that you estimate the disk space based on the amount of data you will have.
+The disk space the search engine needs depends on how many Users and Entities you have. For thousands of Users and Entities, `10GB` is enough. For more, size the disk to your data.
 
-In most cases, if you have thousands of users and entities, `10GB` of disk space will be sufficient. If you have more users and entities please size up accordingly.
+Keep free space on the disk. OpenSearch and Elasticsearch make the index read-only when the disk runs low, and writes to the index fail until you free space.
 
 ## Network Access
 
-FusionAuth offers instructions on downloading the MySQL JDBC driver at install time. Due to the drivers' licensing, it cannot be bundled into the application. You have to download and install the drivers even if the server has network access.
+FusionAuth doesn't download or bundle the MySQL JDBC driver, because of the driver's license. When you use MySQL, download the driver and copy the driver to `fusionauth-app/lib`, whether or not the server has network access. For instructions, see [Install a Database](/docs/deploy/production/install/database).
 
-If you are running FusionAuth in an environment with no network access and are using MySQL, you must download the MySQL driver jar file and place it in `fusionauth-app/web/WEB-INF/lib`.
-
-<Aside type="tip">
-Versions prior to `1.16.0` downloaded the drivers no matter which database you used. Versions prior to `1.40.0` downloaded the drivers only for instances that use MySQL.
+<Aside type="version">
+Versions before `1.16.0` downloaded the JDBC drivers for every database. Versions from `1.16.0` to before `1.40.0` downloaded the MySQL driver only for instances that use MySQL.
 </Aside>
 
 ### Paid Plans

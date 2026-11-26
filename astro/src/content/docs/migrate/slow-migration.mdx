@@ -1,0 +1,243 @@
+---
+title: Slow Migration
+htmlTitle: Migrate Users to FusionAuth Gradually With Connectors
+description: Learn how to move users into FusionAuth one at a time, as each user logs in, with an LDAP or Generic Connector.
+tags: slow migration, connectors, migrate users, user migration, generic connector, ldap connector, gradual migration
+order: 4
+---
+import LdapConnectorReconcile from 'src/content/docs/_shared/lambda/_ldap-connector-reconcile.mdx';
+import SlowMigrationTimeline from 'src/content/docs/migrate/provider-specific/_slow-migration-timeline.mdx';
+
+<PlanBlurb plan="starter" />
+
+A slow migration moves each user into FusionAuth at the user's first login. FusionAuth passes the login to the old system through a [Connector](/docs/users/provision/connectors), and creates the user from the old system's response. To decide whether a slow migration fits, see [Migration Types](/docs/migrate/migration-types).
+
+Before you start, complete the following:
+
+* Plan the migration and set up FusionAuth. For more information, see [Plan a Migration](/docs/migrate/plan-a-migration).
+* Switch FusionAuth to the Elasticsearch search engine. The progress query on this page searches **`user.data`**, and the database search engine can't search **`user.data`**. For more information, see [Switch Search Engines](/docs/users/search/switch-search-engines).
+
+## Set a Finish Line
+
+A slow migration rarely moves every user. Some users log in rarely, and others abandoned their accounts. However long the migration runs, some users won't log in, so decide in advance what "done" means. Consider the following questions:
+
+* How often do users log in?
+* Does a long tail of users visit less often than the average user?
+* Do seasons or holidays change how many users log in?
+* What happens when a user can't log in? Consider business, compliance, legal, and security concerns.
+* Is a lost login an annoyance or a disaster?
+* How will you handle the users who haven't moved when the migration ends?
+* How hard is running FusionAuth and the old system at the same time?
+* How valuable is a user who hasn't logged in for six months? A year? Three years?
+
+From the answers, set a goal for the share of migrated users, the length of the migration, or both. Without a goal, you can't tell when to stop. Decide how often you'll compare the count of migrated users with the goal.
+
+## Migration Timeline
+
+Share a migration timeline with everyone the migration affects.
+
+<SlowMigrationTimeline />
+
+## Connect to the Original System
+
+FusionAuth contacts the old system whenever a user that FusionAuth doesn't know logs in. The connection is an LDAP call or an HTTP request:
+
+* When the old user store is an LDAP directory, such as Active Directory or OpenLDAP, use an LDAP Connector. FusionAuth talks to LDAP servers directly.
+* Otherwise, build an HTTP API for a Generic Connector, in any language that returns JSON.
+
+A Generic Connector's API receives a login request and authenticates the user against the old user store. The request looks like the following:
+
+<JSON title="Example of a Migrate on Authentication Login Request JSON Document" src="login/request.json" />
+
+When the credentials match, the API returns a FusionAuth User object with a `200` status code. When the user doesn't exist or the credentials don't match, the API returns a `404` status code. The following example shows a full response:
+
+<JSON title="Example of a Successful Login Response JSON" src="users/login-migrated-response.json" />
+
+The response can leave out most fields. A migrated user needs a UUID in **`user.id`**, plus **`user.email`**, **`user.username`**, or **`user.phoneNumber`**. Leave out the password. FusionAuth hashes the password from the login with the Tenant's password settings.
+
+Set **`user.data.migrated`** to `true`, as in the example. The flag marks the user as migrated, so you can count migrated users later.
+
+For more information, see [Generic Connector](/docs/users/provision/connectors/generic-connector).
+
+## Configure the Connector
+
+In the Admin UI, navigate to <Breadcrumb>Settings -> Connectors</Breadcrumb> and add a Connector. To configure Connectors with the API instead, see the [Connectors API](/docs/apis/connectors).
+
+<Screenshot id="migration-add-connector" url="/admin/connector/" crop="[data-migration-window]" cropPadding={0} chrome={true} alt="The Connectors list with the menu for adding a Connector." />
+
+The configuration depends on the Connector type.
+
+### LDAP Connector
+
+Configure the server URL, the connection security, such as LDAPS or STARTTLS, and a system account that can query every account in the directory or in the part of the directory you migrate. List the user attributes to query and return.
+
+Map each LDAP attribute to the FusionAuth User with an [LDAP Connector Reconcile lambda](/docs/lambdas/reconcile/ldap-connector-reconcile):
+
+<LdapConnectorReconcile />
+
+Uncomment the lines that set **`user.data.migrated`** to `true`, so you can count migrated users later. For more information, see [LDAP Connector](/docs/users/provision/connectors/ldap-connector).
+
+### Generic Connector
+
+Configure the URL of your API and the security settings. A Generic Connector has no lambda. Your API maps the old data to the FusionAuth User instead.
+
+Protect the API with TLS and other security measures, because FusionAuth sends plaintext passwords to the API. For more information, see [Generic Connector](/docs/users/provision/connectors/generic-connector).
+
+## Test the Connector
+
+Log in as test users from the old system. To automate the test with the [Login API](/docs/apis/login), do the following for each test user:
+
+1. Confirm that the user doesn't exist in FusionAuth.
+1. Log the user in.
+1. Confirm that the user now exists in FusionAuth with the expected values, including **`user.data.migrated`**.
+
+## Add the Connector Policy
+
+A Connector policy sends logins in a Tenant to a Connector. To add a policy:
+
+<Steps>
+
+1. In the Admin UI, navigate to <Breadcrumb>Tenants -> Your Tenant -> Connectors</Breadcrumb>.
+1. Add a Connector policy, and select your Connector.
+1. Turn on **Migrate user**.
+
+    <Screenshot id="migration-add-connector-policy" url="/admin/tenant/edit/00000000-0000-0000-0000-f10000000035#connectors" showHash crop="[data-migration-window]" cropPadding={0} chrome={true} alt="The Add Connector Policy dialog with Migrate user turned on." />
+
+1. Save the Tenant.
+
+</Steps>
+
+FusionAuth then authenticates each user against the old system at the user's first login, and copies the user's data into FusionAuth. Later logins authenticate against FusionAuth. For more information, see [Connector Policies](/docs/users/provision/connectors#connector-policies).
+
+## Update Your Applications
+
+A slow migration has no long outage. After you configure and test the Connector, release the changes that send users to FusionAuth for authentication. Record the number of accounts in the old system just before the cutover.
+
+Users then move into FusionAuth as they log in.
+
+To roll back, revert the application changes. When users changed profile data in FusionAuth, copy the changes back to the old system. A script that uses the [Users API](/docs/apis/users) is a starting point.
+
+## Monitor Progress
+
+Compare the number of migrated users in FusionAuth with the number of accounts in the old system at the cutover. The ratio tells you when to end the migration. To count migrated users, search for **`user.data.migrated`**:
+
+```shell-session title="Count the migrated users"
+API_KEY=...
+FA_HOST=...
+curl -H "Authorization: $API_KEY" "$FA_HOST/api/user/search?queryString=data.migrated%3Atrue&accurateTotal=true"
+```
+
+The **`total`** field of the response holds the count:
+
+```json title="Results of the migrated user query"
+{"total":629,"users": [ ... ] }
+```
+
+## End the Migration
+
+When the migration reaches the goal, remove the Connector policy from the Tenant. All later logins authenticate against FusionAuth only.
+
+<Screenshot id="migration-delete-connector-policy" url="/admin/tenant/edit/00000000-0000-0000-0000-f10000000035#connectors" showHash crop="[data-migration-window]" cropPadding={0} chrome={true} alt="The Connector policies of a tenant, with the delete button highlighted.">
+  <Highlight selector="[data-hl='migration-delete']" />
+</Screenshot>
+
+You can also delete the Connector.
+
+## Handle Unmigrated Users
+
+To find the users who didn't move, subtract the migrated users from the old system's users. Alternatively, query the old system for users who haven't logged in since the migration started.
+
+Choose how to handle these users. You can combine the following options:
+
+* Ask the users to log in before a deadline, with a message such as the following:
+
+  ```plaintext
+  If you don't log in by DATE, your account will be deleted.
+  ```
+
+* Archive or delete the accounts and their data. A user who returns later has no account, must register again, and loses the old data.
+* Move the remaining users with a [bulk migration](/docs/migrate/bulk-migration).
+* Set a new goal, and keep the slow migration running.
+
+For example, you could move every paying customer with a bulk migration, and archive the free accounts. Free users may have only tried your application, and may have forgotten the account.
+
+## Forgot Password During a Slow Migration
+
+A user who forgets a password during a slow migration may or may not exist in FusionAuth yet. FusionAuth can't tell an unmigrated user from a user that doesn't exist. To prevent account enumeration, FusionAuth shows the same message either way, and doesn't reveal whether an account exists:
+
+```plaintext
+We have sent a message to you@example.com containing a link that will allow you to reset your password. Once you receive the message follow the instructions to change your password.
+```
+
+FusionAuth sends the message only to a migrated user. An unmigrated user never gets the message.
+
+To help unmigrated users, change the message to point users to customer service. Change **`forgot-password-message-sent`** in your theme's messages. For more information, see [Localization](/docs/theme/localization#messages). For example:
+
+```plaintext
+We have sent a message to %s containing a link that will allow you to reset your password. If you don't receive the message, check your spam folder or contact customer service.
+```
+
+Give users a link to a form, a phone number, or another way to reach customer service. A customer service representative can check whether the user has moved:
+
+* For a migrated user, send a password reset from the user's page in the Admin UI.
+
+    <Screenshot id="migration-reset-user-password" url="/admin/user/manage/00000000-0000-0000-0000-100000000004" height={600} crop="[data-migration-window]" cropPadding={0} chrome={true} alt="The user details page with the option to send a password reset highlighted.">
+      <Highlight selector="[data-hl='migration-reset']" />
+    </Screenshot>
+
+* For an unmigrated user, reset the password in the old system.
+
+To discuss improvements to this experience, see the [open GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/895).
+
+### Migrate Users From the Forgot Password Page
+
+Alternatively, migrate users when they request a password reset:
+
+1. Add JavaScript to the forgot password page in a custom theme. When the user submits the form, the JavaScript sends the user's email address to an API endpoint that you write. The JavaScript waits for the endpoint to respond, then submits the form.
+1. In the endpoint, look up the user in the old system. When the user exists there, check whether the user exists in FusionAuth.
+1. When the user exists only in the old system, create the user with the [Create a User API](/docs/apis/users/create). Leave out **`user.password`**, and don't set **`sendSetPasswordEmail`**.
+
+When the form submits, FusionAuth sends the forgot password email to the new user. Don't set **`sendSetPasswordEmail`** to `true`, because the user then gets both a set password email and a forgot password email. When the form submits before the endpoint creates the user, FusionAuth sends no email.
+
+<Aside type="caution">
+Anyone can call the endpoint. Return the same response whether or not the user exists, so the endpoint doesn't reveal which accounts exist. Rate limit the endpoint to stop callers from creating many users.
+</Aside>
+
+When the old system can still send password reset emails, the endpoint can start a password reset in the old system instead of creating the user. The user sets a new password in the old system, and the Connector migrates the user at the next login.
+
+## Registration During a Slow Migration
+
+A user who registers during a slow migration may already have an account. When the user exists in FusionAuth, FusionAuth shows an error that tells the user to log in. When the user exists only in the old system, FusionAuth doesn't know about the user, and creates a new, separate account.
+
+To block these registrations, fail the user creation with a webhook:
+
+<Steps>
+
+1. Write a webhook that receives the [`user.create`](/docs/events/reference/user/user-create) event, which FusionAuth sends whenever FusionAuth creates a user.
+1. In the webhook, look up the user in the old system. When the user exists in the old system, return a status code outside `200` to `299`. Otherwise, return `200`.
+1. In the Tenant, turn on the `user.create` event, and set the transaction type so that at least one webhook must succeed. In the API, the value is `Any`. For more information, see [Events](/docs/events).
+
+</Steps>
+
+When the webhook fails, FusionAuth doesn't create the user. To tell these users to log in instead, change **`[WebhookTransactionException]`** in your theme's messages. For more information, see [Localization](/docs/theme/localization#messages).
+
+## Migrate Without a Connector
+
+When the old system's profile data doesn't change, or you can lose the changes, you can run a forked slow migration without a Connector. A custom proxy sits in front of both systems:
+
+1. The proxy receives each login and checks the credentials with the FusionAuth [Login API](/docs/apis/login).
+1. When the user doesn't exist in FusionAuth, the proxy checks the credentials with the old system, and creates the user in FusionAuth.
+1. The proxy returns the token from the Login API to the client.
+
+Use TLS for all traffic to protect passwords. If possible, keep the traffic on an internal network.
+
+With the proxy in place, run a bulk migration whenever you choose. Then change the proxy to call only FusionAuth, or remove the proxy.
+
+A forked slow migration has the following drawbacks:
+
+* The proxy adds complexity and ties you to the Login API. You can't use the [[hosted login pages]] and their workflows.
+* The old system must accept a username and password over HTTP.
+* MFA settings and social account links don't move.
+* Profile data may split between the systems more than with a Connector.
+
+A forked slow migration can work when you expect many new users and want new users in FusionAuth while the old system serves existing users.

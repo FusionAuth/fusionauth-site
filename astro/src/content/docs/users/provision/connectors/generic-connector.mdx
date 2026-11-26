@@ -1,6 +1,6 @@
 ---
 title: Generic Connector
-description: Log users in using FusionAuth and arbitrary data sources using an HTTP JSON API.
+description: Learn how to authenticate users against, or migrate users from, any data source with an HTTP JSON API.
 tags: generic connector, http connector, user migration, external authentication, data source connector
 ---
 import StandardPostResponseCodes from 'src/content/docs/apis/_shared/_standard-post-response-codes.mdx';
@@ -12,7 +12,7 @@ import SecuringHttpRequestsCertificates from 'src/content/docs/_shared/_securing
 import SecuringHttpRequestsFirewalls from 'src/content/docs/_shared/_securing-http-requests-firewalls.mdx';
 import SecuringHttpRequestsProxy from 'src/content/docs/_shared/_securing-http-requests-proxy.mdx';
 
-Generic Connectors allow you to authenticate users against or migrate them from any user datasource accessible over HTTP or TLS.
+A Generic Connector authenticates users against, or migrates users from, any user data source that FusionAuth can reach over HTTP or HTTPS.
 
 ## Configuration
 
@@ -22,28 +22,28 @@ Generic Connectors allow you to authenticate users against or migrate them from 
 
 <APIBlock>
   <APIField name="Id" optional>
-    An optional UUID. When this value is omitted a unique Id will be generated automatically.
+    An optional UUID. When you omit the Id, FusionAuth generates a unique Id.
   </APIField>
   <APIField name="Name" required>
-    A unique name to identify the Connector. This name is for display purposes only and it can be modified later if desired.
+    A unique name for the Connector. FusionAuth uses the name for display only, and you can change the name later.
   </APIField>
   <APIField name="Authentication URL" required>
-    The fully qualified URL of the API endpoint. The connector will send an HTTP POST request to this URL to authenticate the user. The format returned will be identical to the [Login API](/docs/apis/login). See the [response section](/docs/users/provision/connectors/generic-connector#response) for status codes accepted by FusionAuth from your connector.
+    The fully qualified URL of your API endpoint. To authenticate a user, the Connector sends an HTTP POST request to this URL. The endpoint returns the same format as the [Login API](/docs/apis/login). For the status codes that FusionAuth accepts from the endpoint, see [Response](#response).
   </APIField>
   <APIField name="Connect timeout" required>
-    The connect timeout in milliseconds, used when making the POST request.
+    The connect timeout for the POST request, in milliseconds.
   </APIField>
   <APIField name="Read timeout" required>
-    The read timeout in milliseconds, used when making the POST request.
+    The read timeout for the POST request, in milliseconds.
   </APIField>
   <APIField name="Enable debug logging" optional>
-    Creates event log entries to help debug integration errors. Check <Breadcrumb>System -> Event Log</Breadcrumb>.
+    When enabled, FusionAuth writes Event Log entries that help you debug integration errors. To view the entries, navigate to <Breadcrumb>System -> Event Log</Breadcrumb>.
   </APIField>
 </APIBlock>
 
 ### Security
 
-The security settings may be used to require authentication in order to make the POST request to the authentication endpoint.
+Use the security settings to add authentication to the POST request that the Connector sends to the authentication endpoint.
 
 <Screenshot id="migration-generic-connector-security" url="/admin/connector/add/Generic" crop="#screenshot-band" cropPadding={0} alt="The Generic Connector security section." />
 
@@ -51,21 +51,21 @@ The security settings may be used to require authentication in order to make the
 
 <APIBlock>
   <APIField name="Basic auth username" optional>
-    The username to be used for HTTP Basic Authentication.
+    The username for HTTP Basic Authentication.
   </APIField>
   <APIField name="Basic auth password" optional>
-    The password to be used for HTTP Basic Authentication.
+    The password for HTTP Basic Authentication.
   </APIField>
   <APIField name="Certificate" optional>
-    The SSL certificate to be used when connecting to the POST endpoint.
+    The SSL certificate that the Connector uses to connect to the POST endpoint.
 
-    If you need to add a certificate for use with this connector, navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb> and import a certificate. The certificate will then be shown as an option in this form control.
+    To add a certificate, navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb> and import the certificate. The certificate then appears as an option in the **Certificate** field.
   </APIField>
 </APIBlock>
 
 ### Headers
 
-You can configure arbitrary headers to be added to the HTTP POST request when making a request to the configured authentication endpoint.
+You can add headers to the HTTP POST request that the Connector sends to the authentication endpoint.
 
 <Screenshot id="migration-generic-connector-headers" url="/admin/connector/add/Generic" crop="#screenshot-band" cropPadding={0} alt="The Generic Connector headers section." />
 
@@ -73,10 +73,10 @@ You can configure arbitrary headers to be added to the HTTP POST request when ma
 
 <APIBlock>
   <APIField name="Name">
-    The name of the header to add to the HTTP request when authenticating.
+    The name of the header to add to the HTTP request.
   </APIField>
   <APIField name="Value">
-    The header value to add to the HTTP request when authenticating.
+    The value of the header.
   </APIField>
 </APIBlock>
 
@@ -85,43 +85,68 @@ You can configure arbitrary headers to be added to the HTTP POST request when ma
 
 To use a Generic Connector:
 
-* Build a Generic Connector API endpoint in your application to expose your user data.
-* Configure the Connector in <Breadcrumb>Settings -> Connectors</Breadcrumb>, including securing the endpoint.
-* Add the Connector Policy in <Breadcrumb>Tenants -> Your Tenant -> Connectors</Breadcrumb> to configure to which domains the connector applies.
+<Steps>
+
+1. Build an API endpoint in your application that returns your user data. For the formats, see [Request](#request) and [Response](#response).
+1. Configure the Connector in <Breadcrumb>Settings -> Connectors</Breadcrumb>, including the endpoint security.
+1. Add a Connector policy in <Breadcrumb>Tenants -> Your Tenant -> Connectors</Breadcrumb>. The policy sets the domains that the Connector applies to.
+
+</Steps>
 
 ### Request
 
-The request to your API endpoint will be delivered as JSON:
+FusionAuth sends the request to your API endpoint as JSON:
 
 <JSON title="Example Request JSON" src="login/request.json" />
 
-Your application will then look up the user and verify the correct credentials were provided. Then you can return the response.
+Your application looks up the user, checks the credentials, and returns a response.
 
 ### Response
 
-Your API should return a valid FusionAuth `user` object with status code `200` if the user is found and authenticated.
+When your API finds and authenticates the user, return a FusionAuth `user` object with status code `200`. You can return any attribute of the user object, including nested objects such as application registrations with roles. The response must include the required fields. For the required fields, see [Connectors](/docs/users/provision/connectors#required-fields).
 
-While you may return any of the attributes of the user object, including nested objects such as application registrations with roles, only the required ones must be present. The only other status code FusionAuth will accept from your connector is a `404`.
+When your API can't authenticate the user, return a `404`. FusionAuth accepts no other status codes from your API.
 
 <Aside type="caution">
-A valid user object must be returned with a FusionAuth compatible UUID in the **user.id**. This is a requirement whether you are [authenticating but not migrating a user](/docs/users/provision/connectors/#required-fields) or [migrating a user](/docs/users/provision/connectors/#required-fields-1).
+Return a FusionAuth-compatible UUID in **`user.id`**, whether or not the Connector migrates the user. When the Connector authenticates users without migrating the users, return the same **`user.id`** at every login.
 
-When you are authenticating but not migrating a user, the **user.id** must be the same across subsequent logins.
+For the errors that a non-UUID value causes, see [Response Parsing Errors](#response-parsing-errors).
 </Aside>
-
-If the user cannot be authenticated, then you should return a `404`.
-
-{/*  The only thing returned is a `200` or a `404` status code. */}
 
 <StandardPostResponseCodes never_search_error missing_message="To prevent enumeration attacks, a 404 is returned for any non 200 status code returned from your connector." omit_internal_error omit_missing_header omit_error_malformed />
 
 <JSON title="Example Successful Response JSON" src="users/login-migrated-response.json" />
 
+### Response Parsing Errors
+
+FusionAuth reads the response into a FusionAuth User object. When a field in the response has the wrong type or format, FusionAuth can't read the response, and the Login API returns a `404`. FusionAuth also writes an error to <Breadcrumb>System -> Event Log</Breadcrumb>, even when **Enable debug logging** is off.
+
+The error says that FusionAuth failed to parse the HTTP response as JSON, even when the response body is valid JSON. The `Cause` part of the error names the field that failed and the type that FusionAuth expected. For example, an OIDC-style identifier in **`user.id`** produces the following error:
+
+```plaintext
+com.inversoft.rest.JSONException : Message: Failed to parse the HTTP response as JSON. Actual HTTP response body:
+{"user":{"id":"auth0|5f1b2c3d4e","email":"richard@piedpiper.com","fullName":"Richard Hendricks"}}
+Cause: com.fasterxml.jackson.databind.exc.InvalidFormatException
+Message: Cannot deserialize value of type `java.util.UUID` from String "auth0|5f1b2c3d4e": UUID has to be represented by standard 36-char representation
+ at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 15] (through reference chain: io.fusionauth.domain.api.LoginResponse["user"]->io.fusionauth.domain.User["id"])
+```
+
+The following values cause this error:
+
+* A value other than a [UUID](/docs/apis/data-types#uuids) in an Id field, such as **`user.id`** or **`user.registrations[].applicationId`**.
+* A date in **`user.birthDate`** in a format other than `YYYY-MM-DD`.
+* A date string in an [instant](/docs/apis/data-types#instants) field, such as **`user.insertInstant`**. Instants are numbers of milliseconds.
+* A value other than an object in **`user.data`**.
+
+When the response has no **`user.id`**, FusionAuth discards the user, and the Login API returns a `404`. FusionAuth logs the reason only when **Enable debug logging** is on.
+
+For the type of each field, see the [User response body](/docs/apis/users/retrieve#response-body).
+
 ### Using the Generic Connector as the System of Record
 
 <SystemOfRecordCaveat system_of_record="backing database accessed via API" />
 
-The correct way to maintain these attributes is to store them in the backing database, query them when the API is called, and deliver them as part of the User JSON object.
+To keep group memberships and application registrations for these users, store the memberships and registrations in the backing database. Return the memberships and registrations in the user object of each response.
 
 ## Security
 
@@ -149,52 +174,38 @@ The correct way to maintain these attributes is to store them in the backing dat
 
 ## Performance Considerations
 
-Enabled Connectors are in the critical path of the login experience and therefore should have low latency.
+Each login through an enabled Connector waits for the Connector's response, so keep the Connector's latency low.
 
-Set a low timeout; under one second is ideal. Increasing the timeout can result in resource starvation in FusionAuth, as more and more resources are spent on slow requests.
+Set timeouts under one second. A longer timeout can starve FusionAuth of resources, because slow requests hold resources longer.
 
-Here are some things to do to improve performance of your Generic Connector.
+The following sections describe ways to improve the performance of your Generic Connector.
 
 ### Network Connection
 
-There are three phases of the Connector network connection, from FusionAuth connector to the API endpoint:
+The connection from the Connector to your API endpoint has the following phases:
 
-* Initial connection to the API endpoint
-* First byte read from the connection
-* Response complete and returned from the API endpoint
+1. FusionAuth connects to the API endpoint.
+1. FusionAuth reads the first byte from the connection.
+1. The API endpoint completes and returns the response.
 
-The first two have configurable timeouts, the **Connect timeout** and the **Read timeout** fields.
-For **Connect timeout**, if the timeout expires before the connection can be established, the login fails.
-For **Read timeout**, if the timeout expires before there is data available to be read, the login fails.
-The default values for these timeouts are typically adequate, but you may want to tune them if there is resource contention on your server.
+**Connect timeout** limits the first phase. When the connect timeout expires before FusionAuth establishes the connection, the login fails. **Read timeout** limits the second phase. When the read timeout expires before data is available to read, the login fails. The default timeouts usually work. Tune the timeouts when your server has resource contention.
 
-However, neither timeout prevents the HTTP request from taking as long as it needs to in order to respond once the API endpoint has begun to write bytes to the output stream.
-If a Connector is not correctly terminating the HTTP response or taking an excessive time to process the login request, then this can cause issues under load.
+Neither timeout limits the third phase. After the API endpoint starts writing the response, the HTTP request can take as long as the endpoint needs. When the endpoint doesn't end the HTTP response correctly, or takes too long to process the login request, FusionAuth can have problems under load.
 
-You can avoid issues by having your API endpoint write login data and completely close the connection as quickly as possible.
-You can load test your Connector using [FusionAuth's load testing framework](/docs/deploy/monitor) or any other HTTP based load testing framework.
-Additionally, ensure the API endpoint is sized correctly and not starved of resources.
-You should return the appropriate status code and data as quickly as possible.
-Using the correct status code for each response ensures that FusionAuth handles the response appropriately.
+To avoid these problems, write the login response and close the connection as quickly as possible. Give the API endpoint enough resources. Return the correct status code for each response, so FusionAuth handles the response correctly.
 
 ### Add Database Indices
 
-If you are querying a database to determine whether a user can authenticate, use database tooling such as `explain plan` and make sure that appropriate indices have been added.
+When your API endpoint queries a database to authenticate users, check the queries with database tooling such as `explain plan`. Add the indices that the queries need.
 
 ### Disable Logging
 
-Turning on the Connector's **Debug Enabled** field during development is useful for troubleshooting.
-However, once you deploy a Connector to production, enable debugging only when troubleshooting.
-Debugging writes to the <Breadcrumb>System -> Event Log</Breadcrumb> and this causes additional load on the database.
+Turn on **Enable debug logging** during development to troubleshoot the Connector. In production, turn on debug logging only while you troubleshoot. Debug logging writes entries to <Breadcrumb>System -> Event Log</Breadcrumb>, and each entry adds load to the database.
 
-### Perform Optional Actions Out Of Band
+### Perform Optional Actions Out of Band
 
-Your connector may need to do certain other tasks after a successful login occurs. This could include calling APIs or sending messages. If these actions don't affect the result of the authentication, have these take place after a response has been sent to FusionAuth.
-
-One way to accomplish this is to use a queue to store relevant data, which can then be read later by a different process.
+Your API endpoint might run other tasks after a successful login, such as calling APIs or sending messages. When a task doesn't affect the authentication result, run the task after the endpoint sends the response to FusionAuth. For example, store the task data in a queue, and process the queue later in a separate process.
 
 ### Load Test
 
-You can load test your connector using a staging environment and the [Login API](/docs/apis/login). Configure the tenant to use your connector, create users in your system, and use a load testing tool to make repeated login requests of FusionAuth through your connector.
-
-[Here's more about load testing FusionAuth](/docs/deploy/monitor).
+Load test your Connector in a staging environment with the [Login API](/docs/apis/login). Configure the tenant to use your Connector, and create users in your system. Then use a load testing tool to send repeated login requests to FusionAuth. For more information, see [Load Test](/docs/deploy/test/load-test).

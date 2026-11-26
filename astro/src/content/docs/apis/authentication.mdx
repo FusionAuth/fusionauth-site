@@ -10,7 +10,7 @@ import ClientSideApiKeys from 'src/content/docs/_shared/_client-side-api-keys.md
 import NewApiKey401 from 'src/content/docs/apis/_shared/_new-api-key-401.mdx';
 import { YouTube } from '@astro-community/astro-embed-youtube';
 
-The FusionAuth APIs are primarily secured using API keys. A few APIs may use alternate credentials, such as a JWT, basic authentication. Certain APIs are accessible with no authentication. All secured APIs will return an `401 Unauthorized` response if improper credentials are provided.
+Most FusionAuth APIs require an API key. Some APIs accept other credentials, such as a JWT or basic authentication. Some APIs require no authentication. When FusionAuth doesn't authorize a request to a secured API, FusionAuth returns a `401 Unauthorized` response. For a list of causes, see [Unauthorized Responses](#unauthorized-responses).
 
 Each API endpoint is marked with an icon describing supported authentication methods:
 
@@ -21,10 +21,6 @@ Each API endpoint is marked with an icon describing supported authentication met
 * <APIAuthenticationIcon classList={["mr-1"]} type="jwt"/> [JWT Authentication](#jwt-authentication)
 * <APIAuthenticationIcon classList={["mr-1"]} type="none"/> [No Authentication Required](#no-authentication-required)
 * <APIAuthenticationIcon classList={["mr-1"]} type="local-bypass"/> [Localhost Authentication Bypass](#localhost-authentication-bypass)
-
-You can also learn about:
-
-Below you will find a detailed explanation of each type of authentication used in the API documentation.
 
 ## API Key Authentication
 
@@ -57,7 +53,7 @@ Here's a brief video covering some aspects of API keys:
 
 When an API is marked with a red lock icon such as <APIAuthenticationIcon classList={["px-1"]} type="global-api-key"/>, use a global API key. Attempts with a tenant-scoped API key fail.
 
-In addition if an `X-FusionAuth-TenantId` header is provided to this endpoint, the request will fail with a `401`.
+When a request to a global endpoint includes an `X-FusionAuth-TenantId` header, FusionAuth returns a `401`.
 
 ## Basic Authentication using an API Key
 
@@ -100,7 +96,7 @@ Here is an example [client credentials grant using Entities](/docs/authenticatio
 
 Here's another example. First, you get the token:
 
-```shell title="Curl example to retrieve JWT"
+```shell-session title="Curl example to retrieve JWT"
 curl -u "eb6fce6a-4ed8-4010-8091-1709fc823329:_7bz1Ct1Sode-zIyevcQFSyzW9w3TkfKSWuS-Ls8vQQ" \
   https://local.fusionauth.io/oauth2/token \
   -d 'grant_type=client_credentials&scope=target-entity:a647e989-1c7e-4386-9ec6-fa4fe6908906:scim:user:read'
@@ -114,7 +110,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJjbGllbnRfY3
 
 After retrieving the JWT, place it in the `Authorization` header with a prefix of `Bearer `. Then you call the API endpoint:
 
-```shell title="Curl example to call API"
+```shell-session title="Curl example to call API"
 curl -XGET -H "Authorization: Bearer eyJhbG..." 'https://local.fusionauth.io/api/scim/resource/v2/Users'
 ```
 
@@ -235,7 +231,7 @@ Prior to version `1.26.0`, the FusionAuth Admin UI was the only way to create AP
 
     Being able to create other API keys via the API is a **privileged operation**. Use it wisely.
 
-    Any attempt to call the API Keys API with a non-manager key (**keyManager** set to `false`) will return a HTTP response status code `401`.
+    When you call the API Keys API with a key that isn't a key manager (**keyManager** set to `false`), FusionAuth returns a `401`.
   </APIField>
   <APIField name="Access Control List">
     The optional [IP Access Control List](/docs/apis/ip-acl) for restricting the usage of this API key by network address.
@@ -245,7 +241,7 @@ Prior to version `1.26.0`, the FusionAuth Admin UI was the only way to create AP
   <APIField name="Expiration">
     The optional date and time at which this API key will expire and no longer be usable for API authentication.
 
-    Any attempt to call an API with an expired key will result in a `401` response code.
+    When you call an API with an expired key, FusionAuth returns a `401`.
   </APIField>
 </APIBlock>
 
@@ -263,7 +259,7 @@ When a request may be ambiguous without the Tenant Id, such as the email address
 
 The following example demonstrates an API request to an API endpoint requiring `tenantId`, using the `X-FusionAuth-TenantId` HTTP header and a bearer token scoped to all tenants.
 
-```bash
+```shell-session
 curl -v -X POST \
     -H 'Authorization: bf69486b-4733-4470-a592-f1bfce7af580' \
     -H 'X-FusionAuth-TenantId: 6c9e9669-9670-4f85-9f16-8396c2206f7f' \
@@ -288,7 +284,7 @@ Below, we have selected the `Pied Piper` tenant for this API key. Only Users, Gr
 
 The following example demonstrates an API request to an API endpoint requiring `tenantId`, using the tenant-scoped API key.
 
-```bash
+```shell-session
 curl -X POST \
     -H 'Authorization: oa06-d9uxCHTorBOkVdh_QzsX_iEEYARGv8udnMMLJ8' \
     -H 'Content-Type: application/json' \
@@ -348,10 +344,7 @@ Either will toggle all the settings for the column or row, respectively.
   <Highlight selector="[data-hl='leftovers-endpoints']" />
 </Screenshot>
 
-For example, if you were to grant an API key `POST` permissions on `/api/user`, the API key would be able to create users in FusionAuth.
-Any calls with this API key would be denied access to any other functionality, including listing users, creating applications, and deleting registrations.
-
-Calling other endpoints would result in a `401` response code.
+For example, an API key with `POST` permission on `/api/user` can create users. The API key can't list users, create applications, or delete registrations. When you call any other endpoint or HTTP method with the API key, FusionAuth returns a `401`.
 
 ## Tenant Scoped API Keys
 
@@ -366,5 +359,25 @@ Protect such API keys in the same way you would any other API key.
 <ClientSideApiKeys />
 
 ## Troubleshooting
+
+### Unauthorized Responses
+
+When FusionAuth doesn't authorize a request that uses an API key, FusionAuth returns a `401` response with an empty body. FusionAuth returns the same `401` for every cause, so the status code alone doesn't identify the problem. FusionAuth doesn't return a `403` for these failures.
+
+FusionAuth returns a `401` when any of the following is true:
+
+* The request has no `Authorization` header.
+* The API key doesn't exist.
+* The API key has expired.
+* The API key has endpoint permissions, and the permissions don't include the endpoint or the HTTP method of the request.
+* The API key isn't a key manager, and the request calls the [API Keys API](/docs/apis/api-keys).
+* The API key belongs to a Tenant, and the request calls a global endpoint.
+* The API key belongs to a Tenant, and the `X-FusionAuth-TenantId` header contains a different Tenant Id.
+* The API key has an [IP Access Control List](/docs/apis/ip-acl) that blocks the IP address of the caller.
+* The API key is new, and FusionAuth hasn't finished caching the API key. See [New API Keys](#new-api-keys).
+
+To narrow down the cause, repeat the request with an API key that has no endpoint permissions and no Tenant. When the second request succeeds, check the endpoint permissions, Tenant, expiration, and IP Access Control List of the original API key.
+
+### New API Keys
 
 <NewApiKey401 />
