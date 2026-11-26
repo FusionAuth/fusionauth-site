@@ -20,21 +20,13 @@ Here's a brief video covering some aspects of users:
 
 ## Core Concepts Relationships
 
-Below is a visual reminder of the relationships between FusionAuth's primary core concepts.
+A User belongs to one Tenant. A Registration links the User to an Application and holds the User's Roles in that Application. A User can also be a member of Groups. For the full model, see [Core Types](/docs/concepts/types).
 
-```mermaid title="A User belongs to a Tenant, joins Applications through Registrations, and gets Roles directly or through Groups."
-flowchart BT
-    classDef focus stroke:#ff9800,stroke-width:3px;
+```mermaid title="A User belongs to a Tenant, registers with Applications, and joins Groups."
+flowchart LR
     User -->|Belongs to| Tenant
-    User -->|Is in| Group
-    User -->|Assigned| Role
-    Group -->|Belongs to| Tenant
-    Group -->|Assigned| Role
-    Role -->|Defined in| Application
-    Application -->|Belongs to| Tenant
-    Registration -->|Joins| User
-    Registration -->|Joins| Application
-    class User focus
+    User -->|"Registration (holds Roles)"| Application
+    User -->|Member of| Group
 ```
 
 ## Admin UI
@@ -678,86 +670,7 @@ There are many different ways to log in using FusionAuth, but all of the below t
 
 ## User Search
 
-<Aside type="version">
-
-As of version 1.16.0, FusionAuth ships with a database search engine as the default.
-
-By selecting the appropriate [installation guide](/docs/deploy/production/install/fusionauth-app), one can easily create a configuration with Elasticsearch pre-enabled.
-
-You can read more about the database and other search engines in the [search core concepts section](/docs/users/search).
-
-</Aside>
-
-User search requests may be made through the [User Search API](/docs/apis/users/search) or within the FusionAuth Admin UI under <Breadcrumb>Users</Breadcrumb>.
-
-### Configuration
-
-Please see our [search core concepts section](/docs/users/search) for additional information on basic configuration. The remainder of this section will cover specifics as it relates to users and search.
-
-### Database Search Engine
-
-This configuration is lightweight, simplifies installation and system complexity, but comes with the tradeoffs of limited search capabilities and performance implications.
-
-The database search engine enables fuzzy search against the following fields of the user:
-
-* `firstName`
-* `lastName`
-* `fullName`
-* `email`
-* `phoneNumber` <AvailableSince since="1.59.0" />
-* `username`
-
-<Screenshot id="user-search-database" url="/admin/user/" width={1600} fullPage={true} alt="User Search with Database Search Engine" />
-
-To learn more about the database search engine in general, view the [search core concepts section](/docs/users/search).
-
-### Elasticsearch Search Engine
-
-Leveraging Elasticsearch for the user search engine enables advanced search capabilities on more numerous and granular data and a performance improvement for user search.
-
-#### Advanced Search UI
-
-FusionAuth provides an advanced user search interface that reveals how you may construct **queryString** and **query** parameters for the [User Search API](/docs/apis/users/search) and [User Bulk Delete API](/docs/apis/users/bulk-delete) with desired results. Navigate to <Breadcrumb>Users</Breadcrumb> from the left navigation and click on the <Breadcrumb>Advanced</Breadcrumb> link below the **Search** input field to begin. The [<Breadcrumb>Advanced</Breadcrumb>](/docs/apis/users/search) portion of this UI is available when the search engine type is configured to `elasticsearch`.
-
-We provide selectors for common search fields, as well as a free-form search field for constructing complex search queries. By selecting the **Show Elasticsearch query** toggle, you will see either the Elasticsearch query string or JSON search query that can be used as **queryString** and **query** parameters for the [User Search API](/docs/apis/users/search) and [User Bulk Delete API](/docs/apis/users/bulk-delete).
-
-Additionally, you may enter Elasticsearch query strings or raw JSON queries into the search field for testing purposes.
-
-The following screenshot shows a query string being constructed to search for users that belong to the `Moderators` group and are in the <Breadcrumb>Default</Breadcrumb> tenant:
-
-![User Search by Query String](/img/docs/get-started/core-concepts/user-search-query-string.png)
-
-When searching for users by application or any fields on an application, it is necessary to construct a JSON query due to the way the Elasticsearch mapping is defined.
-
-The screenshot shows an Elasticsearch JSON query for the registered users of the `Pied Piper` application assigned to the `CEO` role that have an email that matches the pattern `*@fusionauth.io`:
-
-![User Search with JSON Query.](/img/docs/get-started/core-concepts/user-search-json-query.png)
-
-To learn more about the Elasticsearch search engine in general, view the [Elasticsearch search guide](/docs/users/search/user-search-with-elasticsearch).
-
-<Aside type="version">
-  Prior to version 1.48.0 if you attempted to page past 10,000 results in the Admin UI you would encounter an error.
-
-  Starting in version 1.48.0 you are able to page past the 10,000 results limit one page at a time.
-</Aside>
-
-When there are more than 10,000 results when using the Elasticsearch engine you have the option to navigate past the limit, however you may only do so one page at a time.
-
-![User Search with over 10,000 results first page.](/img/docs/get-started/core-concepts/user-search-extended-a.png)
-
-Clicking on the <Breadcrumb>Last</Breadcrumb> pagination button will take you to the page with the 10,000th result. You will then have the option to click on the <Breadcrumb>Next</Breadcrumb> button to continue paging forward.
-
-![User Search with over 10,000 results paged to 10,000.](/img/docs/get-started/core-concepts/user-search-extended-b.png)
-
-You may continue to page forward using <Breadcrumb>Next</Breadcrumb> until you reach the last of the search results.
-
-![User Search with over 10,000 results paged to end.](/img/docs/get-started/core-concepts/user-search-extended-c.png)
-
-For more information see [Extended Pagination](/docs/users/search#extended-pagination)
-
-#### Limitations On Changing Data Field Types
-
-<DataFieldDataTypeChanges />
+You can search for Users with the [User Search API](/docs/apis/users/search), or in the Admin UI under <Breadcrumb>Users</Breadcrumb>. FusionAuth searches with the [[Search Engine::search engine]] that you configure. The database search engine matches simple terms in a few fields. The Elasticsearch search engine, with OpenSearch or Elasticsearch, supports full queries on any indexed field, including custom **`user.data`** fields. For a comparison of the engines, see [Search Engines](/docs/users/search).
 
 ## Segmenting Users
 

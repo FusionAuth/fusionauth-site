@@ -1,97 +1,133 @@
 ---
 title: Search
-description: Learn about search options within FusionAuth.
-tags: user search, fusionauth search, elasticsearch, database search, search engine, user lookup
+htmlTitle: Search Engines
+description: Learn about the database and Elasticsearch search engines, which FusionAuth features use each engine, and how to choose one.
+tags: user search, entity search, fusionauth search, elasticsearch, opensearch, database search, search engine, reindex
 order: 4
+sectionIndex: true
 ---
+import DataFieldDataTypeChanges from 'src/content/docs/_shared/_data-field-data-type-changes.mdx';
+import ElasticsearchVersion from 'src/content/docs/_shared/_elasticsearch-version.mdx';
 import ReIndexingElasticsearch from 'src/content/docs/_shared/_re-indexing-elasticsearch.mdx';
-import PaginatingSearchResults from 'src/content/docs/_shared/_paginating-search-results.mdx';
 
-FusionAuth ships with two options for search: a simple search via the database search engine and the Elasticsearch search engine.
+FusionAuth uses a [[Search Engine::search engine]] to find Users and Entities in the Admin UI, the User Search API, and the Entity Search API. FusionAuth supports the following search engines:
 
-## Configuration
+* The database search engine runs inside FusionAuth and needs no other service.
+* The Elasticsearch search engine connects to an OpenSearch or Elasticsearch cluster that you run. Despite the name, the Elasticsearch search engine works the same way with OpenSearch.
 
-<Aside type="version">
+A search engine service is optional. Login, registration, and every other feature that doesn't search for Users or Entities work the same with either engine. FusionAuth Cloud deployments use the Elasticsearch search engine.
 
-As of version `1.16.0`, FusionAuth ships with a database search engine as the default.
+## Compare the Search Engines
 
-By selecting the appropriate [installation guide](/docs/get-started/install), one can easily create a configuration with Elasticsearch pre-enabled.
+| Feature | Database | Elasticsearch |
+|---|---|---|
+| Extra service to run | None | OpenSearch or Elasticsearch |
+| User and Entity search by Id | Yes | Yes |
+| Search by `queryString` | Single terms in a few fields | Full query string syntax on any indexed field |
+| Search by `query` (Elasticsearch query DSL) | No | Yes |
+| Search custom **`data`** fields | No | Yes |
+| Search across Registrations, Group memberships, and Entity grants | No | Yes |
+| Advanced search in the Admin UI | No | Yes |
+| [Bulk Delete Users API](/docs/apis/users/bulk-delete) | **`userIds`** and single-term **`queryString`** | All parameters |
+| [SCIM](/docs/users/provision/scim) list Users with a **`filter`** | No | Yes |
+| Page past 10,000 results | Yes | Yes, with **`nextResults`** tokens |
+| Search results after a User changes | Immediate | After an index refresh, usually about one second |
 
-</Aside>
+Choose the database search engine for development, embedded installs, and installs that find Users by Id, email address, or name. With a large number of Users, load test the database search engine with your typical searches, because FusionAuth doesn't test that case. Provision the database with enough resources for search.
 
-### Configuration Reference
+Choose the Elasticsearch search engine when you need any feature in the Elasticsearch column, or when you search a large number of Users often. For a new install, use OpenSearch `2.x`.
 
-The relevant properties which control the configuration of the search engine include `search.type` which specifies the search engine type.
+## Default Search Engine
 
-For the database search engine, there is no other configuration needed.
+The search engine depends on how you install FusionAuth:
 
-All other settings referencing `search` apply to the Elasticsearch search engine only. Please see the [Configuration Reference](/docs/deploy/production/configuration) for more details.
+* The [Docker install](/docs/get-started/install) uses the Elasticsearch search engine, and runs OpenSearch in a container.
+* The `fusionauth/fusionauth-app` Docker image, without a `SEARCH_TYPE` environment variable, uses the database search engine.
+* The FusionAuth App package and the [Fast Path install](/docs/deploy/production/install/fusionauth-app) use the database search engine.
+* The FusionAuth Search package sets the Elasticsearch search engine, and runs Elasticsearch on the same server.
 
-#### Switch Engine Types
+To see the search engine an instance uses, navigate to <Breadcrumb>System -> About</Breadcrumb> in the Admin UI. The **Search** row shows `Database`, or the name and version of OpenSearch or Elasticsearch, such as `OpenSearch 2.19.8`.
 
-FusionAuth supports two different search engines. If you begin with one, you can change to the other if your needs change. 
+<Screenshot id="manage-search-about-engine" url="/admin/system/about" crop="#screenshot-band" cropPadding={0} alt="The System panel of the About page, showing the search engine." />
 
-This tutorial walks through how to [switch between the different search engines](/docs/users/search/switch-search-engines).
+To change the search engine, see [Switch Search Engines](/docs/users/search/switch-search-engines). For the search settings, see the [Configuration Reference](/docs/deploy/production/configuration).
 
-#### Docker
-If you are running FusionAuth in a Docker environment, see the [Using FusionAuth on Docker](/docs/get-started/install) documentation for an example configuring Elasticsearch as the user search engine.
+## Database Search Engine
 
+The database search engine matches a single term against the following User fields:
 
-#### View Current Configuration
+* `firstName`
+* `lastName`
+* `fullName`
+* `email`
+* `phoneNumber` <AvailableSince since="1.59.0" />
+* `username`
 
-You may view the configured search engine type in the FusionAuth Admin UI by navigating to <Breadcrumb>System -> About</Breadcrumb>.  As you can see below, this system is configured to use the database search engine.
+A search matches part of a field, without regard to case. Add a `*` wildcard to match any characters, including none: `*piedpiper` matches `piedpiper` and `thepiedpiper`. You can put the wildcard anywhere in the term. The database search engine doesn't support regular expressions, ranges, or compound queries. For the Entity fields the engine matches, see the [Entity Search API](/docs/apis/entities/entities#search-for-entities).
 
-<Screenshot id="manage-search-about-engine" url="/admin/system/about" crop="#screenshot-band" cropPadding={0} alt="The System panel of the About page showing the search engine." />
+## Elasticsearch Search Engine
 
-## Using the Database Search Engine
+The Elasticsearch search engine keeps an index of Users and Entities in OpenSearch or Elasticsearch. FusionAuth writes to the index whenever a User or an Entity changes. FusionAuth indexes the following data:
 
-This configuration is lightweight, simplifies installation and system complexity, but comes with the trade offs of limited search capabilities and performance implications.
+* Users, with Registrations, Group memberships, and the **`user.data`** and **`registration.data`** fields. For the field list, see [Indexed User Fields](/docs/users/search/user-fields).
+* Entities, with grants and the **`entity.data`** field. For the field list, see [Indexed Entity Fields](/docs/users/search/entity-fields).
 
-The database search engine is appropriate for systems that are not dependent on the FusionAuth APIs, are not expected to have a large number of search results, or are running in an embedded environment.
+With the index, you can search any indexed field with the full Elasticsearch query string syntax and query DSL. For examples, see [Search Users With OpenSearch or Elasticsearch](/docs/users/search/user-search-with-elasticsearch).
 
-If you don't need advanced searching capabilities, you may be able to use the database search engine for large installations. This is not a use case FusionAuth tests, so ensure you provision your database with enough resources and benchmark your typical use cases.
+<ElasticsearchVersion />
 
-### Limitations
+To install OpenSearch, see [Install a Search Engine](/docs/deploy/production/install/search). For memory and disk sizing, see [System Requirements](/docs/deploy/production/system-requirements#search-engine).
 
-You may add a `*` character to wildcard match any character, including none. So `*piedpiper` will match `piedpiper` and `thepiedpiper`. You may put the wildcard at any location in a search string.
+### What Uses the Search Engine
 
-All search terms are converted to lowercase and compared with lowercase values.  In other words, all database searches are case-insensitive.
+With the Elasticsearch search engine, the following features read from the search engine:
 
-Regular expressions, ranges, and other complicated queries can not be used.
+* The [User Search API](/docs/apis/users/search) and the [Entity Search API](/docs/apis/entities/entities#search-for-entities), with **`queryString`**, **`query`**, or **`nextResults`**. A search with **`ids`** reads from the database.
+* The [Bulk Delete Users API](/docs/apis/users/bulk-delete), with **`queryString`** or **`query`**.
+* SCIM requests that list Users with a **`filter`**.
+* User and Entity search in the Admin UI.
 
-## Using the Elasticsearch Search Engine
+The following changes write to the search engine:
 
-Leveraging Elasticsearch enables advanced search capabilities on more numerous and granular data. It also provides a performance improvement.
+* Creating, updating, and deleting Users, including through the [Import Users API](/docs/apis/users/import).
+* Creating, updating, verifying, and deleting Registrations.
+* Adding Users to Groups and removing Users from Groups.
+* Creating, updating, and deleting Entities.
+* Logins, which update the last login time of the User. FusionAuth writes login times in batches in the background.
 
-The Elasticsearch search engine is appropriate for systems that are dependent on the FusionAuth APIs (such as [user search](/docs/apis/users/search)), are expected to have a large number of results, or require more granularity in search than is provided by the standard database search engine.
+Login, passwordless login, and retrieving a User or an Entity by Id don't read from the search engine.
 
-### Reindexing Elasticsearch
+### When the Search Engine Is Unavailable
+
+When OpenSearch or Elasticsearch is down, FusionAuth keeps running, and users can still log in. Other requests behave as follows:
+
+| Request | Result while the search engine is down |
+|---|---|
+| Login and passwordless login | Succeeds. |
+| Retrieve a User or an Entity, or search with **`ids`** | Succeeds. |
+| Search with **`queryString`** or **`query`**, or Bulk Delete Users | Fails with a `503` response. |
+| Create or update a User, or create a Registration | Succeeds, but the change doesn't reach the index. |
+| Delete a User, or add a User to a Group | Fails with a `503` response. FusionAuth makes no change. |
+| Create, update, or delete an Entity | Fails with a `503` response. FusionAuth makes no change. |
+
+A failed request returns the `[SearchEngineUnavailableException]` error code. After the search engine recovers, searches miss the changes that succeeded during the outage. To bring the index up to date, [reindex](#reindex).
+
+A search engine that accepts connections but doesn't respond causes longer delays than one that is down. In testing with an unresponsive OpenSearch node, searches returned the `503` response after 30 seconds, a User update took 60 seconds, and the [System Status API](/docs/apis/system/retrieve-system-status) took 30 seconds. When User API calls slow down, check the health of the search engine cluster.
+
+### Index Delay
+
+The index is eventually consistent. After a User changes, the change appears in search results once the search engine refreshes the index, usually after about one second. For more information, see [Limitations](/docs/users/search/user-search-with-elasticsearch#limitations).
+
+To make changes visible to search right away, for example in tests, call the [Flush the Search Engine API](/docs/apis/users/flush-search).
+
+### Data Field Types
+
+<DataFieldDataTypeChanges />
+
+## Reindex
 
 <ReIndexingElasticsearch />
 
 ## Pagination
 
-<PaginatingSearchResults />
-
-Note that prior to version 1.48.0 you'll only be able to get back 10,000 results no matter how you paginate. See the [Known Limitations](/docs/concepts/plans-and-limits/limitations#user-searches) section for more and some workarounds.
-
-As of version 1.48.0, FusionAuth you can use a **nextResults** token to page past the 10,000 results limitation when using the Elasticsearch engine.
-
-See the [Extended Pagination](#extended-pagination) section for more details.
-
-### Extended Pagination
-
-<AvailableSince since="1.48.0"/>
-
-Starting in version 1.48.0 of FusionAuth every search using the Elasticsearch engine will return a **nextResults** token in the response. You may use this token on subsequent calls to continue paging forward in the result set and go past the 10,000 results limit with Elasticsearch. Every search request made using a **nextResults** token will return a page of results and another **nextResults** token that can be used to retrieve the next page. These calls can be made indefinitely until the number of returned results is 0.
-
-Internally FusionAuth uses this token to make a `search_after` parameter on the request to Elasticsearch. See [the Elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/paginate-search-results.html) for more information.
-
-<Aside type="note">
-Because this call relies on the parameters of a previous search request, you cannot supply new parameters in a search request with a **nextResults** token which would change the query to Elasticsearch.
-
-As such, when using a **nextResults** token in a search request you may only supply the **numberOfResults** as an additional request parameter.
-</Aside>
-
-For more detail on extended pagination see the [Searching Users With Elasticsearch](/docs/users/search/user-search-with-elasticsearch) guide.
-
+Both search engines page through results with **`startRow`** and **`numberOfResults`**. The Elasticsearch search engine also returns a **`nextResults`** token, which pages past the first 10,000 results. For more information, see [Pagination](/docs/users/search/user-search-with-elasticsearch#pagination) and [Extended Pagination](/docs/users/search/user-search-with-elasticsearch#extended-pagination).

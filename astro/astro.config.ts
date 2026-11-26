@@ -167,7 +167,7 @@ const lightboxProvider = () => ({
     // satteri appends the layout import; hoist it so layout CSS loads first, as with unified
     const layoutImport = code.match(/^import \{ jsx as __astro_layout_jsx__ \} from 'astro\/jsx-runtime';\nimport __astro_layout_component__ from .*;$/m);
     if (layoutImport) code = `${layoutImport[0]}\n${code.replace(layoutImport[0], '')}`;
-    code = `import _LightboxImage from "src/components/LightboxImage.astro";\n${code}`;
+    code = `import _LightboxImage from "astro-better-lightbox/LightboxImage.astro";\n${code}`;
     code = code.replace(
       "components: { Fragment: _Fragment, ...props.components, },",
       "components: { Fragment: _Fragment, img: _LightboxImage, ...props.components, },"
@@ -252,7 +252,7 @@ const config = defineConfig({
       processor: satteri({
         mdastPlugins: [
           mermaidTitle(),       // inserts title nodes before we transform code blocks
-          mermaidSSR(),         // replaces mermaid blocks with pre-rendered SVGs
+          mermaidSSR({ lightbox: true }), // replaces mermaid blocks with pre-rendered SVGs that open in a lightbox
           shellSession(),
           glossaryTerms(glossaryOptions),
           requiredProps(),
