@@ -17,69 +17,36 @@ After you configure the Identity Provider, you can enable the Google login butto
 
 <IdentityProviderOverviewDiagram identity_provider_name="Google" />
 
-## Create a Google Cloud Account
-
-Log in to Google, or create a Google account. Then open the [Google Cloud console](https://console.cloud.google.com).
-
 ## Create Google OAuth Client Credentials
+
+Google manages OAuth clients in the Google Auth Platform section of the [Google Cloud console](https://console.cloud.google.com). To find the section, search for `Google Auth Platform` in the console search bar.
 
 <Steps>
 
-1. In the Google Cloud console, navigate to <Breadcrumb>APIs and Services -> Credentials</Breadcrumb>.
-1. When Google asks you to select or create a project, do so. The following example creates a first project named `Pied Piper`:
+1. Log in to the Google Cloud console with a Google account. Select a project, or create a project.
+1. Navigate to <Breadcrumb>Google Auth Platform -> Overview</Breadcrumb>. When the project has no OAuth configuration, click <Breadcrumb>Get started</Breadcrumb>. Fill in the following sections, then finish the setup:
 
-   ![The Google Cloud form to create a project.](/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-create-project.png)
+   * App Information: the **App name** and **User support email** that users see on the Google consent screen.
+   * Audience: usually `External`, which lets any Google account log in. `Internal` limits login to the users in your Google Cloud organization.
+   * Contact Information: the email addresses that receive notifications from Google about the project.
 
-1. Navigate to <Breadcrumb>APIs & Services -> Credentials</Breadcrumb>. Click <Breadcrumb>Create credentials</Breadcrumb> and select <Breadcrumb>OAuth client ID</Breadcrumb>.
+1. Navigate to <Breadcrumb>Google Auth Platform -> Audience</Breadcrumb>. While the **Publishing status** is `Testing`, only the test users can log in with Google. Under **Test users**, click <Breadcrumb>Add users</Breadcrumb> and add the Google accounts that you test with. To let any Google account log in, publish the app. For more information, see [Additional Steps for Your Google Application](#additional-steps-for-your-google-application).
+1. Navigate to <Breadcrumb>Google Auth Platform -> Data Access</Breadcrumb>. Click <Breadcrumb>Add or remove scopes</Breadcrumb>. Most applications select `openid`, `https://www.googleapis.com/auth/userinfo.email`, and `https://www.googleapis.com/auth/userinfo.profile`. Click <Breadcrumb>Update</Breadcrumb>, then click <Breadcrumb>Save</Breadcrumb> at the bottom of the page. Google discards the scopes when you leave the page without saving.
 
-   ![The Create credentials menu in the Google Cloud console.](/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-create-credentials.png)
+   Some scopes need more configuration in the Google console. For more information, see the [full list of Google scopes](https://developers.google.com/identity/protocols/oauth2/scopes). Use the same scopes later in the **Scope** field of the FusionAuth Identity Provider.
 
-1. When an alert says you need to configure the consent screen first, click <Breadcrumb>Configure consent screen</Breadcrumb>.
+1. Navigate to <Breadcrumb>Google Auth Platform -> Clients</Breadcrumb>. Click <Breadcrumb>Create client</Breadcrumb>.
+1. Set **Application type** to `Web application`, and fill in **Name**. Google shows the name only in the console.
+1. Configure the client for your login method. The example uses `https://login.piedpiper.com`, the FusionAuth URL for Pied Piper.
+   * When you use the redirect method, add the FusionAuth callback URL to **Authorized redirect URIs**. For FusionAuth at `login.piedpiper.com`, the value is `https://login.piedpiper.com/oauth2/callback`. When the URI doesn't match the FusionAuth callback URL exactly, Google returns a `redirect_uri_mismatch` error. Google requires HTTPS for every host except `localhost`.
+   * When you use the popup method, add the origin of your login page to **Authorized JavaScript origins**.
+1. Click <Breadcrumb>Create</Breadcrumb>. Google shows the **Client ID** and the **Client secret**.
 
-   ![The Google Cloud alert to configure the consent screen.](/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-configure-consent.png)
-
-1. Choose a consent type, usually `External`, and click <Breadcrumb>Create</Breadcrumb>.
-
-   ![The Google Cloud choice between internal and external consent types.](/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-configure-consent-internal-external.png)
-
-1. Fill out the required fields and click <Breadcrumb>Save</Breadcrumb>. The example sets the following fields:
-
-   * **Application name**
-   * **User support email** (not shown)
-   * **App logo** (not shown)
-   * **Authorized domains**
-   * **Application Homepage link**
-   * **Application Privacy Policy link**
-   * **Application Terms of Service link**
-   * **Developer contact information** (not shown)
-
-   ![The Google Cloud consent screen configuration.](/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-configure-consent-screen.png)
-
-1. To add or update scopes, click <Breadcrumb>Add or remove scopes</Breadcrumb>. Most applications select `https://www.googleapis.com/auth/userinfo.email`, `https://www.googleapis.com/auth/userinfo.profile`, and `openid`. You can enable any other scopes. Some scopes need more configuration in the Google console. For more information, see [Additional Steps for Your Google Application](#additional-steps-for-your-google-application) and the [full list of Google scopes](https://developers.google.com/identity/protocols/oauth2/scopes).
-
-   Use the same scopes later in the FusionAuth Identity Provider configuration.
-
-   ![The Google Cloud scope selection.](/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-configure-scopes.png)
-
-1. Optionally add test users. Then click <Breadcrumb>Save and continue</Breadcrumb>.
-1. Navigate to <Breadcrumb>APIs & Services -> Credentials</Breadcrumb>. Click <Breadcrumb>Create credentials</Breadcrumb> and select <Breadcrumb>OAuth client ID</Breadcrumb>.
-1. Set **Application Type** to `Web application`.
-1. Add the name of the application to the **Name Type** field.
-1. Configure the panel for your login method. The example uses `https://login.piedpiper.com`, the FusionAuth URL for Pied Piper.
-   * When you use the redirect method, add an absolute Authorized [[redirect URI]]. For FusionAuth at `login.piedpiper.com`, the value is `https://login.piedpiper.com/oauth2/callback`.
-   * When you use the popup method, fill out **Authorized JavaScript origins** with the origin of your application login page.
-
-   The following image shows both the popup origin and the redirect URL. Fill in only the one that your login method needs.
-
-   ![The Google Cloud form to create an OAuth client Id.](/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-create-client-id.png)
-
-1. Click <Breadcrumb>Create</Breadcrumb>.
+   <Aside type="caution">
+   Google shows the full client secret only when you create the client. Copy the **Client ID** and the **Client secret** before you close the dialog. After you close the dialog, the console shows only the last four characters of the secret. To get a new secret, open the client and click <Breadcrumb>Add secret</Breadcrumb>.
+   </Aside>
 
 </Steps>
-
-Select the new credential to see the **Client ID** and **Client secret** for the next step.
-
-![The Google OAuth client credentials.](/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-client-credentials.png)
 
 ## Create a Google Identity Provider
 
@@ -133,6 +100,8 @@ Create the Google Identity Provider in FusionAuth. Fill in **Client Id** and **C
     <AvailableSince since="1.44.0" />
 
     FusionAuth uses **Scope** only when **Login Method** is `Use redirect for login`. FusionAuth always requests the `email`, `profile`, and `openid` scopes for the other login methods.
+
+    When **Login Method** is `Use redirect for login`, fill in **Scope**. Google requires the `scope` parameter, and FusionAuth sends no `scope` parameter when **Scope** is empty. Google then rejects the login request.
   </APIField>
   <APIField name="Linking strategy" optional>
     How FusionAuth links a Google user to a FusionAuth user. For more information, see [Linking Strategies](/docs/authentication/identity-providers/linking-strategies).

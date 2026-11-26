@@ -121,13 +121,19 @@ The Docker Compose file on this page is for development. Before you run FusionAu
 
 ## Architecture
 
-A typical FusionAuth install includes three services: `fusionauth-app`, a database, and a search service:
+The Docker Compose file runs the following services:
 
-```mermaid title="FusionAuth Search, FusionAuth App, and the database all run on one server."
+* FusionAuth App, the service that handles API calls, login pages, and the Admin UI.
+* PostgreSQL, the database. FusionAuth requires a database.
+* OpenSearch, the search engine. A search engine is optional.
+
+```mermaid title="FusionAuth App connects to PostgreSQL, and optionally to OpenSearch, on one server."
 flowchart LR
     subgraph Server[Your server]
         direction LR
-        Search[FusionAuth Search] <--> App[FusionAuth App]
-        App <--> DB[(Database)]
+        Search[OpenSearch, optional] <--> App[FusionAuth App]
+        App <--> DB[(PostgreSQL)]
     end
 ```
+
+FusionAuth uses OpenSearch for advanced User and Entity search. Without OpenSearch, FusionAuth searches with the database, and login, registration, and every other feature work the same. To use the database search engine, set `FUSIONAUTH_SEARCH_TYPE=database` in the `.env` file before you start the services. The OpenSearch container still starts, because the FusionAuth service depends on the container. To stop running OpenSearch, remove the `search` service and the `search` entry under `depends_on` from `docker-compose.yml`. For a comparison of the search engines, see [Search Engines](/docs/users/search).

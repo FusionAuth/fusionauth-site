@@ -36,9 +36,36 @@ FusionAuth has the following known limits:
 
 ## Field Lengths
 
-FusionAuth stores most data in a database. Lengths of specific fields are documented in the database schema for your database type. Please [download the database schema for your version of FusionAuth](/direct-download) to review length limits for a particular column.
+FusionAuth stores most data in a database. The database schema for your database type sets the maximum length of each column. To look up the length of a column, [download the database schema for your version of FusionAuth](/direct-download).
 
-Many varchar columns have a length of 191. Why 191? In MySQL when using a `utf8mb4` (4 byte character set) on an indexed column, MySQL limits the usable characters to 191 to account for the overhead of the 4 byte addressing. The InnoDB MySQL engine has a max index length of 767 bytes (for mysql 5.7.9, the earliest version of MySQL which [FusionAuth supports](/docs/deploy/production/system-requirements)). Because we are using `utf8mb4` which allows up to 4 bytes per character, we end up with 767/4 ~ 191, so we set the column length to that.
+Many `VARCHAR` columns have a length of 191 characters. The length comes from MySQL 5.7, where the InnoDB engine limited an index key to 767 bytes. The `utf8mb4` character set uses up to 4 bytes per character, and 767 / 4 rounds down to 191.
+
+## Data Field Sizes
+
+FusionAuth stores the **`data`** field of an object in a single database column. The column type sets the maximum size, and the maximum depends on your database:
+
+| Object | MySQL | PostgreSQL |
+|---|---|---|
+| Users, Registrations, Groups, Group Members, Consents, Audit Logs | 16,777,215 bytes (16 MB) | About 1 GB |
+| Applications, Tenants, Entities, Entity Types, Entity Type Permissions, Entity Grants, Forms, Form Fields, Webhooks, Connectors, Messengers, Message Templates, OAuth Scopes, CIMD Domains | 65,535 bytes (64 KB) | About 1 GB |
+| Themes, System Configuration | About 4 GB | About 1 GB |
+
+The column holds more than the **`data`** field. FusionAuth serializes the **`data`** field and the object fields that have no column of their own into the column as JSON:
+
+* For Users, the column also holds **`preferredLanguages`** and **`twoFactor`**.
+* For Registrations, the column also holds **`preferredLanguages`** and **`tokens`**.
+* For Applications and Tenants, the column holds the entire configuration of the object. A new Application or Tenant uses about 2 KB to 4 KB of the column before you add custom data, so less than 64 KB remains for the **`data`** field on MySQL.
+
+MySQL measures the limit in bytes, not characters. `utf8mb4` stores a character outside ASCII in 2 to 4 bytes, so fewer characters fit in the column.
+
+FusionAuth also limits every API request, on any database. On PostgreSQL, the following request limits apply long before the column fills:
+
+* A request body can hold up to 128 MB by default. FusionAuth rejects a larger request with a `413` status code and an empty response. To change the maximum, set `fusionauth-app.http.max-request-size`. For more information, see the [Configuration reference](/docs/deploy/production/configuration).
+* A single JSON string value can hold up to 20,000,000 characters. FusionAuth rejects a longer string with a `400` status code and an `[invalidJSON]` field error. To store more data, split the data across several keys in the **`data`** field.
+
+FusionAuth doesn't validate the size of a **`data`** field against the column size. On MySQL, when the serialized JSON exceeds the column size, MySQL rejects the write. The API then returns a `500` status code with the `[Exception]` general error code, and FusionAuth logs a `Data too long for column 'data'` error. FusionAuth saves nothing from the request, and the existing object stays unchanged.
+
+Keep **`user.data`** and **`registration.data`** small, even when the database allows more. FusionAuth loads the User and the User's Registrations on every login, and the [Login API](/docs/apis/login) returns the full User in the response. A User with 16 MB of custom data produces a 16 MB login response. When you use the Elasticsearch search engine, FusionAuth also indexes **`user.data`**, **`registration.data`**, and **`entity.data`**, so large values increase the size of the search index. To keep large records, such as documents or files, store the records in another system and save an Id or URL in the **`data`** field.
 
 ## API Keys
 

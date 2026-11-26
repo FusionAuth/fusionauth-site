@@ -1,227 +1,107 @@
 ---
 title: Vue SDK
+htmlTitle: Add Login to a Vue App with the FusionAuth Vue SDK
 description: Learn how to add login, logout, and registration to your Vue application with the FusionAuth Vue SDK.
-tags: vue sdk, fusionauth vue, vue.js authentication, spa authentication, vue client library, composition api
+tags: vue sdk, fusionauth vue, vue.js authentication, spa authentication, vue client library, composition api, nuxt
 order: 20
 ---
-import HostedBackendWarning from 'src/content/docs/_shared/_hosted-backend-warning.md';
-import SdkUpdatePolicy from 'src/content/docs/sdks/_update-policy.mdx';
 import WebSdkOverview from 'src/content/docs/sdks/_web-sdk-overview.mdx';
+import WebSdkPrerequisites from 'src/content/docs/sdks/_web-sdk-prerequisites.mdx';
 
-{/* Source: https://github.com/FusionAuth/fusionauth-javascript-sdk/blob/db7d152eb45837bb9a6a4a0b1d1cd41874539e7d/packages/sdk-vue/README.md — forDocSite; internal documentation links use current site paths. */}
-{/* Local corrections: add the missing Nuxt configuration comma, handle absent user info in the welcome message, and link to the existing useFusionAuth API section. */}
-
-The Vue SDK provides methods and reactive values that manage authentication state in your Vue application.
+The Vue SDK adds login, registration, and logout to a Vue application, and tracks whether the user is logged in. To build a complete application step by step, see the [Vue QuickStart](/docs/quickstarts/spa/vue).
 
 <WebSdkOverview framework="Vue" />
 
-## Install
+## Prerequisites
 
-For a full tutorial on FusionAuth and Vue, see the [FusionAuth Vue Quickstart](/docs/quickstarts/spa/quickstart-javascript-vue-web).
+<WebSdkPrerequisites framework="Vue" version="3.5.0" />
 
-To install the SDK with npm, run:
+## Add Login to Your Application
 
-```shell-session
-npm install @fusionauth/vue-sdk
-```
+<Steps>
 
-To install the SDK with Yarn, run:
+1. Install the SDK:
 
-```shell-session
-yarn add @fusionauth/vue-sdk
-```
+   ```shell-session
+   npm install @fusionauth/vue-sdk
+   ```
 
-## Configure the SDK
+1. Install `FusionAuthVuePlugin` when you create your Vue application. Set **`clientId`** to the client Id of your FusionAuth Application, **`serverUrl`** to the URL of your FusionAuth instance, and **`redirectUri`** to the URL you added to **Authorized redirect URLs**:
 
-Configure and initialize the `FusionAuthVuePlugin` when you create your Vue application:
+   ```typescript
+   import { createApp } from 'vue';
+   import FusionAuthVuePlugin, { type FusionAuthConfig } from '@fusionauth/vue-sdk';
+   import App from './App.vue';
 
-```typescript
-import { createApp } from 'vue';
-import FusionAuthVuePlugin, { type FusionAuthConfig } from '@fusionauth/vue-sdk';
+   const config: FusionAuthConfig = {
+     clientId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
+     serverUrl: 'http://localhost:9011',
+     redirectUri: 'http://localhost:5173',
+     shouldAutoFetchUserInfo: true,
+     shouldAutoRefresh: true,
+   };
 
-const config: FusionAuthConfig = {
-  clientId: "", // Your application's FusionAuth client Id
-  serverUrl: "", // The url of the server that performs the token exchange
-  redirectUri: "", // The URI that the user is directed to after the login/register/logout action
-  shouldAutoFetchUserInfo: true, // Automatically fetch userInfo when logged in. Defaults to false.
-  shouldAutoRefresh: true, // Enables automatic token refresh. Defaults to false.
-  onRedirect: (state?: string) => { }, // Optional callback invoked upon redirect back from login or register.
-  // useDpop: true, // Opt-in to DPoP mode. See "Use DPoP Mode" below. Defaults to false.
-}
+   const app = createApp(App);
+   app.use(FusionAuthVuePlugin, config);
+   app.mount('#app');
+   ```
 
-const app = createApp(App);
+   **`shouldAutoFetchUserInfo`** loads the user's profile after login, and **`shouldAutoRefresh`** refreshes the access token before the token expires. For every option, see [Web SDK Configuration](/docs/sdks/web-sdk-configuration).
 
-app.use(FusionAuthVuePlugin, config);
-app.mount('#app')
-```
+1. Call the `useFusionAuth` composable in a component to add login, registration, and logout buttons:
 
-For a full list of configuration options, see [Web SDK Configuration](/docs/sdks/web-sdk-configuration).
+   ```html
+   <script setup lang="ts">
+   import { useFusionAuth } from '@fusionauth/vue-sdk';
 
-To use the pre-styled buttons, import the CSS file:
+   const {
+     isLoggedIn,
+     isGettingUserInfo,
+     userInfo,
+     login,
+     register,
+     logout,
+   } = useFusionAuth();
+   </script>
+
+   <template>
+     <p v-if="isGettingUserInfo">Loading...</p>
+
+     <div v-else-if="isLoggedIn">
+       <p v-if="userInfo?.given_name">Welcome {{ userInfo.given_name }}!</p>
+       <button @click="logout()">Log Out</button>
+     </div>
+
+     <div v-else>
+       <button @click="login()">Log In</button>
+       <button @click="register()">Register</button>
+     </div>
+   </template>
+   ```
+
+   `login` and `register` send the browser to the FusionAuth login and registration pages. `logout` ends the session and returns the browser to **`redirectUri`**. To return users to a different page after logout, set **`postLogoutRedirectUri`** and add the URL to **Authorized redirect URLs**.
+
+1. Start your application and click <Breadcrumb>Log In</Breadcrumb>. The browser opens the FusionAuth login page. After you log in, FusionAuth returns you to your application, and the component shows <Breadcrumb>Log Out</Breadcrumb>.
+
+</Steps>
+
+For every value that `useFusionAuth` returns, see the [useFusionAuth reference](https://github.com/FusionAuth/fusionauth-javascript-sdk/blob/main/packages/sdk-vue/docs/modules.md#usefusionauth).
+
+## Use the Pre-Built Buttons
+
+Instead of writing your own buttons, use the styled buttons from the SDK. The plugin registers the buttons globally, so you don't import the buttons in each component. Import the button styles once, next to the plugin:
 
 ```typescript
 import '@fusionauth/vue-sdk/dist/style.css';
 ```
 
-### Configure with Nuxt
-
-When you use [Nuxt](https://nuxt.com/), pass the [`useCookie`](https://nuxt.com/docs/api/composables/use-cookie) composable in the config object of your plugin definition:
-
-```typescript
-import { useCookie } from "#app";
-
-export default defineNuxtPlugin((nuxtApp) => {
-  nuxtApp.vueApp.use(FusionAuthVuePlugin, {
-    ...config,
-    nuxtUseCookie: useCookie,
-  });
-});
-```
-
-#### Define the Nuxt Plugin with createFusionAuth
-
-The `createFusionAuth` function gives you more control over the SDK configuration:
-
-```typescript
-export default defineNuxtPlugin({
-  setup(nuxtApp) {
-    const fusionauth = createFusionAuth(config);
-    nuxtApp.vueApp.use(FusionAuthVuePlugin, { instance: fusionauth })
-    return {
-      provide: { fusionauth }
-    };
-  },
-})
-```
-
-## Usage
-
-### Use the useFusionAuth Composable
-
-The `useFusionAuth` composable gives your components access to the SDK through [Vue's Composition API](https://vuejs.org/guide/reusability/composables). For more information, see the [useFusionAuth API documentation](https://github.com/FusionAuth/fusionauth-javascript-sdk/blob/main/packages/sdk-vue/docs/modules.md#usefusionauth).
-
-The following component shows a welcome message and the login, registration, and logout buttons:
-
-```html
-<script setup lang="ts">
-import { computed } from 'vue';
-import { useFusionAuth } from "@fusionauth/vue-sdk";
-
-const {
-  isLoggedIn,
-  userInfo,
-  isFetchingUserInfo,
-  login,
-  register,
-  logout
-} = useFusionAuth();
-
-const welcomeMessage = computed(() => {
-  const name = userInfo.value?.given_name
-  return name
-    ? `Welcome ${name}!`
-    : 'Welcome!';
-});
-</script>
-
-<template>
-  <p>{{ welcomeMessage }}</p>
-
-  <div v-if="isLoggedIn">
-    <p v-if="isFetchingUserInfo">
-      Loading...
-    </p>
-    <button @click="logout()">Logout</button>
-  </div>
-
-  <div v-if="!isLoggedIn">
-    <button @click="login()">Login</button>
-    <p>or</p>
-    <button @click="register()">Register</button>
-  </div>
-</template>
-```
-
-### Pass State Through Login
-
-The `login` and `register` functions accept an optional string parameter named `state`. The SDK passes the value to the optional `onRedirect` callback on your `FusionAuthConfig`. You can pass any value. A common choice is the page the user was on before login, so your application can return the user to that page after authentication.
-
-## Use DPoP Mode
-
-By default, the SDK calls a hosted backend that stores tokens in [[HttpOnly cookies]]. In DPoP mode, the SDK calls FusionAuth endpoints directly and binds tokens to a private key that the browser generates. To enable DPoP mode, set `useDpop` to `true` on `FusionAuthConfig`. The default is `false`.
-
-The following configuration enables DPoP mode:
-
-```typescript
-const config: FusionAuthConfig = {
-  clientId: "",
-  redirectUri: "",
-  serverUrl: "",
-  useDpop: true, // Opt-in to DPoP mode.
-  dpopTokenStorage: 'localStorage', // 'localStorage' (default, persists across reloads) or 'memory'.
-}
-```
-
-When `useDpop` is `true`, `useFusionAuth()` also returns `dpopFetch`, `generateProof`, and `getAccessToken`. These values are `undefined` when `useDpop` is `false` or missing.
-
-The following code calls an API with each function:
-
-```html
-<script setup lang="ts">
-import { useFusionAuth } from "@fusionauth/vue-sdk";
-
-const { dpopFetch, generateProof, getAccessToken } = useFusionAuth();
-
-const response = await dpopFetch('https://api.example.com/data', { method: 'GET' });
-
-const accessToken = getAccessToken();
-const proof = await generateProof('https://api.example.com/data', 'GET', accessToken);
-// axios.get('https://api.example.com/data', {
-//   headers: { Authorization: `DPoP ${accessToken}`, DPoP: proof }
-// });
-</script>
-```
-
-In DPoP mode, the login and register redirect finishes asynchronously, because no hosted backend sets cookies before the application reloads. The SDK calls `onRedirect` only after `isLoggedIn` and the tokens are fully updated. Use `onRedirect` for post-login navigation:
-
-```typescript
-const config: FusionAuthConfig = {
-  // ...
-  useDpop: true,
-  onRedirect: () => router.push('/account'),
-}
-```
-
-## Components
-
-### Protect Content
-
-The `RequireAuth` and `RequireAnonymous` components restrict content based on authentication and authorization:
-
-```html
-<template>
-  <RequireAuth :with-role="['ADMIN', 'SUPER-ADMIN']">
-    <!-- only displays for users with specified role -->
-    <button>Delete user</button>
-  </RequireAuth>
-</template>
-
-<template>
-  <RequireAnonymous>
-    <!-- content for unauthenticated users -->
-  </RequireAnonymous>
-</template>
-```
-
-### Use the Pre-Built Buttons
-
-The SDK includes pre-styled login, logout, and registration buttons. Place the buttons anywhere in your application without further configuration:
+Then place the buttons in any template. Set the CSS variables to match the buttons to your design:
 
 ```html
 <template>
   <FusionAuthLoginButton />
-  <FusionAuthLogoutButton />
   <FusionAuthRegisterButton />
+  <FusionAuthLogoutButton />
 </template>
 
 <style>
@@ -232,22 +112,115 @@ The SDK includes pre-styled login, logout, and registration buttons. Place the b
 </style>
 ```
 
-Set the CSS variables to match the buttons to your application's style.
+## Show Content by Login State and Role
 
-## Library Documentation
+Wrap content in `RequireAuth` to show the content only to logged-in users. Set **`with-role`** to a role name, or to an array of role names, to require at least one of the roles. Wrap content in `RequireAnonymous` to show the content only to logged-out users:
 
-The SDK repository hosts the full library documentation, which [typedoc](https://typedoc.org/) generates with [typedoc-plugin-markdown](https://www.npmjs.com/package/typedoc-plugin-markdown). For more information, see the [full library documentation](https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-vue/docs).
+```html
+<template>
+  <RequireAuth :with-role="['admin', 'editor']">
+    <button>Delete User</button>
+  </RequireAuth>
+  <RequireAnonymous>
+    <p>Log in to manage users.</p>
+  </RequireAnonymous>
+</template>
+```
 
-{/* End source: forDocSite */}
+`RequireAuth` reads the user's profile, and shows nothing until the profile loads. Set **`shouldAutoFetchUserInfo`** to `true`, or call `getUserInfo` from `useFusionAuth`.
 
-## Use the SDK with FusionAuth Cloud
+These components only change what the browser shows. Check the access token on your server before you return protected data.
 
-<HostedBackendWarning />
+## Return Users to a Page After Login
 
-## Source Code
+To return users to the page they started from, pass a string to `login` or `register`. The SDK passes the string to the **`onRedirect`** function when the browser returns from FusionAuth:
 
-The SDK source code is on [GitHub](https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-vue/).
+```typescript
+const config: FusionAuthConfig = {
+  // ...
+  onRedirect: (state?: string) => {
+    if (state) router.push(state);
+  },
+};
+```
 
-## Update Policy
+```typescript
+login(router.currentRoute.value.fullPath);
+```
 
-<SdkUpdatePolicy/>
+The pre-built login and register buttons accept the same string in the **`state`** prop.
+
+## Use the SDK with Nuxt
+
+To read the token cookies during server rendering in [Nuxt](https://nuxt.com/), pass the Nuxt [`useCookie`](https://nuxt.com/docs/api/composables/use-cookie) composable as **`nuxtUseCookie`** in a Nuxt plugin:
+
+```typescript
+import { useCookie } from '#app';
+import FusionAuthVuePlugin from '@fusionauth/vue-sdk';
+
+export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.vueApp.use(FusionAuthVuePlugin, {
+    ...config,
+    nuxtUseCookie: useCookie,
+  });
+});
+```
+
+To reach the SDK outside components, such as in route middleware, create the SDK instance with `createFusionAuth`. Pass the instance to the plugin, and provide the instance to the rest of the Nuxt application:
+
+```typescript
+import { useCookie } from '#app';
+import FusionAuthVuePlugin, { createFusionAuth } from '@fusionauth/vue-sdk';
+
+export default defineNuxtPlugin({
+  setup(nuxtApp) {
+    const fusionauth = createFusionAuth({ ...config, nuxtUseCookie: useCookie });
+    nuxtApp.vueApp.use(FusionAuthVuePlugin, { instance: fusionauth });
+    return {
+      provide: { fusionauth },
+    };
+  },
+});
+```
+
+## Call APIs in DPoP Mode
+
+In [[DPoP]] mode, the SDK calls FusionAuth directly instead of the hosted backend, and binds each token to a key that the browser generates. A stolen DPoP token doesn't work without the key. DPoP mode requires Vue SDK `1.4.0` and FusionAuth `1.63.0` or later. To configure FusionAuth for DPoP, see [Use DPoP in a Browser App](/docs/authentication/oauth/dpop/browser-app).
+
+To enable DPoP mode, set **`useDpop`** to `true`:
+
+```typescript
+const config: FusionAuthConfig = {
+  clientId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
+  serverUrl: 'http://localhost:9011',
+  redirectUri: 'http://localhost:5173',
+  useDpop: true,
+  dpopTokenStorage: 'localStorage',
+  onRedirect: () => router.push('/account'),
+};
+```
+
+With `localStorage`, the user stays logged in across page reloads. With `memory`, a reload logs the user out.
+
+In DPoP mode, the SDK finishes login in the browser after the redirect. The SDK calls **`onRedirect`** after **`isLoggedIn`** and the tokens update, so navigate after login in **`onRedirect`**.
+
+In DPoP mode, `useFusionAuth` also returns `dpopFetch`, `generateProof`, and `getAccessToken`. Call `dpopFetch` like `fetch`. `dpopFetch` adds the DPoP headers and retries when the server asks for a new nonce:
+
+```typescript
+const { dpopFetch, generateProof, getAccessToken } = useFusionAuth();
+
+const response = await dpopFetch('https://api.example.com/data', { method: 'GET' });
+```
+
+When you use an HTTP library such as axios, build the headers with `getAccessToken` and `generateProof`:
+
+```typescript
+const accessToken = getAccessToken();
+const proof = await generateProof('https://api.example.com/data', 'GET', accessToken);
+
+await axios.get('https://api.example.com/data', {
+  headers: { Authorization: `DPoP ${accessToken}`, DPoP: proof },
+});
+```
+
+The three functions are `undefined` when **`useDpop`** is `false`.

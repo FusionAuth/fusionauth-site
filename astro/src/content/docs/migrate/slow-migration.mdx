@@ -193,9 +193,17 @@ To discuss improvements to this experience, see the [open GitHub issue](https://
 
 Alternatively, migrate users when they request a password reset:
 
-1. Add JavaScript to the forgot password page in a custom theme. When the user submits the form, the JavaScript sends the user's email address to an API endpoint that you write.
+1. Add JavaScript to the forgot password page in a custom theme. When the user submits the form, the JavaScript sends the user's email address to an API endpoint that you write. The JavaScript waits for the endpoint to respond, then submits the form.
 1. In the endpoint, look up the user in the old system. When the user exists there, check whether the user exists in FusionAuth.
-1. When the user exists only in the old system, create the user with the [Create a User API](/docs/apis/users/create), and set **`sendSetPasswordEmail`** to `true`.
+1. When the user exists only in the old system, create the user with the [Create a User API](/docs/apis/users/create). Leave out **`user.password`**, and don't set **`sendSetPasswordEmail`**.
+
+When the form submits, FusionAuth sends the forgot password email to the new user. Don't set **`sendSetPasswordEmail`** to `true`, because the user then gets both a set password email and a forgot password email. When the form submits before the endpoint creates the user, FusionAuth sends no email.
+
+<Aside type="caution">
+Anyone can call the endpoint. Return the same response whether or not the user exists, so the endpoint doesn't reveal which accounts exist. Rate limit the endpoint to stop callers from creating many users.
+</Aside>
+
+When the old system can still send password reset emails, the endpoint can start a password reset in the old system instead of creating the user. The user sets a new password in the old system, and the Connector migrates the user at the next login.
 
 ## Registration During a Slow Migration
 

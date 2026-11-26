@@ -221,7 +221,9 @@ Put content in `.mdx` files and logic in `.astro` components. A component render
 * Write partials in markdown, not HTML. For a table with conditional rows, use `TableGrid`, `Row`, and `Cell` from `astro-better-tables`, and wrap each conditional `Row` in `<If>`.
 * Don't put headings in partials. Put the heading on the page that includes the partial, so the heading level fits the page and the heading appears in the table of contents.
 * When only one page uses a partial, inline the content on that page.
-* Put `.mdx` and `.md` partials in `astro/src/content`, next to the pages that use them, not in `astro/src/components`. Folders and files that start with an underscore don't build pages, so use `_shared` folders for partials.
+* Put each `.mdx` and `.md` partial next to the files that use the partial:
+  * When pages use the partial, put the partial in `astro/src/content`, next to the pages. Folders and files that start with an underscore don't build pages, so use `_shared` folders for partials.
+  * When a component renders the partial, put the partial next to the component in `astro/src/components`. Import the partial as content: `import { Content as PatchMethodNote } from 'src/components/api/_patch-method-note.mdx';`.
 
 ### Components
 
