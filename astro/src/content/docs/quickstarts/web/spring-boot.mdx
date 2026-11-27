@@ -1,0 +1,256 @@
+---
+title: Spring Boot With Thymeleaf
+htmlTitle: FusionAuth QuickStart for Spring Boot With Thymeleaf
+description: Learn how to add FusionAuth login to a Spring Boot app with Thymeleaf.
+tags: spring boot quickstart, spring security, java web authentication, thymeleaf, oauth login
+icon: /img/icons/spring.svg
+---
+
+This QuickStart explains how to add a login page and authentication to a website built with [Spring Boot](https://spring.io/projects/spring-boot) and [Thymeleaf](https://www.thymeleaf.org/). You'll begin with a simple Spring Boot app that allows visitors to edit a file. Then, you'll add authentication to the app with a FusionAuth instance. Finally, you'll extend the app to handle multiple independent users with user data provided by FusionAuth.
+
+This tutorial should take between 5 and 15 minutes; less if you already have prerequisites like Docker installed.
+
+## Prerequisites
+
+This QuickStart requires:
+
+* [Java JDK](https://adoptium.net/temurin/releases/?version=21) 21 or later
+* [Maven](https://maven.apache.org/install.html) 3.9 or later
+* [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later
+
+If you use macOS or Windows, you need one of the following container management tools:
+  * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use OrbStack for `docker compose` commands after installation, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
+
+## Create a Simple Spring Boot App
+
+For this QuickStart, we'll use a Spring Boot app that reads and writes data to a text file:
+
+<Steps>
+1. Create a folder for the app and navigate into it:
+
+   ```shell-session
+   mkdir spring-boot-quickstart && cd spring-boot-quickstart
+   ```
+
+1. Create folders for the app's Java code and templates:
+
+   ```shell-session
+   mkdir -p src/main/java/example/notes src/main/resources/templates
+   ```
+
+1. Create a file named `pom.xml` with the following contents, which adds Spring MVC and Thymeleaf:
+
+   <ExtractedCode src="quickstart-spring-boot/0-start/pom.xml" lang="xml"/>
+
+1. Create a file named `src/main/java/example/notes/NotesApplication.java` with the following code, which starts the app:
+
+   <ExtractedCode src="quickstart-spring-boot/0-start/src/main/java/example/notes/NotesApplication.java" lang="java"/>
+
+1. Create a file named `src/main/java/example/notes/NotesController.java` with the following code:
+
+   <ExtractedCode src="quickstart-spring-boot/0-start/src/main/java/example/notes/NotesController.java" lang="java"/>
+
+   The `show` method reads the note when the page loads, and the `save` method saves it when the form is submitted.
+
+1. Create a file named `src/main/resources/templates/notes.html` with the following code, which displays the note in a form:
+
+   <ExtractedCode src="quickstart-spring-boot/0-start/src/main/resources/templates/notes.html" lang="html"/>
+
+1. Run the app:
+
+   ```shell-session
+   mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=3000
+   ```
+
+1. Open the app at [http://localhost:3000](http://localhost:3000).
+
+1. Type "Hello Spring Boot" in the text area, then click <Breadcrumb>Save Changes</Breadcrumb>.
+
+1. In a file browser or terminal, look in the `spring-boot-quickstart` folder. You should see a new file named `note.txt`, with text content "Hello Spring Boot".
+
+1. Press **Ctrl+C** on your keyboard to stop the app.
+</Steps>
+
+## Install and Run FusionAuth
+
+Before we can add authentication to our Spring Boot app, we need a local FusionAuth instance:
+
+<Steps>
+1. Open your container management tool (listed in the prerequisites above).
+
+1. From the `spring-boot-quickstart` folder, clone the [GitHub repository for the FusionAuth instance you'll use with this QuickStart](https://github.com/FusionAuth/fusionauth-quickstart-app):
+
+   ```shell-session
+   git clone https://github.com/FusionAuth/fusionauth-quickstart-app.git
+   ```
+
+1. Navigate into the cloned directory:
+
+   ```shell-session
+   cd fusionauth-quickstart-app
+   ```
+
+1. To start a local instance of FusionAuth, run the following command (omit the `-d` flag to see all Docker logs):
+
+   ```shell-session
+   docker compose up -d
+   ```
+
+1. Wait until all networks, volumes, and containers show a green status of **Healthy**, **Started**, or **Created**. This may take a few minutes, depending on your network speed and cached dependencies.
+
+1. Open [http://localhost:9011/admin](http://localhost:9011/admin) to access the FusionAuth Admin UI.
+
+1. Log in with these credentials:
+
+   * username: `admin@example.com`
+   * password: `password`
+
+1. Navigate to <Breadcrumb>Applications -> QuickStart App -> Edit -> OAuth</Breadcrumb>. On this page, you can find your client Id and client secret, and set redirect and logout URLs. In the next part of this QuickStart, we'll use these values to connect our Spring Boot app with FusionAuth.
+
+1. Click the logout icon in the top right to log out of the Admin UI. We'll use a different user account to access our Spring Boot app, and because FusionAuth supports SSO, we need to log out of our admin account before we can log in as a normal user.
+</Steps>
+
+## Add FusionAuth to the Spring Boot App
+
+Now that you have a working instance of FusionAuth and a working Spring Boot app, let's use FusionAuth to add login to your Spring Boot app:
+
+<Steps>
+1. Navigate out of the `fusionauth-quickstart-app` folder, back to the `spring-boot-quickstart` folder that contains `pom.xml` and `note.txt`:
+
+   ```shell-session
+   cd ..
+   ```
+
+1. Replace the contents of `pom.xml` with the following code, which adds the Spring Security OAuth2 client. This handles communication with our FusionAuth instance:
+
+   <ExtractedCode src="quickstart-spring-boot/1-fusionauth-added/pom.xml" lang="xml"/>
+
+1. Create a file named `src/main/resources/application.properties` with the following contents (we provided the same configuration for the local FusionAuth instance, and then viewed it in the Admin UI):
+
+   <ExtractedCode src="quickstart-spring-boot/1-fusionauth-added/src/main/resources/application.properties" lang="properties"/>
+
+   Spring Security finds the login and token endpoints in the OpenID Connect discovery document for the `issuer-uri`.
+
+1. Create a file named `src/main/java/example/notes/SecurityConfig.java` with the following code:
+
+   <ExtractedCode src="quickstart-spring-boot/1-fusionauth-added/src/main/java/example/notes/SecurityConfig.java" lang="java"/>
+
+   The new code connects the app to FusionAuth:
+
+   * `addViewControllers` shows the `login.html` template at `/login`.
+   * `authorizeHttpRequests` lets anyone open `/login`, and sends users who aren't logged in to `/login` for every other route.
+   * `oauth2Login` sets `/oauth-callback` as the route that receives the authorization code from FusionAuth. Spring Security exchanges the code for tokens, using [[PKCE]], and validates the [[Id Token::ID token]].
+   * The `OidcClientInitiatedLogoutSuccessHandler` sends the user to FusionAuth's logout endpoint so the FusionAuth session ends too, then back to the login page.
+
+1. Create a file named `src/main/resources/templates/login.html` with the following code:
+
+   <ExtractedCode src="quickstart-spring-boot/1-fusionauth-added/src/main/resources/templates/login.html" lang="html"/>
+
+   The link opens `/oauth2/authorization/fusionauth`, which sends the user to the FusionAuth login page using the `fusionauth` client registration in `application.properties`.
+
+1. Replace the contents of `src/main/resources/templates/notes.html` with the following code, which adds a <Breadcrumb>Logout</Breadcrumb> button:
+
+   <ExtractedCode src="quickstart-spring-boot/1-fusionauth-added/src/main/resources/templates/notes.html" lang="html"/>
+
+   The `th:action` attributes add the [[CSRF]] token Spring Security requires for both forms.
+
+1. Run the app, which now uses FusionAuth login:
+
+   ```shell-session
+   mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=3000
+   ```
+
+1. Open the app at [http://localhost:3000](http://localhost:3000) and click <Breadcrumb>Log in with FusionAuth</Breadcrumb>.
+
+1. Log in with the following credentials:
+
+   * username: `richard@example.com`
+   * password: `password`
+
+1. Edit and save the note in the authenticated Spring Boot app.
+
+1. Click <Breadcrumb>Logout</Breadcrumb>. FusionAuth ends your session and sends you back to the login page.
+
+1. Press **Ctrl+C** on your keyboard to stop the app.
+</Steps>
+
+## Add Independent Notes for Each User
+
+To see a more realistic example of FusionAuth usage, we can improve the app even more, so every user gets a unique note to edit. To accomplish this, we'll use FusionAuth's user data:
+
+<Steps>
+1. Open the FusionAuth Admin UI at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+1. Log in with the following credentials:
+
+   * username: `admin@example.com`
+   * password: `password`
+
+1. Navigate to <Breadcrumb>Applications -> QuickStart App -> Edit -> Registration</Breadcrumb>.
+
+   * Under **Self-service registration**, check that **Registration mode** is set to **Create registration**. The QuickStart configuration has already turned on self-service registration.
+   * In the **Registration field** list, turn on the **Enabled** and **Required** switches for the following rows:
+     * **Birthdate**
+     * **First name**
+     * **Last name**
+
+1. Click <Breadcrumb>Save</Breadcrumb> in the top right of the page to save your changes to self-service registration.
+
+1. Navigate to <Breadcrumb>Users -> Richard Hendricks -> Manage</Breadcrumb>.
+
+1. In the <Breadcrumb>Source</Breadcrumb> tab, look for the `firstName` and `lastName` fields. That's what we'll use to personalize the UI for each user. We'll use the user's `id` field to generate a unique name for each user's note.
+
+1. Click the logout icon in the top right to log out of the Admin UI. We'll use a different user account to access our Spring Boot app.
+
+1. Replace the contents of `src/main/resources/application.properties` with the following contents, which add the `profile` scope so the ID token includes the user's first and last name:
+
+   <ExtractedCode src="quickstart-spring-boot/2-multi-user/src/main/resources/application.properties" lang="properties"/>
+
+1. Replace the contents of `src/main/java/example/notes/NotesController.java` with the following code, which reads the user's name (first and last) and Id from the ID token, and stores each user's note in a separate file:
+
+   <ExtractedCode src="quickstart-spring-boot/2-multi-user/src/main/java/example/notes/NotesController.java" lang="java"/>
+
+   Spring Security validated the ID token at login and passes its claims to each method as an `OidcUser`, so we don't need a separate JWT library.
+
+1. Replace the contents of `src/main/resources/templates/notes.html` with the following code, which greets the user by name:
+
+   <ExtractedCode src="quickstart-spring-boot/2-multi-user/src/main/resources/templates/notes.html" lang="html"/>
+
+1. Run the app:
+
+   ```shell-session
+   mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=3000
+   ```
+
+1. Open the app at [http://localhost:3000](http://localhost:3000) and click <Breadcrumb>Log in with FusionAuth</Breadcrumb>.
+
+1. Log in with the following credentials:
+
+   * username: `richard@example.com`
+   * password: `password`
+
+1. In a separate private or incognito window, open the app at [http://localhost:3000](http://localhost:3000) and click <Breadcrumb>Log in with FusionAuth</Breadcrumb>.
+
+1. Click <Breadcrumb>Create an account</Breadcrumb> and create an account using your personal email address, name, and birthdate.
+
+1. Edit and save your own note. Your name appears at the top of the page and in the default note text.
+</Steps>
+
+Your Spring Boot app now provides unique notes for each user. Each user can independently edit and save their note. To see all of the notes, look for `note-<id>.txt` files in the `user_data` directory. To identify which note corresponds to which user, compare the `id` in the file name with the `id` field in the user's <Breadcrumb>Source</Breadcrumb> tab.
+
+## Summary
+
+In this QuickStart, FusionAuth handled login for your Spring Boot app:
+
+* Spring Security sent users to the FusionAuth login page and exchanged the authorization code for tokens, so the app never saw their passwords.
+* The security configuration kept logged-out users away from the notes page.
+* The ID token gave the app each user's unique Id and name. The app used the Id to keep each note separate and the name to greet the user.
+* FusionAuth's self-service registration let new users create their own accounts, with no sign-up code in the app.
+
+## Next Steps
+
+This was a quick introduction to using FusionAuth for user authentication. To learn more about integrating FusionAuth with your product, see [Get Started](/docs/get-started).
+
+FusionAuth has many features (including [Social Login](/docs/authentication/identity-providers/#social-identity-providers), [Single Sign-On](/docs/authentication/sessions/enable-sso), [Passkeys](/docs/authentication/passkeys/configure), [Multi-factor Authentication](/docs/authentication/multi-factor-authentication)), most of which are free. This example app is a great starting point for learning about FusionAuth features.
