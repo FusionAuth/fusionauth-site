@@ -1,0 +1,255 @@
+---
+title: .NET
+htmlTitle: FusionAuth QuickStart for .NET
+description: Learn how to add FusionAuth login to an ASP.NET Core Razor Pages app.
+tags: .net web quickstart, asp.net core, razor pages, c# web authentication, dotnet login
+icon: /img/icons/dotnet-c.svg
+---
+
+This QuickStart explains how to add a login page and authentication to a website built with [ASP.NET Core Razor Pages](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/). You'll begin with a simple Razor Pages app that allows visitors to edit a file. Then, you'll add authentication to the app with a FusionAuth instance. Finally, you'll extend the app to handle multiple independent users with user data provided by FusionAuth.
+
+This tutorial should take between 5 and 15 minutes; less if you already have prerequisites like Docker installed.
+
+## Prerequisites
+
+This QuickStart requires:
+
+* [.NET SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) 10 or later
+* [Docker](https://docs.docker.com/get-started/get-docker/) 23 or later
+
+If you use macOS or Windows, you need one of the following container management tools:
+  * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  * [OrbStack](https://docs.orbstack.dev/quick-start) (to use OrbStack for `docker compose` commands after installation, run `docker context use orbstack`)
+  * [Podman](https://podman.io/docs/installation) (in the commands below, replace `docker` with `podman`)
+
+## Create a Simple .NET App
+
+For this QuickStart, we'll use a Razor Pages app that reads and writes data to a text file:
+
+<Steps>
+1. Create a folder for the app and navigate into it:
+
+   ```shell-session
+   mkdir dotnet-quickstart && cd dotnet-quickstart
+   ```
+
+1. Create a Razor Pages project named `Notes` in the current folder:
+
+   ```shell-session
+   dotnet new webapp -n Notes -o . -f net10.0 --no-https
+   ```
+
+   This creates a `Notes.csproj` file, a `Program.cs` file, and a `Pages` folder with the app's pages.
+
+1. Replace the contents of `Pages/Index.cshtml.cs` with the following code:
+
+   <ExtractedCode src="quickstart-dotnet/0-start/Pages/Index.cshtml.cs" lang="csharp"/>
+
+   `OnGet` reads the note when the page loads, and `OnPost` saves it when the form is submitted.
+
+1. Replace the contents of `Pages/Index.cshtml` with the following code, which displays the note in a form:
+
+   <ExtractedCode src="quickstart-dotnet/0-start/Pages/Index.cshtml" lang="razor"/>
+
+   The form uses the `asp-page` tag helper, which adds the token ASP.NET Core uses to prevent [[CSRF]].
+
+1. Run the app:
+
+   ```shell-session
+   dotnet run --urls http://localhost:3000
+   ```
+
+1. Open the app at [http://localhost:3000](http://localhost:3000).
+
+1. Type "Hello .NET" in the text area, then click <Breadcrumb>Save Changes</Breadcrumb>.
+
+1. In a file browser or terminal, look in the `dotnet-quickstart` folder. You should see a new file named `note.txt`, with text content "Hello .NET".
+
+1. Press **Ctrl+C** on your keyboard to stop the app.
+</Steps>
+
+## Install and Run FusionAuth
+
+Before we can add authentication to our .NET app, we need a local FusionAuth instance:
+
+<Steps>
+1. Open your container management tool (listed in the prerequisites above).
+
+1. From the `dotnet-quickstart` folder, clone the [GitHub repository for the FusionAuth instance you'll use with this QuickStart](https://github.com/FusionAuth/fusionauth-quickstart-app):
+
+   ```shell-session
+   git clone https://github.com/FusionAuth/fusionauth-quickstart-app.git
+   ```
+
+1. Navigate into the cloned directory:
+
+   ```shell-session
+   cd fusionauth-quickstart-app
+   ```
+
+1. To start a local instance of FusionAuth, run the following command (omit the `-d` flag to see all Docker logs):
+
+   ```shell-session
+   docker compose up -d
+   ```
+
+1. Wait until all networks, volumes, and containers show a green status of **Healthy**, **Started**, or **Created**. This may take a few minutes, depending on your network speed and cached dependencies.
+
+1. Open [http://localhost:9011/admin](http://localhost:9011/admin) to access the FusionAuth Admin UI.
+
+1. Log in with these credentials:
+
+   * username: `admin@example.com`
+   * password: `password`
+
+1. Navigate to <Breadcrumb>Applications -> QuickStart App -> Edit -> OAuth</Breadcrumb>. On this page, you can find your client Id and client secret, and set redirect and logout URLs. In the next part of this QuickStart, we'll use these values to connect our .NET app with FusionAuth.
+
+1. Click the logout icon in the top right to log out of the Admin UI. We'll use a different user account to access our .NET app, and because FusionAuth supports SSO, we need to log out of our admin account before we can log in as a normal user.
+</Steps>
+
+## Add FusionAuth to the .NET App
+
+Now that you have a working instance of FusionAuth and a working .NET app, let's use FusionAuth to add login to your .NET app:
+
+<Steps>
+1. Navigate out of the `fusionauth-quickstart-app` folder, back to the `dotnet-quickstart` folder that contains `Notes.csproj` and `note.txt`:
+
+   ```shell-session
+   cd ..
+   ```
+
+1. Install the ASP.NET Core OpenID Connect package, which handles communication with our FusionAuth instance:
+
+   ```shell-session
+   dotnet add package Microsoft.AspNetCore.Authentication.OpenIdConnect --version 10.0.15
+   ```
+
+1. Replace the contents of `appsettings.Development.json` with the following configuration (we provided the same configuration for the local FusionAuth instance, and then viewed it in the Admin UI):
+
+   <ExtractedCode src="quickstart-dotnet/1-fusionauth-added/appsettings.Development.json" lang="json"/>
+
+1. Replace the contents of `Program.cs` with the following code:
+
+   <ExtractedCode src="quickstart-dotnet/1-fusionauth-added/Program.cs" lang="csharp"/>
+
+   The new code connects the app to FusionAuth:
+
+   * `AddCookie` keeps the user logged in to the app with a cookie, and sends users who aren't logged in to `/login`.
+   * `AddOpenIdConnect` tells ASP.NET Core how to talk to FusionAuth. It uses the client Id, client secret, and [[PKCE]], and finds the login and token endpoints in the OpenID Connect discovery document at `/.well-known/openid-configuration`. `RequireHttpsMetadata` is turned off in development so the app can read that document from the local FusionAuth instance over HTTP.
+   * `CallbackPath` sets `/oauth-callback` as the route that receives the authorization code from FusionAuth. The handler exchanges the code for tokens, validates the [[Id Token::ID token]], and signs the user in to the cookie session.
+   * `MapInboundClaims = false` keeps the claim names from the ID token, such as `sub`, instead of renaming them to .NET claim types.
+   * `SaveTokens` keeps the ID token, which the handler sends to FusionAuth when the user logs out. The `OnRedirectToIdentityProviderForSignOut` event sends the user back to the login page after FusionAuth ends their session.
+   * The `/login/start` route starts the OpenID Connect challenge, which sends the user to the FusionAuth login page.
+
+1. Create a file named `Pages/Login.cshtml` with the following code, which links to `/login/start`:
+
+   <ExtractedCode src="quickstart-dotnet/1-fusionauth-added/Pages/Login.cshtml" lang="razor"/>
+
+1. Replace the contents of `Pages/Index.cshtml.cs` with the following code:
+
+   <ExtractedCode src="quickstart-dotnet/1-fusionauth-added/Pages/Index.cshtml.cs" lang="csharp"/>
+
+   The `[Authorize]` attribute sends users who aren't logged in to the login page. `OnPostLogout` ends both the app's cookie session and the FusionAuth session.
+
+1. Replace the contents of `Pages/Index.cshtml` with the following code, which adds a <Breadcrumb>Logout</Breadcrumb> button:
+
+   <ExtractedCode src="quickstart-dotnet/1-fusionauth-added/Pages/Index.cshtml" lang="razor"/>
+
+1. Run the app, which now uses FusionAuth login:
+
+   ```shell-session
+   dotnet run --urls http://localhost:3000
+   ```
+
+1. Open the app at [http://localhost:3000](http://localhost:3000) and click <Breadcrumb>Log in with FusionAuth</Breadcrumb>.
+
+1. Log in with the following credentials:
+
+   * username: `richard@example.com`
+   * password: `password`
+
+1. Edit and save the note in the authenticated .NET app.
+
+1. Click <Breadcrumb>Logout</Breadcrumb>. FusionAuth ends your session and sends you back to the login page.
+
+1. Press **Ctrl+C** on your keyboard to stop the app.
+</Steps>
+
+## Add Independent Notes for Each User
+
+To see a more realistic example of FusionAuth usage, we can improve the app even more, so every user gets a unique note to edit. To accomplish this, we'll use FusionAuth's user data:
+
+<Steps>
+1. Open the FusionAuth Admin UI at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+1. Log in with the following credentials:
+
+   * username: `admin@example.com`
+   * password: `password`
+
+1. Navigate to <Breadcrumb>Applications -> QuickStart App -> Edit -> Registration</Breadcrumb>.
+
+   * Under **Self-service registration**, check that **Registration mode** is set to **Create registration**. The QuickStart configuration has already turned on self-service registration.
+   * In the **Registration field** list, turn on the **Enabled** and **Required** switches for the following rows:
+     * **Birthdate**
+     * **First name**
+     * **Last name**
+
+1. Click <Breadcrumb>Save</Breadcrumb> in the top right of the page to save your changes to self-service registration.
+
+1. Navigate to <Breadcrumb>Users -> Richard Hendricks -> Manage</Breadcrumb>.
+
+1. In the <Breadcrumb>Source</Breadcrumb> tab, look for the `firstName` and `lastName` fields. That's what we'll use to personalize the UI for each user. We'll use the user's `id` field to generate a unique name for each user's note.
+
+1. Click the logout icon in the top right to log out of the Admin UI. We'll use a different user account to access our .NET app.
+
+1. Replace the contents of `Program.cs` with the following code, which adds the `profile` scope so the ID token includes the user's first and last name:
+
+   <ExtractedCode src="quickstart-dotnet/2-multi-user/Program.cs" lang="csharp"/>
+
+1. Replace the contents of `Pages/Index.cshtml.cs` with the following code, which reads the user's name (first and last) and Id from the ID token, and stores each user's note in a separate file:
+
+   <ExtractedCode src="quickstart-dotnet/2-multi-user/Pages/Index.cshtml.cs" lang="csharp"/>
+
+   The handler validated the ID token at login and stored its claims in the cookie session, so the page reads `given_name`, `family_name`, and `sub` from `User` without a separate JWT library.
+
+1. Replace the contents of `Pages/Index.cshtml` with the following code, which greets the user by name:
+
+   <ExtractedCode src="quickstart-dotnet/2-multi-user/Pages/Index.cshtml" lang="razor"/>
+
+1. Run the app:
+
+   ```shell-session
+   dotnet run --urls http://localhost:3000
+   ```
+
+1. Open the app at [http://localhost:3000](http://localhost:3000) and click <Breadcrumb>Log in with FusionAuth</Breadcrumb>.
+
+1. Log in with the following credentials:
+
+   * username: `richard@example.com`
+   * password: `password`
+
+1. In a separate private or incognito window, open the app at [http://localhost:3000](http://localhost:3000) and click <Breadcrumb>Log in with FusionAuth</Breadcrumb>.
+
+1. Click <Breadcrumb>Create an account</Breadcrumb> and create an account using your personal email address, name, and birthdate.
+
+1. Edit and save your own note. Your name appears at the top of the page and in the default note text.
+</Steps>
+
+Your .NET app now provides unique notes for each user. Each user can independently edit and save their note. To see all of the notes, look for `note-<id>.txt` files in the `user_data` directory. To identify which note corresponds to which user, compare the `id` in the file name with the `id` field in the user's <Breadcrumb>Source</Breadcrumb> tab.
+
+## Summary
+
+In this QuickStart, FusionAuth handled login for your .NET app:
+
+* The ASP.NET Core OpenID Connect handler sent users to the FusionAuth login page and exchanged the authorization code for tokens, so the app never saw their passwords.
+* The `[Authorize]` attribute kept logged-out users away from the notes page.
+* The ID token gave the app each user's unique Id and name. The app used the Id to keep each note separate and the name to greet the user.
+* FusionAuth's self-service registration let new users create their own accounts, with no sign-up code in the app.
+
+## Next Steps
+
+This was a quick introduction to using FusionAuth for user authentication. To learn more about integrating FusionAuth with your product, see [Get Started](/docs/get-started).
+
+FusionAuth has many features (including [Social Login](/docs/authentication/identity-providers/#social-identity-providers), [Single Sign-On](/docs/authentication/sessions/enable-sso), [Passkeys](/docs/authentication/passkeys/configure), [Multi-factor Authentication](/docs/authentication/multi-factor-authentication)), most of which are free. This example app is a great starting point for learning about FusionAuth features.
